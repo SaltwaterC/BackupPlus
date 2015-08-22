@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, microsoft one drive, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.3
-Stable tag: 1.11.4
+Stable tag: 1.11.5
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -119,6 +119,10 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.4 of the free version correspond to changes made in 2.11.4.x of the paid version.
+
+= 1.11.5 - 22/Aug/2015 =
+
+* FIX: phpseclib fix relating to generation of random numbers on some systems (affecting SFTP on some systems)
 
 = 1.11.4 - 19/Aug/2015 =
 
@@ -1617,4 +1621,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.4 : Small tweaks and fixes.
+* 1.11.5 : Random number generation was halting on some systems due to phpseclib issue in 1.11.4
