@@ -122,7 +122,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 
 = 1.11.8 - 04/Sep/2015 =
 
-* FIX: Dropbox introduced an un-documented, un-announnced change to their server, which caused new site authentications in UpdraftPlus to no longer work. Now fixed with this release.
+* FIX: Dropbox introduced an un-documented, un-announced change to their server, which caused new site authentications in UpdraftPlus to no longer work. Now fixed with this release.
 * FIX: If backing up multiple extra directories under "more files", if large directories required a resumption, then inclusion of the files multiple times in the backup was possible.
 * TWEAK: Tweak the auto-split algorithm to not avoid firing in a particular case (that relies on a sequence of unlikely I/O events, seen on GoDaddy) if there's no resumption scheduled
 * TWEAK: Add mysql.sql to the (changeable) default configuration for excludes from wp-content - on WP Engine this is an unreadable file that they create that thus produces a backup warning
