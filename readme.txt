@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, microsoft one drive, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.3
-Stable tag: 1.11.5
+Stable tag: 1.11.9
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -118,9 +118,9 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.7 of the free version correspond to changes made in 2.11.8.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.9 of the free version correspond to changes made in 2.11.9.x of the paid version.
 
-= 1.11.8 - 04/Sep/2015 =
+= 1.11.9 - 04/Sep/2015 =
 
 * FIX: Dropbox introduced an un-documented, un-announced change to their server, which caused new site authentications in UpdraftPlus to no longer work. Now fixed with this release.
 * FIX: If backing up multiple extra directories under "more files", if large directories required a resumption, then inclusion of the files multiple times in the backup was possible.
@@ -1635,4 +1635,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.8 : Fix for undocumented change at Dropbox.Com that began preventing authorising new WP sites, plus a few others
+* 1.11.9 : Fix for undocumented change at Dropbox.Com that began preventing authorising new WP sites, plus a few others
