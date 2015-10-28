@@ -1675,3 +1675,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 == Upgrade Notice ==
 * 1.11.15: Google Cloud Storage (in UD Premium); various other tweaks, optimisations + fixes.
+
