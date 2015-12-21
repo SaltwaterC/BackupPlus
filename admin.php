@@ -2648,7 +2648,12 @@ class UpdraftPlus_Admin {
 						<td class="updraft_tick_cell"><img src="<?php echo $tick;?>"></td>
 					</tr>
 					<tr>
-						<td class="updraft_feature_cell"><?php _e('WebDAV, OneDrive, Copy.Com, SFTP/SCP, encrypted FTP', 'updraftplus');?></td>
+						<td class="updraft_feature_cell"><?php _e('WebDAV, Copy.Com, SFTP/SCP, encrypted FTP', 'updraftplus');?></td>
+						<td class="updraft_tick_cell"><img src="<?php echo $cross;?>"></td>
+						<td class="updraft_tick_cell"><img src="<?php echo $tick;?>"></td>
+					</tr>
+					<tr>
+						<td class="updraft_feature_cell"><?php _e('Microsoft OneDrive, Microsoft Azure, Google Cloud Storage', 'updraftplus');?></td>
 						<td class="updraft_tick_cell"><img src="<?php echo $cross;?>"></td>
 						<td class="updraft_tick_cell"><img src="<?php echo $tick;?>"></td>
 					</tr>
