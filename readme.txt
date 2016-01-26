@@ -125,7 +125,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * FIX: When migrating a sub-folder based multisite into a non-root install with different relative path to the source multisite (I can't think of any good reasons to do this), the search/replace could leave sub-sites unreachable without manual correction
 * FIX: Logic errors in the advanced backup retention options could lead to the oldest backups being deleted prematurely, and some backups not being deleted when they were overdue for deletion
 * FIX: Amazon S3 bucket creation wizard (in the S3 enhanced add-on) was not honouring the chosen region for new buckets
-* FIX: Upon restoration over an existing site, inactive plugins could remain post-restore (bug introduced in 1.11.21)
+* FIX: Upon restoration over an existing site, inactive plugins could remain post-restore (bug introduced in 1.11.20)
 * TWEAK: Various internal re-organisations, to improve modularity/re-use of the code
 * TWEAK: Internal CSS re-organisation to make future layout changes easier
 * TWEAK: The "stop" link in the backup progress indicator now halts the backup asap, instead of at the next scheduled resumption
