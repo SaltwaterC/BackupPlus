@@ -2947,7 +2947,7 @@ class UpdraftPlus_Admin {
 				$this->settings_debugrow('Table prefix:', htmlspecialchars($updraftplus->get_table_prefix()));
 
 				if (defined('UPDRAFTPLUS_EXPERIMENTAL_REMOTECONTROL') && UPDRAFTPLUS_EXPERIMENTAL_REMOTECONTROL) {
-					$show_key_create = '<span id="updraftplus_remotecontrol_key"><a href="#" id="updraftplus_remotecontrol_keycreate_go">'.__('Create a new key (this will invalidate any currently in-use key and disconnect any existing remote control connection)', 'updraftplus').'</a></span>';
+					$show_key_create = '<span id="updraft_centralkey"><a href="#" id="updraft_centralkeycreate_go">'.__('Create a new key (this will invalidate any currently in-use key and disconnect any existing remote control connection)', 'updraftplus').'</a></span>';
 					$this->settings_debugrow('Remote control key:', $show_key_create);
 					
 				}

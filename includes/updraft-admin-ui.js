@@ -947,21 +947,21 @@ jQuery(document).ready(function($){
 	});
 	
 	// Remote Control
-	jQuery('#updraftplus_remotecontrol_keycreate_go').click(function(e) {
+	jQuery('#updraft_central_keycreate_go').click(function(e) {
 		e.preventDefault();
-		jQuery('#updraftplus_remotecontrol_key').html(updraftlion.creating);
+		jQuery('#updraft_central_key').html(updraftlion.creating);
 		try {
 			jQuery.post(ajaxurl,  {
 				action: 'updraft_ajax',
 				subaction: 'remotecontrol_createkey',
 				nonce: updraft_credentialtest_nonce
 			}, function(response) {
-				jQuery('#updraftplus_remotecontrol_key').html();
+				jQuery('#updraft_central_key').html();
 				try {
 					resp = jQuery.parseJSON(response);
 					alert(resp.r);
 					if (resp.hasOwnProperty('bundle')) {
-						jQuery('#updraftplus_remotecontrol_key').html('<textarea onclick="this.select();" style="width:620px; height:165px; word-wrap:break-word; border: 1px solid #aaa; border-radius: 3px; padding:4px;">'+resp.bundle+'</textarea>');
+						jQuery('#updraft_central_key').html('<textarea onclick="this.select();" style="width:620px; height:165px; word-wrap:break-word; border: 1px solid #aaa; border-radius: 3px; padding:4px;">'+resp.bundle+'</textarea>');
 					} else {
 						console.log(resp);
 					}
@@ -971,7 +971,7 @@ jQuery(document).ready(function($){
 				} 
 			});
 		} catch (err) {
-			jQuery('#updraftplus_remotecontrol_key').html();
+			jQuery('#updraft_central_key').html();
 			console.log(err);
 		}
 	});
