@@ -956,7 +956,6 @@ jQuery(document).ready(function($){
 				subaction: 'remotecontrol_createkey',
 				nonce: updraft_credentialtest_nonce
 			}, function(response) {
-				jQuery('#updraft_central_key').html();
 				try {
 					resp = jQuery.parseJSON(response);
 					alert(resp.r);
