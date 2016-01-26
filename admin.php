@@ -331,7 +331,7 @@ class UpdraftPlus_Admin {
 	private function ensure_sufficient_jquery_and_enqueue() {
 		global $updraftplus, $wp_version;
 		
-		$enqueue_version = constant('WP_DEBUG') ? $updraftplus->version.'-'.time() : $updraftplus->version;
+		$enqueue_version = @constant('WP_DEBUG') ? $updraftplus->version.'-'.time() : $updraftplus->version;
 		
 		if (version_compare($wp_version, '3.3', '<')) {
 			// Require a newer jQuery (3.2.1 has 1.6.1, so we go for something not too much newer). We use .on() in a way that is incompatible with < 1.7
