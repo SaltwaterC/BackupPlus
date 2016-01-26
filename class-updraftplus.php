@@ -137,7 +137,7 @@ class UpdraftPlus {
 
 	public function create_remote_control_key($name_hash, $extra_info = array(), $post_it = false) {
 
-		$indicator_name = $name_hash.'.remotecontrol.updraftplus.com';
+		$indicator_name = $name_hash.'.central.updraftplus.com';
 
 		$our_keys = UpdraftPlus_Options::get_updraft_option('updraft_central_localkeys');
 		if (!is_array($our_keys)) $our_keys = array();
