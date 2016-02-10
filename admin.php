@@ -5106,7 +5106,7 @@ ENDHERE;
 		$add_to_post_keys = array('updraft_interval', 'updraft_interval_database', 'updraft_starttime_files', 'updraft_starttime_db', 'updraft_startday_files', 'updraft_startday_db');
 		
 		//If database and files are on same schedule, override the db day/time settings
-		if (isset($settings['updraft_interval_database']) && isset($settings['updraft_interval_database']) && $settings['updraft_interval_database'] == $settings['updraft_interval']) {
+		if (isset($settings['updraft_interval_database']) && isset($settings['updraft_interval_database']) && $settings['updraft_interval_database'] == $settings['updraft_interval'] && isset($settings['updraft_starttime_files'])) {
 			$settings['updraft_starttime_db'] = $settings['updraft_starttime_files'];
 			$settings['updraft_startday_db'] = $settings['updraft_startday_files'];
 		}	
