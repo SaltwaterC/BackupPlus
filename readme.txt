@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, lcahill
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, microsoft one drive, microsoft azure, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.4
-Stable tag: 1.11.23
+Stable tag: 1.11.24
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -16,7 +16,7 @@ Backup and restoration made easy. Complete backups; manual or scheduled (backup 
 
 <strong>Top-quality:</strong> UpdraftPlus is the <a href="http://rankwp.com/plugins/updraftplus">highest-ranking backup plugin on wordpress.org</a> (ranks in the top 40 out of over 30,000 WordPress plugins for quality on rankwp.com).
 
-<strong>Over 600,000 currently active installs:</strong> widely tested and reliable (over 3.8 million downloads). The #1 most installed scheduled backup plugin, according to wordpress.org. Many millions of backups completed!
+<strong>Over 600,000 currently active installs:</strong> widely tested and reliable (over 3.9 million downloads). The #1 most installed scheduled backup plugin, according to wordpress.org. Many millions of backups completed!
 
 * Supports WordPress backups to UpdraftPlus Vault, Amazon S3 (or compatible), Dropbox, Rackspace Cloud Files, Google Drive, Google Cloud Storage, DreamHost DreamObjects, FTP, OpenStack (Swift) and email. Also (via a paid add-on) backup to Microsoft OneDrive, Microsoft Azure, Google Cloud Storage, Copy.Com, FTP over SSL, SFTP, SCP, and WebDAV (and compatible services, e.g. Yandex, Cubby, OwnCloud). Examples of S3-compatible providers: Cloudian, Connectria, Constant, Eucalyptus, Nifty, Nimbula, Cloudn.
 * Quick restore (both file and database backups)
@@ -118,7 +118,22 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.23 of the free version correspond to changes made in 2.11.23.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.24 of the free version correspond to changes made in 2.11.24.x of the paid version.
+
+= 1.11.24 - 10/Feb/2016 =
+
+* FIX: Fixed further logic errors in the advanced backup retention options, potentially relevant if you had more than one extra rule
+* TWEAK: Saving of settings is now done over AJAX (i.e. without a page reload)
+* TWEAK: In-dashboard downloads now process the HTTP Range: header, allowing resumption of failed  downloads via the browser
+* TWEAK: Tweak 'Existing Backups' table CSS, to allow more entities per row
+* TWEAK: Warn copy.com users of Barracuda ending the service - https://techlib.barracuda.com/CudaDrive/EOL
+* TWEAK: Rename the 'hidden' CSS class, to prevent clashes with other plugins/themes which load their CSS code onto UD's page (which they shouldn't be doing)
+* TWEAK: Fix newsletter sign-up link
+* TWEAK: Log and triple-click summary now mentions the total size of the backup (i.e. total of the compressed backup set)
+* TWEAK: Try to detect a very rare case of recoverable database read failure, and schedule a re-try
+* TWEAK: Suppress unnecessary warning message when Dropbox account info checking fails
+* TWEAK: Attempt to restart a large OneDrive upload in a particular case seen when OneDrive's end seems to get into confusion about state
+* TWEAK: Various bits of internal re-factoring to support future improvements
 
 = 1.11.23 - 26/Jan/2016 =
 
@@ -1729,7 +1744,7 @@ improvements
 
 == License ==
 
-    Copyright 2011-15 David Anderson
+    Copyright 2011-16 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1751,4 +1766,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.23: Various tweaks and fixes, and foundation-laying internal improvements.
+* 1.11.24: Various tweaks and small improvements, and foundation-laying internal improvements.
