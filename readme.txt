@@ -14,9 +14,9 @@ Backup and restoration made easy. Complete backups; manual or scheduled (backup 
 
 <a href="https://updraftplus.com">UpdraftPlus</a> simplifies backups (and restoration). Backup into the cloud (Amazon S3 (or compatible), Dropbox, Google Drive, Rackspace Cloud, DreamObjects, FTP, Openstack Swift, UpdraftPlus Vault and email) and restore with a single click. Backups of files and database can have separate schedules. The paid version also backs up to Microsoft OneDrive, Microsoft Azure, Copy.Com, Google Cloud Storage, SFTP, SCP, and WebDAV.
 
-<strong>Top-quality:</strong> UpdraftPlus is the <a href="http://rankwp.com/plugins/updraftplus">highest-ranking backup plugin on wordpress.org</a> (ranks in the top 40 out of over 30,000 WordPress plugins for quality on rankwp.com).
+<strong>Top-quality:</strong> UpdraftPlus is the highest-ranking backup plugin on wordpress.org, with <strong>over 600,000 currently active installs</strong>. Widely tested and reliable, this is the world's #1 most popular and mostly highly rated scheduled backup plugin. Millions of backups completed!
 
-<strong>Over 600,000 currently active installs:</strong> widely tested and reliable (over 3.9 million downloads). The #1 most installed scheduled backup plugin, according to wordpress.org. Many millions of backups completed!
+<iframe src="https://player.vimeo.com/video/154870690" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> 
 
 * Supports WordPress backups to UpdraftPlus Vault, Amazon S3 (or compatible), Dropbox, Rackspace Cloud Files, Google Drive, Google Cloud Storage, DreamHost DreamObjects, FTP, OpenStack (Swift) and email. Also (via a paid add-on) backup to Microsoft OneDrive, Microsoft Azure, Google Cloud Storage, Copy.Com, FTP over SSL, SFTP, SCP, and WebDAV (and compatible services, e.g. Yandex, Cubby, OwnCloud). Examples of S3-compatible providers: Cloudian, Connectria, Constant, Eucalyptus, Nifty, Nimbula, Cloudn.
 * Quick restore (both file and database backups)
