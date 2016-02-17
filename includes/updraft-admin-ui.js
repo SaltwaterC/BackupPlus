@@ -16,6 +16,19 @@ function updraft_delete(key, nonce, showremote) {
 	jQuery('#updraft-delete-modal').dialog('open');
 }
 
+function backupnow_whichfiles_checked(onlythesefileentities){
+	jQuery('#backupnow_includefiles_moreoptions input[type="checkbox"]').each(function(index) {
+		if (!jQuery(this).is(':checked')) { return; }
+		var name = jQuery(this).attr('name');
+		if (name.substring(0, 16) != 'updraft_include_') { return; }
+		var entity = name.substring(16);
+		if (onlythesefileentities != '') { onlythesefileentities += ','; }
+		onlythesefileentities += entity;
+	});
+// 	console.log(onlythesefileentities);
+	return onlythesefileentities;
+}
+
 function updraft_deleteallselected() {
 	var howmany = 0;
 	var remote_exists = 0;
@@ -112,6 +125,12 @@ function updraft_backup_dialog_open() {
 	}
 }
 
+var onlythesefileentities = backupnow_whichfiles_checked('');
+if ('' == onlythesefileentities) {
+	jQuery("#backupnow_includefiles_moreoptions").show();
+} else {
+	jQuery("#backupnow_includefiles_moreoptions").hide();
+}
 
 function updraft_migrate_dialog_open() {
 	jQuery('#updraft_migrate_modal_alt').hide();
@@ -914,7 +933,6 @@ function updraft_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_noclo
 		extradata: extradata
 	};
 	
-	
 	if ('' != onlythesefileentities) {
 		params.onlythisfileentity = onlythesefileentities;
 	}
@@ -981,22 +999,37 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 		updraft_updatehistory(1, 1);
 	});
+
+	function updraftcentral_keys_setupform(on_page_load) {
+		var is_other = jQuery('#updraftcentral_mothership_other').is(':checked') ? true : false;
+		if (is_other) {
+			jQuery('#updraftcentral_keycreate_mothership').prop('disabled', false);
+			if (!on_page_load) { jQuery('#updraftcentral_keycreate_mothership').focus(); }
+		} else {
+			jQuery('#updraftcentral_keycreate_mothership').prop('disabled', true);
+		}
+	}
 	
-	// Remote Control
-	jQuery('#updraft_central_keycreate_go').click(function(e) {
+	jQuery('#updraftcentral_keys').on('change', 'input[type="radio"]', function() {
+		updraftcentral_keys_setupform(false);
+	});
+	// Initial setup (for browsers, e.g. Firefox, that remember form selection state but not DOM state, which can leave an inconsistent state)
+	updraftcentral_keys_setupform(true);
+	
+	jQuery('#updraftcentral_keys').on('click', '#updraftcentral_view_log', function(e) {
 		e.preventDefault();
-		jQuery('#updraft_central_key').html(updraftlion.creating);
+		jQuery('#updraftcentral_view_log_container').block({ message: '<div style="margin: 8px; font-size:150%;"><img src="'+updraftlion.ud_url+'/images/udlogo-rotating.gif" height="80" width="80" style="padding-bottom:10px;"><br>'+updraftlion.fetching+'</div>'});
 		try {
 			jQuery.post(ajaxurl,  {
 				action: 'updraft_ajax',
-				subaction: 'remotecontrol_createkey',
+				subaction: 'updraftcentral_get_log',
 				nonce: updraft_credentialtest_nonce
 			}, function(response) {
+				jQuery('#updraftcentral_view_log_container').unblock();
 				try {
 					resp = jQuery.parseJSON(response);
-					alert(resp.r);
-					if (resp.hasOwnProperty('bundle')) {
-						jQuery('#updraft_central_key').html('<textarea onclick="this.select();" style="width:620px; height:165px; word-wrap:break-word; border: 1px solid #aaa; border-radius: 3px; padding:4px;">'+resp.bundle+'</textarea>');
+					if (resp.hasOwnProperty('log_contents')) {
+						jQuery('#updraftcentral_view_log_contents').html('<div style="border:1px solid;padding: 2px;max-height: 400px; overflow-y:scroll;">'+resp.log_contents+'</div>');
 					} else {
 						console.log(resp);
 					}
@@ -1010,6 +1043,91 @@ jQuery(document).ready(function($){
 			console.log(err);
 		}
 	});
+	
+	// UpdraftCentral
+	jQuery('#updraftcentral_keys').on('click', '#updraftcentral_keycreate_go', function(e) {
+		e.preventDefault();
+		
+		var is_other = jQuery('#updraftcentral_mothership_other').is(':checked') ? true : false;
+		
+		var key_description = jQuery('#updraftcentral_keycreate_description').val();
+
+		var where_send = '__updraftpluscom';
+		if (is_other) {
+			where_send = jQuery('#updraftcentral_keycreate_mothership').val();
+			if (where_send.substring(0, 4) != 'http') {
+				alert(updraftlion.enter_mothership_url);
+				return;
+			}
+		}
+		
+		jQuery('#updraftcentral_keys').block({ message: '<div style="margin: 8px; font-size:150%;"><img src="'+updraftlion.ud_url+'/images/udlogo-rotating.gif" height="80" width="80" style="padding-bottom:10px;"><br>'+updraftlion.creating+'</div>'});
+
+		try {
+			jQuery.post(ajaxurl,  {
+				action: 'updraft_ajax',
+				subaction: 'updraftcentral_create_key',
+				key_description: key_description,
+				where_send: where_send,
+				nonce: updraft_credentialtest_nonce
+			}, function(response) {
+				jQuery('#updraftcentral_keys').unblock();
+				try {
+					resp = jQuery.parseJSON(response);
+					if (resp.hasOwnProperty('error')) {
+						alert(resp.error);
+						console.log(resp);
+						return;
+					}
+					alert(resp.r);
+					if (resp.hasOwnProperty('keys_table')) {
+						jQuery('#updraftcentral_keys_content').html(resp.keys_table);
+					}
+					if (resp.hasOwnProperty('bundle')) {
+						jQuery('#updraftcentral_keys_content').append(resp.r+'<br><textarea onclick="this.select();" style="width:620px; height:165px; word-wrap:break-word; border: 1px solid #aaa; border-radius: 3px; padding:4px;">'+resp.bundle+'</textarea>');
+					} else {
+						console.log(resp);
+					}
+				} catch (err) {
+					alert(updraftlion.unexpectedresponse+' '+response);
+					console.log(err);
+				} 
+			});
+		} catch (err) {
+			jQuery('#updraft_central_key').html();
+			console.log(err);
+		}
+	});
+	
+	jQuery('#updraftcentral_keys').on('click', '.updraftcentral_key_delete', function(e) {
+		e.preventDefault();
+		var key_id = jQuery(this).data('key_id');
+		if ('undefined' == typeof key_id) {
+			console.log("UpdraftPlus: .updraftcentral_key_delete clicked, but no key ID found");
+			return;
+		}
+
+		jQuery('#updraftcentral_keys').block({ message: '<div style="margin: 8px; font-size:150%;"><img src="'+updraftlion.ud_url+'/images/udlogo-rotating.gif" height="80" width="80" style="padding-bottom:10px;"><br>'+updraftlion.deleting+'</div>'});
+		
+		jQuery.post(ajaxurl,  {
+			action: 'updraft_ajax',
+			subaction: 'updraftcentral_delete_key',
+			nonce: updraft_credentialtest_nonce,
+			key_id: key_id
+		}, function(response) {
+			jQuery('#updraftcentral_keys').unblock();
+			try {
+				resp = jQuery.parseJSON(response);
+				if (resp.hasOwnProperty('keys_table')) {
+					jQuery('#updraftcentral_keys_content').html(resp.keys_table);
+				}
+			} catch (err) {
+				alert(updraftlion.unexpectedresponse+' '+response);
+				console.log(err);
+			}
+		});
+	});
+										
 	
 	jQuery('#updraft_reset_sid').click(function(e) {
 		e.preventDefault();
@@ -1380,18 +1498,11 @@ jQuery(document).ready(function($){
 		var backupnow_nofiles = jQuery('#backupnow_includefiles').is(':checked') ? 0 : 1;
 		var backupnow_nocloud = jQuery('#backupnow_includecloud').is(':checked') ? 0 : 1;
 		
-		var onlythesefileentities = '';
-		jQuery('#backupnow_includefiles_moreoptions input[type="checkbox"]').each(function(index) {
-			if (!jQuery(this).is(':checked')) { return; }
-			var name = jQuery(this).attr('name');
-			if (name.substring(0, 16) != 'updraft_include_') { return; }
-			var entity = name.substring(16);
-			if (onlythesefileentities != '') { onlythesefileentities += ','; }
-			onlythesefileentities += entity;
-		});
+		var onlythesefileentities = backupnow_whichfiles_checked('');
 
 		if ('' == onlythesefileentities && 0 == backupnow_nofiles) {
 			alert(updraftlion.nofileschosen);
+			jQuery('#backupnow_includefiles_moreoptions').show();
 			return;
 		}
 		
@@ -1917,6 +2028,14 @@ jQuery(document).ready(function($){
 	// Pre-load the image so that it doesn't jerk when first used
 	var my_image = new Image();
 	my_image.src = updraftlion.ud_url+'/images/udlogo-rotating.gif';
+	
+	// When inclusion options for file entities in the settings tab, reflect that in the "Backup Now" dialog, to prevent unexpected surprises
+	$('#updraft-navtab-settings-content input.updraft_include_entity').change(function(e) {
+		var event_target = $(this).attr('id');
+		var checked = $(this).is(':checked');
+		var backup_target = '#backupnow_files_'+event_target;
+		$(backup_target).prop('checked', checked);
+	});
 	
 	$('#updraftplus-settings-save').click(function(e) {
 		e.preventDefault();

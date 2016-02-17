@@ -579,6 +579,7 @@ class UpdraftPlus_Backup {
 					if (empty($backup_to_examine)) {
 						unset($functional_backup_history[$backup_datestamp]);
 						unset($backup_history[$backup_datestamp]);
+						$this->maybe_save_backup_history_and_reschedule($backup_history);
 					} else {
 						$functional_backup_history[$backup_datestamp] = $backup_to_examine;
 						$backup_history[$backup_datestamp] = $backup_to_examine;
@@ -699,7 +700,7 @@ class UpdraftPlus_Backup {
 
 				// Sending an empty array is not itself a problem - except that the remote storage method may not check that before setting up a connection, which can waste time: especially if this is done every time around the loop.
 				if (!empty($files_to_prune)) {
-					# Actually delete the files
+					// Actually delete the files
 					foreach ($services as $service => $sd) {
 						$this->prune_file($service, $files_to_prune, $sd[0], $sd[1], $file_sizes);
 						$updraftplus->record_still_alive();
@@ -710,6 +711,7 @@ class UpdraftPlus_Backup {
 				if (empty($backup_to_examine)) {
 // 					unset($functional_backup_history[$backup_datestamp]);
 					unset($backup_history[$backup_datestamp]);
+					$this->maybe_save_backup_history_and_reschedule($backup_history);
 				} else {
 // 					$functional_backup_history[$backup_datestamp] = $backup_to_examine;
 					$backup_history[$backup_datestamp] = $backup_to_examine;
@@ -728,6 +730,19 @@ class UpdraftPlus_Backup {
 
 	}
 
+	// The purpose of this is to save the backup history periodically - for the benefit of setups where the pruning takes longer than the total allow run time (e.g. if the network communications to the remote storage have delays in, and there are a lot of sets to scan)
+	private function maybe_save_backup_history_and_reschedule($backup_history) {
+		static $last_saved_at = 0;
+		if (!$last_saved_at) $last_saved_at = time();
+		if (time() - $last_saved_at >= 10) {
+			global $updraftplus;
+			$updraftplus->log("Retain: saving new backup history, because at least 10 seconds have passed since the last save (sets now: ".count($backup_history).")");
+			UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, false);
+			$updraftplus->something_useful_happened();
+			$last_saved_at = time();
+		}
+	}
+	
 	private function remove_backup_set_if_empty($backup_to_examine, $backup_datestamp, $backupable_entities, $backup_history) {
 	
 		global $updraftplus;

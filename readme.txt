@@ -120,6 +120,22 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.24 of the free version correspond to changes made in 2.11.24.x of the paid version.
 
+= 1.11.27 - 17/Feb/2016 =
+
+* FEATURE: Automatic backups can take place before updates commissioned via WordPress.Com/JetPack remote site management (requires a not-yet-released version of JetPack - all current releases are insufficient, so please don't file reports about this yet)
+* FIX: Fixed a further logic error in the advanced backup retention options, potentially relevant if you had more than one extra rule, affecting the oldest backups
+* TWEAK: Resolve issue on some sites with in-dashboard downloads being interfered with by other site components
+* TWEAK: Auto-backups now hook to a newly-added more suitable action, on WP 4.4+ (https://core.trac.wordpress.org/ticket/30441)
+* TWEAK: Make WebDAV library not use a language construct that's not supported by HHVM
+* TWEAK: Change options in the "Backup Now" dialog as main settings are changed
+* TWEAK: Show the file options in the "Backup Now" dialog if/when alerting the user that they've chosen inconsistent options
+* TWEAK: When pruning old backups, save the history to the database at least every 10 seconds, to help with sites with slow network communications and short PHP timeouts
+
+= 1.11.26 - 13/Feb/2016 =
+
+* TWEAK: Prevent HTTP 500 download errors on some very large file/hosting setups
+* TWEAK: A tiny number of users had a badly laid-out settings screen until they refreshed their browser cache. This release prevents that.
+
 = 1.11.24 - 10/Feb/2016 =
 
 * FIX: Fixed further logic errors in the advanced backup retention options, potentially relevant if you had more than one extra rule
@@ -1766,4 +1782,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.25: Various tweaks and small improvements, and foundation-laying internal improvements.
+* 1.11.27: Various tweaks, fixes and small improvements.

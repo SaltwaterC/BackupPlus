@@ -50,10 +50,6 @@
 		list-style: disc inside; 
 	}
 
-	.updraft-hidden { 
-		display:none; 
-	}
-	
 	.dashicons-log-fix {
 		display: inherit;
 	}

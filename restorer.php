@@ -1848,7 +1848,7 @@ ENDHERE;
 		$this->configuration_bundle = array();
 		// Some items must always be saved + restored; others only on a migration
 		// Remember, if modifying this, that a restoration can include restoring a destroyed site from a backup onto a fresh WP install on the same URL. So, it is not necessarily desirable to retain the current settings and drop the ones in the backup.
-		$keys_to_save = array('updraft_remotesites', 'updraft_migrator_localkeys');
+		$keys_to_save = array('updraft_remotesites', 'updraft_migrator_localkeys', 'updraft_central_localkeys');
 
 		if ($this->old_siteurl != $this->our_siteurl) {
 			global $updraftplus;

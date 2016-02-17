@@ -59,7 +59,7 @@ if (!class_exists('UpdraftPlus_Remote_Communications')):
 class UpdraftPlus_Remote_Communications {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.1';
+	public $version = '1.2';
 
 	private $key_name_indicator;
 
@@ -79,7 +79,7 @@ class UpdraftPlus_Remote_Communications {
 	private $sequence_protection_column;
 	private $sequence_protection_where_sql;
 	
-	// Debug may log confidential data using error_log() - so only use when you are in a secure environment
+	// Debug may log confidential data using $this->log() - so only use when you are in a secure environment
 	private $debug = false;
 
 	private $next_send_sequence_id;
@@ -111,7 +111,7 @@ class UpdraftPlus_Remote_Communications {
 		$this->maximum_replay_time_difference = (int)$replay_time_difference;
 	}
 
-	// This will cause more things to be sent to error_log()
+	// This will cause more things to be sent to $this->log()
 	public function set_debug($debug = true) {
 		$this->debug = (bool)$debug;
 	}
@@ -134,19 +134,19 @@ class UpdraftPlus_Remote_Communications {
 			if (is_a($updraftplus, 'UpdraftPlus')) {
 				$updraftplus->ensure_phpseclib(array('Crypt_Rijndael', 'Crypt_RSA', 'Crypt_Hash'), array('Crypt/Rijndael', 'Crypt/RSA', 'Crypt/Hash'));
 			} elseif (defined('UPDRAFTPLUS_DIR') && file_exists(UPDRAFTPLUS_DIR.'/includes/phpseclib')) {
-				if (false === strpos(get_include_path(), UPDRAFTPLUS_DIR.'/includes/phpseclib')) set_include_path(get_include_path().PATH_SEPARATOR.UPDRAFTPLUS_DIR.'/includes/phpseclib');
+				if (false === strpos(get_include_path(), UPDRAFTPLUS_DIR.'/includes/phpseclib')) set_include_path(UPDRAFTPLUS_DIR.'/includes/phpseclib'.PATH_SEPARATOR.get_include_path());
 				if (!class_exists('Crypt_Rijndael')) require_once('Crypt/Rijndael.php');
 				if (!class_exists('Crypt_RSA')) require_once('Crypt/RSA.php');
 				if (!class_exists('Crypt_Hash')) require_once('Crypt/Hash.php');
 			} elseif (file_exists(dirname(__DIR__).'/vendor/phpseclib')) {
 				$pdir = dirname(__DIR__).'/vendor/phpseclib';
-				if (false === strpos(get_include_path(), $pdir)) set_include_path(get_include_path().PATH_SEPARATOR.$pdir);
+				if (false === strpos(get_include_path(), $pdir)) set_include_path($pdir.PATH_SEPARATOR.get_include_path());
 				if (!class_exists('Crypt_Rijndael')) require_once('Crypt/Rijndael.php');
 				if (!class_exists('Crypt_RSA')) require_once('Crypt/RSA.php');
 				if (!class_exists('Crypt_Hash')) require_once('Crypt/Hash.php');
 			} elseif (file_exists(dirname(__DIR__).'/composer/vendor/phpseclib/phpseclib/phpseclib')) {
 				$pdir = dirname(__DIR__).'/composer/vendor/phpseclib/phpseclib/phpseclib';
-				if (false === strpos(get_include_path(), $pdir)) set_include_path(get_include_path().PATH_SEPARATOR.$pdir);
+				if (false === strpos(get_include_path(), $pdir)) set_include_path($pdir.PATH_SEPARATOR.get_include_path());
 				if (!class_exists('Crypt_Rijndael')) require_once('Crypt/Rijndael.php');
 				if (!class_exists('Crypt_RSA')) require_once('Crypt/RSA.php');
 				if (!class_exists('Crypt_Hash')) require_once('Crypt/Hash.php');
@@ -304,19 +304,26 @@ class UpdraftPlus_Remote_Communications {
 // 		$hash = new Crypt_Hash($hash_algorithm);		
 // 		$hashed = $hash->hash($message);
 		
-// 		if ($this->debug) error_log("UDRPC: Message hash (hash=$hash_algorithm) (hex): ".bin2hex($hashed));
+// 		if ($this->debug) $this->log("Message hash (hash=$hash_algorithm) (hex): ".bin2hex($hashed));
 
 		// phpseclib defaults to SHA1
 		$rsa->setHash($hash_algorithm);
 		$encrypted = $rsa->sign($message);
 
-		if ($this->debug) error_log("Signed hash (mode=".CRYPT_RSA_SIGNATURE_PKCS1.") (hex): ".bin2hex($encrypted));
+		if ($this->debug) $this->log("Signed hash (mode=".CRYPT_RSA_SIGNATURE_PKCS1.") (hex): ".bin2hex($encrypted));
 		
 		$signature = base64_encode($encrypted);
 		
-		if ($this->debug) error_log("UDRPC: Message signature (base64): $signature");
+		if ($this->debug) $this->log("Message signature (base64): $signature");
 
 		return $signature;
+	}
+	
+	// $level is not yet used much
+	private function log($message, $level = 'notice') {
+		// Allow other plugins to do something with the message
+		do_action('udrpc_log', $message, $level, $this->key_name_indicator, $this->debug, $this);
+		if ($level != 'info') error_log("UDRPC (".$this->key_name_indicator.", $level): $message");
 	}
 	
 	// Encrypt the message, using the local key (which needs to exist)
@@ -343,13 +350,13 @@ class UpdraftPlus_Remote_Communications {
 		// Generate Random Symmetric Key
 		$sym_key = crypt_random_string($key_length);
 		
-		if ($this->debug) error_log("Unencrypted symmetric key (hex): ".bin2hex($sym_key));
+		if ($this->debug) $this->log("Unencrypted symmetric key (hex): ".bin2hex($sym_key));
 
 		// Encrypt Message with new Symmetric Key                  
 		$rij->setKey($sym_key);
 		$ciphertext = $rij->encrypt($plaintext);
 		
-		if ($this->debug) error_log("Encrypted ciphertext (hex): ".bin2hex($ciphertext));
+		if ($this->debug) $this->log("Encrypted ciphertext (hex): ".bin2hex($ciphertext));
 		
 		$ciphertext = base64_encode($ciphertext); 
 
@@ -357,12 +364,12 @@ class UpdraftPlus_Remote_Communications {
 		$rsa->loadKey($use_key);
 		$sym_key = $rsa->encrypt($sym_key);
 		
-		if ($this->debug) error_log("Encrypted symmetric key (hex): ".bin2hex($sym_key));
+		if ($this->debug) $this->log("Encrypted symmetric key (hex): ".bin2hex($sym_key));
 
 		// Base 64 encode the symmetric key for transport
 		$sym_key = base64_encode($sym_key);
 
-		if ($this->debug) error_log("Encrypted symmetric key (b64): ".$sym_key);
+		if ($this->debug) $this->log("Encrypted symmetric key (b64): ".$sym_key);
 		
 		$len = str_pad(dechex(strlen($sym_key)), 3, '0', STR_PAD_LEFT); // Zero pad to be sure.
 
@@ -483,7 +490,7 @@ class UpdraftPlus_Remote_Communications {
 		$decoded = json_decode((string)$post['body'], true);
 
 		if (empty($decoded)) {
-			error_log("UDRPC: response from remote site could not be understood: ".substr($post['body'], 0, 100).' ... ');
+			$this->log("response from remote site could not be understood: ".substr($post['body'], 0, 100).' ... ');
 			return new WP_Error('response_not_understood', 'Response from remote site could not be understood', $post['body']);
 		}
 
@@ -491,15 +498,15 @@ class UpdraftPlus_Remote_Communications {
 
 		if ($this->format >= 2) {
 			if (empty($decoded['signature'])) {
-				error_log("UDRPC: No message signature found");
+				$this->log("No message signature found");
 				die;
 			}
 			if (!$this->key_remote) {
-				error_log('UDRPC: No signature verification key has been set');
+				$this->log('No signature verification key has been set');
 				die;
 			}
 			if (!$this->verify_signature($decoded['udrpc_message'], $decoded['signature'], $this->key_remote)) {
-				error_log('UDRPC: Signature verification failed; discarding');
+				$this->log('Signature verification failed; discarding');
 				die;
 			}
 		}
@@ -523,7 +530,7 @@ class UpdraftPlus_Remote_Communications {
 
 		$time_difference = absint(time() - $json_decoded['time']);
 		if ($time_difference > $this->maximum_replay_time_difference) return array(
-			'response' => 'error',
+			'response' => 'rpcerror',
 			'data' => array(
 				'code' => 'window_error',
 				'difference' => $time_difference,
@@ -550,8 +557,9 @@ class UpdraftPlus_Remote_Communications {
 		return false;
 	}
 
-	public function wp_loaded_final() {
-		error_log("UDRPC: Message was received, but not understood by local site");
+	public function wp_loaded_final() {	
+		$message_for = empty($_POST['key_name']) ? '' : (string)$_POST['key_name'];
+		$this->log("Message was received, but not understood by local site (for: $message_for)");
 		die;
 	}
 
@@ -567,7 +575,7 @@ class UpdraftPlus_Remote_Communications {
 				if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) header('Access-Control-Allow-Headers: '.$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
 				die;
 			} elseif ($this->debug) {
-				error_log("UDRPC: Non-allowed CORS from: ".$http_origin);
+				$this->log("Non-allowed CORS from: ".$http_origin);
 			}
 			// Having detected that this is a CORS request, there's nothing more to do. We return, because a different listener might pick it up, even though we didn't.
 			return;
@@ -587,7 +595,9 @@ class UpdraftPlus_Remote_Communications {
 		*/
 
 		// Is this for us?
-		if (empty($_POST['key_name']) || $_POST['key_name'] != $this->key_name_indicator) return;
+		if (empty($_POST['key_name']) || $_POST['key_name'] != $this->key_name_indicator) {
+			return;
+		}
 
 		// wp_unslash() does not exist until after WP 3.5
 // 		$udrpc_message = function_exists('wp_unslash') ? wp_unslash($_POST['udrpc_message']) : stripslashes_deep($_POST['udrpc_message']);
@@ -598,53 +608,53 @@ class UpdraftPlus_Remote_Communications {
 		// Check this now, rather than allow the decrypt method to thrown an Exception
 		
 		if (empty($this->key_local)) {
-			error_log("UDRPC: no local key (format 1): cannot decrypt");
+			$this->log("no local key (format 1): cannot decrypt");
 			die;
 		}
 		
 		if ($format >= 2) {
 			if (empty($_POST['signature'])) {
-				error_log("UDRPC: No message signature found");
+				$this->log("No message signature found");
 				die;
 			}
 			if (!$this->key_remote) {
-				error_log('UDRPC: No signature verification key has been set');
+				$this->log('No signature verification key has been set');
 				die;
 			}
 			if (!$this->verify_signature($udrpc_message, $_POST['signature'], $this->key_remote)) {
-				error_log('UDRPC: Signature verification failed; discarding');
+				$this->log('Signature verification failed; discarding');
 			}
 		}
 		
 		try {
 			$udrpc_message = $this->decrypt_message($udrpc_message);
 		} catch (Exception $e) {
-			error_log("UDRPC: exception (".get_class($e)."): ".$e->getMessage());
+			$this->log("Exception (".get_class($e)."): ".$e->getMessage());
 			die;
 		}
 
 		$udrpc_message = json_decode($udrpc_message, true);
 
 		if (empty($udrpc_message) || !is_array($udrpc_message) || empty($udrpc_message['command']) || !is_string($udrpc_message['command'])) {
-			error_log("UDRPC: could not decode JSON on incoming message");
+			$this->log("Could not decode JSON on incoming message");
 			die;
 		}
 
 		if (empty($udrpc_message['time'])) {
-			error_log("UDRPC: No time set in incoming message");
+			$this->log("No time set in incoming message");
 			die;
 		}
 
 		// Mismatch indicating a replay of the message with a different key name in the unencrypted portion?
 		if (empty($udrpc_message['key_name']) || $_POST['key_name'] != $udrpc_message['key_name']) {
-			error_log("UDRPC: key_name mismatch between encrypted and unencrypted portions");
+			$this->log("key_name mismatch between encrypted and unencrypted portions");
 			die;
 		}
 
 		if ($this->extra_replay_protection) {
 			$message_hash = $this->calculate_message_hash((string)$_POST['udrpc_message']);
 			if ($this->message_hash_seen($message_hash)) {
-				error_log("UDRPC: Message dropped: apparently a replay (hash: $message_hash)");
+				$this->log("Message dropped: apparently a replay (hash: $message_hash)");
 				die;
 			}
 		}
@@ -652,19 +662,19 @@ class UpdraftPlus_Remote_Communications {
 		// Do this after the extra replay protection, as that checks hashes within the maximum time window - so don't check the maximum time window until afterwards, to avoid a tiny window (race) in between.
 		$time_difference = absint($udrpc_message['time'] - time());
 		if ($time_difference > $this->maximum_replay_time_difference) {
-			error_log("UDRPC: Time in incoming message is outside of allowed window ($time_difference > ".$this->maximum_replay_time_difference.")");
+			$this->log("Time in incoming message is outside of allowed window ($time_difference > ".$this->maximum_replay_time_difference.")");
 			die;
 		}
 		
 		// The sequence number should always be larger than any previously-sent sequence number
 		if ($this->sequence_protection_tolerance) {
 		
-			if ($this->debug) error_log("Sequence protection is active; tolerance: ".$this->sequence_protection_tolerance);
+			if ($this->debug) $this->log("Sequence protection is active; tolerance: ".$this->sequence_protection_tolerance);
 			
 			global $wpdb;
 			
 			if (!isset($udrpc_message['sequence_id']) || !is_numeric($udrpc_message['sequence_id'])) {
-				error_log("UDRPC: a numerical sequence number is required, but none was included in the message - dropping");
+				$this->log("a numerical sequence number is required, but none was included in the message - dropping");
 				die;
 			}
 			
@@ -678,21 +688,21 @@ class UpdraftPlus_Remote_Communications {
 
 			// Seen before?
 			if (in_array($message_sequence_id, $recently_seen_sequences_ids_as_array)) {
-				error_log("UDRPC: message with duplicate sequence number received - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids)");
+				$this->log("message with duplicate sequence number received - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids)");
 				die;
 			}
 			
 			// Within the tolerance threshold? That means: a) either bigger than the max, or b) no more than <tolerance> lower than the least
 			if ($message_sequence_id > max($recently_seen_sequences_ids)) {
-				if ($this->debug) error_log("Sequence id ($message_sequence_id) is greater than any previous (".max($recently_seen_sequences_ids).") - message is thus OK");
+				if ($this->debug) $this->log("Sequence id ($message_sequence_id) is greater than any previous (".max($recently_seen_sequences_ids).") - message is thus OK");
 				// All is well
 				$recently_seen_sequences_ids_as_array[] = $message_sequence_id;
 			} elseif (max($recently_seen_sequences_ids) - $message_sequence_id <= $this->sequence_protection_tolerance) {
 				// All is well - was one of those 'missing' in the sequence
-				if ($this->debug) error_log("Sequence id ($message_sequence_id) is within tolerance range of previous maximum (".max($recently_seen_sequences_ids).") - message is thus OK");
+				if ($this->debug) $this->log("Sequence id ($message_sequence_id) is within tolerance range of previous maximum (".max($recently_seen_sequences_ids).") - message is thus OK");
 				$recently_seen_sequences_ids_as_array[] = $message_sequence_id;
 			} else {
-				error_log("UDRPC: message received outside of allowed sequence window - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids, tolerance=".$this->sequence_protection_tolerance.")");
+				$this->log("message received outside of allowed sequence window - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids, tolerance=".$this->sequence_protection_tolerance.")");
 				die;
 			}
 
@@ -700,7 +710,7 @@ class UpdraftPlus_Remote_Communications {
 			$max_sequence_id_seen = max($recently_seen_sequences_ids_as_array);
 			foreach ($recently_seen_sequences_ids_as_array as $k => $id) {
 				if ($max_sequence_id_seen - $id > $this->sequence_protection_tolerance) {
-					if ($this->debug) error_log("Removing no-longer-relevant sequence from list of those recently seen: $id");
+					if ($this->debug) $this->log("Removing no-longer-relevant sequence from list of those recently seen: $id");
 					unset($recently_seen_sequences_ids_as_array[$k]);
 				}
 			}
@@ -712,7 +722,7 @@ class UpdraftPlus_Remote_Communications {
 			
 			// Write them back to the database
 			$sql = $wpdb->prepare("UPDATE %s SET %s=%s WHERE ".$this->sequence_protection_where_sql, $this->sequence_protection_table, $this->sequence_protection_column, implode(',', $recently_seen_sequences_ids_as_array));
-			if ($this->debug) error_log("SQL to send recent sequence IDs back to the database: $sql");
+			if ($this->debug) $this->log("SQL to send recent sequence IDs back to the database: $sql");
 			$wpdb->query($sql);
 			
 		}
@@ -725,6 +735,8 @@ class UpdraftPlus_Remote_Communications {
 			header("Access-Control-Allow-Credentials: true");
 		}
 		
+		$this->log("Command received: ".$command, 'info');
+		
 		if ('ping' == $command) {
 			echo json_encode($this->create_message('pong', null, true));
 		} else {
@@ -732,7 +744,7 @@ class UpdraftPlus_Remote_Communications {
 				$command_action_hooked = true;
 				$response = apply_filters('udrpc_command_'.$command, null, $data, $this->key_name_indicator);
 			} else {
-				$response = array('response' => 'no_such_command', 'data' => $command);
+				$response = array('response' => 'rpcerror', 'data' => array('code' => 'unknown_rpc_command', 'command' => $command));
 			}
 
 			$response = apply_filters('udrpc_action', $response, $command, $data, $this->key_name_indicator, $this);
@@ -740,7 +752,7 @@ class UpdraftPlus_Remote_Communications {
 			if (is_array($response)) {
 			
 				if ($this->debug) {
-					error_log("UDRPC response (pre-encoding/encryption): ".serialize($response));
+					$this->log("UDRPC response (pre-encoding/encryption): ".serialize($response));
 				}
 				
 				$data = isset($response['data']) ? $response['data'] : null;
@@ -770,7 +782,7 @@ class UpdraftPlus_Remote_Communications {
 		
 		$verified = $rsa->verify($message, base64_decode($signature));
 		
-		if ($this->debug) error_log("UDRPC: Signature verification result: ".serialize($verified));
+		if ($this->debug) $this->log("Signature verification result: ".serialize($verified));
 
 		return $verified;
 	}
