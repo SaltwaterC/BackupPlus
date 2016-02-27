@@ -59,7 +59,7 @@ if (!class_exists('UpdraftPlus_Remote_Communications')):
 class UpdraftPlus_Remote_Communications {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.2';
+	public $version = '1.3';
 
 	private $key_name_indicator;
 
@@ -608,53 +608,54 @@ class UpdraftPlus_Remote_Communications {
 		// Check this now, rather than allow the decrypt method to thrown an Exception
 		
 		if (empty($this->key_local)) {
-			$this->log("no local key (format 1): cannot decrypt");
+			$this->log("no local key (format 1): cannot decrypt", 'error');
 			die;
 		}
 		
 		if ($format >= 2) {
 			if (empty($_POST['signature'])) {
-				$this->log("No message signature found");
+				$this->log("No message signature found", 'error');
 				die;
 			}
 			if (!$this->key_remote) {
-				$this->log('No signature verification key has been set');
+				$this->log('No signature verification key has been set', 'error');
 				die;
 			}
 			if (!$this->verify_signature($udrpc_message, $_POST['signature'], $this->key_remote)) {
-				$this->log('Signature verification failed; discarding');
+				$this->log('Signature verification failed; discarding', 'error');
+				die;
 			}
 		}
 		
 		try {
 			$udrpc_message = $this->decrypt_message($udrpc_message);
 		} catch (Exception $e) {
-			$this->log("Exception (".get_class($e)."): ".$e->getMessage());
+			$this->log("Exception (".get_class($e)."): ".$e->getMessage(), 'error');
 			die;
 		}
 
 		$udrpc_message = json_decode($udrpc_message, true);
 
 		if (empty($udrpc_message) || !is_array($udrpc_message) || empty($udrpc_message['command']) || !is_string($udrpc_message['command'])) {
-			$this->log("Could not decode JSON on incoming message");
+			$this->log("Could not decode JSON on incoming message", 'error');
 			die;
 		}
 
 		if (empty($udrpc_message['time'])) {
-			$this->log("No time set in incoming message");
+			$this->log("No time set in incoming message", 'error');
 			die;
 		}
 
 		// Mismatch indicating a replay of the message with a different key name in the unencrypted portion?
 		if (empty($udrpc_message['key_name']) || $_POST['key_name'] != $udrpc_message['key_name']) {
-			$this->log("key_name mismatch between encrypted and unencrypted portions");
+			$this->log("key_name mismatch between encrypted and unencrypted portions", 'error');
 			die;
 		}
 
 		if ($this->extra_replay_protection) {
 			$message_hash = $this->calculate_message_hash((string)$_POST['udrpc_message']);
 			if ($this->message_hash_seen($message_hash)) {
-				$this->log("Message dropped: apparently a replay (hash: $message_hash)");
+				$this->log("Message dropped: apparently a replay (hash: $message_hash)", 'error');
 				die;
 			}
 		}
@@ -662,7 +663,7 @@ class UpdraftPlus_Remote_Communications {
 		// Do this after the extra replay protection, as that checks hashes within the maximum time window - so don't check the maximum time window until afterwards, to avoid a tiny window (race) in between.
 		$time_difference = absint($udrpc_message['time'] - time());
 		if ($time_difference > $this->maximum_replay_time_difference) {
-			$this->log("Time in incoming message is outside of allowed window ($time_difference > ".$this->maximum_replay_time_difference.")");
+			$this->log("Time in incoming message is outside of allowed window ($time_difference > ".$this->maximum_replay_time_difference.")", 'error');
 			die;
 		}
 		
@@ -674,7 +675,7 @@ class UpdraftPlus_Remote_Communications {
 			global $wpdb;
 			
 			if (!isset($udrpc_message['sequence_id']) || !is_numeric($udrpc_message['sequence_id'])) {
-				$this->log("a numerical sequence number is required, but none was included in the message - dropping");
+				$this->log("a numerical sequence number is required, but none was included in the message - dropping", 'error');
 				die;
 			}
 			
@@ -702,7 +703,7 @@ class UpdraftPlus_Remote_Communications {
 				if ($this->debug) $this->log("Sequence id ($message_sequence_id) is within tolerance range of previous maximum (".max($recently_seen_sequences_ids).") - message is thus OK");
 				$recently_seen_sequences_ids_as_array[] = $message_sequence_id;
 			} else {
-				$this->log("message received outside of allowed sequence window - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids, tolerance=".$this->sequence_protection_tolerance.")");
+				$this->log("message received outside of allowed sequence window - dropping (received=$message_sequence_id, seen=$recently_seen_sequences_ids, tolerance=".$this->sequence_protection_tolerance.")", 'error');
 				die;
 			}
 

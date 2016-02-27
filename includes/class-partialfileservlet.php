@@ -48,11 +48,9 @@ class UpdraftPlus_RangeHeader
 		if ($header === null) {
 			return null;
 		}
-error_log("header=$header");
 		if (!preg_match('/^\s*([A-Za-z]+)\s*=\s*(\d*)\s*-\s*(\d*)\s*(?:,|$)/', $header, $info)) {
 			throw new UpdraftPlus_InvalidRangeHeaderException('Invalid header format');
 		} else if (strtolower($info[1]) !== 'bytes') {
-error_log_v($info);
 			throw new UpdraftPlus_InvalidRangeHeaderException('Unknown range unit: ' . $info[1]);
 		}
 

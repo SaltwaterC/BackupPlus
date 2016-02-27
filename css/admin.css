@@ -249,6 +249,39 @@ a .udp-logo {
 	top: -20px;
 }
 
+#updraft_report_cell .updraft_reportbox {
+	padding:8px;
+	margin: 8px 0;
+	border: 1px dotted;
+	clear:left;
+	float:left;
+}
+
+#updraft_report_cell button.updraft_reportbox_delete {
+	font-size: 50%;
+	float:right;
+	padding:0 3px;
+	position: relative;
+	top: -4px;
+	left: 4px;
+}
+
+#updraft-navtab-settings-content .updraft-test-button {
+	font-size:18px !important;
+}
+
+#updraft_report_cell .updraft_report_checkbox {
+	margin-top: 4px;
+}
+
+#updraft_report_cell  .updraft_report_email {
+	width: 300px;
+}
+
+#updraft_report_cell .updraft_report_another_p {
+	clear:left;
+}
+
 /* Taken straight from admin.php */
 
 	#updraft-navtab-settings-content table.form-table p {
@@ -442,59 +475,6 @@ a .udp-logo {
 		cursor: pointer;
 		color: white;
 		background: red;
-	}
-
-	/* Selectric dropdown styling */
-	.selectric-items .ico {
-	display: inline-block;
-	vertical-align: middle;
-	zoom: 1;
-	*display: inline;
-	height: 40px;
-	width: 40px;
-	margin: 0 6px 0 0;
-	}
-
-	.selectric-wrapper{
-		width: 300px;
-	}
-
-	div.selectric {
-		padding: 0 2px 4px;
-		line-height: 28px;
-		height: 34px;
-		vertical-align: middle;
-		background-color: #fff;
-	}
-
-	.selectric .label {
-		line-height: 28px;
-		height: 28px;
-		margin: 0px 0px 0px 4px;
-		font-size: 14px;
-	}
-
-	.selectric .button {
-		width: 22px;
-		height: 32px;
-		border: none;
-	}
-
-	.selectric .button:after {
-		border-top-color: #000;
-	}
-
-	.selectric-hover .selectric {
-		border-color: #DDD;
-		cursor: default;
-	}
-
-	.selectric-hover .selectric .button {
-		cursor: default;
-	}
-
-	.selectric-hover .selectric .button:after {
-		border-top-color: #000;
 	}
 
 	#updraft_backup_started {
@@ -1338,4 +1318,69 @@ input #backupnow_includefiles_moreoptions {
 
 /* End of forgotton something */
 
+.updraftplusmethod.updraftvault #vaultlogo { padding-left: 40px; }
 
+.updraftplusmethod.updraftvault .vault_primary_option {
+	float: left;
+	width:50%;
+	text-align:center;
+	padding-bottom:20px;
+}
+
+.updraftplusmethod.updraftvault .vault_primary_option div {
+	clear:right;
+	padding-top: 20px;
+}
+
+.updraftplusmethod.updraftvault .clear-left {
+	clear: left;
+}
+
+.updraftplusmethod.updraftvault .padding-top-20px {	padding-top: 20px; }
+
+.updraftplusmethod.updraftvault .padding-top-14px {	padding-top: 14px; }
+
+.updraftplusmethod.updraftvault #updraftvault_settings_default .button-primary, .updraftplusmethod.updraftvault #updraftvault_settings_showoptions .button-primary {
+	font-size: 18px !important;
+	padding-bottom: 20px;
+}
+
+.updraftplusmethod.updraftvault #updraftvault_showoptions, .updraftplusmethod.updraftvault #updraftvault_connect {
+	margin-top:8px;
+}
+
+.updraftplusmethod.updraftvault #updraftvault_settings_connect input {
+	margin-right:10px;
+}
+
+.updraftplusmethod.updraftvault #updraftvault_email { width: 280px; }
+.updraftplusmethod.updraftvault #updraftvault_pass { width: 200px; }
+
+.updraftplusmethod.updraftvault #vault-is-connected { margin: 0; padding: 0; }
+
+.updraftplusmethod.updraftvault #updraftvault_settings_default p {
+	clear:left;
+}
+
+.updraftplusmethod.updraftvault .vault-purchase-option {
+	float: left;
+	width:33%;
+	text-align:center;
+	padding-top: 20px;
+}
+
+.updraftplusmethod.updraftvault .vault-purchase-option-size {
+	font-size: 200%;
+	font-weight:bold;
+}
+
+.updraftplusmethod.updraftvault .vault-purchase-option-link {
+	clear:both;
+	font-size: 150%
+}
+
+.updraftplusmethod.updraftvault .vault-purchase-option-or {
+	clear: both;
+	font-size: 115%;
+	font-style: italic;
+}

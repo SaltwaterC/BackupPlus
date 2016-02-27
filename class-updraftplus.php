@@ -2362,8 +2362,19 @@ class UpdraftPlus {
 			$this->log("There were errors in the uploads, so the 'resume' event is remaining scheduled");
 			$this->jobdata_set('jobstatus', 'resumingforerrors');
 			# If there were no errors before moving to the upload stage, on the first run, then bring the resumption back very close. Since this is only attempted on the first run, it is really only an efficiency thing for a quicker finish if there was an unexpected networking event. We don't want to do it straight away every time, as it may be that the cloud service is down - and might be up in 5 minutes time. This was added after seeing a case where resumption 0 got to run for 10 hours... and the resumption 7 that should have picked up the uploading of 1 archive that failed never occurred.
-			if (isset($this->error_count_before_cloud_backup) && 0 == $resumption_no && 0 === $this->error_count_before_cloud_backup) {
-				$this->reschedule(60);
+			if (isset($this->error_count_before_cloud_backup) && 0 === $this->error_count_before_cloud_backup) {
+				if (0 == $resumption_no) {
+					$this->reschedule(60);
+				} else {
+					// Added 27/Feb/2016 - though the cloud service seems to be down, we still don't want to wait too long
+					$resume_interval = $this->jobdata_get('resume_interval');
+					
+					// 15 minutes + 2 for each resumption (a modest back-off)
+					$max_interval = 900 + $resumption_no * 120;
+					if ($resume_interval > $max_interval) {
+						$this->reschedule($max_interval);
+					}
+				}
 			}
 		}
 
@@ -2441,6 +2452,18 @@ class UpdraftPlus {
 
 	}
 
+	// This function returns 'true' if mod_rewrite could be detected as unavailable; a 'false' result may mean it just couldn't find out the answer
+	public function mod_rewrite_unavailable($check_if_in_use_first = true) {
+		if (function_exists('apache_get_modules')) {
+			global $wp_rewrite;
+			$mods = apache_get_modules();
+			if ((!$check_if_in_use_first || $wp_rewrite->using_mod_rewrite_permalinks()) && ((in_array('core', $mods) || in_array('http_core', $mods)) && !in_array('mod_rewrite', $mods))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public function error_count($level = 'error') {
 		$count = 0;
 		foreach ($this->errors as $err) {
@@ -2638,7 +2661,7 @@ class UpdraftPlus {
 		$how_far_ahead = $new_resume;
 		# If it is very long-running, then that would normally be known soon.
 		# If the interval is already 12 minutes or more, then try the next resumption 10 minutes from now (i.e. sooner than it would have been). Thus, we are guaranteed to get at least 24 minutes of processing in the first 34.
-		if (1 >= $this->current_resumption && $new_resume > 720) $how_far_ahead = 600;
+		if ($this->current_resumption <= 1 && $new_resume > 720) $how_far_ahead = 600;
 
 		if (!empty($this->newresumption_scheduled) || $force_schedule) $this->reschedule($how_far_ahead);
 		$this->jobdata_set('resume_interval', $new_resume);
@@ -2808,7 +2831,7 @@ class UpdraftPlus {
 						if ($add_to_list) {
 							array_push($dirlist, $candidate);
 							$added++;
-							$skip_dblog = ($added > 50 && 0 != $added % 100);
+							$skip_dblog = (($added > 50 && 0 != $added % 100) || ($added > 2000 && 0 != $added % 500));
 							$this->log("finding files: $entry: adding to list ($added)", 'notice', false, $skip_dblog);
 						}
 					}
@@ -3487,6 +3510,11 @@ class UpdraftPlus {
 						}
 						// Explicitly set it, allowing the consumer to detect when the result was unknown
 						$info['same_url'] = false;
+						
+						if ($this->mod_rewrite_unavailable(false)) {
+							$warn[] = sprintf(__('You are using the %s webserver, but do not seem to have the %s module loaded.', 'updraftplus'), 'Apache', 'mod_rewrite').' '.sprintf(__('You should enable %s to make any pretty permalinks (e.g. %s) work', 'updraftplus'), 'mod_rewrite', 'http://example.com/my-page/');
+						}
+						
 					} else {
 						$info['same_url'] = true;
 					}

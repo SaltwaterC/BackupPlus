@@ -14,7 +14,7 @@ Backup and restoration made easy. Complete backups; manual or scheduled (backup 
 
 <a href="https://updraftplus.com">UpdraftPlus</a> simplifies backups (and restoration). Backup into the cloud (Amazon S3 (or compatible), Dropbox, Google Drive, Rackspace Cloud, DreamObjects, FTP, Openstack Swift, UpdraftPlus Vault and email) and restore with a single click. Backups of files and database can have separate schedules. The paid version also backs up to Microsoft OneDrive, Microsoft Azure, Copy.Com, Google Cloud Storage, SFTP, SCP, and WebDAV.
 
-<strong>Top-quality:</strong> UpdraftPlus is the highest-ranking backup plugin on wordpress.org, with <strong>over 600,000 currently active installs</strong>. Widely tested and reliable, this is the world's #1 most popular and mostly highly rated scheduled backup plugin. Millions of backups completed!
+<strong>Top-quality:</strong> UpdraftPlus is the highest-ranking backup plugin on wordpress.org, with <strong>over 700,000 currently active installs</strong>. Widely tested and reliable, this is the world's #1 most popular and mostly highly rated scheduled backup plugin. Millions of backups completed!
 
 [vimeo https://vimeo.com/154870690]
 
@@ -118,7 +118,19 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.24 of the free version correspond to changes made in 2.11.24.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.28 of the free version correspond to changes made in 2.11.28.x of the paid version.
+
+= 1.11.28 - 27/Feb/2016 =
+
+* FIX: When saving settings on multisite, some connections to remote storage could drop and need to be re-made
+* FIX: Fix an inoperative button in the Clone dialog box
+* TWEAK: Updated readme to reflect > 700,000 active sites
+* TWEAK: When cloning a site and mod_rewrite is not available, give a warning pre-restore
+* TWEAK: Options saving on multisite is now much more efficient (in terms of database requests required)
+* TWEAK: Improve the scheduling algorithm in the case of hosts that allow very long runs times, and a network outage on the cloud storage
+* TWEAK: When connecting to updraftplus.com to claim a licence (paid versions), use the newer JSON-based protocol
+* TWEAK: Many and various internal improvements to structure of the admin page HTML, CSS and JS
+* TWEAK: The boxes for adding extra addresses for reporting, and extra DBs, now fade in
 
 = 1.11.27 - 17/Feb/2016 =
 
@@ -1782,4 +1794,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.27: Various tweaks, fixes and small improvements.
+* 1.11.28: Various tweaks, fixes and small improvements.

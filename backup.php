@@ -1556,7 +1556,7 @@ class UpdraftPlus_Backup {
 				$updraftplus->log(__("Failed to open database file for reading:", 'updraftplus').' '.$table_file.'.gz', 'error');
 				$errors++;
 			} else {
-				while ($line = gzgets($handle, 2048)) { $this->stow($line); }
+				while ($line = gzgets($handle, 65536)) { $this->stow($line); }
 				gzclose($handle);
 				$unlink_files[] = $this->updraft_dir.'/'.$table_file.'.gz';
 			}

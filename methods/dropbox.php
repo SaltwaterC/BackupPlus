@@ -79,7 +79,7 @@ class UpdraftPlus_BackupModule_dropbox {
 		$opts = $this->get_opts();
 
 		if (empty($opts['tk_request_token'])) {
-			$updraftplus->log('You do not appear to be authenticated with Dropbox');
+			$updraftplus->log('You do not appear to be authenticated with Dropbox (1)');
 			$updraftplus->log(__('You do not appear to be authenticated with Dropbox','updraftplus'), 'error');
 			return false;
 		}
@@ -290,7 +290,7 @@ class UpdraftPlus_BackupModule_dropbox {
 		$opts = $this->get_opts();
 
 		if (empty($opts['tk_request_token'])) {
-			$updraftplus->log('You do not appear to be authenticated with Dropbox');
+			$updraftplus->log('You do not appear to be authenticated with Dropbox (3)');
 			$updraftplus->log(sprintf(__('You do not appear to be authenticated with %s (whilst deleting)', 'updraftplus'), 'Dropbox'), 'warning');
 			return false;
 		}
@@ -331,7 +331,7 @@ class UpdraftPlus_BackupModule_dropbox {
 		$opts = $this->get_opts();
 
 		if (empty($opts['tk_request_token'])) {
-			$updraftplus->log('You do not appear to be authenticated with Dropbox');
+			$updraftplus->log('You do not appear to be authenticated with Dropbox (4)');
 			$updraftplus->log(sprintf(__('You do not appear to be authenticated with %s','updraftplus'), 'Dropbox'), 'error');
 			return false;
 		}
