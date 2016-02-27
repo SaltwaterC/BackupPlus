@@ -409,31 +409,27 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		$this->credentials_test_engine($this->get_config(), $posted_settings);
 	}
 	
-	public function ajax_vault_recountquota() {
+	public function ajax_vault_recountquota($echo_results = true) {
 		// Force the opts to be refreshed
 		$config = $this->get_config();
 
 		if (empty($config['accesskey']) && !empty($config['error_message'])) {
 			$results = array('html' => htmlspecialchars($config['error_message']), 'connected' => 0);
 		} else {
-
 			// Now read the opts
 			$opts = $this->get_opts();
-	// 		$quota_limit = !isset($opts['quota']) ? $opts['quota'] : -1;
-
 			$results = array('html' => $this->connected_html($opts), 'connected' => 1);
-	/*
-			$results = array(
-				'limit' => $quota_limit,
-				'used' => $quota_used,
-			);*/
 		}
 
-		echo json_encode($results);
+		if ($echo_results) {
+			echo json_encode($results);
+		} else {
+			return $results;
+		}
 	}
 
 	// This method also gets called directly, so don't add code that assumes that it's definitely an AJAX situation
-	public function ajax_vault_disconnect() {
+	public function ajax_vault_disconnect($echo_results = true) {
 		$vault_settings = UpdraftPlus_Options::get_updraft_option('updraft_updraftvault');
 		UpdraftPlus_Options::update_updraft_option('updraft_updraftvault', array());
 		global $updraftplus;
@@ -441,7 +437,11 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		delete_transient('udvault_last_config');
 		delete_transient('updraftvault_quota_text');
 
-		$updraftplus->close_browser_connection(json_encode(array('disconnected' => 1, 'html' => $this->connected_html())));
+		$response = array('disconnected' => 1, 'html' => $this->connected_html());
+		
+		if ($echo_results) {
+			$updraftplus->close_browser_connection(json_encode($response));
+		}
 
 		// If $_POST['reset_hash'] is set, then we were alerted by updraftplus.com - no need to notify back
 		if (is_array($vault_settings) && isset($vault_settings['email']) && empty($_POST['reset_hash'])) {
@@ -460,11 +460,17 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 				'body' => $post_body,
 			));
 		}
+		
+		return $response;
+		
 	}
 
 	// This is called from the UD admin object
-	public function ajax_vault_connect() {
-		$connect = $this->vault_connect($_REQUEST['email'], $_REQUEST['pass']);
+	public function ajax_vault_connect($echo_results = true, $use_credentials = false) {
+	
+		if (empty($use_credentials)) $use_credentials = $_REQUEST;
+	
+		$connect = $this->vault_connect($use_credentials['email'], $use_credentials['pass']);
 		if (true === $connect) {
 			$response = array('connected' => true, 'html' => $this->connected_html(false));
 		} else {
@@ -476,8 +482,13 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 				$response['code'] = $connect->get_error_code();
 				$response['data'] = serialize($connect->get_error_data());
 			}
-		} 
-		echo json_encode($response);
+		}
+		
+		if ($echo_results) {
+			echo json_encode($response);
+		} else {
+			return $response;
+		}
 	}
 
 	// Returns either true (in which case the Vault token will be stored), or false|WP_Error

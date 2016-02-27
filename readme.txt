@@ -118,12 +118,13 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.28 of the free version correspond to changes made in 2.11.28.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.29 of the free version correspond to changes made in 2.11.29.x of the paid version.
 
-= 1.11.28 - 27/Feb/2016 =
+= 1.11.29 - 27/Feb/2016 =
 
 * FIX: When saving settings on multisite, some connections to remote storage could drop and need to be re-made
 * FIX: Fix an inoperative button in the Clone dialog box
+* FIX: Fix an error upon automatic backups (Premium) in 2.11.28
 * TWEAK: Updated readme to reflect > 700,000 active sites
 * TWEAK: When cloning a site and mod_rewrite is not available, give a warning pre-restore
 * TWEAK: Options saving on multisite is now much more efficient (in terms of database requests required)
@@ -1794,4 +1795,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.11.28: Various tweaks, fixes and small improvements.
+* 1.11.29: Various tweaks, fixes and small improvements.
