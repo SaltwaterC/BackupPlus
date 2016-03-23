@@ -390,6 +390,7 @@ class UpdraftPlus_UpdraftCentral_Main {
 			
 				$mothership_url = $key['extra_info']['mothership'];
 				$purl = parse_url($mothership_url);
+				$path = empty($purl['path']) ? '' : $purl['path'];
 				
 				$reconstructed_url = $purl['scheme'].'://'.$purl['host'].(!empty($purl['port']) ? ':'.$purl['port'] : '').$purl['path'];
 				
