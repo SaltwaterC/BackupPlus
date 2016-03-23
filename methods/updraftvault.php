@@ -170,17 +170,17 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		}
 
 		if (!$details_retrieved) {
-			$updraftplus->log("UpdraftPlus Vault: failed to retrieve access details from updraftplus.com");
+			// Don't log anything yet, as this will replace the most recently logged message in the main panel
 			if (!empty($opts['last_config']) && is_array($opts['last_config'])) {
 				$last_config = $opts['last_config'];
 				if (!empty($last_config['time']) && is_numeric($last_config['time']) && $last_config['time'] > time() - 86400*15) {
-					$updraftplus->log("Will attempt to use most recently stored configuration");
+					$updraftplus->log("UpdraftPlus Vault: failed to retrieve access details from updraftplus.com: will attempt to use most recently stored configuration");
 					if (!empty($last_config['accesskey'])) $config['accesskey'] = $last_config['accesskey'];
 					if (!empty($last_config['secretkey'])) $config['secretkey'] = $last_config['secretkey'];
 					if (isset($last_config['path'])) $config['path'] = $last_config['path'];
 					if (isset($opts['quota'])) $config['quota'] = $opts['quota'];
 				} else {
-					$updraftplus->log("No recently stored configuration was found to use instead");
+					$updraftplus->log("UpdraftPlus Vault: failed to retrieve access details from updraftplus.com: no recently stored configuration was found to use instead");
 				}
 			}
 		}
@@ -258,19 +258,19 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 						<?php echo __('UpdraftPlus Vault brings you storage that is <strong>reliable, easy to use and a great price</strong>.', 'updraftplus').' '.__('Press a button to get started.', 'updraftplus');?>
 					</p>
 					<div class="vault-purchase-option">
-						<div class="vault-purchase-option-size">5 Gb</div>
+						<div class="vault-purchase-option-size">5 GB</div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-5gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$10'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-5gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$35'); ?></a></div>
 					</div>
 					<div class="vault-purchase-option">
-						<div class="vault-purchase-option-size">15 Gb</div>
+						<div class="vault-purchase-option-size">15 GB</div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-15gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$20'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-15gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$70');?></a></div>
 					</div>
 					<div class="vault-purchase-option">
-						<div class="vault-purchase-option-size">50 Gb</div>
+						<div class="vault-purchase-option-size">50 GB</div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-50gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$50'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
 						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-50gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$175');;?></a></div>
@@ -340,12 +340,12 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 	protected function s3_out_of_quota($total, $used, $needed) {
 		global $updraftplus;
 		$updraftplus->log("UpdraftPlus Vault Error: Quota exhausted (used=$used, total=$total, needed=$needed)");
-		$updraftplus->log(sprintf(__('%s Error: you have insufficient storage quota available (%s) to upload this archive (%s).','updraftplus'), 'UpdraftPlus Vault', round(($total-$used)/1048576, 2).' Mb', round($needed/1048576, 2).' Mb').' '.__('You can get more quota here', 'updraftplus').': '.$this->get_url('get_more_quota'), 'error');
+		$updraftplus->log(sprintf(__('%s Error: you have insufficient storage quota available (%s) to upload this archive (%s).','updraftplus'), 'UpdraftPlus Vault', round(($total-$used)/1048576, 2).' MB', round($needed/1048576, 2).' MB').' '.__('You can get more quota here', 'updraftplus').': '.$this->get_url('get_more_quota'), 'error');
 	}
 
 	protected function s3_record_quota_info($quota_used, $quota) {
 
-		$ret = __('Current use:', 'updraftplus').' '.round($quota_used / 1048576, 1).' / '.round($quota / 1048576, 1).' Mb';
+		$ret = __('Current use:', 'updraftplus').' '.round($quota_used / 1048576, 1).' / '.round($quota / 1048576, 1).' MB';
 		$ret .= ' ('.sprintf('%.1f', 100*$quota_used / max($quota, 1)).' %)';
 
 		$ret_plain = $ret . ' - '.__('Get more quota', 'updraftplus').': '.$this->get_url('get_more_quota');
@@ -391,7 +391,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 					$counted += $file['size'];
 				}
 				$ret .= round($counted / 1048576, 1);
-				$ret .= ' / '.round($quota / 1048576, 1).' Mb';
+				$ret .= ' / '.round($quota / 1048576, 1).' MB';
 				$ret .= ' ('.sprintf('%.1f', 100*$counted / $quota).' %)';
 			}
 		} else {

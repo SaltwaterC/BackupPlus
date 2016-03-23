@@ -121,7 +121,7 @@ class UpdraftPlus_BackupModule_dropbox {
 						$normal_quota = $quota_info->normal;
 						$shared_quota = $quota_info->shared;
 						$available_quota = $total_quota - ($normal_quota + $shared_quota);
-						$message = "Dropbox quota usage: normal=".round($normal_quota/1048576,1)." Mb, shared=".round($shared_quota/1048576,1)." Mb, total=".round($total_quota/1048576,1)." Mb, available=".round($available_quota/1048576,1)." Mb";
+						$message = "Dropbox quota usage: normal=".round($normal_quota/1048576,1)." MB, shared=".round($shared_quota/1048576,1)." MB, total=".round($total_quota/1048576,1)." MB, available=".round($available_quota/1048576,1)." MB";
 					}
 				}
 				$updraftplus->log($message);
@@ -138,7 +138,7 @@ class UpdraftPlus_BackupModule_dropbox {
 			$filesize = filesize($updraft_dir.'/'.$file);
 			$this->current_file_size = $filesize;
 
-			// Into Kb
+			// Into KB
 			$filesize = $filesize/1024;
 			$microtime = microtime(true);
 
@@ -213,7 +213,7 @@ class UpdraftPlus_BackupModule_dropbox {
 				$updraftplus->uploaded_file($file);
 				$microtime_elapsed = microtime(true)-$microtime;
 				$speedps = $filesize/$microtime_elapsed;
-				$speed = sprintf("%.2d",$filesize)." Kb in ".sprintf("%.2d",$microtime_elapsed)."s (".sprintf("%.2d", $speedps)." Kb/s)";
+				$speed = sprintf("%.2d",$filesize)." KB in ".sprintf("%.2d",$microtime_elapsed)."s (".sprintf("%.2d", $speedps)." KB/s)";
 				$updraftplus->log("Dropbox: File upload success (".$file."): $speed");
 				$updraftplus->jobdata_delete('updraft_duido_'.$hash);
 				$updraftplus->jobdata_delete('updraft_duidi_'.$hash);
@@ -368,7 +368,7 @@ class UpdraftPlus_BackupModule_dropbox {
 			try {
 				$get = $dropbox->getFile($dropbox_folder.'/'.$file, $updraft_dir.'/'.$file, null, true);
 				if (isset($get['response']['body'])) {
-					$updraftplus->log("Dropbox: downloaded ".round(strlen($get['response']['body'])/1024,1).' Kb');
+					$updraftplus->log("Dropbox: downloaded ".round(strlen($get['response']['body'])/1024,1).' KB');
 				}
 			}  catch (Exception $e) {
 				$updraftplus->log($possible_error, 'error');
@@ -415,7 +415,7 @@ class UpdraftPlus_BackupModule_dropbox {
 
 			<tr class="updraftplusmethod dropbox">
 				<th><?php echo sprintf(__('Authenticate with %s', 'updraftplus'), __('Dropbox', 'updraftplus'));?>:</th>
-				<td><p><?php $rt = (empty($opts['tk_request_token'])) ? '' : $opts['tk_request_token']; if (!empty($rt)) echo "<strong>".__('(You appear to be already authenticated).','updraftplus')."</strong>"; ?> <a href="?page=updraftplus&action=updraftmethod-dropbox-auth&updraftplus_dropboxauth=doit"><?php echo sprintf(__('<strong>After</strong> you have saved your settings (by clicking \'Save Changes\' below), then come back here once and click this link to complete authentication with %s.','updraftplus'), __('Dropbox', 'updraftplus'));?></a>
+				<td><p><?php $rt = (empty($opts['tk_request_token'])) ? '' : $opts['tk_request_token']; if (!empty($rt)) echo "<strong>".__('(You appear to be already authenticated).','updraftplus')."</strong>"; ?> <a class="updraft_authlink" href="<?php echo UpdraftPlus_Options::admin_page_url();?>?page=updraftplus&action=updraftmethod-dropbox-auth&updraftplus_dropboxauth=doit"><?php echo sprintf(__('<strong>After</strong> you have saved your settings (by clicking \'Save Changes\' below), then come back here once and click this link to complete authentication with %s.','updraftplus'), __('Dropbox', 'updraftplus'));?></a>
 				</p>
 				<?php
 					if (!empty($rt)) {
@@ -506,7 +506,7 @@ class UpdraftPlus_BackupModule_dropbox {
 				$shared_quota = $quota_info->shared;
 				$available_quota =$total_quota - ($normal_quota + $shared_quota);
 				$used_perc = round(($normal_quota + $shared_quota)*100/$total_quota, 1);
-				$message .= ' <br>'.sprintf(__('Your %s quota usage: %s %% used, %s available','updraftplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' Mb');
+				$message .= ' <br>'.sprintf(__('Your %s quota usage: %s %% used, %s available','updraftplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB');
 			} catch (Exception $e) {
 			}
 

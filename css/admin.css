@@ -556,16 +556,20 @@ a .udp-logo {
 	padding: 0px !important;
 }
 
-.next-backup .updraft_scheduled {
-	width: 124px; 
+.next-backup .updraft_scheduled  {
+	/* width: 124px;*/
 	margin: 0px; 
-	padding: 0px;
+	padding: 2px 4px 2px 0px;
 }
 
-.next-backup .updraft_scheduled .updraft_all-files {
+#next-backup-table-inner td {
+	vertical-align: top;
+}
+
+.next-backup .updraft_all-files {
 	color: blue; 
 	margin: 0px; 
-	padding: 0px;
+	padding: 2px 0px 0px;
 }	
 
 .multisite-advert-width {

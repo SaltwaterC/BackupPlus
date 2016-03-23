@@ -275,8 +275,8 @@ class UpdraftPlus_BackupModule_s3 {
 
 			foreach ($backup_array as $key => $file) {
 
-				// We upload in 5Mb chunks to allow more efficient resuming and hence uploading of larger files
-				// N.B.: 5Mb is Amazon's minimum. So don't go lower or you'll break it.
+				// We upload in 5MB chunks to allow more efficient resuming and hence uploading of larger files
+				// N.B.: 5MB is Amazon's minimum. So don't go lower or you'll break it.
 				$fullpath = $updraft_dir.$file;
 				$orig_file_size = filesize($fullpath);
 
@@ -291,13 +291,13 @@ class UpdraftPlus_BackupModule_s3 {
 							continue;
 						} else {
 							// We don't need to log this always - the s3_out_of_quota method will do its own logging
-							$updraftplus->log("$whoweare: Quota is available: used=$quota_used (".round($quota_used/1048576, 1)." Mb), total=".$config['quota']." (".round($config['quota']/1048576, 1)." Mb), needed=$orig_file_size (".round($orig_file_size/1048576, 1)." Mb)");
+							$updraftplus->log("$whoweare: Quota is available: used=$quota_used (".round($quota_used/1048576, 1)." MB), total=".$config['quota']." (".round($config['quota']/1048576, 1)." MB), needed=$orig_file_size (".round($orig_file_size/1048576, 1)." MB)");
 						}
 					}
 				}
 
 				$chunks = floor($orig_file_size / 5242880);
-				// There will be a remnant unless the file size was exactly on a 5Mb boundary
+				// There will be a remnant unless the file size was exactly on a 5MB boundary
 				if ($orig_file_size % 5242880 > 0) $chunks++;
 				$hash = md5($file);
 
@@ -317,7 +317,7 @@ class UpdraftPlus_BackupModule_s3 {
 							if (method_exists($this, 's3_record_quota_info')) $this->s3_record_quota_info($this->quota_used, $config['quota']);
 							$extra_log = '';
 							if (method_exists($this, 's3_get_quota_info')) {
-								$extra_log = ', quota used now: '.round($this->quota_used / 1048576, 1).' Mb';
+								$extra_log = ', quota used now: '.round($this->quota_used / 1048576, 1).' MB';
 							}
 							$updraftplus->log("$whoweare regular upload: success$extra_log");
 							$updraftplus->uploaded_file($file);

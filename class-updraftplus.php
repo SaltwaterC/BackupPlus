@@ -218,7 +218,7 @@ class UpdraftPlus {
 		$updraft_dir = $this->backups_dir_location();
 
 		$log_file = '';
-		$mod_time = 0;
+		$mod_time = false;
 		$nonce = '';
 
 		if ($handle = @opendir($updraft_dir)) {
@@ -270,7 +270,7 @@ class UpdraftPlus {
 
 		if (!UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts')) $opts['sslcertificates'] = UPDRAFTPLUS_DIR.'/includes/cacert.pem';
 
-		$opts['sslverify'] = (UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify')) ? false : true;
+		$opts['sslverify'] = UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify') ? false : true;
 
 		return $opts;
 
@@ -576,7 +576,7 @@ class UpdraftPlus {
 		$hosting_bytes_free = $this->get_hosting_disk_quota_free();
 		if (is_array($hosting_bytes_free)) {
 			$perc = round(100*$hosting_bytes_free[1]/(max($hosting_bytes_free[2], 1)), 1);
-			$quota_free = ' / '.sprintf('Free disk space in account: %s (%s used)', round($hosting_bytes_free[3]/1048576, 1)." Mb", "$perc %");
+			$quota_free = ' / '.sprintf('Free disk space in account: %s (%s used)', round($hosting_bytes_free[3]/1048576, 1)." MB", "$perc %");
 			if ($hosting_bytes_free[3] < 1048576*50) {
 				$quota_free_mb = round($hosting_bytes_free[3]/1048576, 1);
 				$this->log(sprintf(__('Your free space in your hosting account is very low - only %s Mb remain', 'updraftplus'), $quota_free_mb), 'warning', 'lowaccountspace'.$quota_free_mb);
@@ -590,7 +590,7 @@ class UpdraftPlus {
 		if ($disk_free_space == false) {
 			$this->log("Free space on disk containing Updraft's temporary directory: Unknown".$quota_free);
 		} else {
-			$this->log("Free space on disk containing Updraft's temporary directory: ".round($disk_free_space/1048576,1)." Mb".$quota_free);
+			$this->log("Free space on disk containing Updraft's temporary directory: ".round($disk_free_space/1048576,1)." MB".$quota_free);
 			$disk_free_mb = round($disk_free_space/1048576, 1);
 			if ($disk_free_space < 50*1048576) $this->log(sprintf(__('Your free disk space is very low - only %s Mb remain', 'updraftplus'), round($disk_free_space/1048576, 1)), 'warning', 'lowdiskspace'.$disk_free_mb);
 		}
@@ -608,7 +608,7 @@ class UpdraftPlus {
 	*/
 
 	public function verify_free_memory($how_many_bytes_needed) {
-		// This returns in Mb
+		// This returns in MB
 		$memory_limit = $this->memory_check_current();
 		if (!is_numeric($memory_limit)) return false;
 		$memory_limit = $memory_limit * 1048576;
@@ -708,19 +708,19 @@ class UpdraftPlus {
 	public function get_max_packet_size() {
 		global $wpdb;
 		$mp = (int)$wpdb->get_var("SELECT @@session.max_allowed_packet");
-		# Default to 1Mb
+		# Default to 1MB
 		$mp = (is_numeric($mp) && $mp > 0) ? $mp : 1048576;
-		# 32Mb
+		# 32MB
 		if ($mp < 33554432) {
 			$save = $wpdb->show_errors(false);
 			$req = @$wpdb->query("SET GLOBAL max_allowed_packet=33554432");
 			$wpdb->show_errors($save);
-			if (!$req) $this->log("Tried to raise max_allowed_packet from ".round($mp/1048576,1)." Mb to 32 Mb, but failed (".$wpdb->last_error.", ".serialize($req).")");
+			if (!$req) $this->log("Tried to raise max_allowed_packet from ".round($mp/1048576,1)." MB to 32 MB, but failed (".$wpdb->last_error.", ".serialize($req).")");
 			$mp = (int)$wpdb->get_var("SELECT @@session.max_allowed_packet");
-			# Default to 1Mb
+			# Default to 1MB
 			$mp = (is_numeric($mp) && $mp > 0) ? $mp : 1048576;
 		}
-		$this->log("Max packet size: ".round($mp/1048576, 1)." Mb");
+		$this->log("Max packet size: ".round($mp/1048576, 1)." MB");
 		return $mp;
 	}
 
@@ -757,7 +757,7 @@ class UpdraftPlus {
 		// If we are on an 'overtime' resumption run, and we are still meaningfully uploading, then schedule a new resumption
 		// Our definition of meaningful is that we must maintain an overall average of at least 0.7% per run, after allowing 9 runs for everything else to get going
 		// i.e. Max 100/.7 + 9 = 150 runs = 760 minutes = 12 hrs 40, if spaced at 5 minute intervals. However, our algorithm now decreases the intervals if it can, so this should not really come into play
-		// If they get 2 minutes on each run, and the file is 1Gb, then that equals 10.2Mb/120s = minimum 59Kb/s upload speed required
+		// If they get 2 minutes on each run, and the file is 1GB, then that equals 10.2MB/120s = minimum 59KB/s upload speed required
 
 		$upload_status = $this->jobdata_get('uploading_substatus');
 		if (is_array($upload_status)) {
@@ -775,7 +775,7 @@ class UpdraftPlus {
 		if ($uploaded_size >= $orig_file_size) return true;
 
 		$chunks = floor($orig_file_size / $chunk_size);
-		// There will be a remnant unless the file size was exactly on a 5Mb boundary
+		// There will be a remnant unless the file size was exactly on a 5MB boundary
 		if ($orig_file_size % $chunk_size > 0) $chunks++;
 
 		$this->log("$logname upload: $file (chunks: $chunks, size: $chunk_size) -> $cloudpath ($uploaded_size)");
@@ -1227,7 +1227,7 @@ class UpdraftPlus {
 					$meta .= sprintf(__('External database (%s)', 'updraftplus'), $dbinfo['user'].'@'.$dbinfo['host'].'/'.$dbinfo['name'])."<br>";
 				}
 			}
-			if (isset($history[$skey])) $meta .= sprintf(__('Size: %s Mb', 'updraftplus'), round($history[$skey]/1048576, 1));
+			if (isset($history[$skey])) $meta .= sprintf(__('Size: %s MB', 'updraftplus'), round($history[$skey]/1048576, 1));
 			$ckey = $entity.$ind;
 			foreach ($checksums as $ck) {
 				$ck_plain = false;
@@ -1731,13 +1731,13 @@ class UpdraftPlus {
 
 	public function convert_numeric_size_to_text($size) {
 		if ($size > 1073741824) {
-			return round($size / 1073741824, 1).' Gb';
+			return round($size / 1073741824, 1).' GB';
 		} elseif ($size > 1048576) {
-			return round($size / 1048576, 1).' Mb';
+			return round($size / 1048576, 1).' MB';
 		} elseif ($size > 1024) {
-			return round($size / 1024, 1).' Kb';
+			return round($size / 1024, 1).' KB';
 		} else {
-			return round($size, 1).' b';
+			return round($size, 1).' B';
 		}
 	}
 	
@@ -1945,8 +1945,9 @@ class UpdraftPlus {
 
 		// Are we doing an action called by the WP scheduler? If so, we want to check when that last happened; the point being that the dodgy WP scheduler, when overloaded, can call the event multiple times - and sometimes, it evades the semaphore because it calls a second run after the first has finished, or > 3 minutes (our semaphore lock time) later
 		// doing_action() was added in WP 3.9
-		// wp_cron() is called from the 'init' action
-		if (function_exists('doing_action') && doing_action('init') && (doing_action('updraft_backup_database') || doing_action('updraft_backup'))) {
+		// wp_cron() can be called from the 'init' action
+		
+		if (function_exists('doing_action') && (doing_action('init') || @constant('DOING_CRON')) && (doing_action('updraft_backup_database') || doing_action('updraft_backup'))) {
 			$last_scheduled_action_called_at = get_option("updraft_last_scheduled_$semaphore");
 			// 11 minutes - so, we're assuming that they haven't custom-modified their schedules to run scheduled backups more often than that. If they have, they need also to use the filter to over-ride this check.
 			$seconds_ago = time() - $last_scheduled_action_called_at;
@@ -2008,7 +2009,7 @@ class UpdraftPlus {
 			'job_time_ms', $this->job_time_ms,
 			'service', $service,
 			'split_every', $split_every,
-			'maxzipbatch', 26214400, #25Mb
+			'maxzipbatch', 26214400, #25MB
 			'job_file_entities', $job_file_entities,
 			'option_cache', $option_cache,
 			'uploaded_lastreset', 9,
@@ -2888,7 +2889,7 @@ class UpdraftPlus {
 	public function terminate_due_to_activity($file, $time_now, $time_mod, $increase_resumption = true) {
 		# We check-in, to avoid 'no check in last time!' detectors firing
 		$this->record_still_alive();
-		$file_size = file_exists($file) ? round(filesize($file)/1024,1). 'Kb' : 'n/a';
+		$file_size = file_exists($file) ? round(filesize($file)/1024,1). 'KB' : 'n/a';
 		$this->log("Terminate: ".basename($file)." exists with activity within the last 30 seconds (time_mod=$time_mod, time_now=$time_now, diff=".(floor($time_now-$time_mod)).", size=$file_size). This likely means that another UpdraftPlus run is at work; so we will exit.");
 		$increase_by = ($increase_resumption) ? 120 : 0;
 		$this->increase_resume_and_reschedule($increase_by, true);
@@ -3126,9 +3127,9 @@ class UpdraftPlus {
 	}
 
 	// Returns without any trailing slash
-	public function backups_dir_location() {
+	public function backups_dir_location($allow_cache = true) {
 
-		if (!empty($this->backup_dir)) return $this->backup_dir;
+		if ($allow_cache && !empty($this->backup_dir)) return $this->backup_dir;
 
 		$updraft_dir = untrailingslashit(UpdraftPlus_Options::get_updraft_option('updraft_dir'));
 		# When newly installing, if someone had (e.g.) wp-content/updraft in their database from a previous, deleted pre-1.7.18 install but had removed the updraft directory before re-installing, without this fix they'd end up with wp-content/wp-content/updraft.
@@ -3485,15 +3486,15 @@ class UpdraftPlus {
 		$db_version = $wpdb->db_version();
 
 		// Don't set too high - we want a timely response returned to the browser
-		// Until April 2015, this was always 90. But we've seen a few people with ~1Gb databases (uncompressed), and 90s is not enough. Note that we don't bother checking here if it's compressed - having a too-large timeout when unexpected is harmless, as it won't be hit. On very large dbs, they're expecting it to take a while.
-		// "120 or 240" is a first attempt at something more useful than just fixed at 90 - but should be sufficient (as 90 was for everyone without ~1Gb databases)
+		// Until April 2015, this was always 90. But we've seen a few people with ~1GB databases (uncompressed), and 90s is not enough. Note that we don't bother checking here if it's compressed - having a too-large timeout when unexpected is harmless, as it won't be hit. On very large dbs, they're expecting it to take a while.
+		// "120 or 240" is a first attempt at something more useful than just fixed at 90 - but should be sufficient (as 90 was for everyone without ~1GB databases)
 		$default_dbscan_timeout = (filesize($db_file) < 31457280) ? 120 : 240;
 		$dbscan_timeout = (defined('UPDRAFTPLUS_DBSCAN_TIMEOUT') && is_numeric(UPDRAFTPLUS_DBSCAN_TIMEOUT)) ? UPDRAFTPLUS_DBSCAN_TIMEOUT : $default_dbscan_timeout;
 		@set_time_limit($dbscan_timeout);
 
 		while ((($is_plain && !feof($dbhandle)) || (!$is_plain && !gzeof($dbhandle))) && ($line<100 || (!$header_only && count($wanted_tables)>0))) {
 			$line++;
-			// Up to 1Mb
+			// Up to 1MB
 			$buffer = ($is_plain) ? rtrim(fgets($dbhandle, 1048576)) : rtrim(gzgets($dbhandle, 1048576));
 			// Comments are what we are interested in
 			if (substr($buffer, 0, 1) == '#') {

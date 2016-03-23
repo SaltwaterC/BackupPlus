@@ -35,6 +35,9 @@ class Updraft_Restorer extends WP_Upgrader {
 	
 	private $restore_this_table = array();
 
+	private $line = 0;
+	private $statements_run = 0;
+	
 	// Constants for use with the move_backup_in method
 	// These can't be arbitrarily changed; there is legacy code doing bitwise operations and numerical comparisons, and possibly legacy code still using the values directly.
 	const MOVEIN_OVERWRITE_NO_BACKUP = 0;
