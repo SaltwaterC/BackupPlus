@@ -131,7 +131,7 @@ class UpdraftPlus {
 
 	// Gets an RPC object, and sets some defaults on it that we always want
 	public function get_udrpc($indicator_name = 'migrator.updraftplus.com') {
-		if (!class_exists('UpdraftPlus_Remote_Communications')) require_once(UPDRAFTPLUS_DIR.'/includes/class-udrpc.php');
+		if (!class_exists('UpdraftPlus_Remote_Communications')) require_once(apply_filters('updraftplus_class_udrpc_path', UPDRAFTPLUS_DIR.'/includes/class-udrpc.php', $this->version));
 		$ud_rpc = new UpdraftPlus_Remote_Communications($indicator_name);
 		$ud_rpc->set_can_generate(true);
 		return $ud_rpc;

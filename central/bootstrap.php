@@ -389,10 +389,15 @@ class UpdraftPlus_UpdraftCentral_Main {
 			if (!empty($key['extra_info']['mothership'])) {
 			
 				$mothership_url = $key['extra_info']['mothership'];
-				$purl = parse_url($mothership_url);
-				$path = empty($purl['path']) ? '' : $purl['path'];
 				
-				$reconstructed_url = $purl['scheme'].'://'.$purl['host'].(!empty($purl['port']) ? ':'.$purl['port'] : '').$purl['path'];
+				if ('__updraftpluscom' == $mothership_url) {
+					$reconstructed_url = 'https://updraftplus.com';
+				} else {
+					$purl = parse_url($mothership_url);
+					$path = empty($purl['path']) ? '' : $purl['path'];
+					
+					$reconstructed_url = $purl['scheme'].'://'.$purl['host'].(!empty($purl['port']) ? ':'.$purl['port'] : '').$path;
+				}
 				
 			} else {
 				$reconstructed_url = __('Unknown', 'updraftplus');
@@ -404,7 +409,7 @@ class UpdraftPlus_UpdraftCentral_Main {
 			
 			$user_display = is_a($user, 'WP_User') ? $user->user_login.' ('.$user->user_email.')' : __('Unknown', 'updraftplus');
 			
-			$ret .= '<tr class="updraft_debugrow"><td style="vertical-align:top;">'.htmlspecialchars($name).' ('.htmlspecialchars($i).')</td><td>'.__("Access this site as user:", 'updraftplus')." ".htmlspecialchars($user_display)."<br>".__('Key was sent to:', 'updraftplus').' '.htmlspecialchars($reconstructed_url).'<br>';
+			$ret .= '<tr class="updraft_debugrow"><td style="vertical-align:top;">'.htmlspecialchars($name).' ('.htmlspecialchars($i).')</td><td>'.__("Access this site as user:", 'updraftplus')." ".htmlspecialchars($user_display)."<br>".__('Public key was sent to:', 'updraftplus').' '.htmlspecialchars($reconstructed_url).'<br>';
 			
 			if (!empty($key['created'])) {
 				$ret .= __('Created:', 'updraftplus').' '.date_i18n(get_option('date_format').' '.get_option('time_format'), $key['created']).'<br>';

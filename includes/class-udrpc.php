@@ -485,11 +485,12 @@ class UpdraftPlus_Remote_Communications {
 	
 	// This needs only to return an array with keys body and response - where response is also an array, with key 'code' (the HTTP status code)
 	// The $post_options array support these keys: timeout, body,
-	private function http_post($post_options) {
+	// Public, to allow short-circuiting of the library's own encoding/decoding (e.g. for acting as a proxy for a message already encrypted elsewhere)
+	public function http_post($post_options) {
 	
 		@include(ABSPATH.WPINC.'/version.php');
 		$http_credentials = $this->http_credentials;
-	
+
 		if (is_a($this->http_transport, 'GuzzleHttp\Client')) {
 			
 			// https://guzzle.readthedocs.org/en/5.3/clients.html
@@ -602,7 +603,8 @@ class UpdraftPlus_Remote_Communications {
 		try {
 			$post = $this->http_post($post_options);
 		} catch (Exception $e) {
-			return new WP_Error($e->getCode(), $e->getMessage(), $e);
+			// Curl can return an error code 0, which causes WP_Error to return early, without recording the message. So, we prefix the code.
+			return new WP_Error('http_post_'.$e->getCode(), $e->getMessage());
 		}
 		
 		if (is_wp_error($post)) return $post;
