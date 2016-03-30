@@ -216,6 +216,10 @@ class UpdraftPlus_UpdraftCentral_Main {
 			$extra_info['name'] = (string)$params['key_description'];
 		}
 
+		$key_size = (empty($params['key_size']) || !is_numeric($params['key_size']) || $params['key_size'] < 512) ? 2048 : (int)$params['key_size'];
+		
+		$extra_info['key_size'] = $key_size;
+		
 		$created = $this->create_remote_control_key(false, $extra_info, $where_send);
 
 		if (is_array($created)) {
@@ -268,7 +272,10 @@ class UpdraftPlus_UpdraftCentral_Main {
 		
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);
 		
-		if (is_object($ud_rpc) && $ud_rpc->generate_new_keypair()) {
+		$key_size = (empty($extra_info['key_size']) || !is_numeric($extra_info['key_size']) || $extra_info['key_size'] < 512) ? 2048 : (int)$extra_info['key_size'];
+// 		unset($extra_info['key_size']);
+		
+		if (is_object($ud_rpc) && $ud_rpc->generate_new_keypair($key_size)) {
 		
 			if ($post_it && empty($extra_info['mothership_firewalled'])) {
 			
@@ -412,7 +419,11 @@ class UpdraftPlus_UpdraftCentral_Main {
 			$ret .= '<tr class="updraft_debugrow"><td style="vertical-align:top;">'.htmlspecialchars($name).' ('.htmlspecialchars($i).')</td><td>'.__("Access this site as user:", 'updraftplus')." ".htmlspecialchars($user_display)."<br>".__('Public key was sent to:', 'updraftplus').' '.htmlspecialchars($reconstructed_url).'<br>';
 			
 			if (!empty($key['created'])) {
-				$ret .= __('Created:', 'updraftplus').' '.date_i18n(get_option('date_format').' '.get_option('time_format'), $key['created']).'<br>';
+				$ret .= __('Created:', 'updraftplus').' '.date_i18n(get_option('date_format').' '.get_option('time_format'), $key['created']).'.';
+				if (!empty($key['extra_info']['key_size'])) {
+					$ret .= ' '.sprintf(__('Key size: %d bits', 'updraftplus'), $key['extra_info']['key_size']).'.';
+				}
+				$ret .= '<br>';
 			}
 			
 			$ret .= '<a href="#" data-key_id="'.esc_attr($i).'" class="updraftcentral_key_delete">'.__('Delete...', 'updraftplus').'</a></td></tr>';
@@ -426,6 +437,13 @@ class UpdraftPlus_UpdraftCentral_Main {
 		$ret .= '<tr class="updraft_debugrow"><th style="width: 20%;">'.__('Description', 'updraftplus').':</th><td style="width:80%;"><input id="updraftcentral_keycreate_description" type="text" size="20" placeholder="'.__('Enter any description', 'updraftplus').'" value=""></td></tr>';
 		
 		$ret .= '<tr class="updraft_debugrow"><th style="">'.__('Mothership', 'updraftplus').':</th><td style="width:80%;"><input checked="checked" type="radio" name="updraftcentral_mothership" id="updraftcentral_mothership_updraftpluscom"> <label for="updraftcentral_mothership_updraftpluscom">'.'UpdraftPlus.Com ('.__('i.e. you have an account there', 'updraftplus').')'.'</label><br><input type="radio" name="updraftcentral_mothership" id="updraftcentral_mothership_other"> <label for="updraftcentral_mothership_other">'.__('Other (please specify - i.e. the site where you have installed an UpdraftCentral dashboard)', 'updraftplus').'</label>:<br><input disabled="disabled" id="updraftcentral_keycreate_mothership" type="text" size="40" placeholder="'.__('URL of mothership', 'updraftplus').'" value=""><br><div style="display:none;" id="updraftcentral_keycreate_mothership_firewalled_container"><input id="updraftcentral_keycreate_mothership_firewalled" type="checkbox"><label for="updraftcentral_keycreate_mothership_firewalled">'.__('Use the alternative method for making a connection with the mothership. This is suitable if the mothership cannot be contacted with incoming traffic by this website (for example, this is the case if this website is hosted on the public Internet, but the UpdraftCentral mothership is on localhost, or on an Intranet), or if the mothership site does not have a SSL certificate.').'</label></div></td></tr>';
+		
+		$ret .= '<tr class="updraft_debugrow"><th style=""></th><td style="width:80%;">'.__('Encryption key size:', 'updraftplus').' <select style="" id="updraftcentral_keycreate_keysize">
+				<option value="512">'.sprintf(__('%s bits', 'updraftplus').' - '.__('easy to break, fastest', 'updraftplus'), '512').'</option>
+				<option value="1024">'.sprintf(__('%s bits', 'updraftplus').' - '.__('faster (possibility for slow PHP installs)', 'updraftplus'), '1024').'</option>
+				<option value="2048" selected="selected">'.sprintf(__('%s bytes', 'updraftplus').' - '.__('recommended', 'updraftplus'), '2048').'</option>
+				<option value="4096">'.sprintf(__('%s bits', 'updraftplus').' - '.__('slower, strongest', 'updraftplus'), '4096').'</option>
+			</select></td></tr>';
 		
 		$ret .= '<tr class="updraft_debugrow"><th style=""></th><td style="width:80%;"><button type="button" class="button button-primary" id="updraftcentral_keycreate_go">'.__('Create', 'updraftplus').'</button></td></tr>';
 		

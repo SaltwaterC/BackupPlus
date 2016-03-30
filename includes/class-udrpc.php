@@ -59,7 +59,7 @@ if (!class_exists('UpdraftPlus_Remote_Communications')):
 class UpdraftPlus_Remote_Communications {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.4';
+	public $version = '1.4.2';
 
 	private $key_name_indicator;
 
@@ -93,6 +93,8 @@ class UpdraftPlus_Remote_Communications {
 	private $format = 2;
 	
 	private $http_credentials = array();
+	
+	private $incoming_message = null;
 	
 	public function __construct($key_name_indicator = 'default', $can_generate = false) {
 		$this->set_key_name_indicator($key_name_indicator);
@@ -273,12 +275,12 @@ class UpdraftPlus_Remote_Communications {
 		if ($this->key_option_name) update_site_option($this->key_option_name, $this->key_local);
 	}
 
-	public function generate_new_keypair() {
+	public function generate_new_keypair($key_size = 2048) {
 
 		$this->ensure_crypto_loaded();
 
 		$rsa = new Crypt_RSA();
-		$keys = $rsa->createKey(2048);
+		$keys = $rsa->createKey($key_size);
 
 		if (empty($keys['privatekey'])) {
 			$this->set_key_local(false);
@@ -443,13 +445,18 @@ class UpdraftPlus_Remote_Communications {
 		$send_array['key_name'] = $this->key_name_indicator;
 
 		// This random element means that if the site needs to send two identical commands or responses in the same second, then it can, and still use replay protection
-		$send_array['rand'] = rand(0, PHP_INT_MAX);
+		// The value of PHP_INT_MAX on a 32-bit platform
+		$send_array['rand'] = rand(0, 2147483647);
 		
 		if ($this->next_send_sequence_id) {
 			$send_array['sequence_id'] = $this->next_send_sequence_id;
 			$this->next_send_sequence_id++;
 		}
 
+		if ($is_response && !empty($this->incoming_message) && isset($this->incoming_message['rand'])) {
+			$send_array['incoming_rand'] = $this->incoming_message['rand'];
+		}
+		
 		if (null !== $data) $send_array['data'] = $data;
 		$send_data = $this->encrypt_message(json_encode($send_array), $use_key_remote);
 
@@ -463,7 +470,7 @@ class UpdraftPlus_Remote_Communications {
 			$signature = $this->signature_for_message($send_data, $use_key_local);
 			$message['signature'] = $signature;
 		}
-		
+
 		return $message;
 
 	}
@@ -866,6 +873,8 @@ class UpdraftPlus_Remote_Communications {
 			$wpdb->query($sql);
 			
 		}
+		
+		$this->incoming_message = $udrpc_message;
 
 		$command = (string)$udrpc_message['command'];
 		$data = empty($udrpc_message['data']) ? null : $udrpc_message['data'];

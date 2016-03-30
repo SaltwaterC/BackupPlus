@@ -37,9 +37,15 @@ class UpdraftPlus_UpdraftCentral_Listener {
 			$ud_rpc->set_key_remote($key['publickey_remote']);
 			// Create listener (which causes WP actions to be fired when messages are received)
 			$ud_rpc->activate_replay_protection();
-			if (!empty($key['extra_info']) && isset($key['extra_info']['mothership']) && false != ($parsed = parse_url($key['extra_info']['mothership'])) && is_array($parsed)) {
-				$url = $parsed['scheme'].'://'.$parsed['host'];
-				$ud_rpc->set_allow_cors_from(array($url));
+			if (!empty($key['extra_info']) && isset($key['extra_info']['mothership'])) {
+				$mothership = $key['extra_info']['mothership'];
+				unset($url);
+				if ('__updraftpluscom' == $mothership) {
+					$url = 'https://updraftplus.com';
+				} elseif (false != ($parsed = parse_url($key['extra_info']['mothership'])) && is_array($parsed)) {
+					$url = $parsed['scheme'].'://'.$parsed['host'];
+				}
+				if (!empty($url)) $ud_rpc->set_allow_cors_from(array($url));
 			}
 			$ud_rpc->create_listener();
 		}

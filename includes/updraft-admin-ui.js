@@ -1215,6 +1215,7 @@ jQuery(document).ready(function($){
 		var is_other = jQuery('#updraftcentral_mothership_other').is(':checked') ? true : false;
 		
 		var key_description = jQuery('#updraftcentral_keycreate_description').val();
+		var key_size = jQuery('#updraftcentral_keycreate_keysize').val();
 
 		var where_send = '__updraftpluscom';
 		
@@ -1222,6 +1223,7 @@ jQuery(document).ready(function($){
 			action: 'updraft_ajax',
 			subaction: 'updraftcentral_create_key',
 			key_description: key_description,
+			key_size: key_size,
 			nonce: updraft_credentialtest_nonce
 		};
 		

@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, microsoft one drive, microsoft azure, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.5
-Stable tag: 1.12.1
+Stable tag: 1.12.2
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -119,6 +119,12 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.11.29 of the free version correspond to changes made in 2.11.29.x of the paid version.
+
+= 1.12.2 - 30/Mar/2016 =
+
+* TWEAK: When testing Amazon S3 bucket accessibility, slightly improve one of the corner-case checks
+* TWEAK: When creating an encryption key for direct Migration, or UpdraftCentral, allow the user to choose their key size (this helps with PHP installs lacking both OpenSSL and GMP, in which case key creation can be really slow)
+* TWEAK: Detect another case and deal with an HTTP 413 response when sending chunked data on a direct site-to-site migration
 
 = 1.12.1 - 24/Mar/2016 =
 
@@ -1812,4 +1818,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.1: Compatible with the forthcoming UpdraftCentral; various tweaks, fixes and small improvements.
+* 1.12.2: Compatible with the forthcoming UpdraftCentral; various minor tweaks
