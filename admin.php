@@ -120,6 +120,7 @@ class UpdraftPlus_Admin {
 			$next_scheduled_backup_gmt = gmdate('Y-m-d H:i:s', $next_scheduled_backup);
 			// Convert to blog time zone
 			$next_scheduled_backup = get_date_from_gmt($next_scheduled_backup_gmt, 'D, F j, Y H:i');
+// 			$next_scheduled_backup = date_i18n('D, F j, Y H:i', $next_scheduled_backup);
 		} else {
 			$next_scheduled_backup = __('Nothing currently scheduled', 'updraftplus');
 			$files_not_scheduled = true;
@@ -140,12 +141,12 @@ class UpdraftPlus_Admin {
 				$next_scheduled_backup_database_gmt = gmdate('Y-m-d H:i:s', $next_scheduled_backup_database);
 				// Convert to blog time zone
 				$next_scheduled_backup_database = get_date_from_gmt($next_scheduled_backup_database_gmt, 'D, F j, Y H:i');
+// 				$next_scheduled_backup_database = date_i18n('D, F j, Y H:i', $next_scheduled_backup_database);
 			} else {
 				$next_scheduled_backup_database = __('Nothing currently scheduled', 'updraftplus');
 				$database_not_scheduled = true;
 			}
 		}
-		$current_time = get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'D, F j, Y H:i');
 		?>
 		<tr>
 		<?php if (isset($files_not_scheduled) && isset($database_not_scheduled)) { ?>
@@ -158,15 +159,9 @@ class UpdraftPlus_Admin {
 					<td class="updraft_scheduled"><?php _e('Database','updraftplus');?>: </td><td class="updraft_all-files"><?php echo $next_scheduled_backup_database; ?></td>
 				</tr>
 			<?php } ?>
-			<!--
-			<tr>
-				<td class="updraft_scheduled"><?php _e('Time now','updraftplus');?>: </td><td class="updraft_all-files"><?php echo $current_time; ?></td>
-			</tr>
-			-->
 		<?php
 		}
 	}
-	
 	
 	private function admin_init() {
 
@@ -1241,7 +1236,7 @@ class UpdraftPlus_Admin {
 			}
 
 			$mess = array();
-			parse_str($_REQUEST['restoreopts'], $res);
+			parse_str(stripslashes($_REQUEST['restoreopts']), $res);
 
 			if (isset($res['updraft_restore'])) {
 
@@ -1657,12 +1652,12 @@ class UpdraftPlus_Admin {
 			if ($mod_time) $logs_exist = true;
 		}
 		
-		return array(
+		return apply_filters('updraftplus_get_history_status_result', array(
 			'n' => sprintf(__('Existing Backups', 'updraftplus').' (%d)', count($backup_history)),
 			't' => $output,
 			'cksum' => md5($output),
 			'logs_exist' => $logs_exist,
-		);
+		));
 	}
 	
 	public function get_disk_space_used($entity) {
@@ -1887,7 +1882,7 @@ class UpdraftPlus_Admin {
 		global $updraftplus;
 		if (0 == error_reporting()) return true;
 		$logline = $updraftplus->php_error_to_logline($errno, $errstr, $errfile, $errline);
-		$this->logged[] = $logline;
+		if (false !== $logline) $this->logged[] = $logline;
 		# Don't pass it up the chain (since it's going to be output to the user always)
 		return true;
 	}
@@ -2447,6 +2442,8 @@ class UpdraftPlus_Admin {
 				<?php
 					$last_backup_html = $this->last_backup_html(); 
 					$current_time = get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'D, F j, Y H:i');
+// 					$current_time = date_i18n('D, F j, Y H:i');
+
 				?>
 
 				<script>var lastbackup_laststatus = '<?php echo esc_js($last_backup_html);?>';</script>
@@ -3079,6 +3076,9 @@ class UpdraftPlus_Admin {
 					$cvs = __('Not installed', 'updraftplus').' ('.__('required for some remote storage providers', 'updraftplus').')';
 				}
 				$this->settings_debugrow(sprintf(__('%s version:', 'updraftplus'), 'Curl'), htmlspecialchars($cvs));
+				$this->settings_debugrow(sprintf(__('%s version:', 'updraftplus'), 'OpenSSL'), defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : '-');
+				$this->settings_debugrow('MCrypt:', function_exists('mcrypt_encrypt') ? __('Yes') : __('No'));
+				
 				if (version_compare(phpversion(), '5.2.0', '>=') && extension_loaded('zip')) {
 					$ziparchive_exists = __('Yes', 'updraftplus');
 				} else {
@@ -3588,11 +3588,13 @@ class UpdraftPlus_Admin {
 			$backup_time = (int)$updraft_last_backup['backup_time'];
 
 			$print_time = get_date_from_gmt(gmdate('Y-m-d H:i:s', $backup_time), 'D, F j, Y H:i');
+// 			$print_time = date_i18n('D, F j, Y H:i', $backup_time);
 
 			if (empty($updraft_last_backup['backup_time_incremental'])) {
 				$last_backup_text = "<span style=\"color:".(($updraft_last_backup['success']) ? 'green' : 'black').";\">".$print_time.'</span>';
 			} else {
 				$inc_time = get_date_from_gmt(gmdate('Y-m-d H:i:s', $updraft_last_backup['backup_time_incremental']), 'D, F j, Y H:i');
+// 				$inc_time = date_i18n('D, F j, Y H:i', $updraft_last_backup['backup_time_incremental']);
 				$last_backup_text = "<span style=\"color:".(($updraft_last_backup['success']) ? 'green' : 'black').";\">$inc_time</span> (".sprintf(__('incremental backup; base backup: %s', 'updraftplus'), $print_time).')';
 			}
 
@@ -3831,7 +3833,7 @@ class UpdraftPlus_Admin {
 			<table class="form-table width-900">
 
 			<tr>
-				<th><?php _e('Database encryption phrase','updraftplus');?>:</th>
+				<th><?php _e('Database encryption phrase', 'updraftplus');?>:</th>
 
 				<td>
 				<?php
@@ -4121,7 +4123,7 @@ class UpdraftPlus_Admin {
 
 	public function optionfilter_split_every($value) {
 		$value = absint($value);
-		if (!$value >= UPDRAFTPLUS_SPLIT_MIN) $value = UPDRAFTPLUS_SPLIT_MIN;
+		if ($value < UPDRAFTPLUS_SPLIT_MIN) $value = UPDRAFTPLUS_SPLIT_MIN;
 		return $value;
 	}
 
@@ -4770,10 +4772,10 @@ ENDHERE;
 			// Gather the restore optons into one place - code after here should read the options, and not the HTTP layer
 			$restore_options = array();
 			if (!empty($_POST['updraft_restorer_restore_options'])) {
-				parse_str($_POST['updraft_restorer_restore_options'], $restore_options);
+				parse_str(stripslashes($_POST['updraft_restorer_restore_options']), $restore_options);
 			}
 			$restore_options['updraft_restorer_replacesiteurl'] = empty($_POST['updraft_restorer_replacesiteurl']) ? false : true;
-			$restore_options['updraft_encryptionphrase'] = empty($_POST['updraft_encryptionphrase']) ? '' : (string)$_POST['updraft_encryptionphrase'];
+			$restore_options['updraft_encryptionphrase'] = empty($_POST['updraft_encryptionphrase']) ? '' : (string)stripslashes($_POST['updraft_encryptionphrase']);
 			$restore_options['updraft_restorer_wpcore_includewpconfig'] = empty($_POST['updraft_restorer_wpcore_includewpconfig']) ? false : true;
 			$updraftplus->jobdata_set('restore_options', $restore_options);
 		}
@@ -5088,7 +5090,7 @@ ENDHERE;
 		
 		if (empty($_POST['settings']) || !is_string($_POST['settings'])) die('Invalid data');
 
-		parse_str($_POST['settings'], $posted_settings);
+		parse_str(stripslashes($_POST['settings']), $posted_settings);
 		// We now have $posted_settings as an array
 		
 		echo json_encode($this->save_settings($posted_settings));
@@ -5112,8 +5114,6 @@ ENDHERE;
 		}
 	}
        
-
-	
 	public function save_settings($settings) {
 	
 		global $updraftplus;
@@ -5121,7 +5121,7 @@ ENDHERE;
 		// Make sure that settings filters are registered
 		UpdraftPlus_Options::admin_init();
 	
-		$return_array = array('saved' => true, 'changed' => array());
+		$return_array = array('saved' => true);
 		
 		$add_to_post_keys = array('updraft_interval', 'updraft_interval_database', 'updraft_starttime_files', 'updraft_starttime_db', 'updraft_startday_files', 'updraft_startday_db');
 		
@@ -5148,6 +5148,7 @@ ENDHERE;
 		$relevant_keys = $updraftplus->get_settings_keys();
 		
 		if (method_exists('UpdraftPlus_Options', 'mass_options_update')) {
+			$original_settings = $settings;
 			$settings = UpdraftPlus_Options::mass_options_update($settings);
 			$mass_updated = true;
 		}
@@ -5163,15 +5164,16 @@ ENDHERE;
 					}
 				}
 
-				$updated = empty($mass_updated) ? UpdraftPlus_Options::update_updraft_option($key, $value) : true;
+				// This flag indicates that either the stored database option was changed, or that the supplied option was changed before being stored. It isn't comprehensive - it's only used to update some UI elements with invalid input.
+				$updated = empty($mass_updated) ? (is_string($value) && $value != UpdraftPlus_Options::get_updraft_option($key)) : (is_string($value) && (!isset($original_settings[$key]) || $original_settings[$key] != $value));
+				
+				$db_updated = empty($mass_updated) ? UpdraftPlus_Options::update_updraft_option($key, $value) : true;
 				
 				// Add information on what has changed to array to loop through to update links etc.
-				if ($updated){
-					$return_array['changed'][$key] = $value;
-				} elseif (empty($mass_updated) && $key == 'updraft_interval') { //To schedule a database when the interval is not changed.
-					$updraftplus->schedule_backup($value);
-				} elseif (empty($mass_updated) && $key == 'updraft_interval_database') {
-					$updraftplus->schedule_backup_database($value);
+				// Restricting to strings for now, to prevent any unintended leakage (since this is just used for UI updating)
+				if ($updated) {
+					$value = UpdraftPlus_Options::get_updraft_option($key);
+					if (is_string($value)) $return_array['changed'][$key] = $value;
 				}
 			} else {
 				// When last active, it was catching: option_page, action, _wpnonce, _wp_http_referer, updraft_s3_endpoint, updraft_dreamobjects_endpoint. The latter two are empty; probably don't need to be in the page at all.
@@ -5221,6 +5223,9 @@ ENDHERE;
 		
 		$return_array['messages'] = $messages_output;
 		$return_array['scheduled'] = $scheduled_output;
+		
+		//*** Add the updated options to the return message, so we can update on screen ***\\
+		
 		
 		return $return_array;
 		

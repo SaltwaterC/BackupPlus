@@ -396,11 +396,6 @@ class UpdraftPlus_Backup {
 
 	private function group_backups($backup_history) {
 		return array(array('sets' => $backup_history, 'process_order' => 'keep_newest'));
-// 		$groups = array();
-// 		foreach ($backup_history as $k => $v) {
-// 			$groups[] = array('sets' => array($k => $v));
-// 		}
-// 		return $groups;
 	}
 	
 	// $services *must* be an array
@@ -643,7 +638,7 @@ class UpdraftPlus_Backup {
 					
 						// This should only be able to happen if you import backups with a future timestamp
 						if ($nonce == $updraftplus->nonce) {
-							$updraftplus->log("This backup set is the backup set just made, so will not be deleted, despite being over the retain limit.");
+							$updraftplus->log("This backup set is the backup set just made, so will not be deleted.");
 							$file_entities_backups_found[$entity]++;
 							continue;
 						}
@@ -1975,7 +1970,7 @@ class UpdraftPlus_Backup {
 				}
 			} else {
 				$updraftplus->log("$fullpath: unreadable file");
-				$updraftplus->log(sprintf(__("%s: unreadable file - could not be backed up (check the file permissions)", 'updraftplus'), $fullpath), 'warning');
+				$updraftplus->log(sprintf(__("%s: unreadable file - could not be backed up (check the file permissions and ownership)", 'updraftplus'), $fullpath), 'warning');
 			}
 		} elseif (is_dir($fullpath)) {
 			if ($fullpath == $this->updraft_dir_realpath) {
@@ -1989,7 +1984,7 @@ class UpdraftPlus_Backup {
 			if (!isset($this->existing_files[$use_path_when_storing])) $this->zipfiles_dirbatched[] = $use_path_when_storing;
 			if (!$dir_handle = @opendir($fullpath)) {
 				$updraftplus->log("Failed to open directory: $fullpath");
-				$updraftplus->log(sprintf(__("Failed to open directory (check the file permissions): %s",'updraftplus'), $fullpath), 'error');
+				$updraftplus->log(sprintf(__("Failed to open directory (check the file permissions and ownership): %s",'updraftplus'), $fullpath), 'error');
 				return false;
 			}
 

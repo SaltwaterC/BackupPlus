@@ -32,6 +32,8 @@ class UpdraftPlus_BackupModule_dropbox {
 	private $current_file_hash;
 	private $current_file_size;
 	private $dropbox_object;
+	private $uploaded_offset;
+	private $upload_tick;
 
 	public function chunked_callback($offset, $uploadid, $fullpath = false) {
 		global $updraftplus;
@@ -40,11 +42,33 @@ class UpdraftPlus_BackupModule_dropbox {
 		$updraftplus->jobdata_set('updraf_dbid_'.$this->current_file_hash, $uploadid);
 		$updraftplus->jobdata_set('updraf_dbof_'.$this->current_file_hash, $offset);
 
-		$this->upload_tick = time();
-
+		$time_now = microtime(true);
+		
+		$time_since_last_tick = $time_now - $this->upload_tick;
+		$data_since_last_tick = $offset - $this->uploaded_offset;
+		
+		$this->upload_tick = $time_now;
+		$this->uploaded_offset = $offset;
+		
+		$chunk_size = $updraftplus->jobdata_get('dropbox_chunk_size', 1048576);
+		// Don't go beyond 10MB, or change the chunk size after the last segment
+		if ($chunk_size < 10485760 && $this->current_file_size > 0 && $offset < $this->current_file_size) {
+			$job_run_time = $time_now - $updraftplus->job_time_ms;
+			if ($time_since_last_tick < 10) {
+				$upload_rate = $data_since_last_tick / max($time_since_last_tick, 1);
+				$upload_secs = min(floor($job_run_time), 10);
+				if ($job_run_time < 15) $upload_secs = max(6, $job_run_time*0.6);
+				$new_chunk = max(min($upload_secs * $upload_rate * 0.9, 10485760), 1048576);
+				$new_chunk = $new_chunk - ($new_chunk % 524288);
+				$chunk_size = (int)$new_chunk;
+				$this->dropbox_object->setChunkSize($chunk_size);
+				$updraftplus->jobdata_set('dropbox_chunk_size', $chunk_size);
+			}
+		}
+		
 		if ($this->current_file_size > 0) {
 			$percent = round(100*($offset/$this->current_file_size),1);
-			$updraftplus->record_uploaded_chunk($percent, "$uploadid, $offset", $fullpath);
+			$updraftplus->record_uploaded_chunk($percent, "$uploadid, $offset, ".round($chunk_size/1024, 1)." KB", $fullpath);
 		} else {
 			$updraftplus->log("Dropbox: Chunked Upload: $offset bytes uploaded");
 			// This act is done by record_uploaded_chunk, and helps prevent overlapping runs
@@ -83,12 +107,14 @@ class UpdraftPlus_BackupModule_dropbox {
 			$updraftplus->log(__('You do not appear to be authenticated with Dropbox','updraftplus'), 'error');
 			return false;
 		}
+		
+		$chunk_size = $updraftplus->jobdata_get('dropbox_chunk_size', 1048576);
 
 		try {
 			$dropbox = $this->bootstrap();
 			if (false === $dropbox) throw new Exception(__('You do not appear to be authenticated with Dropbox', 'updraftplus'));
-			$updraftplus->log("Dropbox: access gained");
-			$dropbox->setChunkSize(1048576);
+			$updraftplus->log("Dropbox: access gained; setting chunk size to: ".round($chunk_size/1024, 1)." KB");
+			$dropbox->setChunkSize($chunk_size);
 		} catch (Exception $e) {
 			$updraftplus->log('Dropbox error when trying to gain access: '.$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
 			$updraftplus->log(sprintf(__('Dropbox error: %s (see log file for more)','updraftplus'), $e->getMessage()), 'error');
@@ -163,7 +189,8 @@ class UpdraftPlus_BackupModule_dropbox {
 
 			$updraftplus->log("Dropbox: Attempt to upload: $file to: $ufile");
 
-			$this->upload_tick = time();
+			$this->upload_tick = microtime(true);
+			$this->uploaded_offset = $offset;
 
 			try {
 				$response = $dropbox->chunkedUpload($updraft_dir.'/'.$file, '', $ufile, true, $offset, $upload_id, array($this, 'chunked_callback'));
@@ -182,11 +209,31 @@ class UpdraftPlus_BackupModule_dropbox {
 					$we_tried = $matches[1];
 					$dropbox_wanted = $matches[2];
 					$updraftplus->log("Dropbox not yet aligned: tried=$we_tried, wanted=$dropbox_wanted; will attempt recovery");
+					$this->uploaded_offset = $dropbox_wanted;
 					try {
 						$dropbox->chunkedUpload($updraft_dir.'/'.$file, '', $ufile, true, $dropbox_wanted, $upload_id, array($this, 'chunked_callback'));
 					} catch (Exception $e) {
 						$msg = $e->getMessage();
-						$updraftplus->log('Dropbox error: '.$msg.' (line: '.$e->getLine().', file: '.$e->getFile().')');
+						if (preg_match('/Upload with upload_id .* already completed/', $msg)) {
+							$updraftplus->log('Dropbox returned an error, but apparently indicating previous success: '.$msg);
+						} else {
+							$updraftplus->log('Dropbox error: '.$msg.' (line: '.$e->getLine().', file: '.$e->getFile().')');
+							$updraftplus->log('Dropbox '.sprintf(__('error: failed to upload file to %s (see log file for more)','updraftplus'), $ufile), 'error');
+							$file_success = 0;
+							if (strpos($msg, 'select/poll returned error') !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800) {
+								$updraftplus->reschedule(60);
+								$updraftplus->log("Select/poll returned after a long time: scheduling a resumption and terminating for now");
+								$updraftplus->record_still_alive();
+								die;
+							}
+						}
+					}
+				} else {
+					$msg = $e->getMessage();
+					if (preg_match('/Upload with upload_id .* already completed/', $msg)) {
+						$updraftplus->log('Dropbox returned an error, but apparently indicating previous success: '.$msg);
+					} else {
+						$updraftplus->log('Dropbox error: '.$msg);
 						$updraftplus->log('Dropbox '.sprintf(__('error: failed to upload file to %s (see log file for more)','updraftplus'), $ufile), 'error');
 						$file_success = 0;
 						if (strpos($msg, 'select/poll returned error') !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800) {
@@ -195,17 +242,6 @@ class UpdraftPlus_BackupModule_dropbox {
 							$updraftplus->record_still_alive();
 							die;
 						}
-					}
-				} else {
-					$msg = $e->getMessage();
-					$updraftplus->log('Dropbox error: '.$msg);
-					$updraftplus->log('Dropbox '.sprintf(__('error: failed to upload file to %s (see log file for more)','updraftplus'), $ufile), 'error');
-					$file_success = 0;
-					if (strpos($msg, 'select/poll returned error') !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800) {
-						$updraftplus->reschedule(60);
-						$updraftplus->log("Select/poll returned after a long time: scheduling a resumption and terminating for now");
-						$updraftplus->record_still_alive();
-						die;
 					}
 				}
 			}

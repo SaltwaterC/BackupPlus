@@ -139,7 +139,7 @@ class UpdraftPlus {
 
 	public function ensure_phpseclib($classes = false, $class_paths = false) {
 
-		if (false === strpos(get_include_path(), UPDRAFTPLUS_DIR.'/includes/phpseclib')) set_include_path(get_include_path().PATH_SEPARATOR.UPDRAFTPLUS_DIR.'/includes/phpseclib');
+		if (false === strpos(get_include_path(), UPDRAFTPLUS_DIR.'/includes/phpseclib')) set_include_path(UPDRAFTPLUS_DIR.'/includes/phpseclib'.PATH_SEPARATOR.get_include_path());
 
 		$this->no_deprecation_warnings_on_php7();
 
@@ -168,6 +168,7 @@ class UpdraftPlus {
 			$old_level = error_reporting();
 			$new_level = $old_level & ~E_DEPRECATED;
 			if ($old_level != $new_level) error_reporting($new_level);
+			$this->no_deprecation_warnings = true;
 		}
 	}
 
@@ -321,7 +322,7 @@ class UpdraftPlus {
 				$file = $_GET['updraftplus_file'];
 				$spool_file = $updraft_dir.'/'.basename($file);
 				if (is_readable($spool_file)) {
-					$dkey = isset($_GET['decrypt_key']) ? $_GET['decrypt_key'] : "";
+					$dkey = isset($_GET['decrypt_key']) ? stripslashes($_GET['decrypt_key']) : '';
 					$this->spool_file($spool_file, $dkey);
 					exit;
 				} else {
@@ -356,7 +357,7 @@ class UpdraftPlus {
 					exit;
 				}
 				
-				$dkey = isset($_GET['decrypt_key']) ? (string)$_GET['decrypt_key'] : "";
+				$dkey = isset($_GET['decrypt_key']) ? stripslashes($_GET['decrypt_key']) : "";
 				
 				$this->spool_file($updraft_dir.'/'.basename($filename), $dkey);
 				exit;
@@ -539,11 +540,11 @@ class UpdraftPlus {
 		$memory_usage = round(@memory_get_usage(false)/1048576, 1);
 		$memory_usage2 = round(@memory_get_usage(true)/1048576, 1);
 
-		# Attempt to raise limit to avoid false positives
+		// Attempt to raise limit to avoid false positives
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);
 		$max_execution_time = (int)@ini_get("max_execution_time");
 
-		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".@php_uname().") MySQL: $mysql_version Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? 'Y' : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";
+		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".@php_uname().") MySQL: $mysql_version WPLANG: ".$this->get_wplang()." Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? 'Y' : 'N')." openssl: ".(defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";
 
 		// method_exists causes some faulty PHP installations to segfault, leading to support requests
 		if (version_compare(phpversion(), '5.2.0', '>=') && extension_loaded('zip')) {
@@ -918,6 +919,15 @@ class UpdraftPlus {
 	public function decrypt($fullpath, $key, $ciphertext = false) {
 		$this->ensure_phpseclib('Crypt_Rijndael', 'Crypt/Rijndael');
 		$rijndael = new Crypt_Rijndael();
+		if (defined('UPDRAFTPLUS_DECRYPTION_ENGINE')) {
+			if ('openssl' == UPDRAFTPLUS_DECRYPTION_ENGINE) {
+				$rijndael->setPreferredEngine(CRYPT_ENGINE_OPENSSL);
+			} elseif ('mcrypt' == UPDRAFTPLUS_DECRYPTION_ENGINE) {
+				$rijndael->setPreferredEngine(CRYPT_ENGINE_MCRYPT);
+			} elseif ('internal' == UPDRAFTPLUS_DECRYPTION_ENGINE) {
+				$rijndael->setPreferredEngine(CRYPT_ENGINE_INTERNAL);
+			}
+		}
 		$rijndael->setKey($key);
 		return (false == $ciphertext) ? $rijndael->decrypt(file_get_contents($fullpath)) : $rijndael->decrypt($ciphertext);
 	}
@@ -1329,6 +1339,10 @@ class UpdraftPlus {
 
 		if (0 === strpos($errfile, ABSPATH)) $errfile = substr($errfile, strlen(ABSPATH));
 
+		if ('E_DEPRECATED' == $e_type && !empty($this->no_deprecation_warnings)) {
+			return false;
+		}
+		
 		return "PHP event: code $e_type: $errstr (line $errline, $errfile)";
 
 	}
@@ -1336,7 +1350,7 @@ class UpdraftPlus {
 	public function php_error($errno, $errstr, $errfile, $errline) {
 		if (0 == error_reporting()) return true;
 		$logline = $this->php_error_to_logline($errno, $errstr, $errfile, $errline);
-		$this->log($logline, 'notice', 'php_event');
+		if (false !== $logline) $this->log($logline, 'notice', 'php_event');
 		// Pass it up the chain
 		return $this->error_reporting_stop_when_logged;
 	}
@@ -2919,7 +2933,6 @@ class UpdraftPlus {
 		// Clear schedule so that we don't stack up scheduled backups
 		wp_clear_scheduled_hook('updraft_backup');
 		if ('manual' == $interval) return 'manual';
-
 		$previous_interval = UpdraftPlus_Options::get_updraft_option('updraft_interval');
 
 		$valid_schedules = wp_get_schedules();
@@ -3180,7 +3193,7 @@ class UpdraftPlus {
 				print $ciphertext;
 			} else {
 				header('Content-type: text/plain');
-				echo __("Decryption failed. The most likely cause is that you used the wrong key.",'updraftplus')." ".__('The decryption key used:','updraftplus').' '.$encryption;
+				echo __("Decryption failed. The most likely cause is that you used the wrong key.", 'updraftplus')." ".__('The decryption key used:', 'updraftplus').' '.$encryption;
 				
 			}
 		}
@@ -3272,7 +3285,7 @@ class UpdraftPlus {
 	}
 
 	public function replace_http_with_webdav($input) {
-		if (!empty($input['url']) && 'http' == substr($input['url'], 0, 4)) $input['url'] = 'webdav'.substr($input['url'], 4);
+		if (!empty($input['url']) && 'http' == strtolower(substr($input['url'], 0, 4))) $input['url'] = 'webdav'.substr($input['url'], 4);
 		return $input;
 	}
 

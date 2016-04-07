@@ -615,10 +615,14 @@ function updraft_updatehistory(rescan, remotescan) {
 	jQuery.get(ajaxurl, { action: 'updraft_ajax', subaction: 'historystatus', nonce: updraft_credentialtest_nonce, rescan: rescan, remotescan: remotescan }, function(response) {
 		try {
 			resp = jQuery.parseJSON(response);
-			
+
 			if (resp.hasOwnProperty('logs_exist') && resp.logs_exist) {
 				// Show the "most recently modified log" link, in case it was previously hidden (if there were no logs until now)
 				jQuery('#updraft_lastlogmessagerow .updraft-log-link').show();
+			}
+			
+			if (resp.hasOwnProperty('migrate_modal') && resp.migrate_modal) {
+				jQuery('#updraft_migrate_modal_main').replaceWith(resp.migrate_modal);
 			}
 			
 			if (resp.n != null) { jQuery('#updraft-navtab-backups').html(resp.n); }
@@ -1098,13 +1102,19 @@ jQuery(document).ready(function($){
 		};
 	}
 
-	jQuery('#updraft-navtab-backups-content').on('click', '.updraft_existing_backups .updraft_existing_backups_row', function(e) {
+	$('#updraftcentral_keycreate_altmethod_moreinfo_get').click(function(e) {
+		e.preventDefault();
+		$(this).remove();
+		$('#updraftcentral_keycreate_altmethod_moreinfo').slideDown();
+	});
+	
+	$('#updraft-navtab-backups-content').on('click', '.updraft_existing_backups .updraft_existing_backups_row', function(e) {
 		if (! e.ctrlKey && ! e.metaKey) return;
-		jQuery(this).toggleClass('backuprowselected');
-		if (jQuery('#updraft-navtab-backups-content .updraft_existing_backups .updraft_existing_backups_row.backuprowselected').length >0) {
-			jQuery('#ud_massactions').show();
+		$(this).toggleClass('backuprowselected');
+		if ($('#updraft-navtab-backups-content .updraft_existing_backups .updraft_existing_backups_row.backuprowselected').length >0) {
+			$('#ud_massactions').show();
 		} else {
-			jQuery('#ud_massactions').hide();
+			$('#ud_massactions').hide();
 		}
 	});
 	
@@ -1166,11 +1176,6 @@ jQuery(document).ready(function($){
 			}
 		} else {
 			jQuery('#updraftcentral_keycreate_mothership').prop('disabled', true);
-			if (on_page_load) {
-				jQuery('#updraftcentral_keycreate_mothership_firewalled_container').hide();
-			} else {
-				jQuery('#updraftcentral_keycreate_mothership_firewalled_container').slideUp();
-			}
 		}
 	}
 	
@@ -1233,9 +1238,9 @@ jQuery(document).ready(function($){
 				alert(updraftlion.enter_mothership_url);
 				return;
 			}
-			data.mothership_firewalled = jQuery('#updraftcentral_keycreate_mothership_firewalled').is(':checked') ? 1 : 0;
 		}
 		
+		data.mothership_firewalled = jQuery('#updraftcentral_keycreate_mothership_firewalled').is(':checked') ? 1 : 0;
 		data.where_send = where_send;
 		
 		jQuery('#updraftcentral_keys').block({ message: '<div style="margin: 8px; font-size:150%;"><img src="'+updraftlion.ud_url+'/images/udlogo-rotating.gif" height="80" width="80" style="padding-bottom:10px;"><br>'+updraftlion.creating+'</div>'});
@@ -2254,8 +2259,8 @@ jQuery(document).ready(function($){
 			try {
 				var resp = jQuery.parseJSON(response);
 				
-				var messages = resp.changed.updraft_service;
-				var debug = resp.changed.updraft_debug_mode;
+				var messages = resp.messages;
+// 				var debug = resp.changed.updraft_debug_mode;
 				
 				// If backup dir is not writable, change the text, and grey out the 'Backup Now' button
 				var backup_dir_writable = resp.backup_dir.writable;
@@ -2268,7 +2273,25 @@ jQuery(document).ready(function($){
 				$.unblockUI();
 				return;
 			}
-				
+			
+			if (resp.hasOwnProperty('changed')) {
+				console.log("UpdraftPlus: savesettings: some values were changed after being filtered");
+				console.log(resp.changed);
+				for(prop in resp.changed){
+					if(typeof resp.changed[prop] === 'object'){
+						for(innerprop in resp.changed[prop]){
+							if(!$("[name='"+innerprop+"']").is(':checkbox')){
+								$("[name='"+prop+"["+innerprop+"]']").val(resp.changed[prop][innerprop]);
+							}
+						}
+					} else {
+						if(!$("[name='"+prop+"']").is(':checkbox')){				
+							$("[name='"+prop+"']").val(resp.changed[prop]);
+						}
+					}
+				}
+			}
+			
 			$('#updraft_writable_mess').html(backup_dir_message);
 			
 			if (backup_dir_writable == false){

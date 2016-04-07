@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2016-02-29 17:21:21+0000\n"
+"PO-Revision-Date: 2016-03-25 18:52:03+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -12,51 +12,51 @@ msgstr ""
 
 #: central/bootstrap.php:422
 msgid "i.e. you have an account there"
-msgstr ""
+msgstr "par exemple si vous avez un compte là-bas"
 
 #: central/bootstrap.php:422
 msgid "Other (please specify - i.e. the site where you have installed an UpdraftCentral dashboard)"
-msgstr ""
+msgstr "Autre (veuillez préciser ; par exemple le site où vous avez installé un tableau de bord UpdraftCentral)"
 
 #: central/bootstrap.php:422
 msgid "Use the alternative method for making a connection with the mothership. This is suitable if the mothership cannot be contacted with incoming traffic by this website (for example, this is the case if this website is hosted on the public Internet, but the UpdraftCentral mothership is on localhost, or on an Intranet), or if the mothership site does not have a SSL certificate."
-msgstr ""
+msgstr "Utilisez la méthode alternative pour établir une connexion avec le site maître. Ceci est opportun si le site maître ne peut pas être contacté avec un trafic entrant par ce site (par exemple, si ce site est hébergé sur l'Internet public mais que le site maître UpdraftPlus Central est situé en local ou encore sur un intranet) ou si le site maître n'a pas de certificat SSL."
 
 #: class-updraftplus.php:1230
 msgid "Size: %s MB"
-msgstr ""
+msgstr "Taille: %s Mo"
 
 #: methods/email.php:28
 msgid "This backup archive is %s MB in size - the attempt to send this via email is likely to fail (few email servers allow attachments of this size). If so, you should switch to using a different remote storage method."
-msgstr ""
+msgstr "Le poids de cette archive de sauvegarde est de %s Mo. Tenter de l'envoyer par e-mail risque d'échouer (peut de serveurs d'e-mailing laissent passer des pièces jointes de ce poids. Vous devriez donc opter pour un autre moyen de stockage à distance que l'e-mail."
 
 #: methods/email.php:77
 msgid "Be aware that mail servers tend to have size limits; typically around %s MB; backups larger than any limits will likely not arrive."
-msgstr ""
+msgstr "Les serveurs d'e-mailing autorisent généralement les pièces jointes jusqu'à un certain poids, généralement autour de %s Mo. Les sauvegardes ayant un poids plus important n'arriveront probablement pas à destination."
 
 #: methods/ftp.php:355
 msgid "login"
-msgstr ""
+msgstr "Identifiant"
 
 #: methods/ftp.php:383
 msgid "This is sometimes caused by a firewall - try turning off SSL in the expert settings, and testing again."
-msgstr ""
+msgstr "Ceci est parfois occasionné par un pare-feu (firewall). Essayez d'éteindre \"SSL\" dans les réglages avancés, puis renouvelez votre test."
 
 #: methods/googledrive.php:417
 msgid "Upload expected to fail: the %s limit for any single file is %s, whereas this file is %s GB (%d bytes)"
-msgstr ""
+msgstr "L'upload risque d'échouer. La limite %s pour tout fichier est de %s, or ce fichier a un poids de %s Go (%d octets)"
 
 #: admin.php:2456
 msgid "Now"
-msgstr ""
+msgstr "Maintenant"
 
 #: admin.php:2607
 msgid "Free 1GB for UpdraftPlus Vault"
-msgstr ""
+msgstr "1 Go gratuit pour UpdraftPlus Vault"
 
 #: admin.php:3957
 msgid "UpdraftPlus will split up backup archives when they exceed this file size. The default value is %s megabytes. Be careful to leave some margin if your web-server has a hard size limit (e.g. the 2 GB / 2048 MB limit on some 32-bit servers/file systems)."
-msgstr ""
+msgstr "UpdraftPlus va scinder les archives de sauvegarde chaque fois qu'elles dépassent ce poids. La valeur limite par défaut est de %s Mo. Veillez à prévoir un peu de marge si votre serveur Web possède une limite de stockage (par exemple la limite de 2 Go / 2048 Mo sur certains serveurs ou systèmes de fichier 32 bits)."
 
 #: class-updraftplus.php:3516 restorer.php:926
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
@@ -1855,7 +1855,7 @@ msgstr "Date de la sauvegarde"
 
 #: admin.php:4326
 msgid "Backup data (click to download)"
-msgstr "Données de sauvegarde (cliquer pour télécharger)"
+msgstr "Données sauvegardées (cliquer dessus pour télécharger)"
 
 #: admin.php:3220 admin.php:4630
 msgid "View Log"
@@ -3486,7 +3486,7 @@ msgstr "Sans lui, la procédure de cryptage sera bien plus lente."
 
 #: admin.php:2893
 msgid "Drop backup files here"
-msgstr "Laissez les fichiers de sauvegarde ici"
+msgstr "Cliquez-glissez vos fichiers de sauvegarde ici"
 
 #: addons/googlecloud.php:898 methods/googledrive.php:951
 msgid "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
@@ -4393,7 +4393,7 @@ msgstr "Test des paramètres %s"
 
 #: admin.php:2883
 msgid "Or, you can place them manually into your UpdraftPlus directory (usually wp-content/updraft), e.g. via FTP, and then use the \"rescan\" link above."
-msgstr "Ou vous pouvez les placer manuellement dans le répertoire UpdraftPlus (généralement wp-content/updraft) via FTP. Lancez ensuite une nouvelle analyse du dossier des sauvegardes pour détecter la (les) sauvegarde(s) envoyée(s) via FTP."
+msgstr "Alternativement, vous pouvez les placer manuellement dans le répertoire UpdraftPlus (généralement \"wp-content/updraft\") par FTP. Lancez ensuite une nouvelle analyse du dossier des sauvegardes pour détecter la (les) sauvegarde(s) envoyée(s) via FTP."
 
 #: admin.php:782
 msgid "Notice"
@@ -5534,7 +5534,7 @@ msgstr "Heure actuelle"
 
 #: admin.php:335 admin.php:515 admin.php:2436
 msgid "Backup Now"
-msgstr "Sauvegarder maintenant"
+msgstr "Sauvegarder"
 
 #: addons/migrator.php:212 admin.php:522 admin.php:2439 admin.php:4610
 msgid "Restore"
