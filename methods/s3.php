@@ -414,9 +414,27 @@ class UpdraftPlus_BackupModule_s3 {
 
 	public function listfiles($match = 'backup_') {
 
-		global $updraftplus;
-
 		$config = $this->get_config();
+
+		return $this->listfiles_with_path($config['path'], $match);
+		
+	}
+	
+	// The purpose of splitting this into a separate method, is to also allow listing with a different path
+	public function listfiles_with_path($path, $match = 'backup_') {
+		
+		$bucket_name = untrailingslashit($path);
+		$bucket_path = '';
+
+		if (preg_match("#^([^/]+)/(.*)$#", $bucket_name, $bmatches)) {
+			$bucket_name = $bmatches[1];
+			$bucket_path = trailingslashit($bmatches[2]);
+		}
+		
+		$config = $this->get_config();
+		
+		global $updraftplus;
+		
 		$whoweare = $config['whoweare'];
 		$whoweare_key = $config['key'];
 		$sse = empty($config['server_side_encryption']) ? false : true;
@@ -432,15 +450,7 @@ class UpdraftPlus_BackupModule_s3 {
 
 		if (is_wp_error($s3)) return $s3;
 		if (!is_a($s3, 'UpdraftPlus_S3') && !is_a($s3, 'UpdraftPlus_S3_Compat')) return new WP_Error('no_s3object', 'Failed to gain access to '.$config['whoweare']);
-
-		$bucket_name = untrailingslashit($config['path']);
-		$bucket_path = '';
-
-		if (preg_match("#^([^/]+)/(.*)$#", $bucket_name, $bmatches)) {
-			$bucket_name = $bmatches[1];
-			$bucket_path = trailingslashit($bmatches[2]);
-		}
-
+		
 		if (!empty($config['is_new_bucket'])) {
 			if (method_exists($s3, 'waitForBucket')) {
 				$s3->setExceptions(true);
@@ -497,7 +507,6 @@ class UpdraftPlus_BackupModule_s3 {
 				return new WP_Error('bucket_not_accessed', sprintf(__('%s Error: Failed to access bucket %s. Check your permissions and credentials.','updraftplus'),$whoweare, $bucket_name));
 			}
 		}
-
 		$bucket = $s3->getBucket($bucket_name, $bucket_path.$match);
 
 		if (!is_array($bucket)) return array();

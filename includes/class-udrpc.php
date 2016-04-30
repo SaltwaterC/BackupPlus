@@ -59,7 +59,7 @@ if (!class_exists('UpdraftPlus_Remote_Communications')):
 class UpdraftPlus_Remote_Communications {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.4.2';
+	public $version = '1.4.3';
 
 	private $key_name_indicator;
 
@@ -95,6 +95,8 @@ class UpdraftPlus_Remote_Communications {
 	private $http_credentials = array();
 	
 	private $incoming_message = null;
+	
+	private $message_random_number = null;
 	
 	public function __construct($key_name_indicator = 'default', $can_generate = false) {
 		$this->set_key_name_indicator($key_name_indicator);
@@ -446,7 +448,8 @@ class UpdraftPlus_Remote_Communications {
 
 		// This random element means that if the site needs to send two identical commands or responses in the same second, then it can, and still use replay protection
 		// The value of PHP_INT_MAX on a 32-bit platform
-		$send_array['rand'] = rand(0, 2147483647);
+		$this->message_random_number = rand(1, 2147483647);
+		$send_array['rand'] = $this->message_random_number;
 		
 		if ($this->next_send_sequence_id) {
 			$send_array['sequence_id'] = $this->next_send_sequence_id;
@@ -672,6 +675,20 @@ class UpdraftPlus_Remote_Communications {
 				'maximum_difference' => $this->maximum_replay_time_difference
 			)
 		);
+		
+		if (isset($json_decoded['incoming_rand']) && !empty($this->message_random_number) && $json_decoded['incoming_rand'] != $this->message_random_number) {
+			$this->log("UDRPC: Message mismatch (possibly MITM) (sent_rand="+$this->message_random_number+", returned_rand=".$json_decoded['incoming_rand']."): dropping", 'error');
+			
+			return array(
+				'response' => 'rpcerror',
+				'data' => array(
+					'code' => 'message_mismatch_error',
+					'ours' => $this->message_random_number,
+					'returned' => $json_decoded['incoming_rand']
+				)
+			);
+			
+		}
 
 		// Should be an array with keys including 'response' and (if relevant) 'data'
 		return $json_decoded;

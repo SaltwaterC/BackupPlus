@@ -49,6 +49,8 @@ class UpdraftPlus {
 	public $cpanel_quota_readable = false;
 
 	public $error_reporting_stop_when_logged = false;
+	
+	private $combine_jobs_around;
 
 	public function __construct() {
 
@@ -91,6 +93,9 @@ class UpdraftPlus {
 		# This is our runs-after-backup event, whose purpose is to see if it succeeded or failed, and resume/mom-up etc.
 		add_action('updraft_backup_resume', array($this, 'backup_resume'), 10, 3);
 
+		# If files + db are on different schedules but are scheduled for the same time, then combine them
+		add_filter('schedule_event', array($this, 'schedule_event'));
+		
 		add_action('plugins_loaded', array($this, 'plugins_loaded'));
 
 		# Prevent iThemes Security from telling people that they have no backups (and advertising them another product on that basis!)
@@ -641,7 +646,7 @@ class UpdraftPlus {
 			$this->jobdata_set('warnings', $warnings);
 		}
 
-		do_action('updraftplus_logline', $line, $this->nonce, $level, $uniq_id);
+		if (false === ($line = apply_filters('updraftplus_logline', $line, $this->nonce, $level, $uniq_id))) return;
 
 		if ($this->logfile_handle) {
 			# Record log file times relative to the backup start, if possible
@@ -797,7 +802,7 @@ class UpdraftPlus {
 			for ($i = 1 ; $i <= $chunks; $i++) {
 
 				$upload_start = ($i-1)*$chunk_size;
-				// The file size -1 equals the byte offset of the final byte
+				// The file size minus one equals the byte offset of the final byte
 				$upload_end = min($i*$chunk_size-1, $orig_file_size-1);
 				// Don't forget the +1; otherwise the last byte is omitted
 				$upload_size = $upload_end - $upload_start + 1;
@@ -806,13 +811,21 @@ class UpdraftPlus {
 
 				$uploaded = $caller->chunked_upload($file, $fp, $i, $upload_size, $upload_start, $upload_end);
 
-				// This is the only supported case of a WP_Error - otherwise, a boolean must be returned
+				// Try again? (Just once - added in 1.12.6 (can make more sophisticated if there is a need))
+				if (is_wp_error($uploaded) && 'try_again' == $uploaded->get_error_code()) {
+					// Arbitrary wait
+					sleep(3);
+					$this->log("Re-trying after wait (to allow apparent inconsistency to clear)");
+					$uploaded = $caller->chunked_upload($file, $fp, $i, $upload_size, $upload_start, $upload_end);
+				}
+				
+				// This is the only other supported case of a WP_Error - otherwise, a boolean must be returned
 				// Note that this is only allowed on the first chunk. The caller is responsible to remember its chunk size if it uses this facility.
 				if (1 == $i && is_wp_error($uploaded) && 'reduce_chunk_size' == $uploaded->get_error_code() && false != ($new_chunk_size = $uploaded->get_error_data()) && is_numeric($new_chunk_size)) {
 					$this->log("Re-trying with new chunk size: ".$new_chunk_size);
 					return $this->chunked_upload($caller, $file, $cloudpath, $logname, $new_chunk_size, $uploaded_size, $singletons=false);
 				}
-
+				
 				if ($uploaded) {
 					$perc = round(100*((($i-1) * $chunk_size) + $upload_size)/max($orig_file_size, 1), 1);
 					# $perc = round(100*$i/$chunks,1); # Takes no notice of last chunk likely being smaller
@@ -1900,16 +1913,60 @@ class UpdraftPlus {
 
 		// Some house-cleaning
 		$this->clean_temporary_files();
+		
 		// Log some information that may be helpful
 		$this->log("Tasks: Backup files: $backup_files (schedule: ".UpdraftPlus_Options::get_updraft_option('updraft_interval', 'unset').") Backup DB: $backup_database (schedule: ".UpdraftPlus_Options::get_updraft_option('updraft_interval_database', 'unset').")");
 
+		// The is_bool() check here is confirming that we're allowed to adjust the parameters
 		if (false === $one_shot && is_bool($backup_database)) {
 			# If the files and database schedules are the same, and if this the file one, then we rope in database too.
 			# On the other hand, if the schedules were the same and this was the database run, then there is nothing to do.
-			if ('manual' != UpdraftPlus_Options::get_updraft_option('updraft_interval') && (UpdraftPlus_Options::get_updraft_option('updraft_interval') == UpdraftPlus_Options::get_updraft_option('updraft_interval_database') || UpdraftPlus_Options::get_updraft_option('updraft_interval_database', 'xyz') == 'xyz' )) {
-				$backup_database = ($backup_files == true) ? true : false;
+			
+			$files_schedule = UpdraftPlus_Options::get_updraft_option('updraft_interval');
+			$db_schedule = UpdraftPlus_Options::get_updraft_option('updraft_interval_database');
+			
+			$sched_log_extra = '';
+			
+			if ('manual' != $files_schedule) {
+				if ($files_schedule == $db_schedule || UpdraftPlus_Options::get_updraft_option('updraft_interval_database', 'xyz') == 'xyz') {
+					$sched_log_extra = 'Combining jobs from identical schedules. ';
+					$backup_database = ($backup_files == true) ? true : false;
+				} elseif ($files_schedule && $db_schedule && $files_schedule != $db_schedule) {
+
+					// This stored value is the earliest of the two apparently-close jobs
+					$combine_around = empty($this->combine_jobs_around) ? false : $this->combine_jobs_around;
+
+					if (preg_match('/^(cancel:)?(\d+)$/', $combine_around, $matches)) {
+					
+						$combine_around = $matches[2];
+					
+						// Re-save the option, since otherwise it will have been reset and not be accessible to the 'other' run
+						UpdraftPlus_Options::update_updraft_option('updraft_combine_jobs_around', 'cancel:'.$this->combine_jobs_around);
+					
+						$margin = (defined('UPDRAFTPLUS_COMBINE_MARGIN') && is_numeric(UPDRAFTPLUS_COMBINE_MARGIN)) ? UPDRAFTPLUS_COMBINE_MARGIN : 600;
+						
+						$time_now = time();
+
+						// The margin is doubled, to cope with the lack of predictability in WP's cron system
+						if ($time_now >= $combine_around && $time_now <= $combine_around + 2*$margin) {
+
+							$sched_log_extra = 'Combining jobs from co-inciding events. ';
+							
+							if ('cancel:' == $matches[1]) {
+								$backup_database = false;
+								$backup_files = false;
+							} else {
+								// We want them both to happen on whichever run is first (since, afterwards, the updraft_combine_jobs_around option will have been removed when the event is rescheduled).
+								$backup_database = true;
+								$backup_files = true;
+							}
+							
+						}
+						
+					}
+				}
 			}
-			$this->log("Processed schedules. Tasks now: Backup files: $backup_files Backup DB: $backup_database");
+			$this->log("Processed schedules. ${sched_log_extra}Tasks now: Backup files: $backup_files Backup DB: $backup_database");
 		}
 
 		$semaphore = (($backup_files) ? 'f' : '') . (($backup_database) ? 'd' : '');
@@ -2923,9 +2980,53 @@ class UpdraftPlus {
 	}
 
 	/*
-	This function is both the backup scheduler and a filter callback for saving the option.
-	It is called in the register_setting for the updraft_interval, which means when the
-	admin settings are saved it is called.
+		If files + db are on different schedules but are scheduled for the same time, then combine them
+		$event = (object) array( 'hook' => $hook, 'timestamp' => $timestamp, 'schedule' => $recurrence, 'args' => $args, 'interval' => $schedules[$recurrence]['interval'] );
+		See wp_schedule_single_event() and wp_schedule_event() in wp-includes/cron.php
+	*/
+	public function schedule_event($event) {
+	
+		static $scheduled = array();
+	
+		
+		if ('updraft_backup' == $event->hook || 'updraft_backup_database' == $event->hook) {
+		
+			// Reset the option - but make sure it is saved first so that we can used it (since this hook may be called just before our actual cron task)
+			$this->combine_jobs_around = UpdraftPlus_Options::get_updraft_option('updraft_combine_jobs_around');
+			
+			UpdraftPlus_Options::delete_updraft_option('updraft_combine_jobs_around');
+		
+			$scheduled[$event->hook] = true;
+			
+			// This next fragment is wrong: there's only a 'second call' when saving all settings; otherwise, the WP scheduler might just be updating one event. So, there's some inefficieny as the option is wiped and set uselessly at least once when saving settings.
+			// We only want to take action on the second call (otherwise, our information is out-of-date already)
+			// If there is no second call, then that's fine - nothing to do
+			//if (count($scheduled) < 2) {
+			//	return $event;
+			//}
+		
+			$backup_scheduled_for =  ('updraft_backup' == $event->hook) ? $event->timestamp : wp_next_scheduled('updraft_backup');
+			$db_scheduled_for = ('updraft_backup_database' == $event->hook) ? $event->timestamp : wp_next_scheduled('updraft_backup_database');
+		
+			$diff = absint($backup_scheduled_for - $db_scheduled_for);
+			
+			$margin = (defined('UPDRAFTPLUS_COMBINE_MARGIN') && is_numeric(UPDRAFTPLUS_COMBINE_MARGIN)) ? UPDRAFTPLUS_COMBINE_MARGIN : 600;
+			
+			if ($backup_scheduled_for && $db_scheduled_for && $diff < $margin) {
+				// We could change the event parameters; however, this would complicate other code paths (because the WP cron system uses a hash of the parameters as a key, and you must supply the exact parameters to look up events). So, we just set a marker that boot_backup() can pick up on.
+				UpdraftPlus_Options::update_updraft_option('updraft_combine_jobs_around', min($backup_scheduled_for, $db_scheduled_for));
+			}
+			
+		}
+	
+		return $event;
+	
+	}
+	
+	/*
+		This function is both the backup scheduler and a filter callback for saving the option.
+		It is called in the register_setting for the updraft_interval, which means when the
+		admin settings are saved it is called.
 	*/
 	public function schedule_backup($interval) {
 		$previous_time = wp_next_scheduled('updraft_backup');
@@ -3735,7 +3836,7 @@ CREATE TABLE $wpdb->signups (
 	public function get_settings_keys() {
 	// N.B. updraft_backup_history is not included here, as we don't want that wiped
 		return array('updraft_autobackup_default', 'updraft_dropbox', 'updraft_googledrive', 'updraftplus_tmp_googledrive_access_token', 'updraftplus_dismissedautobackup', 'updraftplus_dismissedexpiry', 'updraftplus_dismisseddashnotice', 'updraft_interval', 'updraft_interval_increments', 'updraft_interval_database', 'updraft_retain', 'updraft_retain_db', 'updraft_encryptionphrase', 'updraft_service', 'updraft_dropbox_appkey', 'updraft_dropbox_secret', 'updraft_googledrive_clientid', 'updraft_googledrive_secret', 'updraft_googledrive_remotepath', 'updraft_ftp', 'updraft_ftp_login', 'updraft_ftp_pass', 'updraft_ftp_remote_path', 'updraft_server_address', 'updraft_dir', 'updraft_email', 'updraft_delete_local', 'updraft_debug_mode', 'updraft_include_plugins', 'updraft_include_themes', 'updraft_include_uploads', 'updraft_include_others', 'updraft_include_wpcore', 'updraft_include_wpcore_exclude', 'updraft_include_more', 'updraft_include_blogs', 'updraft_include_mu-plugins',
-		'updraft_include_others_exclude', 'updraft_include_uploads_exclude', 'updraft_lastmessage', 'updraft_googledrive_token', 'updraft_dropboxtk_request_token', 'updraft_dropboxtk_access_token', 'updraft_dropbox_folder', 'updraft_adminlocking', 'updraft_updraftvault', 'updraft_remotesites', 'updraft_migrator_localkeys', 'updraft_central_localkeys', 'updraft_retain_extrarules', 'updraft_googlecloud', 'updraft_include_more_path', 'updraft_split_every', 'updraft_ssl_nossl', 'updraft_backupdb_nonwp', 'updraft_extradbs',
+		'updraft_include_others_exclude', 'updraft_include_uploads_exclude', 'updraft_lastmessage', 'updraft_googledrive_token', 'updraft_dropboxtk_request_token', 'updraft_dropboxtk_access_token', 'updraft_dropbox_folder', 'updraft_adminlocking', 'updraft_updraftvault', 'updraft_remotesites', 'updraft_migrator_localkeys', 'updraft_central_localkeys', 'updraft_retain_extrarules', 'updraft_googlecloud', 'updraft_include_more_path', 'updraft_split_every', 'updraft_ssl_nossl', 'updraft_backupdb_nonwp', 'updraft_extradbs', 'updraft_combine_jobs_around',
 		'updraft_last_backup', 'updraft_starttime_files', 'updraft_starttime_db', 'updraft_startday_db', 'updraft_startday_files', 'updraft_sftp_settings', 'updraft_s3', 'updraft_s3generic', 'updraft_dreamhost', 'updraft_s3generic_login', 'updraft_s3generic_pass', 'updraft_s3generic_remote_path', 'updraft_s3generic_endpoint', 'updraft_webdav_settings', 'updraft_openstack', 'updraft_bitcasa', 'updraft_copycom', 'updraft_onedrive', 'updraft_azure', 'updraft_cloudfiles', 'updraft_cloudfiles_user', 'updraft_cloudfiles_apikey', 'updraft_cloudfiles_path', 'updraft_cloudfiles_authurl', 'updraft_ssl_useservercerts', 'updraft_ssl_disableverify', 'updraft_s3_login', 'updraft_s3_pass', 'updraft_s3_remote_path', 'updraft_dreamobjects_login', 'updraft_dreamobjects_pass', 'updraft_dreamobjects_remote_path', 'updraft_dreamobjects', 'updraft_report_warningsonly', 'updraft_report_wholebackup', 'updraft_log_syslog', 'updraft_extradatabases');
 	}
 

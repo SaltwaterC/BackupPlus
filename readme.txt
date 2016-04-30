@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, microsoft one drive, microsoft azure, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.5
-Stable tag: 1.12.4
+Stable tag: 1.12.6
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -121,12 +121,28 @@ Yes; especially before you submit any support requests.
 
 Thanks for asking; yes, we've got a few. Check out this profile page - https://profiles.wordpress.org/DavidAnderson/ .
 
-
 == Changelog ==
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.4 of the free version correspond to changes made in 2.12.4.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.6 of the free version correspond to changes made in 2.12.6.x of the paid version.
+
+= 1.12.6 - 30/Apr/2016 =
+
+* FIX: UpdraftVault quota usage was being shown incorrectly in recounts on sites connected to accounts backing up multiple sites
+* TWEAK: In accordance with Barracuda's previous announcement, copy.com no longer exists - https://techlib.barracuda.com/CudaDrive/EOL
+* TWEAK: Allow particular log lines to be cancelled
+* TWEAK: Explicitly set the separator when calling http_build_query(), to prevent problems with non-default configurations
+* TWEAK: Tweak the algorithm for sending data to a remote UD installation to cope with eventually-consistent filesystems that are temporarily inconsistent
+* TWEAK: Make the automatic backups advert prettier
+* TWEAK: Detect and combine file and database backups running on different schedules which coincide
+* TWEAK: Update bundled Select2 to version 4.0.2
+* TWEAK: Update UDRPC library to version 1.4.3
+
+= 1.12.5 - 08/Apr/2016 =
+
+* TWEAK: (Paid versions) - tweak the updater class so that it sends the information that updraftplus.com needs in order to correctly advise about language pack update availability. (If you are continuously seeing the same language pack update offered, then this may continue for a few more hours - please be patient!).
+* TWEAK: Detect another case and deal with an HTTP 413 response when sending chunked data on a direct site-to-site migration
 
 = 1.12.4 - 07/Apr/2016 =
 
@@ -1844,4 +1860,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.2: Compatible with the forthcoming UpdraftCentral; various minor tweaks
+* 1.12.6: Various minor tweaks

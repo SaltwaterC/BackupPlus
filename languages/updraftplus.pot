@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: UpdraftPlus\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-07 14:30+0100\n"
+"POT-Creation-Date: 2016-04-13 18:00+0100\n"
 "PO-Revision-Date: 2015-06-08 14:43+0100\n"
 "Last-Translator: David Anderson <contact@updraftplus.com>\n"
 "Language-Team: contact@updraftplus.com\n"
@@ -67,8 +67,8 @@ msgid "Starting automatic backup..."
 msgstr ""
 
 #: addons/autobackup.php:283 addons/autobackup.php:374 admin.php:473
-#: methods/remotesend.php:70 methods/remotesend.php:78
-#: methods/remotesend.php:212 methods/remotesend.php:220
+#: methods/remotesend.php:71 methods/remotesend.php:79
+#: methods/remotesend.php:219 methods/remotesend.php:227
 msgid "Unexpected response:"
 msgstr ""
 
@@ -165,7 +165,7 @@ msgstr ""
 msgid "Upload failed"
 msgstr ""
 
-#: addons/azure.php:364 addons/googlecloud.php:693 methods/s3.php:895
+#: addons/azure.php:364 addons/googlecloud.php:693 methods/s3.php:904
 msgid "Delete failed:"
 msgstr ""
 
@@ -288,8 +288,8 @@ msgstr ""
 #: addons/migrator.php:1842 addons/migrator.php:1852 addons/migrator.php:1857
 #: addons/s3-enhanced.php:100 addons/s3-enhanced.php:105
 #: addons/s3-enhanced.php:107 addons/sftp.php:734 admin.php:487 admin.php:4881
-#: admin.php:4911 methods/remotesend.php:75 methods/remotesend.php:217
-#: methods/updraftvault.php:386 restorer.php:1292
+#: admin.php:4911 methods/remotesend.php:76 methods/remotesend.php:224
+#: methods/updraftvault.php:401 restorer.php:1292
 msgid "Error:"
 msgstr ""
 
@@ -647,7 +647,7 @@ msgstr ""
 msgid "Western Europe"
 msgstr ""
 
-#: addons/googlecloud.php:78 addons/googlecloud.php:643 methods/s3.php:814
+#: addons/googlecloud.php:78 addons/googlecloud.php:643 methods/s3.php:823
 msgid "Failure: No bucket details were given."
 msgstr ""
 
@@ -742,7 +742,7 @@ msgstr ""
 #: addons/googlecloud.php:579 addons/googlecloud.php:689
 #: addons/onedrive.php:554 addons/sftp.php:478 methods/addon-base.php:291
 #: methods/cloudfiles.php:560 methods/googledrive.php:358
-#: methods/openstack-base.php:392 methods/s3.php:878
+#: methods/openstack-base.php:392 methods/s3.php:887
 #: methods/stream-base.php:308
 msgid "Success"
 msgstr ""
@@ -769,19 +769,19 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: addons/googlecloud.php:683 addons/googlecloud.php:697 methods/s3.php:876
-#: methods/s3.php:888
+#: addons/googlecloud.php:683 addons/googlecloud.php:697 methods/s3.php:885
+#: methods/s3.php:897
 msgid "Failure"
 msgstr ""
 
-#: addons/googlecloud.php:683 addons/googlecloud.php:697 methods/s3.php:876
-#: methods/s3.php:888
+#: addons/googlecloud.php:683 addons/googlecloud.php:697 methods/s3.php:885
+#: methods/s3.php:897
 msgid ""
 "We successfully accessed the bucket, but the attempt to create a file in it "
 "failed."
 msgstr ""
 
-#: addons/googlecloud.php:689 methods/s3.php:878
+#: addons/googlecloud.php:689 methods/s3.php:887
 msgid "We accessed the bucket, and were able to create files within it."
 msgstr ""
 
@@ -976,7 +976,7 @@ msgid "Please make sure that you have made a note of the password!"
 msgstr ""
 
 #: addons/lockadmin.php:141 addons/moredatabase.php:234 addons/sftp.php:366
-#: methods/openstack2.php:127 methods/updraftvault.php:293
+#: methods/openstack2.php:127 methods/updraftvault.php:299
 #: udaddons/options.php:145
 msgid "Password"
 msgstr ""
@@ -1106,8 +1106,8 @@ msgstr ""
 #: methods/cloudfiles-new.php:147 methods/cloudfiles.php:504
 #: methods/cloudfiles.php:509 methods/ftp.php:355 methods/ftp.php:359
 #: methods/openstack2.php:142 methods/openstack2.php:147
-#: methods/openstack2.php:152 methods/openstack2.php:157 methods/s3.php:788
-#: methods/s3.php:792
+#: methods/openstack2.php:152 methods/openstack2.php:157 methods/s3.php:797
+#: methods/s3.php:801
 #, php-format
 msgid "Failure: No %s was given."
 msgstr ""
@@ -2119,7 +2119,7 @@ msgstr ""
 msgid "AWS authentication failed"
 msgstr ""
 
-#: addons/s3-enhanced.php:125 methods/openstack2.php:113 methods/s3.php:834
+#: addons/s3-enhanced.php:125 methods/openstack2.php:113 methods/s3.php:843
 msgid "Region"
 msgstr ""
 
@@ -2130,7 +2130,7 @@ msgid ""
 "bucket name (as another AWS user may already have taken your name)."
 msgstr ""
 
-#: addons/s3-enhanced.php:152 methods/s3.php:866
+#: addons/s3-enhanced.php:152 methods/s3.php:875
 #, php-format
 msgid "The error reported by %s was:"
 msgstr ""
@@ -2389,7 +2389,7 @@ msgstr ""
 
 #: addons/sftp.php:406 admin.php:557 methods/addon-base.php:242
 #: methods/cloudfiles.php:496 methods/ftp.php:329
-#: methods/openstack-base.php:440 methods/s3.php:753
+#: methods/openstack-base.php:440 methods/s3.php:762
 #: methods/stream-base.php:219
 #, php-format
 msgid "Test %s Settings"
@@ -2770,7 +2770,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: admin.php:522 methods/updraftvault.php:249 methods/updraftvault.php:294
+#: admin.php:522 methods/updraftvault.php:255 methods/updraftvault.php:300
 #: udaddons/options.php:244
 msgid "Connect"
 msgstr ""
@@ -2779,7 +2779,7 @@ msgstr ""
 msgid "Connecting..."
 msgstr ""
 
-#: admin.php:524 methods/updraftvault.php:335
+#: admin.php:524 methods/updraftvault.php:341
 msgid "Disconnect"
 msgstr ""
 
@@ -2931,8 +2931,8 @@ msgstr ""
 #: admin.php:757 admin.php:761 admin.php:765 admin.php:769 admin.php:773
 #: admin.php:782 admin.php:2858 admin.php:4137 admin.php:4144 admin.php:4146
 #: methods/cloudfiles.php:448 methods/ftp.php:284
-#: methods/openstack-base.php:429 methods/s3.php:701 methods/s3.php:705
-#: methods/updraftvault.php:233 udaddons/updraftplus-addons.php:210
+#: methods/openstack-base.php:429 methods/s3.php:710 methods/s3.php:714
+#: methods/updraftvault.php:239 udaddons/updraftplus-addons.php:208
 msgid "Warning"
 msgstr ""
 
@@ -3245,6 +3245,10 @@ msgstr ""
 
 #: admin.php:2161
 msgid "Lead developer's homepage"
+msgstr ""
+
+#: admin.php:2162
+msgid "FAQs"
 msgstr ""
 
 #: admin.php:2162
@@ -3987,7 +3991,7 @@ msgid "Encrypted database"
 msgstr ""
 
 #: admin.php:3344 central/bootstrap.php:410 central/bootstrap.php:417
-#: methods/updraftvault.php:329 methods/updraftvault.php:388
+#: methods/updraftvault.php:335 methods/updraftvault.php:403
 msgid "Unknown"
 msgstr ""
 
@@ -4411,7 +4415,7 @@ msgstr ""
 msgid "Any other directories found inside wp-content"
 msgstr ""
 
-#: admin.php:4137 methods/updraftvault.php:233
+#: admin.php:4137 methods/updraftvault.php:239
 #, php-format
 msgid ""
 "Your web server's PHP installation does not included a <strong>required</"
@@ -5382,7 +5386,7 @@ msgstr ""
 
 #: methods/addon-base.php:230 methods/cloudfiles.php:438
 #: methods/dropbox.php:427 methods/ftp.php:298 methods/googledrive.php:889
-#: methods/openstack-base.php:419 methods/s3.php:677
+#: methods/openstack-base.php:419 methods/s3.php:686
 #: methods/stream-base.php:212
 #, php-format
 msgid ""
@@ -5440,7 +5444,7 @@ msgid "Cloud Files API Key"
 msgstr ""
 
 #: methods/cloudfiles-new.php:142 methods/cloudfiles.php:504
-#: methods/s3.php:788
+#: methods/s3.php:797
 msgid "API key"
 msgstr ""
 
@@ -5489,7 +5493,7 @@ msgid "Error - failed to download the file from %s"
 msgstr ""
 
 #: methods/cloudfiles.php:448 methods/openstack-base.php:429
-#: methods/s3.php:705
+#: methods/s3.php:714
 #, php-format
 msgid ""
 "Your web server's PHP installation does not included a required module (%s). "
@@ -5497,7 +5501,7 @@ msgid ""
 msgstr ""
 
 #: methods/cloudfiles.php:448 methods/openstack-base.php:429
-#: methods/s3.php:705
+#: methods/s3.php:714
 #, php-format
 msgid ""
 "UpdraftPlus's %s module <strong>requires</strong> %s. Please do not file any "
@@ -5920,27 +5924,27 @@ msgid ""
 "%s Error: Failed to create bucket %s. Check your permissions and credentials."
 msgstr ""
 
-#: methods/s3.php:497 methods/s3.php:571 methods/s3.php:657
+#: methods/s3.php:507 methods/s3.php:580 methods/s3.php:666
 #, php-format
 msgid ""
 "%s Error: Failed to access bucket %s. Check your permissions and credentials."
 msgstr ""
 
-#: methods/s3.php:652
+#: methods/s3.php:661
 #, php-format
 msgid ""
 "%s Error: Failed to download %s. Check your permissions and credentials."
 msgstr ""
 
-#: methods/s3.php:680
+#: methods/s3.php:689
 msgid "Examples of S3-compatible storage providers:"
 msgstr ""
 
-#: methods/s3.php:687
+#: methods/s3.php:696
 msgid "... and many more!"
 msgstr ""
 
-#: methods/s3.php:701
+#: methods/s3.php:710
 #, php-format
 msgid ""
 "Your web server's PHP installation does not included a required module (%s). "
@@ -5948,7 +5952,7 @@ msgid ""
 "enable it."
 msgstr ""
 
-#: methods/s3.php:716
+#: methods/s3.php:725
 #, php-format
 msgid ""
 "Get your access key and secret key <a href=\"%s\">from your %s console</a>, "
@@ -5957,52 +5961,52 @@ msgid ""
 "created for you if it does not already exist."
 msgstr ""
 
-#: methods/s3.php:718
+#: methods/s3.php:727
 msgid "If you see errors about SSL certificates, then please go here for help."
 msgstr ""
 
-#: methods/s3.php:720
+#: methods/s3.php:729
 #, php-format
 msgid "Other %s FAQs."
 msgstr ""
 
-#: methods/s3.php:725
+#: methods/s3.php:734
 #, php-format
 msgid "%s end-point"
 msgstr ""
 
-#: methods/s3.php:734
+#: methods/s3.php:743
 msgid ""
 "To create a new IAM sub-user and access key that has access only to this "
 "bucket, use this add-on."
 msgstr ""
 
-#: methods/s3.php:739
+#: methods/s3.php:748
 #, php-format
 msgid "%s access key"
 msgstr ""
 
-#: methods/s3.php:743
+#: methods/s3.php:752
 #, php-format
 msgid "%s secret key"
 msgstr ""
 
-#: methods/s3.php:747
+#: methods/s3.php:756
 #, php-format
 msgid "%s location"
 msgstr ""
 
-#: methods/s3.php:748
+#: methods/s3.php:757
 msgid ""
 "Enter only a bucket name or a bucket and path. Examples: mybucket, mybucket/"
 "mypath"
 msgstr ""
 
-#: methods/s3.php:792
+#: methods/s3.php:801
 msgid "API secret"
 msgstr ""
 
-#: methods/s3.php:865
+#: methods/s3.php:874
 #, php-format
 msgid ""
 "Failure: We could not successfully access or create such a bucket. Please "
@@ -6010,17 +6014,17 @@ msgid ""
 "bucket name (as another %s user may already have taken your name)."
 msgstr ""
 
-#: methods/s3.php:881
+#: methods/s3.php:890
 #, php-format
 msgid "The communication with %s was encrypted."
 msgstr ""
 
-#: methods/s3.php:883
+#: methods/s3.php:892
 #, php-format
 msgid "The communication with %s was not encrypted."
 msgstr ""
 
-#: methods/s3.php:888
+#: methods/s3.php:897
 msgid "Please check your access credentials."
 msgstr ""
 
@@ -6045,14 +6049,14 @@ msgstr ""
 msgid "Updraft Vault"
 msgstr ""
 
-#: methods/updraftvault.php:199
+#: methods/updraftvault.php:205
 msgid ""
 "Your UpdraftPlus Premium purchase is over a year ago. You should renew "
 "immediately to avoid losing the 12 months of free storage allowance that you "
 "get for being a current UpdraftPlus Premium customer."
 msgstr ""
 
-#: methods/updraftvault.php:202
+#: methods/updraftvault.php:208
 msgid ""
 "You have an UpdraftPlus Vault subscription with overdue payment. You are "
 "within the few days of grace period before it will be suspended, and you "
@@ -6060,7 +6064,7 @@ msgid ""
 "soon as possible!"
 msgstr ""
 
-#: methods/updraftvault.php:205
+#: methods/updraftvault.php:211
 msgid ""
 "You have an UpdraftPlus Vault subscription that has not been renewed, and "
 "the grace period has expired. In a few days' time, your stored data will be "
@@ -6068,198 +6072,198 @@ msgid ""
 "renew as soon as possible."
 msgstr ""
 
-#: methods/updraftvault.php:208
+#: methods/updraftvault.php:214
 msgid ""
 "No Vault connection was found for this site (has it moved?); please "
 "disconnect and re-connect."
 msgstr ""
 
-#: methods/updraftvault.php:241 methods/updraftvault.php:258
+#: methods/updraftvault.php:247 methods/updraftvault.php:264
 msgid ""
 "UpdraftPlus Vault brings you storage that is <strong>reliable, easy to use "
 "and a great price</strong>."
 msgstr ""
 
-#: methods/updraftvault.php:241 methods/updraftvault.php:258
+#: methods/updraftvault.php:247 methods/updraftvault.php:264
 msgid "Press a button to get started."
 msgstr ""
 
-#: methods/updraftvault.php:244
+#: methods/updraftvault.php:250
 msgid "First time user?"
 msgstr ""
 
-#: methods/updraftvault.php:245
+#: methods/updraftvault.php:251
 msgid "Show the options"
 msgstr ""
 
-#: methods/updraftvault.php:248
+#: methods/updraftvault.php:254
 msgid "Already purchased space?"
 msgstr ""
 
-#: methods/updraftvault.php:252 methods/updraftvault.php:282
+#: methods/updraftvault.php:258 methods/updraftvault.php:288
 msgid ""
 "UpdraftPlus Vault is built on top of Amazon's world-leading data-centres, "
 "with redundant data storage to achieve 99.999999999% reliability."
 msgstr ""
 
-#: methods/updraftvault.php:252 methods/updraftvault.php:282
+#: methods/updraftvault.php:258 methods/updraftvault.php:288
 msgid "Read more about it here."
 msgstr ""
 
-#: methods/updraftvault.php:252 methods/updraftvault.php:282
+#: methods/updraftvault.php:258 methods/updraftvault.php:288
 msgid "Read the FAQs here."
 msgstr ""
 
-#: methods/updraftvault.php:262 methods/updraftvault.php:268
-#: methods/updraftvault.php:274
+#: methods/updraftvault.php:268 methods/updraftvault.php:274
+#: methods/updraftvault.php:280
 #, php-format
 msgid "%s per quarter"
 msgstr ""
 
-#: methods/updraftvault.php:263 methods/updraftvault.php:269
-#: methods/updraftvault.php:275
+#: methods/updraftvault.php:269 methods/updraftvault.php:275
+#: methods/updraftvault.php:281
 msgid "or (annual discount)"
 msgstr ""
 
-#: methods/updraftvault.php:264 methods/updraftvault.php:270
-#: methods/updraftvault.php:276
+#: methods/updraftvault.php:270 methods/updraftvault.php:276
+#: methods/updraftvault.php:282
 #, php-format
 msgid "%s per year"
 msgstr ""
 
-#: methods/updraftvault.php:279
+#: methods/updraftvault.php:285
 msgid ""
 "Payments can be made in US dollars, euros or GB pounds sterling, via card or "
 "PayPal."
 msgstr ""
 
-#: methods/updraftvault.php:279
+#: methods/updraftvault.php:285
 msgid "Subscriptions can be cancelled at any time."
 msgstr ""
 
-#: methods/updraftvault.php:285 methods/updraftvault.php:300
+#: methods/updraftvault.php:291 methods/updraftvault.php:306
 msgid "Back..."
 msgstr ""
 
-#: methods/updraftvault.php:290
+#: methods/updraftvault.php:296
 msgid "Enter your UpdraftPlus.Com email / password here to connect:"
 msgstr ""
 
-#: methods/updraftvault.php:292
+#: methods/updraftvault.php:298
 msgid "E-mail"
 msgstr ""
 
-#: methods/updraftvault.php:297
+#: methods/updraftvault.php:303
 msgid "Don't know your email address, or forgotten your password?"
 msgstr ""
 
-#: methods/updraftvault.php:297
+#: methods/updraftvault.php:303
 msgid "Go here for help"
 msgstr ""
 
-#: methods/updraftvault.php:321
+#: methods/updraftvault.php:327
 msgid "You are <strong>not connected</strong> to UpdraftPlus Vault."
 msgstr ""
 
-#: methods/updraftvault.php:325
+#: methods/updraftvault.php:331
 msgid "This site is <strong>connected</strong> to UpdraftPlus Vault."
 msgstr ""
 
-#: methods/updraftvault.php:325
+#: methods/updraftvault.php:331
 msgid "Well done - there's nothing more needed to set up."
 msgstr ""
 
-#: methods/updraftvault.php:325
+#: methods/updraftvault.php:331
 msgid "Vault owner"
 msgstr ""
 
-#: methods/updraftvault.php:327
+#: methods/updraftvault.php:333
 msgid "Quota:"
 msgstr ""
 
-#: methods/updraftvault.php:343
+#: methods/updraftvault.php:349
 #, php-format
 msgid ""
 "%s Error: you have insufficient storage quota available (%s) to upload this "
 "archive (%s)."
 msgstr ""
 
-#: methods/updraftvault.php:343
+#: methods/updraftvault.php:349
 msgid "You can get more quota here"
 msgstr ""
 
-#: methods/updraftvault.php:348 methods/updraftvault.php:382
+#: methods/updraftvault.php:354 methods/updraftvault.php:397
 msgid "Current use:"
 msgstr ""
 
-#: methods/updraftvault.php:351 methods/updraftvault.php:353
-#: methods/updraftvault.php:401
+#: methods/updraftvault.php:357 methods/updraftvault.php:359
+#: methods/updraftvault.php:416
 msgid "Get more quota"
 msgstr ""
 
-#: methods/updraftvault.php:355 methods/updraftvault.php:401
+#: methods/updraftvault.php:361 methods/updraftvault.php:416
 msgid "Refresh current status"
 msgstr ""
 
-#: methods/updraftvault.php:478 udaddons/options.php:265
+#: methods/updraftvault.php:492 udaddons/options.php:265
 msgid "An unknown error occurred when trying to connect to UpdraftPlus.Com"
 msgstr ""
 
-#: methods/updraftvault.php:498 udaddons/updraftplus-addons.php:630
+#: methods/updraftvault.php:512 udaddons/updraftplus-addons.php:642
 msgid "You need to supply both an email address and a password"
 msgstr ""
 
-#: methods/updraftvault.php:522 udaddons/updraftplus-addons.php:695
+#: methods/updraftvault.php:536 udaddons/updraftplus-addons.php:707
 msgid "UpdraftPlus.com has responded with 'Access Denied'."
 msgstr ""
 
-#: methods/updraftvault.php:522 udaddons/updraftplus-addons.php:695
+#: methods/updraftvault.php:536 udaddons/updraftplus-addons.php:707
 #, php-format
 msgid "It appears that your web server's IP Address (%s) is blocked."
 msgstr ""
 
-#: methods/updraftvault.php:522 udaddons/updraftplus-addons.php:695
+#: methods/updraftvault.php:536 udaddons/updraftplus-addons.php:707
 msgid ""
 "This most likely means that you share a webserver with a hacked website that "
 "has been used in previous attacks."
 msgstr ""
 
-#: methods/updraftvault.php:522 udaddons/updraftplus-addons.php:695
+#: methods/updraftvault.php:536 udaddons/updraftplus-addons.php:707
 msgid "To remove the block, please go here."
 msgstr ""
 
-#: methods/updraftvault.php:524 udaddons/updraftplus-addons.php:697
+#: methods/updraftvault.php:538 udaddons/updraftplus-addons.php:709
 #, php-format
 msgid ""
 "UpdraftPlus.Com returned a response which we could not understand (data: %s)"
 msgstr ""
 
-#: methods/updraftvault.php:549
+#: methods/updraftvault.php:563
 msgid "You do not currently have any UpdraftPlus Vault quota"
 msgstr ""
 
-#: methods/updraftvault.php:551 methods/updraftvault.php:569
-#: udaddons/updraftplus-addons.php:739
+#: methods/updraftvault.php:565 methods/updraftvault.php:583
+#: udaddons/updraftplus-addons.php:751
 msgid "UpdraftPlus.Com returned a response, but we could not understand it"
 msgstr ""
 
-#: methods/updraftvault.php:558 udaddons/updraftplus-addons.php:729
+#: methods/updraftvault.php:572 udaddons/updraftplus-addons.php:741
 msgid ""
 "Your email address was valid, but your password was not recognised by "
 "UpdraftPlus.Com."
 msgstr ""
 
-#: methods/updraftvault.php:558
+#: methods/updraftvault.php:572
 msgid ""
 "If you have forgotten your password, then go here to change your password on "
 "updraftplus.com."
 msgstr ""
 
-#: methods/updraftvault.php:561 udaddons/updraftplus-addons.php:733
+#: methods/updraftvault.php:575 udaddons/updraftplus-addons.php:745
 msgid "You entered an email address that was not recognised by UpdraftPlus.Com"
 msgstr ""
 
-#: methods/updraftvault.php:565 udaddons/updraftplus-addons.php:736
+#: methods/updraftvault.php:579 udaddons/updraftplus-addons.php:748
 msgid "Your email address and password were not recognised by UpdraftPlus.Com"
 msgstr ""
 
@@ -6781,7 +6785,7 @@ msgstr ""
 msgid "An unknown response was received. Response was:"
 msgstr ""
 
-#: udaddons/options.php:370 udaddons/updraftplus-addons.php:258
+#: udaddons/options.php:370 udaddons/updraftplus-addons.php:256
 msgid "UpdraftPlus Addons"
 msgstr ""
 
@@ -6890,103 +6894,103 @@ msgstr ""
 msgid "Unknown update checker status \"%s\""
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:182
+#: udaddons/updraftplus-addons.php:180
 #, php-format
 msgid "Dismiss from main dashboard (for %s weeks)"
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:210
+#: udaddons/updraftplus-addons.php:208
 #, php-format
 msgid ""
 "The installed version of UpdraftPlus Backup/Restore has not been tested on "
 "your version of WordPress (%s)."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:210
+#: udaddons/updraftplus-addons.php:208
 #, php-format
 msgid "It has been tested up to version %s."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:210
+#: udaddons/updraftplus-addons.php:208
 msgid ""
 "You should update UpdraftPlus to make sure that you have a version that has "
 "been tested for compatibility."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:217
+#: udaddons/updraftplus-addons.php:215
 msgid ""
 "Your paid access to UpdraftPlus updates for this site has expired. You will "
 "no longer receive updates to UpdraftPlus."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:217 udaddons/updraftplus-addons.php:219
+#: udaddons/updraftplus-addons.php:215 udaddons/updraftplus-addons.php:217
 msgid ""
 "To regain access to updates (including future features and compatibility "
 "with future WordPress releases) and support, please renew."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:219
+#: udaddons/updraftplus-addons.php:217
 #, php-format
 msgid ""
 "Your paid access to UpdraftPlus updates for %s add-ons on this site has "
 "expired."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:223
+#: udaddons/updraftplus-addons.php:221
 #, php-format
 msgid ""
 "Your paid access to UpdraftPlus updates for %s of the %s add-ons on this "
 "site will soon expire."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:223 udaddons/updraftplus-addons.php:225
+#: udaddons/updraftplus-addons.php:221 udaddons/updraftplus-addons.php:223
 msgid ""
 "To retain your access, and maintain access to updates (including future "
 "features and compatibility with future WordPress releases) and support, "
 "please renew."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:225
+#: udaddons/updraftplus-addons.php:223
 msgid "Your paid access to UpdraftPlus updates for this site will soon expire."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:229
+#: udaddons/updraftplus-addons.php:227
 msgid "Your paid access to UpdraftPlus support has expired."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:229
+#: udaddons/updraftplus-addons.php:227
 msgid "To regain your access, please renew."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:231
+#: udaddons/updraftplus-addons.php:229
 msgid "Your paid access to UpdraftPlus support will soon expire."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:231
+#: udaddons/updraftplus-addons.php:229
 msgid "To maintain your access to support, please renew."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:382 udaddons/updraftplus-addons.php:385
+#: udaddons/updraftplus-addons.php:380 udaddons/updraftplus-addons.php:383
 msgid "Errors occurred:"
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:655
+#: udaddons/updraftplus-addons.php:667
 msgid "We failed to successfully connect to UpdraftPlus.Com"
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:657
+#: udaddons/updraftplus-addons.php:669
 msgid "UpdraftPlus.Com responded, but we did not understand the response"
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:729
+#: udaddons/updraftplus-addons.php:741
 msgid "Go here to re-enter your password."
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:730
+#: udaddons/updraftplus-addons.php:742
 msgid "If you have forgotten your password "
 msgstr ""
 
-#: udaddons/updraftplus-addons.php:730
+#: udaddons/updraftplus-addons.php:742
 msgid "go here to change your password on updraftplus.com."
 msgstr ""
 

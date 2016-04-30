@@ -127,6 +127,12 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 					$opts['last_config']['accesskey'] = $response['accesskey'];
 					$opts['last_config']['secretkey'] = $response['secretkey'];
 					$opts['last_config']['path'] = $response['path'];
+					unset($opts['last_config']['quota_root']);
+					if (!empty($response['quota_root'])) {
+						$opts['last_config']['quota_root'] = $response['quota_root'];
+						$config['quota_root'] = $response['quota_root'];
+						$opts['quota_root'] = $response['quota_root'];
+					}
 					$opts['last_config']['time'] = time();
 					// This is just a cache of the most recent setting
 					if (isset($response['quota'])) {
@@ -372,7 +378,16 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 			}
 
 			try {
-				$current_files = $this->listfiles('');
+				
+				$config = $this->get_config();
+				
+				if (empty($config['quota_root'])) {
+					// This next line is wrong: it lists the files *in this site's sub-folder*, rather than the whole Vault
+					$current_files = $this->listfiles('');
+				} else {
+					$current_files = $this->listfiles_with_path($config['quota_root'], '');
+				}
+				
 			} catch (Exception $e) {
 				global $updraftplus;
 				$updraftplus->log("Listfiles failed during quota calculation: ".$e->getMessage());
@@ -420,7 +435,6 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 			$opts = $this->get_opts();
 			$results = array('html' => $this->connected_html($opts), 'connected' => 1);
 		}
-
 		if ($echo_results) {
 			echo json_encode($results);
 		} else {

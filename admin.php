@@ -577,8 +577,8 @@ class UpdraftPlus_Admin {
 		<div id="updraft-autobackup" class="updated autobackup">
 			<?php if (!class_exists('UpdraftPlus_Addon_Autobackup')) { ?>
 			<div style="float:right;"><a href="#" onclick="jQuery('#updraft-autobackup').slideUp(); jQuery.post(ajaxurl, {action: 'updraft_ajax', subaction: 'dismissautobackup', nonce: '<?php echo wp_create_nonce('updraftplus-credentialtest-nonce');?>' });"><?php echo sprintf(__('Dismiss (for %s weeks)', 'updraftplus'), 12); ?></a></div> <?php } ?>
-			<h3 style="margin-top: 0px;"><?php _e('Be safe with an automatic backup','updraftplus');?></h3>
-			<?php echo apply_filters('updraftplus_autobackup_blurb', __('UpdraftPlus Premium can  <strong>automatically</strong> take a backup of your plugins or themes and database before you update.', 'updraftplus').' <a href="https://updraftplus.com/shop/autobackup/">'.__('Be safe every time, without needing to remember - follow this link to learn more.' ,'updraftplus').'</a>'); ?>
+			<h3 style="margin-top: 2px;"><?php _e('Be safe with an automatic backup','updraftplus');?></h3>
+			<?php echo apply_filters('updraftplus_autobackup_blurb', $this->autobackup_ad_content()); ?>
 		</div>
 		<script>
 		jQuery(document).ready(function() {
@@ -586,6 +586,18 @@ class UpdraftPlus_Admin {
 		});
 		</script>
 		<?php
+	}
+	
+	private function autobackup_ad_content(){
+		global $updraftplus;
+		$our_version = @constant('SCRIPT_DEBUG') ? $updraftplus->version.'.'.time() : $updraftplus->version;
+		wp_enqueue_style('updraft-admin-css', UPDRAFTPLUS_URL.'/css/admin.css', array(), $our_version);
+		
+		$ret = '<div class="autobackup-description"><img class="autobackup-image" src="'.UPDRAFTPLUS_URL.'/images/automaticbackup.png" class="automation-icon"/>';
+		$ret .= '<div class="advert-description">'.__('UpdraftPlus Premium can automatically take a backup of your plugins or themes and database before you update. <a href="https://updraftplus.com/shop/autobackup/" target="_blank">Be safe every time, without needing to remember - follow this link to learn more</a>', 'updraftplus').'</div></div>';
+		$ret .= '<div class="advert-btn"><a href="https://updraftplus.com/shop/autobackup/" class="btn btn-get-started">'.__('Just this add-on', 'updraftplus').' <span class="circle-dblarrow">&raquo;</span></a></div>';
+		$ret .= '<div class="advert-btn"><a href="https://updraftplus.com/shop/updraftplus-premium/" class="btn btn-get-started">'.__('Full Premium plugin', 'updraftplus').' <span class="circle-dblarrow">&raquo;</span></a></div>';
+		return $ret;
 	}
 
 	public function admin_head() {
@@ -733,7 +745,7 @@ class UpdraftPlus_Admin {
 			<div id="updraft-autobackup" class="updated" style="float:left; padding: 6px; margin:8px 0px;">
 				<div style="float: right;"><a href="#" onclick="jQuery('#updraft-autobackup').slideUp(); jQuery.post(ajaxurl, {action: 'updraft_ajax', subaction: 'dismissautobackup', nonce: '<?php echo wp_create_nonce('updraftplus-credentialtest-nonce');?>' });"><?php echo sprintf(__('Dismiss (for %s weeks)', 'updraftplus'), 10); ?></a></div>
 				<h3 style="margin-top: 0px;"><?php _e('Be safe with an automatic backup','updraftplus');?></h3>
-				<p><?php echo __('UpdraftPlus Premium can  <strong>automatically</strong> take a backup of your plugins or themes and database before you update.', 'updraftplus').' <a href="https://updraftplus.com/shop/autobackup/">'.__('Be safe every time, without needing to remember - follow this link to learn more.' ,'updraftplus').'</a>'; ?></p>
+				<p><?php echo $this->autobackup_ad_content(); ?></p>
 			</div>
 			<?php
 		}
@@ -811,7 +823,6 @@ class UpdraftPlus_Admin {
 	public function show_admin_warning_googlecloud() {
 		$this->show_admin_warning('<strong>'.__('UpdraftPlus notice:','updraftplus').'</strong> <a class="updraft_authlink" href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&action=updraftmethod-googlecloud-auth&updraftplus_googleauth=doit">'.sprintf(__('Click here to authenticate your %s account (you will not be able to back up to %s without it).','updraftplus'), 'Google Cloud', 'Google Cloud').'</a>');
 	}
-
 
 	// This options filter removes ABSPATH off the front of updraft_dir, if it is given absolutely and contained within it
 	public function prune_updraft_dir_prefix($updraft_dir) {
@@ -2159,7 +2170,7 @@ class UpdraftPlus_Admin {
 		<a href="https://updraftplus.com/support/"><?php _e("Support",'updraftplus');?></a> | 
 		<?php if (!is_file(UPDRAFTPLUS_DIR.'/udaddons/updraftplus-addons.php')) { ?><a href="https://updraftplus.com/newsletter-signup"><?php _e("Newsletter sign-up", 'updraftplus');?></a> | <?php } ?>
 		<a href="http://david.dw-perspective.org.uk"><?php _e("Lead developer's homepage",'updraftplus');?></a> | 
-		<a href="https://updraftplus.com/support/frequently-asked-questions/">FAQs</a> | <a href="https://www.simbahosting.co.uk/s3/shop/"><?php _e('More plugins', 'updraftplus');?></a> - <?php _e('Version','updraftplus');?>: <?php echo $updraftplus->version; ?>
+		<a href="https://updraftplus.com/support/frequently-asked-questions/"><?php _e('FAQs', 'updraftplus'); ?></a> | <a href="https://www.simbahosting.co.uk/s3/shop/"><?php _e('More plugins', 'updraftplus');?></a> - <?php _e('Version','updraftplus');?>: <?php echo $updraftplus->version; ?>
 		<br>
 		<?php
 	}
@@ -2473,7 +2484,7 @@ class UpdraftPlus_Admin {
 					if (class_exists('UpdraftPlus_Addons_Migrator')) {
 						do_action('updraftplus_migrate_modal_output');
 					} else {
-						echo '<p id="updraft_migrate_modal_main">'.__('Do you want to migrate or clone/duplicate a site?', 'updraftplus').'</p><p>'.__('Then, try out our "Migrator" add-on. After using it once, you\'ll have saved the purchase price compared to the time needed to copy a site by hand.', 'updraftplus').'</p><p><a href="https://updraftplus.com/shop/migrator/">'.__('Get it here.', 'updraftplus').'</a></p>';
+						echo '<p id="updraft_migrate_modal_main">'.__('Do you want to migrate or clone/duplicate a site?', 'updraftplus').'</p><p>'.__('Then, try out our "Migrator" add-on. After using it once, you\'ll have saved the purchase price compared to the time needed to copy a site by hand.', 'updraftplus').'</p><p><a href="https://updraftplus.com/landing/migrator">'.__('Get it here.', 'updraftplus').'</a></p>';
 					}
 				?>
 			</div>
@@ -5108,7 +5119,7 @@ ENDHERE;
 		$no_remote_configured = (empty($service) || array('none') === $service || array('') === $service) ? true : false;
 
 		if ($no_remote_configured) {
-			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>'.sprintf(__("Backup won't be sent to any remote storage - none has been saved in the %s", 'updraftplus'), '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&amp;tab=settings" id="updraft_backupnow_gotosettings">'.__('settings', 'updraftplus')).'</a>. '.__('Not got any remote storage?', 'updraftplus').' <a href="https://updraftplus.com/support/updraftplus-vault-faqs/">'.__("Check out UpdraftPlus Vault.", 'updraftplus').'</a></em>';
+			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>'.sprintf(__("Backup won't be sent to any remote storage - none has been saved in the %s", 'updraftplus'), '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&amp;tab=settings" id="updraft_backupnow_gotosettings">'.__('settings', 'updraftplus')).'</a>. '.__('Not got any remote storage?', 'updraftplus').' <a href="https://updraftplus.com/landing/vault">'.__("Check out UpdraftPlus Vault.", 'updraftplus').'</a></em>';
 		} else {
 			return '<input type="checkbox" id="backupnow_includecloud" checked="checked"> <label for="backupnow_includecloud">'.__("Send this backup to remote storage", 'updraftplus').'</label>';
 		}

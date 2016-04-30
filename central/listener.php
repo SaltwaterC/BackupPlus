@@ -134,7 +134,7 @@ class UpdraftPlus_UpdraftCentral_Listener {
 		set_error_handler(array($this->ud, 'php_error'), E_ALL & ~E_STRICT);
 		$this->php_events = array();
 		@ob_start();
-		add_action('updraftplus_logline', array($this, 'updraftplus_logline'), 10, 4);
+		add_filter('updraftplus_logline', array($this, 'updraftplus_logline'), 10, 4);
 		if (!UpdraftPlus_Options::get_updraft_option('updraft_debug_mode')) return;
 // 		$this->ud->nonce = $hash;
 // 		$this->ud->logfile_open($hash);
@@ -144,6 +144,7 @@ class UpdraftPlus_UpdraftCentral_Listener {
 		if ('notice' === $level && 'php_event' === $uniq_id) {
 			$this->php_events[] = $line;
 		}
+		return $line;
 	}
 
 	public function return_rpc_message($msg) {
