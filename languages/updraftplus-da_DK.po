@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2016-05-24 20:13:09+0000\n"
+"PO-Revision-Date: 2016-05-30 21:39:20+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -254,209 +254,209 @@ msgstr "Se de seneste updraftCentral log-hændelser"
 
 #: central/bootstrap.php:452
 msgid "fetch..."
-msgstr ""
+msgstr "hent..."
 
 #: central/bootstrap.php:463
 msgid "UpdraftCentral (Remote Control)"
-msgstr ""
+msgstr "UpdraftCentral (Fjernbetjent)"
 
 #: class-updraftplus.php:356 class-updraftplus.php:401
 msgid "The given file was not found, or could not be read."
-msgstr ""
+msgstr "Den pågældende fil blev ikke fundet eller kunne ikke læses."
 
 #: methods/updraftvault.php:214
 msgid "No Vault connection was found for this site (has it moved?); please disconnect and re-connect."
-msgstr ""
+msgstr "Ingen Vault forbindelse blev fundet for dette websted (er det flyttet?); venligst afbryd og tilslut igen."
 
 #: methods/updraftvault.php:269 methods/updraftvault.php:275
 #: methods/updraftvault.php:281
 msgid "or (annual discount)"
-msgstr ""
+msgstr "eller (årlig rabat)"
 
 #: methods/updraftvault.php:270 methods/updraftvault.php:276
 #: methods/updraftvault.php:282
 msgid "%s per year"
-msgstr ""
+msgstr "%s pr. år"
 
 #: addons/copycom.php:60 addons/copycom.php:526
 msgid "Barracuda are closing down Copy.Com on May 1st, 2016. See:"
-msgstr ""
+msgstr "Barracuda lukker Copy.Com 1. maj 2016. Se:"
 
 #: addons/s3-enhanced.php:305
 msgid "Asia Pacific (Seoul)"
-msgstr ""
+msgstr "Asia Pacific (Seoul)"
 
 #: admin.php:477
 msgid "Fetching..."
-msgstr ""
+msgstr "Henter..."
 
 #: admin.php:485
 msgid "Error: the server sent us a response which we did not understand."
-msgstr ""
+msgstr "Fejl: Serveren sendte et uforståeligt svar."
 
 #: admin.php:521
 msgid "Saving..."
-msgstr ""
+msgstr "Gemmer..."
 
 #: admin.php:538
 msgid "Please enter a valid URL"
-msgstr ""
+msgstr "Venligst indtast en gyldig URL"
 
 #: admin.php:539
 msgid "We requested to delete the file, but could not understand the server's response"
-msgstr ""
+msgstr "Vi anmodede om at slette filen, men kunne ikke forstå serverens svar"
 
 #: admin.php:545
 msgid "You should save your changes to ensure that they are used for making your backup."
-msgstr ""
+msgstr "Du bør gemme dine ændringer for at sikre, at de bliver anvendt til din backup."
 
 #: admin.php:2599
 msgid "Microsoft OneDrive, Microsoft Azure, Google Cloud Storage"
-msgstr ""
+msgstr "Microsoft OneDrive, Microsoft Azure, Google Cloud Storage"
 
 #: admin.php:2863
 msgid "calculate"
-msgstr ""
+msgstr "beregn"
 
 #: admin.php:2934
 msgid "this backup set"
-msgstr ""
+msgstr "dette backup sæt"
 
 #: admin.php:2937
 msgid "these backup sets"
-msgstr ""
+msgstr "disse backup sæt"
 
 #: admin.php:3103
 msgid "reset"
-msgstr ""
+msgstr "reset"
 
 #: admin.php:3149 admin.php:3153
 msgid "Wipe settings"
-msgstr ""
+msgstr "Wipe-indstillinger"
 
 #: admin.php:3220
 msgid "The backup has finished running"
-msgstr ""
+msgstr "Denne backup er færdig"
 
 #: admin.php:3382
 msgid "stop"
-msgstr ""
+msgstr "stop"
 
 #: admin.php:4294
 msgid "Total backup size:"
-msgstr ""
+msgstr "Total backup-størrelse:"
 
 #: admin.php:5212
 msgid "Your settings have been saved."
-msgstr ""
+msgstr "Dine indstillinger er blevet gemt."
 
 #: addons/onedrive.php:50
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it."
-msgstr ""
+msgstr "Det nødvendige %s PHP modul er ikke installeret - bed din webudbyder om at aktivere det."
 
 #: backup.php:386
 msgid "Unexpected error: no class '%s' was found (your UpdraftPlus installation seems broken - try re-installing)"
-msgstr ""
+msgstr "Uventet fejl: Ingen klasse '%s' blev fundet (der er sandsynligvis fejl på din UpdraftPlus installation - prøv at geninstallere)"
 
 #: restorer.php:1533
 msgid "Uploads URL:"
-msgstr ""
+msgstr "Uploads URL:"
 
 #: addons/multisite.php:374 addons/multisite.php:384
 msgid "Restoring only the site with id=%s: removing other data (if any) from the unpacked backup"
-msgstr ""
+msgstr "Gendanner kun stedet med id =%s: Fjerner andre data (hvis nogen) fra den udpakkede backup"
 
 #: addons/multisite.php:525
 msgid "Which site to restore"
-msgstr ""
+msgstr "Hvilket site at gendanne"
 
 #: addons/multisite.php:528
 msgid "All sites"
-msgstr ""
+msgstr "Allle sider"
 
 #: addons/multisite.php:533
 msgid "may include some site-wide data"
-msgstr ""
+msgstr "kan indeholde nogle data for hele sitet"
 
 #: addons/multisite.php:542
 msgid "N.B. this option only affects the restoration of the database and uploads - other file entities (such as plugins) in WordPress are shared by the whole network."
-msgstr ""
+msgstr "N. B. Denne indstilling påvirker kun gendannelse af databasen og uploads - andre filer (såsom plugins) i WordPress deles af hele netværket."
 
 #: addons/multisite.php:542
 msgid "Read more..."
-msgstr ""
+msgstr "Læs mere..."
 
 #: admin.php:556
 msgid "Please fill in the required information."
-msgstr ""
+msgstr "Venligst udfyld den nødvendige information."
 
 #: admin.php:2727
 msgid "Dismiss"
-msgstr ""
+msgstr "Afvis"
 
 #: class-updraftplus.php:3576
 msgid "It will be imported as a new site."
-msgstr ""
+msgstr "Vil blive importeret som et nyt site."
 
 #: class-updraftplus.php:3576
 msgid "Please read this link for important information on this process."
-msgstr ""
+msgstr "Venligst læs dette link for vigtig information om processen."
 
 #: class-updraftplus.php:3580 restorer.php:1553
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
-msgstr ""
+msgstr "For at importere et almindeligt WordPress site til en multisite installation kræves %s."
 
 #: restorer.php:1894
 msgid "Skipping table %s: this table will not be restored"
-msgstr ""
+msgstr "Dropper tabel %s: Denne tabel vil ikke blive gendannet."
 
 #: addons/migrator.php:352 addons/migrator.php:355 addons/migrator.php:358
 msgid "You selected %s to be included in the restoration - this cannot / should not be done when importing a single site into a network."
-msgstr ""
+msgstr "Du valgte at %s skal indgå i gendannelsen - det kan ikke / bør ikke ske ved import af et enkelt site til et netværk."
 
 #: addons/migrator.php:352
 msgid "WordPress core"
-msgstr ""
+msgstr "WordPress core"
 
 #: addons/migrator.php:355
 msgid "other content from wp-content"
-msgstr ""
+msgstr "andet indhold end wp-indhold"
 
 #: addons/migrator.php:364 addons/migrator.php:366
 msgid "Importing a single site into a multisite install"
-msgstr ""
+msgstr "Importerer et single site til en multisite installation"
 
 #: addons/migrator.php:366
 msgid "This feature is not compatible with %s"
-msgstr ""
+msgstr "Denne funktion er ikke kompatibel med %s"
 
 #: addons/migrator.php:386 addons/migrator.php:388
 msgid "You must use lower-case letters or numbers for the site path, only."
-msgstr ""
+msgstr "Du skal bruge små bogstaver eller tal i websitets sti."
 
 #: addons/migrator.php:396
 msgid "Attribute imported content to user"
-msgstr ""
+msgstr "Egenskabs importeret indhold til bruger"
 
 #: addons/migrator.php:434
 msgid "Required information for restoring this backup was not given (%s)"
-msgstr ""
+msgstr "Der blev ikke givet nødvendige oplysninger for at kunne genskabe denne sikkerhedskopi (%s)"
 
 #: addons/migrator.php:491 addons/migrator.php:492
 msgid "Error when creating new site at your chosen address:"
-msgstr ""
+msgstr "Der opsted fejl oprettelse af nyt site på din valgte adresse:"
 
 #: addons/migrator.php:517
 msgid "<strong>ERROR</strong>: problem creating site entry."
-msgstr ""
+msgstr "<strong>ERROR</strong>: problem med at oprette indhold på sitet."
 
 #: admin.php:3101
 msgid "Call WordPress action:"
-msgstr ""
+msgstr "Udfør WordPress handling:"
 
 #: admin.php:2751
 msgid "Your saved settings also affect what is backed up - e.g. files excluded."
-msgstr ""
+msgstr "Dine gemte indstillinger påvirker også, hvad der oprettes back up af - f.eks. udelukkes filer."
 
 #: admin.php:354 admin.php:2395
 msgid "Advanced Tools"
@@ -481,11 +481,11 @@ msgstr "Tilstrækkelige informationer om den igangværende genskabelse kunne ikk
 
 #: admin.php:2396
 msgid "Premium / Extensions"
-msgstr ""
+msgstr "Premium / Udvidelser"
 
 #: admin.php:2521
 msgid "Backup Contents And Schedule"
-msgstr ""
+msgstr "Backup Indhold og Tidspland"
 
 #: admin.php:2718
 msgid "%s minutes, %s seconds"
@@ -493,282 +493,282 @@ msgstr "%s minutter, %s sekunder"
 
 #: admin.php:2720
 msgid "Unfinished restoration"
-msgstr ""
+msgstr "Ufærdig gendannelse"
 
 #: admin.php:2721
 msgid "You have an unfinished restoration operation, begun %s ago."
-msgstr ""
+msgstr "Du har en ufærdig gendannelses-operation, påbegyndt for %s siden."
 
 #: admin.php:2726
 msgid "Continue restoration"
-msgstr ""
+msgstr "Fortsæt gendannelse"
 
 #: admin.php:2747
 msgid "Include the database in the backup"
-msgstr ""
+msgstr "Medtag databasen i backup'en"
 
 #: admin.php:2749
 msgid "Include any files in the backup"
-msgstr ""
+msgstr "Medtag alle filer i backup'en"
 
 #: admin.php:5111
 msgid "Backup won't be sent to any remote storage - none has been saved in the %s"
-msgstr ""
+msgstr "Backup vil ikke blive sendt til noget lager - Intet  er blevet gemt i %s"
 
 #: admin.php:5111
 msgid "settings"
-msgstr ""
+msgstr "indstillinger"
 
 #: admin.php:5111
 msgid "Not got any remote storage?"
-msgstr ""
+msgstr "Har du ikke et fjernlager?"
 
 #: admin.php:5111
 msgid "Check out UpdraftPlus Vault."
-msgstr ""
+msgstr "Se UpdraftPlus Vault"
 
 #: admin.php:5113
 msgid "Send this backup to remote storage"
-msgstr ""
+msgstr "Send denne backup til fjernlager"
 
 #: admin.php:3150
 msgid "This button will delete all UpdraftPlus settings and progress information for in-progress backups (but not any of your existing backups from your cloud storage)."
-msgstr ""
+msgstr "Denne knap vil slette alle UpdraftPlus indstillinger og information om igangværende sikkerhedskopier (men ikke slette eksisterende sikkerhedskopier i din sky)."
 
 #: admin.php:3150
 msgid "You will then need to enter all your settings again. You can also do this before deactivating/deinstalling UpdraftPlus if you wish."
-msgstr ""
+msgstr "Du skal derefter indtaste alle dine indstillinger igen. Du kan også gøre dette inden deaktivering / afinstallation af UpdraftPlus, hvis du ønsker det."
 
 #: admin.php:3682
 msgid "Files backup schedule"
-msgstr ""
+msgstr "Tidsplan for backup af filer"
 
 #: admin.php:3715
 msgid "Incremental file backup schedule"
-msgstr ""
+msgstr "Detaljeret tidsplan for backup af filer"
 
 #: admin.php:3725
 msgid "Database backup schedule"
-msgstr ""
+msgstr "Database backup tidsplan"
 
 #: admin.php:3760
 msgid "Sending Your Backup To Remote Storage"
-msgstr ""
+msgstr "Sender din backup til fjernlager"
 
 #: admin.php:3819
 msgid "File Options"
-msgstr ""
+msgstr "Fil-muligheder"
 
 #: admin.php:4849
 msgid "Skipping: this archive was already restored."
-msgstr ""
+msgstr "Stopper: Dette arkiv er allerede genskabt."
 
 #: addons/googlecloud.php:860
 msgid "You must use a bucket name that is unique, for all %s users."
-msgstr ""
+msgstr "Du skal bruge et gruppenavn, der er unikt for alle %s brugere."
 
 #: addons/googlecloud.php:875 addons/googlecloud.php:890
 msgid "This setting applies only when a new bucket is being created."
-msgstr ""
+msgstr "Denne indstilling gælder kun, når en ny gruppe bliver skabt."
 
 #: addons/googlecloud.php:875
 msgid "Note that Google do not support every storage class in every location - you should read their documentation to learn about current availability."
-msgstr ""
+msgstr "Bemærk, at Google ikke understøtter alle lagringsklasser på enhver placering - Du bør læse deres dokumentation for at lære om aktuel tilgængelighed."
 
 #: addons/googlecloud.php:880
 msgid "Bucket location"
-msgstr ""
+msgstr "Gruppe lokation"
 
 #: addons/googlecloud.php:45
 msgid " Eastern United States"
-msgstr ""
+msgstr "Østlige United States"
 
 #: addons/googlecloud.php:47 addons/googlecloud.php:48
 msgid "Eastern United States"
-msgstr ""
+msgstr "Østlige United States"
 
 #: addons/googlecloud.php:49
 msgid "Western United States"
-msgstr ""
+msgstr "Vestlige United States"
 
 #: addons/googlecloud.php:50
 msgid "Eastern Asia-Pacific"
-msgstr ""
+msgstr "Østlige Asia-Pacific"
 
 #: addons/googlecloud.php:51
 msgid "Western Europe"
-msgstr ""
+msgstr "Vesteuropa"
 
 #: addons/googlecloud.php:268
 msgid "You do not have access to this bucket"
-msgstr ""
+msgstr "Du har ikke adgang til denne gruppe"
 
 #: addons/googlecloud.php:816
 msgid "Do not confuse %s with %s - they are separate things."
-msgstr ""
+msgstr "%s of %s må ikke forveksles - De er forskellige"
 
 #: addons/azure.php:516
 msgid "If the %s does not already exist, then it will be created."
-msgstr ""
+msgstr "Hvis %s ikke allerede eksisterer, vil det blive oprettet."
 
 #: addons/azure.php:516
 msgid "See Microsoft's guidelines on container naming by following this link."
-msgstr ""
+msgstr "Se Microsofts retningslinjer for mappe-navngivning ved at følge dette link."
 
 #: addons/azure.php:521
 msgid "Prefix"
-msgstr ""
+msgstr "Præfiks"
 
 #: addons/azure.php:521
 msgid "optional"
-msgstr ""
+msgstr "valgfri"
 
 #: addons/azure.php:522
 msgid "You can enter the path of any %s virtual folder you wish to use here."
-msgstr ""
+msgstr "Du kan indtaste stien til enhver %s virtuel mappe, du ønsker at bruge her."
 
 #: addons/azure.php:522
 msgid "container"
-msgstr ""
+msgstr "mappe"
 
 #: addons/googlecloud.php:35
 msgid "Standard"
-msgstr ""
+msgstr "Standard"
 
 #: addons/googlecloud.php:36
 msgid "Durable reduced availability"
-msgstr ""
+msgstr "Vedværende begrænset tilgængelighed"
 
 #: addons/googlecloud.php:37
 msgid "Nearline"
-msgstr ""
+msgstr "Nearline"
 
 #: addons/googlecloud.php:41
 msgid "United States"
-msgstr ""
+msgstr "United States"
 
 #: addons/googlecloud.php:41 addons/googlecloud.php:42
 #: addons/googlecloud.php:43
 msgid "multi-region location"
-msgstr ""
+msgstr "multi-regional lokation"
 
 #: addons/googlecloud.php:42
 msgid "Asia Pacific"
-msgstr ""
+msgstr "Asia Pacific"
 
 #: addons/googlecloud.php:43
 msgid "European Union"
-msgstr ""
+msgstr "Europæsik Union"
 
 #: addons/googlecloud.php:44 addons/googlecloud.php:46
 msgid "Central United States"
-msgstr ""
+msgstr "Central United States"
 
 #: addons/azure.php:342
 msgid "Could not access container"
-msgstr ""
+msgstr "Kunne ikke tilgå mappe"
 
 #: addons/azure.php:448
 msgid "Could not create the container"
-msgstr ""
+msgstr "Kunne ikke oprette beholderen"
 
 #: addons/azure.php:500
 msgid "Create Azure credentials in your Azure developer console."
-msgstr ""
+msgstr "Opret Azure legitimationsoplysninger i din Azure udviklerkonsol."
 
 #: addons/azure.php:504 addons/azure.php:508
 msgid "Azure"
-msgstr ""
+msgstr "Azure"
 
 #: addons/azure.php:504
 msgid "Account Name"
-msgstr ""
+msgstr "Kontonavn"
 
 #: addons/azure.php:505
 msgid "This is not your Azure login - see the instructions if needing more guidance."
-msgstr ""
+msgstr "Dette er ikke din Azure login - se anvisninger, hvis du har brug for mere vejledning."
 
 #: addons/azure.php:516
 msgid "Enter the path of the %s you wish to use here."
-msgstr ""
+msgstr "Indtast stien til den %s, du ønsker at bruge her."
 
 #: class-updraftplus.php:2428
 msgid "To complete your migration/clone, you should now log in to the remote site and restore the backup set."
-msgstr ""
+msgstr "For at fuldføre din migrering/kloning, bør du nu logge ind på det eksterne site og genoprette backup sættet."
 
 #: addons/googlecloud.php:854
 msgid "Project ID"
-msgstr ""
+msgstr "Projekt ID"
 
 #: addons/googlecloud.php:743
 msgid "You must enter a project ID in order to be able to create a new bucket."
-msgstr ""
+msgstr "Du skal indtaste et projekt ID for at kunne oprette en nu gruppe."
 
 #: addons/googlecloud.php:828
 msgid "Follow this link to your Google API Console, and there activate the Storage API and create a Client ID in the API Access section."
-msgstr ""
+msgstr "Følg dette link til din Google API Console og aktivér Lager API'en og opret et klient ID i API-adgang sektionen."
 
 #: addons/googlecloud.php:855
 msgid "Enter the ID of the %s project you wish to use here."
-msgstr ""
+msgstr "Indtast ID''et til det %s projekt du ønsker at benytte her."
 
 #: addons/googlecloud.php:855
 msgid "N.B. This is only needed if you have not already created the bucket, and you wish UpdraftPlus to create it for you."
-msgstr ""
+msgstr "N. B. Dette er kun nødvendigt, hvis du ikke allerede har oprettet gruppen, og du ønsker at UpdraftPlus opretter det for dig."
 
 #: addons/googlecloud.php:855
 msgid "Otherwise, you can leave it blank."
-msgstr ""
+msgstr "Ellers kan du lade det være tomt."
 
 #: addons/googlecloud.php:859
 msgid "Bucket"
-msgstr ""
+msgstr "Gruppe"
 
 #: addons/googlecloud.php:860
 msgid "Enter the name of the %s bucket you wish to use here."
-msgstr ""
+msgstr "Indtast navnet på den %s gruppe, du vil bruge her."
 
 #: addons/googlecloud.php:860
 msgid "Bucket names have to be globally unique. If the bucket does not already exist, then it will be created."
-msgstr ""
+msgstr "Gruppenavne skal være globalt unikke. Hvis gruppen ikke allerede eksisterer, vil den blive oprettet."
 
 #: addons/googlecloud.php:860
 msgid "See Google's guidelines on bucket naming by following this link."
-msgstr ""
+msgstr "Se Google's vejledning vedrørende navngivning af grupper ved at følge dette link."
 
 #: addons/googlecloud.php:865
 msgid "Storage class"
-msgstr ""
+msgstr "Lager niveau"
 
 #: admin.php:3076
 msgid "Not installed"
-msgstr ""
+msgstr "Ikke installeret"
 
 #: admin.php:3076
 msgid "required for some remote storage providers"
-msgstr ""
+msgstr "krævet af nogle lager-udbydere"
 
 #: backup.php:1408
 msgid "The backup directory is not writable (or disk space is full) - the database backup is expected to shortly fail."
-msgstr ""
+msgstr "Backup-mappen er ikke skrivbar (eller diskplads er fuld) - Database-backup'en forventes snart at mislykkes."
 
 #: backup.php:1509 backup.php:1511
 msgid "The database backup appears to have failed"
-msgstr ""
+msgstr "Backup af databasen er tilsyneladende mislykkedes."
 
 #: backup.php:1509
 msgid "no options or sitemeta table was found"
-msgstr ""
+msgstr "der blev ikke fundet hverken valgmuligheder eller site-meta"
 
 #: backup.php:1511
 msgid "the options table was not found"
-msgstr ""
+msgstr "tabellen med muligheder blev ikke fundet"
 
 #: addons/googlecloud.php:215 addons/googlecloud.php:268
 #: addons/googlecloud.php:288 addons/googlecloud.php:735
 #: addons/googlecloud.php:782
 msgid "%s Service Exception."
-msgstr ""
+msgstr "%s Service undtagelse"
 
 #: addons/googlecloud.php:215 addons/googlecloud.php:268
 #: addons/googlecloud.php:278 addons/googlecloud.php:288
@@ -777,20 +777,20 @@ msgstr ""
 #: addons/googlecloud.php:839 addons/googlecloud.php:847
 #: addons/googlecloud.php:860
 msgid "Google Cloud"
-msgstr ""
+msgstr "Google Cloud"
 
 #: addons/googlecloud.php:215 addons/googlecloud.php:288
 #: addons/googlecloud.php:735 addons/googlecloud.php:782
 msgid "You do not have access to this bucket."
-msgstr ""
+msgstr "Du har ikke adgang til denne gruppe"
 
 #: addons/googlecloud.php:479
 msgid "Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Cloud."
-msgstr ""
+msgstr "Har endnu ikke fået en adgang token fra Google - du har brug for at tillade eller re-autorisere din forbindelse til Google Cloud."
 
 #: addons/googlecloud.php:609
 msgid "You must save and authenticate before you can test your settings."
-msgstr ""
+msgstr "Du skal gemme og godkende, før du kan teste dine indstillinger."
 
 #: admin.php:548
 msgid "day"
