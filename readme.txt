@@ -130,6 +130,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 = Development version (not yet released/supported)
 
 * TWEAK: Extend cacheing of enumeration of uploads that was introduced in 1.11.1 to other data in wp-content also
+* FIX: Fix inaccurate reporting of the current Vault quota usage in the report email
 
 = 1.12.13 - 07/Jun/2016 =
 

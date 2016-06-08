@@ -397,14 +397,14 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 			try {
 				
 				$config = $this->get_config();
-				
+
 				if (empty($config['quota_root'])) {
 					// This next line is wrong: it lists the files *in this site's sub-folder*, rather than the whole Vault
 					$current_files = $this->listfiles('');
 				} else {
-					$current_files = $this->listfiles_with_path($config['quota_root'], '');
+					$current_files = $this->listfiles_with_path($config['quota_root'], '', true);
 				}
-				
+
 			} catch (Exception $e) {
 				global $updraftplus;
 				$updraftplus->log("Listfiles failed during quota calculation: ".$e->getMessage());

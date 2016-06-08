@@ -489,7 +489,7 @@ class UpdraftPlus_BackupModule_s3 {
 	}
 	
 	// The purpose of splitting this into a separate method, is to also allow listing with a different path
-	public function listfiles_with_path($path, $match = 'backup_') {
+	public function listfiles_with_path($path, $match = 'backup_', $include_subfolders = false) {
 		
 		$bucket_name = untrailingslashit($path);
 		$bucket_path = '';
@@ -498,7 +498,7 @@ class UpdraftPlus_BackupModule_s3 {
 			$bucket_name = $bmatches[1];
 			$bucket_path = trailingslashit($bmatches[2]);
 		}
-		
+
 		$config = $this->get_config();
 		
 		global $updraftplus;
@@ -537,7 +537,7 @@ class UpdraftPlus_BackupModule_s3 {
 			}
 		}
 		*/
-		
+
 		$bucket = $s3->getBucket($bucket_name, $bucket_path.$match);
 
 		if (!is_array($bucket)) return array();
@@ -552,7 +552,7 @@ class UpdraftPlus_BackupModule_s3 {
 				if (0 !== strpos($object['name'], $bucket_path)) continue;
 				$object['name'] = substr($object['name'], strlen($bucket_path));
 			} else {
-				if (false !== strpos($object['name'], '/')) continue;
+				if (!$include_subfolders && false !== strpos($object['name'], '/')) continue;
 			}
 
 			$result = array('name' => $object['name']);
