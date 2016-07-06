@@ -109,15 +109,19 @@ class UpdraftPlus_UpdraftCentral_Listener {
 
 		$command_php_class = $this->command_classes[$class_prefix];
 		
-		if (!class_exists($command_php_class)) require_once(UPDRAFTPLUS_DIR.'/central/'.$class_prefix.'-commands.php');
+		if (!class_exists($command_php_class) && file_exists(UPDRAFTPLUS_DIR.'/central/'.$class_prefix.'-commands.php')) require_once(UPDRAFTPLUS_DIR.'/central/'.$class_prefix.'-commands.php');
 		
-		if (empty($this->commands[$class_prefix])) $this->commands[$class_prefix] = new $command_php_class($this);
+		if (empty($this->commands[$class_prefix])) {
+			if (class_exists($command_php_class)) {
+				$this->commands[$class_prefix] = new $command_php_class($this);
+			}
+		}
 		
-		$command_class = $this->commands[$class_prefix];
+		$command_class = isset($this->commands[$class_prefix]) ? $this->commands[$class_prefix] : new stdClass;
 
-		if ('_' == substr($command, 0, 1) || !method_exists($command_class, $command)) {
+		if ('_' == substr($command, 0, 1) || !is_a($command_class, $command_php_class) || !method_exists($command_class, $command)) {
 			if (defined('UPDRAFTPLUS_UDRPC_FORCE_DEBUG') && UPDRAFTPLUS_UDRPC_FORCE_DEBUG) error_log("Unknown RPC command received: ".$command);
-			return $this->return_rpc_message(array('response' => 'rpcerror', 'data' => array('code' => 'unknown_rpc_command', 'data' => $command)));
+			return $this->return_rpc_message(array('response' => 'rpcerror', 'data' => array('code' => 'unknown_rpc_command', 'data' => array('prefix' => $class_prefix, 'command' => $command, 'class' => $command_php_class))));
 		}
 
 		$extra_info = isset($this->extra_info[$key_name_indicator]) ? $this->extra_info[$key_name_indicator] : null;

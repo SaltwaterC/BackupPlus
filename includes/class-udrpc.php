@@ -59,7 +59,7 @@ if (!class_exists('UpdraftPlus_Remote_Communications')):
 class UpdraftPlus_Remote_Communications {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.4.7';
+	public $version = '1.4.8';
 
 	private $key_name_indicator;
 
@@ -680,26 +680,12 @@ class UpdraftPlus_Remote_Communications {
 		}
 
 		$time_difference = absint(time() - $json_decoded['time']);
-		if ($time_difference > $this->maximum_replay_time_difference) return array(
-			'response' => 'rpcerror',
-			'data' => array(
-				'code' => 'window_error',
-				'difference' => $time_difference,
-				'maximum_difference' => $this->maximum_replay_time_difference
-			)
-		);
+		if ($time_difference > $this->maximum_replay_time_difference) return new WP_Error('window_error', 'Message refused: maxium replay time difference exceeded', $time_difference);
 		
 		if (isset($json_decoded['incoming_rand']) && !empty($this->message_random_number) && $json_decoded['incoming_rand'] != $this->message_random_number) {
 			$this->log("UDRPC: Message mismatch (possibly MITM) (sent_rand="+$this->message_random_number+", returned_rand=".$json_decoded['incoming_rand']."): dropping", 'error');
 			
-			return array(
-				'response' => 'rpcerror',
-				'data' => array(
-					'code' => 'message_mismatch_error',
-					'ours' => $this->message_random_number,
-					'returned' => $json_decoded['incoming_rand']
-				)
-			);
+			return new WP_Error('message_mismatch_error', 'Message refused: message mismatch (possible MITM)');
 			
 		}
 

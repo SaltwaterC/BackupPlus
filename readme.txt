@@ -14,7 +14,7 @@ Backup and restoration made easy. Complete backups; manual or scheduled (backup 
 
 <a href="https://updraftplus.com">UpdraftPlus</a> simplifies backups (and restoration). Backup into the cloud (Amazon S3 (or compatible), Dropbox, Google Drive, Rackspace Cloud, DreamObjects, FTP, Openstack Swift, UpdraftPlus Vault and email) and restore with a single click. Backups of files and database can have separate schedules. The paid version also backs up to Microsoft OneDrive, Microsoft Azure, Google Cloud Storage, SFTP, SCP, and WebDAV.
 
-<strong>Top-quality:</strong> UpdraftPlus is the highest-ranking backup plugin on wordpress.org, with <strong>over 700,000 currently active installs</strong>. Widely tested and reliable, this is the world's #1 most popular and mostly highly rated scheduled backup plugin. Millions of backups completed!
+<strong>Top-quality:</strong> UpdraftPlus is the highest-ranking backup plugin on wordpress.org, with <strong>over 800,000 currently active installs</strong>. Widely tested and reliable, this is the world's #1 most popular and mostly highly rated scheduled backup plugin. Millions of backups completed!
 
 [vimeo https://vimeo.com/154870690]
 
@@ -127,10 +127,25 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.12 of the free version correspond to changes made in 2.12.12.x of the paid version.
 
-= Development version (not yet released/supported)
+= 1.12.15 - 06/Jul/2016 =
 
+* TWEAK: S3 now supports the new Mumbai region
+* TWEAK: If the user enters an AWS/S3 access key that looks prima facie invalid, then mention this in the error output
+* TWEAK: Make the message that the user is shown in the case of no network connectivity to updraftplus.com when connecting for updates (paid versions) clearer
 * TWEAK: Extend cacheing of enumeration of uploads that was introduced in 1.11.1 to other data in wp-content also
+* TWEAK: Avoid fatal error in Migrator if running via WP-CLI with the USER environment variable unset
+* TWEAK: When DB_CHARSET is defined but empty, treat it the same as if undefined
+* TWEAK: Add updraftplus_remotesend_udrpc_object_obtained action hook, allowing customisation of HTTP transport options for remote sending
+* TWEAK: Introduced new UPDRAFTPLUS_RESTORE_ALL_SETTINGS constant to assist in complicated load-balancing setups with duplicate install on the same URL
+* TWEAK: Update bundled tripleclick script to fix bug in teardown handler
+* TWEAK: Update bundled UDRPC library to version 1.4.8
+* TWEAK: Patch Labelauty to be friendly to screen-readers
+* TWEAK: Suppress the UD updates check on paid versions that immediately follows a WP automatic core security update
+* TWEAK: Handle missing UpdraftCentral command classes more elegantly
+* FEATURE: Endpoint handlers for forthcoming updates and user mangement features in UpdraftCentral
+* TRANSLATIONS: Remove bundled German (de_DE) translation, since this is now retrieved from wordpress.org
 * FIX: Fix inaccurate reporting of the current Vault quota usage in the report email
+* FIX: Fix logic errors in processing return codes when no direct MySQL/MySQLi connection was possible in restoring that could cause UpdraftPlus to wrongly conclude that restoring was not possible
 
 = 1.12.13 - 07/Jun/2016 =
 
@@ -226,4 +241,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.13: Various small updates and fixes
+* 1.12.15: Various small updates and fixes

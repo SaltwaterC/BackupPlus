@@ -1575,7 +1575,7 @@ class UpdraftPlus_Backup {
 			if ($sind % 100 == 0) $updraftplus->something_useful_happened();
 		}
 
-		if (defined("DB_CHARSET")) {
+		if (@constant("DB_CHARSET")) {
 			$this->stow("/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
 		}
 
@@ -1909,7 +1909,7 @@ class UpdraftPlus_Backup {
 		$this->stow("# Database: ".$updraftplus->backquote($this->dbinfo['name'])."\n");
 		$this->stow("# --------------------------------------------------------\n");
 
-		if (defined("DB_CHARSET")) {
+		if (@constant("DB_CHARSET")) {
 			$this->stow("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n");
 			$this->stow("/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n");
 			$this->stow("/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n");
@@ -2291,7 +2291,7 @@ class UpdraftPlus_Backup {
 		
 		// Uploads: can/should we get it back from the cache?
 		// || 'others' == $whichone
-		if (('uploads' == $whichone ) && function_exists('gzopen') && function_exists('gzread')) {
+		if (('uploads' == $whichone || 'others' == $whichone) && function_exists('gzopen') && function_exists('gzread')) {
 			$use_cache_files = false;
 			$cache_file_base = $this->zip_basename.'-cachelist-'.$this->makezip_if_altered_since;
 			// Cache file suffixes: -zfd.gz.tmp, -zfb.gz.tmp, -info.tmp, (possible)-zfs.gz.tmp
@@ -2377,7 +2377,7 @@ class UpdraftPlus_Backup {
 		// Cache the file scan, if it looks like it'll be useful
 		// We use gzip to reduce the size as on hosts which limit disk I/O, the cacheing may make things worse
 		// 	|| 'others' == $whichone
-		if (('uploads' == $whichone) && !$error_occurred && function_exists('gzopen') && function_exists('gzwrite')) {
+		if (('uploads' == $whichone|| 'others' == $whichone) && !$error_occurred && function_exists('gzopen') && function_exists('gzwrite')) {
 			$cache_file_base = $this->zip_basename.'-cachelist-'.$this->makezip_if_altered_since;
 
 			// Just approximate - we're trying to avoid an otherwise-unpredictable PHP fatal error. Cacheing only happens if file enumeration took a long time - so presumably there are very many.
@@ -2386,9 +2386,32 @@ class UpdraftPlus_Backup {
 
 			// We haven't bothered to check if we just fetched the files from cache, as that shouldn't take a long time and so shouldn't trigger this
 			// Let us suppose we need 15% overhead for gzipping
+			
+			$memory_limit = ini_get('memory_limit');
+			$memory_usage = round(@memory_get_usage(false)/1048576, 1);
+			$memory_usage2 = round(@memory_get_usage(true)/1048576, 1);
+			
 			if ($time_counting_ended-$time_counting_began > 20 && $updraftplus->verify_free_memory($memory_needed_estimate*0.15) && $whandle = gzopen($cache_file_base.'-zfb.gz.tmp', 'w')) {
-				$updraftplus->log("File counting took a long time (".($time_counting_ended - $time_counting_began)."s); will attempt to cache results (estimated uncompressed bytes: ".round($memory_needed_estimate/1024, 1)." Kb)");
-				if (!gzwrite($whandle, serialize($this->zipfiles_batched))) {
+				$updraftplus->log("File counting took a long time (".($time_counting_ended - $time_counting_began)."s); will attempt to cache results (memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M), estimated uncompressed bytes: ".round($memory_needed_estimate/1024, 1)." Kb)");
+				
+				$buf = 'a:'.count($this->zipfiles_batched).':{';
+				foreach ($this->zipfiles_batched as $file => $add_as) {
+					$k = addslashes($file);
+					$v = addslashes($add_as);
+					$buf .= 's:'.strlen($k).':"'.$k.'";s:'.strlen($v).':"'.$v.'";';
+					if (strlen($buf) > 1048576) {
+						gzwrite($whandle, $buf, strlen($buf));
+						$buf = '';
+					}
+				}
+				$buf .= '}';
+				$final = gzwrite($whandle, $buf);
+				unset($buf);
+				
+// 				$serialised = serialize($this->zipfiles_batched);
+// 				$updraftplus->log("Actual uncompressed bytes: ".round(strlen($serialised)/1024, 1)." Kb");
+// 				if (!gzwrite($whandle, $serialised)) {
+				if (!$final) {
 					@unlink($cache_file_base.'-zfb.gz.tmp');
 					@gzclose($whandle);
 				} else {

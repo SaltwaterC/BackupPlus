@@ -22,6 +22,7 @@ class UpdraftPlus_UpdraftCentral_Main {
 			'core' => 'UpdraftCentral_Core_Commands',
 			'updraftplus' => 'UpdraftPlus_RemoteControl_Commands',
 			'updates' => 'UpdraftCentral_Updates_Commands',
+			'users' => 'UpdraftCentral_Users_Commands',
 		));
 	
 		// Remote control keys

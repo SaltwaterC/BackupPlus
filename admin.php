@@ -441,7 +441,7 @@ class UpdraftPlus_Admin {
 		
 		wp_enqueue_script('jquery-blockui', UPDRAFTPLUS_URL.'/includes/jquery.blockUI.js', array('jquery'), '2.70.0');
 	
-		wp_enqueue_script('jquery-labelauty', UPDRAFTPLUS_URL.'/includes/labelauty/jquery-labelauty.js', array('jquery'), '20150925');
+		wp_enqueue_script('jquery-labelauty', UPDRAFTPLUS_URL.'/includes/labelauty/jquery-labelauty.js', array('jquery'), '20160622-ud');
 		wp_enqueue_style('jquery-labelauty', UPDRAFTPLUS_URL.'/includes/labelauty/jquery-labelauty.css', array(), '20150925'); 
 
 		do_action('updraftplus_admin_enqueue_scripts');
@@ -3790,7 +3790,9 @@ class UpdraftPlus_Admin {
 					$multi = apply_filters('updraftplus_storage_printoptions_multi', '');
 					
 					foreach($updraftplus->backup_methods as $method => $description) {
-						echo "<input name=\"updraft_service[]\" class=\"updraft_servicecheckbox $method $multi\" id=\"updraft_servicecheckbox_$method\" type=\"checkbox\" value=\"$method\"";
+						$backup_using = esc_attr(sprintf(__("Backup using %s?", 'updraftplus'), $description));
+						
+						echo "<input aria-label=\"$backup_using\" name=\"updraft_service[]\" class=\"updraft_servicecheckbox $method $multi\" id=\"updraft_servicecheckbox_$method\" type=\"checkbox\" value=\"$method\"";
 						if ($active_service === $method || (is_array($active_service) && in_array($method, $active_service))) echo ' checked="checked"';
 						echo " data-labelauty=\"".esc_attr($description)."\">";
 					}

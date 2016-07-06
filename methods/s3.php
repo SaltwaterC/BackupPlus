@@ -215,6 +215,7 @@ class UpdraftPlus_BackupModule_s3 {
 			case 'eu-central-1':
 				$endpoint = 's3-'.$region.'.amazonaws.com';
 				break;
+			case 'ap-south-1':
 			case 'cn-north-1':
 				$endpoint = 's3.'.$region.'.amazonaws.com.cn';
 				break;
@@ -945,7 +946,8 @@ class UpdraftPlus_BackupModule_s3 {
 			printf(__("Failure: We could not successfully access or create such a bucket. Please check your access credentials, and if those are correct then try another bucket name (as another %s user may already have taken your name).",'updraftplus'), $whoweare);
 			
 			if (!empty($this->s3_error)) echo "\n\n".sprintf(__('The error reported by %s was:', 'updraftplus'), $whoweare).' '.$this->s3_error;
-
+			if ('s3' == $config['key'] && 'AK' != substr($key, 0, 2)) echo "\n\n".sprintf(__('The AWS access key looks to be wrong (valid %s access keys begin with "AK")', 'updraftplus'), $whoweare);
+		
 		} else {
 		
 			$try_file = md5(rand());
