@@ -1,6 +1,6 @@
 <?php
 
-// Extracted from 4.5.2/wordpress/wp-admin/includes/class-wp-upgrader-skins.php
+// Extracted from 4.5.2/wordpress/wp-admin/includes/class-wp-upgrader-skins.php; with the bulk_*() methods added since they are not in the base class on all WP versions.
 // Needed only on WP < 3.7
 
 /**
@@ -98,4 +98,15 @@ class Automatic_Upgrader_Skin extends WP_Upgrader_Skin {
 		if ( ! empty( $output ) )
 			$this->feedback( $output );
 	}
+	
+		/**
+	 * @access public
+	 */
+	public function bulk_header() {}
+
+	/**
+	 * @access public
+	 */
+	public function bulk_footer() {}
+	
 }

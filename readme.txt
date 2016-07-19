@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.5
-Stable tag: 1.12.15
+Stable tag: 1.12.17
 Author URI: https://updraftplus.com
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -125,7 +125,29 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.12 of the free version correspond to changes made in 2.12.12.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.15 of the free version correspond to changes made in 2.12.15.x of the paid version.
+
+= Development version (not yet released) =
+
+* TWEAK: When Microsoft OneDrive quota is insufficient, the advisory message from UD now includes the available quota (as well as the used)
+* FEATURE: The Azure add-on/Premium now supports new-style Azure storage, as well as classic
+* TWEAK: When logging Azure upload locations, include the account name
+* TWEAK: Make the entering of settings for WebDAV more user-friendly
+* TWEAK: Update bundled select2 to version 4.0.3
+
+= 1.12.17 - 19/Jul/2016 =
+
+* FIX: Previous free release included empty translation files
+* TWEAK: Add 'snapshots' to the default list of directories to exclude from the uploads backup (is used by another backup plugin - avoid backups-of-backups)
+* TWEAK: Add et_bloom_stats to the list of tables likely to be large, and not needing search/replacing
+
+= 1.12.16 - 07/Jul/2016 =
+
+* TWEAK: Log FTP progress upload less often (slight resource usage improvement)
+* TWEAK: For multi-archive backup sets, the HTML title attribute of download buttons had unnecessary duplicated information
+* TWEAK: Improve OneDrive performance by cacheing directory listings
+* TWEAK: Detect and handle a case in which OneDrive incorrectly reports a file as incompletely uploaded
+* FIX: OneDrive scanning of large directories for existing backup sets was only detecting the first 200 files
 
 = 1.12.15 - 06/Jul/2016 =
 
@@ -241,4 +263,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.15: Various small updates and fixes
+* 1.12.17: The previous release did not include non-English translations

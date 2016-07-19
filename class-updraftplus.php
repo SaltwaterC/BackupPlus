@@ -3393,9 +3393,46 @@ class UpdraftPlus {
 		return  ($input > 0) ? min($input, 9999) : 1;
 	}
 
-	public function replace_http_with_webdav($input) {
-		if (!empty($input['url']) && 'http' == strtolower(substr($input['url'], 0, 4))) $input['url'] = 'webdav'.substr($input['url'], 4);
-		return $input;
+	// This is used as a WordPress options filter
+	public function construct_webdav_url($input) {
+
+		$url = null;
+		$slash = "/";
+		$host = "";
+		$colon = "";
+		$port_colon = "";
+		
+ 		if ((80 == $input['port'] && 'webdav' == $input['webdav']) || (443 == $input['port'] && 'webdavs' == $input['webdav'])) {
+			$input['port'] = '';
+		}
+		
+		if ('/' == substr($input['path'], 0, 1)){
+			$slash = "";
+		}
+		
+		if (false === strpos($input['host'],"@")){
+			$host = "@";
+		}
+		
+		if ('' != $input['user'] && '' != $input['pass']){
+			$colon = ":";
+		}
+		
+		if ('' != $input['host'] && '' != $input['port']){
+			$port_colon = ":";
+		}
+
+		if (!empty($input['url']) && 'http' == strtolower(substr($input['url'], 0, 4))) {
+			$input['url'] = 'webdav'.substr($input['url'], 4);
+		} elseif ('' != $input['user'] && '' != $input['pass']) {
+			$input['url'] = $input['webdav'] . urlencode($input['user']) . $colon . urlencode($input['pass']) . $host . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
+		} else {
+			$input['url'] = $input['webdav'] . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
+		}
+		
+// 		array_splice($input, 1);
+		
+		return array('url' => $input['url']);
 	}
 
 	public function just_one_email($input, $required = false) {
@@ -3416,6 +3453,15 @@ class UpdraftPlus {
 		return apply_filters('updraftplus_'.$filter, $rinput, $oinput);
 	}
 
+	public function enqueue_select2() {
+		// De-register to defeat any plugins that may have registered incompatible versions (e.g. WooCommerce 2.5 beta1 still has the Select 2 3.5 series)
+		wp_deregister_script('select2');
+		wp_deregister_style('select2');
+		$select2_version = '4.0.3';
+		wp_enqueue_script('select2', UPDRAFTPLUS_URL."/includes/select2/select2.min.js", array('jquery'), $select2_version);
+		wp_enqueue_style('select2', UPDRAFTPLUS_URL."/includes/select2/select2.min.css", array(), $select2_version);
+	}
+	
 	public function memory_check_current($memory_limit = false) {
 		# Returns in megabytes
 		if ($memory_limit == false) $memory_limit = ini_get('memory_limit');

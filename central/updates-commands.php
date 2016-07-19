@@ -424,17 +424,17 @@ class UpdraftCentral_Updates_Commands extends UpdraftCentral_Commands {
 			if (is_array($get_theme_updates)) {
 				foreach ($get_theme_updates as $update) {
 					$theme_updates[] = array(
-						'name' => $update->get('Name'),
-						'theme_uri' => $update->get('ThemeURI'),
-						'version' => $update->get('Version'),
-						'description' => $update->get('Description'),
-						'author' => $update->get('Author'),
-						'author_uri' => $update->get('AuthorURI'),
-						'update' => array(
-							'theme' => $update->update['theme'],
-							'new_version' => $update->update['new_version'],
-							'package' => $update->update['package'],
-							'url' => $update->update['url'],
+						'name' => @$update->Name,
+						'theme_uri' => @$update->ThemeURI,
+						'version' => @$update->Version,
+						'description' => @$update->Description,
+						'author' => @$update->Author,
+						'author_uri' => @$update->AuthorURI,
+						'update' => array(	
+							'theme' => @$update->update['theme'],
+							'new_version' => @$update->update['new_version'],
+							'package' => @$update->update['package'],
+							'url' => @$update->update['url'],
 						),
 					);
 				}
