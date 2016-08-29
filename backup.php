@@ -407,7 +407,7 @@ class UpdraftPlus_Backup {
 			return;
 		}
 
-		if (method_exists($wpdb, 'check_connection')) {
+		if (method_exists($wpdb, 'check_connection') && (!defined('UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS') || !UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS)) {
 			if (!$wpdb->check_connection(false)) {
 				$updraftplus->reschedule(60);
 				$updraftplus->log("It seems the database went away; scheduling a resumption and terminating for now");
@@ -1375,7 +1375,7 @@ class UpdraftPlus_Backup {
 		$total_tables = 0;
 
 		# WP 3.9 onwards - https://core.trac.wordpress.org/browser/trunk/src/wp-includes/wp-db.php?rev=27925 - check_connection() allows us to get the database connection back if it had dropped
-		if ('wp' == $whichdb && method_exists($this->wpdb_obj, 'check_connection')) {
+		if ('wp' == $whichdb && method_exists($this->wpdb_obj, 'check_connection') && (!defined('UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS') || !UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS)) {
 			if (!$this->wpdb_obj->check_connection(false)) {
 				$updraftplus->reschedule(60);
 				$updraftplus->log("It seems the database went away; scheduling a resumption and terminating for now");

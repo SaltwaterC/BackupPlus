@@ -15,19 +15,19 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		$base = (defined('UPDRAFTPLUS_VAULT_SHOP_BASE')) ? UPDRAFTPLUS_VAULT_SHOP_BASE : 'https://updraftplus.com/shop/';
 		switch ($which_page) {
 			case 'get_more_quota';
-				return $base.'product-category/updraftplus-vault/';
+				return apply_filters('updraftplus_com_link',$base.'product-category/updraftplus-vault/');
 				break;
 			case 'more_vault_info_faqs';
-				return 'https://updraftplus.com/support/updraftplus-vault-faqs/';
+				return apply_filters('updraftplus_com_link','https://updraftplus.com/support/updraftplus-vault-faqs/');
 				break;
 			case 'more_vault_info_landing';
-				return 'https://updraftplus.com/landing/vault';
+				return apply_filters('updraftplus_com_link','https://updraftplus.com/landing/vault');
 				break;
 			case 'vault_forgotten_credentials_links';
-				return 'https://updraftplus.com/my-account/lost-password/';
+				return apply_filters('updraftplus_com_link','https://updraftplus.com/my-account/lost-password/');
 				break;
 			default:
-				return $base;
+				return apply_filters('updraftplus_com_link',$base);
 				break;
 		}
 	}
@@ -270,21 +270,21 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 					</p>
 					<div class="vault-purchase-option">
 						<div class="vault-purchase-option-size">5 GB</div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-5gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$10'); ?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-5gb-quarterly");?>"><?php printf(__('%s per quarter', 'updraftplus'), '$10'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-5gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$35'); ?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-5gb-annual");?>"><?php printf(__('%s per year', 'updraftplus'), '$35'); ?></a></div>
 					</div>
 					<div class="vault-purchase-option">
 						<div class="vault-purchase-option-size">15 GB</div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-15gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$20'); ?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-15gb-quarterly");?>"><?php printf(__('%s per quarter', 'updraftplus'), '$20'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-15gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$70');?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-15gb-annual");?>"><?php printf(__('%s per year', 'updraftplus'), '$70');?></a></div>
 					</div>
 					<div class="vault-purchase-option">
 						<div class="vault-purchase-option-size">50 GB</div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-50gb-quarterly"><?php printf(__('%s per quarter', 'updraftplus'), '$50'); ?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-50gb-quarterly");?>"><?php printf(__('%s per quarter', 'updraftplus'), '$50'); ?></a></div>
 						<div class="vault-purchase-option-or"><?php _e('or (annual discount)', 'updraftplus');?></div>
-						<div class="vault-purchase-option-link"><a target="_blank" href="https://updraftplus.com/vault-50gb-annual"><?php printf(__('%s per year', 'updraftplus'), '$175');;?></a></div>
+						<div class="vault-purchase-option-link"><a target="_blank" href="<?php echo apply_filters("updraftplus_com_link","https://updraftplus.com/vault-50gb-annual");?>"><?php printf(__('%s per year', 'updraftplus'), '$175');;?></a></div>
 					</div>
 					<p class="clear-left padding-top-20px">
 						<?php echo __('Payments can be made in US dollars, euros or GB pounds sterling, via card or PayPal.', 'updraftplus').' '. __('Subscriptions can be cancelled at any time.', 'updraftplus');?>
@@ -550,7 +550,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		if (!is_array($response) || !isset($response['mothership']) || !isset($response['loggedin'])){
 
 			if (preg_match('/has banned your IP address \(([\.:0-9a-f]+)\)/', $result['body'], $matches)){
-				return new WP_Error('banned_ip', sprintf(__("UpdraftPlus.com has responded with 'Access Denied'.", 'updraftplus').'<br>'.__("It appears that your web server's IP Address (%s) is blocked.", 'updraftplus').' '.__('This most likely means that you share a webserver with a hacked website that has been used in previous attacks.', 'updraftplus').'<br> <a href="https://updraftplus.com/unblock-ip-address/" target="_blank">'.__('To remove the block, please go here.', 'updraftplus').'</a> ', $matches[1]));
+				return new WP_Error('banned_ip', sprintf(__("UpdraftPlus.com has responded with 'Access Denied'.", 'updraftplus').'<br>'.__("It appears that your web server's IP Address (%s) is blocked.", 'updraftplus').' '.__('This most likely means that you share a webserver with a hacked website that has been used in previous attacks.', 'updraftplus').'<br> <a href="'.apply_filters("updraftplus_com_link","https://updraftplus.com/unblock-ip-address/").'" target="_blank">'.__('To remove the block, please go here.', 'updraftplus').'</a> ', $matches[1]));
 			} else {
 				return new WP_Error('unknown_response', sprintf(__('UpdraftPlus.Com returned a response which we could not understand (data: %s)', 'updraftplus'), wp_remote_retrieve_body($result)));
 			}
@@ -586,7 +586,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 
 				if (!empty($response['authproblem'])) {
 					if ('invalidpassword' == $response['authproblem']) {
-						$authfail_error = new WP_Error('authfailed', __('Your email address was valid, but your password was not recognised by UpdraftPlus.Com.', 'updraftplus').' <a href="https://updraftplus.com/my-account/lost-password/">'.__('If you have forgotten your password, then go here to change your password on updraftplus.com.', 'updraftplus').'</a>');
+						$authfail_error = new WP_Error('authfailed', __('Your email address was valid, but your password was not recognised by UpdraftPlus.Com.', 'updraftplus').' <a href="'.apply_filters("updraftplus_com_link","https://updraftplus.com/my-account/lost-password/").'">'.__('If you have forgotten your password, then go here to change your password on updraftplus.com.', 'updraftplus').'</a>');
 						return $authfail_error;
 					} elseif ('invaliduser' == $response['authproblem']) {
 						return new WP_Error('authfailed', __('You entered an email address that was not recognised by UpdraftPlus.Com', 'updraftplus'));

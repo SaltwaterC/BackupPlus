@@ -1,5 +1,5 @@
 === UpdraftPlus WordPress Backup Plugin ===
-Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne
+Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, jcb
 Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
 Requires at least: 3.2
 Tested up to: 4.6
@@ -125,15 +125,39 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.15 of the free version correspond to changes made in 2.12.15.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.20 of the free version correspond to changes made in 2.12.20.x of the paid version.
 
-= Development version (not yet released) =
+= 1.12.20 - 29/Aug/2016 =
+
+* FEATURE: OpenStack uploads (including Rackspace Cloudfiles) can now adapt their upload rate to network conditions, leading to much faster uploads on many networks
+* FEATURE: Updated the OneDrive configuration to make it easier to setup. A custom Microsoft Developer App is no longer required
+* FEATURE: The "Advanced Tools" tab now has tools for importing and exporting settings
+* TWEAK: Honour the "do not verify SSL certificates" setting with WebDAV storage on PHP 5.6+
+* TWEAK: When there's a connection problem to updraftplus.com when claiming licences, provide more error info and guidance
+* TWEAK: In particular circumstances (malfunctioning WP scheduler, expert option to keep backups after despatching remotely selected (non-default)), zips could be sent to Google Drive more than once
+* TWEAK: Tweak issue in 1.12.18 with automatic backup pop-up appearing under another pop-up if you update themes via the themes pop-up (instead of the direct link)
+* TWEAK: When rescanning remote storage, don't log a potentially confusing message for an unconfigured storage module
+* TWEAK: Show a visual indicator and advice if an invalid hostname is entered for WebDAV
+* TWEAK: Removed the no-longer-useful debug backup buttons
+* TWEAK: Add a message when generating a key on a server without php-openssl, with information about how to make it faster
+* TWEAK: Prevent PHP installs which print PHP logging information to the browser from messing up the WebDAV settings in some situations
+* TWEAK: If PHP reports the current memory limit as a non-positive integer, do not display any message to the user about a low memory limit
+* TWEAK: If the user deletes their Google API project, then show clearer information on what to do when a backup fails
+* TWEAK: If you changed your OneDrive client ID, UD will now more clearly advise you of the need to re-authenticate
+* COMPATABILITY: Updated the OneDrive authentication procedure to make it compatible with the new Microsoft Developer Apps
+
+= 1.12.18 - 03/Aug/2016 =
 
 * TWEAK: When Microsoft OneDrive quota is insufficient, the advisory message from UD now includes the available quota (as well as the used)
 * FEATURE: The Azure add-on/Premium now supports new-style Azure storage, as well as classic
+* FEATURE: The Rackspace enhanced wizard can now be accessed via UpdraftCentral
+* TWEAK: Fix a regression in recent WP versions which caused remote keys to not always be retained after a migration
 * TWEAK: When logging Azure upload locations, include the account name
 * TWEAK: Make the entering of settings for WebDAV more user-friendly
 * TWEAK: Update bundled select2 to version 4.0.3
+* TWEAK: Clarify error message when a 'more files' location is not found
+* TWEAK: Add redirection_404 to the list of tables likely to be large, and not needing search/replacing
+* COMPATIBILITY: Compatible with WP 4.6 (previous paid versions have incompatibilities with the changes made to 'shiny updates/installs/deletes' in WP 4.6)
 
 = 1.12.17 - 19/Jul/2016 =
 
@@ -263,4 +287,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.17: The previous release did not include non-English translations
+* 1.12.20: Faster Rackspace Cloudfiles uploads. New import/export settings tool. Various small improvements, tweaks and fixes.

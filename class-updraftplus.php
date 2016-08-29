@@ -558,7 +558,6 @@ class UpdraftPlus {
 			$logline .= (class_exists('ZipArchive') && method_exists('ZipArchive', 'addFile')) ? "Y" : "N";
 		}
 
-// 		$w3oc = 'N';
 		if (0 === $this->current_resumption) {
 			$memlim = $this->memory_check_current();
 			if ($memlim<65 && $memlim>0) {
@@ -567,13 +566,6 @@ class UpdraftPlus {
 			if ($max_execution_time>0 && $max_execution_time<20) {
 				$this->log(sprintf(__('The amount of time allowed for WordPress plugins to run is very low (%s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %s seconds or more)', 'updraftplus'), $max_execution_time, 90), 'warning', 'lowmaxexecutiontime');
 			}
-// 			if (defined('W3TC') && W3TC == true && function_exists('w3_instance')) {
-// 				$modules = w3_instance('W3_ModuleStatus');
-// 				if ($modules->is_enabled('objectcache')) {
-// 					$w3oc = 'Y';
-// 				}
-// 			}
-// 			$logline .= " W3TC/ObjectCache: $w3oc";
 
 		}
 
@@ -774,19 +766,19 @@ class UpdraftPlus {
 	}
 
 	// $singletons : whether to upload a file that only has one chunk, or whether instead to return 1 in that case
-	public function chunked_upload($caller, $file, $cloudpath, $logname, $chunk_size, $uploaded_size, $singletons=false) {
+	public function chunked_upload($caller, $file, $cloudpath, $logname, $chunk_size, $uploaded_size, $singletons = false) {
 
 		$fullpath = $this->backups_dir_location().'/'.$file;
 		$orig_file_size = filesize($fullpath);
 		if ($uploaded_size >= $orig_file_size) return true;
 
 		$chunks = floor($orig_file_size / $chunk_size);
-		// There will be a remnant unless the file size was exactly on a 5MB boundary
+		// There will be a remnant unless the file size was exactly on a chunk boundary
 		if ($orig_file_size % $chunk_size > 0) $chunks++;
 
 		$this->log("$logname upload: $file (chunks: $chunks, size: $chunk_size) -> $cloudpath ($uploaded_size)");
 
-		if ($chunks == 0) {
+		if (0 == $chunks) {
 			return 1;
 		} elseif ($chunks < 2 && !$singletons) {
 			return 1;
@@ -799,43 +791,87 @@ class UpdraftPlus {
 			}
 
 			$errors_so_far = 0;
-			for ($i = 1 ; $i <= $chunks; $i++) {
+			$upload_start = 0;
+			$upload_end = -1;
+			$chunk_index = 1;
+			// The file size minus one equals the byte offset of the final byte
+			$upload_end = min($chunk_size - 1, $orig_file_size - 1);
+			
+			while ($upload_start < $orig_file_size) {
 
-				$upload_start = ($i-1)*$chunk_size;
-				// The file size minus one equals the byte offset of the final byte
-				$upload_end = min($i*$chunk_size-1, $orig_file_size-1);
 				// Don't forget the +1; otherwise the last byte is omitted
 				$upload_size = $upload_end - $upload_start + 1;
 
-				fseek($fp, $upload_start);
+				if ($upload_start) fseek($fp, $upload_start);
 
-				$uploaded = $caller->chunked_upload($file, $fp, $i, $upload_size, $upload_start, $upload_end);
+				/*
+				* Valid return values for $uploaded are many, as the possibilities have grown over time.
+				* This could be cleaned up; but, it works, and it's not hugely complex.
+				*
+				* WP_Error : an error occured. The only permissible codes are: reduce_chunk_size (only on the first chunk), try_again
+				* (bool)true : What was requested was done
+				* (int)1 : What was requested was done, but do not log anything
+				* (bool)false : There was an error
+				* (Object) : Properties:
+				*  (bool)log: (bool) - if absent, defaults to true
+				*  (int)new_chunk_size: advisory amount for the chunk size for future chunks
+				*  NOT IMPLEMENTED: (int)bytes_uploaded: Actual number of bytes uploaded (needs to be positive - o/w, should return an error instead)
+				*  
+				* N.B. Consumers should consult $fp and $upload_start to get data; they should not re-calculate from $chunk_index, which is not an indicator of file position.
+				*/
+				$uploaded = $caller->chunked_upload($file, $fp, $chunk_index, $upload_size, $upload_start, $upload_end, $orig_file_size);
 
 				// Try again? (Just once - added in 1.12.6 (can make more sophisticated if there is a need))
 				if (is_wp_error($uploaded) && 'try_again' == $uploaded->get_error_code()) {
 					// Arbitrary wait
 					sleep(3);
 					$this->log("Re-trying after wait (to allow apparent inconsistency to clear)");
-					$uploaded = $caller->chunked_upload($file, $fp, $i, $upload_size, $upload_start, $upload_end);
+					$uploaded = $caller->chunked_upload($file, $fp, $chunk_index, $upload_size, $upload_start, $upload_end, $orig_file_size);
 				}
 				
 				// This is the only other supported case of a WP_Error - otherwise, a boolean must be returned
 				// Note that this is only allowed on the first chunk. The caller is responsible to remember its chunk size if it uses this facility.
-				if (1 == $i && is_wp_error($uploaded) && 'reduce_chunk_size' == $uploaded->get_error_code() && false != ($new_chunk_size = $uploaded->get_error_data()) && is_numeric($new_chunk_size)) {
+				if (1 == $chunk_index && is_wp_error($uploaded) && 'reduce_chunk_size' == $uploaded->get_error_code() && false != ($new_chunk_size = $uploaded->get_error_data()) && is_numeric($new_chunk_size)) {
 					$this->log("Re-trying with new chunk size: ".$new_chunk_size);
-					return $this->chunked_upload($caller, $file, $cloudpath, $logname, $new_chunk_size, $uploaded_size, $singletons=false);
+					return $this->chunked_upload($caller, $file, $cloudpath, $logname, $new_chunk_size, $uploaded_size, $singletons);
+				}
+				
+				$uploaded_amount = $chunk_size;
+				
+				/*
+				// Not using this approach for now. Instead, going to allow the consumers to increase the next chunk size
+				if (is_object($uploaded) && isset($uploaded->bytes_uploaded)) {
+					if (!$uploaded->bytes_uploaded) {
+						$uploaded = false;
+					} else {
+						$uploaded_amount = $uploaded->bytes_uploaded;
+						$uploaded = (!isset($uploaded->log) || $uploaded->log) ? true : 1;
+					}
+				}
+				*/
+				if (is_object($uploaded) && isset($uploaded->new_chunk_size)) {
+					if ($uploaded->new_chunk_size >= 1048576) $new_chunk_size = $uploaded->new_chunk_size;
+					$uploaded = (!isset($uploaded->log) || $uploaded->log) ? true : 1;
 				}
 				
 				if ($uploaded) {
-					$perc = round(100*((($i-1) * $chunk_size) + $upload_size)/max($orig_file_size, 1), 1);
-					# $perc = round(100*$i/$chunks,1); # Takes no notice of last chunk likely being smaller
-					// Implementations used a return value of (int)1 (rather than (bool)true) to suppress logging
+					$perc = round(100*($upload_end + 1)/max($orig_file_size, 1), 1);
+					// Consumers use a return value of (int)1 (rather than (bool)true) to suppress logging
 					$log_it = ($uploaded === 1) ? false : true;
-					$this->record_uploaded_chunk($perc, $i, $fullpath, $log_it);
+					$this->record_uploaded_chunk($perc, $chunk_index, $fullpath, $log_it);
+					
+					// $uploaded_bytes = $upload_end + 1;
+					
 				} else {
 					$errors_so_far++;
-					if ($errors_so_far>=3) { @fclose($fp); return false; }
+					if ($errors_so_far >= 3) { @fclose($fp); return false; }
 				}
+				
+				$chunk_index++;
+				$upload_start = $upload_end + 1;
+				$upload_end += isset($new_chunk_size) ? $uploaded_amount + $new_chunk_size - $chunk_size : $uploaded_amount;
+				$upload_end = min($upload_end, $orig_file_size - 1);
+
 			}
 
 			@fclose($fp);
@@ -2607,7 +2643,7 @@ class UpdraftPlus {
 				global $wpdb;
 				$handle = $wpdb;
 			}
-			if (method_exists($handle, 'check_connection')) {
+			if (method_exists($handle, 'check_connection') && (!defined('UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS') || !UPDRAFTPLUS_SUPPRESS_CONNECTION_CHECKS)) {
 				if (!$handle->check_connection(false)) {
 					if ($logit) $this->log("The database went away, and could not be reconnected to");
 					# Almost certainly a no-op
@@ -2630,7 +2666,7 @@ class UpdraftPlus {
 
 		$db_connected = $this->check_db_connection(false, true, true);
 
-		$service = (empty($updraftplus_backup->current_service)) ? '' : $updraftplus_backup->current_service;
+		$service = empty($updraftplus_backup->current_service) ? '' : $updraftplus_backup->current_service;
 		$shash = $service.'-'.md5($file);
 
 		$this->jobdata_set("uploaded_".$shash, 'yes');
@@ -3075,9 +3111,10 @@ class UpdraftPlus {
 		$opts = UpdraftPlus_Options::get_updraft_option('updraft_onedrive');
 		if (!is_array($opts)) $opts = array();
 		if (!is_array($onedrive)) return $opts;
-		$old_client_id = (empty($opts['clientid'])) ? '' : $opts['clientid'];
-		if (!empty($opts['token']) && $old_client_id != $onedrive['clientid']) {
-			unset($opts['token']);
+		$old_client_id = empty($opts['clientid']) ? '' : $opts['clientid'];
+		$now_client_id = empty($onedrive['clientid']) ? '' : $onedrive['clientid'];
+		if (!empty($opts['refresh_token']) && $old_client_id != $now_client_id) {
+			unset($opts['refresh_token']);
 			unset($opts['tokensecret']);
 			unset($opts['ownername']);
 		}
@@ -3396,41 +3433,44 @@ class UpdraftPlus {
 	// This is used as a WordPress options filter
 	public function construct_webdav_url($input) {
 
-		$url = null;
-		$slash = "/";
-		$host = "";
-		$colon = "";
-		$port_colon = "";
-		
- 		if ((80 == $input['port'] && 'webdav' == $input['webdav']) || (443 == $input['port'] && 'webdavs' == $input['webdav'])) {
-			$input['port'] = '';
-		}
-		
-		if ('/' == substr($input['path'], 0, 1)){
-			$slash = "";
-		}
-		
-		if (false === strpos($input['host'],"@")){
-			$host = "@";
-		}
-		
-		if ('' != $input['user'] && '' != $input['pass']){
-			$colon = ":";
-		}
-		
-		if ('' != $input['host'] && '' != $input['port']){
-			$port_colon = ":";
-		}
+		if (isset($input['webdav'])) {
+	
+			$url = null;
+			$slash = "/";
+			$host = "";
+			$colon = "";
+			$port_colon = "";
+			
+			if ((80 == $input['port'] && 'webdav' == $input['webdav']) || (443 == $input['port'] && 'webdavs' == $input['webdav'])) {
+				$input['port'] = '';
+			}
+			
+			if ('/' == substr($input['path'], 0, 1)){
+				$slash = "";
+			}
+			
+			if (false === strpos($input['host'],"@")){
+				$host = "@";
+			}
+			
+			if ('' != $input['user'] && '' != $input['pass']){
+				$colon = ":";
+			}
+			
+			if ('' != $input['host'] && '' != $input['port']){
+				$port_colon = ":";
+			}
 
-		if (!empty($input['url']) && 'http' == strtolower(substr($input['url'], 0, 4))) {
-			$input['url'] = 'webdav'.substr($input['url'], 4);
-		} elseif ('' != $input['user'] && '' != $input['pass']) {
-			$input['url'] = $input['webdav'] . urlencode($input['user']) . $colon . urlencode($input['pass']) . $host . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
-		} else {
-			$input['url'] = $input['webdav'] . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
+			if (!empty($input['url']) && 'http' == strtolower(substr($input['url'], 0, 4))) {
+				$input['url'] = 'webdav'.substr($input['url'], 4);
+			} elseif ('' != $input['user'] && '' != $input['pass']) {
+				$input['url'] = $input['webdav'] . urlencode($input['user']) . $colon . urlencode($input['pass']) . $host . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
+			} else {
+				$input['url'] = $input['webdav'] . urlencode($input['host']) . $port_colon . $input['port'] . $slash . $input['path'];
+			}
+			
+	// 		array_splice($input, 1);
 		}
-		
-// 		array_splice($input, 1);
 		
 		return array('url' => $input['url']);
 	}
@@ -3497,7 +3537,11 @@ class UpdraftPlus {
 
 	private function url_start($urls, $url, $https = false) {
 		$proto = ($https) ? 'https' : 'http';
-		return ($urls) ? "<a href=\"$proto://$url\">" : "";
+		if (strpos($url, 'updraftplus.com') !== false){
+			return ($urls) ? "<a href=".apply_filters('updraftplus_com_link',$proto.'://'.$url).">" : "";
+		}else{
+			return ($urls) ? "<a href=\"$proto://$url\">" : "";	
+		}
 	}
 
 	private function url_end($urls, $url, $https = false) {
@@ -3515,7 +3559,7 @@ class UpdraftPlus {
 		$rad = rand(0, 8);
 		switch ($rad) {
 		case 0:
-			return $this->url_start($urls,'updraftplus.com').__("Want more features or paid, guaranteed support? Check out UpdraftPlus.Com", 'updraftplus').$this->url_end($urls,'updraftplus.com');
+			return $this->url_start($urls,'updraftplus.com/').__("Want more features or paid, guaranteed support? Check out UpdraftPlus.Com", 'updraftplus').$this->url_end($urls,'updraftplus.com');
 			break;
 		case 1:
 			$wplang = get_locale();
@@ -3535,9 +3579,9 @@ class UpdraftPlus {
 			break;
 		case 5:
 			if (!defined('UPDRAFTPLUS_NOADS_B')) {
-				return $this->url_start($urls,'updraftplus.com').__("Need even more features and support? Check out UpdraftPlus Premium",'updraftplus').$this->url_end($urls,'updraftplus.com');
+				return $this->url_start($urls,'updraftplus.com/').__("Need even more features and support? Check out UpdraftPlus Premium",'updraftplus').$this->url_end($urls,'updraftplus.com');
 			} else {
-				return "Thanks for being an UpdraftPlus premium user. Keep visiting ".$this->url_start($urls,'updraftplus.com')."updraftplus.com".$this->url_end($urls,'updraftplus.com')." to see what's going on.";
+				return "Thanks for being an UpdraftPlus premium user. Keep visiting ".$this->url_start($urls,'updraftplus.com/')."updraftplus.com".$this->url_end($urls,'updraftplus.com')." to see what's going on.";
 			}
 			break;
 		case 6:
@@ -3545,7 +3589,7 @@ class UpdraftPlus {
 			return __("Subscribe to the UpdraftPlus blog to get up-to-date news and offers",'updraftplus')." - ".$this->url_start($urls,'updraftplus.com/news/').__("Blog link",'updraftplus').$this->url_end($urls,'updraftplus.com/news/').' - '.$this->url_start($urls,'feeds.feedburner.com/UpdraftPlus').__("RSS link",'updraftplus').$this->url_end($urls,'feeds.feedburner.com/UpdraftPlus');
 			break;
 		case 7:
-			return $this->url_start($urls,'updraftplus.com').__("Check out UpdraftPlus.Com for help, add-ons and support",'updraftplus').$this->url_end($urls,'updraftplus.com');
+			return $this->url_start($urls,'updraftplus.com/').__("Check out UpdraftPlus.Com for help, add-ons and support",'updraftplus').$this->url_end($urls,'updraftplus.com');
 			break;
 // 		case 8:
 // 			return __("Want to say thank-you for UpdraftPlus?",'updraftplus').$this->url_start($urls,'updraftplus.com/shop/', true)." ".__("Please buy our very cheap 'no adverts' add-on.",'updraftplus').$this->url_end($urls,'updraftplus.com/shop/', true);

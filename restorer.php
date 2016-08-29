@@ -1868,11 +1868,12 @@ ENDHERE;
 
 	// The table here is just for logging/info. The actual restoration itself is done via the standard options class.
 	private function restore_configuration_bundle($table) {
+
 		if (!is_array($this->configuration_bundle)) return;
 		global $updraftplus;
 		$updraftplus->log("Restoring prior UD configuration (table: $table; keys: ".count($this->configuration_bundle).")");
 		foreach ($this->configuration_bundle as $key => $value) {
-			UpdraftPlus_Options::delete_updraft_option($key, $value);
+			UpdraftPlus_Options::delete_updraft_option($key);
 			UpdraftPlus_Options::update_updraft_option($key, $value);
 		}
 	}
@@ -2046,7 +2047,11 @@ ENDHERE;
 
 		global $wpdb, $updraftplus;
 		
-		if ($table == $import_table_prefix.UpdraftPlus_Options::options_table()) $this->restore_configuration_bundle($table);
+		if ($table == $import_table_prefix.UpdraftPlus_Options::options_table()) {
+			// This became necessary somewhere around WP 4.5 - otherwise deleting and re-saving options stopped working
+			wp_cache_flush();
+			$this->restore_configuration_bundle($table);
+		}
 
 		if (preg_match('/^([\d+]_)?options$/', substr($table, strlen($import_table_prefix)), $matches)) {
 			// The second prefix here used to have a '!$this->is_multisite' on it (i.e. 'options' table on non-multisite). However, the user_roles entry exists in the main options table on multisite too.
