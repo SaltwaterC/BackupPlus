@@ -2,8 +2,6 @@
 
 if (!defined('UPDRAFTPLUS_DIR')) die('No access.');
 
-if (!class_exists('UpdraftCentral_Commands')) require_once('commands.php');
-
 class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 
 	private function _search_users($query){
@@ -142,6 +140,10 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 			$result = array("valid"=>false, "message"=>'username_exists');
 			return $this->_response($result);
 		}
+		if(!validate_username($username)){
+			$result = array("valid"=>false, "message"=>'username_invalid');
+			return $this->_response($result);
+		}
 		
 		$result = array("valid"=>true, "message"=>'username_valid');	
 		return $this->_response($result);
@@ -207,7 +209,7 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 		$this->_admin_include('user.php');
 		
 		if(!current_user_can('create_users') && !is_super_admin()){
-			$result = array("error" => true, "message" => "user_create_no_premission");
+			$result = array("error" => true, "message" => "user_create_no_permission");
 			return $this->_response($result);
 		}		
 		if ( is_email($user["user_email"]) === false){
@@ -215,12 +217,16 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 			return $this->_response($result);	
 		}		
 		if (email_exists( $user["user_email"] )){
-			$result = array("error" => true, "message" => "email_exsists");
+			$result = array("error" => true, "message" => "email_exists");
 			return $this->_response($result);	
 		}	
 		if(username_exists($user["user_login"])){
-			$result = array("error" => true, "message" => "username_exsists");
+			$result = array("error" => true, "message" => "username_exists");
 			return $this->_response($result);	
+		}
+		if(!validate_username($user["user_login"])){
+			$result = array("error"=>true, "message"=>'username_invalid');
+			return $this->_response($result);
 		}
 		
 		$user_id = wp_insert_user( $user ) ;
@@ -233,19 +239,32 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 		return $this->_response($result);
 	}
 	
-	public function delete_user($user_id){
+	/**
+	 * [delete_user - UCP: users.delete_user]
+	 *
+	 * This function is used to check to make sure the user_id is valid and that it has has user delete permissions.
+	 * If there are no issues, the user is deleted.
+	 *
+	 * current_user_can: 	This check the user permissons from UCP
+	 * get_userdata:		This get the user data on the data from user_id in the $user_id array
+	 * wp_delete_user:		Deleting users on the User ID (user_id) and, IF Specified, the Assigner ID (assign_user_id).
+	 * 
+	 * @param  [type] $user_ids [description] THis is an Array of user_id and assign_user_id sent over from UpdraftCentral
+	 * @return [type] Array     [description] This will send back an error array along with message if there are any issues with the user_id
+	 */
+	public function delete_user($user_ids){
 		$this->_admin_include('user.php');
 		
 		if(!current_user_can('delete_users') && !is_super_admin()){
-			$result = array("error" => true, "message" => "user_delete_no_premission");
+			$result = array("error" => true, "message" => "user_delete_no_permission");
 			return $this->_response($result);
 		}
-		if ( get_userdata( $user_id ) === false ) {
+		if ( get_userdata( $user_ids["user_id"] ) === false ) {
 		  $result = array("error" => true, "message"=>"user_not_found");
 		  return $this->_response($result);
 		} 
 		
-		if(wp_delete_user($user_id)){
+		if(wp_delete_user($user_ids["user_id"], $user_ids["assign_user_id"])){
 			$result = array("error" => false,  "message"=>"user_deleted");
 		}else{
 			$result = array("error" => true,  "message"=>"user_delete_failed");
@@ -257,9 +276,10 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 		$this->_admin_include('user.php');
 		
 		if(!current_user_can('edit_users') && !is_super_admin() && $user["ID"] !== get_current_user_id()){
-			$result = array("error" => true, "message" => "user_edit_no_premission");
+			$result = array("error" => true, "message" => "user_edit_no_permission");
 			return $this->_response($result);
 		}
+		
 		if ( get_userdata( $user["ID"] ) === false ) {
 			$result = array("error" => true, "message"=>"user_not_found");
 			return $this->_response($result);
@@ -267,6 +287,29 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 		if($user["ID"] == get_current_user_id()){
 			unset($user["role"]); 
 		}
+		
+		/* Validate Username*/
+		if(!validate_username($user["user_login"])){
+			$result = array("error"=>true, "message"=>'username_invalid');
+			return $this->_response($result);
+		}
+		/* Validate Email if not the same*/
+		
+		$remote_user = get_userdata($user["ID"]);
+		$old_email = $remote_user->user_email;
+		
+		if($user['user_email'] !== $old_email){
+			if (is_email($user['user_email']) === false){
+				$result = array("error"=> true, "message"=>'email_invalid');
+				return $this->_response($result);
+			}
+			
+			if (email_exists($user['user_email'])){
+				$result = array("error"=> true, "message"=>'email_exists');
+				return $this->_response($result);
+			}
+		}
+		
 		
 		$user_id = wp_update_user( $user );		
 		if ( is_wp_error( $user_id ) ) {

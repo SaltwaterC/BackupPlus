@@ -193,7 +193,7 @@ class UpdraftPlus {
 	// Returns the number of bytes free, if it can be detected; otherwise, false
 	// Presently, we only detect CPanel. If you know of others, then feel free to contribute!
 	public function get_hosting_disk_quota_free() {
-		if (!@is_dir('/usr/local/cpanel') || $this->detect_safe_mode() || !function_exists('popen') || (!@is_executable('/usr/local/bin/perl') && !@is_executable('/usr/local/cpanel/3rdparty/bin/perl'))) return false;
+		if (!@is_dir('/usr/local/cpanel') || $this->detect_safe_mode() || !function_exists('popen') || (!@is_executable('/usr/local/bin/perl') && !@is_executable('/usr/local/cpanel/3rdparty/bin/perl')) || (defined('UPDRAFTPLUS_SKIP_CPANEL_QUOTA_CHECK') && UPDRAFTPLUS_SKIP_CPANEL_QUOTA_CHECK)) return false;
 
 		$perl = (@is_executable('/usr/local/cpanel/3rdparty/bin/perl')) ? '/usr/local/cpanel/3rdparty/bin/perl' : '/usr/local/bin/perl';
 
@@ -522,7 +522,7 @@ class UpdraftPlus {
 					# Return to the end of the file
 					$read_recent = fread($handle, $bytes_back);
 					# Move to end of file - ought to be redundant
-					if (false !== strpos($read_recent, 'The backup apparently succeeded') && false !== strpos($read_recent, 'and is now complete')) {
+					if (false !== strpos($read_recent, ') The backup apparently succeeded') && false !== strpos($read_recent, 'and is now complete')) {
 						$this->backup_is_already_complete = true;
 					}
 				}
@@ -549,7 +549,7 @@ class UpdraftPlus {
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);
 		$max_execution_time = (int)@ini_get("max_execution_time");
 
-		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".@php_uname().") MySQL: $mysql_version WPLANG: ".get_locale()." Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? 'Y' : 'N')." openssl: ".(defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";
+		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".PHP_SAPI.", ".@php_uname().") MySQL: $mysql_version WPLANG: ".get_locale()." Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? 'Y' : 'N')." openssl: ".(defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";
 
 		// method_exists causes some faulty PHP installations to segfault, leading to support requests
 		if (version_compare(phpversion(), '5.2.0', '>=') && extension_loaded('zip')) {
@@ -1005,23 +1005,42 @@ class UpdraftPlus {
 
 		$result = false;
 		foreach (explode(',', UPDRAFTPLUS_MYSQLDUMP_EXECUTABLE) as $potsql) {
+			
 			if (!@is_executable($potsql)) continue;
+			
 			if ($logit) $this->log("Testing: $potsql");
 
-			$exec = "cd ".escapeshellarg($updraft_dir)."; $potsql  --defaults-file=$pfile --max_allowed_packet=1M --quote-names --add-drop-table --skip-comments --skip-set-charset --allow-keywords --dump-date --extended-insert --where=option_name=\\'siteurl\\' --user=".escapeshellarg(DB_USER)." --host=".escapeshellarg(DB_HOST)." ".DB_NAME." ".escapeshellarg($table_name)." >$tmp_file";
-
+			if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
+				$exec = "cd ".escapeshellarg(str_replace('/', '\\', $updraft_dir))." & ";
+				$siteurl = "'siteurl'";
+				if (false !== strpos($potsql, ' ')) $potsql = '"'.$potsql.'"';
+			} else {
+				$exec = "cd ".escapeshellarg($updraft_dir)."; ";
+				$siteurl = "\\'siteurl\\'";
+				if (false !== strpos($potsql, ' ')) $potsql = "'$potsql'";
+			}
+				
+			$exec .= "$potsql --defaults-file=$pfile --max_allowed_packet=1M --quote-names --add-drop-table --skip-comments --skip-set-charset --allow-keywords --dump-date --extended-insert --where=option_name=$siteurl --user=".escapeshellarg(DB_USER)." --host=".escapeshellarg(DB_HOST)." ".DB_NAME." ".escapeshellarg($table_name)."";
+			
 			$handle = popen($exec, "r");
 			if ($handle) {
-				while (!feof($handle)) {
-					$w = fgets($handle);
-					if ($w && $logit) $this->log("Output: ".trim($w));
+				if (!feof($handle)) {
+					$output = fread($handle, 8192);
+					if ($output && $logit) {
+						$log_output = (strlen($output) > 512) ? substr($output, 0, 512).' (truncated - '.strlen($output).' bytes total)' : $output;
+						$this->log("Output: ".str_replace("\n", '\\n', trim($log_output)));
+					}
+				} else {
+					$output = '';
 				}
 				$ret = pclose($handle);
 				if ($ret !=0) {
-					if ($logit) $this->log("Binary mysqldump: error (code: $ret)");
+					if ($logit) {
+						$this->log("Binary mysqldump: error (code: $ret)");
+					}
 				} else {
-					$dumped = file_get_contents($updraft_dir.'/'.$tmp_file, false, null, 0, 4096);
-					if (stripos($dumped, 'insert into') !== false) {
+// 					$dumped = file_get_contents($updraft_dir.'/'.$tmp_file, false, null, 0, 4096);
+					if (stripos($output, 'insert into') !== false) {
 						if ($logit) $this->log("Working binary mysqldump found: $potsql");
 						$result = $potsql;
 						break;
@@ -1040,7 +1059,7 @@ class UpdraftPlus {
 		return $result;
 	}
 
-	# We require -@ and -u -r to work - which is the usual Linux binzip
+	// We require -@ and -u -r to work - which is the usual Linux binzip
 	public function find_working_bin_zip($logit = true, $cacheit = true) {
 		if ($this->detect_safe_mode()) return false;
 		// The hosting provider may have explicitly disabled the popen or proc_open functions
@@ -1523,6 +1542,7 @@ class UpdraftPlus {
 			$this->log('Terminate: This backup job is already finished (1).');
 			die;
 		} elseif ('backup' == $job_type && !empty($this->backup_is_already_complete)) {
+			$this->jobdata_set('jobstatus', 'finished');
 			$this->log('Terminate: This backup job is already finished (2).');
 			die;
 		}
@@ -3250,8 +3270,19 @@ class UpdraftPlus {
 		$opts = UpdraftPlus_Options::get_updraft_option('updraft_dropbox');
 		if (!is_array($opts)) $opts = array();
 		if (!is_array($dropbox)) return $opts;
-		foreach ($dropbox as $key => $value) { $opts[$key] = $value; }
-		if (!empty($opts['folder']) && preg_match('#^https?://(www.)dropbox\.com/home/Apps/UpdraftPlus([^/]*)/(.*)$#i', $opts['folder'], $matches)) $opts['folder'] = $matches[3];
+		if (!empty($opts['tk_access_token']) && empty($opts['appkey']) && !empty($dropbox['appkey'])) {
+			unset($opts['tk_access_token']);
+			unset($opts['folder']);
+			unset($opts['ownername']);
+		}
+		foreach ($dropbox as $key => $value) { 
+			if (null === $value) {
+				unset($opts[$key]);
+			} else {
+				$opts[$key] = $value; 
+			}
+		}
+		if (!empty($opts['folder']) && preg_match('#^https?://(www.)dropbox\.com/home/Apps/UpdraftPlus(.Com)?([^/]*)/(.*)$#i', $opts['folder'], $matches)) $opts['folder'] = $matches[3];
 		return $opts;
 	}
 

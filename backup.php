@@ -1479,7 +1479,15 @@ class UpdraftPlus_Backup {
 						if  ('wp' == $this->whichdb && (!empty($this->table_prefix) && strtolower($this->table_prefix.'sitemeta') == strtolower($table))) {
 							$where = 'meta_key NOT LIKE "updraft_jobdata_%"';
 						} elseif ('wp' == $this->whichdb && (!empty($this->table_prefix) && strtolower($this->table_prefix.'options') == strtolower($table))) {
-							$where = 'option_name NOT LIKE "updraft_jobdata_%" AND option_name NOT LIKE "_site_transient_update_%"';
+							if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
+								$updraft_jobdata = "'updraft_jobdata_%'";
+								$site_transient_update = "'_site_transient_update_%'";
+							} else {
+								$updraft_jobdata = '"updraft_jobdata_%"';
+								$site_transient_update = '"_site_transient_update_%"';
+							}
+							
+							$where = 'option_name NOT LIKE '.$updraft_jobdata.' AND option_name NOT LIKE '.$site_transient_update.'';
 						} else {
 							$where = '';
 						}
@@ -1614,11 +1622,17 @@ class UpdraftPlus_Backup {
 		$pfile = md5(time().rand()).'.tmp';
 		file_put_contents($this->updraft_dir.'/'.$pfile, "[mysqldump]\npassword=".$this->dbinfo['pass']."\n");
 
-		# Note: escapeshellarg() adds quotes around the string
+		// Note: escapeshellarg() adds quotes around the string
 		if ($where) $where="--where=".escapeshellarg($where);
 
-		$exec = "cd ".escapeshellarg($this->updraft_dir)."; $potsql  --defaults-file=$pfile $where --max_allowed_packet=1M --quote-names --add-drop-table --skip-comments --skip-set-charset --allow-keywords --dump-date --extended-insert --user=".escapeshellarg($this->dbinfo['user'])." --host=".escapeshellarg($this->dbinfo['host'])." ".$this->dbinfo['name']." ".escapeshellarg($table_name);
+		if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
+			$exec = "cd ".escapeshellarg(str_replace('/', '\\', $this->updraft_dir))." & ";
+		} else {
+			$exec = "cd ".escapeshellarg($this->updraft_dir)."; ";
+		}
 
+		$exec .= "$potsql  --defaults-file=$pfile $where --max_allowed_packet=1M --quote-names --add-drop-table --skip-comments --skip-set-charset --allow-keywords --dump-date --extended-insert --user=".escapeshellarg($this->dbinfo['user'])." --host=".escapeshellarg($this->dbinfo['host'])." ".$this->dbinfo['name']." ".escapeshellarg($table_name);
+		
 		$ret = false;
 		$any_output = false;
 		$writes = 0;

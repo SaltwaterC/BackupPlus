@@ -1093,6 +1093,20 @@ function updraft_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_noclo
 
 jQuery(document).ready(function($){
 	
+	//Advanced settings new menu button listeners
+	$('.expertmode .form-table .advanced_tools_button').click(function() {
+		advanced_tool_hide($(this).attr("id"));
+	});
+	
+	function advanced_tool_hide(show_tool) {
+		
+		$('.expertmode .form-table .advanced_tools:not(".'+show_tool+'")').hide();
+		$('.expertmode .form-table .advanced_tools.'+show_tool).fadeIn('slow');
+		
+		$('.expertmode .form-table .advanced_tools_button:not(#'+show_tool+')').removeClass('active');
+		$('.expertmode .form-table .advanced_tools_button#'+show_tool).addClass('active');
+		
+	}
 	// https://github.com/select2/select2/issues/1246#issuecomment-71710835
 	if (jQuery.ui && jQuery.ui.dialog && jQuery.ui.dialog.prototype._allowInteraction) {
 		var ui_dialog_interaction = jQuery.ui.dialog.prototype._allowInteraction;
@@ -1835,12 +1849,18 @@ jQuery(document).ready(function($){
 		uploader.bind('UploadProgress', function(up, file) {
 			jQuery('#' + file.id + " .fileprogress").width(file.percent + "%");
 			jQuery('#' + file.id + " span").html(plupload.formatSize(parseInt(file.size * file.percent / 100)));
+
+			if(file.size == file.loaded){
+				jQuery('#' + file.id).html('<div class="file" id="' + file.id + '"><b>' +
+				file.name + '</b> (<span>' + plupload.formatSize(parseInt(file.size * file.percent / 100)) + '</span>/' + plupload.formatSize(file.size) + ') - ' + updraftlion.complete +
+				'</div>'); // Removed <div class="fileprogress"></div> (just before closing </div>) to make clearer it's complete.
+				jQuery('#' + file.id + " .fileprogress").width(file.percent + "%");
+			}
 		});
 
 		uploader.bind('Error', function(up, error) {
 			alert(updraftlion.uploaderr+' (code '+error.code+') : '+error.message+' '+updraftlion.makesure);
 		});
-
 
 		// a file was uploaded 
 		uploader.bind('FileUploaded', function(up, file, response) {

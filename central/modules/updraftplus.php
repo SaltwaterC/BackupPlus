@@ -10,8 +10,6 @@ if (!defined('UPDRAFTPLUS_DIR')) die('No access.');
 	
 */
 
-if (!class_exists('UpdraftCentral_Commands')) require_once('commands.php');
-
 class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 
 	public function get_download_status($items) {

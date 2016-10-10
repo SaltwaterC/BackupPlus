@@ -1466,3 +1466,53 @@ a.btn-get-started {
 	}*/
 }
 /* End Automation Backup Advert by B */
+/*Pretty Advanced tools */
+.expertmode .form-table .advanced_settings_menu {
+	border-right: 1px solid rgb(204, 204, 204);
+	min-width: 215px;
+}
+.expertmode .form-table .advanced_tools {
+	display: none;
+}
+.expertmode .form-table .site_info {
+	display: block;
+}
+.expertmode .form-table .advanced_tools_button {
+	cursor: pointer;
+	padding: 5px;
+	color: #000000;
+}
+.expertmode .form-table .advanced_tools_text {
+	font-size: 16px;
+}
+.expertmode .form-table .advanced_tools_button:hover {
+	background-color: #eaeaea;
+}
+.expertmode .form-table .active {
+	background-color: #3498db;
+	color:#ffffff;
+}
+.expertmode .form-table .active:hover {
+	background-color: #72c5fd;
+	color: #ffffff;
+}
+.expertmode .form-table .updraft_debugrow th {
+	float: none;
+}
+.expertmode .form-table .updraft_debugrow td {
+	vertical-align: top;
+	padding-top: 5px;
+}
+.expertmode .form-table th {
+	width: 160px !important;
+}
+.expertmode .form-table td {
+	padding: 0px 0px;
+	vertical-align: top;
+}
+.expertmode .form-table td p {
+	margin:1em 0;
+}
+.expertmode .form-table input#import_settings {
+	height:auto !important;
+}

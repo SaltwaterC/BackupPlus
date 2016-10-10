@@ -4,7 +4,7 @@ Plugin Name: UpdraftPlus - Backup/Restore
 Plugin URI: https://updraftplus.com
 Description: Backup and restore: take backups locally, or backup to Amazon S3, Dropbox, Google Drive, Rackspace, (S)FTP, WebDAV & email, on automatic schedules.
 Author: UpdraftPlus.Com, DavidAnderson
-Version: 1.12.20
+Version: 1.12.23
 Donate link: http://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
 Text Domain: updraftplus
@@ -151,6 +151,7 @@ if (!file_exists(UPDRAFTPLUS_DIR.'/class-updraftplus.php') || !file_exists(UPDRA
 
 	require_once(UPDRAFTPLUS_DIR.'/class-updraftplus.php');
 	$updraftplus = new UpdraftPlus();
+	$GLOBALS['updraftplus'] = $updraftplus;
 	$updraftplus->have_addons = $updraftplus_have_addons;
 
 	if (!$updraftplus->memory_check(192)) {
@@ -168,7 +169,7 @@ if (!file_exists(UPDRAFTPLUS_DIR.'/class-updraftplus.php') || !file_exists(UPDRA
 
 # Ubuntu bug - https://bugs.launchpad.net/ubuntu/+source/php5/+bug/1315888
 if (!function_exists('gzopen') && function_exists('gzopen64')) {
-	function gzopen($filename , $mode, $use_include_path = 0 ) { 
+	function gzopen($filename, $mode, $use_include_path = 0) { 
 		return gzopen64($filename, $mode, $use_include_path);
 	}
 }

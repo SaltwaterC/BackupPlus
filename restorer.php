@@ -33,6 +33,8 @@ class Updraft_Restorer extends WP_Upgrader {
 	
 	private $ud_restore_options;
 	
+	private $restore_this_site = array();
+	
 	private $restore_this_table = array();
 
 	private $line = 0;
@@ -279,7 +281,9 @@ class Updraft_Restorer extends WP_Upgrader {
 
 		@set_time_limit(1800);
 
-		$this->skin->feedback('unpack_package');
+		$packsize = round(filesize($backup_dir.$package)/1048576, 1).' Mb';
+		
+		$this->skin->feedback($this->strings['unpack_package'].' ('.basename($package).', '.$packsize.')');
 
 		$upgrade_folder = $wp_filesystem->wp_content_dir() . 'upgrade/';
 		@$wp_filesystem->mkdir($upgrade_folder, octdec($this->calculate_additive_chmod_oct(FS_CHMOD_DIR, 0775)));
@@ -1727,10 +1731,10 @@ ENDHERE;
 					}
 				}
 
-				echo '<strong>'.sprintf(__('Restoring table (%s)','updraftplus'), $engine).":</strong> ".htmlspecialchars($this->table_name);
-				$logline = "Restoring table ($engine): ".$this->table_name;
+				echo '<strong>'.sprintf(__('Processing table (%s)','updraftplus'), $engine).":</strong> ".htmlspecialchars($this->table_name);
+				$logline = "Processing table ($engine): ".$this->table_name;
 				if ('' != $this->old_table_prefix && $import_table_prefix != $this->old_table_prefix) {
-					if (!isset($this->restore_this_table[$this->table_name]) || $this->restore_this_table[$this->table_name]) {
+					if ($this->restore_this_table($this->table_name)) {
 						echo ' - '.__('will restore as:', 'updraftplus').' '.htmlspecialchars($this->new_table_name);
 						$logline .= " - will restore as: ".$this->new_table_name;
 					} else {
@@ -1885,23 +1889,72 @@ ENDHERE;
 		echo '<strong>'.__('Warning:', 'updraftplus').'</strong> '.sprintf(__("An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s", 'updraftplus'), '('.strlen($sql_line).', '.$this->max_allowed_packet.', '.$logit.' ...)')."<br>";
 	}
 
+	private function restore_this_table($table_name) {
+	
+		global $updraftplus;
+		$unprefixed_table_name = substr($table_name, strlen($this->old_table_prefix));
+	
+		// First, check whether it's a multisite site which we're not restoring. This is stored in restore_this_site (once we know the site).
+		if (!empty($this->ud_multisite_selective_restore)) {
+error_log("ud_multisite_selective_restore: ".$this->ud_multisite_selective_restore);
+			if (preg_match('/^(\d+)_.*$/', $unprefixed_table_name, $matches)) {
+				$site_id = $matches[1];
+error_log("restore_this_table $table_name site_id=$site_id");
+			
+				if (!isset($this->restore_this_site[$site_id])) {
+error_log("Need to look it up");
+					$this->restore_this_site[$site_id] = apply_filters(
+						'updraftplus_restore_this_site',
+						true,
+						$site_id,
+						$unprefixed_table_name,
+						$this->ud_restore_options
+					);
+				}
+				
+				if (false === $this->restore_this_site[$site_id]) {
+					// The first time it's looked into, it gets logged
+					$updraftplus->log_e('Skipping site %s: this table (%s) and others from the site will not be restored', $site_id, $table_name);
+					$this->restore_this_site[$site_id] = 0;
+				}
+				
+				if (!$this->restore_this_site[$site_id]) {
+				error_log("skipped - not restoring this site: $site_id");
+					return false;
+				}
+				
+			}
+		
+		}
+		
+		// Secondly, if we're still intending to proceed, check the table specifically
+		if (!isset($this->restore_this_table[$table_name])) {
+		
+			$this->restore_this_table[$table_name] = apply_filters(
+				'updraftplus_restore_this_table',
+				true,
+				$unprefixed_table_name,
+				$this->ud_restore_options
+			);
+			
+			if (false === $this->restore_this_table[$table_name]) {
+				// The first time it's looked into, it gets logged
+				$updraftplus->log_e('Skipping table %s: this table will not be restored', $table_name);
+				$this->restore_this_table[$table_name] = 0;
+			}
+			
+		}
+		
+		return $this->restore_this_table[$table_name];
+	}
+	
 	# UPDATE is sql_type=5 (not used in the function, but used in Migrator and so noted here for reference)
 	# $import_table_prefix is only use in one place in this function (long INSERTs), and otherwise need/should not be supplied
 	public function sql_exec($sql_line, $sql_type, $import_table_prefix = '', $check_skipping = true) {
 
 		global $wpdb, $updraftplus;
 
-		if ($check_skipping && !empty($this->table_name)) {
-			if (!isset($this->restore_this_table[$this->table_name])) {
-				// Valid values: true (= yes, restore it); false (= no, don't restore it, and log the fact); 0 (= don't restore, and don't log)
-				$this->restore_this_table[$this->table_name] = apply_filters('updraftplus_restore_this_table', true, substr($this->table_name, strlen($this->old_table_prefix)), $this->ud_restore_options);
-			}
-			if (false === $this->restore_this_table[$this->table_name]) {
-				$updraftplus->log_e('Skipping table %s: this table will not be restored', $this->table_name);
-				$this->restore_this_table[$this->table_name] = 0;
-			}
-			if (!$this->restore_this_table[$this->table_name]) return;
-		}
+		if ($check_skipping && !empty($this->table_name) && !$this->restore_this_table($this->table_name)) return;
 		
 		$ignore_errors = false;
 		# Type 2 = CREATE TABLE
