@@ -104,7 +104,6 @@ class UpdraftPlus {
 		add_filter('itsec_scheduled_external_backup', array($this, 'itsec_scheduled_external_backup'), 999);
 
 		# register_deactivation_hook(__FILE__, array($this, 'deactivation'));
-
 		if (!empty($_POST) && !empty($_GET['udm_action']) && 'vault_disconnect' == $_GET['udm_action'] && !empty($_POST['udrpc_message']) && !empty($_POST['reset_hash'])) {
 			add_action('wp_loaded', array($this, 'wp_loaded_vault_disconnect'), 1);
 		}
@@ -459,10 +458,11 @@ class UpdraftPlus {
 				// zi followed by 6 characters is the pattern used by /usr/bin/zip on Linux systems. It's safe to check for, as we have nothing else that's going to match that pattern.
 				$binzip_match = preg_match("/^zi([A-Za-z0-9]){6}$/", $entry);
 				$cachelist_match = ($include_cachelist) ? preg_match("/$match-cachelist-.*.tmp$/i", $entry) : false;
+				$browserlog_match = preg_match('/^log\.[0-9a-f]+-browser\.txt$/', $entry);
 				# Temporary files from the database dump process - not needed, as is caught by the catch-all
 				# $table_match = preg_match("/${match}-table-(.*)\.table(\.tmp)?\.gz$/i", $entry);
 				# The gz goes in with the txt, because we *don't* want to reap the raw .txt files
-				if ((preg_match("/$match\.(tmp|table|txt\.gz)(\.gz)?$/i", $entry) || $cachelist_match || $ziparchive_match || $binzip_match || $manifest_match) && is_file($updraft_dir.'/'.$entry)) {
+				if ((preg_match("/$match\.(tmp|table|txt\.gz)(\.gz)?$/i", $entry) || $cachelist_match || $ziparchive_match || $binzip_match || $manifest_match || $browserlog_match) && is_file($updraft_dir.'/'.$entry)) {
 					// We delete if a parameter was specified (and either it is a ZipArchive match or an order to delete of whatever age), or if over 12 hours old
 					if (($match && ($ziparchive_match || $binzip_match || $cachelist_match || $manifest_match || 0 == $older_than) && $now_time-filemtime($updraft_dir.'/'.$entry) >= $older_than) || $now_time-filemtime($updraft_dir.'/'.$entry)>43200) {
 						$this->log("Deleting old temporary file: $entry");
@@ -506,9 +506,14 @@ class UpdraftPlus {
 		return $got_wp_version;
 	}
 
+	/**
+	 * Opens the log file, writes a standardised header, and stores the resulting name and handle in the class variables logfile_name/logfile_handle/opened_log_time (and possibly backup_is_already_complete)
+	 * 
+	 * @param string $nonce - Used in the log file name to distinguish it from other log files. Should be the job nonce.
+	 * @returns void
+	 */
 	public function logfile_open($nonce) {
 
-		//set log file name and open log file
 		$updraft_dir = $this->backups_dir_location();
 		$this->logfile_name =  $updraft_dir."/log.$nonce.txt";
 
@@ -516,7 +521,7 @@ class UpdraftPlus {
 			$seek_to = max((filesize($this->logfile_name) - 340), 1);
 			$handle = fopen($this->logfile_name, 'r');
 			if (is_resource($handle)) {
-				# Returns 0 on success
+				// Returns 0 on success
 				if (0 === @fseek($handle, $seek_to)) {
 					$bytes_back = filesize($this->logfile_name) - $seek_to;
 					# Return to the end of the file
@@ -533,12 +538,26 @@ class UpdraftPlus {
 		$this->logfile_handle = fopen($this->logfile_name, 'a');
 
 		$this->opened_log_time = microtime(true);
-		$this->log('Opened log file at time: '.date('r').' on '.network_site_url());
+		
+		$this->write_log_header(array($this, 'log'));
+		
+	}
+	
+	/**
+	 * Writes a standardised header to the log file, using the specified logging function, which needs to be compatible with (or to be) UpdraftPlus::log()
+	 * 
+	 * @param callable $logging_function
+	 */
+	public function write_log_header($logging_function) {
+		
 		global $wpdb;
+
+		$updraft_dir = $this->backups_dir_location();
+
+		call_user_func($logging_function, 'Opened log file at time: '.date('r').' on '.network_site_url());
+		
 		$wp_version = $this->get_wordpress_version();
-
 		$mysql_version = $wpdb->db_version();
-
 		$safe_mode = $this->detect_safe_mode();
 
 		$memory_limit = ini_get('memory_limit');
@@ -564,12 +583,12 @@ class UpdraftPlus {
 				$this->log(sprintf(__('The amount of memory (RAM) allowed for PHP is very low (%s Mb) - you should increase it to avoid failures due to insufficient memory (consult your web hosting company for more help)', 'updraftplus'), round($memlim, 1)), 'warning', 'lowram');
 			}
 			if ($max_execution_time>0 && $max_execution_time<20) {
-				$this->log(sprintf(__('The amount of time allowed for WordPress plugins to run is very low (%s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %s seconds or more)', 'updraftplus'), $max_execution_time, 90), 'warning', 'lowmaxexecutiontime');
+				call_user_func($logging_function, sprintf(__('The amount of time allowed for WordPress plugins to run is very low (%s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %s seconds or more)', 'updraftplus'), $max_execution_time, 90), 'warning', 'lowmaxexecutiontime');
 			}
 
 		}
 
-		$this->log($logline);
+		call_user_func($logging_function, $logline);
 
 		$hosting_bytes_free = $this->get_hosting_disk_quota_free();
 		if (is_array($hosting_bytes_free)) {
@@ -577,7 +596,7 @@ class UpdraftPlus {
 			$quota_free = ' / '.sprintf('Free disk space in account: %s (%s used)', round($hosting_bytes_free[3]/1048576, 1)." MB", "$perc %");
 			if ($hosting_bytes_free[3] < 1048576*50) {
 				$quota_free_mb = round($hosting_bytes_free[3]/1048576, 1);
-				$this->log(sprintf(__('Your free space in your hosting account is very low - only %s Mb remain', 'updraftplus'), $quota_free_mb), 'warning', 'lowaccountspace'.$quota_free_mb);
+				call_user_func($logging_function, sprintf(__('Your free space in your hosting account is very low - only %s Mb remain', 'updraftplus'), $quota_free_mb), 'warning', 'lowaccountspace'.$quota_free_mb);
 			}
 		} else {
 			$quota_free = '';
@@ -586,11 +605,11 @@ class UpdraftPlus {
 		$disk_free_space = @disk_free_space($updraft_dir);
 		# == rather than === here is deliberate; support experience shows that a result of (int)0 is not reliable. i.e. 0 can be returned when the real result should be false.
 		if ($disk_free_space == false) {
-			$this->log("Free space on disk containing Updraft's temporary directory: Unknown".$quota_free);
+			call_user_func($logging_function, "Free space on disk containing Updraft's temporary directory: Unknown".$quota_free);
 		} else {
-			$this->log("Free space on disk containing Updraft's temporary directory: ".round($disk_free_space/1048576,1)." MB".$quota_free);
+			call_user_func($logging_function, "Free space on disk containing Updraft's temporary directory: ".round($disk_free_space/1048576, 1)." MB".$quota_free);
 			$disk_free_mb = round($disk_free_space/1048576, 1);
-			if ($disk_free_space < 50*1048576) $this->log(sprintf(__('Your free disk space is very low - only %s Mb remain', 'updraftplus'), round($disk_free_space/1048576, 1)), 'warning', 'lowdiskspace'.$disk_free_mb);
+			if ($disk_free_space < 50*1048576) call_user_func($logging_function, sprintf(__('Your free disk space is very low - only %s Mb remain', 'updraftplus'), round($disk_free_space/1048576, 1)), 'warning', 'lowdiskspace'.$disk_free_mb);
 		}
 
 	}
@@ -616,8 +635,20 @@ class UpdraftPlus {
 		return false;
 	}
 
+	/*
+		$line - the log line
+		$level - the log level: notice, warning, error. If suffixed with a hypen and a destination, then the default destination is changed too.
+		$uniq_id - (string)each of these will only be logged once
+		$skip_dblog - if true, then do not write to the database
+	*/
 	public function log($line, $level = 'notice', $uniq_id = false, $skip_dblog = false) {
 
+		$destination = 'default';
+		if (preg_match('/^([a-z]+)-([a-z]+)$/', $level, $matches)) {
+			$level = $matches[1];
+			$destination = $matches[2];
+		}
+	
 		if ('error' == $level || 'warning' == $level) {
 			if ('error' == $level && 0 == $this->error_count()) $this->log('An error condition has occurred for the first time during this job');
 			if ($uniq_id) {
@@ -629,7 +660,7 @@ class UpdraftPlus {
 			if ('error' == $level) return;
 			# It's a warning
 			$warnings = $this->jobdata_get('warnings');
-			if (!is_array($warnings)) $warnings=array();
+			if (!is_array($warnings)) $warnings = array();
 			if ($uniq_id) {
 				$warnings[$uniq_id] = $line;
 			} else {
@@ -638,7 +669,7 @@ class UpdraftPlus {
 			$this->jobdata_set('warnings', $warnings);
 		}
 
-		if (false === ($line = apply_filters('updraftplus_logline', $line, $this->nonce, $level, $uniq_id))) return;
+		if (false === ($line = apply_filters('updraftplus_logline', $line, $this->nonce, $level, $uniq_id, $destination))) return;
 
 		if ($this->logfile_handle) {
 			# Record log file times relative to the backup start, if possible
@@ -680,13 +711,13 @@ class UpdraftPlus {
 		if (false === $err) return false;
 		if (is_string($err)) {
 			$this->log("Error message: $err");
-			if ($echo) echo sprintf(__('Error: %s', 'updraftplus'), htmlspecialchars($err))."<br>";
+			if ($echo) $this->log(sprintf(__('Error: %s', 'updraftplus'), $err), 'notice-warning');
 			if ($logerror) $this->log($err, 'error');
 			return false;
 		}
 		foreach ($err->get_error_messages() as $msg) {
 			$this->log("Error message: $msg");
-			if ($echo) echo sprintf(__('Error: %s', 'updraftplus'), htmlspecialchars($msg))."<br>";
+			if ($echo) $this->log(sprintf(__('Error: %s', 'updraftplus'), $msg), 'notice-warning');
 			if ($logerror) $this->log($msg, 'error');
 		}
 		$codes = $err->get_error_codes();
@@ -733,9 +764,10 @@ class UpdraftPlus {
 		if (is_wp_error($pre_line)) {
 			$this->log_wp_error($pre_line);
 		} else {
-			# Now run (v)sprintf on it, using any remaining arguments. vsprintf = sprintf but takes an array instead of individual arguments
+			// Now run (v)sprintf on it, using any remaining arguments. vsprintf = sprintf but takes an array instead of individual arguments
 			$this->log(vsprintf($pre_line, $args));
-			echo vsprintf(__($pre_line, 'updraftplus'), $args).'<br>';
+			// This is slightly hackish, in that we have no way to use a different level or destination. In that case, the caller should instead call log() twice with different parameters, instead of using this convenience function.
+			$this->log(vsprintf(__($pre_line, 'updraftplus'), $args), 'notice-restore');
 		}
 	}
 
@@ -765,7 +797,17 @@ class UpdraftPlus {
 
 	}
 
-	// $singletons : whether to upload a file that only has one chunk, or whether instead to return 1 in that case
+	/**
+	 * Method for helping remote storage methods to upload files in chunks without needing to duplicate all the overhead
+	 *
+	 * @param	string	$file	the full path to the file
+	 * @param	object	$caller	the object to call back to do the actual network API calls; needs to have a chunked_upload() method.
+	 * @param	string	$cloudpath	this is passed back to the callback function; within this function, it is used only for logging
+	 * @param	string	$logname	the prefix used on log lines. Also passed back to the callback function.
+	 * @param	integer	$chunk_size	the size, in bytes, of each upload chunk
+	 * @param	integer	$uploaded_size	how many bytes have already been uploaded. This is passed back to the callback function; within this method, it is only used for logging.
+	 * @param	boolean	$singletons	when the file, given the chunk size, would only have one chunk, should that be uploaded (true), or instead should 1 be returned (false) ?
+	*/
 	public function chunked_upload($caller, $file, $cloudpath, $logname, $chunk_size, $uploaded_size, $singletons = false) {
 
 		$fullpath = $this->backups_dir_location().'/'.$file;
@@ -898,12 +940,22 @@ class UpdraftPlus {
 		}
 	}
 
+	/**
+	 * Provides a convenience function allowing remote storage methods to download a file in chunks, without duplicated overhead.
+	 * 
+	 * @param string $file - The basename of the file being downloaded
+	 * @param object $method - This remote storage method object needs to have a chunked_download() method to call back
+	 * @param integer $remote_size - The size, in bytes, of the object being downloaded
+	 * @param boolean $manually_break_up - Whether to break the download into multiple network operations (rather than just issuing a GET with a range beginning at the end of the already-downloaded data, and carrying on until it times out)
+	 * @param * $passback - A value to pass back to the callback function
+	 * @param integer $chunk_size - Break up the download into chunks of this number of bytes. Should be set if and only if $manually_break_up is true.
+	 */
 	public function chunked_download($file, $method, $remote_size, $manually_break_up = false, $passback = null, $chunk_size = 1048576) {
 
 		try {
 
 			$fullpath = $this->backups_dir_location().'/'.$file;
-			$start_offset = (file_exists($fullpath)) ? filesize($fullpath): 0;
+			$start_offset = file_exists($fullpath) ? filesize($fullpath) : 0;
 
 			if ($start_offset >= $remote_size) {
 				$this->log("File is already completely downloaded ($start_offset/$remote_size)");
@@ -911,13 +963,14 @@ class UpdraftPlus {
 			}
 
 			// Some more remains to download - so let's do it
-			if (!$fh = fopen($fullpath, 'a')) {
+			// N.B. We use ftell(), which precludes us from using open in append-only ('a') mode - see https://php.net/manual/en/function.fopen.php
+			if (!($fh = fopen($fullpath, 'c'))) {
 				$this->log("Error opening local file: $fullpath");
 				$this->log($file.": ".__("Error",'updraftplus').": ".__('Error opening local file: Failed to download','updraftplus'), 'error');
 				return false;
 			}
 
-			$last_byte = ($manually_break_up) ? min($remote_size, $start_offset + $chunk_size) : $remote_size;
+			$last_byte = ($manually_break_up) ? min($remote_size, $start_offset + $chunk_size ) : $remote_size;
 
 			# This only affects logging
 			$expected_bytes_delivered_so_far = true;
@@ -934,19 +987,44 @@ class UpdraftPlus {
 					$this->log("$file: local file is status: $start_offset/$remote_size bytes; requesting next chunk (${start_offset}-)");
 				}
 
-				if ($start_offset >0 || $last_byte<$remote_size) {
+				if ($start_offset > 0 || $last_byte<$remote_size) {
 					fseek($fh, $start_offset);
 					// N.B. Don't alter this format without checking what relies upon it
-					$headers['Range'] = "bytes=$start_offset-$last_byte";
+					$last_byte_start = $last_byte - 1;
+					$headers['Range'] = "bytes=$start_offset-$last_byte_start";
 				}
 
-				# The method is free to return as much data as it pleases
-				$ret = $method->chunked_download($file, $headers, $passback);
+				/*
+				* The most common method is for the remote storage module to return a string with the results in it. In that case, the final $fh parameter is unused. However, since not all SDKs have that option conveniently, it is also possible to use the file handle and write directly to that; in that case, the method can either return the number of bytes written, or (boolean)true to infer it from the new file *pointer*.
+				* The method is free to write/return as much data as it pleases.
+				*/
+				$ret = $method->chunked_download($file, $headers, $passback, $fh);
+				if (true === $ret) {
+					clearstatcache();
+					// Some SDKs (including AWS/S3) close the resource
+					// N.B. We use ftell(), which precludes us from using open in append-only ('a') mode - see https://php.net/manual/en/function.fopen.php
+					if (is_resource($fh)) {
+						$ret = ftell($fh);
+					} else {
+						$ret = filesize($fullpath);
+						// fseek returns - on success
+						if (false == ($fh = fopen($fullpath, 'c')) || 0 !== fseek($fh, $ret)) {
+							$this->log("Error opening local file: $fullpath");
+							$this->log($file.": ".__("Error",'updraftplus').": ".__('Error opening local file: Failed to download','updraftplus'), 'error');
+							return false;
+						}
+					}
+					if (is_integer($ret)) $ret -= $start_offset;
+				}
+				
+				// Note that this covers a false code returned either by chunked_download() or by ftell.
 				if (false === $ret) return false;
+				
+				$returned_bytes = is_integer($ret) ? $ret : strlen($ret);
 
-				if (strlen($ret) > $requested_bytes || strlen($ret) < $requested_bytes - 1) $expected_bytes_delivered_so_far = false;
+				if ($returned_bytes > $requested_bytes || $returned_bytes < $requested_bytes - 1) $expected_bytes_delivered_so_far = false;
 
-				if (!fwrite($fh, $ret)) throw new Exception('Write failure (start offset: '.$start_offset.', bytes: '.strlen($ret).'; requested: '.$requested_bytes.')');
+				if (!is_integer($ret) && !fwrite($fh, $ret)) throw new Exception('Write failure (start offset: '.$start_offset.', bytes: '.strlen($ret).'; requested: '.$requested_bytes.')');
 
 				clearstatcache();
 				$start_offset = ftell($fh);
@@ -956,7 +1034,7 @@ class UpdraftPlus {
 
 		} catch(Exception $e) {
 			$this->log('Error ('.get_class($e).') - failed to download the file ('.$e->getCode().', '.$e->getMessage().')');
-			$this->log("$file: ".__('Error - failed to download the file','updraftplus').' ('.$e->getCode().', '.$e->getMessage().')' ,'error');
+			$this->log("$file: ".__('Error - failed to download the file', 'updraftplus').' ('.$e->getCode().', '.$e->getMessage().')' ,'error');
 			return false;
 		}
 
@@ -1578,6 +1656,12 @@ class UpdraftPlus {
 					$this->log("Based on the available data, we are bringing the resumption interval down to: $resume_interval seconds");
 					$this->jobdata_set('resume_interval', $resume_interval);
 				}
+				// This next condition was added in response to HS#9174, a case where on one resumption, PHP was allowed to run for >3000 seconds - but other than that, up to 500 seconds. As a result, the resumption interval got stuck at a large value, whilst resumptions were only allowed to run for a much smaller amount.
+				// This detects whether our last run was less than half the resume interval,  but was non-trivial (at least 50 seconds - so, indicating it didn't just error out straight away), but with a resume interval of over 300 seconds. In this case, it is reduced.
+			} elseif (isset($time_passed[$prev_resumption]) && $time_passed[$prev_resumption] > 50 && $resume_interval > 300 && $time_passed[$prev_resumption] < $resume_interval/2 && 'clouduploading' == $this->jobdata_get('jobstatus')) {
+				$resume_interval = round($time_passed[$prev_resumption] + 52);
+				$this->log("Time passed on previous resumptions: $timings_string (known: $run_times_known, max: $max_time). Based on the available data, we are bringing the resumption interval down to: $resume_interval seconds");
+				$this->jobdata_set('resume_interval', $resume_interval);
 			}
 
 		}
@@ -2417,7 +2501,7 @@ class UpdraftPlus {
 				$type = $matches[3];
 				if ('db' == $type) {
 					$index = 0;
-					$type .= empty($matches[4]) ? $matches[4] : '';
+					$type .= !empty($matches[4]) ? $matches[4] : '';
 				} else {
 					$index = (empty($matches[4])) ? '0' : (max((int)$matches[4]-1,0));
 				}

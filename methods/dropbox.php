@@ -98,10 +98,12 @@ class UpdraftPlus_BackupModule_dropbox {
 			return false;
 		}
 		
+		$use_api_ver = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) ? 1 : 2;
+		
 		if (empty($opts['tk_request_token'])) {
-			$updraftplus->log("Dropbox: begin cloud upload (using OAuth v2 token)");
+			$updraftplus->log("Dropbox: begin cloud upload (using API version $use_api_ver with OAuth v2 token)");
 		} else {
-			$updraftplus->log("Dropbox: begin cloud upload (using OAuth v1 token)");
+			$updraftplus->log("Dropbox: begin cloud upload (using API version $use_api_ver with OAuth v1 token)");
 		}
 
 		$chunk_size = $updraftplus->jobdata_get('dropbox_chunk_size', 1048576);
@@ -127,23 +129,33 @@ class UpdraftPlus_BackupModule_dropbox {
 			// If we experience any failures collecting account info, then carry on anyway
 			try {
 
-				$accountInfo = $dropbox->accountInfo();
+				/*
+					Quota information is no longer provided with account information a new call to qoutaInfo must be made to get this information.
+				 */
+				if (1 == $use_api_ver) {
+					$quotaInfo = $dropbox->accountInfo();
+				} else {
+					$quotaInfo = $dropbox->quotaInfo();
+				}
 
-				if ($accountInfo['code'] != "200") {
+				if ($quotaInfo['code'] != "200") {
 					$message = "Dropbox account/info did not return HTTP 200; returned: ". $accountInfo['code'];
-				} elseif (!isset($accountInfo['body'])) {
+				} elseif (!isset($quotaInfo['body'])) {
 					$message = "Dropbox account/info did not return the expected data";
 				} else {
-					$body = $accountInfo['body'];
-					if (!isset($body->quota_info)) {
-						$message = "Dropbox account/info did not return the expected data";
+					$body = $quotaInfo['body'];
+					if (isset($body->quota_info)) {
+						$quota_info = $body->quota_info; 
+						$total_quota = $quota_info->quota; 
+			            $normal_quota = $quota_info->normal; 
+			            $shared_quota = $quota_info->shared; 
+			            $available_quota = $total_quota - ($normal_quota + $shared_quota); 
+			            $message = "Dropbox quota usage: normal=".round($normal_quota/1048576,1)." MB, shared=".round($shared_quota/1048576,1)." MB, total=".round($total_quota/1048576,1)." MB, available=".round($available_quota/1048576,1)." MB";
 					} else {
-						$quota_info = $body->quota_info;
-						$total_quota = $quota_info->quota;
-						$normal_quota = $quota_info->normal;
-						$shared_quota = $quota_info->shared;
-						$available_quota = $total_quota - ($normal_quota + $shared_quota);
-						$message = "Dropbox quota usage: normal=".round($normal_quota/1048576,1)." MB, shared=".round($shared_quota/1048576,1)." MB, total=".round($total_quota/1048576,1)." MB, available=".round($available_quota/1048576,1)." MB";
+						$total_quota = max($body->allocation->allocated, 1);
+						$used = $body->used;
+						$available_quota =$total_quota - $used;
+						$message = "Dropbox quota usage: used=".round($used/1048576,1)." MB, total=".round($total_quota/1048576,1)." MB, available=".round($available_quota/1048576,1)." MB";
 					}
 				}
 				$updraftplus->log($message);
@@ -283,26 +295,53 @@ class UpdraftPlus_BackupModule_dropbox {
 
 		if (empty($search['code']) || 200 != $search['code']) return new WP_Error('response_error', sprintf(__('%s returned an unexpected HTTP response: %s', 'updraftplus'), 'Dropbox', $search['code']), $search['body']);
 
-		if (empty($search['body']) || !is_array($search['body'])) return array();
+		if (empty($search['body'])) return array();
+
+		if (isset($search['body']->matches) && is_array($search['body']->matches)) {
+			$matches = $search['body']->matches;
+		} elseif (is_array($search['body'])) {
+			$matches = $search['body'];
+		} else {
+			return array();
+		}
 
 		$results = array();
 
-		foreach ($search['body'] as $item) {
-			if (!is_object($item)) continue;
+		foreach ($matches as $item) {
+			if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) {
+				if (!is_object($item)) continue;
 
-			if ((!isset($item->bytes) || $item->bytes > 0) && empty($item->is_dir) && !empty($item->path) && 0 === strpos($item->path, $searchpath)) {
+				if ((!isset($item->bytes) || $item->bytes > 0) && empty($item->is_dir) && !empty($item->path) && 0 === strpos($item->path, $searchpath)) {
 
-				$path = substr($item->path, strlen($searchpath));
-				if ('/' == substr($path, 0, 1)) $path=substr($path, 1);
+					$path = substr($item->path, strlen($searchpath)); 
+					if ('/' == substr($path, 0, 1)) $path=substr($path, 1);
 
-				# Ones in subfolders are not wanted
-				if (false !== strpos($path, '/')) continue;
+					# Ones in subfolders are not wanted
+					if (false !== strpos($path, '/')) continue;
 
-				$result = array('name' => $path);
-				if (!empty($item->bytes)) $result['size'] = $item->bytes;
+					$result = array('name' => $path);
+					if (!empty($item->bytes)) $result['size'] = $item->bytes;
 
-				$results[] = $result;
+					$results[] = $result;
 
+				}
+			} else {
+				$item = $item->metadata;
+				if (!is_object($item)) continue;
+
+				if ((!isset($item->size) || $item->size > 0)  && $item->{'.tag'} != 'folder' && !empty($item->path_display) && 0 === strpos($item->path_display, $searchpath)) {
+
+					$path = substr($item->path_display, strlen($searchpath));
+					if ('/' == substr($path, 0, 1)) $path=substr($path, 1);
+
+					# Ones in subfolders are not wanted
+					if (false !== strpos($path, '/')) continue;
+
+					$result = array('name' => $path);
+					if (!empty($item->size)) $result['size'] = $item->size;
+
+					$results[] = $result;
+				}
 			}
 
 		}
@@ -499,6 +538,7 @@ class UpdraftPlus_BackupModule_dropbox {
 			if ('doit' == $_GET['updraftplus_dropboxauth']) {
 				$opts = $this->get_opts();
 				$opts['tk_access_token'] = '';
+				unset($opts['tk_request_token']);
 				$opts['ownername'] = '';
 				UpdraftPlus_Options::update_updraft_option('updraft_dropbox', $opts);
 			} elseif ('deauth' == $_GET['updraftplus_dropboxauth']) {
@@ -559,20 +599,48 @@ class UpdraftPlus_BackupModule_dropbox {
 			if (!empty($accountinfo_err)) $message .= "<br>".htmlspecialchars($accountinfo_err);
 		} else {
 			$body = $accountInfo['body'];
-			$message .= ". <br>".sprintf(__('Your %s account name: %s','updraftplus'),'Dropbox', htmlspecialchars($body->display_name));
+			$name = '';
+			if (isset($body->display_name)) {
+				$name = $body->display_name;
+			} else {
+				$name = $body->name->display_name;
+			}
+			$message .= ". <br>".sprintf(__('Your %s account name: %s','updraftplus'),'Dropbox', htmlspecialchars($name));
 			$opts = $this->get_opts();
-			$opts['ownername'] = '';
-			if (!empty($body->display_name)) $opts['ownername'] = $body->display_name;
+			$opts['ownername'] = $name;
 			UpdraftPlus_Options::update_updraft_option('updraft_dropbox', $opts);
 
 			try {
-				$quota_info = $body->quota_info;
-				$total_quota = max($quota_info->quota, 1);
-				$normal_quota = $quota_info->normal;
-				$shared_quota = $quota_info->shared;
-				$available_quota =$total_quota - ($normal_quota + $shared_quota);
-				$used_perc = round(($normal_quota + $shared_quota)*100/$total_quota, 1);
-				$message .= ' <br>'.sprintf(__('Your %s quota usage: %s %% used, %s available','updraftplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB');
+				/*
+					Quota information is no longer provided with account information a new call to qoutaInfo must be made to get this information.
+				 */
+				if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) { 
+		        	$quotaInfo = $accountInfo; 
+		        } else { 
+		          	$quotaInfo = $dropbox->quotaInfo(); 
+		        } 
+
+				if (empty($quotaInfo['code']) || "200" != $quotaInfo['code']) {
+					$message .= " (".__('though part of the returned information was not as expected - your mileage may vary','updraftplus').")". $quotaInfo['code'];
+					if (!empty($accountinfo_err)) $message .= "<br>".htmlspecialchars($accountinfo_err);
+				} else {
+					$body = $quotaInfo['body'];
+					if (isset($body->quota_info)){
+						$quota_info = $body->quota_info; 
+						$total_quota = max($quota_info->quota, 1); 
+						$normal_quota = $quota_info->normal; 
+						$shared_quota = $quota_info->shared; 
+						$available_quota =$total_quota - ($normal_quota + $shared_quota); 
+						$used_perc = round(($normal_quota + $shared_quota)*100/$total_quota, 1); 
+						$message .= ' <br>'.sprintf(__('Your %s quota usage: %s %% used, %s available','updraftplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB'); 
+					} else {
+						$total_quota = max($body->allocation->allocated, 1);
+						$used = $body->used;
+						$available_quota =$total_quota - $used;
+						$used_perc = round($used*100/$total_quota, 1);
+						$message .= ' <br>'.sprintf(__('Your %s quota usage: %s %% used, %s available','updraftplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB');
+					}
+				}
 			} catch (Exception $e) {
 			}
 
@@ -598,14 +666,19 @@ class UpdraftPlus_BackupModule_dropbox {
 	public function bootstrap($deauthenticate = false) {
 		if (!empty($this->dropbox_object) && !is_wp_error($this->dropbox_object)) return $this->dropbox_object;
 
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/API.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/Exception.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Consumer/ConsumerAbstract.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Storage/StorageInterface.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Storage/Encrypter.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Storage/WordPress.php');
-		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Consumer/Curl.php');
-//		require_once(UPDRAFTPLUS_DIR.'/includes/Dropbox/OAuth/Consumer/WordPress.php');
+		/*
+			Use Old Dropbox API constant is used to force bootstrap to use the old API this is for users having problems. By default we will use the new Dropbox API v2 as the old version will be deprecated as of June 2017
+		 */
+		$dropbox_api = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) ? 'Dropbox' : 'Dropbox2';
+
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/API.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/Exception.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Consumer/ConsumerAbstract.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Storage/StorageInterface.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Storage/Encrypter.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Storage/WordPress.php');
+		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Consumer/Curl.php');
+//		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/OAuth/Consumer/WordPress.php');
 
 		$opts = $this->get_opts();
 

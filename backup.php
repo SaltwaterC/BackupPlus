@@ -1471,7 +1471,7 @@ class UpdraftPlus_Backup {
 							$this->stow("# Approximate rows expected in table: $rows\n");
 							if ($rows > UPDRAFTPLUS_WARN_DB_ROWS) {
 								$manyrows_warning = true;
-								$updraftplus->log(sprintf(__("Table %s has very many rows (%s) - we hope your web hosting company gives you enough resources to dump out that table in the backup", 'updraftplus'), $table, $rows), 'warning', 'manyrows_'.$this->whichdb_suffix.$table);
+								$updraftplus->log(sprintf(__("Table %s has very many rows (%s) - we hope your web hosting company gives you enough resources to dump out that table in the backup", 'updraftplus'), $table, $rows).' '.__('If not, you will need to either remove data from this table, or contact your hosting company to request more resources.', 'updraftplus'), 'warning', 'manyrows_'.$this->whichdb_suffix.$table);
 							}
 						}
 
@@ -2897,7 +2897,7 @@ class UpdraftPlus_Backup {
 					$original_size = filesize($zipfile);
 					clearstatcache();
 				} else {
-					$create_code = (defined('ZIPARCHIVE::CREATE')) ? ZIPARCHIVE::CREATE : 1;
+					$create_code = defined('ZIPARCHIVE::CREATE') ? ZIPARCHIVE::CREATE : 1;
 					$opencode = $zip->open($zipfile, $create_code);
 					$original_size = 0;
 				}

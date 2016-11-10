@@ -54,7 +54,8 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 				array_push($users, $new_user);
 			}
 		};
-		return array("users" => $users, "count"=>count($users));
+		
+		return $users;
 	}
 
 	private function _calculate_pages($query){
@@ -65,6 +66,14 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 		};
 
 		if(!empty($query)){
+			
+			if(!empty($query['search'])){
+				return array( 
+					page_count => 1, 
+					page_no => 1 
+				); 
+			}
+			
 			$pages = array();
 			$page_query = new WP_User_Query(array('role'=> $query["role"]));
 			$page_count = ceil($page_query->total_users / $query["per_page"]);
@@ -168,34 +177,46 @@ class UpdraftCentral_Users_Commands extends UpdraftCentral_Commands {
 	
 	public function get_users($query) {
 		$this->_admin_include('user.php');
-
+		
+		$users;
+		
 		if(!empty($query["search"])){
-			return $this->_response($this->_search_users($query));	
+			$users = $this->_search_users($query);
+		}
+		else{
+			if(empty($query["per_page"])){ $query["per_page"] = 10; }
+			if(empty($query["page_no"])){ $query["page_no"] = 1; }
+			if(empty($query["role"])){ $query["role"] = ""; }
+			
+			$user_query = new WP_User_Query(array(
+				'orderby' => 'ID',
+				'order' => 'ASC',
+				'number' => $query["per_page"],
+				'paged'=> $query["page_no"],
+				'role'=> $query["role"]
+			));
+			
+			if(empty( $user_query->results)){
+				$result = array("message"=>'users_not_found');
+				return $this->_response($result);
+			}
+			
+			$users = $user_query->results;
 		}
 		
-		if(empty($query["per_page"])){ $query["per_page"] = 10; }
-		if(empty($query["page_no"])){ $query["page_no"] = 1; }
-		if(empty($query["role"])){ $query["role"] = ""; }
-
-		$user_query = new WP_User_Query(array(
-			'orderby' => 'ID',
-			'order' => 'ASC',
-			'number' => $query["per_page"],
-			'paged'=> $query["page_no"],
-			'role'=> $query["role"]
-		));
-		
-		if(empty( $user_query->results)){
-			$result = array("message"=>'users_not_found');
-			return $this->_response($result);
+		foreach ( $users as &$user) {
+			$user_object = get_userdata($user->ID);
+			if(method_exists($user_object, 'to_array')){
+				$user = $user_object->to_array();
+				$user["roles"] = $user_object->roles;
+				$user["first_name"] = $user_object->first_name;
+				$user["last_name"] = $user_object->last_name;
+				$user["description"] = $user_object->description;
+			}else{
+				$user = $user_object;
+			}
 		}
 		
-		$users = $user_query->results;
-		foreach ( $users as $key => $user) {
-			$user->first_name = get_user_meta($user->ID, 'first_name' , true);
-			$user->last_name = get_user_meta($user->ID, 'last_name' , true);
-			$user->description = get_user_meta($user->ID, 'description' , true);
-		}
 		$result = array(
 			"users"=>$users,
 			"paging" => $this->_calculate_pages($query)
