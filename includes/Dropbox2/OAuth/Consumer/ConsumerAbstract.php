@@ -10,13 +10,15 @@
 
 abstract class Dropbox_ConsumerAbstract
 {
-    // Dropbox web endpoint
-    const WEB_URL = 'https://www.dropbox.com/1/';
+    // Dropbox web endpoint. v2 API has just dropped the 1/ suffix to the below.
+    const WEB_URL = 'https://www.dropbox.com/';
     
     // OAuth flow methods
     const AUTHORISE_METHOD = 'oauth2/authorize';
-    const DEAUTHORISE_METHOD = 'disable_access_token';
+    // Beware - the documentation in one place says oauth2/token/revoke, but that appears to be wrong
+    const DEAUTHORISE_METHOD = '2/auth/token/revoke';
     const ACCESS_TOKEN_METHOD = 'oauth2/token';
+    // The next endpoint only exists with APIv1
     const OAUTH_UPGRADE = 'oauth2/token_from_oauth1';
     
     /**
@@ -78,6 +80,7 @@ abstract class Dropbox_ConsumerAbstract
     */
     private function upgradeOAuth()
     {
+		// N.B. This call only exists under API v1 - i.e. there is no APIv2 equivalent. Hence the APIv1 endpoint (API_URL) is used, and not the v2 (API_URL_V2)
 	    $url = UpdraftPlus_Dropbox_API::API_URL . self::OAUTH_UPGRADE;
 	    $response = $this->fetch('POST', $url, '');
         $token = new stdClass();
@@ -176,7 +179,7 @@ abstract class Dropbox_ConsumerAbstract
     
     protected function deauthenticate()
     {
-	    $url = UpdraftPlus_Dropbox_API::API_URL . self::DEAUTHORISE_METHOD;
+	    $url = UpdraftPlus_Dropbox_API::API_URL_V2 . self::DEAUTHORISE_METHOD;
 	    $response = $this->fetch('POST', $url, '');
         $this->storage->delete();
     }
@@ -200,7 +203,7 @@ abstract class Dropbox_ConsumerAbstract
             $appkey = $this->storage->get('appkey');
             if (!empty($appkey)){
                 // Get the signed request URL
-                $url = UpdraftPlus_Dropbox_API::API_URL . self::ACCESS_TOKEN_METHOD;
+                $url = UpdraftPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
                 $params = array(
                     'code' => $code,
                     'grant_type' => 'authorization_code',
@@ -274,6 +277,7 @@ abstract class Dropbox_ConsumerAbstract
     {
         // Get the request/access token
         $token = $this->getToken();
+
         // Prepare the standard request parameters differnt for OAuth1 and OAuth2, we still need OAuth1 to make the request to the upgrade token endpoint
         if (isset($token->token_type)) {
 	        $params = array(

@@ -25,8 +25,10 @@
 	}
 
 	$uname_info .= $release_name.$mtype.' '.@php_uname('v');
+	
+	$web_server = $_SERVER["SERVER_SOFTWARE"];
 
-	$updraftplus_admin->settings_debugrow(__('Web server:','updraftplus'), htmlspecialchars($_SERVER["SERVER_SOFTWARE"]).' ('.htmlspecialchars($uname_info).')');
+	$updraftplus_admin->settings_debugrow(__('Web server:','updraftplus'), htmlspecialchars($web_server).' ('.htmlspecialchars($uname_info).')');
 
 	$updraftplus_admin->settings_debugrow('ABSPATH:', htmlspecialchars(ABSPATH));
 	$updraftplus_admin->settings_debugrow('WP_CONTENT_DIR:', htmlspecialchars(WP_CONTENT_DIR));
@@ -63,6 +65,23 @@
 	if (is_array($hosting_bytes_free)) {
 		$perc = round(100*$hosting_bytes_free[1]/(max($hosting_bytes_free[2], 1)), 1);
 		$updraftplus_admin->settings_debugrow(__('Free disk space in account:', 'updraftplus'), sprintf(__('%s (%s used)', 'updraftplus'), round($hosting_bytes_free[3]/1048576, 1)." MB", "$perc %"));
+	}
+	
+	if (function_exists('apache_get_modules')) {
+		$apache_info = '';
+		$apache_modules = apache_get_modules();
+		if (is_array($apache_modules)) {
+			sort($apache_modules, SORT_STRING);
+			foreach ($apache_modules as $mod) {
+				if (0 === strpos($mod, 'mod_')) {
+					$apache_info .= ', '.substr($mod, 4);
+				} else {
+					$apache_info .= ', '.$mod;
+				}
+			}
+		}
+		$apache_info = substr($apache_info, 2);
+		$updraftplus_admin->settings_debugrow(__('Apache modules', 'updraftplus').':', $apache_info);
 	}
 	
 	$updraftplus_admin->settings_debugrow(__('Plugins for debugging:', 'updraftplus'),'<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;updraftplus_noautobackup=1&amp;plugin=wp-crontrol'), 'install-plugin_wp-crontrol').'">WP Crontrol</a> | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;updraftplus_noautobackup=1&amp;plugin=sql-executioner'), 'install-plugin_sql-executioner').'">SQL Executioner</a> | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;updraftplus_noautobackup=1&amp;plugin=advanced-code-editor'), 'install-plugin_advanced-code-editor').'">Advanced Code Editor</a> '.(current_user_can('edit_plugins') ? '<a href="'.self_admin_url('plugin-editor.php?file=updraftplus/updraftplus.php').'">(edit UpdraftPlus)</a>' : '').' | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;updraftplus_noautobackup=1&amp;plugin=wp-filemanager'), 'install-plugin_wp-filemanager').'">WP Filemanager</a>');

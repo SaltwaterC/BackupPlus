@@ -11,7 +11,7 @@
 class UpdraftPlus_Dropbox_API {
     // API Endpoints
     const API_URL     = 'https://api.dropbox.com/1/';
-    const API_URL_V2  = 'https://api.dropboxapi.com/2/';
+    const API_URL_V2  = 'https://api.dropboxapi.com/';
     const CONTENT_URL = 'https://api-content.dropbox.com/1/';
     const CONTENT_URL_V2 = 'https://content.dropboxapi.com/2/';
     
@@ -77,7 +77,7 @@ class UpdraftPlus_Dropbox_API {
      * @return object stdClass
      */
     public function accountInfo() {
-        $call = 'users/get_current_account';
+        $call = '2/users/get_current_account';
         $params = array('api_v2' => true);
         $response = $this->fetch('POST', self::API_URL_V2, $call, $params);
         return $response;
@@ -88,7 +88,7 @@ class UpdraftPlus_Dropbox_API {
      * @return object stdClass
      */
     public function quotaInfo() {
-        $call = 'users/get_space_usage';
+        $call = '2/users/get_space_usage';
         $params = array('api_v2' => true);
         $response = $this->fetch('POST', self::API_URL_V2, $call, $params);
         return $response;
@@ -367,7 +367,7 @@ class UpdraftPlus_Dropbox_API {
      * @return array
      */
     public function search($query, $path = '', $limit = 1000) {
-        $call = 'files/search';
+        $call = '2/files/search';
         $params = array(
             'path' => $this->encodePath($path),
             'query' => $query,
@@ -505,7 +505,7 @@ class UpdraftPlus_Dropbox_API {
      * @return object stdClass
      */
     public function delete($path) {
-        $call = 'files/delete';
+        $call = '2/files/delete';
         $params = array('path' => '/' . $this->normalisePath($path), 'api_v2' => true);
         $response = $this->fetch('POST', self::API_URL_V2, $call, $params);
         return $response;

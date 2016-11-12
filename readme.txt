@@ -127,6 +127,11 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.24 of the free version correspond to changes made in 2.12.24.x of the paid version.
 
+= 1.12.25 - 12/Nov/2016 =
+
+* COMPATIBILITY: Dropbox APIv2 capability (see: https://updraftplus.com/dropbox-api-version-1-deprecation/) in 1.12.24 was not complete - this release now avoids all APIv1 use
+* TWEAK: The 'site information' advanced tool now contains information on loaded Apache modules.
+
 = 1.12.24 - 08/Nov/2016 =
 
 * FIX: When importing a single site into a multisite install as a new site (experimental feature), the main multisite URL was being incorrectly adjusted
@@ -141,7 +146,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: When importing a single site into a multsite install as a new site, remove any cron entries for backup runs on the new site
 * TWEAK: Fix an inconsequential off-by-one in the chunked downloading algorithm so that the behaviour is as documented
 * TWEAK: Improve accessibility of Labelauty components with keyboard navigation
-* TWEAK: Tweak the algorithm for scheduling resumptions, to improve efficient in the (once) seen corner-case of PHP usually having a predictable run-time, but with an instance of a much longer run-time
+* TWEAK: Tweak the algorithm for scheduling resumptions, to improve efficiency in the (once) seen corner-case of PHP usually having a predictable run-time, but with an instance of a much longer run-time
 * TWEAK: Slightly more logging when an S3 error condition occurs, allowing easier diagnosis
 * TWEAK: Add support for the new US East (Ohio) region to S3
 * TWEAK: OneDrive authentication can now detect a block by CloudFlare, and direct the user accordingly
@@ -333,4 +338,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.24: Dropbox backend now uses APIv2. Faster database backups on some Windows servers. Various other small tweaks and fixes. 
+* 1.12.25: Dropbox backend now uses APIv2. Faster database backups on some Windows servers. Various other small tweaks and fixes. 

@@ -595,7 +595,7 @@ class UpdraftPlus_BackupModule_dropbox {
 		$updraftplus->log(__('Success:','updraftplus').' '.sprintf(__('you have authenticated your %s account','updraftplus'),'Dropbox'));
 
 		if (empty($accountInfo['code']) || "200" != $accountInfo['code']) {
-			$message .= " (".__('though part of the returned information was not as expected - your mileage may vary','updraftplus').")". $accountInfo['code'];
+			$message .= " (".__('though part of the returned information was not as expected - your mileage may vary','updraftplus').") ". $accountInfo['code'];
 			if (!empty($accountinfo_err)) $message .= "<br>".htmlspecialchars($accountinfo_err);
 		} else {
 			$body = $accountInfo['body'];

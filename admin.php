@@ -1724,7 +1724,7 @@ class UpdraftPlus_Admin {
 									unset($backups[$timestamp][$key.$itext.'-size']);
 									if (empty($backups[$timestamp][$key])) unset($backups[$timestamp][$key]);
 								}
-								if (is_array($backups[$timestamp]['checksums'])) {
+								if (isset($backups[$timestamp]['checksums']) && is_array($backups[$timestamp]['checksums'])) {
 									foreach (array_keys($backups[$timestamp]['checksums']) as $algo) {
 										unset($backups[$timestamp]['checksums'][$algo][$key.$index]);
 									}
@@ -3431,8 +3431,8 @@ class UpdraftPlus_Admin {
 
 		$ret .= '<div class="curstage">';
 		$ret .= htmlspecialchars($curstage);
-        //we need to add this data-progress attribute in order to be able to update the progress bar in UDCentral
-		$ret .= '<div class="updraft_percentage" data-progress="'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'" style="height: 100%; width:'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'%"></div>';
+        //we need to add this data-progress attribute in order to be able to update the progress bar in UDC  
+		$ret .= '<div class="updraft_percentage" data-info="'.esc_attr($curstage).'" data-progress="'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'" style="height: 100%; width:'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'%"></div>';
 		$ret .= '</div></div>';
 
 		$ret .= '</div>';
