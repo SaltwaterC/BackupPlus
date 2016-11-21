@@ -368,8 +368,11 @@ class UpdraftPlus_Dropbox_API {
      */
     public function search($query, $path = '', $limit = 1000) {
         $call = '2/files/search';
+        $path = $this->encodePath($path);
+        // APIv2 requires that the path match this regex: String(pattern="(/(.|[\r\n])*)?|(ns:[0-9]+(/.*)?)")
+        if ($path && '/' != substr($path, 0, 1)) $path = "/$path";
         $params = array(
-            'path' => $this->encodePath($path),
+            'path' => $path,
             'query' => $query,
             'max_results' => ($limit < 1) ? 1 : (($limit > 1000) ? 1000 : (int) $limit),
             'api_v2' => true,

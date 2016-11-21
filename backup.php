@@ -919,6 +919,9 @@ class UpdraftPlus_Backup {
 		// Make it available to the filter
 		$jobdata['remotestorage_extrainfo'] = $this->remotestorage_extrainfo;
 		
+		if (!class_exists('UpdraftPlus_Notices')) require_once(UPDRAFTPLUS_DIR.'/includes/updraftplus-notices.php');
+		$ws_advert = UpdraftPlus_Notices::do_notice(false, 'report-plain', true);
+		
 		$body = apply_filters('updraft_report_body',
 			__('Backup of:', 'updraftplus').' '.site_url()."\r\n".
 			"UpdraftPlus ".__('WordPress backup is complete','updraftplus').".\r\n".
@@ -927,7 +930,7 @@ class UpdraftPlus_Backup {
 			$extra_msg.
 			"\r\n".
 			$feed.
-			$updraftplus->wordshell_random_advert(0)."\r\n".
+			$ws_advert."\r\n".
 			$append_log,
 		$final_message, $backup_contains, $updraftplus->errors, $warnings, $jobdata);
 
@@ -2949,7 +2952,7 @@ class UpdraftPlus_Backup {
 
 		// Always warn of this
 		if (strpos($msg, 'File Size Limit Exceeded') !== false && 'UpdraftPlus_BinZip' == $this->use_zip_object) {
-			$updraftplus->log(sprintf(__('The zip engine returned the message: %s.', 'updraftplus'), 'File Size Limit Exceeded').' <a href="https://updraftplus.com/what-should-i-do-if-i-see-the-message-file-size-limit-exceeded/">'.__('Go here for more information.','updraftplus').'</a>', 'warning', 'zipcloseerror-filesizelimit');
+			$updraftplus->log(sprintf(__('The zip engine returned the message: %s.', 'updraftplus'), 'File Size Limit Exceeded'). __('Go here for more information.','updraftplus').' https://updraftplus.com/what-should-i-do-if-i-see-the-message-file-size-limit-exceeded/', 'warning', 'zipcloseerror-filesizelimit');
 		} elseif ($warn) {
 			$warn_msg = __('A zip error occurred', 'updraftplus').' - ';
 			if (!empty($quota_low)) {

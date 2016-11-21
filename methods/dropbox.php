@@ -98,7 +98,8 @@ class UpdraftPlus_BackupModule_dropbox {
 			return false;
 		}
 		
-		$use_api_ver = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) ? 1 : 2;
+		// 28 June 2017
+		$use_api_ver = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1 && time() < 1498608000) ? 1 : 2;
 		
 		if (empty($opts['tk_request_token'])) {
 			$updraftplus->log("Dropbox: begin cloud upload (using API version $use_api_ver with OAuth v2 token)");
@@ -187,8 +188,8 @@ class UpdraftPlus_BackupModule_dropbox {
 
 			// We don't actually abort now - there's no harm in letting it try and then fail
 			if ($available_quota != -1 && $available_quota < ($filesize-$offset)) {
-				$updraftplus->log("File upload expected to fail: file data remaining to upload ($file) size is ".($filesize-$offset)." b (overall file size; $filesize b), whereas available quota is only $available_quota b");
-				$updraftplus->log(sprintf(__("Account full: your %s account has only %d bytes left, but the file to be uploaded has %d bytes remaining (total size: %d bytes)",'updraftplus'),'Dropbox', $available_quota, $filesize-$offset, $filesize), 'error');
+				$updraftplus->log("File upload expected to fail: file data remaining to upload ($file) size is ".($filesize-$offset)." b (overall file size; .".($filesize*1024)." b), whereas available quota is only $available_quota b");
+// 				$updraftplus->log(sprintf(__("Account full: your %s account has only %d bytes left, but the file to be uploaded has %d bytes remaining (total size: %d bytes)",'updraftplus'),'Dropbox', $available_quota, $filesize-$offset, $filesize), 'warning');
 			}
 
 			// Old-style, single file put: $put = $dropbox->putFile($updraft_dir.'/'.$file, $dropbox_folder.$file);
@@ -290,7 +291,9 @@ class UpdraftPlus_BackupModule_dropbox {
 			$search = $dropbox->search($match, $searchpath);
 		} catch (Exception $e) {
 			$updraftplus->log('Dropbox error: '.$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
-			return new WP_Error('search_error', $e->getMessage());
+			// The most likely cause of a search_error is specifying a non-existent path, which should just result in an empty result set.
+// 			return new WP_Error('search_error', $e->getMessage());
+			return array();
 		}
 
 		if (empty($search['code']) || 200 != $search['code']) return new WP_Error('response_error', sprintf(__('%s returned an unexpected HTTP response: %s', 'updraftplus'), 'Dropbox', $search['code']), $search['body']);
@@ -308,7 +311,8 @@ class UpdraftPlus_BackupModule_dropbox {
 		$results = array();
 
 		foreach ($matches as $item) {
-			if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) {
+			// 28 June 2017 - https://blogs.dropbox.com/developers/2016/06/api-v1-deprecated/
+			if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1 && time() < 1498608000) {
 				if (!is_object($item)) continue;
 
 				if ((!isset($item->bytes) || $item->bytes > 0) && empty($item->is_dir) && !empty($item->path) && 0 === strpos($item->path, $searchpath)) {
@@ -614,7 +618,8 @@ class UpdraftPlus_BackupModule_dropbox {
 				/*
 					Quota information is no longer provided with account information a new call to qoutaInfo must be made to get this information.
 				 */
-				if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) { 
+				 // 28 June 2017 - https://blogs.dropbox.com/developers/2016/06/api-v1-deprecated/			
+				if (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1 && time() < 1498608000) { 
 		        	$quotaInfo = $accountInfo; 
 		        } else { 
 		          	$quotaInfo = $dropbox->quotaInfo(); 
@@ -669,7 +674,7 @@ class UpdraftPlus_BackupModule_dropbox {
 		/*
 			Use Old Dropbox API constant is used to force bootstrap to use the old API this is for users having problems. By default we will use the new Dropbox API v2 as the old version will be deprecated as of June 2017
 		 */
-		$dropbox_api = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1) ? 'Dropbox' : 'Dropbox2';
+		$dropbox_api = (defined('UPDRAFTPLUS_DROPBOX_API_V1') && UPDRAFTPLUS_DROPBOX_API_V1 && time() < 1498608000) ? 'Dropbox' : 'Dropbox2';
 
 		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/API.php');
 		require_once(UPDRAFTPLUS_DIR.'/includes/'.$dropbox_api.'/Exception.php');

@@ -235,14 +235,6 @@ h3 .thank-you {
 	clear:left;
 }
 
-a .udp-logo {
-	border: 0px;
-	float: right; 
-	height: 150px;
-	width: 150px;
-	margin: 20px 15px 15px 35px;
-}
-
 .dismiss-dash-notice {
 	float: right;
 	position: relative;
@@ -502,13 +494,6 @@ a .udp-logo {
 
 .backup-restored span { 
 	font-size: 120% 
-}
-
-.word-shell-advert {
-	max-width: 800px; 
-	font-size: 140%; 
-	line-height: 140%; 
-	padding: 14px;
 }
 
 .memory-limit { 
@@ -836,16 +821,6 @@ input #backupnow_includefiles_moreoptions {
 .directory-permissions {
 	font-size: 110%;
 	font-weight: bold;
-}
-
-.wordshell-advert {
-	margin: 10px 0; 
-	padding: 10px; 
-	font-size: 140%; 
-	background-color: lightYellow; 
-	border-color: #E6DB55; 
-	border: 1px solid; 
-	border-radius: 4px;
 }
 
 .double-warning {

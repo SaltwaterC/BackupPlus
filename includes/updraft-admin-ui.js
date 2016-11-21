@@ -647,6 +647,9 @@ function updraft_updatehistory(rescan, remotescan) {
 					updraft_history_lastchecksum = resp.cksum;
 				}
 				jQuery('#updraft-navtab-backups-content .updraft_existing_backups').html(resp.t);
+				if (resp.data) {
+					console.log(resp.data);
+				}
 			}
 		} catch(err) {
 			console.log(updraftlion.unexpectedresponse+' '+response);
