@@ -12,7 +12,7 @@ class UpdraftPlus_Notices {
 	
 		// These variables are just short-hands to be used below.
 		$dashboard_top = array('top');
-		$dashboard_top_or_report = array('top', 'report');
+		$dashboard_top_or_report = array('top', 'report', 'report-plain');
 		$dashboard_bottom_or_report = array('bottom', 'report', 'report-plain');
 		$anywhere = array('top', 'bottom', 'report', 'report-plain');
 		$autobackup = array('autobackup');
@@ -367,7 +367,6 @@ class UpdraftPlus_Notices {
 	}
 
 	private static function render_specified_notice($advert_information, $return_instead_of_echo = false, $position = 'top') {
-		global $updraftplus_admin;
 		
 		if ('bottom' == $position) {
 			$template_file = 'bottom-notice.php';
@@ -379,6 +378,8 @@ class UpdraftPlus_Notices {
 			$template_file = 'horizontal-notice.php';
 		}
 		
+		require_once(UPDRAFTPLUS_DIR.'/admin.php');
+		global $updraftplus_admin;
 		return $updraftplus_admin->include_template('wp-admin/notices/'.$template_file, $return_instead_of_echo, $advert_information);
 	}
 }
