@@ -631,8 +631,7 @@ class UpdraftPlus_Dropbox_API {
      * @return string
      */
     private function encodePath($path) {
-        $path = $this->normalisePath($path);
-        $path = str_replace('%2F', '/', rawurlencode($path));
-        return $path;
+        // in APIv1, encoding was needed because parameters were passed as part of the URL; this is no longer done in our APIv2 SDK; hence, all that we now do here is normalise.
+        return $this->normalisePath($path);
     }
 }

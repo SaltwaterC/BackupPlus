@@ -112,11 +112,15 @@ class UpdraftPlus_UpdraftCentral_Listener {
 
 		$command_php_class = $this->command_classes[$class_prefix];
 		
+		$command_base_class_at = apply_filters('updraftcentral_command_base_class_at', UPDRAFTPLUS_DIR.'/central/commands.php');
+		
+		if (!class_exists('UpdraftCentral_Commands')) require_once($command_base_class_at);
+		
+		// Second parameter has been passed since 
 		do_action('updraftcentral_command_class_wanted', $command_php_class);
 		
 		if (!class_exists($command_php_class)) {
 			if (file_exists(UPDRAFTPLUS_DIR.'/central/modules/'.$class_prefix.'.php')) {
-				if (!class_exists('UpdraftCentral_Commands')) require_once(UPDRAFTPLUS_DIR.'/central/commands.php');
 				require_once(UPDRAFTPLUS_DIR.'/central/modules/'.$class_prefix.'.php');
 			}
 		}

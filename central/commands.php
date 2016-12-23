@@ -51,5 +51,4 @@ abstract class UpdraftCentral_Commands {
 			'rpcerror'
 		);
 	}
-	
 }

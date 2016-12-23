@@ -12,8 +12,20 @@ if (!defined('UPDRAFTPLUS_DIR')) die('No access.');
 
 class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 
-	public function get_download_status($items) {
+	//Get the Advanced Tools HTMl and return to Central
+	public function get_advanced_settings($options){
+		//load global updraftplus and admin
 		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return $this->_generic_error_response('no_updraftplus');
+		if (false === ($updraftplus = $this->_load_ud())) return $this->_generic_error_response('no_updraftplus');
+
+		$html = $updraftplus_admin->settings_advanced_tools(true, array('options' => $options));
+		
+		return $this->_response($html);
+	}
+
+	public function get_download_status($items) {
+		//load global updraftplus and admin
+		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return $this->_generic_error_response('no_updraftplus'); 
 		
 		if (!UpdraftPlus_Options::user_can_manage()) return $this->_generic_error_response('updraftplus_permission_denied');
 	
@@ -212,19 +224,13 @@ class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 	
 	}
 	
-	private function _get_vault() {
-		require_once(UPDRAFTPLUS_DIR.'/methods/updraftvault.php');
-		$vault = new UpdraftPlus_BackupModule_updraftvault();
-		return $vault;
-	}
-	
 	public function vault_connect($credentials) {
 	
 		if (false === ($updraftplus_admin = $this->_load_ud_admin()) || false === ($updraftplus = $this->_load_ud())) return $this->_generic_error_response('no_updraftplus');
 		
 		if (!UpdraftPlus_Options::user_can_manage()) return $this->_generic_error_response('updraftplus_permission_denied');
 
-		$results = $this->_get_vault()->ajax_vault_connect(false, $credentials);
+		$results = $updraftplus_admin->get_updraftvault()->ajax_vault_connect(false, $credentials);
 	
 		return $this->_response($results);
 	
@@ -236,7 +242,7 @@ class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 		
 		if (!UpdraftPlus_Options::user_can_manage()) return $this->_generic_error_response('updraftplus_permission_denied');
 	
-		$results = (array)$this->_get_vault()->ajax_vault_disconnect(false);
+		$results = (array)$updraftplus_admin->get_updraftvault()->ajax_vault_disconnect(false);
 
 		return $this->_response($results);
 	
@@ -247,7 +253,7 @@ class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 		
 		if (!UpdraftPlus_Options::user_can_manage()) return $this->_generic_error_response('updraftplus_permission_denied');
 	
-		$results = $this->_get_vault()->ajax_vault_recountquota(false);
+		$results = $updraftplus_admin->get_updraftvault()->ajax_vault_recountquota(false);
 	
 		return $this->_response($results);
 	}
@@ -361,5 +367,177 @@ class UpdraftPlus_RemoteControl_Commands extends UpdraftCentral_Commands {
 		}
 		
 	}
+	
+	//This gets the http_get function from admin to grab information on a url
+	public function http_get($uri){
+		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return $this->_generic_error_response('no_updraftplus');
+
+		if (empty($uri)) {
+			return $this->_generic_error_response("error", "no_uri");
+		}
 		
+		$response =  $updraftplus_admin->http_get($uri);
+		$response_decode = json_decode($response);
+
+	    if (isset($response_decode->e)) { 
+	      return $this->_generic_error_response("error", htmlspecialchars($response_decode->e)); 
+	    } 
+	     
+	    return $this->_response( 
+	      array( 
+	        'status' => $response_decode->code, 
+	        'response' => $response_decode->html_response
+	      ) 
+	    ); 
+	}	
+
+	//This gets the http_get function from admin to grab cURL information on a url
+	public function http_get_curl($uri){
+		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return $this->_generic_error_response('no_updraftplus');
+
+		if (empty($uri)) {
+			return $this->_generic_error_response("error", "no_uri");
+		}
+		
+		if (!function_exists('curl_exec')) {
+			return $this->_generic_error_response("error", "no_curl");
+		}
+		
+		$response_encode =  $updraftplus_admin->http_get($uri,true);
+		$response_decode = json_decode($response_encode);
+
+		$response = 'Curl Info: ' . $response_decode->verb
+					.'Response: ' . $response_decode->response;
+
+		if($response_decode->response === false){
+			return $this->_generic_error_response("error", array(
+				"error" => htmlspecialchars($response_decode->e),
+				"status" => $response_decode->status,
+				"log" => htmlspecialchars($response_decode->verb)
+
+			));
+		}
+		
+		return $this->_response(array(
+			"response"=> htmlspecialchars(substr($response, 0, 2048)),
+			"status"=> $response_decode->status,
+			"log"=> htmlspecialchars($response_decode->verb)
+		));
+	}
+
+	//Display raw backup and file list
+	public function show_raw_backup_and_file_list(){
+		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return $this->_generic_error_response('no_updraftplus');
+
+		/*
+			need to remove the pre tags as the modal assumes a <pre> is for a new box.
+			This cause issues specifically with fetach log events. Do this by passing true
+			to the method show_raw_backups
+		 */
+		
+		$response = $updraftplus_admin->show_raw_backups(true);
+
+		return $this->_response($response['html']);
+	}
+
+	//get resetting the site ID
+	public function reset_site_id(){
+		global $updraftplus;
+		delete_site_option('updraftplus-addons_siteid');
+		return $this->_response($updraftplus->siteid());
+	}
+
+	public function search_replace($query){
+
+		if (!class_exists('UpdraftPlus_Addons_Migrator')) {
+			return $this->_generic_error_response('error', 'no_class_found');
+		}
+		
+		global $updraftplus_addons_migrator;
+		
+		if (!is_a( $updraftplus_addons_migrator, 'UpdraftPlus_Addons_Migrator')) {
+			return $this->_generic_error_response('error', 'no_object_found');
+		}
+
+		$_POST = $query;
+		
+		ob_start();
+
+		do_action('updraftplus_adminaction_searchreplace', $query);
+		
+		$response = array('log' => ob_get_clean());
+		
+		return $this->_response($response);
+	}
+
+	public function change_lock_settings($data){
+		global $updraftplus_addon_lockadmin;
+		
+		if(!class_exists("UpdraftPlus_Addon_LockAdmin")){
+			return $this->_generic_error_response("error","no_class_found");
+		}
+		
+		if(!is_a( $updraftplus_addon_lockadmin, "UpdraftPlus_Addon_LockAdmin")){
+			return $this->_generic_error_response("error","no_object_found");
+		}
+
+		$session_length = empty($data["session_length"]) ? '' : $data["session_length"];
+		$password 		= empty($data["password"]) ? '' : $data["password"];
+		$old_password 	= empty($data["old_password"]) ? '' : $data["old_password"];
+		$support_url 	= $data["support_url"];
+		
+		$user = wp_get_current_user();
+		if (0 == $user->ID) {
+			return $this->_generic_error_response("no_user_found");
+		}
+		
+		$options = $updraftplus_addon_lockadmin->return_opts();
+
+		if($old_password == $options['password']) {
+			
+			$options['password'] = (string)$password;
+			$options['support_url'] = (string)$support_url;
+			$options['session_length'] = (int)$session_length;
+			UpdraftPlus_Options::update_updraft_option('updraft_adminlocking', $options);
+						
+			return $this->_response("lock_changed");
+		} else {
+			return $this->_generic_error_response("error","wrong_old_password");
+		}
+	}
+
+	public function delete_key($key_id){
+		global $updraftplus_updraftcentral_main;
+
+		if (!is_a($updraftplus_updraftcentral_main, 'UpdraftPlus_UpdraftCentral_Main')) {
+			return $this->_generic_error_response("error", 'UpdraftPlus_UpdraftCentral_Main object not found');
+		}
+		
+		$response = $updraftplus_updraftcentral_main->delete_key($key_id);
+		return $this->_response($response);
+		
+	}
+	
+	public function create_key($data){
+		global $updraftplus_updraftcentral_main;
+
+		if (!is_a($updraftplus_updraftcentral_main, 'UpdraftPlus_UpdraftCentral_Main')) {
+			return $this->_generic_error_response("error", 'UpdraftPlus_UpdraftCentral_Main object not found');
+		}
+		
+		$response = call_user_func(array($updraftplus_updraftcentral_main, "create_key"), $data);
+		
+		return $this->_response($response);
+	}
+	
+	public function fetch_log($data){
+		global $updraftplus_updraftcentral_main;
+
+		if (!is_a($updraftplus_updraftcentral_main, 'UpdraftPlus_UpdraftCentral_Main')) {
+			return $this->_generic_error_response('error', 'UpdraftPlus_UpdraftCentral_Main object not found');
+		}
+		
+		$response = call_user_func(array($updraftplus_updraftcentral_main, "get_log"), $data);
+		return $this->_response($response);
+	}
 }
