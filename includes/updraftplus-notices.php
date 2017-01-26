@@ -176,6 +176,17 @@ class UpdraftPlus_Notices extends Updraft_Notices {
 				'dismiss_time' => 'dismissautobackup',
 				'supported_positions' => $this->autobackup_bottom_or_report,
 			),
+			'wp-optimize' => array(
+				'prefix' => '',
+				'title' => 'WP-Optimize',
+				'text' => __("After you've backed up your database, we recommend you install our WP-Optimize plugin to streamline it for better website performance.", "updraftplus"),
+				'image' => 'notices/wp_optimize_logo.png',
+				'button_link' => 'https://wordpress.org/plugins/wp-optimize/',
+				'button_meta' => 'wp-optimize',
+				'dismiss_time' => 'dismiss_notice',
+				'supported_positions' => $this->anywhere,
+				'validity_function' => 'wp_optimize_installed',
+			),
 			
 			//The sale adverts content starts here
 			'blackfriday' => array(
@@ -261,6 +272,18 @@ class UpdraftPlus_Notices extends Updraft_Notices {
 
 	protected function translation_needed($plugin_base_dir = null, $product_name = null) {
 		return parent::translation_needed(UPDRAFTPLUS_DIR, 'updraftplus');
+	}
+	
+	protected function wp_optimize_installed($plugin_base_dir = null, $product_name = null) {
+		$wp_optimize_file = false;
+		$plugins = get_plugins();
+
+		foreach ($plugins as $key => $value) {
+			if ($value['TextDomain'] == 'wp-optimize') {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	protected function url_start($html_allowed = false, $url, $https = false, $website_home = 'updraftplus.com') {

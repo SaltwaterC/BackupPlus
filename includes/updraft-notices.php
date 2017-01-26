@@ -94,7 +94,6 @@ abstract class Updraft_Notices {
 			// If the advert has a validity function, then require the advert to be valid
 			if (!empty($notice_data['validity_function']) && !call_user_func(array($this, $notice_data['validity_function']))) continue;
 		
-		
 			if (isset($notice_data['valid_from']) && isset($notice_data['valid_to'])) {
 
 				if ($this->skip_seasonal_notices($notice_data)) return $notice_data;
@@ -115,6 +114,7 @@ abstract class Updraft_Notices {
 		/*
 			Using shuffle here as something like rand which produces a random number and uses that as the array index fails, this is because in future an advert may not be numbered and could have a string as its key which will then cause errors.
 		*/
+		
 		shuffle($available_notices);
 		return $available_notices[0];
 	}

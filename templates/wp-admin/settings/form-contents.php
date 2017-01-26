@@ -62,7 +62,9 @@ foreach ($default_options as $k => $v) {
 
 	<?php apply_filters('updraftplus_after_file_intervals', false, $selected_interval); ?>
 	<tr>
-		<th><?php _e('Database backup schedule','updraftplus'); ?>:</th>
+		<th>
+			<?php _e('Database backup schedule','updraftplus'); ?>:
+		</th>
 		<td>
 		<div style="float:left; clear:both;">
 			<select class="updraft_interval_database" name="updraft_interval_database">
@@ -148,9 +150,13 @@ foreach ($default_options as $k => $v) {
 			do_action('updraftplus_config_print_before_storage', $method);
 			require_once(UPDRAFTPLUS_DIR.'/methods/'.$method.'.php');
 			$call_method = 'UpdraftPlus_BackupModule_'.$method;
-			$method_objects[$method] = new $call_method;
-			$method_objects[$method]->config_print();
-			do_action('updraftplus_config_print_after_storage', $method);
+			if (class_exists($call_method)) {
+				$method_objects[$method] = new $call_method;
+				$method_objects[$method]->config_print();
+				do_action('updraftplus_config_print_after_storage', $method);
+			} else {
+				error_log("UpdraftPlus: no such storage class: $call_method");
+			} 
 		}
 	?>
 
@@ -219,6 +225,25 @@ foreach ($default_options as $k => $v) {
 			<?php } ?>
 
 		</div>
+		
+		<?php
+			$plugins = get_plugins();
+			$wp_optimize_file = false;
+
+			foreach ($plugins as $key => $value) {
+				if ($value['TextDomain'] == 'wp-optimize') {
+					$wp_optimize_file = $key;
+					break;
+				}
+			}
+			
+			if (!$wp_optimize_file) {
+				?><br><a href="https://wordpress.org/plugins/wp-optimize/"><?php _e('Recommended: optimize your database with WP-Optimize.', 'updraftplus');?></a>
+				<?php
+			}
+		?>
+		
+
 
 
 		</td>

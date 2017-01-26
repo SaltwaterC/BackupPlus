@@ -133,7 +133,7 @@ class UpdraftPlus_UpdraftCentral_Listener {
 		
 		$command_class = isset($this->commands[$class_prefix]) ? $this->commands[$class_prefix] : new stdClass;
 
-		if ('_' == substr($command, 0, 1) || !is_a($command_class, $command_php_class) || !method_exists($command_class, $command)) {
+		if ('_' == substr($command, 0, 1) || !is_a($command_class, $command_php_class) || (!method_exists($command_class, $command) && !method_exists($command_class, '__call'))) {
 			if (defined('UPDRAFTPLUS_UDRPC_FORCE_DEBUG') && UPDRAFTPLUS_UDRPC_FORCE_DEBUG) error_log("Unknown RPC command received: ".$command);
 			return $this->return_rpc_message(array('response' => 'rpcerror', 'data' => array('code' => 'unknown_rpc_command', 'data' => array('prefix' => $class_prefix, 'command' => $command, 'class' => $command_php_class))));
 		}
@@ -146,7 +146,7 @@ class UpdraftPlus_UpdraftCentral_Listener {
 		$this->current_udrpc = $ud_rpc;
 		
 		// Despatch
-		$msg = call_user_func(array($command_class, $command), $data, $extra_info);
+		$msg = apply_filters('updraftcentral_listener_udrpc_action', call_user_func(array($command_class, $command), $data, $extra_info), $command_class, $class_prefix, $command, $data, $extra_info);
 	
 		return $this->return_rpc_message($msg);
 	}

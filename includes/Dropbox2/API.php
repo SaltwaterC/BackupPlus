@@ -273,7 +273,7 @@ class UpdraftPlus_Dropbox_API {
         $file = $this->encodePath($file);        
         $call = 'files/download';
         $params = array('path' => '/' . $file, 'api_v2' => true, 'content_download' => true);
-        $response = $this->fetch('POST', self::CONTENT_URL_V2, $call, $params);
+        $response = $this->fetch('GET', self::CONTENT_URL_V2, $call, $params);
         
         // Close the file handle if one was opened
         if ($handle) fclose($handle);

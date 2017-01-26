@@ -18,12 +18,13 @@ class UpdraftPlus_UpdraftCentral_Main {
 		add_action('wp_ajax_updraftcentral_receivepublickey', array($this, 'wp_ajax_updraftcentral_receivepublickey')); 
 		add_action('wp_ajax_nopriv_updraftcentral_receivepublickey', array($this, 'wp_ajax_updraftcentral_receivepublickey')); 
 	
+		// The 'updraftplus' commands are registered in UpdraftPlus::plugins_loaded()
 		$command_classes = apply_filters('updraftplus_remotecontrol_command_classes', array(
 			'core' => 'UpdraftCentral_Core_Commands',
-			'updraftplus' => 'UpdraftPlus_RemoteControl_Commands',
 			'updates' => 'UpdraftCentral_Updates_Commands',
 			'users' => 'UpdraftCentral_Users_Commands',
 			'comments' => 'UpdraftCentral_Comments_Commands',
+			'updraftvault' => 'UpdraftCentral_UpdraftVault_Commands',
 		));
 	
 		// Remote control keys
@@ -541,9 +542,9 @@ class UpdraftPlus_UpdraftCentral_Main {
 				<?php echo __('UpdraftCentral enables control of your WordPress sites (including management of backups and updates) from a central dashboard.', 'updraftplus').' <a href="https://updraftcentral.com">'.__('Read more about it here.', 'updraftplus').'</a>'; ?>
 			</p>
 			<div id="updraftcentral_keys">
-				<?php echo $this->get_keys_table() ?>
-				<?php echo $this->create_key_markup() ?> 
-				<?php echo $this->create_log_markup() ?>
+				<?php echo $this->get_keys_table(); ?>
+				<?php echo $this->create_key_markup(); ?> 
+				<?php echo $this->create_log_markup(); ?>
 			</div>
 		</div>
 	<?php
