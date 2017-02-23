@@ -1,9 +1,9 @@
 === UpdraftPlus WordPress Backup Plugin ===
 Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snightingale
-Tags: backup, backups, restore, amazon backup, s3 backup, dropbox backup, google drive backup, rackspace cloud files, rackspace backup, dreamhost, dreamobjects backup, ftp backup, webdav backup, google cloud storage, onedrive, azure, back up, multisite, restoration, sftp backup, ftps, scp backup, migrate, duplicate, copy, mysql backup, database backup, db backups, website backup, wordpress backup, full backup, openstack backup, sicherung
+Tags: backup, restore, database backup, wordpress backup, database backup, cloud backup, restore, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.7
-Stable tag: 1.12.32
+Stable tag: 1.12.34
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -125,14 +125,33 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.31 of the free version correspond to changes made in 2.12.31.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.34 of the free version correspond to changes made in 2.12.34.x of the paid version.
 
-= 1.12.31 - 26/Jan/2017 =
+= 1.12.34 - 23/Feb/2017 =
+
+* FEATURE: Added the ability to allow other plugins to call an automatic backup more easily
+* FEATURE: Added the ability to select which tables you want to backup when using the 'Backup now' modal (Premium)
+* FIX: Re-scanning a Dropbox that contained more than 1000 backup archives only fetched the first 1000 (this was previously awaiting on Dropbox fixing a related bug on their API servers).
+* FIX: Escape table names to allow table names with hyphens in, when reading data
+* FIX: The "Advanced Tools" tab was appearing with no contents if you chose an unwritable backup directory (regression)
+* TRANSLATIONS: Remove bundled Swedish (sv), Spanish (Spain) (es_ES) and Czeck (Čeština‎, cs_CZ) translations, since these are now retrieved from wordpress.org.
+* TWEAK: Prevent a JavaScript message being logged when loading UD infrastructure on non-UD settings pages (e.g. plugins that integrate to do backups via UD)
+* TWEAK: Make it easier for other plugins to get/set UpdraftPlus options with less code
+* TWEAK: Make sure that the get_plugins() function is available before using it when generating notices
+* TWEAK: Add the updraftplus_exclude_directory and updraftplus_exclude_file filters allowing arbitrary backup exclusions from code
+* TWEAK: When requesting a download, work around buggy browser/server that continued after Connection: close
+* TWEAK: Add a work-around for a bug in some server/Firefox combinations in handling of the Content-Length header with non-ASCII characters
+* TWEAK: Cause an informational message to be shown in the Rackspace module if php-json is not enabled
+* TWEAK: Fix a regression that prevented information about a faulty WP scheduler from being shown in recent releases
+* TWEAK: Made alert regarding plupload's 'HTTP -200' error, when upload of file fails, more informative.
+
+= 1.12.32 - 26/Jan/2017 =
 
 * FEATURE: Add UpdraftCentral (https://updraftcentral.com) UpdraftVault listener
 * FEATURE: Encryption and decryption is now chunked, meaning that large databases of any size can be encrypted without being prevented by memory limits
 * FIX: Fix a bug whereby if a backup set containing a manual "more files" element was imported via a remote scan, then an error would show concerning it when attempting to restore.
 * FIX: On certain combinations of changing the "more files to back up" settings, these changes might not be reflected in the "Backup Now" dialog without a page reload
+* FIX: Remove a PHP 5.5+-only construction that crept into 1.12.31
 * TWEAK: Allow UpdraftCentral command classes to provide commands via the __call method
 * TWEAK: Move the existing backups table into the templating system
 * TWEAK: When trying to restore before cleaning up a previous restore, the detailed error message shown needed tweaking
@@ -393,4 +412,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.31: Can now control UpdraftVault from UpdraftCentral. Database decryption now more friendly when memory is low. Internal organisation improvements. Many tweaks and small fixes.
+* 1.12.34: Allow other WP dashboard pages to call a backup easily. Various tweaks and small improvements.

@@ -362,11 +362,12 @@ class UpdraftPlus_Dropbox_API {
     /**
      * Returns metadata for all files and folders that match the search query
      * @param mixed $query The search string. Must be at least 3 characters long
-     * @param string $path The path to the folder you want to search in
-     * @param integer $limit Maximum number of results to return (1-1000)
+     * @param string [$path=''] The path to the folder you want to search in
+     * @param integer [$limit=1000] Maximum number of results to return (1-1000)
+     * @param integer [$start=0] Result number to start from
      * @return array
      */
-    public function search($query, $path = '', $limit = 1000) {
+    public function search($query, $path = '', $limit = 1000, $start = 0) {
         $call = '2/files/search';
         $path = $this->encodePath($path);
         // APIv2 requires that the path match this regex: String(pattern="(/(.|[\r\n])*)?|(ns:[0-9]+(/.*)?)")
@@ -374,6 +375,7 @@ class UpdraftPlus_Dropbox_API {
         $params = array(
             'path' => $path,
             'query' => $query,
+            'start' => $start,
             'max_results' => ($limit < 1) ? 1 : (($limit > 1000) ? 1000 : (int) $limit),
             'api_v2' => true,
         );
