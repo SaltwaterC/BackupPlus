@@ -99,15 +99,17 @@ class UpdraftPlus_Admin {
 				$clientid = UpdraftPlus_Options::get_updraft_option('updraft_googledrive_clientid', '');
 				$token = UpdraftPlus_Options::get_updraft_option('updraft_googledrive_token', '');
 			} else {
-				$clientid = $opts['clientid'];
+				$clientid = empty($opts['clientid']) ? '' : $opts['clientid'];
 				$token = (empty($opts['token'])) ? '' : $opts['token'];
 			}
 			if (!empty($clientid) && empty($token)) add_action('all_admin_notices', array($this,'show_admin_warning_googledrive'));
+			unset($token);
+			unset($clientid);
 		}
 		if ('googlecloud' === $service || (is_array($service) && in_array('googlecloud', $service))) {
 			$opts = UpdraftPlus_Options::get_updraft_option('updraft_googlecloud');
 			if (!empty($opts)) {
-				$clientid = $opts['clientid'];
+				$clientid = empty($opts['clientid']) ? '' : $opts['clientid'];
 				$token = (empty($opts['token'])) ? '' : $opts['token'];
 			}
 			if (!empty($clientid) && empty($token)) add_action('all_admin_notices', array($this,'show_admin_warning_googlecloud'));

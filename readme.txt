@@ -129,7 +129,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 
 = 1.12.35 - 03/Mar/2017 =
 
-* FIX: Fix an issue that causing corruption of interrupted Dropbox backups. All Dropbox users are recommended to update asap.
+* FIX: Fix an issue causing corruption of interrupted Dropbox backups. All Dropbox users are recommended to update asap.
 * TWEAK: Fix a regression that prevented information about a faulty WP scheduler from being shown in recent releases (incomplete fix in 1.12.34)
 * TWEAK: submit_button() needs to be available (possible UpdraftCentral fatal when requesting filesystem creds)
 * TWEAK: Remove an ES5 JavaScript construct (incompatible with some old browsers)
@@ -421,4 +421,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.35: Fix an issue that causing corruption of interrupted Dropbox backups.
+* 1.12.35: Fix an issue causing corruption of interrupted Dropbox backups.

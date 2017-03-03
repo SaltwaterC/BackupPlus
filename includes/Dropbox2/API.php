@@ -170,7 +170,7 @@ class UpdraftPlus_Dropbox_API {
                 /*
                     Set firstCommit to true so that the upload session start endpoint is called.
                  */
-                $firstCommit = true;
+                $firstCommit = (0 == $offset);
                 
                 // Read from the file handle until EOF, uploading each chunk
                 while ($data = fread($handle, $this->chunkSize)) {
@@ -179,11 +179,22 @@ class UpdraftPlus_Dropbox_API {
                     $this->OAuth->setInFile($data);
 
                     if ($firstCommit) {
-                        $params = array('close' => false, 'api_v2' => true, 'content_upload' => true);
+                        $params = array(
+							'close' => false,
+							'api_v2' => true,
+							'content_upload' => true
+						);
                         $response = $this->fetch('POST', self::CONTENT_URL_V2, 'files/upload_session/start', $params);
                         $firstCommit = false;
                     } else {
-                        $params = array('cursor' => array('session_id' => $uploadID, 'offset' => $offset), 'api_v2' => true, 'content_upload' => true);
+                        $params = array(
+							'cursor' => array(
+								'session_id' => $uploadID,
+								'offset' => $offset
+							),
+							'api_v2' => true,
+							'content_upload' => true
+						);
                         $response = $this->append_upload($params, false);
                     }
                     
@@ -206,7 +217,18 @@ class UpdraftPlus_Dropbox_API {
                 
                 // Complete the chunked upload
                 $filename = (is_string($filename)) ? $filename : basename($file);
-                $params = array('cursor' => array('session_id' => $uploadID, 'offset' => $offset), 'commit' => array('path' => '/' . $this->encodePath($path . $filename), 'mode' => 'add'), 'api_v2' => true, 'content_upload' => true);
+                $params = array(
+					'cursor' => array(
+						'session_id' => $uploadID,
+						'offset' => $offset
+					),
+					'commit' => array(
+						'path' => '/' . $this->encodePath($path . $filename),
+						'mode' => 'add'
+					),
+					'api_v2' => true,
+					'content_upload' => true
+				);
                 $response = $this->append_upload($params, true);
                 return $response;
             } else {
