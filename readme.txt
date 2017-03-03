@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, database backup, cloud backup, restore, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.7
-Stable tag: 1.12.34
+Stable tag: 1.12.35
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -126,6 +126,15 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.34 of the free version correspond to changes made in 2.12.34.x of the paid version.
+
+= 1.12.35 - 03/Mar/2017 =
+
+* FIX: Fix an issue that causing corruption of interrupted Dropbox backups. All Dropbox users are recommended to update asap.
+* TWEAK: Fix a regression that prevented information about a faulty WP scheduler from being shown in recent releases (incomplete fix in 1.12.34)
+* TWEAK: submit_button() needs to be available (possible UpdraftCentral fatal when requesting filesystem creds)
+* TWEAK: Remove an ES5 JavaScript construct (incompatible with some old browsers)
+* TWEAK: Fix incorrect variable name in routine that triggered WP automatic update check
+* TWEAK: Fix a logic error whereby if Google Drive and Google Cloud were both in use and partially set up, a notice about completing the setup of Cloud could fail to show
 
 = 1.12.34 - 23/Feb/2017 =
 
@@ -412,4 +421,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.34: Allow other WP dashboard pages to call a backup easily. Various tweaks and small improvements.
+* 1.12.35: Fix an issue that causing corruption of interrupted Dropbox backups.
