@@ -35,8 +35,9 @@ class UpdraftCentral_Core_Commands extends UpdraftCentral_Commands {
 				}
 			}
 			
-			//Include the needed WP Core file(s)
-			$this->_admin_include('file.php');
+			// Include the needed WP Core file(s)
+			// template.php needed for submit_button() which is called by request_filesystem_credentials()
+			$this->_admin_include('file.php', 'template.php');
 			
 			//Directory entities that we currently need permissions
 			//to update.
