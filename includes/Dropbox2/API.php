@@ -246,9 +246,7 @@ class UpdraftPlus_Dropbox_API {
             if ($last_call){
                 $response = $this->fetch('POST', self::CONTENT_URL_V2, 'files/upload_session/finish', $params);
             } else {
-print_r($params);
                 $response = $this->fetch('POST', self::CONTENT_URL_V2, 'files/upload_session/append_v2', $params);
-print_r($response);
             }   
         } catch (Exception $e) {
             $responseCheck = json_decode($e->getMessage());
