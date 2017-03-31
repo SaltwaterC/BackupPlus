@@ -283,7 +283,7 @@ abstract class UpdraftPlus_BackupModule {
 				$options = reset($options_full['settings']);
 
 				if (false === $options) {
-					$updraftplus->log("Options retrieval failure (no options set): ".$options->get_error_code().": ".$options->get_error_message()." (".json_encode($options->get_error_data()).")");
+					$updraftplus->log("Options retrieval failure (no options set)");
 					return array();
 				}
 				$instance_id = key($options_full['settings']);
