@@ -8,6 +8,15 @@ if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed.');
 
 if (!class_exists('UpdraftPlus_BackupModule')) require_once(UPDRAFTPLUS_DIR.'/methods/backup-module.php');
 
+# Fix a potential problem for users who had the short-lived 1.12.35-1.12.38 free versions (see: https://wordpress.org/support/topic/1-12-37-dropbox-auth-broken/page/2/#post-8981457)
+# Can be removed after a few months
+$potential_options = UpdraftPlus_Options::get_updraft_option('updraft_dropbox');
+if (is_array($potential_options) && isset($potential_options['version']) && isset($potential_options['settings']) && array() === $potential_options['settings']) {
+	// Wipe it, which wil force its re-creation in proper format
+	UpdraftPlus_Options::delete_updraft_option('updraft_dropbox');
+}
+
+
 class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 
 	private $current_file_hash;
