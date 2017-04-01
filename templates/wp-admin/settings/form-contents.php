@@ -170,6 +170,11 @@ foreach ($default_options as $k => $v) {
 						$settings = array('settings' => array());
 					}
 					
+					if (empty($settings['settings'])) {
+						// See: https://wordpress.org/support/topic/cannot-setup-connectionauthenticate-with-dropbox/
+						error_log("UpdraftPlus: Warning: settings for $method are empty. A dummy field is usually needed so that something is saved.");
+					}
+					
 					if (!empty($settings['settings'])) {
 						foreach ($settings['settings'] as $instance_id => $storage_options) {
 							$remote_storage->set_options($storage_options, false, $instance_id);

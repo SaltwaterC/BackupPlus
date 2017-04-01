@@ -457,6 +457,7 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 	}
 
 	public function config_print() {
+	
 		$opts = $this->get_options();
 
 		$classes = $this->get_css_classes();
@@ -470,15 +471,13 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 			</tr>
 
 			<tr class="<?php echo $classes;?>">
-			<th></th>
-			<td>
-			<?php
-			// Check requirements.
-			global $updraftplus_admin;
-
-			$updraftplus_admin->curl_check('Dropbox', false, 'dropbox');
-			?>
-			</td>
+				<th></th>
+				<td>
+					<?php
+						global $updraftplus_admin;
+						$updraftplus_admin->curl_check('Dropbox', false, 'dropbox');
+					?>
+				</td>
 			</tr>
 
 			<?php
@@ -486,7 +485,11 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 				$defmsg = '<tr class="'.$classes.'"><td></td><td><strong>'.__('Need to use sub-folders?','updraftplus').'</strong> '.__('Backups are saved in','updraftplus').' apps/UpdraftPlus. '.__('If you back up several sites into the same Dropbox and want to organise with sub-folders, then ','updraftplus').'<a href="https://updraftplus.com/shop/">'.__("there's an add-on for that.",'updraftplus').'</a></td></tr>';
 
 				$defmsg = '<tr class="'.$classes.'"><td></td><td><strong>'.__('Need to use sub-folders?','updraftplus').'</strong> '.__('Backups are saved in','updraftplus').' apps/UpdraftPlus. '.__('If you back up several sites into the same Dropbox and want to organise with sub-folders, then ','updraftplus').'<a href="'.apply_filters("updraftplus_com_link","https://updraftplus.com/shop/").'">'.__("there's an add-on for that.",'updraftplus').'</a></td></tr>';
-				echo apply_filters('updraftplus_dropbox_extra_config', $defmsg, $this); ?>
+				
+				$extra_config = apply_filters('updraftplus_dropbox_extra_config', $defmsg, $this);
+				
+				echo $extra_config;
+				?>
 
 			<tr class="<?php echo $classes;?>">
 				<th><?php echo sprintf(__('Authenticate with %s', 'updraftplus'), __('Dropbox', 'updraftplus'));?>:</th>
@@ -533,8 +536,11 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 					<td><input type="text" style="width:332px" <?php $this->output_settings_field_name_and_id('secret');?> value="<?php echo esc_attr($secret); ?>" /></td>
 				</tr>
 
+			<?php } elseif (false === strpos($extra_config, '<input')) {
+				// We need to make sure that it is not the case that the module has no settings whatsoever - this can result in the module being effectively invisible.
+				?>
+				<input type="hidden" <?php $this->output_settings_field_name_and_id('tk_access_token');?> value="0">
 			<?php } ?>
-
 		<?php
 	}
 

@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.7
-Stable tag: 1.12.38
+Stable tag: 1.12.39
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -126,6 +126,10 @@ Thanks for asking; yes, we've got a few. Check out this profile page - https://p
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.12.38 of the free version correspond to changes made in 2.12.38.x of the paid version.
+
+= 1.12.39 - 01/Apr/2017 =
+
+* FIX: The free version of 1.12.37/38 in some circumstances could fail to complete Dropbox authentication
 
 = 1.12.38 - 31/Mar/2017 =
 
@@ -441,4 +445,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.12.38: Prevent a fatal error when attempting to use a backup method with no options set
+* 1.12.39: The free version of 1.12.37/38 in some circumstances could fail to complete Dropbox authentication
