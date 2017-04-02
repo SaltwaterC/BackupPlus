@@ -71,7 +71,7 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 		return array('multi_options');
 	}
 
-	protected function get_default_options() {
+	public function get_default_options() {
 		return array(
 			'appkey' => '',
 			'secret' => '',
@@ -125,7 +125,7 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 			try {
 
 				/*
-					Quota information is no longer provided with account information a new call to qoutaInfo must be made to get this information.
+					Quota information is no longer provided with account information a new call to quotaInfo must be made to get this information.
 				 */
 				if (1 == $use_api_ver) {
 					$quotaInfo = $dropbox->accountInfo();
@@ -134,7 +134,7 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 				}
 
 				if ($quotaInfo['code'] != "200") {
-					$message = "Dropbox account/info did not return HTTP 200; returned: ". $accountInfo['code'];
+					$message = "Dropbox account/info did not return HTTP 200; returned: ". $quotaInfo['code'];
 				} elseif (!isset($quotaInfo['body'])) {
 					$message = "Dropbox account/info did not return the expected data";
 				} else {

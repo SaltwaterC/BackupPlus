@@ -1663,7 +1663,7 @@ class UpdraftPlus_Admin {
 		
 		if (!empty($nonce)) {
 			$updraft_dir = $updraftplus->backups_dir_location();
-			
+
 			$potential_log_file = $updraft_dir."/log.".$nonce.".txt";
 
 			if (is_readable($potential_log_file)){
@@ -1681,6 +1681,7 @@ class UpdraftPlus_Admin {
 				
 				$new_pointer = ftell($log_file);
 				$log_content = implode("", $templog_array);
+
 				
 			} else {
 				$log_content .= __('The log file could not be read.', 'updraftplus');
