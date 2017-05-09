@@ -29,28 +29,33 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
     protected $lastResponse = null;
     
     /**
-
-    /**
      * Set properties and begin authentication
      * @param string $key
      * @param string $secret
      * @param \Dropbox\OAuth\Consumer\StorageInterface $storage
      * @param string $callback
      */
-    public function __construct($key, $secret, Dropbox_StorageInterface $storage, $callback = null)
+    public function __construct($key, $oauth2_id, $secret, Dropbox_StorageInterface $storage, $callback = null, $callbackhome = null, $deauthenticate = false)
     {
         // Check the cURL extension is loaded
         if (!extension_loaded('curl')) {
-            throw new Dropbox_Exception('The cURL OAuth consumer requires the cURL extension');
+            throw new Dropbox_Exception('The cURL OAuth consumer requires the cURL extension. Please speak to your web hosting provider so that this missing PHP component can be installed.');
         }
         
         $this->consumerKey = $key;
+        $this->oauth2_id = $oauth2_id;
         $this->consumerSecret = $secret;
         $this->storage = $storage;
         $this->callback = $callback;
-        $this->authenticate();
+        $this->callbackhome = $callbackhome;
+        
+        if ($deauthenticate) {
+			$this->deauthenticate();
+        } else {
+			$this->authenticate();
+        }
     }
-
+    
     /**
      * Execute an API call
      * @todo Improve error handling
@@ -78,6 +83,27 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
         } else {
             $options[CURLOPT_SSL_VERIFYPEER] = true;
         }
+
+        if (!class_exists('WP_HTTP_Proxy')) require_once(ABSPATH.WPINC.'/class-http.php');
+        $proxy = new WP_HTTP_Proxy();
+
+        if ($proxy->is_enabled()) {
+            # WP_HTTP_Proxy returns empty strings if nothing is set
+            $user = $proxy->username();
+            $pass = $proxy->password();
+            $host = $proxy->host();
+            $port = (int)$proxy->port();
+            if (empty($port)) $port = 8080;
+            if (!empty($host) && $proxy->send_through_proxy($request['url'])) {
+                  $options[CURLOPT_PROXY] = $host;
+                  $options[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
+                  $options[CURLOPT_PROXYPORT] = $port;
+                  if (!empty($user) && !empty($pass)) {
+                        $options[CURLOPT_PROXYAUTH] = CURLAUTH_ANY;
+                        $options[CURLOPT_PROXYUSERPWD] = sprintf('%s:%s', $user, $pass);
+                  }
+            }
+        }
         
         if ($method == 'GET' && $this->outFile) { // GET
             $options[CURLOPT_RETURNTRANSFER] = false;
@@ -89,7 +115,7 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
             $this->outFile = null;
         } elseif ($method == 'POST') { // POST
             $options[CURLOPT_POST] = true;
-            $options[CURLOPT_POSTFIELDS] = $request['postfields'];
+			$options[CURLOPT_POSTFIELDS] = $request['postfields'];
         } elseif ($method == 'PUT' && $this->inFile) { // PUT
             $options[CURLOPT_PUT] = true;
             $options[CURLOPT_INFILE] = $this->inFile;
@@ -101,7 +127,6 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
 
         // Set the cURL options at once
         curl_setopt_array($handle, $options);
-        
         // Execute, get any error and close
         $response = curl_exec($handle);
         $error = curl_error($handle);
@@ -152,6 +177,9 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
                         throw new Dropbox_NotAcceptableException($message, 406);
                     case 415:
                         throw new Dropbox_UnsupportedMediaTypeException($message, 415);
+                    case 401:
+                    	//401 means oauth token is expired continue to manually handle the exception depending on the situation
+                    	continue;
                     default:
                         throw new Dropbox_Exception($message, $code);
                 }
