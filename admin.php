@@ -608,6 +608,8 @@ class UpdraftPlus_Admin {
 
 		wp_enqueue_script('jquery.serializeJSON', UPDRAFTPLUS_URL.'/includes/jquery.serializeJSON/jquery.serializejson.min.js', array('jquery'), '2.8.1');
 
+		$this->enqueue_jstree();
+		
 		do_action('updraftplus_admin_enqueue_scripts');
 		
 		$day_selector = '';
