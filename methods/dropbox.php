@@ -553,6 +553,9 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 		<?php
 	}
 
+	/**
+	 * Handles various URL actions, as indicated by the updraftplus_dropboxauth URL parameter
+	 */
 	public function action_auth() {
 		if (isset($_GET['updraftplus_dropboxauth'])) {
 			// Clear out the existing credentials
@@ -574,16 +577,24 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 				return;
 				
 			}
-		} elseif (isset($_GET['state'])) {
+		} elseif (isset($_REQUEST['state'])) {
+			if($_SERVER['REQUEST_METHOD'] == 'POST') {
+				$raw_state = urldecode($_POST['state']);
+				if (isset($_POST['code'])) $raw_code = $_POST['code'];
+			} else {
+				$raw_state = $_GET['state'];
+				if (isset($_GET['code'])) $raw_code = $_GET['code'];
+			}
+			
 			//Get the CSRF from setting and check it matches the one returned if it does no CSRF attack has happened
 			$opts = $this->get_options();
 			$CSRF = $opts['CSRF'];
-			$state = stripslashes($_GET['state']);
+			$state = stripslashes($raw_state);
 			if (strcmp($CSRF, $state) == 0) {
 				$opts['CSRF'] = '';
-				if (isset($_GET['code'])) {
+				if (isset($raw_code)) {
 					//set code so it can be accessed in the next authentication step
-					$opts['code'] = stripslashes($_GET['code']);
+					$opts['code'] = stripslashes($raw_code);
 					$this->set_options($opts, true);
 					$this->auth_token();
 				}

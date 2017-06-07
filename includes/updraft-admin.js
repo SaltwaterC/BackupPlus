@@ -123,7 +123,7 @@ function updraft_remote_storage_tab_activation(the_method){
  * Check how many cron jobs are overdue, and display a message if it is several (as determined by the back-end)
  */
 function updraft_check_overduecrons() {
-	updraft_send_command('check_overdue_crons', function(data, response) {
+	updraft_send_command('check_overdue_crons', null, function(response) {
 		if (response && response.hasOwnProperty('m')) {
 			jQuery('#updraft-insert-admin-warning').html(response.m);
 		}
@@ -1546,7 +1546,7 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 		updraft_send_command('reset_site_id', null, function(response) {
 			jQuery('#updraft_show_sid').html(response);
-		});
+		}, { json_parse: false });
 	});
 	
 	jQuery("#updraft-navtab-settings-content form input:not('.udignorechange'), #updraft-navtab-settings-content form select").change(function(e){
