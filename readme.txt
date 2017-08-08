@@ -497,7 +497,7 @@ Older changes are found in the changelog.txt file in the plugin directory.
 
 == License ==
 
-    Copyright 2011-16 David Anderson
+    Copyright 2011-17 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

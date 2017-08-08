@@ -6,11 +6,11 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'System' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'OpenCloud' => array($vendorDir . '/rackspace/php-opencloud/lib', $vendorDir . '/rackspace/php-opencloud/tests'),
     'Net' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Math' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
+    'Guzzle\\Tests' => array($vendorDir . '/guzzle/guzzle/tests'),
     'Guzzle' => array($vendorDir . '/guzzle/guzzle/src'),
     'File' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Eher\\OAuth' => array($vendorDir . '/eher/oauth/src'),

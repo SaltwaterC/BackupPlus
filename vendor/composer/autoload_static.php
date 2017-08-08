@@ -4,34 +4,17 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit88ce38fd6a2620591220bb07795b5132
+class ComposerStaticInita374db1a877247f8dc792d1a6f28bfc1
 {
     public static $files = array (
-        '89ff252b349d4d088742a09c25f5dd74' => __DIR__ . '/..' . '/yahnis-elsts/plugin-update-checker/plugin-update-checker.php',
         'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
         '3919eeb97e98d4648304477f8ef734ba' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/Crypt/Random.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'S' => 
-        array (
-            'Symfony\\Component\\EventDispatcher\\' => 34,
-        ),
-        'P' => 
-        array (
-            'Psr\\Log\\' => 8,
-        ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Symfony\\Component\\EventDispatcher\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
-        ),
-        'Psr\\Log\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
-        ),
     );
 
     public static $prefixesPsr0 = array (
@@ -106,6 +89,16 @@ class ComposerStaticInit88ce38fd6a2620591220bb07795b5132
     );
 
     public static $classMap = array (
+        'Psr\\Log\\AbstractLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/AbstractLogger.php',
+        'Psr\\Log\\InvalidArgumentException' => __DIR__ . '/..' . '/psr/log/Psr/Log/InvalidArgumentException.php',
+        'Psr\\Log\\LogLevel' => __DIR__ . '/..' . '/psr/log/Psr/Log/LogLevel.php',
+        'Psr\\Log\\LoggerAwareInterface' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerAwareInterface.php',
+        'Psr\\Log\\LoggerAwareTrait' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerAwareTrait.php',
+        'Psr\\Log\\LoggerInterface' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerInterface.php',
+        'Psr\\Log\\LoggerTrait' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerTrait.php',
+        'Psr\\Log\\NullLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/NullLogger.php',
+        'Psr\\Log\\Test\\DummyTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
+        'Psr\\Log\\Test\\LoggerInterfaceTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
         'Symfony\\Component\\EventDispatcher\\ContainerAwareEventDispatcher' => __DIR__ . '/..' . '/symfony/event-dispatcher/ContainerAwareEventDispatcher.php',
         'Symfony\\Component\\EventDispatcher\\Debug\\TraceableEventDispatcher' => __DIR__ . '/..' . '/symfony/event-dispatcher/Debug/TraceableEventDispatcher.php',
         'Symfony\\Component\\EventDispatcher\\Debug\\TraceableEventDispatcherInterface' => __DIR__ . '/..' . '/symfony/event-dispatcher/Debug/TraceableEventDispatcherInterface.php',
@@ -122,10 +115,10 @@ class ComposerStaticInit88ce38fd6a2620591220bb07795b5132
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit88ce38fd6a2620591220bb07795b5132::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit88ce38fd6a2620591220bb07795b5132::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit88ce38fd6a2620591220bb07795b5132::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit88ce38fd6a2620591220bb07795b5132::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInita374db1a877247f8dc792d1a6f28bfc1::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInita374db1a877247f8dc792d1a6f28bfc1::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInita374db1a877247f8dc792d1a6f28bfc1::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInita374db1a877247f8dc792d1a6f28bfc1::$classMap;
 
         }, null, ClassLoader::class);
     }
