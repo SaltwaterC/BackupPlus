@@ -36,7 +36,7 @@ You could always create your own manual backups- but using backup plugin is infi
 
 = How UpdraftPlus compares with other backup plugins: =
 
-UpdraftPlus is hte most highly-rated and popular plugin out there- and for good reason. Not only is it comprehensive in terms of its features, but it's aso easy and intuitive to use. And because it has such a vast user base, it's tried and tested in a whole range of different situations and scenarios.
+UpdraftPlus is the most highly-rated and popular plugin out there - and for good reason. Not only is it comprehensive in terms of its features, but it's aso easy and intuitive to use. And because it has such a vast user base, it's tried and tested in a whole range of different situations and scenarios.
 
 Unlike many other plugins, UpdraftPlus:
 
@@ -55,7 +55,7 @@ The free version of UpdraftPlus works just fine, but if you need more features a
 * Easily duplicates or migrates websites (with Migrator)
 * Multisite/multi-network compatible
 * Backs up non WP files and databases to multiple remote destinations
-* Free dedicated expert supprt
+* Free dedicated expert support
 
 Find out more on our comparison page. UpdraftPlus Premium is available for purchase <a href="https://updraftplus.com/shop/">here</a>
 
