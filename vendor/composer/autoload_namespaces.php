@@ -7,9 +7,13 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Psr\\Log\\' => array($vendorDir . '/psr/log'),
+    'System' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'OpenCloud' => array($vendorDir . '/rackspace/php-opencloud/lib', $vendorDir . '/rackspace/php-opencloud/tests'),
-    'Guzzle\\Tests' => array($vendorDir . '/guzzle/guzzle/tests'),
+    'Net' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
+    'Math' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Guzzle' => array($vendorDir . '/guzzle/guzzle/src'),
+    'File' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Eher\\OAuth' => array($vendorDir . '/eher/oauth/src'),
+    'Crypt' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Aws' => array($vendorDir . '/aws/aws-sdk-php/src'),
 );
