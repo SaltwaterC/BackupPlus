@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.8
-Stable tag: 1.13.5
+Stable tag: 1.13.6
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -166,7 +166,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Request list of available add-ons (paid versions) from the mothership in current format
 * TWEAK: Added custom backup message parameter backupnow_message in function updraft_backupnow_inpage_go()
 * TWEAK: General code tidy-up, making older code conform to our current standards
-* TWEAK: Add the possibiity of passing back associated data with test results, and log it in the browser console
+* TWEAK: Add the possibility of passing back associated data with test results, and log it in the browser console
 * TWEAK: When carrying out a remote storage test, pass the state of the 'debug' setting
 * TWEAK: When testing SFTP settings, if debug is activated, activate debug logging and pass the results back in the event of test failure
 * TWEAK: Optimise away a database query in the case of no UpdraftCentral keys existing
@@ -541,7 +541,6 @@ Older changes are found in the changelog.txt file in the plugin directory.
 Furthermore, reliance upon any non-English translation is at your own risk. UpdraftPlus can give no guarantees that translations from the original English are accurate.
 
 We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
-
 
 == Upgrade Notice ==
 * 1.13.6: Easier Google Drive setup. Lots of small tweaks and improvements. Recommended update for all.
