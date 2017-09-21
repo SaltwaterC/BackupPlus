@@ -116,7 +116,9 @@ abstract class UpdraftPlus_BackupModule {
 	public function output_settings_field_name_and_id($field, $return_instead_of_echo = false) {
 	
 		$method_id = $this->get_id();
-		$instance_id = $this->_instance_id;
+		
+		$instance_id = $this->supports_feature('config_templates') ? '{{instance_id}}' : $this->_instance_id;
+		
 		$id = '';
 		$name = '';
 
@@ -253,7 +255,7 @@ abstract class UpdraftPlus_BackupModule {
 	 *
 	 * @return String - the identifier
 	 */
-	private function get_id() {
+	public function get_id() {
 		$class = get_class($this);
 		// UpdraftPlus_BackupModule_
 		return substr($class, 25);

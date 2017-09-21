@@ -34,7 +34,7 @@ class UpdraftPlus_Options {
 	 *
 	 * @param  String  $option    specify option name
 	 * @param  String  $value     specify option value
-	 * @param  Boolean $use_cache check if it needs to use cache
+	 * @param  Boolean $use_cache whether or not to use the WP options cache
 	 * @return Boolean - as from update_option()
 	 */
 	public static function update_updraft_option($option, $value, $use_cache = true) {

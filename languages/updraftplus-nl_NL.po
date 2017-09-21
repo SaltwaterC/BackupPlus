@@ -11,20 +11,48 @@ msgstr ""
 "Language: nl\n"
 "Project-Id-Version: UpdraftPlus\n"
 
+#: src/class-updraftplus.php:4741
+msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
+msgstr ""
+
+#: src/class-updraftplus.php:4739, src/class-updraftplus.php:4741
+msgid "the migrator add-on"
+msgstr ""
+
+#: src/class-updraftplus.php:4739
+msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
+msgstr ""
+
+#: src/class-updraftplus.php:4737
+msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
+msgstr ""
+
+#: src/class-updraftplus.php:4734
+msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
+msgstr ""
+
+#: src/methods/googledrive.php:1153
+msgid "To de-authorize UpdraftPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings."
+msgstr ""
+
+#: src/methods/googledrive.php:1149
+msgid "Follow this link to remove this site's settings for %s."
+msgstr ""
+
 #: src/addons/sftp.php:346
-msgid "UpdraftPlus debug mode is on: detailed debugging data follows.n"
+msgid "UpdraftPlus debug mode is on: detailed debugging data follows."
 msgstr ""
 
 #: src/admin.php:740
 msgid "Error: The chosen file is corrupt. Please choose a valid UpdraftPlus export file."
 msgstr ""
 
-#: src/admin.php:1234, src/admin.php:3881, src/class-updraftplus.php:2095,
+#: src/admin.php:1286, src/admin.php:3933, src/class-updraftplus.php:2095,
 #: src/class-updraftplus.php:2160, src/class-updraftplus.php:2294
 msgid "A PHP fatal error (%s) has occurred: %s"
 msgstr ""
 
-#: src/admin.php:1227, src/admin.php:3873, src/class-updraftplus.php:2088,
+#: src/admin.php:1279, src/admin.php:3925, src/class-updraftplus.php:2088,
 #: src/class-updraftplus.php:2153, src/class-updraftplus.php:2287
 msgid "A PHP exception (%s) has occurred: %s"
 msgstr ""
@@ -41,8 +69,8 @@ msgstr ""
 msgid "North-east Asia"
 msgstr ""
 
-#: src/udaddons/options.php:115
-msgid "Your web server's version of PHP is too old (.phpversion.) - UpdraftPlus expects at least %s. You can try it, but don't be surprised if it does not work. To fix this problem, contact your web hosting company"
+#: src/udaddons/options.php:118
+msgid "Your web server's version of PHP is too old (%s) - UpdraftPlus expects at least %s. You can try it, but don't be surprised if it does not work. To fix this problem, contact your web hosting company"
 msgstr ""
 
 #: src/templates/wp-admin/settings/tab-status.php:80
@@ -69,18 +97,6 @@ msgstr ""
 msgid "Select Files"
 msgstr ""
 
-#: src/methods/updraftvault.php:346
-msgid "__Password"
-msgstr ""
-
-#: src/methods/updraftvault.php:345
-msgid "__E-mail"
-msgstr ""
-
-#: src/methods/openstack-base.php:420
-msgid "Error downloading remote file: Failed to download. (.$e->getMessage.)"
-msgstr ""
-
 #: src/methods/cloudfiles.php:497
 msgid "Rackspace Storage Region"
 msgstr ""
@@ -93,23 +109,15 @@ msgstr ""
 msgid "Instant and secure logon with a wave of your phone."
 msgstr ""
 
-#: src/class-updraftplus.php:946
-msgid "$pre_line"
-msgstr ""
-
 #: src/backup.php:1907
 msgid "As previously warned (see: %s), encryption is no longer a feature of the free edition of UpdraftPlus"
 msgstr ""
 
-#: src/admin.php:4362
+#: src/admin.php:4415
 msgid "Value"
 msgstr ""
 
-#: src/admin.php:3543
-msgid "No backup log)"
-msgstr ""
-
-#: src/admin.php:1479
+#: src/admin.php:1540
 msgid "Did not know how to delete from this cloud service."
 msgstr ""
 
@@ -125,7 +133,7 @@ msgstr ""
 msgid "You must add the following as the authorised redirect URI in your Azure console (under \"API Settings\") when asked"
 msgstr ""
 
-#: src/templates/wp-admin/settings/existing-backups-table.php:69
+#: src/templates/wp-admin/settings/existing-backups-table.php:70
 msgid "Stored at: %s"
 msgstr ""
 
@@ -133,11 +141,11 @@ msgstr ""
 msgid "Cloud Files"
 msgstr "Cloud-bestanden"
 
-#: src/admin.php:4207
+#: src/admin.php:4260
 msgid "Your settings failed to save. Please refresh the settings page and try again"
 msgstr ""
 
-#: src/admin.php:4166
+#: src/admin.php:4219
 msgid "UpdraftPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded. Please reload the settings page before trying to save settings."
 msgstr ""
 
@@ -154,7 +162,7 @@ msgstr ""
 msgid "Extra database"
 msgstr ""
 
-#: src/admin.php:3436
+#: src/admin.php:3502
 msgid "Press here to download or browse"
 msgstr ""
 
@@ -198,15 +206,15 @@ msgstr ""
 msgid "Skipped tables:"
 msgstr ""
 
-#: src/class-updraftplus.php:4764
+#: src/class-updraftplus.php:4889
 msgid "This database backup has the following WordPress tables excluded: %s"
 msgstr ""
 
-#: src/admin.php:2422
+#: src/admin.php:2481
 msgid "With UpdraftPlus Premium, you can choose to backup non-WordPress tables, backup only specified tables, and backup other databases too."
 msgstr ""
 
-#: src/admin.php:2422
+#: src/admin.php:2481
 msgid "All WordPress tables will be backed up."
 msgstr ""
 
@@ -706,7 +714,7 @@ msgstr ""
 msgid "Backup of: %s"
 msgstr ""
 
-#: src/methods/googledrive.php:243
+#: src/methods/googledrive.php:248
 msgid "The client has been deleted from the Google Drive API console. Please create a new Google Drive project and reconnect with UpdraftPlus."
 msgstr ""
 
@@ -734,11 +742,11 @@ msgstr ""
 msgid "You have selected a remote storage option which has an authorization step to complete:"
 msgstr ""
 
-#: src/admin.php:1531
+#: src/admin.php:1591
 msgid "Remote files deleted:"
 msgstr ""
 
-#: src/admin.php:1530
+#: src/admin.php:1590
 msgid "Local files deleted:"
 msgstr ""
 
@@ -807,7 +815,7 @@ msgstr "Ga hierheen om een blok te verwijderen"
 msgid "An error response was received; HTTP code:"
 msgstr ""
 
-#: src/includes/class-commands.php:325
+#: src/includes/class-commands.php:322
 msgid "%s add-on not found"
 msgstr ""
 
@@ -819,11 +827,11 @@ msgstr "of zet handmatig terug"
 msgid "This makes time-outs much more likely. You are recommended to turn safe_mode off, or to restore only one entity at a time"
 msgstr "Hierdoor komen time-outs vaker voor. Je kunt het beste safe_mode uitschakelen, of je beperken tot het terugzetten van één entiteit per keer."
 
-#: src/admin.php:2247
+#: src/admin.php:2306
 msgid "To fix this problem go here."
 msgstr "Om dit probleem op te lossen ga hierheen."
 
-#: src/admin.php:2247
+#: src/admin.php:2306
 msgid "OptimizePress 2.0 encodes its contents, so search/replace does not work."
 msgstr "OptimizePress 2.0 versleutelt zijn content, hierdoor werkt zoeken/vervangen niet."
 
@@ -859,11 +867,11 @@ msgstr "Deze WebDAV URL wordt gegenereerd door de opties hieronder in te vullen.
 msgid "No response data was received. This usually indicates a network connectivity issue (e.g. an outgoing firewall or overloaded network) between this site and UpdraftPlus.com."
 msgstr ""
 
-#: src/methods/s3.php:1052
+#: src/methods/s3.php:1061
 msgid "The AWS access key looks to be wrong (valid %s access keys begin with \"AK\")"
 msgstr ""
 
-#: src/methods/s3.php:120
+#: src/methods/s3.php:125
 msgid "No settings were found - please go to the Settings tab and check your settings"
 msgstr "Geen instellingen gevonden - ga naar tab Instellingen en controleer de instellingen."
 
@@ -911,49 +919,49 @@ msgstr "Directory kon niet geopend worden (controleer the bestandsrechten en eig
 msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
 msgstr "%s: bestand niet te lezen - kon niet gebackupt worden (controleer de bestandsrechten)"
 
-#: src/addons/migrator.php:2210
+#: src/addons/migrator.php:2218
 msgid "Create key"
 msgstr "Maak sleutel"
 
-#: src/addons/migrator.php:2207, src/central/bootstrap.php:513
+#: src/addons/migrator.php:2215, src/central/bootstrap.php:513
 msgid "slower, strongest"
 msgstr "langzamer, sterkste"
 
-#: src/addons/migrator.php:2206, src/central/bootstrap.php:512
+#: src/addons/migrator.php:2214, src/central/bootstrap.php:512
 msgid "recommended"
 msgstr "aanbevolen"
 
-#: src/addons/migrator.php:2206, src/central/bootstrap.php:512
+#: src/addons/migrator.php:2214, src/central/bootstrap.php:512
 msgid "%s bytes"
 msgstr "%s bytes"
 
-#: src/addons/migrator.php:2205, src/central/bootstrap.php:511
+#: src/addons/migrator.php:2213, src/central/bootstrap.php:511
 msgid "faster (possibility for slow PHP installs)"
 msgstr "sneller (mogelijk bij trage PHP installaties)"
 
-#: src/addons/migrator.php:2204, src/central/bootstrap.php:510
+#: src/addons/migrator.php:2212, src/central/bootstrap.php:510
 msgid "easy to break, fastest"
 msgstr "eenvoudigst te breken, snelste"
 
-#: src/addons/migrator.php:2204, src/addons/migrator.php:2205,
-#: src/addons/migrator.php:2207, src/central/bootstrap.php:510,
+#: src/addons/migrator.php:2212, src/addons/migrator.php:2213,
+#: src/addons/migrator.php:2215, src/central/bootstrap.php:510,
 #: src/central/bootstrap.php:511, src/central/bootstrap.php:513
 msgid "%s bits"
 msgstr "%s bits"
 
-#: src/addons/migrator.php:2202, src/central/bootstrap.php:508
+#: src/addons/migrator.php:2210, src/central/bootstrap.php:508
 msgid "Encryption key size:"
 msgstr "Versleutelde sleutel grootte:"
 
-#: src/addons/migrator.php:2200
+#: src/addons/migrator.php:2208
 msgid "Enter your chosen name"
 msgstr "Vul je gekozen naam in"
 
-#: src/addons/migrator.php:2199
+#: src/addons/migrator.php:2207
 msgid "Create a key: give this key a unique name (e.g. indicate the site it is for), then press \"Create Key\":"
 msgstr "Maak een sleutel aan: geef deze sleutel een unieke naam (geef bijvoorbeeld aan voor welke site deze is bedoeld), klik daarna op \"Maak Sleutel\":"
 
-#: src/methods/googledrive.php:486
+#: src/methods/googledrive.php:491
 msgid "Upload expected to fail: the %s limit for any single file is %s, whereas this file is %s GB (%d bytes)"
 msgstr "Upload gaat mislukken: de limiet %s voor een enkel bestand is %s, terwijl het bestand %s GB (%d bytes) groot is"
 
@@ -993,7 +1001,7 @@ msgstr "UpdraftPlus zal de backuparchieven splitsen als deze bestandsgrootte wor
 msgid "Now"
 msgstr "Nu"
 
-#: src/class-updraftplus.php:4628, src/restorer.php:1010
+#: src/class-updraftplus.php:4753, src/restorer.php:1010
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
 msgstr "Je moet %s inschakelen om mooie permalinks (bv %s) te laten werken."
 
@@ -1115,23 +1123,23 @@ msgstr "Een Updraft Central verbinding is geslaagd. "
 msgid "UpdraftCentral Connection"
 msgstr "UpdraftCentral verbinding"
 
-#: src/backup.php:867, src/class-updraftplus.php:3094
+#: src/backup.php:867, src/class-updraftplus.php:3182
 msgid "The backup was aborted by the user"
 msgstr "Het maken van de back-up is gestopt door de gebruiker"
 
-#: src/admin.php:4202
+#: src/admin.php:4255
 msgid "Your settings have been saved."
 msgstr "De instellingen zijn succesvol opgeslagen. "
 
-#: src/admin.php:3330
+#: src/admin.php:3389
 msgid "Total backup size:"
 msgstr "Totale back-up grootte: "
 
-#: src/admin.php:2744
+#: src/admin.php:2803
 msgid "stop"
 msgstr "stoppen"
 
-#: src/admin.php:2582
+#: src/admin.php:2641
 msgid "The backup has finished running"
 msgstr "De back-up heeft het uitvoeren voltooid. "
 
@@ -1153,7 +1161,7 @@ msgstr "deze back-up reeksen"
 msgid "this backup set"
 msgstr "deze back-up reeks"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:33
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:32
 msgid "calculate"
 msgstr "bereken"
 
@@ -1197,19 +1205,19 @@ msgstr ""
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it."
 msgstr ""
 
-#: src/class-updraftplus.php:4679, src/restorer.php:1700
+#: src/class-updraftplus.php:4804, src/restorer.php:1700
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr ""
 
-#: src/class-updraftplus.php:4675
+#: src/class-updraftplus.php:4800
 msgid "Please read this link for important information on this process."
 msgstr ""
 
-#: src/class-updraftplus.php:4675
+#: src/class-updraftplus.php:4800
 msgid "It will be imported as a new site."
 msgstr "Het wordt geïmporteerd als een nieuwe site."
 
-#: src/admin.php:2395, src/templates/wp-admin/notices/horizontal-notice.php:16,
+#: src/admin.php:2454, src/templates/wp-admin/notices/horizontal-notice.php:16,
 #: src/templates/wp-admin/notices/horizontal-notice.php:18
 msgid "Dismiss"
 msgstr "Laat maar"
@@ -1234,40 +1242,40 @@ msgstr ""
 msgid "Which site to restore"
 msgstr ""
 
-#: src/addons/migrator.php:506, src/addons/migrator.php:507
+#: src/addons/migrator.php:514, src/addons/migrator.php:515
 msgid "Error when creating new site at your chosen address:"
 msgstr ""
 
-#: src/addons/migrator.php:448
+#: src/addons/migrator.php:456
 msgid "Required information for restoring this backup was not given (%s)"
 msgstr ""
 
-#: src/addons/migrator.php:407
+#: src/addons/migrator.php:415
 msgid "Attribute imported content to user"
 msgstr ""
 
-#: src/addons/migrator.php:397, src/addons/migrator.php:399
+#: src/addons/migrator.php:405, src/addons/migrator.php:407
 msgid "You must use lower-case letters or numbers for the site path, only."
 msgstr ""
 
-#: src/addons/migrator.php:385
+#: src/addons/migrator.php:393
 msgid "This feature is not compatible with %s"
 msgstr ""
 
-#: src/addons/migrator.php:383, src/addons/migrator.php:385
+#: src/addons/migrator.php:391, src/addons/migrator.php:393
 msgid "Importing a single site into a multisite install"
 msgstr ""
 
-#: src/addons/migrator.php:374
+#: src/addons/migrator.php:382
 msgid "other content from wp-content"
 msgstr ""
 
-#: src/addons/migrator.php:371
+#: src/addons/migrator.php:379
 msgid "WordPress core"
 msgstr ""
 
-#: src/addons/migrator.php:371, src/addons/migrator.php:374,
-#: src/addons/migrator.php:377
+#: src/addons/migrator.php:379, src/addons/migrator.php:382,
+#: src/addons/migrator.php:385
 msgid "You selected %s to be included in the restoration - this cannot / should not be done when importing a single site into a network."
 msgstr ""
 
@@ -1275,11 +1283,11 @@ msgstr ""
 msgid "Call WordPress action:"
 msgstr ""
 
-#: src/admin.php:2430
+#: src/admin.php:2489
 msgid "Your saved settings also affect what is backed up - e.g. files excluded."
 msgstr ""
 
-#: src/admin.php:3748
+#: src/admin.php:3813
 msgid "Skipping: this archive was already restored."
 msgstr "Overslaan: dit archief is al hersteld. "
 
@@ -1311,51 +1319,51 @@ msgstr "Je zult dan alle instellingen opnieuw moeten invoeren. Je kunt dit, indi
 msgid "This button will delete all UpdraftPlus settings and progress information for in-progress backups (but not any of your existing backups from your cloud storage)."
 msgstr "Deze knop zal alle UpdraftPlus-instellingen en voortgangsinformatie van draaiende backups verwijderen (maar geen van de bestaande backups op de cloudopslag)."
 
-#: src/admin.php:4079
+#: src/admin.php:4132
 msgid "Send this backup to remote storage"
 msgstr "Stuur deze backup naar de externe opslag"
 
-#: src/admin.php:4077
+#: src/admin.php:4130
 msgid "Check out UpdraftPlus Vault."
 msgstr "Kijk eens naar UpdraftPlus-Vault."
 
-#: src/admin.php:4077
+#: src/admin.php:4130
 msgid "Not got any remote storage?"
 msgstr "Geen externe opslag beschikbaar?"
 
-#: src/admin.php:4077
+#: src/admin.php:4130
 msgid "settings"
 msgstr "instellingen"
 
-#: src/admin.php:4077
+#: src/admin.php:4130
 msgid "Backup won't be sent to any remote storage - none has been saved in the %s"
 msgstr "Er is geen backup naar een externe opslag gestuurd - noch is er een opgeslagen in de %s"
 
-#: src/admin.php:2428
+#: src/admin.php:2487
 msgid "Include any files in the backup"
 msgstr "Alle bestanden in de backup opnemen"
 
-#: src/admin.php:2414
+#: src/admin.php:2473
 msgid "Include the database in the backup"
 msgstr "Maak ook een backup van de database"
 
-#: src/admin.php:2394
+#: src/admin.php:2453
 msgid "Continue restoration"
 msgstr "Terugzetten hervatten"
 
-#: src/admin.php:2389
+#: src/admin.php:2448
 msgid "You have an unfinished restoration operation, begun %s ago."
 msgstr "Er bestaat een een onvoltooide terugzetoperatie, %s geleden gestart."
 
-#: src/admin.php:2388
+#: src/admin.php:2447
 msgid "Unfinished restoration"
 msgstr "Onvoltooide terugzetoperatie"
 
-#: src/admin.php:2386
+#: src/admin.php:2445
 msgid "%s minutes, %s seconds"
 msgstr "%s minuten, %s seconden"
 
-#: src/admin.php:2333
+#: src/admin.php:2392
 msgid "Backup Contents And Schedule"
 msgstr "Backupinhoud en planning"
 
@@ -1363,7 +1371,7 @@ msgstr "Backupinhoud en planning"
 msgid "Premium / Extensions"
 msgstr "Premium/Extensies"
 
-#: src/admin.php:2113, src/admin.php:2122
+#: src/admin.php:2172, src/admin.php:2181
 msgid "Sufficient information about the in-progress restoration operation could not be found."
 msgstr "Er was onvoldoende informatie over het terugzetproces te vinden."
 
@@ -1510,7 +1518,7 @@ msgstr "Container kon niet gecreëerd worden"
 msgid "Could not access container"
 msgstr "Container niet toegankelijk"
 
-#: src/class-updraftplus.php:3111
+#: src/class-updraftplus.php:3199
 msgid "To complete your migration/clone, you should now log in to the remote site and restore the backup set."
 msgstr "Om de migratie/clonering af te ronden moet je nu inloggen op de externe site en backupset terugzetten."
 
@@ -1635,11 +1643,11 @@ msgstr "Alles selecteren"
 msgid "Actions upon selected backups"
 msgstr "Acties voor geselecteerde backups"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:45
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:44
 msgid "Press here to look inside your remote storage methods for any existing backup sets (from any site, if they are stored in the same folder)."
 msgstr "Klik hier om in de externe opslagvoorzieningen te zoeken naar bestaande backup-sets (van elke site, als ze opgeslagen zijn in dezelfde map)."
 
-#: src/admin.php:1529
+#: src/admin.php:1589
 msgid "Backup sets removed:"
 msgstr "Back-up set verwijderd:"
 
@@ -1691,15 +1699,15 @@ msgstr "Dit probleem wordt veroorzaakt daar een poging een database terug te zet
 msgid "You do not currently have any UpdraftPlus Vault quota"
 msgstr "Je hebt op dit moment geen UpdraftPlus-Vault-quotum"
 
-#: src/class-updraftplus.php:4714
+#: src/class-updraftplus.php:4839
 msgid "You must upgrade MySQL to be able to use this database."
 msgstr "Je moet MySQL upgraden om deze database te kunnen gebruiken."
 
-#: src/class-updraftplus.php:4714
+#: src/class-updraftplus.php:4839
 msgid "The database backup uses MySQL features not available in the old MySQL version (%s) that this site is running on."
 msgstr "De database-backup gebruikt MySQL-functies die niet beschikbaar zijn in de oude MySQL-versie (%s) waar deze site op draait."
 
-#: src/admin.php:2232
+#: src/admin.php:2291
 msgid "The UpdraftPlus directory in wp-content/plugins has white-space in it; WordPress does not like this. You should rename the directory to wp-content/plugins/updraftplus to fix this problem."
 msgstr "De UpdraftPlus-directory in wp-content/plugins bevat wit-ruimte; WordPress houdt daar niet van. Je moet de directory hernoemen naar wp-content/plugins/updraftplus om dit probleem op te lossen."
 
@@ -1868,7 +1876,7 @@ msgid "Updraft Vault"
 msgstr "Updraft-Vault"
 
 #: src/addons/azure.php:374, src/addons/googlecloud.php:760,
-#: src/methods/s3.php:1080
+#: src/methods/s3.php:1089
 msgid "Delete failed:"
 msgstr "Verwijderen mislukt:"
 
@@ -1892,71 +1900,71 @@ msgstr "Zonder deze goedkeuring kun je niet direct downloaden of terugzetten met
 msgid "Allow download"
 msgstr "Download toestaan"
 
-#: src/addons/migrator.php:1754
+#: src/addons/migrator.php:1762
 msgid "If sending directly from site to site does not work for you, then there are three other methods - please try one of these instead."
 msgstr "Als het direct versturen van site naar site niet werkt, zijn er drie andere methodes - gebruik dan in plaats hiervan een van deze."
 
-#: src/addons/migrator.php:1739, src/admin.php:709
+#: src/addons/migrator.php:1747, src/admin.php:709
 msgid "You should check that the remote site is online, not firewalled, does not have security modules that may be blocking access, has UpdraftPlus version %s or later active and that the keys have been entered correctly."
 msgstr "Je moet controleren of de externe site online is, geen firewall of beveiligingsmodules heeft die de toegang blokkeren, dat UpdraftPlus versie %s of nieuwer draait en de sleutels correct ingevoerd zijn."
 
-#: src/addons/migrator.php:2242
+#: src/addons/migrator.php:2250
 msgid "Existing keys"
 msgstr "Bestaande sleutels"
 
-#: src/addons/migrator.php:2233
+#: src/addons/migrator.php:2241
 msgid "No keys to allow remote sites to connect have yet been created."
 msgstr "Er zijn nog geen sleutels aangemaakt die externe sites toestaan verbinding te maken."
 
-#: src/addons/migrator.php:2215
+#: src/addons/migrator.php:2223
 msgid "Your new key:"
 msgstr "De nieuwe sleutel:"
 
-#: src/addons/migrator.php:2194
+#: src/addons/migrator.php:2202
 msgid "To allow another site to send a backup to this site, create a key, and then press the 'Migrate' button on the sending site, and copy-and-paste the key there."
 msgstr "Maak een sleutel aan om een andere site toe te staan een backup naar deze site te sturen, klik dan op de knop 'Migreren' op de site die verzendt, en kopieer/plak hem daar."
 
-#: src/addons/migrator.php:2176
+#: src/addons/migrator.php:2184
 msgid "So, to get the key for the remote site, open the 'Migrate' window on that site, scroll down, and you can create one there."
 msgstr "Om dus de sleutel voor de externe site te verkrijgen open je het venster 'Migreren' op die site, blader je omlaag en kun je kun er daar een creëren."
 
-#: src/addons/migrator.php:2176
+#: src/addons/migrator.php:2184
 msgid "Keys for this site are created in the section below the one you just pressed in."
 msgstr "Sleutels voor deze site worden gecreëerd in de sectie onder degene die je zojuist indrukte."
 
-#: src/addons/migrator.php:1856, src/central/bootstrap.php:370
+#: src/addons/migrator.php:1864, src/central/bootstrap.php:370
 msgid "You must copy and paste this key now - it cannot be shown again."
 msgstr "Je moet deze sleutel nu kopiëren en plakken - hij kan niet opnieuw getoond worden."
 
-#: src/addons/migrator.php:1856, src/central/bootstrap.php:370
+#: src/addons/migrator.php:1864, src/central/bootstrap.php:370
 msgid "Key created successfully."
 msgstr "Sleutel succesvol aangemaakt. "
 
-#: src/addons/migrator.php:1841
+#: src/addons/migrator.php:1849
 msgid "A key with this name already exists; you must use a unique name."
 msgstr "Een sleutel met deze naam bestaat al; je moet een unieke naam gebruiken."
 
-#: src/addons/migrator.php:1785
+#: src/addons/migrator.php:1793
 msgid "Also send this backup to the active remote storage locations"
 msgstr "Verzend deze backup ook naar de actieve externe opslaglocaties"
 
-#: src/addons/migrator.php:1750
+#: src/addons/migrator.php:1758
 msgid "The site URL you are sending to (%s) looks like a local development website. If you are sending from an external network, it is likely that a firewall will be blocking this."
 msgstr "De site-URL waarnaar je verzendt (%s) ziet eruit als een locale ontwikkelaarssite. Als je verzendt vanaf een extern netwerk, is het waarschijnlijk dat een firewall dit blokkeert."
 
-#: src/addons/migrator.php:1706
+#: src/addons/migrator.php:1714
 msgid "site not found"
 msgstr "site niet gevonden"
 
-#: src/addons/migrator.php:1691
+#: src/addons/migrator.php:1699
 msgid "Backup data will be sent to:"
 msgstr "Backupdata zullen verzonden worden naar:"
 
-#: src/addons/migrator.php:195
+#: src/addons/migrator.php:203
 msgid "Restore an existing backup set onto this site"
 msgstr "Een bestaande backup terugzetten naar deze site"
 
-#: src/addons/migrator.php:188
+#: src/addons/migrator.php:196
 msgid "This site has no backups to restore from yet."
 msgstr "Deze site bevat nog geen backups om terug te zetten."
 
@@ -1968,15 +1976,15 @@ msgstr "Backup gemaakt door %s"
 msgid "This storage method does not allow downloading"
 msgstr "Deze opslagmethode staat downloaden niet toe"
 
-#: src/admin.php:3501
+#: src/admin.php:3567
 msgid "(backup set imported from remote location)"
 msgstr "(backupset geïmporteerd van een externe locatie)"
 
-#: src/templates/wp-admin/settings/existing-backups-table.php:82
+#: src/templates/wp-admin/settings/existing-backups-table.php:83
 msgid "Site"
 msgstr "Site"
 
-#: src/templates/wp-admin/settings/existing-backups-table.php:81
+#: src/templates/wp-admin/settings/existing-backups-table.php:82
 msgid "Backup sent to remote site - not available for download."
 msgstr "Backup naar externe site verzonden - niet beschikbaar om te downloaden."
 
@@ -1988,7 +1996,7 @@ msgstr "Je moet er zeker van zijn dat deze backupset inderdaad bedoeld is voor g
 msgid "This backup set was not known by UpdraftPlus to be created by the current WordPress installation, but was either found in remote storage, or was sent from a remote site."
 msgstr "Van deze backupset is niet bij UpdraftPlus bekend dat hij gemaakt is door de huidige WordPress-installatie, maar hij is of gevonden in een externe opslaglocatie of verzonden vanaf een externe site."
 
-#: src/addons/migrator.php:1767, src/admin.php:716
+#: src/addons/migrator.php:1775, src/admin.php:716
 msgid "Testing connection..."
 msgstr "Verbinding testen..."
 
@@ -2008,60 +2016,60 @@ msgstr "Geef deze sleutel een naam (vermeld bv de site waarvoor hij dient):"
 msgid "Creating..."
 msgstr "Aanmaken..."
 
-#: src/addons/migrator.php:2193
+#: src/addons/migrator.php:2201
 msgid "Or, receive a backup from a remote site"
 msgstr "Of ontvang een backup van een externe site"
 
-#: src/addons/migrator.php:2182
+#: src/addons/migrator.php:2190
 msgid "Paste key here"
 msgstr "Plak de sleutel hier"
 
-#: src/addons/migrator.php:2176
+#: src/addons/migrator.php:2184
 msgid "How do I get a site's key?"
 msgstr "Hoe kan ik de sleutel van een site krijgen?"
 
-#: src/addons/migrator.php:2176
+#: src/addons/migrator.php:2184
 msgid "To add a site as a destination for sending to, enter that site's key below."
 msgstr "Voer de sleutel van een site hieronder in om die site als verzendadres toe te voegen."
 
-#: src/addons/migrator.php:2173
+#: src/addons/migrator.php:2181
 msgid "Or, send a backup to another site"
 msgstr "Of verzend een backup naar een andere site"
 
-#: src/addons/migrator.php:1938, src/admin.php:717
+#: src/addons/migrator.php:1946, src/admin.php:717
 msgid "Send"
 msgstr "Verzenden"
 
-#: src/addons/migrator.php:1932, src/admin.php:708
+#: src/addons/migrator.php:1940, src/admin.php:708
 msgid "Send to site:"
 msgstr "Verzend naar site:"
 
-#: src/addons/migrator.php:1930
+#: src/addons/migrator.php:1938
 msgid "No receiving sites have yet been added."
 msgstr "Er zijn nog geen ontvangende sites toegevoegd."
 
-#: src/addons/migrator.php:1911
+#: src/addons/migrator.php:1919
 msgid "It is for sending backups to the following site: "
 msgstr "Hij is voor het verzenden van backups naar de volgende site:"
 
-#: src/addons/migrator.php:1911
+#: src/addons/migrator.php:1919
 msgid "The key was successfully added."
 msgstr "De sleutel is met succes toegevoegd."
 
-#: src/addons/migrator.php:1895
+#: src/addons/migrator.php:1903
 msgid "The entered key does not belong to a remote site (it belongs to this one)."
 msgstr "De ingevoerde sleutel hoort niet bij de externe server (hij hoort bij deze)."
 
-#: src/addons/migrator.php:1884, src/addons/migrator.php:1886,
-#: src/addons/migrator.php:1890
+#: src/addons/migrator.php:1892, src/addons/migrator.php:1894,
+#: src/addons/migrator.php:1898
 msgid "The entered key was corrupt - please try again."
 msgstr "De ingevoerde sleutel was foutief - probeer het opnieuw."
 
-#: src/addons/migrator.php:1882
+#: src/addons/migrator.php:1890
 msgid "The entered key was the wrong length - please try again."
 msgstr "De ingevoerde sleutel heeft de verkeerde lengte - probeer het opnieuw."
 
-#: src/addons/migrator.php:1872
+#: src/addons/migrator.php:1880
 msgid "key"
 msgstr "sleutel"
 
@@ -2101,7 +2109,7 @@ msgstr "Een 'migratie' is uiteindelijk hetzelfde als terugzetten - maar je gebru
 msgid "Resetting..."
 msgstr ""
 
-#: src/addons/migrator.php:2182, src/admin.php:705
+#: src/addons/migrator.php:2190, src/admin.php:705
 msgid "Add site"
 msgstr "Site toevoegen"
 
@@ -2109,7 +2117,7 @@ msgstr "Site toevoegen"
 msgid "Adding..."
 msgstr "Aan het toevoegen..."
 
-#: src/udaddons/options.php:333
+#: src/udaddons/options.php:336
 msgid "Claim not granted - perhaps you have already used this purchase somewhere else, or your paid period for downloading from updraftplus.com has expired?"
 msgstr "Claim niet toegekend - misschien heb je deze aankoop al ergens anders gebruikt, of misschien is de betaalde termijn voor het downloaden vanaf updraftplus.com verlopen."
 
@@ -2129,11 +2137,11 @@ msgstr "Als je het wachtwoord vergeten bent"
 msgid "Go here to re-enter your password."
 msgstr "Ga hierheen om je wachtwoord opnieuw in te voeren."
 
-#: src/addons/migrator.php:224
+#: src/addons/migrator.php:232
 msgid "After pressing this button, you will be given the option to choose which components you wish to migrate"
 msgstr "Na het klikken op deze knop krijg je de mogelijkheid te kiezen welke componenten je wilt migreren"
 
-#: src/addons/migrator.php:195
+#: src/addons/migrator.php:203
 msgid "To import a backup set, go to the \"Existing Backups\" tab"
 msgstr "Ga naar het tabblad 'Bestaande backups' om een backupset te importeren."
 
@@ -2153,7 +2161,7 @@ msgstr "N.B. %s is niet hoofdlettergevoelig."
 msgid "If OneDrive later shows you the message \"unauthorized_client\", then you did not enter a valid client ID here."
 msgstr "Als OneDrive later de melding 'unauthorized_client' toont, heb je hier een niet geldig client-ID ingevoerd."
 
-#: src/addons/azure.php:541, src/addons/migrator.php:1754,
+#: src/addons/azure.php:541, src/addons/migrator.php:1762,
 #: src/addons/onedrive.php:955
 msgid "For longer help, including screenshots, follow this link."
 msgstr "Klik op deze link voor meer hulp, inclusief schermafbeeldingen."
@@ -2332,7 +2340,7 @@ msgstr "Je moet een toegangssleutel voor de beheerder invoeren"
 msgid "If you have an AWS admin user, then you can use this wizard to quickly create a new AWS (IAM) user with access to only this bucket (rather than your whole account)"
 msgstr "Als je een gebruiker met AWS-beheer hebt, kun je deze wizzard gebruiken om snel een nieuwe AWS(IAM)-gebruiker aan te maken die alleen toegang heeft deze 'bucket' (in plaats van je hele account te gebruiken)."
 
-#: src/methods/s3.php:868
+#: src/methods/s3.php:874
 msgid "To create a new IAM sub-user and access key that has access only to this bucket, use this add-on."
 msgstr "Gebruik deze add-on om een nieuwe IAM-subgebruiker aan te maken en een toegangssleutel die alleen toegang geeft tot deze 'bucket'."
 
@@ -2407,7 +2415,7 @@ msgstr "Afwijzen (gedurende %s maanden)"
 msgid "(at same time as files backup)"
 msgstr "(tegelijk met de bestandsbackup)"
 
-#: src/admin.php:3012
+#: src/admin.php:3071
 msgid "No backup has been completed"
 msgstr "De backup is nog niet afgerond"
 
@@ -2456,8 +2464,8 @@ msgstr "Je gebruikt op dit moment de gratis UpdraftPlus-versie van wordpress.org
 msgid "Backup (where relevant) plugins, themes and the WordPress database with UpdraftPlus before updating"
 msgstr "Backup (Indien relevant) plugins, thema's en de WordPress-database met Updraft-Plus alvorens te updaten,"
 
-#: src/methods/s3.php:166, src/methods/s3.php:167, src/methods/s3.php:168,
-#: src/methods/s3.php:176, src/methods/s3.php:177, src/methods/s3.php:178
+#: src/methods/s3.php:171, src/methods/s3.php:172, src/methods/s3.php:173,
+#: src/methods/s3.php:181, src/methods/s3.php:182, src/methods/s3.php:183
 msgid "%s Error: Failed to initialise"
 msgstr "Fout %s: Initialisatie mislukt"
 
@@ -2497,7 +2505,7 @@ msgstr "E-mailadres van de sitebeheerder"
 msgid "Check this box to have a basic report sent to"
 msgstr "Vink dit vakje aan om een eenvoudig rapport te laten sturen"
 
-#: src/admin.php:3021
+#: src/admin.php:3080
 msgctxt "i.e. Non-automatic"
 msgid "Manual"
 msgstr "Handmatig"
@@ -2515,7 +2523,7 @@ msgstr "Blokkeerinstellingen veranderen"
 msgid "Any other file/directory on your server that you wish to back up"
 msgstr "Elke andere file/directory op de server die je wilt backuppen"
 
-#: src/admin.php:2249
+#: src/admin.php:2308
 msgid "For even more features and personal support, check out "
 msgstr "Kijk hier voor nog meer functies en persoonlijke support"
 
@@ -2605,11 +2613,11 @@ msgstr "Het beheerderswachtwoord is nu verwijderd."
 msgid "(learn more about this significant option)"
 msgstr "(meer te weten komen over deze belangrijke optie)"
 
-#: src/udaddons/options.php:275
+#: src/udaddons/options.php:278
 msgid "Note that after you have claimed your add-ons, you can remove your password (but not the email address) from the settings below, without affecting this site's access to updates."
 msgstr "Merk op dat je na het opvragen van de add-ons het wachtwoord (niet het e-mailadres) uit de instellingen hieronder kunt verwijderen, zonder dat dit invloed heeft op de toegang tot updates."
 
-#: src/admin.php:2582, src/admin.php:3523, src/admin.php:3524
+#: src/admin.php:2641, src/admin.php:3589, src/admin.php:3590
 msgid "View Log"
 msgstr "Log bekijken"
 
@@ -2626,7 +2634,7 @@ msgstr "Backupdatum"
 msgid "and retain this many scheduled backups"
 msgstr "en behoud zoveel geplande backups"
 
-#: src/admin.php:2982
+#: src/admin.php:3041
 msgid "incremental backup; base backup: %s"
 msgstr "incrementele backup; basisbackup: %s"
 
@@ -2634,20 +2642,20 @@ msgstr "incrementele backup; basisbackup: %s"
 msgid "For the ability to lock access to UpdraftPlus settings with a password, upgrade to UpdraftPlus Premium."
 msgstr "Om de UpdraftPlus-instellingen te kunnen beveiligen met een wachtwoord, moet je upgraden naar UpdraftPlus-Premium."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:58
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:57
 msgid "Upload files into UpdraftPlus."
 msgstr "Bestanden uploaden naar UpdraftPlus."
 
-#: src/admin.php:932, src/includes/class-commands.php:379,
+#: src/admin.php:932, src/includes/class-commands.php:376,
 #: src/templates/wp-admin/settings/tab-status.php:22
 msgid "The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option)."
 msgstr "De knop 'Backup nu' is uitgeschakeld omdat je geen schrijfrechten hebt in de backupmap (ga naar het tabblad 'Instellingen' voor de juiste instellingen)."
 
-#: src/class-updraftplus.php:4664
+#: src/class-updraftplus.php:4789
 msgid "Backup label:"
 msgstr "Backup-label:"
 
-#: src/admin.php:1774
+#: src/admin.php:1833
 msgid "Error: unexpected file read fail"
 msgstr "Fout: lezen van het bestand onverwacht mislukt"
 
@@ -2667,7 +2675,7 @@ msgstr "Er is een zip-fout opgetreden"
 msgid "Your label for this backup (optional)"
 msgstr "Je label voor deze backup (optioneel)"
 
-#: src/addons/googlecloud.php:908, src/methods/googledrive.php:1082
+#: src/addons/googlecloud.php:908, src/methods/googledrive.php:1087
 msgid "%s does not allow authorisation of sites hosted on direct IP addresses. You will need to change your site's address (%s) before you can use %s for storage."
 msgstr "%s staat autorisatie niet toe van sites die gehost zijn op een direct IP-adres. Je zult het adres (%s) van de website moeten aanpassen voordat je %s kunt gebruiken voor opslag."
 
@@ -2687,36 +2695,36 @@ msgstr "Je dient zowel een e-mailadres als een wachtwoord op te geven"
 msgid "To proceed, press 'Backup Now'. Then, watch the 'Last Log Message' field for activity."
 msgstr "Klik op 'Nu backuppen' om door te gaan. Controleer daarna het veld 'Laatste log-berichten' op activiteit. "
 
-#: src/class-updraftplus.php:4683
+#: src/class-updraftplus.php:4808
 msgid "If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite."
 msgstr "Als je een multisite-backup wilt terugzetten, zul je eerst een multisite-WordPress-installatie moeten opzetten."
 
-#: src/class-updraftplus.php:4683
+#: src/class-updraftplus.php:4808
 msgid "Your backup is of a WordPress multisite install; but this site is not. Only the first site of the network will be accessible."
 msgstr "De backup bevat een multisite-WordPress-installatie maar deze website is dat niet. Alleen de eerste website van het netwerk zal toegankelijk zijn."
 
-#: src/addons/migrator.php:1083
+#: src/addons/migrator.php:1091
 msgid "already done"
 msgstr "al afgerond"
 
-#: src/addons/migrator.php:1040
+#: src/addons/migrator.php:1048
 msgid "skipped (not in list)"
 msgstr "overgeslagen (niet in de lijst)"
 
-#: src/addons/migrator.php:1040, src/addons/migrator.php:1083,
-#: src/addons/migrator.php:1215
+#: src/addons/migrator.php:1048, src/addons/migrator.php:1091,
+#: src/addons/migrator.php:1223
 msgid "Search and replacing table:"
 msgstr "Zoeken en vervangen tabel:"
 
-#: src/addons/migrator.php:322
+#: src/addons/migrator.php:330
 msgid "Enter a comma-separated list; otherwise, leave blank for all tables."
 msgstr "Voer een kommagescheiden lijst in of laat het leeg voor alle tabellen."
 
-#: src/addons/migrator.php:322
+#: src/addons/migrator.php:330
 msgid "These tables only"
 msgstr "Alleen deze tabellen"
 
-#: src/addons/migrator.php:321
+#: src/addons/migrator.php:329
 msgid "Rows per batch"
 msgstr "Aantal rijen per batch"
 
@@ -2728,19 +2736,19 @@ msgstr "Je bent nog niet verbonden met het UpdraftPlus.com-account."
 msgid "You need to connect to receive future updates to UpdraftPlus."
 msgstr "Om in de toekomst updates te blijven ontvangen van UpdraftPlus moet je verbinding maken."
 
-#: src/class-updraftplus.php:4656
+#: src/class-updraftplus.php:4781
 msgid "Any support requests to do with %s should be raised with your web hosting company."
 msgstr "Supportvragen over %s zullen aan de hostingprovider gesteld moeten worden."
 
-#: src/class-updraftplus.php:4656
+#: src/class-updraftplus.php:4781
 msgid "You should only proceed if you cannot update the current server and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the older %s version."
 msgstr "Ga alleen verder als je de huidige server niet kunt updaten en als je er zeker van bent (of het risico aandurft) dat alle plugins/thema's/enz. compatibel zijn met de oudere versie %s."
 
-#: src/class-updraftplus.php:4656
+#: src/class-updraftplus.php:4781
 msgid "This is significantly newer than the server which you are now restoring onto (version %s)."
 msgstr "Deze is duidelijk nieuwer dan de versie die op de huidige server aanwezig is (versie %s)."
 
-#: src/class-updraftplus.php:4656
+#: src/class-updraftplus.php:4781
 msgid "The site in this backup was running on a webserver with version %s of %s. "
 msgstr "De website in deze backup draaide op een webserver met versie %s van %s."
 
@@ -2769,27 +2777,27 @@ msgstr "Twitter"
 msgid "UpdraftPlus is on social media - check us out!"
 msgstr "UpdraftPlus is ook te vinden op sociale media - zoek ons op."
 
-#: src/admin.php:3592
+#: src/admin.php:3658
 msgid "Why am I seeing this?"
 msgstr "Waarom krijg ik dit te zien?"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:44
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:43
 msgid "The location of this directory is set in the expert settings, in the Settings tab."
 msgstr "De locatie van deze directory wordt ingesteld in de expert-instellingen op het tabblad 'Instellingen'."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:44
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:43
 msgid "Press here to look inside your UpdraftPlus directory (in your web hosting space) for any new backup sets that you have uploaded."
 msgstr "Klik hier om in de UpdraftPlus-map (op de webhosting-ruimte) te zoeken naar nieuwe backupsets die geüploadet zijn."
 
-#: src/admin.php:1713, src/admin.php:1725
+#: src/admin.php:1772, src/admin.php:1784
 msgid "Start backup"
 msgstr "Backup starten"
 
-#: src/class-updraftplus.php:4628, src/restorer.php:1010
+#: src/class-updraftplus.php:4753, src/restorer.php:1010
 msgid "You are using the %s webserver, but do not seem to have the %s module loaded."
 msgstr "Je gebruikt webserver %s, maar de module %s lijkt daarop niet geladen te zijn."
 
-#: src/admin.php:2905
+#: src/admin.php:2964
 msgid "You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory."
 msgstr "Neem contact op met de hostingprovider om erachter te komen hoe de rechten zo aangepast kunnen worden dat een WordPress-plugin schrijfrechten heeft in de directory."
 
@@ -2797,11 +2805,11 @@ msgstr "Neem contact op met de hostingprovider om erachter te komen hoe de recht
 msgid "Unless you have a problem, you can completely ignore everything here."
 msgstr "Je kunt alles hier gewoon negeren, tenzij er een probleem optreedt."
 
-#: src/admin.php:1935
+#: src/admin.php:1994
 msgid "This file could not be uploaded"
 msgstr "Dit bestand kan niet geüploadet worden"
 
-#: src/admin.php:1900
+#: src/admin.php:1959
 msgid "You will find more information about this in the Settings section."
 msgstr "Meer informatie hierover is te vinden in de sectie Instellingen."
 
@@ -2821,7 +2829,7 @@ msgstr "Meer informatie over incrementele backups"
 msgid "Memory limit"
 msgstr "Geheugenlimiet"
 
-#: src/class-updraftplus.php:4786, src/restorer.php:1493
+#: src/class-updraftplus.php:4911, src/restorer.php:1493
 msgid "restoration"
 msgstr "terugzetten"
 
@@ -2845,42 +2853,42 @@ msgstr "(bekijk logboek...)"
 msgid "Backup succeeded"
 msgstr "Backup geslaagd"
 
-#: src/admin.php:3022, src/admin.php:3023, src/admin.php:3024,
+#: src/admin.php:3081, src/admin.php:3082, src/admin.php:3083,
 #: src/updraftplus.php:99, src/updraftplus.php:100
 msgid "Every %s hours"
 msgstr "Om de %s uur"
 
-#: src/addons/migrator.php:785, src/addons/migrator.php:787
+#: src/addons/migrator.php:793, src/addons/migrator.php:795
 msgid "search and replace"
 msgstr "zoeken en vervangen"
 
-#: src/addons/migrator.php:324
+#: src/addons/migrator.php:332
 msgid "Go"
 msgstr "Starten"
 
-#: src/addons/migrator.php:313
+#: src/addons/migrator.php:321
 msgid "A search/replace cannot be undone - are you sure you want to do this?"
 msgstr "Een zoeken/vervangen-actie kan niet ongedaan gemaakt worden - weet je zeker dat je dit wilt?"
 
-#: src/addons/migrator.php:312
+#: src/addons/migrator.php:320
 msgid "This can easily destroy your site; so, use it with care!"
 msgstr "Dit kan gemakkelijk de site onbruikbaar maken; gebruik het dus voorzichtig."
 
-#: src/addons/migrator.php:282, src/addons/migrator.php:320
+#: src/addons/migrator.php:290, src/addons/migrator.php:328
 msgid "Replace with"
 msgstr "Vervangen door"
 
-#: src/addons/migrator.php:281, src/addons/migrator.php:319
+#: src/addons/migrator.php:289, src/addons/migrator.php:327
 msgid "Search for"
 msgstr "Zoeken naar"
 
-#: src/addons/migrator.php:280, src/addons/migrator.php:311,
+#: src/addons/migrator.php:288, src/addons/migrator.php:319,
 #: src/templates/wp-admin/advanced/search-replace.php:7,
 #: src/templates/wp-admin/advanced/tools-menu.php:18
 msgid "Search / replace database"
 msgstr "Database zoeken/vervangen"
 
-#: src/addons/migrator.php:286
+#: src/addons/migrator.php:294
 msgid "search term"
 msgstr "zoekterm"
 
@@ -2896,11 +2904,11 @@ msgstr "lees meer op %s"
 msgid "Email reports created by UpdraftPlus (free edition) bring you the latest UpdraftPlus.com news"
 msgstr "E-mailrapporten gecreëerd door UpdraftPlus (gratis versie) brengen je het laatste UpdraftPlus.com-nieuws"
 
-#: src/methods/googledrive.php:1090
+#: src/methods/googledrive.php:1095
 msgid "N.B. If you install UpdraftPlus on several WordPress sites, then you cannot re-use your project; you must create a new one from your Google API console for each site."
 msgstr "N.B. Als je UpdraftPlus installeert op verschillende WordPress-sites, kun je het project niet opnieuw gebruiken; je moet voor elke site een nieuw project aanmaken met de Google-API-console."
 
-#: src/admin.php:3350
+#: src/admin.php:3416
 msgid "You have not yet made any backups."
 msgstr "Je hebt nog geen backup gemaakt."
 
@@ -2920,13 +2928,13 @@ msgstr "%s (%s gebruikt)"
 msgid "Free disk space in account:"
 msgstr "Gratis opslagruimte in account:"
 
-#: src/admin.php:4173, src/templates/wp-admin/settings/tab-status.php:27
+#: src/admin.php:4226, src/templates/wp-admin/settings/tab-status.php:27
 msgid "This button is disabled because your backup directory is not writable (see the settings)."
 msgstr "Deze knop is niet actief omdat je in de backuplocatie geen schrijfrechten hebt (zie instellingen)."
 
-#: src/admin.php:522, src/admin.php:664, src/admin.php:1578,
-#: src/includes/deprecated-actions.php:30,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:22,
+#: src/admin.php:522, src/admin.php:664, src/admin.php:1637,
+#: src/includes/deprecated-actions.php:29,
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:21,
 #: src/templates/wp-admin/settings/tab-bar.php:6
 msgid "Existing Backups"
 msgstr "Bestaande backups"
@@ -3019,20 +3027,20 @@ msgstr "gebruiker"
 msgid "External database (%s)"
 msgstr "Externe database (%s)"
 
-#: src/methods/googledrive.php:1090
+#: src/methods/googledrive.php:1095
 msgid "Follow this link to your Google API Console, and there activate the Drive API and create a Client ID in the API Access section."
 msgstr "Gebruik deze link naar de Google-API-console, activeer daar de Drive-API en creëer een client-ID in de sectie API-access."
 
-#: src/methods/googledrive.php:450
+#: src/methods/googledrive.php:455
 msgid "failed to access parent folder"
 msgstr "toegang tot bovenliggende map mislukt"
 
 #: src/addons/googlecloud.php:615, src/addons/onedrive.php:762,
-#: src/addons/onedrive.php:773, src/methods/googledrive.php:403
+#: src/addons/onedrive.php:773, src/methods/googledrive.php:408
 msgid "However, subsequent access attempts failed:"
 msgstr "Echter, de erop volgende toegangspogingen zijn mislukt:"
 
-#: src/admin.php:3375
+#: src/admin.php:3441
 msgid "External database"
 msgstr "Externe database"
 
@@ -3064,7 +3072,7 @@ msgstr "Wil je niet bespioneerd worden? UpdaftPlus-Premium kan de databasebackup
 msgid "use UpdraftPlus Premium"
 msgstr "UpdraftPlus-Premium gebruiken"
 
-#: src/class-updraftplus.php:4546
+#: src/class-updraftplus.php:4655
 msgid "Decryption failed. The database file is encrypted."
 msgstr "Decoderen mislukt; het databasebestand is versleuteld."
 
@@ -3085,7 +3093,7 @@ msgstr "Verbinding mislukt: controleer de toegangsgegevens, of de databaseserver
 msgid "database connection attempt failed."
 msgstr "databaseverbinding mislukt."
 
-#: src/addons/migrator.php:971
+#: src/addons/migrator.php:979
 msgid "Warning: the database's home URL (%s) is different to what we expected (%s)"
 msgstr "Waarschuwing: de home-URL in de database (%s) is anders dan wat er verwacht werd (%s)"
 
@@ -3168,7 +3176,7 @@ msgstr "Dropbox"
 msgid "Authenticate with %s"
 msgstr "Autoriseren op %s"
 
-#: src/methods/cloudfiles.php:422
+#: src/methods/cloudfiles.php:422, src/methods/openstack-base.php:420
 msgid "Error downloading remote file: Failed to download"
 msgstr "Fout bij het downloaden van extern bestand: downloaden mislukt"
 
@@ -3196,37 +3204,37 @@ msgid "%s error - failed to access the container"
 msgstr "Fout %s - geen toegang tot de container"
 
 #: src/addons/googlecloud.php:988, src/addons/onedrive.php:990,
-#: src/methods/dropbox.php:546, src/methods/googledrive.php:1146
+#: src/methods/dropbox.php:546, src/methods/googledrive.php:1161
 msgid "Account holder's name: %s."
 msgstr "Naam van de accounteigenaar: %s."
 
-#: src/methods/googledrive.php:1135
+#: src/methods/googledrive.php:1139
 msgid "To be able to set a custom folder name, use UpdraftPlus Premium."
 msgstr "Gebruik UpdraftPlus-Premium om zelf een naam voor een map te kunnen kiezen."
 
-#: src/methods/googledrive.php:1126
+#: src/methods/googledrive.php:1130
 msgid "It is an ID number internal to Google Drive"
 msgstr "Het is een intern GoogleDrive-ID."
 
-#: src/methods/googledrive.php:1126
+#: src/methods/googledrive.php:1130
 msgid "<strong>This is NOT a folder name</strong>."
 msgstr "<strong>Dit is GEEN mapnaam</strong>."
 
 #: src/addons/google-enhanced.php:84, src/addons/onedrive.php:982,
-#: src/methods/googledrive.php:1122, src/methods/googledrive.php:1132
+#: src/methods/googledrive.php:1126, src/methods/googledrive.php:1136
 msgid "Folder"
 msgstr "Map"
 
 #: src/addons/googlecloud.php:296, src/addons/onedrive.php:366,
-#: src/methods/googledrive.php:1041
+#: src/methods/googledrive.php:1046
 msgid "%s download: failed: file not found"
 msgstr "Download %s mislukt: bestand niet gevonden"
 
-#: src/addons/googlecloud.php:635, src/methods/googledrive.php:423
+#: src/addons/googlecloud.php:635, src/methods/googledrive.php:428
 msgid "Name: %s."
 msgstr "Naam: %s."
 
-#: src/methods/googledrive.php:181
+#: src/methods/googledrive.php:186
 msgid "Google Drive list files: failed to access parent folder"
 msgstr "GoogleDrive-bestandenlijst: er kon geen verbinding gemaakt worden met de hoofdmap"
 
@@ -3251,8 +3259,8 @@ msgstr "Bellen"
 msgid "Fetch"
 msgstr "Ophalen"
 
-#: src/addons/migrator.php:383,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:62,
+#: src/addons/migrator.php:391,
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:61,
 #: src/templates/wp-admin/settings/form-contents.php:212
 msgid "This feature requires %s version %s or later"
 msgstr "Deze functie vereist %s versie %s of recenter"
@@ -3265,7 +3273,7 @@ msgstr "Uitpakken van het archief mislukt"
 msgid "Error - failed to download the file"
 msgstr "Fout - het bestand kon niet worden gedownloadet"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:44
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:43
 msgid "Rescan local folder for new backup sets"
 msgstr "Opnieuw in de lokale map zoeken naar nieuwe backup-sets"
 
@@ -3285,8 +3293,8 @@ msgstr "De geïnstalleerde versie van UpdraftPlus-Backup/Restore is niet getest 
 msgid "password/key"
 msgstr "wachtwoord/sleutel"
 
-#: src/addons/azure.php:549, src/addons/migrator.php:2200,
-#: src/addons/sftp.php:439, src/admin.php:711, src/admin.php:4362
+#: src/addons/azure.php:549, src/addons/migrator.php:2208,
+#: src/addons/sftp.php:439, src/admin.php:711, src/admin.php:4415
 msgid "Key"
 msgstr "Sleutel"
 
@@ -3302,36 +3310,36 @@ msgstr "De gegeven sleutel heeft een ongeldig formaat of is beschadigd."
 msgid "SCP/SFTP password/key"
 msgstr "SCP/SFTP-wachtwoord/sleutel"
 
-#: src/admin.php:3410
+#: src/admin.php:3476
 msgid "Files backup (created by %s)"
 msgstr "Bestanden-backup (gemaakt door %s)"
 
-#: src/admin.php:3410
+#: src/admin.php:3476
 msgid "Files and database WordPress backup (created by %s)"
 msgstr "Backup van Wordpress-bestanden en -database (gemaakt door %s)"
 
-#: src/addons/importer.php:276, src/admin.php:3404,
-#: src/class-updraftplus.php:2893
+#: src/addons/importer.php:276, src/admin.php:3470,
+#: src/class-updraftplus.php:2927
 msgid "Backup created by: %s."
 msgstr "Backup gemaakt door: %s."
 
-#: src/admin.php:3373
+#: src/admin.php:3439
 msgid "Database (created by %s)"
 msgstr "Database (gemaakt door %s)"
 
-#: src/admin.php:3367, src/admin.php:3406
+#: src/admin.php:3433, src/admin.php:3472
 msgid "unknown source"
 msgstr "onbekende bron"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:45
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:44
 msgid "Rescan remote storage"
 msgstr "Scan de externe opslag opnieuw"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:40
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:39
 msgid "Upload backup files"
 msgstr "Backup-bestanden uploaden"
 
-#: src/admin.php:1979
+#: src/admin.php:2038
 msgid "This backup was created by %s, and can be imported."
 msgstr "Deze backup is gemaakt door %s en kan geïmporteerd worden."
 
@@ -3343,7 +3351,7 @@ msgstr "Lees deze pagina voor een overzicht met mogelijke oorzaken en oplossinge
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr "WordPress bevat een aantal (%d) geplande taken die al uitgevoerd hadden moeten zijn. Tenzij dit een ontwikkelaarssite is, betekent dit waarschijnlijk dat de planner in de WordPress-installatie niet werkt."
 
-#: src/admin.php:676, src/class-updraftplus.php:2900
+#: src/admin.php:676, src/class-updraftplus.php:2934
 msgid "If this is a backup created by a different backup plugin, then UpdraftPlus Premium may be able to help you."
 msgstr "Als dit een backup is, gemaakt door een andere backup-plugin, dan kan UpdraftPlus-Premium je misschien helpen."
 
@@ -3351,11 +3359,11 @@ msgstr "Als dit een backup is, gemaakt door een andere backup-plugin, dan kan Up
 msgid "However, UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern."
 msgstr "Echter, UpdraftPlus-archiven zijn standaard zip/SQL-bestanden - als je er zeker van bent dat het bestand de juiste opmaak heeft, kun je het hernoemen om het aan dat het gewenste patroon aan te passen."
 
-#: src/admin.php:675, src/admin.php:676, src/class-updraftplus.php:2900
+#: src/admin.php:675, src/admin.php:676, src/class-updraftplus.php:2934
 msgid "This file does not appear to be an UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
 msgstr "Dit bestand lijkt geen UpdraftPlus-backuparchief te zijn (zulke bestanden zijn zip- of gz-bestanden, die een naam hebben als: backup_(tijd)_(sitenaam)_(code)_(type).(zip|gz))."
 
-#: src/admin.php:3407, src/includes/class-wpadmin-commands.php:152,
+#: src/admin.php:3473, src/includes/class-wpadmin-commands.php:152,
 #: src/restorer.php:1462
 msgid "Backup created by unknown source (%s) - cannot be restored."
 msgstr "Backup gemaakt door een onbekende bron (%s) - kan niet teruggezet worden."
@@ -3381,7 +3389,7 @@ msgstr "De UpdraftPlus-module om bestanden te benaderen (%s) ondersteunt het wee
 msgid "No settings were found"
 msgstr "Er zijn geen instellingen gevonden"
 
-#: src/class-updraftplus.php:3021
+#: src/class-updraftplus.php:3100
 msgid "One or more backups has been added from scanning remote storage; note that these backups will not be automatically deleted through the \"retain\" settings; if/when you wish to delete them then you must do so manually."
 msgstr "Na het scannen van de externe opslag zijn een of meer backups toegevoegd; let op: deze backups worden niet automatisch verwijderd door de 'retain'-instellingen; deze backups dienen handmatig verwijderd te worden."
 
@@ -3407,7 +3415,7 @@ msgstr ""
 msgid "Remove"
 msgstr "Verwijderen"
 
-#: src/methods/s3.php:840
+#: src/methods/s3.php:846
 msgid "Other %s FAQs."
 msgstr "Andere %s-FAQ's."
 
@@ -3415,16 +3423,16 @@ msgstr "Andere %s-FAQ's."
 msgid "Check this to receive more information and emails on the backup process - useful if something is going wrong."
 msgstr "Vink dit aan om meer informatie en e-mails over het backupproces te ontvangen - handig als er iets fout gaat."
 
-#: src/addons/morefiles.php:445, src/admin.php:3114
+#: src/addons/morefiles.php:445, src/admin.php:3173
 msgid "If entering multiple files/directories, then separate them with commas. For entities at the top level, you can use a * at the start or end of the entry as a wildcard."
 msgstr "Als je meerdere bestanden/directories invoert, scheid ze dan met een komma. Gebruik a* aan het begin of einde als wildcard voor het toplevel."
 
-#: src/class-updraftplus.php:4786, src/methods/ftp.php:309,
+#: src/class-updraftplus.php:4911, src/methods/ftp.php:309,
 #: src/restorer.php:1493
 msgid "Your hosting company must enable these functions before %s can work."
 msgstr "De hostingprovider moet deze functies activeren voordat %s kan werken."
 
-#: src/class-updraftplus.php:4786, src/methods/ftp.php:309
+#: src/class-updraftplus.php:4911, src/methods/ftp.php:309
 msgid "Your web server's PHP installation has these functions disabled: %s."
 msgstr "De PHP-installatie van de webserver heeft deze functies uitgeschakeld: %s."
 
@@ -3444,7 +3452,7 @@ msgstr "Reguliere niet-versleutelde FTP"
 msgid "Backup created by:"
 msgstr "Backup gemaakt door:"
 
-#: src/udaddons/options.php:482
+#: src/udaddons/options.php:485
 msgid "Available to claim on this site"
 msgstr "Beschikbaar om op te vragen op deze site"
 
@@ -3494,15 +3502,15 @@ msgstr "De betaalde toegang tot UpdraftPlus-updates voor deze site is verlopen. 
 msgid "Dismiss from main dashboard (for %s weeks)"
 msgstr "Toon dit niet meer op het Dashboard (gedurende %s weken)"
 
-#: src/class-updraftplus.php:4836
+#: src/class-updraftplus.php:4961
 msgid "The attempt to undo the double-compression succeeded."
 msgstr "De poging de dubbele compressie ongedaan te maken is gelukt."
 
-#: src/class-updraftplus.php:4813, src/class-updraftplus.php:4834
+#: src/class-updraftplus.php:4938, src/class-updraftplus.php:4959
 msgid "The attempt to undo the double-compression failed."
 msgstr "De poging de dubbele compressie ongedaan te maken is mislukt."
 
-#: src/class-updraftplus.php:4806
+#: src/class-updraftplus.php:4931
 msgid "The database file appears to have been compressed twice - probably the website you downloaded it from had a mis-configured webserver."
 msgstr "Dit databasebestand lijkt twee keer gecomprimeerd te zijn - waarschijnlijk was de webserver van de website waarvan je dit bestand gedownloadet hebt, verkeerd geconfigureerd."
 
@@ -3535,7 +3543,7 @@ msgstr "Geen plaats meer op dit account: er zijn slechts %d bytes over van het a
 msgid "Errors occurred:"
 msgstr "Er zijn fouten opgetreden:"
 
-#: src/admin.php:3612
+#: src/admin.php:3678
 msgid "Follow this link to download the log file for this restoration (needed for any support requests)."
 msgstr "Klik op deze link om het logbestand voor deze terugplaatsing te downloaden (nodig voor eventuele supportaanvragen)."
 
@@ -3563,7 +3571,7 @@ msgstr "Er bestaan niet-verwijderde mappen van een vorige terugzet-actie (geliev
 msgid "The amount of time allowed for WordPress plugins to run is very low (%s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %s seconds or more)"
 msgstr "De toegestane werkingstijd voor WordPress-plugins is zeer kort (%s seconden) - je kunt deze het beste verhogen om te vermijden dat backups mislukken door tijdgebrek (neem contact op met de hostingprovider voor hulp - het betreft de PHP-instelling 'max_execution_time'; de aanbevolen waarde is %s seconden of meer)."
 
-#: src/addons/migrator.php:253
+#: src/addons/migrator.php:261
 msgid "Disabled this plugin: %s: re-activate it manually when you are ready."
 msgstr "Deze plugin is uitgeschakeld: %s: schakel hem weer met de hand in als je klaar bent."
 
@@ -3572,7 +3580,7 @@ msgstr "Deze plugin is uitgeschakeld: %s: schakel hem weer met de hand in als je
 msgid "The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company."
 msgstr "De connectie %s duurde te lang; als je de server correct opgegeven hebt, wordt dit vaak veroorzaakt door de firewall die de verbinding blokkeert - je kunt dit het beste navragen bij de hostingprovider."
 
-#: src/addons/moredatabase.php:137, src/admin.php:1363
+#: src/addons/moredatabase.php:137, src/admin.php:1415
 msgid "Messages:"
 msgstr "Berichten:"
 
@@ -3732,7 +3740,7 @@ msgstr "Accounts gemaakt op rackspacecloud.com zijn VS-accounts; accounts gemaak
 msgid "Authorisation failed (check your credentials)"
 msgstr "Autorisatie mislukt (controleer de inloggegevens) "
 
-#: src/methods/updraftvault.php:568, src/udaddons/options.php:267
+#: src/methods/updraftvault.php:568, src/udaddons/options.php:270
 msgid "An unknown error occurred when trying to connect to UpdraftPlus.Com"
 msgstr "Er is een onbekende fout opgetreden tijdens het verbinding maken met UpdraftPlus.com"
 
@@ -3748,15 +3756,15 @@ msgstr "Proberen..."
 msgid "The new user's RackSpace console password is (this will not be shown again):"
 msgstr "Het RackSpace-console-wachtwoord van de nieuwe gebruiker is (dit wordt niet opnieuw getoond):"
 
-#: src/admin.php:661, src/admin.php:3902
+#: src/admin.php:661, src/admin.php:3954
 msgid "Error data:"
 msgstr "Foutgegevens:"
 
-#: src/admin.php:3563
+#: src/admin.php:3629
 msgid "Backup does not exist in the backup history"
 msgstr "Backup bestaat niet in de backup-geschiedenis"
 
-#: src/admin.php:2526
+#: src/admin.php:2585
 msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old). You should press this button to delete them as soon as you have verified that the restoration worked."
 msgstr "De WordPress-installatie bevat oude mappen van voor de terugzet-/migratieactie (technische informatie: deze hebben het achtervoegsel -old). Je kunt het beste op deze knop drukken om die bestanden te verwijderen, zodra je gecontroleerd hebt dat de terugzetactie gelukt is."
 
@@ -3812,7 +3820,7 @@ msgstr "Gebruik de sectie 'Rapporteren' om het e-mailadres in te stellen dat geb
 msgid "Debugging information"
 msgstr "Foutopsporingsinformatie"
 
-#: src/addons/reporting.php:211, src/admin.php:3313
+#: src/addons/reporting.php:211, src/admin.php:3372
 msgid "Uploaded to:"
 msgstr "Uploaden naar:"
 
@@ -3872,7 +3880,7 @@ msgstr "%s logo"
 msgid "%s did not return the expected response - check your log file for more details"
 msgstr "%s gaf niet het verwachte resultaat - kijk de logbestanden na voor meer details."
 
-#: src/methods/s3.php:287
+#: src/methods/s3.php:292
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it"
 msgstr "De vereiste PHP-module %s is niet geïnstalleerd - vraag de hostingprovider om deze ín te schakelen"
 
@@ -3885,7 +3893,7 @@ msgid "Your site's admin email address (%s) will be used."
 msgstr "Het e-mailadres van de websitebeheerder (%s) wordt gebruikt."
 
 #: src/admin.php:698, src/methods/updraftvault.php:302,
-#: src/methods/updraftvault.php:347, src/udaddons/options.php:246
+#: src/methods/updraftvault.php:347, src/udaddons/options.php:249
 msgid "Connect"
 msgstr "Verbinden"
 
@@ -3893,7 +3901,7 @@ msgstr "Verbinden"
 msgid "For more reporting features, use the Reporting add-on."
 msgstr "Gebruik de addon 'Rapportage' voor meer rapportageopties, ."
 
-#: src/class-updraftplus.php:4616
+#: src/class-updraftplus.php:4725
 msgid "(version: %s)"
 msgstr "(versie: %s)"
 
@@ -3966,39 +3974,39 @@ msgstr "Dit is een WordPress-multisite-installatie (te weten een netwerk)."
 msgid "UpdraftPlus warning:"
 msgstr "UpdraftPlus-waarschuwing:"
 
-#: src/udaddons/options.php:488
+#: src/udaddons/options.php:491
 msgid "(or connect using the form on this page if you have already purchased it)"
 msgstr "(of maak verbinding, gebruikmakend van het formulier op deze pagina, als je hem al gekocht hebt)"
 
-#: src/udaddons/options.php:474
+#: src/udaddons/options.php:477
 msgid "please  follow this link to update the plugin in order to activate it"
 msgstr "klik op deze link om de plugin bij te werken, zodat deze ook geactiveerd wordt"
 
-#: src/udaddons/options.php:471
+#: src/udaddons/options.php:474
 msgid "please follow this link to update the plugin in order to get it"
 msgstr "klik op deze link om de plugin bij te werken, zodat je deze ook krijgt"
 
-#: src/udaddons/options.php:461, src/udaddons/options.php:463
+#: src/udaddons/options.php:464, src/udaddons/options.php:466
 msgid "latest"
 msgstr "laatste"
 
-#: src/udaddons/options.php:459
+#: src/udaddons/options.php:462
 msgid "Your version: %s"
 msgstr "Versie: %s"
 
-#: src/udaddons/options.php:457, src/udaddons/options.php:457
+#: src/udaddons/options.php:460, src/udaddons/options.php:460
 msgid "You've got it"
 msgstr "Je hebt het"
 
-#: src/udaddons/options.php:418
+#: src/udaddons/options.php:421
 msgid "UpdraftPlus Support"
 msgstr "UpdraftPlus-support"
 
-#: src/udaddons/options.php:376
+#: src/udaddons/options.php:379
 msgid "An update containing your addons is available for UpdraftPlus - please follow this link to get it."
 msgstr "Er is een update beschikbaar met de add-ons voor UpdraftPlus - klik hier om bij te werken."
 
-#: src/udaddons/options.php:365, src/udaddons/updraftplus-addons.php:290
+#: src/udaddons/options.php:368, src/udaddons/updraftplus-addons.php:290
 msgid "UpdraftPlus Addons"
 msgstr "UPdraftPlus-add-ons"
 
@@ -4034,7 +4042,7 @@ msgstr "Het is niet gelukt contact te maken met UpdraftPlus.com"
 msgid "Reporting"
 msgstr "Rapportage"
 
-#: src/admin.php:4359
+#: src/admin.php:4412
 msgid "Options (raw)"
 msgstr "Opties (raw)"
 
@@ -4062,91 +4070,91 @@ msgstr "De vrije ruimte bij de hostingprovider is zeer laag - er is slechts %s M
 msgid "The amount of memory (RAM) allowed for PHP is very low (%s Mb) - you should increase it to avoid failures due to insufficient memory (consult your web hosting company for more help)"
 msgstr "De hoeveelheid geheugen (RAM) die toegekend is voor PHP is zeer laag (%s MB) - verhoog deze limiet om toekomstige fouten door te weinig geheugen te voorkomen (neem contact op met de hostingprovider voor meer hulp)"
 
-#: src/udaddons/options.php:553
+#: src/udaddons/options.php:556
 msgid "Manage Addons"
 msgstr "De add-ons beheren"
 
-#: src/udaddons/options.php:489, src/udaddons/options.php:489
+#: src/udaddons/options.php:492, src/udaddons/options.php:492
 msgid "Buy It"
 msgstr "Koop hem"
 
-#: src/udaddons/options.php:488
+#: src/udaddons/options.php:491
 msgid "Get it from the UpdraftPlus.Com Store"
 msgstr "Haal hem op in de UpdraftPlus.com-winkel"
 
-#: src/udaddons/options.php:482, src/udaddons/options.php:484
+#: src/udaddons/options.php:485, src/udaddons/options.php:487
 msgid "activate it on this site"
 msgstr "activeer hem op deze site"
 
-#: src/udaddons/options.php:484
+#: src/udaddons/options.php:487
 msgid "You have an inactive purchase"
 msgstr "Je hebt een niet-actieve aankoop"
 
-#: src/udaddons/options.php:474
+#: src/udaddons/options.php:477
 msgid "Assigned to this site"
 msgstr "Toegewezen aan deze site"
 
-#: src/udaddons/options.php:471
+#: src/udaddons/options.php:474
 msgid "Available for this site (via your all-addons purchase)"
 msgstr "Beschikbaar voor deze site (dmv de aankoop van alle add-ons)"
 
-#: src/udaddons/options.php:465
+#: src/udaddons/options.php:468
 msgid "(apparently a pre-release or withdrawn release)"
 msgstr "(blijkbaar een pre-release of ingetrokken release)"
 
-#: src/udaddons/options.php:420
+#: src/udaddons/options.php:423
 msgid "Go here"
 msgstr "Ga hierheen"
 
-#: src/udaddons/options.php:420
+#: src/udaddons/options.php:423
 msgid "Need to get support?"
 msgstr "Hulp nodig?"
 
-#: src/udaddons/options.php:402
+#: src/udaddons/options.php:405
 msgid "An error occurred when trying to retrieve your add-ons."
 msgstr "Er is een fout opgetreden tijdens de poging de add-ons op te halen."
 
-#: src/udaddons/options.php:335
+#: src/udaddons/options.php:338
 msgid "An unknown response was received. Response was:"
 msgstr "Er is een onbekend antwoord ontvangen; het antwoord was:"
 
-#: src/udaddons/options.php:334
+#: src/udaddons/options.php:337
 msgid "Claim not granted - your account login details were wrong"
 msgstr "Claim afgewezen - de inloggegevens zijn onjuist"
 
-#: src/udaddons/options.php:332
+#: src/udaddons/options.php:335
 msgid "Please wait whilst we make the claim..."
 msgstr "Een moment geduld, we zijn de claim aan het indienen..."
 
-#: src/udaddons/options.php:285
+#: src/udaddons/options.php:288
 msgid "Errors occurred when trying to connect to UpdraftPlus.Com:"
 msgstr "Er zijn fouten opgetreden tijdens het verbinden met UpdraftPlus.com:"
 
-#: src/udaddons/options.php:278
+#: src/udaddons/options.php:281
 msgid "You are presently <strong>not connected</strong> to an UpdraftPlus.Com account."
 msgstr "Je bent op dit moment <strong>niet verbonden</strong> met een UpdraftPlus.com-account."
 
-#: src/udaddons/options.php:274
+#: src/udaddons/options.php:277
 msgid "If you bought new add-ons, then follow this link to refresh your connection"
 msgstr "Als je nieuwe add-ons hebt aangeschaft, gebruik dan de volgende link om de verbinding te vernieuwen"
 
-#: src/udaddons/options.php:273
+#: src/udaddons/options.php:276
 msgid "You are presently <strong>connected</strong> to an UpdraftPlus.Com account."
 msgstr "Je bent nu <strong>verbonden</strong> met een UpdraftPlus.com-account."
 
-#: src/udaddons/options.php:244
+#: src/udaddons/options.php:247
 msgid "Interested in knowing about your UpdraftPlus.Com password security? Read about it here."
 msgstr "Meer weten over de UpdraftPlus.com-wachtwoordbeveiliging? Lees er hier meer over."
 
-#: src/udaddons/options.php:172
+#: src/udaddons/options.php:175
 msgid "Forgotten your details?"
 msgstr "Gegevens vergeten?"
 
-#: src/udaddons/options.php:161
+#: src/udaddons/options.php:164
 msgid "Not yet got an account (it's free)? Go get one!"
 msgstr "Nog geen account? Maak er gratis een aan."
 
-#: src/udaddons/options.php:128
+#: src/udaddons/options.php:131
 msgid "Connect with your UpdraftPlus.Com account"
 msgstr "Verbinding maken met het UpdraftPlus.com-account"
 
@@ -4186,15 +4194,15 @@ msgstr "Zonder gaat versleuteling een stuk langzamer."
 msgid "Your web-server does not have the %s module installed."
 msgstr "De module %s is niet geïnstalleerd op de webserver."
 
-#: src/addons/googlecloud.php:984, src/methods/googledrive.php:1142
+#: src/addons/googlecloud.php:984, src/methods/googledrive.php:1148
 msgid "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
 msgstr "<strong>(Je lijkt al geautoriseerd te zijn,</strong> maar je kunt je natuurlijk opnieuw aanmelden als er een probleem optreedt)."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:68
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:67
 msgid "Drop backup files here"
 msgstr "Plaats backupbestanden hier"
 
-#: src/admin.php:2405
+#: src/admin.php:2464
 msgid "Does nothing happen when you attempt backups?"
 msgstr "Gebeurt er niets wanneer je een backup probeert te maken?"
 
@@ -4235,11 +4243,11 @@ msgstr "Uploaden mislukt"
 msgid "You can send a backup to more than one destination with an add-on."
 msgstr "Je kunt een backup naar meer dan één locatie sturen met een add-on."
 
-#: src/admin.php:2744
+#: src/admin.php:2803
 msgid "Note: the progress bar below is based on stages, NOT time. Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal."
 msgstr "Let op: de voortgangsbalk hieronder is gebaseerd op stadia, NIET op tijd. Stop de backup niet omdat het lijkt alsof de overblijvende hoeveelheid een tijdje constant blijft - dat is normaal."
 
-#: src/admin.php:2642
+#: src/admin.php:2701
 msgid "(%s%%, file %s of %s)"
 msgstr "(%s%%, bestand %s van %s)"
 
@@ -4280,11 +4288,11 @@ msgstr "Backup is van: %s."
 msgid "%s settings test result:"
 msgstr "Testresultaat van instelling %s:"
 
-#: src/admin.php:3474, src/admin.php:3476
+#: src/admin.php:3540, src/admin.php:3542
 msgid "(Not finished)"
 msgstr "(Nog niet klaar)"
 
-#: src/admin.php:3476
+#: src/admin.php:3542
 msgid "If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes."
 msgstr "Als je meer backups ziet dan verwacht, dan is dat waarschijnlijk omdat het verwijderen van oude backups niet gebeurt tot een nieuwe backup klaar is."
 
@@ -4296,73 +4304,73 @@ msgstr "Plaats hem <b>niet</b> in de uploads- of plugins-map, dat zou tot recurs
 msgid "This is where UpdraftPlus will write the zip files it creates initially.  This directory must be writable by your web server. It is relative to your content directory (which by default is called wp-content)."
 msgstr "Hier zal UpdraftPlus de zip-bestanden wegschrijven die het oorspronkelijk aanmaakt. Deze map moet beschrijfbaar gemaakt zijn door de webserver. Hij staat onder de content-map (die standaard wp-content heet)."
 
-#: src/admin.php:2739
+#: src/admin.php:2798
 msgid "Job ID: %s"
 msgstr "Taak-ID: %s"
 
-#: src/admin.php:2724
+#: src/admin.php:2783
 msgid "last activity: %ss ago"
 msgstr "laatste activiteit: %ss geleden"
 
-#: src/admin.php:2723
+#: src/admin.php:2782
 msgid "next resumption: %d (after %ss)"
 msgstr "volgende hervatting: %d (na %ss)"
 
-#: src/admin.php:2706, src/central/bootstrap.php:411,
+#: src/admin.php:2765, src/central/bootstrap.php:411,
 #: src/central/bootstrap.php:418, src/methods/updraftvault.php:382,
 #: src/methods/updraftvault.php:467
 msgid "Unknown"
 msgstr "Onbekend"
 
-#: src/admin.php:2656
+#: src/admin.php:2715
 msgid "Backup finished"
 msgstr "Backup klaar"
 
-#: src/admin.php:2651
+#: src/admin.php:2710
 msgid "Waiting until scheduled time to retry because of errors"
 msgstr "Wachten tot het geplande tijdstip om een nieuwe poging als gevolg van fouten te doen"
 
-#: src/admin.php:2647
+#: src/admin.php:2706
 msgid "Pruning old backup sets"
 msgstr "Oude backupsets verwijderen"
 
-#: src/admin.php:2635
+#: src/admin.php:2694
 msgid "Uploading files to remote storage"
 msgstr "Bestanden uploaden naar de externe opslag"
 
-#: src/admin.php:2704
+#: src/admin.php:2763
 msgid "Encrypted database"
 msgstr "Versleutelde database"
 
-#: src/admin.php:2696
+#: src/admin.php:2755
 msgid "Encrypting database"
 msgstr "Database versleutelen"
 
-#: src/admin.php:2670
+#: src/admin.php:2729
 msgid "Created database backup"
 msgstr "Database-backup gemaakt"
 
-#: src/admin.php:2683
+#: src/admin.php:2742
 msgid "table: %s"
 msgstr "tabel: %s"
 
-#: src/admin.php:2681
+#: src/admin.php:2740
 msgid "Creating database backup"
 msgstr "Database-backup aan het creëren"
 
-#: src/admin.php:2629
+#: src/admin.php:2688
 msgid "Created file backup zips"
 msgstr "Bestandenbackup-zips gecreëerd"
 
-#: src/admin.php:2616
+#: src/admin.php:2675
 msgid "Creating file backup zips"
 msgstr "Bestandenbackup-zips creëren"
 
-#: src/admin.php:2611
+#: src/admin.php:2670
 msgid "Backup begun"
 msgstr "Backup is begonnen"
 
-#: src/admin.php:2454
+#: src/admin.php:2513
 msgid "Backups in progress:"
 msgstr "Backup bezig:"
 
@@ -4382,7 +4390,7 @@ msgstr "map"
 msgid "UpdraftPlus needed to create a %s in your content directory, but failed - please check your file permissions and enable the access (%s)"
 msgstr "UpdraftPlus moest een %s maken in de content-directory, maar dat is mislukt - controleer de bestandsrechten en schakel toegang in (%s)"
 
-#: src/class-updraftplus.php:3118
+#: src/class-updraftplus.php:3206
 msgid "The backup has not finished; a resumption is scheduled"
 msgstr "De backup is niet afgemaakt; er is een hervatting gepland"
 
@@ -4396,7 +4404,7 @@ msgstr "Deze website wordt weinig bezocht en UpdraftPlus krijgt niet de verwacht
 msgid "The %s authentication could not go ahead, because something else on your site is breaking it. Try disabling your other plugins and switching to a default theme. (Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins. Turning off any debugging settings may also help)."
 msgstr "De autorisatie %s kon niet gestart worden omdat iets anders op de site dat voorkomt. Probeer de andere plugins te deactiveren en naar het standaardthema over te schakelen. (Meer bepaald, je moet op zoek naar de component die output verstuurt (waarschijnlijk PHP-waarschuwingen/fouten) voordat de pagina begint. Het uitzetten van foutopsporingsinstellingen kan ook helpen)."
 
-#: src/admin.php:2277
+#: src/admin.php:2336
 msgid "Your PHP memory limit (set by your web hosting company) is very low. UpdraftPlus attempted to raise it but was unsuccessful. This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary)."
 msgstr "De PHP-geheugenlimiet (bepaald door de hostingprovider) is zeer laag. UpdraftPlus probeerde het te verhogen maar dat mislukte. Deze plugin kan problemen ondervinden met een geheugenlimiet van minder dan 64 MB - zeker als je zeer grote bestanden geüploadet hebt (anderzijds, veel sites werken perfect met een 32MB-limiet - mogelijk is dat hier anders)."
 
@@ -4475,23 +4483,23 @@ msgstr "Meer plugins"
 msgid "Support"
 msgstr "Support"
 
-#: src/class-updraftplus.php:4769
+#: src/class-updraftplus.php:4894
 msgid "UpdraftPlus was unable to find the table prefix when scanning the database backup."
 msgstr "UpdraftPlus heeft geen tabel-prefix gevonden tijdens het scannen van de database-backup."
 
-#: src/class-updraftplus.php:4761
+#: src/class-updraftplus.php:4886
 msgid "This database backup is missing core WordPress tables: %s"
 msgstr "Er ontbreken essentiële WordPress-tabellen in deze database-backup: %s"
 
-#: src/class-updraftplus.php:4649
+#: src/class-updraftplus.php:4774
 msgid "You are importing from a newer version of WordPress (%s) into an older one (%s). There are no guarantees that WordPress can handle this."
 msgstr "Je importeert een nieuwere WordPress-versie (%s) in een oudere (%s). Er is geen garantie dat WordPress hier goed mee om kan gaan."
 
-#: src/class-updraftplus.php:4648, src/class-updraftplus.php:4655
+#: src/class-updraftplus.php:4773, src/class-updraftplus.php:4780
 msgid "%s version: %s"
 msgstr ""
 
-#: src/class-updraftplus.php:4565
+#: src/class-updraftplus.php:4674
 msgid "The database is too small to be a valid WordPress database (size: %s Kb)."
 msgstr "De database is te klein om een geldige WordPress-database te kunnen zijn (grootte: %s kB)."
 
@@ -4500,7 +4508,7 @@ msgstr "De database is te klein om een geldige WordPress-database te kunnen zijn
 msgid "Be safe with an automatic backup"
 msgstr "Altijd veilig met een automatische backup"
 
-#: src/admin.php:2229
+#: src/admin.php:2288
 msgid "If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
 msgstr "Als je deze tekst nog steeds kunt lezen nadat de pagina is geladen, dan is er op de site een probleem met JavaScript of jQuery."
 
@@ -4548,11 +4556,11 @@ msgstr "Naar de computer downloaden"
 msgid "Delete from your web server"
 msgstr "Van de webserver verwijderen"
 
-#: src/admin.php:3444
+#: src/admin.php:3510
 msgid "You appear to be missing one or more archives from this multi-archive set."
 msgstr "In deze multi-archief-set lijken een of meerdere archieven te ontbreken."
 
-#: src/admin.php:3441
+#: src/admin.php:3507
 msgid "(%d archive(s) in set)."
 msgstr "(%d archieven in de set)."
 
@@ -4572,7 +4580,7 @@ msgstr "Waarschuwingen:"
 msgid "Error: the server sent an empty response."
 msgstr "Fout: de server heeft een lege reactie gestuurd."
 
-#: src/admin.php:1990
+#: src/admin.php:2049
 msgid "This looks like a file created by UpdraftPlus, but this install does not know about this type of object: %s. Perhaps you need to install an add-on?"
 msgstr "Dit lijkt een bestand te zijn dat gegenereerd is door UpdraftPlus, maar de installatie kent dit type object: %s niet. Mogelijk moet je nog een add-on installeren."
 
@@ -4608,7 +4616,7 @@ msgstr "Bestand niet gevonden (je moet het uploaden): %s"
 msgid "No such backup set exists"
 msgstr "Een dergelijk backupbestand bestaat niet"
 
-#: src/admin.php:1239
+#: src/admin.php:1291
 msgid "The backup archive for this file could not be found. The remote storage method in use (%s) does not allow us to retrieve files. To perform any restoration using UpdraftPlus, you will need to obtain a copy of this file and place it inside UpdraftPlus's working folder"
 msgstr "Het backuparchief voor dit bestand is niet gevonden. De externe opslagmethode (%s) die gebruikt wordt, staat het niet toe de bestanden op te halen. Om toch te kunnen terugzetten met behulp van UpdraftPlus, haal je handmatig de bestanden op en plaats deze in de werkmap van UpdraftPlus."
 
@@ -4624,27 +4632,27 @@ msgstr "Openen van zip-bestand (%s) mislukt - %s"
 msgid "WordPress root directory server path: %s"
 msgstr "Rootdirectory van de WordPress-server: %s"
 
-#: src/methods/s3.php:845
+#: src/methods/s3.php:851
 msgid "%s end-point"
 msgstr "eindpunt %s"
 
-#: src/methods/s3.php:807
+#: src/methods/s3.php:813
 msgid "... and many more!"
 msgstr "... en veel meer."
 
-#: src/methods/s3generic.php:52, src/methods/s3generic.php:60
+#: src/methods/s3generic.php:52, src/methods/s3generic.php:61
 msgid "S3 (Compatible)"
 msgstr "S3 (compatibel)"
 
-#: src/admin.php:3758
+#: src/admin.php:1205
 msgid "File is not locally present - needs retrieving from remote storage"
 msgstr "Bestand is lokaal niet aanwezig - moet opgehaald worden van de externe opslag"
 
-#: src/admin.php:3745
+#: src/admin.php:3810
 msgid "Looking for %s archive: file name: %s"
 msgstr "Archief %s aan het opzoeken: bestandsnaam: %s"
 
-#: src/admin.php:3706
+#: src/admin.php:3771
 msgid "Final checks"
 msgstr "Eindcontroles"
 
@@ -4656,7 +4664,7 @@ msgstr "Vink dit aan om overbodige backupbestanden van de server te verwijderen 
 msgid "Drop encrypted database files (db.gz.crypt files) here to upload them for decryption"
 msgstr "Plaats hier de versleutelde databasebestanden (db.gz.crypt-bestanden) die je wilt uploaden ter ontsleuteling."
 
-#: src/admin.php:3103
+#: src/admin.php:3162
 msgid "Your wp-content directory server path: %s"
 msgstr "Het server-pad van de wp-content-directory is: %s"
 
@@ -4672,20 +4680,20 @@ msgstr "Toon onbewerkte backup- en bestandenlijst"
 msgid "Processing files - please wait..."
 msgstr "Bestanden verwerken -  even geduld..."
 
-#: src/admin.php:3904,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:28
+#: src/admin.php:3956,
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:27
 msgid "Please consult this FAQ for help on what to do about it."
 msgstr "Bekijk deze FAQ voor hulp."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:28
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:27
 msgid "Your WordPress installation has a problem with outputting extra whitespace. This can corrupt backups that you download from here."
 msgstr "De WordPress-installatie heeft een probleem met het toevoegen van extra blanco ruimte. De backups die je hiervandaan downloadt kunnen daardoor beschadigd zijn."
 
-#: src/class-updraftplus.php:4573
+#: src/class-updraftplus.php:4682
 msgid "Failed to open database file."
 msgstr "Database-bestand openen is mislukt."
 
-#: src/admin.php:4329
+#: src/admin.php:4382
 msgid "Known backups (raw)"
 msgstr "Bekende backups (onbewerkt)"
 
@@ -4697,17 +4705,17 @@ msgstr "Gevonden bestanden:"
 msgid "Requested table engine (%s) is not present - changing to MyISAM."
 msgstr "De gevraagd tabel-engine (%s) is niet beschikbaar - overstappen naar MyISAM"
 
-#: src/addons/migrator.php:333
+#: src/addons/migrator.php:341
 msgid "This looks like a migration (the backup is from a site with a different address/URL), but you did not check the option to search-and-replace the database. That is usually a mistake."
 msgstr "Dit lijkt op een migratie (de backup is afkomstig van een site met een ander(e) adres/url), maar je hebt de optie 'zoek-en-vervang' in de database niet geselecteerd. Dit is meestal een vergissing."
 
-#: src/admin.php:3778
+#: src/admin.php:3830
 msgid "file is size:"
 msgstr "Bestand heeft grootte:"
 
-#: src/addons/googlecloud.php:941, src/addons/migrator.php:371,
-#: src/addons/migrator.php:374, src/addons/migrator.php:377, src/admin.php:945,
-#: src/admin.php:2234, src/backup.php:3043, src/updraftplus.php:156
+#: src/addons/googlecloud.php:941, src/addons/migrator.php:379,
+#: src/addons/migrator.php:382, src/addons/migrator.php:385, src/admin.php:945,
+#: src/admin.php:2293, src/backup.php:3043, src/updraftplus.php:156
 msgid "Go here for more information."
 msgstr "Ga hierheen voor meer informatie."
 
@@ -4715,7 +4723,7 @@ msgstr "Ga hierheen voor meer informatie."
 msgid "Some files are still downloading or being processed - please wait."
 msgstr "Sommige bestanden worden nog gedownloadet of verwerkt - even geduld."
 
-#: src/class-updraftplus.php:4621, src/class-updraftplus.php:4639
+#: src/class-updraftplus.php:4746, src/class-updraftplus.php:4764
 msgid "This backup set is from a different site - this is not a restoration, but a migration. You need the Migrator add-on in order to make this work."
 msgstr "De backupset is afkomstig van een andere site - dit is geen terugzet-actie maar een migratie. Je hebt de migratie-add-on nodig om dit te kunnen uitvoeren."
 
@@ -4761,7 +4769,7 @@ msgstr "Fout - een dergelijk bestand bestaat niet op %s"
 
 #: src/addons/azure.php:217, src/methods/addon-base-v2.php:219,
 #: src/methods/cloudfiles.php:405, src/methods/cloudfiles.php:422,
-#: src/methods/googledrive.php:1001, src/methods/openstack-base.php:420,
+#: src/methods/googledrive.php:1006, src/methods/openstack-base.php:420,
 #: src/methods/stream-base.php:265, src/methods/stream-base.php:272,
 #: src/methods/stream-base.php:285
 msgid "%s Error"
@@ -4785,25 +4793,25 @@ msgstr "Fout %s - het samenvoegen van deelbestanden is mislukt"
 msgid "%s authentication failed"
 msgstr "Het aanmelden op %s is mislukt"
 
-#: src/addons/googlecloud.php:432, src/addons/migrator.php:462,
-#: src/admin.php:1935, src/admin.php:1982, src/admin.php:1990,
+#: src/addons/googlecloud.php:432, src/addons/migrator.php:470,
+#: src/admin.php:1994, src/admin.php:2041, src/admin.php:2049,
 #: src/class-updraftplus.php:886, src/class-updraftplus.php:892,
-#: src/class-updraftplus.php:4544, src/class-updraftplus.php:4546,
-#: src/class-updraftplus.php:4672, src/class-updraftplus.php:4679,
-#: src/class-updraftplus.php:4714, src/methods/googledrive.php:364,
-#: src/methods/s3.php:316
+#: src/class-updraftplus.php:4653, src/class-updraftplus.php:4655,
+#: src/class-updraftplus.php:4797, src/class-updraftplus.php:4804,
+#: src/class-updraftplus.php:4839, src/methods/googledrive.php:369,
+#: src/methods/s3.php:321
 msgid "Error: %s"
 msgstr "Fout: %s"
 
-#: src/admin.php:3040
+#: src/admin.php:3099
 msgid "Backup directory specified exists, but is <b>not</b> writable."
 msgstr "De opgegeven backupdirectory bestaat, maar je hebt er <b>geen schrijfrechten</b>."
 
-#: src/admin.php:3038
+#: src/admin.php:3097
 msgid "Backup directory specified does <b>not</b> exist."
 msgstr "De opgegeven backupdirectory  <b>bestaat niet</b>."
 
-#: src/admin.php:2751, src/admin.php:2994
+#: src/admin.php:2810, src/admin.php:3053
 msgid "Warning: %s"
 msgstr "Waarschuwing: %s"
 
@@ -4831,7 +4839,7 @@ msgstr "Er is een fout opgetreden tijdens het sluiten van het laatste databasebe
 msgid "Warnings encountered:"
 msgstr "Er zijn waarschuwingen:"
 
-#: src/class-updraftplus.php:3106
+#: src/class-updraftplus.php:3194
 msgid "The backup apparently succeeded (with warnings) and is now complete"
 msgstr "De backup is geslaagd (met waarschuwingen) en is nu afgerond"
 
@@ -4839,27 +4847,27 @@ msgstr "De backup is geslaagd (met waarschuwingen) en is nu afgerond"
 msgid "Your free disk space is very low - only %s Mb remain"
 msgstr "De vrije schijfruimte is erg beperkt - nog maar %s MB beschikbaar"
 
-#: src/addons/migrator.php:470
+#: src/addons/migrator.php:478
 msgid "New site:"
 msgstr "Nieuwe site:"
 
-#: src/addons/migrator.php:445
+#: src/addons/migrator.php:453
 msgid "Migrated site (from UpdraftPlus)"
 msgstr "Gemigreerde site (van UpdraftPlus)"
 
-#: src/addons/migrator.php:392
+#: src/addons/migrator.php:400
 msgid "Enter details for where this new site is to live within your multisite install:"
 msgstr "Geef aan waar deze nieuwe site moet komen in de multisite-installatie:"
 
-#: src/addons/migrator.php:391
+#: src/addons/migrator.php:399
 msgid "Information needed to continue:"
 msgstr "Er is informatie nodig om verder te gaan:"
 
-#: src/addons/migrator.php:348
+#: src/addons/migrator.php:356
 msgid "Network activating theme:"
 msgstr "Het netwerk activeert thema:"
 
-#: src/addons/migrator.php:338
+#: src/addons/migrator.php:346
 msgid "Processed plugin:"
 msgstr "Uitgevoerde plugin:"
 
@@ -4871,15 +4879,15 @@ msgstr "Controleer de schrijfrechten: het maken en openen van een nieuwe directo
 msgid "Some servers advertise encrypted FTP as available, but then time-out (after a long time) when you attempt to use it. If you find this happenning, then go into the \"Expert Options\" (below) and turn off SSL there."
 msgstr "Sommige servers claimen dat er versleutelde FTP beschikbaar is, maar geven (na lange tijd) een time-out als je het probeert te gebruiken. Als dit optreedt, ga dan naar 'Expert-opties\" (onderaan) en schakel daar SSL uit."
 
-#: src/methods/s3.php:821
+#: src/methods/s3.php:827
 msgid "Your web server's PHP installation does not included a required module (%s). Please contact your web hosting provider's support and ask for them to enable it."
 msgstr "Er ontbreekt een noodzakelijke module (%s) in de PHP-installatie op de webserver. Neem contact op met de hostingprovider en vraag deze module in te schakelen."
 
-#: src/methods/s3.php:1073
+#: src/methods/s3.php:1082
 msgid "Please check your access credentials."
 msgstr "Controleer de inloggegevens."
 
-#: src/addons/s3-enhanced.php:179, src/methods/s3.php:1051
+#: src/addons/s3-enhanced.php:179, src/methods/s3.php:1060
 msgid "The error reported by %s was:"
 msgstr "De door %s gerapporteerde fout was:"
 
@@ -4887,7 +4895,7 @@ msgstr "De door %s gerapporteerde fout was:"
 msgid "Please supply the requested information, and then continue."
 msgstr "Vul de gevraagde informatie in, en ga daarna verder."
 
-#: src/class-updraftplus.php:4690, src/restorer.php:1706
+#: src/class-updraftplus.php:4815, src/restorer.php:1706
 msgid "Site information:"
 msgstr "Site-informatie:"
 
@@ -4895,21 +4903,21 @@ msgstr "Site-informatie:"
 msgid "Your database user does not have permission to create tables. We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
 msgstr "De databasegebruiker heeft niet de rechten die nodig zijn om een tabel aan te maken. We proberen terug te zetten door simpelweg de tabellen leeg te maken. Dit zou moeten werken als a) je terugzet vanaf een WordPress-versie met dezelfde databasestructuur, en b) de geïmporteerde database geen tabellen bevat die niet reeds aanwezig zijn in de huidige."
 
-#: src/addons/migrator.php:333, src/admin.php:2229,
-#: src/class-updraftplus.php:4683, src/restorer.php:2033
+#: src/addons/migrator.php:341, src/admin.php:2288,
+#: src/class-updraftplus.php:4808, src/restorer.php:2033
 msgid "Warning:"
 msgstr "Waarschuwing:"
 
-#: src/class-updraftplus.php:4672, src/class-updraftplus.php:4675,
+#: src/class-updraftplus.php:4797, src/class-updraftplus.php:4800,
 #: src/restorer.php:154
 msgid "You are running on WordPress multisite - but your backup is not of a multisite site."
 msgstr "Je hebt een WordPress-multisite-installatie maar de backup is niet van een multisite-installatie."
 
-#: src/admin.php:3733
+#: src/admin.php:3798
 msgid "Skipping restoration of WordPress core when importing a single site into a multisite installation. If you had anything necessary in your WordPress directory then you will need to re-add it manually from the zip file."
 msgstr "Het importeren van de WordPress-core wordt overgeslagen bij het importeren van een enkele-site-installatie in een multisite-installatie. Mocht je iets essentieels in de WordPress-map hebben staan, dan kun je dat handmatig toevoegen vanuit het zip-bestand."
 
-#: src/admin.php:3169, src/methods/updraftvault.php:286
+#: src/admin.php:3228, src/methods/updraftvault.php:286
 msgid "Your web server's PHP installation does not included a <strong>required</strong> (for %s) module (%s). Please contact your web hosting provider's support and ask for them to enable it."
 msgstr "Er ontbreekt een (voor %s) <strong>vereiste</strong> module (%s) in de PHP-installatie van de webserver. Neem contact op met de supportafdeling van de hostingprovider en vraag deze module te activeren."
 
@@ -4964,7 +4972,7 @@ msgstr "Verwijderen... het kan even duren voordat de communicatie met de externe
 msgid "Also delete from remote storage"
 msgstr "Ook verwijderen van externe opslag"
 
-#: src/admin.php:2481
+#: src/admin.php:2540
 msgid "Latest UpdraftPlus.com news:"
 msgstr "Laatste nieuws van UpdraftPlus.com:"
 
@@ -4981,7 +4989,7 @@ msgstr "Premium-versie"
 msgid "News"
 msgstr "Nieuws"
 
-#: src/admin.php:1409, src/includes/class-wpadmin-commands.php:465
+#: src/admin.php:1469, src/includes/class-wpadmin-commands.php:465
 msgid "Backup set not found"
 msgstr "Backup-set niet gevonden"
 
@@ -5007,7 +5015,7 @@ msgstr "Blog-link"
 msgid "Testing %s Settings..."
 msgstr "%s-instellingen testen..."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:58
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:57
 msgid "Or, you can place them manually into your UpdraftPlus directory (usually wp-content/updraft), e.g. via FTP, and then use the \"rescan\" link above."
 msgstr "Je kunt ze ook handmatig in de UpdraftPlus-directory plaatsen (meestal 'wp-content/updraft'), bijvoorbeeld mbv FTP, en vervolgens hierboven op 'Opnieuw scannen' klikken."
 
@@ -5035,77 +5043,77 @@ msgstr "Begonnen met zoeken naar dit gegeven"
 msgid "Store at"
 msgstr "Opslaan in"
 
-#: src/addons/migrator.php:1380
+#: src/addons/migrator.php:1388
 msgid "\"%s\" has no primary key, manual change needed on row %s."
 msgstr "\"%s\" heeft geen primaire sleutel, handmatige aanpassing van rij %s is vereist."
 
-#: src/addons/migrator.php:1258
+#: src/addons/migrator.php:1266
 msgid "rows: %d"
 msgstr "aantal rijen: %d"
 
-#: src/addons/migrator.php:1134
+#: src/addons/migrator.php:1142
 msgid "Time taken (seconds):"
 msgstr "Verstreken tijd (in seconden):"
 
-#: src/addons/migrator.php:1133, src/admin.php:659
+#: src/addons/migrator.php:1141, src/admin.php:659
 msgid "Errors:"
 msgstr "Fouten:"
 
-#: src/addons/migrator.php:1132
+#: src/addons/migrator.php:1140
 msgid "SQL update commands run:"
 msgstr "Uitgevoerde SQL-update-commando's:"
 
-#: src/addons/migrator.php:1131
+#: src/addons/migrator.php:1139
 msgid "Changes made:"
 msgstr "Gemaakte aanpassingen:"
 
-#: src/addons/migrator.php:1130
+#: src/addons/migrator.php:1138
 msgid "Rows examined:"
 msgstr "Onderzochte rijen:"
 
-#: src/addons/migrator.php:1129
+#: src/addons/migrator.php:1137
 msgid "Tables examined:"
 msgstr "Onderzochte tabellen:"
 
-#: src/addons/migrator.php:1018
+#: src/addons/migrator.php:1026
 msgid "Could not get list of tables"
 msgstr "Er kan geen lijst met tabellen gemaakt worden"
 
-#: src/addons/migrator.php:963
+#: src/addons/migrator.php:971
 msgid "Warning: the database's site URL (%s) is different to what we expected (%s)"
 msgstr "Waarschuwing: de site-url in de database (%s) is anders dan verwacht (%s)"
 
-#: src/addons/migrator.php:952
+#: src/addons/migrator.php:960
 msgid "Nothing to do: the site URL is already: %s"
 msgstr "Niets te doen: de site-URL is al: %s"
 
-#: src/addons/migrator.php:916, src/addons/migrator.php:920,
-#: src/addons/migrator.php:924, src/addons/migrator.php:929,
-#: src/addons/migrator.php:933, src/addons/migrator.php:938
+#: src/addons/migrator.php:924, src/addons/migrator.php:928,
+#: src/addons/migrator.php:932, src/addons/migrator.php:937,
+#: src/addons/migrator.php:941, src/addons/migrator.php:946
 msgid "Error: unexpected empty parameter (%s, %s)"
 msgstr "Fout: onverwachte lege parameter (%s, %s)"
 
-#: src/addons/migrator.php:876
+#: src/addons/migrator.php:884
 msgid "Database: search and replace site URL"
 msgstr "Database: zoek en vervang site-URL"
 
-#: src/addons/migrator.php:787, src/addons/migrator.php:1115
+#: src/addons/migrator.php:795, src/addons/migrator.php:1123
 msgid "Failed: we did not understand the result returned by the %s operation."
 msgstr "Mislukt: het teruggemelde resultaat van operatie %s is niet duidelijk."
 
-#: src/addons/migrator.php:785, src/addons/migrator.php:1113
+#: src/addons/migrator.php:793, src/addons/migrator.php:1121
 msgid "Failed: the %s operation was not able to start."
 msgstr "Mislukt: de opdracht %s kon niet gestart worden."
 
-#: src/addons/migrator.php:550
+#: src/addons/migrator.php:558
 msgid "(learn more)"
 msgstr "(meer te weten komen)"
 
-#: src/addons/migrator.php:550
+#: src/addons/migrator.php:558
 msgid "Search and replace site location in the database (migrate)"
 msgstr "Zoek en vervang site-locatie in de database (migreren)"
 
-#: src/addons/migrator.php:550
+#: src/addons/migrator.php:558
 msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
 msgstr "Alle verwijzingen in de database naar deze site-locatie zullen worden vervangen door de huidige site-url: %s"
 
@@ -5113,7 +5121,7 @@ msgstr "Alle verwijzingen in de database naar deze site-locatie zullen worden ve
 msgid "Blog uploads"
 msgstr "Site-uploads"
 
-#: src/addons/migrator.php:377, src/addons/multisite.php:649
+#: src/addons/migrator.php:385, src/addons/multisite.php:649
 msgid "Must-use plugins"
 msgstr "Dringend aangeraden plugins"
 
@@ -5152,7 +5160,7 @@ msgstr "Pad naar directory"
 #: src/addons/lockadmin.php:156, src/addons/moredatabase.php:246,
 #: src/addons/sftp.php:431, src/addons/webdav.php:109,
 #: src/methods/openstack2.php:158, src/methods/updraftvault.php:346,
-#: src/udaddons/options.php:132
+#: src/udaddons/options.php:135
 msgid "Password"
 msgstr "Wachtwoord"
 
@@ -5218,8 +5226,8 @@ msgid "Failed: We were not able to place a file in that directory - please check
 msgstr "Mislukt: er kon geen bestand in die map geplaatst worden - controleer de inloggegevens"
 
 #: src/addons/googlecloud.php:693, src/addons/googlecloud.php:727,
-#: src/addons/googlecloud.php:733, src/addons/sftp.php:516, src/admin.php:2805,
-#: src/admin.php:2840, src/admin.php:2849, src/methods/addon-base-v2.php:289,
+#: src/addons/googlecloud.php:733, src/addons/sftp.php:516, src/admin.php:2864,
+#: src/admin.php:2899, src/admin.php:2908, src/methods/addon-base-v2.php:289,
 #: src/methods/stream-base.php:301
 msgid "Failed"
 msgstr "Mislukt"
@@ -5244,7 +5252,7 @@ msgstr "Deelbestand %s: Er is een fout %s opgetreden"
 #: src/methods/addon-base-v2.php:76, src/methods/addon-base-v2.php:117,
 #: src/methods/addon-base-v2.php:149, src/methods/addon-base-v2.php:195,
 #: src/methods/addon-base-v2.php:269, src/methods/ftp.php:42,
-#: src/methods/googledrive.php:167, src/methods/googledrive.php:169,
+#: src/methods/googledrive.php:172, src/methods/googledrive.php:174,
 #: src/methods/stream-base.php:27, src/methods/stream-base.php:144,
 #: src/methods/stream-base.php:150, src/methods/stream-base.php:184,
 #: src/methods/stream-base.php:246
@@ -5312,96 +5320,96 @@ msgstr "Fout: het uploaden van een bestand naar %s is mislukt (zie het logboek v
 msgid "You do not appear to be authenticated with Dropbox"
 msgstr "Je bent kennelijk niet geregistreerd bij Dropbox"
 
-#: src/methods/s3.php:1068
+#: src/methods/s3.php:1077
 msgid "The communication with %s was not encrypted."
 msgstr "De communicatie met %s was niet versleuteld."
 
-#: src/methods/s3.php:1066
+#: src/methods/s3.php:1075
 msgid "The communication with %s was encrypted."
 msgstr "De communicatie met %s was versleuteld."
 
-#: src/addons/googlecloud.php:756, src/methods/s3.php:1063
+#: src/addons/googlecloud.php:756, src/methods/s3.php:1072
 msgid "We accessed the bucket, and were able to create files within it."
 msgstr "Er was toegang tot de container en het was mogelijk bestanden erin aan te maken."
 
 #: src/addons/googlecloud.php:750, src/addons/googlecloud.php:764,
-#: src/methods/s3.php:1061, src/methods/s3.php:1073
+#: src/methods/s3.php:1070, src/methods/s3.php:1082
 msgid "We successfully accessed the bucket, but the attempt to create a file in it failed."
 msgstr "De container kon met succes kunnen benaderd worden, maar de poging een bestand aan te maken is mislukt."
 
 #: src/addons/googlecloud.php:750, src/addons/googlecloud.php:764,
-#: src/methods/s3.php:1061, src/methods/s3.php:1073
+#: src/methods/s3.php:1070, src/methods/s3.php:1082
 msgid "Failure"
 msgstr "Mislukt"
 
-#: src/methods/s3.php:1049
+#: src/methods/s3.php:1058
 msgid "Failure: We could not successfully access or create such a bucket. Please check your access credentials, and if those are correct then try another bucket name (as another %s user may already have taken your name)."
 msgstr "Mislukt: De toegang tot of het aanmaken van de container is mislukt. Controleer de toegangsgegevens en als deze correct zijn, kies dan een andere container-naam (aangezien een andere gebruiker %s de gekozen naam wellicht al heeft vastgelegd)."
 
 #: src/addons/s3-enhanced.php:152, src/methods/openstack2.php:144,
-#: src/methods/s3.php:1043
+#: src/methods/s3.php:1052
 msgid "Region"
 msgstr "Regio"
 
 #: src/addons/googlecloud.php:120, src/addons/googlecloud.php:710,
-#: src/methods/s3.php:1025
+#: src/methods/s3.php:1034
 msgid "Failure: No bucket details were given."
 msgstr "Mislukt: Er zijn geen details van de container opgegeven."
 
-#: src/methods/s3.php:1003
+#: src/methods/s3.php:1012
 msgid "API secret"
 msgstr "API-geheim"
 
-#: src/methods/s3.php:882
+#: src/methods/s3.php:888
 msgid "Enter only a bucket name or a bucket and path. Examples: mybucket, mybucket/mypath"
 msgstr "Voer alleen een naam in voor een container en evt. een pad. Voorbeelden: 'mijncontainer', 'mijncontainer/mijnpad'"
 
-#: src/methods/s3.php:881
+#: src/methods/s3.php:887
 msgid "%s location"
 msgstr "Locatie %s"
 
-#: src/methods/s3.php:877
+#: src/methods/s3.php:883
 msgid "%s secret key"
 msgstr "Geheime sleutel %s"
 
-#: src/methods/s3.php:873
+#: src/methods/s3.php:879
 msgid "%s access key"
 msgstr "Toegangssleutel %s"
 
-#: src/methods/s3.php:838
+#: src/methods/s3.php:844
 msgid "If you see errors about SSL certificates, then please go here for help."
 msgstr "Als je een fout ziet over SSL-certificaten, ga dan hierheen voor hulp."
 
-#: src/methods/s3.php:836
+#: src/methods/s3.php:842
 msgid "Get your access key and secret key <a href=\"%s\">from your %s console</a>, then pick a (globally unique - all %s users) bucket name (letters and numbers) (and optionally a path) to use for storage. This bucket will be created for you if it does not already exist."
 msgstr "Gebruik de toegangssleutel en geheime sleutel <a href=\"%s\">van de %s console</a> en kies vervolgens een (unieke - alle %s gebruikers) naam voor de data-container (letters en cijfers) (en optioneel een pad) om te gebruiken voor de opslag. Als de data-container nog niet bestaat wordt deze aangemaakt."
 
-#: src/methods/s3.php:457, src/methods/s3.php:569, src/methods/s3.php:641,
-#: src/methods/s3.php:744
+#: src/methods/s3.php:462, src/methods/s3.php:574, src/methods/s3.php:646,
+#: src/methods/s3.php:749
 msgid "%s Error: Failed to access bucket %s. Check your permissions and credentials."
 msgstr "Fout %s: de toegang tot de data-container %s is mislukt. Controleer de bestandsrechten en inloggegevens. "
 
-#: src/methods/s3.php:727, src/methods/s3.php:737, src/methods/s3.php:773
+#: src/methods/s3.php:732, src/methods/s3.php:742, src/methods/s3.php:778
 msgid "%s Error: Failed to download %s. Check your permissions and credentials."
 msgstr "Fout %s: downloaden van %s is mislukt. Controleer de bestandsrechten en inloggegevens."
 
-#: src/methods/s3.php:435
+#: src/methods/s3.php:440
 msgid "%s re-assembly error (%s): (see log file for more)"
 msgstr "Fout %s bij het opnieuw samenvoegen (%s): (zie logbestand voor meer details)"
 
-#: src/methods/s3.php:431
+#: src/methods/s3.php:436
 msgid "%s upload (%s): re-assembly failed (see log for more details)"
 msgstr "%s upload (%s): opnieuw samenvoegen mislukt (zie logbestand voor meer details)"
 
-#: src/methods/s3.php:415
+#: src/methods/s3.php:420
 msgid "%s chunk %s: upload failed"
 msgstr "%s deelbestand %s: upload mislukt"
 
-#: src/methods/s3.php:405
+#: src/methods/s3.php:410
 msgid "%s error: file %s was shortened unexpectedly"
 msgstr "Fout %s: bestand %s werd onverwacht ingekort"
 
-#: src/methods/s3.php:383
+#: src/methods/s3.php:388
 msgid "%s upload: getting uploadID for multipart upload failed - see log file for more details"
 msgstr "Upload %s: het ophalen van een upload-ID voor multipart-upload is mislukt - zie logbestand voor meer details"
 
@@ -5432,11 +5440,11 @@ msgid "Username"
 msgstr "Gebruikersnaam"
 
 #: src/methods/cloudfiles-new.php:173, src/methods/cloudfiles.php:526,
-#: src/methods/s3.php:999
+#: src/methods/s3.php:1008
 msgid "API key"
 msgstr "API-sleutel"
 
-#: src/addons/migrator.php:286, src/addons/migrator.php:1872,
+#: src/addons/migrator.php:294, src/addons/migrator.php:1880,
 #: src/addons/moredatabase.php:82, src/addons/moredatabase.php:84,
 #: src/addons/moredatabase.php:86, src/addons/sftp.php:485,
 #: src/addons/sftp.php:489, src/addons/sftp.php:493, src/addons/webdav.php:143,
@@ -5446,12 +5454,12 @@ msgstr "API-sleutel"
 #: src/methods/ftp.php:380, src/methods/ftp.php:384,
 #: src/methods/openstack2.php:173, src/methods/openstack2.php:178,
 #: src/methods/openstack2.php:183, src/methods/openstack2.php:188,
-#: src/methods/s3.php:999, src/methods/s3.php:1003
+#: src/methods/s3.php:1008, src/methods/s3.php:1012
 msgid "Failure: No %s was given."
 msgstr "Mislukt: er is geen %s opgegeven."
 
 #: src/methods/cloudfiles-new.php:107, src/methods/cloudfiles.php:468,
-#: src/methods/openstack-base.php:541, src/methods/s3.php:825
+#: src/methods/openstack-base.php:541, src/methods/s3.php:831
 msgid "UpdraftPlus's %s module <strong>requires</strong> %s. Please do not file any support requests; there is no alternative."
 msgstr "De UpdraftPlus-module %s <strong>vereist</strong> %s. Maak geen support-ticket aan; er is geen alternatief voor deze module."
 
@@ -5490,7 +5498,7 @@ msgstr "Je moet ook deze belangrijke FAQ lezen."
 msgid "Get your API key <a href=\"https://mycloud.rackspace.com/\">from your Rackspace Cloud console</a> (read instructions <a href=\"http://www.rackspace.com/knowledge_center/article/rackspace-cloud-essentials-1-generating-your-api-key\">here</a>), then pick a container name to use for storage. This container will be created for you if it does not already exist."
 msgstr "Haal de API-key op bij <a href=\"https://mycloud.rackspace.com/\">via de 'Rackspace-cloud'-console</a> (instructies vind je op <a href=\"http://www.rackspace.com/knowledge_center/article/rackspace-cloud-essentials-1-generating-your-api-key\"></a>). Kies vervolgens een containernaam om te gebruiken voor de opslag. Als de container nog niet bestaat, wordt hij aangemaakt."
 
-#: src/admin.php:735, src/methods/backup-module.php:242
+#: src/admin.php:735, src/methods/backup-module.php:247
 msgid "Test %s Settings"
 msgstr "Instellingen %s testen"
 
@@ -5506,13 +5514,13 @@ msgstr "'Cloud Files'-fout - bestand uploaden mislukt"
 #: src/addons/sftp.php:136, src/addons/sftp.php:148,
 #: src/methods/cloudfiles.php:159, src/methods/cloudfiles.php:201,
 #: src/methods/openstack-base.php:81, src/methods/openstack-base.php:280,
-#: src/methods/s3.php:351, src/methods/s3.php:363, src/methods/s3.php:364
+#: src/methods/s3.php:356, src/methods/s3.php:368, src/methods/s3.php:369
 msgid "%s Error: Failed to upload"
 msgstr "Fout %s: uploaden mislukt"
 
 #: src/addons/googlecloud.php:203, src/addons/googlecloud.php:208,
 #: src/class-updraftplus.php:1016, src/methods/cloudfiles.php:142,
-#: src/methods/googledrive.php:919, src/methods/googledrive.php:924
+#: src/methods/googledrive.php:924, src/methods/googledrive.php:929
 msgid "%s Error: Failed to open local file"
 msgstr "Fout %s: lokaal bestand kan niet geopend worden"
 
@@ -5528,87 +5536,87 @@ msgstr "'Cloud Files'-fout - het aanmaken en openen van de container is mislukt"
 msgid "Cloud Files authentication failed"
 msgstr "Autorisatie bij 'Cloud Files' mislukt"
 
-#: src/addons/googlecloud.php:993, src/methods/googledrive.php:1152
+#: src/addons/googlecloud.php:993, src/methods/googledrive.php:1166
 msgid "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here once and click this link to complete authentication with Google."
 msgstr "<strong>Nadat</strong> je de instellingen opgeslagen hebt (door hieronder op 'Bewaar wijzigingen' te klikken), kom je hier weer terug en klik je op deze link om de autorisatie bij Google af te ronden."
 
 #: src/addons/googlecloud.php:933, src/addons/onedrive.php:974,
-#: src/methods/googledrive.php:1110
+#: src/methods/googledrive.php:1114
 msgid "Client Secret"
 msgstr "Client-geheim"
 
-#: src/addons/googlecloud.php:928, src/methods/googledrive.php:1107
+#: src/addons/googlecloud.php:928, src/methods/googledrive.php:1111
 msgid "If Google later shows you the message \"invalid_client\", then you did not enter a valid client ID here."
 msgstr "Als Google later het bericht toont 'invalid_client', dan heb je hier een ongeldig client-ID ingevoerd."
 
 #: src/addons/googlecloud.php:925, src/addons/onedrive.php:970,
-#: src/methods/googledrive.php:1106
+#: src/methods/googledrive.php:1110
 msgid "Client ID"
 msgstr "Client-ID"
 
-#: src/addons/googlecloud.php:914, src/methods/googledrive.php:1090
+#: src/addons/googlecloud.php:914, src/methods/googledrive.php:1095
 msgid "You must add the following as the authorised redirect URI (under \"More Options\") when asked"
 msgstr "Je moet het volgende toevoegen als de geautoriseerde doorstuur-URI (onder 'Meer opties'), als daarom gevraagd wordt."
 
-#: src/addons/googlecloud.php:914, src/methods/googledrive.php:1090
+#: src/addons/googlecloud.php:914, src/methods/googledrive.php:1095
 msgid "Select 'Web Application' as the application type."
 msgstr "Selecteer 'Webapplicatie' als type toepassing."
 
-#: src/addons/googlecloud.php:912, src/methods/googledrive.php:1088
+#: src/addons/googlecloud.php:912, src/methods/googledrive.php:1093
 msgid "For longer help, including screenshots, follow this link. The description below is sufficient for more expert users."
 msgstr "Volg deze link voor meer hulp, inclusief schermafbeeldingen. De omschrijving hieronder is voldoende voor meer ervaren gebruikers."
 
 #: src/methods/addon-base-v2.php:243, src/methods/cloudfiles.php:458,
 #: src/methods/dropbox.php:497, src/methods/ftp.php:321,
-#: src/methods/googledrive.php:1071, src/methods/openstack-base.php:531,
-#: src/methods/s3.php:797, src/methods/stream-base.php:218
+#: src/methods/googledrive.php:1076, src/methods/openstack-base.php:531,
+#: src/methods/s3.php:802, src/methods/stream-base.php:218
 msgid "%s is a great choice, because UpdraftPlus supports chunked uploads - no matter how big your site is, UpdraftPlus can upload it a little at a time, and not get thwarted by timeouts."
 msgstr "%s is een goede keuze, aangezien UpdraftPlus in stukken verdeelde uploads ondersteunt - het maakt niet uit hoe groot de site is, UpdraftPlus kan hem in kleine stukjes uploaden, zonder last te krijgen van time-outs."
 
 #: src/addons/googlecloud.php:499, src/addons/googlecloud.php:500,
-#: src/addons/googlecloud.php:783, src/methods/googledrive.php:526,
-#: src/methods/googledrive.php:527, src/methods/googledrive.php:537,
-#: src/methods/googledrive.php:538
+#: src/addons/googlecloud.php:783, src/methods/googledrive.php:531,
+#: src/methods/googledrive.php:532, src/methods/googledrive.php:542,
+#: src/methods/googledrive.php:543
 msgid "Account is not authorized."
 msgstr "Het account is niet geautoriseerd."
 
-#: src/methods/googledrive.php:450, src/methods/googledrive.php:496,
-#: src/methods/googledrive.php:502, src/methods/googledrive.php:504,
+#: src/methods/googledrive.php:455, src/methods/googledrive.php:501,
+#: src/methods/googledrive.php:507, src/methods/googledrive.php:509,
 #: src/methods/stream-base.php:200
 msgid "Failed to upload to %s"
 msgstr "Upload naar %s mislukt"
 
-#: src/methods/googledrive.php:479
+#: src/methods/googledrive.php:484
 msgid "Account full: your %s account has only %d bytes left, but the file to be uploaded is %d bytes"
 msgstr "De accountruimte is vol: er nog maar %d bytes over op het account %s, maar het te uploaden bestand is %d bytes groot"
 
-#: src/methods/googledrive.php:570, src/methods/googledrive.php:606
+#: src/methods/googledrive.php:575, src/methods/googledrive.php:611
 msgid "Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Drive."
 msgstr "Nog geen toegangs-token van Google ontvangen - je moet (opnieuw) autoriseren om verbinding te maken met Google-Drive."
 
 #: src/addons/googlecloud.php:635, src/addons/onedrive.php:794,
-#: src/methods/googledrive.php:423
+#: src/methods/googledrive.php:428
 msgid "you have authenticated your %s account."
 msgstr "Je heb het account %s geautoriseerd."
 
 #: src/addons/googlecloud.php:635, src/addons/googlecloud.php:756,
 #: src/addons/onedrive.php:794, src/addons/sftp.php:550,
 #: src/methods/addon-base-v2.php:298, src/methods/cloudfiles.php:582,
-#: src/methods/googledrive.php:423, src/methods/openstack-base.php:495,
-#: src/methods/s3.php:1063, src/methods/stream-base.php:312
+#: src/methods/googledrive.php:428, src/methods/openstack-base.php:495,
+#: src/methods/s3.php:1072, src/methods/stream-base.php:312
 msgid "Success"
 msgstr "Gelukt"
 
 #: src/addons/onedrive.php:748, src/methods/dropbox.php:684,
-#: src/methods/dropbox.php:693, src/methods/googledrive.php:397
+#: src/methods/dropbox.php:693, src/methods/googledrive.php:402
 msgid "Your %s quota usage: %s %% used, %s available"
 msgstr "Het %s quotaverbruik: %s %% gebruikt, %s beschikbaar"
 
-#: src/addons/googlecloud.php:438, src/methods/googledrive.php:370
+#: src/addons/googlecloud.php:438, src/methods/googledrive.php:375
 msgid "Authorization failed"
 msgstr "Autorisatie mislukt"
 
-#: src/addons/googlecloud.php:430, src/methods/googledrive.php:362
+#: src/addons/googlecloud.php:430, src/methods/googledrive.php:367
 msgid "No refresh token was received from Google. This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it. Re-check it, then follow the link to authenticate again. Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again."
 msgstr "Er is geen ververs-'token' ontvangen van Google. Dit betekent meestal dat er een verkeerd 'client-secret' ingevoerd is of dat je (hieronder) nog niet opnieuw geautoriseerd hebt na correctie ervan. Controleer nogmaals en klik dan op de link voor bevestiging. Als dat niet werkt, gebruik dan de expertmodus om alle instellingen te wissen en een nieuw Google-client-ID/secret aan te maken en opnieuw te starten."
 
@@ -5634,8 +5642,8 @@ msgstr "Je hebt de UpdraftPlus-uitbreiding %s niet ge&iuml;nstalleerd - haal hem
 msgid "You need to re-authenticate with %s, as your existing credentials are not working."
 msgstr "Je moet je opnieuw aanmelden bij %s, aangezien de huidige inloggegevens niet werken."
 
-#: src/addons/migrator.php:1767, src/admin.php:2808, src/admin.php:2842,
-#: src/admin.php:2846, src/admin.php:3763, src/admin.php:3776,
+#: src/addons/migrator.php:1775, src/admin.php:1233, src/admin.php:2867,
+#: src/admin.php:2901, src/admin.php:2905, src/admin.php:3828,
 #: src/restorer.php:2273, src/restorer.php:2378
 msgid "OK"
 msgstr "Ok"
@@ -5644,7 +5652,7 @@ msgstr "Ok"
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr "Tabel-prefix is veranderd: %s tabelveld(en) worden dienovereenkomstig aangepast:"
 
-#: src/addons/migrator.php:1146, src/restorer.php:2170
+#: src/addons/migrator.php:1154, src/restorer.php:2170
 msgid "the database query being run was:"
 msgstr "de uitgevoerde database-query was:"
 
@@ -5652,13 +5660,13 @@ msgstr "de uitgevoerde database-query was:"
 msgid "will restore as:"
 msgstr "wordt teruggezet als:"
 
-#: src/class-updraftplus.php:4661, src/restorer.php:1688,
+#: src/class-updraftplus.php:4786, src/restorer.php:1688,
 #: src/restorer.php:1777, src/restorer.php:1803
 msgid "Old table prefix:"
 msgstr "Oude tabel-prefix:"
 
 #: src/addons/reporting.php:70, src/addons/reporting.php:169,
-#: src/backup.php:960, src/class-updraftplus.php:4616
+#: src/backup.php:960, src/class-updraftplus.php:4725
 msgid "Backup of:"
 msgstr "Backup van:"
 
@@ -5730,60 +5738,60 @@ msgstr "Backup-bestand niet beschikbaar."
 msgid "UpdraftPlus is not able to directly restore this kind of entity. It must be restored manually."
 msgstr "UpdraftPlus kan dit type bestand niet direct terugzetten. Het moet handmatig teruggezet worden."
 
-#: src/admin.php:3784, src/admin.php:3785
+#: src/admin.php:3836, src/admin.php:3837
 msgid "Could not find one of the files for restoration"
 msgstr "Een van de terug te zetten bestanden kon niet gevonden worden"
 
-#: src/admin.php:3894
+#: src/admin.php:3946
 msgid "Error message"
 msgstr "Foutmelding"
 
-#: src/admin.php:3781
+#: src/admin.php:3833
 msgid "The backup records do not contain information about the proper size of this file."
 msgstr "De backup-gegevens bevatten geen informatie over de precieze grootte van dit bestand."
 
-#: src/admin.php:3773
+#: src/admin.php:3825
 msgid "Archive is expected to be size:"
 msgstr "De verwachte grootte van het archief is:"
 
-#: src/admin.php:3657
+#: src/admin.php:3722
 msgid "If making a request for support, please include this information:"
 msgstr "Vermeld de volgende informatie als je een supportverzoek indient:"
 
-#: src/admin.php:3656
+#: src/admin.php:3721
 msgid "ABORT: Could not find the information on which entities to restore."
 msgstr "Annuleren: Er kon geen informatie gevonden worden over welke gegevens teruggezet moeten worden."
 
-#: src/admin.php:3610
+#: src/admin.php:3676
 msgid "UpdraftPlus Restoration: Progress"
 msgstr "UpdraftPlus-terugzetproces: voortgang"
 
-#: src/admin.php:3562
+#: src/admin.php:3628
 msgid "This backup does not exist in the backup history - restoration aborted. Timestamp:"
 msgstr "Deze backup komt niet voor in de backup-geschiedenis -  terugzetproces afgebroken. Tijdstempel:"
 
-#: src/admin.php:3504
+#: src/admin.php:3570
 msgid "After pressing this button, you will be given the option to choose which components you wish to restore"
 msgstr "Nadat je op deze knop geklikt hebt, krijg je de optie te kiezen welke componenten je wilt terugzetten"
 
-#: src/admin.php:3513
+#: src/admin.php:3579
 msgid "Delete this backup set"
 msgstr "Deze backupset verwijderen"
 
-#: src/admin.php:3181
+#: src/admin.php:3240
 msgid "Good news: Your site's communications with %s can be encrypted. If you see any errors to do with encryption, then look in the 'Expert Settings' for more help."
 msgstr "Goed nieuws: communicatie met %s kan worden versleuteld. Kijk in de 'Expert-instellingen' voor meer hulp, als je problemen tegenkomt die te maken hebben met versleuteling, ."
 
-#: src/admin.php:3178
+#: src/admin.php:3237
 msgid "Your web server's PHP/Curl installation does not support https access. We cannot access %s without this support. Please contact your web hosting provider's support. %s <strong>requires</strong> Curl+https. Please do not file any support requests; there is no alternative."
 msgstr "De PHP/Curl-installatie van de webserver staat https-toegang niet toe. Daarom is er geen toegang mogelijk tot %s. Neem contact op met de supportafdeling van de hostingprovider. %s <strong>vereist</strong> Curl+HTTPS. Dien geen supportverzoek in bij UpdraftPlus; er is geen alternatief beschikbaar."
 
-#: src/admin.php:3176
+#: src/admin.php:3235
 msgid "Your web server's PHP/Curl installation does not support https access. Communications with %s will be unencrypted. Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on)."
 msgstr "De PHP/Curl-installatie van de webserver ondersteunt https-toegang niet. Communicatie met %s zal niet versleuteld worden. Vraag de webhost Curl/SSL te installeren om versleutelde toegang te kunnen gebruiken (m.b.v. een add-on)."
 
 #: src/methods/cloudfiles-new.php:107, src/methods/cloudfiles.php:468,
-#: src/methods/openstack-base.php:541, src/methods/s3.php:825
+#: src/methods/openstack-base.php:541, src/methods/s3.php:831
 msgid "Your web server's PHP installation does not included a required module (%s). Please contact your web hosting provider's support."
 msgstr "Er ontbreekt een vereiste module (%s) in de PHP-installatie van de webserver. Neemt contact op met de supportafdeling van de hostingprovider."
 
@@ -5819,23 +5827,23 @@ msgstr "Standaard maakt UpdraftPlus gebruik van zijn eigen SSL-certificaatcollec
 msgid "Use the server's SSL certificates"
 msgstr "Gebruik het SSL-certificaat van de server"
 
-#: src/admin.php:3042
+#: src/admin.php:3101
 msgid "If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process."
 msgstr "Als dat niet lukt, controleer dan de rechten op de server of kies een andere directory waarin je wel schrijfrechten hebt voor het webserver-proces."
 
-#: src/admin.php:3042
+#: src/admin.php:3101
 msgid "click here"
 msgstr "klik hier"
 
-#: src/admin.php:3042
+#: src/admin.php:3101
 msgid "or, to reset this option"
 msgstr "of om deze optie te resetten"
 
-#: src/admin.php:3042
+#: src/admin.php:3101
 msgid "Follow this link to attempt to create the directory and set the permissions"
 msgstr "Volg deze link om te proberen de map aan te maken en stel de rechten in"
 
-#: src/admin.php:3034
+#: src/admin.php:3093
 msgid "Backup directory specified is writable, which is good."
 msgstr "Je hebt schrijfrechten in de aangegeven backup-directory, dat is goed."
 
@@ -5875,7 +5883,7 @@ msgstr "Verzoek om backup te starten..."
 msgid "Cancel"
 msgstr "Annuleren"
 
-#: src/addons/reporting.php:233, src/admin.php:3325
+#: src/addons/reporting.php:233, src/admin.php:3384
 msgid "None"
 msgstr "Geen"
 
@@ -5892,7 +5900,7 @@ msgid "Database encryption phrase"
 msgstr "Frase voor database-versleuteling"
 
 #: src/templates/wp-admin/settings/form-contents.php:285,
-#: src/udaddons/options.php:130
+#: src/udaddons/options.php:133
 msgid "Email"
 msgstr "E-mailadres"
 
@@ -5900,11 +5908,11 @@ msgstr "E-mailadres"
 msgid "The above directories are everything, except for WordPress core itself which you can download afresh from WordPress.org."
 msgstr "Bovenstaande mappen omvatten alles, behalve de WordPress-core zelf. Die kun je downloaden van nl.wordpress.org."
 
-#: src/addons/morefiles.php:443, src/admin.php:3112
+#: src/addons/morefiles.php:443, src/admin.php:3171
 msgid "Exclude these:"
 msgstr "Sluit deze uit:"
 
-#: src/admin.php:3103
+#: src/admin.php:3162
 msgid "Any other directories found inside wp-content"
 msgstr "Andere mappen, gevonden binnen wp-content"
 
@@ -5920,49 +5928,49 @@ msgstr "Bv als de server overdag bezet is en je wilt de backup 's nachts uitvoer
 msgid "To fix the time at which a backup should take place,"
 msgstr "Om het tijdstip te verbeteren waarop een backup plaats moet vinden,"
 
-#: src/admin.php:3028
+#: src/admin.php:3087
 msgid "Monthly"
 msgstr "Maandelijks"
 
-#: src/admin.php:3027
+#: src/admin.php:3086
 msgid "Fortnightly"
 msgstr "Om de 14 dagen"
 
-#: src/admin.php:3026
+#: src/admin.php:3085
 msgid "Weekly"
 msgstr "Wekelijks"
 
-#: src/admin.php:3025
+#: src/admin.php:3084
 msgid "Daily"
 msgstr "Dagelijks"
 
-#: src/admin.php:694, src/admin.php:3008
+#: src/admin.php:694, src/admin.php:3067
 msgid "Download log file"
 msgstr "Download-logboek"
 
-#: src/admin.php:2905
+#: src/admin.php:2964
 msgid "The folder exists, but your webserver does not have permission to write to it."
 msgstr "De map bestaat, maar de webserver heeft niet de juiste rechten om naar deze map te schrijven."
 
-#: src/admin.php:2900
+#: src/admin.php:2959
 msgid "The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it. You should check with your hosting provider that this will not cause any problems"
 msgstr "De map is aangemaakt, maar de bestandsrechten moesten aangepast worden naar 777 (door iedereen beschrijfbaar) om bestanden naar de map te kunnen schrijven. Neem contact op met de hostingprovider om te controleren of dit geen problemen oplevert."
 
-#: src/admin.php:2886
+#: src/admin.php:2945
 msgid "The request to the filesystem to create the directory failed."
 msgstr "Het verzoek aan het bestandssysteem de directory aan te maken, is mislukt."
 
-#: src/addons/migrator.php:2245, src/admin.php:688, src/admin.php:2802,
-#: src/admin.php:2835, src/admin.php:3513,
+#: src/addons/migrator.php:2253, src/admin.php:688, src/admin.php:2861,
+#: src/admin.php:2894, src/admin.php:3579,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:5
 msgid "Delete"
 msgstr "Verwijderen"
 
-#: src/admin.php:2586
+#: src/admin.php:2645
 msgid "(None)"
 msgstr ""
 
-#: src/admin.php:2742
+#: src/admin.php:2801
 msgid "show log"
 msgstr "toon het logboek"
 
@@ -6067,7 +6075,7 @@ msgstr "Heb je support voor WordPress-multisite nodig?"
 msgid "Multisite"
 msgstr "Multisite"
 
-#: src/admin.php:2405
+#: src/admin.php:2464
 msgid "Go here for help."
 msgstr "Ga hierheen voor hulp."
 
@@ -6124,81 +6132,81 @@ msgstr "Backupset verwijderen"
 msgid "Download error: the server sent us a response which we did not understand."
 msgstr "Downloadfout: de server stuurde een reactie die onduidelijk is."
 
-#: src/addons/cloudfiles-enhanced.php:102, src/addons/migrator.php:772,
-#: src/addons/migrator.php:1018, src/addons/migrator.php:1099,
-#: src/addons/migrator.php:1146, src/addons/migrator.php:1380,
-#: src/addons/migrator.php:1706, src/addons/migrator.php:1733,
-#: src/addons/migrator.php:1739, src/addons/migrator.php:1801,
-#: src/addons/migrator.php:1841, src/addons/migrator.php:1880,
-#: src/addons/migrator.php:1890, src/addons/migrator.php:1895,
+#: src/addons/cloudfiles-enhanced.php:102, src/addons/migrator.php:780,
+#: src/addons/migrator.php:1026, src/addons/migrator.php:1107,
+#: src/addons/migrator.php:1154, src/addons/migrator.php:1388,
+#: src/addons/migrator.php:1714, src/addons/migrator.php:1741,
+#: src/addons/migrator.php:1747, src/addons/migrator.php:1809,
+#: src/addons/migrator.php:1849, src/addons/migrator.php:1888,
+#: src/addons/migrator.php:1898, src/addons/migrator.php:1903,
 #: src/addons/s3-enhanced.php:127, src/addons/s3-enhanced.php:132,
 #: src/addons/s3-enhanced.php:134, src/addons/sftp.php:814,
 #: src/addons/webdav.php:119, src/admin.php:82, src/admin.php:662,
-#: src/admin.php:3778, src/admin.php:3808, src/methods/remotesend.php:71,
+#: src/admin.php:3830, src/admin.php:3860, src/methods/remotesend.php:71,
 #: src/methods/remotesend.php:239, src/methods/updraftvault.php:465,
 #: src/restorer.php:1408
 msgid "Error:"
 msgstr "Fout:"
 
 #: src/admin.php:653,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:33
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:32
 msgid "calculating..."
 msgstr "berekenen..."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:57
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:56
 msgid "UpdraftPlus - Upload backup files"
 msgstr "UpdraftPlus - backup-bestanden uploaden"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:33
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:32
 msgid "refresh"
 msgstr "verversen"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:33
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:32
 msgid "Web-server disk space in use by UpdraftPlus"
 msgstr "Webserver-opslagruimte in gebruik door UpdraftPlus"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:33
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:32
 msgid "This is a count of the contents of your Updraft directory"
 msgstr "Dit is een telling van de inhoud van de Updraft-map."
 
-#: src/addons/google-enhanced.php:84, src/methods/googledrive.php:167,
-#: src/methods/googledrive.php:169, src/methods/googledrive.php:423,
-#: src/methods/googledrive.php:450, src/methods/googledrive.php:479,
-#: src/methods/googledrive.php:486, src/methods/googledrive.php:496,
-#: src/methods/googledrive.php:502, src/methods/googledrive.php:504,
-#: src/methods/googledrive.php:1070, src/methods/googledrive.php:1082,
-#: src/methods/googledrive.php:1082, src/methods/googledrive.php:1106,
-#: src/methods/googledrive.php:1110, src/methods/googledrive.php:1122,
-#: src/methods/googledrive.php:1132
+#: src/addons/google-enhanced.php:84, src/methods/googledrive.php:172,
+#: src/methods/googledrive.php:174, src/methods/googledrive.php:428,
+#: src/methods/googledrive.php:455, src/methods/googledrive.php:484,
+#: src/methods/googledrive.php:491, src/methods/googledrive.php:501,
+#: src/methods/googledrive.php:507, src/methods/googledrive.php:509,
+#: src/methods/googledrive.php:1075, src/methods/googledrive.php:1087,
+#: src/methods/googledrive.php:1087, src/methods/googledrive.php:1110,
+#: src/methods/googledrive.php:1114, src/methods/googledrive.php:1126,
+#: src/methods/googledrive.php:1136, src/methods/googledrive.php:1149
 msgid "Google Drive"
 msgstr "Google-Drive"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:48
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:47
 msgid "If you are using this, then turn Turbo/Road mode off."
 msgstr "Als je dit gebruikt, schakel dan de Turbo/Road-modus uit."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:48
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:47
 msgid "Opera web browser"
 msgstr "Browser Opera"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:36
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:35
 msgid "More tasks:"
 msgstr "Meer taken:"
 
-#: src/admin.php:2505
+#: src/admin.php:2564
 msgid "Download most recently modified log file"
 msgstr "Het meest recente logbestand downloaden"
 
-#: src/admin.php:2464, src/admin.php:2470, src/central/bootstrap.php:169
+#: src/admin.php:2523, src/admin.php:2529, src/central/bootstrap.php:169
 msgid "(Nothing yet logged)"
 msgstr "(Nog niets in het logboek)"
 
 #: src/addons/autobackup.php:325, src/addons/autobackup.php:420,
-#: src/admin.php:2463, src/admin.php:2468
+#: src/admin.php:2522, src/admin.php:2527
 msgid "Last log message"
 msgstr "Laatste logboek-bericht"
 
-#: src/addons/migrator.php:224, src/admin.php:693, src/admin.php:3504,
+#: src/addons/migrator.php:232, src/admin.php:693, src/admin.php:3570,
 #: src/templates/wp-admin/settings/tab-status.php:30
 msgid "Restore"
 msgstr "Terugzetten"
@@ -6208,9 +6216,9 @@ msgstr "Terugzetten"
 msgid "Backup Now"
 msgstr "Nu een backup maken"
 
-#: src/addons/migrator.php:1771, src/addons/moredatabase.php:247,
-#: src/addons/reporting.php:248, src/admin.php:299, src/admin.php:3300,
-#: src/admin.php:3373, src/admin.php:3862,
+#: src/addons/migrator.php:1779, src/addons/moredatabase.php:247,
+#: src/addons/reporting.php:248, src/admin.php:299, src/admin.php:3359,
+#: src/admin.php:3439, src/admin.php:3914,
 #: src/includes/class-wpadmin-commands.php:147,
 #: src/includes/class-wpadmin-commands.php:480,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:81,
@@ -6218,7 +6226,7 @@ msgstr "Nu een backup maken"
 msgid "Database"
 msgstr "Database"
 
-#: src/admin.php:295, src/admin.php:4335
+#: src/admin.php:295, src/admin.php:4388
 msgid "Files"
 msgstr "Bestanden"
 
@@ -6246,15 +6254,15 @@ msgstr "Dit beheerderscherm maakt intensief gebruik van JavaScript. Je moet het 
 msgid "JavaScript warning"
 msgstr "JavaScript-waarschuwing"
 
-#: src/admin.php:673, src/admin.php:2532
+#: src/admin.php:673, src/admin.php:2591
 msgid "Delete Old Directories"
 msgstr "De oude mappen verwijderen"
 
-#: src/admin.php:2277
+#: src/admin.php:2336
 msgid "Current limit is:"
 msgstr "De huidige limiet is:"
 
-#: src/admin.php:2251
+#: src/admin.php:2310
 msgid "Your backup has been restored."
 msgstr "De backup is teruggezet."
 
@@ -6266,67 +6274,67 @@ msgstr "Versie"
 msgid "Lead developer's homepage"
 msgstr "Homepage van de hoofdontwikkelaar"
 
-#: src/admin.php:4255
+#: src/admin.php:4308
 msgid "Your settings have been wiped."
 msgstr "De instellingen zijn gewist."
 
-#: src/admin.php:2211
+#: src/admin.php:2270
 msgid "Backup directory successfully created."
 msgstr "De backup-directory is met succes aangemaakt."
 
-#: src/admin.php:2204
+#: src/admin.php:2263
 msgid "Backup directory could not be created"
 msgstr "De backup-directory kon niet aangemaakt worden"
 
-#: src/admin.php:2774
+#: src/admin.php:2833
 msgid "Old directory removal failed for some reason. You may want to do this manually."
 msgstr "Het verwijderen van de oude mappen mislukte om de een of andere reden. Je kunt dit ook handmatig doen."
 
-#: src/admin.php:2772
+#: src/admin.php:2831
 msgid "Old directories successfully removed."
 msgstr "Oude mappen met succes verwijderd"
 
-#: src/admin.php:2769, src/admin.php:2769
+#: src/admin.php:2828, src/admin.php:2828
 msgid "Remove old directories"
 msgstr "Oude mappen verwijderen"
 
-#: src/addons/migrator.php:289, src/addons/migrator.php:304,
-#: src/admin.php:2153, src/admin.php:2162, src/admin.php:2171,
-#: src/admin.php:2213, src/admin.php:2776
+#: src/addons/migrator.php:297, src/addons/migrator.php:312,
+#: src/admin.php:2212, src/admin.php:2221, src/admin.php:2230,
+#: src/admin.php:2272, src/admin.php:2835
 msgid "Return to UpdraftPlus Configuration"
 msgstr "Terugkeren naar de UpdraftPlus-configuratie"
 
-#: src/admin.php:666, src/admin.php:2153, src/admin.php:2162,
-#: src/admin.php:2171, src/admin.php:2213, src/admin.php:2776,
+#: src/admin.php:666, src/admin.php:2212, src/admin.php:2221,
+#: src/admin.php:2230, src/admin.php:2272, src/admin.php:2835,
 #: src/templates/wp-admin/settings/existing-backups-table.php:16
 msgid "Actions"
 msgstr "Acties"
 
-#: src/admin.php:2072
+#: src/admin.php:2131
 msgid "Bad filename format - this does not look like an encrypted database file created by UpdraftPlus"
 msgstr "Formaat bestandsnaam niet correct - dit ziet er niet uit als een versleuteld bestand dat is aangemaakt door UpdraftPlus"
 
-#: src/admin.php:1982
+#: src/admin.php:2041
 msgid "Bad filename format - this does not look like a file created by UpdraftPlus"
 msgstr "Formaat bestandsnaam niet correct - dit ziet er niet uit als een bestand dat aangemaakt is door UpdraftPlus"
 
-#: src/admin.php:1863
+#: src/admin.php:1922
 msgid "No local copy present."
 msgstr "Er is geen lokale kopie aanwezig."
 
-#: src/admin.php:1860
+#: src/admin.php:1919
 msgid "Download in progress"
 msgstr "Download bezig"
 
-#: src/admin.php:665, src/admin.php:1849
+#: src/admin.php:665, src/admin.php:1908
 msgid "File ready."
 msgstr "Bestand gereed."
 
-#: src/admin.php:1830
+#: src/admin.php:1889
 msgid "Download failed"
 msgstr "Download mislukt"
 
-#: src/admin.php:663, src/admin.php:1609, src/admin.php:3761,
+#: src/admin.php:663, src/admin.php:1241, src/admin.php:1668,
 #: src/class-updraftplus.php:1157, src/class-updraftplus.php:1201,
 #: src/methods/addon-base-v2.php:95, src/methods/addon-base-v2.php:100,
 #: src/methods/addon-base-v2.php:205, src/methods/addon-base-v2.php:225,
@@ -6335,15 +6343,15 @@ msgstr "Download mislukt"
 msgid "Error"
 msgstr "Fout"
 
-#: src/admin.php:1637
+#: src/admin.php:1696
 msgid "Could not find that job - perhaps it has already finished?"
 msgstr "Die taak is niet te vinden - wellicht is hij al afgerond..."
 
-#: src/admin.php:1629
+#: src/admin.php:1688
 msgid "Job deleted"
 msgstr "Taak verwijderd"
 
-#: src/admin.php:1713
+#: src/admin.php:1772
 msgid "OK. You should soon see activity in the \"Last log message\" field below."
 msgstr "Als het goed is zie je binnen enkele seconden iets gebeuren in het veld 'Laatste logboekbericht' hieronder."
 
@@ -6368,12 +6376,12 @@ msgid "You have less than %s of free disk space on the disk which UpdraftPlus is
 msgstr "Je hebt minder dan %s vrije ruimte om te gebruiken voor het creëren van backups op de schijf waarop UpdraftPlus ingesteld is. UpdraftPlus zou ruimte tekort kunnen komen. Neem contact op met de beheerder van de server (bv de hostingprovider) om dit probleem op te lossen."
 
 #: src/admin.php:941, src/admin.php:945, src/admin.php:949, src/admin.php:953,
-#: src/admin.php:957, src/admin.php:966, src/admin.php:3169,
-#: src/admin.php:3176, src/admin.php:3178, src/methods/cloudfiles-new.php:107,
+#: src/admin.php:957, src/admin.php:966, src/admin.php:3228,
+#: src/admin.php:3235, src/admin.php:3237, src/methods/cloudfiles-new.php:107,
 #: src/methods/cloudfiles.php:468, src/methods/ftp.php:309,
-#: src/methods/openstack-base.php:541, src/methods/s3.php:821,
-#: src/methods/s3.php:825, src/methods/updraftvault.php:286,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:28,
+#: src/methods/openstack-base.php:541, src/methods/s3.php:827,
+#: src/methods/s3.php:831, src/methods/updraftvault.php:286,
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:27,
 #: src/udaddons/updraftplus-addons.php:242
 msgid "Warning"
 msgstr "Waarschuwing"
@@ -6403,21 +6411,21 @@ msgstr "Steun UpdraftPlus met een positieve beoordeling op wordpress.org."
 msgid "Like UpdraftPlus and can spare one minute?"
 msgstr "Bevalt UpdraftPlus je en heb je een minuutje?"
 
-#: src/addons/azure.php:217, src/class-updraftplus.php:4340,
-#: src/methods/googledrive.php:1001, src/methods/s3.php:316
+#: src/addons/azure.php:217, src/class-updraftplus.php:4449,
+#: src/methods/googledrive.php:1006, src/methods/s3.php:321
 msgid "File not found"
 msgstr "Bestand niet gevonden"
 
-#: src/class-updraftplus.php:4247
+#: src/class-updraftplus.php:4356
 msgid "The decryption key used:"
 msgstr "De gebruikte decodeersleutel:"
 
-#: src/class-updraftplus.php:4247, src/class-updraftplus.php:4556,
+#: src/class-updraftplus.php:4356, src/class-updraftplus.php:4665,
 #: src/restorer.php:389
 msgid "Decryption failed. The most likely cause is that you used the wrong key."
 msgstr "Decoderen mislukt. Waarschijnlijk heb je een verkeerde sleutel ingevoerd."
 
-#: src/class-updraftplus.php:4228, src/class-updraftplus.php:4544,
+#: src/class-updraftplus.php:4337, src/class-updraftplus.php:4653,
 #: src/restorer.php:376
 msgid "Decryption failed. The database file is encrypted, but you have no encryption key entered."
 msgstr "Decoderen mislukt. Het databasebestand is versleuteld, maar je hebt geen decodeersleutel ingevoerd."
@@ -6426,15 +6434,15 @@ msgstr "Decoderen mislukt. Het databasebestand is versleuteld, maar je hebt geen
 msgid "Could not open the backup file for writing"
 msgstr "Het backupbestand kon niet geopend worden om het te beschrijven"
 
-#: src/class-updraftplus.php:3638
+#: src/class-updraftplus.php:3731
 msgid "Could not save backup history because we have no backup array. Backup probably failed."
 msgstr "De backup-geschiedenis kon niet opgeslagen worden, omdat er geen backupreeks is. De backup is waarschijnlijk mislukt."
 
-#: src/class-updraftplus.php:3604
+#: src/class-updraftplus.php:3691
 msgid "Could not read the directory"
 msgstr "De directory kon niet uitgelezen worden"
 
-#: src/admin.php:1900, src/backup.php:1157
+#: src/admin.php:1959, src/backup.php:1157
 msgid "Backup directory (%s) is not writable, or does not exist."
 msgstr "Je hebt geen schrijfrechten in de backupdirectory (%s), of hij bestaat niet."
 
@@ -6442,11 +6450,11 @@ msgstr "Je hebt geen schrijfrechten in de backupdirectory (%s), of hij bestaat n
 msgid "WordPress backup is complete"
 msgstr "De WordPress-backup is gereed"
 
-#: src/class-updraftplus.php:3115
+#: src/class-updraftplus.php:3203
 msgid "The backup attempt has finished, apparently unsuccessfully"
 msgstr "De backup-poging is afgerond, zo te zien zonder succes."
 
-#: src/class-updraftplus.php:3100
+#: src/class-updraftplus.php:3188
 msgid "The backup apparently succeeded and is now complete"
 msgstr "De backup is zo te zien geslaagd, en is nu afgerond."
 
@@ -6478,7 +6486,7 @@ msgstr "Plugins"
 msgid "No log files were found."
 msgstr "Geen logbestanden gevonden."
 
-#: src/admin.php:1782, src/admin.php:1786, src/class-updraftplus.php:516
+#: src/admin.php:1841, src/admin.php:1845, src/class-updraftplus.php:516
 msgid "The log file could not be read."
 msgstr "Het logboekbestand kon niet uitgelezen worden."
 

@@ -330,7 +330,7 @@ class UpdraftPlus_Backup {
 
 		$updraftplus->jobdata_set('jobstatus', 'clouduploading');
 
-		add_action('http_request_args', array($updraftplus, 'modify_http_options'));
+		$updraftplus->register_wp_http_option_hooks();
 
 		$upload_status = $updraftplus->jobdata_get('uploading_substatus');
 		if (!is_array($upload_status) || !isset($upload_status['t'])) {
@@ -404,7 +404,7 @@ class UpdraftPlus_Backup {
 
 		if (!empty($do_prune)) $this->prune_retained_backups($do_prune);
 
-		remove_action('http_request_args', array($updraftplus, 'modify_http_options'));
+		$updraftplus->register_wp_http_option_hooks(false);
 
 	}
 
@@ -480,7 +480,7 @@ class UpdraftPlus_Backup {
 		$updraftplus->log("Retain: beginning examination of existing backup sets; user setting: retain_files=$updraft_retain, retain_db=$updraft_retain_db");
 
 		// Returns an array, most recent first, of backup sets
-		$backup_history = $updraftplus->get_backup_history();
+		$backup_history = UpdraftPlus_Backup_History::get_history();
 		$db_backups_found = 0;
 		$file_backups_found = 0;
 		
@@ -516,8 +516,7 @@ class UpdraftPlus_Backup {
 		
 		foreach ($backup_db_groups as $group_id => $group) {
 			
-			// The array returned by UpdraftPlus::get_backup_history() is already sorted, with most-recent first
-// 			foreach ($backup_history as $backup_datestamp => $backup_to_examine) {
+			// N.B. The array returned by UpdraftPlus_Backup_History::get_history() is already sorted, with most-recent first
 
 			if (empty($group['sets']) || !is_array($group['sets'])) continue;
 			$sets = $group['sets'];
@@ -633,8 +632,7 @@ class UpdraftPlus_Backup {
 		// Now again - this time for the files
 		foreach ($backup_files_groups as $group_id => $group) {
 			
-			// The array returned by UpdraftPlus::get_backup_history() is already sorted, with most-recent first
-// 			foreach ($backup_history as $backup_datestamp => $backup_to_examine) {
+			// N.B. The array returned by UpdraftPlus_Backup_History::get_history() is already sorted, with most-recent first
 
 			if (empty($group['sets']) || !is_array($group['sets'])) continue;
 			$sets = $group['sets'];
@@ -754,7 +752,7 @@ class UpdraftPlus_Backup {
 		}
 
 		$updraftplus->log("Retain: saving new backup history (sets now: ".count($backup_history).") and finishing retain operation");
-		UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, false);
+		UpdraftPlus_Backup_History::save_history($backup_history, false);
 
 		do_action('updraftplus_prune_retained_backups_finished');
 		
@@ -762,14 +760,18 @@ class UpdraftPlus_Backup {
 
 	}
 
-	// The purpose of this is to save the backup history periodically - for the benefit of setups where the pruning takes longer than the total allow run time (e.g. if the network communications to the remote storage have delays in, and there are a lot of sets to scan)
+	/**
+	 * The purpose of this is to save the backup history periodically - for the benefit of setups where the pruning takes longer than the total allow run time (e.g. if the network communications to the remote storage have delays in, and there are a lot of sets to scan)
+	 *
+	 * @param Array $backup_history - the backup history to possible save
+	 */
 	private function maybe_save_backup_history_and_reschedule($backup_history) {
 		static $last_saved_at = 0;
 		if (!$last_saved_at) $last_saved_at = time();
 		if (time() - $last_saved_at >= 10) {
 			global $updraftplus;
 			$updraftplus->log("Retain: saving new backup history, because at least 10 seconds have passed since the last save (sets now: ".count($backup_history).")");
-			UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, false);
+			UpdraftPlus_Backup_History::save_history($backup_history, false);
 			$updraftplus->something_useful_happened();
 			$last_saved_at = time();
 		}
