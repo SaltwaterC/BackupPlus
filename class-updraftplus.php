@@ -20,6 +20,7 @@ class UpdraftPlus {
 		'azure' => 'Microsoft Azure',
 		'sftp' => 'SFTP / SCP',
 		'googlecloud' => 'Google Cloud',
+		'backblaze'    => 'Backblaze',
 		'webdav' => 'WebDAV',
 		's3generic' => 'S3-Compatible (Generic)',
 		'openstack' => 'OpenStack (Swift)',
@@ -1041,7 +1042,7 @@ class UpdraftPlus {
 		// There will be a remnant unless the file size was exactly on a chunk boundary
 		if ($orig_file_size % $chunk_size > 0) $chunks++;
 
-		$this->log("$logname upload: $file (chunks: $chunks, size: $chunk_size) -> $cloudpath ($uploaded_size)");
+		$this->log("$logname upload: $file (chunks: $chunks, of size: $chunk_size) -> $cloudpath ($uploaded_size)");
 
 		if (0 == $chunks) {
 			return 1;
@@ -1119,7 +1120,8 @@ class UpdraftPlus {
 					$uploaded = (!isset($uploaded->log) || $uploaded->log) ? true : 1;
 				}
 				
-				if ($uploaded) {
+				// The joys of PHP: is_wp_error() is not false-y.
+				if ($uploaded && !is_wp_error($uploaded)) {
 					$perc = round(100*($upload_end + 1)/max($orig_file_size, 1), 1);
 					// Consumers use a return value of (int)1 (rather than (bool)true) to suppress logging
 					$log_it = (1 === $uploaded) ? false : true;
@@ -1151,7 +1153,7 @@ class UpdraftPlus {
 			if (method_exists($caller, 'chunked_upload_finish')) {
 				$ret = $caller->chunked_upload_finish($file);
 				if (!$ret) {
-					$this->log("$logname - failed to re-assemble chunks (".$e->getMessage().')');
+					$this->log("$logname - failed to re-assemble chunks");
 					$this->log(sprintf(__('%s error - failed to re-assemble chunks', 'updraftplus'), $logname), 'error');
 				}
 			}
@@ -1173,7 +1175,7 @@ class UpdraftPlus {
 	 * @param object  $method            - This remote storage method object needs to have a chunked_download() method to call back
 	 * @param integer $remote_size       - The size, in bytes, of the object being downloaded
 	 * @param boolean $manually_break_up - Whether to break the download into multiple network operations (rather than just issuing a GET with a range beginning at the end of the already-downloaded data, and carrying on until it times out)
-	 * @param *       $passback          - A value to pass back to the callback function
+	 * @param Mixed   $passback          - A value to pass back to the callback function
 	 * @param integer $chunk_size        - Break up the download into chunks of this number of bytes. Should be set if and only if $manually_break_up is true.
 	 */
 	public function chunked_download($file, $method, $remote_size, $manually_break_up = false, $passback = null, $chunk_size = 1048576) {
@@ -1259,7 +1261,7 @@ class UpdraftPlus {
 			}
 
 		} catch (Exception $e) {
-			$this->log('Error ('.get_class($e).') - failed to download the file ('.$e->getCode().', '.$e->getMessage().')');
+			$this->log('Error ('.get_class($e).') - failed to download the file ('.$e->getCode().', '.$e->getMessage().', line '.$e->getLine().' in '.$e->getFile().')');
 			$this->log("$file: ".__('Error - failed to download the file', 'updraftplus').' ('.$e->getCode().', '.$e->getMessage().')', 'error');
 			return false;
 		}
@@ -3764,27 +3766,58 @@ class UpdraftPlus {
 	/**
 	 * WordPress options filter, sanitising the FTP options saved from the options page
 	 *
-	 * @param Array $ftp - the options, prior to sanitisation
+	 * @param Array $settings - the options, prior to sanitisation
 	 *
 	 * @return Array - the sanitised options for saving
 	 */
-	public function ftp_sanitise($ftp) {
-		if (is_array($ftp)) {
-			if (!empty($ftp['host']) && preg_match('#ftp(es|s)?://(.*)#i', $ftp['host'], $matches)) {
-				$ftp['host'] = untrailingslashit($matches[2]);
-			}
-			if (isset($ftp['pass'])) {
-				$ftp['pass'] = trim($ftp['pass'], "\n\r\0\x0B");
+	public function ftp_sanitise($settings) {
+		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
+			foreach ($settings['settings'] as $instance_id => $instance_settings) {
+				if (!empty($instance_settings['host']) && preg_match('#ftp(es|s)?://(.*)#i', $instance_settings['host'], $matches)) {
+					$settings['settings'][$instance_id]['host'] = rtrim($matches[2], "/ \t\n\r\0x0B");
+				}
+				if (isset($instance_settings['pass'])) {
+					$settings['settings'][$instance_id]['pass'] = trim($instance_settings['pass'], "\n\r\0\x0B");
+				}
 			}
 		}
-		return $ftp;
+		return $settings;
 	}
 
-	public function s3_sanitise($s3) {
-		if (is_array($s3) && !empty($s3['path']) && '/' == substr($s3['path'], 0, 1)) {
-			$s3['path'] = substr($s3['path'], 1);
+	/**
+	 * Acts as a WordPress options filter
+	 *
+	 * @param Array $settings - pre-filtered settings
+	 *
+	 * @return Array filtered settings
+	 */
+	public function backblaze_sanitise($settings) {
+		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
+			foreach ($settings['settings'] as $instance_id => $instance_settings) {
+				if (!empty($instance_settings['backup_path'])) {
+					$settings['settings'][$instance_id]['backup_path'] = trim($instance_settings['backup_path'], "/ \t\n\r\0x0B");
+				}
+			}
 		}
-		return $s3;
+		return $settings;
+	}
+
+	/**
+	 * Acts as a WordPress options filter
+	 *
+	 * @param Array $settings - pre-filtered settings
+	 *
+	 * @return Array filtered settings
+	 */
+	public function s3_sanitise($settings) {
+		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
+			foreach ($settings['settings'] as $instance_id => $instance_settings) {
+				if (!empty($instance_settings['path'])) {
+					$settings['settings'][$instance_id]['path'] = trim($instance_settings['path'], "/ \t\n\r\0x0B");
+				}
+			}
+		}
+		return $settings;
 	}
 
 	/**
@@ -4675,6 +4708,7 @@ CREATE TABLE $wpdb->signups (
 			'updraft_googledrive_secret',
 			'updraft_googledrive_remotepath',
 			'updraft_ftp',
+			'updraft_backblaze',
 			'updraft_server_address',
 			'updraft_dir',
 			'updraft_email',

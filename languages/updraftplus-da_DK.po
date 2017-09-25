@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2017-09-05 14:35:49+0000\n"
+"PO-Revision-Date: 2017-09-24 21:19:29+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13,61 +13,61 @@ msgstr ""
 
 #: src/class-updraftplus.php:4741
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
-msgstr ""
+msgstr "Så længe din webhosting tillader http (dvs. ikke-SSL-adgang) eller vil sende forespørgsler til https (hvilket næsten altid er tilfældet), er dette ikke noget problem. Hvis det endnu ikke er oprettet, skal du sætte det op, eller bruge%s, sådan at ikke-https-links automatisk erstattes."
 
 #: src/class-updraftplus.php:4739, src/class-updraftplus.php:4741
 msgid "the migrator add-on"
-msgstr ""
+msgstr "migrator tilføjelsen"
 
 #: src/class-updraftplus.php:4739
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
-msgstr ""
+msgstr "Denne opgradering vil fungere, hvis du har et aktivt SSL-certifikat (dvs. kan bruge https). Ellers vil du bruge %s til at søge/erstatte webstedets adresse, så webstedet kan besøges uden https."
 
 #: src/class-updraftplus.php:4737
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
-msgstr ""
+msgstr "Dette backup-sæt er slået fra på dette websted, men på tidspunktet for sikkerhedskopien brugte du %s, mens webstedet nu bruger %s."
 
 #: src/class-updraftplus.php:4734
 msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
-msgstr ""
+msgstr "Webstedets adresse i backup'en (%s) er lidt anderledes end det nuværende websted (%s). Dette forventes ikke at være et problem for genoprettelsen af webstedet, så længe besøg på den tidligere adresse stadig kommer til webstedet."
 
 #: src/methods/googledrive.php:1153
 msgid "To de-authorize UpdraftPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings."
-msgstr ""
+msgstr "Hvis du vil fjerne tilladelse til UpdraftPlus (alle websteder) til at få adgang til dit Google Drev, skal du følge dette link til dine Google-kontoindstillinger."
 
 #: src/methods/googledrive.php:1149
 msgid "Follow this link to remove this site's settings for %s."
-msgstr ""
+msgstr "Følg dette link for at fjerne dette websteds indstillinger for %s."
 
 #: src/addons/sftp.php:346
 msgid "UpdraftPlus debug mode is on: detailed debugging data follows."
-msgstr ""
+msgstr "UpdraftPlus debug mode er aktivt: Detaljerede debugging data følger."
 
 #: src/admin.php:740
 msgid "Error: The chosen file is corrupt. Please choose a valid UpdraftPlus export file."
-msgstr ""
+msgstr "Fejl: Den valgte fil er beskadiget. Vælg venligst en gyldig UpdraftPlus eksportfil."
 
 #: src/admin.php:1286, src/admin.php:3933, src/class-updraftplus.php:2095,
 #: src/class-updraftplus.php:2160, src/class-updraftplus.php:2294
 msgid "A PHP fatal error (%s) has occurred: %s"
-msgstr ""
+msgstr "En alvorlig PHP fejl (%s) er opstået: %s"
 
 #: src/admin.php:1279, src/admin.php:3925, src/class-updraftplus.php:2088,
 #: src/class-updraftplus.php:2153, src/class-updraftplus.php:2287
 msgid "A PHP exception (%s) has occurred: %s"
-msgstr ""
+msgstr "Der er opstået en PHP-undtagelse (%s): %s"
 
 #: src/addons/googlecloud.php:56
 msgid "South-east Australia"
-msgstr ""
+msgstr "Syd-øst Australien"
 
 #: src/addons/googlecloud.php:55
 msgid "South-east Asia"
-msgstr ""
+msgstr "Syd-øst Asien"
 
 #: src/addons/googlecloud.php:54
 msgid "North-east Asia"
-msgstr ""
+msgstr "Nord-øst Asien"
 
 #: src/udaddons/options.php:118
 msgid "Your web server's version of PHP is too old (%s) - UpdraftPlus expects at least %s. You can try it, but don't be surprised if it does not work. To fix this problem, contact your web hosting company"
@@ -123,15 +123,15 @@ msgstr "Ved ikke, hvordan der slettes fra denne cloud service."
 
 #: src/addons/sftp.php:696
 msgid "Encrypted login failed; trying non-encrypted"
-msgstr ""
+msgstr "Krypteret login mislykkedes. Forsøger nu en ikke-krypteret"
 
 #: src/addons/s3-enhanced.php:68
 msgid "__Check this box to use Amazon's server-side encryption"
-msgstr ""
+msgstr "__Afkryds denne boks for at bruge Amazons kryptering på server-siden"
 
 #: src/addons/azure.php:535
 msgid "You must add the following as the authorised redirect URI in your Azure console (under \"API Settings\") when asked"
-msgstr ""
+msgstr "Du skal tilføje følgende som autoriseret omdirigerings-URI i din Azure-konsol (under \"API-indstillinger\"), når du bliver spurgt"
 
 #: src/templates/wp-admin/settings/existing-backups-table.php:70
 msgid "Stored at: %s"
@@ -413,15 +413,15 @@ msgstr "UpdraftPlus"
 
 #: src/templates/wp-admin/settings/form-contents.php:245
 msgid "Recommended: optimize your database with WP-Optimize."
-msgstr ""
+msgstr "Anbefalet: Optimer din database med WP-Optimize."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:15
 msgid "When you've backed up your database, we recommend you install our WP-Optimize plugin to streamline it for better website performance."
-msgstr ""
+msgstr "Når du har sikkerhedskopieret din database, anbefaler vi, at du installerer vores WP-Optimize-plugin for at strømline det til bedre website-ydelse."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:15
 msgid "WP-Optimize"
-msgstr ""
+msgstr "WP-Optimize"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:31,
 #: src/templates/wp-admin/notices/horizontal-notice.php:42,

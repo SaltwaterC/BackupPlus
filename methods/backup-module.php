@@ -157,7 +157,11 @@ abstract class UpdraftPlus_BackupModule {
 		
 		if ($this->supports_feature('config_templates')) {
 
-			$template = $this->get_configuration_template();
+			ob_start();
+			do_action('updraftplus_config_print_before_storage', $this->get_id(), $this);
+			$template = ob_get_clean();
+			
+			$template .= $this->get_configuration_template();
 			
 			$opts = $this->get_options();
 			
@@ -183,6 +187,8 @@ abstract class UpdraftPlus_BackupModule {
 			}
 			
 		} else {
+
+			do_action('updraftplus_config_print_before_storage', $this->get_id(), $this);
 
 			// N.B. These are mutually exclusive: config_print() is not used if config_templates is supported. So, even during transition, the UpdraftPlus_BackupModule instance only needs to support one of the two, not both.
 			$this->config_print();

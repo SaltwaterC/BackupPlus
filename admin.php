@@ -13,6 +13,8 @@ class UpdraftPlus_Admin {
 
 	private $template_directories;
 
+	private $backups_instance_ids;
+
 	public function __construct() {
 		$this->admin_init();
 	}
@@ -1524,14 +1526,25 @@ class UpdraftPlus_Admin {
 				}
 
 				if ('log' != $key && count($delete_from_service) > 0) {
+
+					$storage_objects_and_ids = $updraftplus->get_storage_objects_and_ids($delete_from_service);
+
 					foreach ($delete_from_service as $service) {
-						if ('email' == $service) continue;
-						if (file_exists(UPDRAFTPLUS_DIR."/methods/$service.php")) require_once(UPDRAFTPLUS_DIR."/methods/$service.php");
-						$objname = "UpdraftPlus_BackupModule_".$service;
+					
+						if ('email' == $service || 'none' == $service || !$service) continue;
+
 						$deleted = -1;
-						if (class_exists($objname)) {
-							# TODO: Re-use the object (i.e. prevent repeated connection setup/teardown)
-							$remote_obj = new $objname;
+
+						$remote_obj = $storage_objects_and_ids[$service]['object'];
+
+						$instance_settings = $storage_objects_and_ids[$service]['instance_settings'];
+						$this->backups_instance_ids = empty($backups[$timestamp]['service_instance_ids'][$service]) ? array() : $backups[$timestamp]['service_instance_ids'][$service];
+
+						uksort($instance_settings, array($this, 'instance_ids_sort'));
+
+						foreach ($instance_settings as $instance_id => $options) {
+
+							$remote_obj->set_options($options, false, $instance_id);
 
 							foreach ($files as $index => $file) {
 								if ($remote_deleted == $remote_delete_limit) {
@@ -1563,7 +1576,6 @@ class UpdraftPlus_Admin {
 								
 								// If we don't save the array back, then the above section will fire again for the same files - and the remote storage will be requested to delete already-deleted files, which then means no time is actually saved by the browser-backend loop method.
 								UpdraftPlus_Backup_History::save_history($backups);
-								
 							}
 						}
 					}
@@ -1577,6 +1589,21 @@ class UpdraftPlus_Admin {
 
 		return $this->remove_backup_set_cleanup(true, $backups, $local_deleted, $remote_deleted, $sets_removed);
 
+	}
+
+	/**
+	 * This function sorts the array of instance ids currently saved so that any instance id that is in both the saved settings and the backup history move to the top of the array, as these are likely to work. Then values that don't appear in the backup history move to the bottom.
+	 *
+	 * @param  String $a  - the first instance id
+	 * @param  String $b  - the second instance id
+	 * @return Integer    - returns an integer to indicate what position the $b value should be moved in
+	 */
+	public function instance_ids_sort($a, $b) {
+		if (in_array($a, $this->backups_instance_ids)) {
+			if (in_array($b, $this->backups_instance_ids)) return 0;
+			return -1;
+		}
+		return in_array($b, $this->backups_instance_ids) ? 1 : 0;
 	}
 
 	/**
@@ -3021,10 +3048,10 @@ class UpdraftPlus_Admin {
 	}
 
 	/**
-	 * Outputs html for a storage method using the parameters passed in, this version of the method is compatible with multi storage options
-	 * @param  [String] $classes - a list of classes to be used when
-	 * @param  [String] $header - the table header content
-	 * @param  [String] $contents - the table contents
+	 * Outputs html for a storage method using the parameters passed in. This version of the method is compatible with multi storage options
+	 * @param String $classes  - a list of classes to be used when
+	 * @param String $header   - the table header content
+	 * @param String $contents - the table contents
 	 */
 	public function storagemethod_row_multi($classes, $header, $contents) {
 		?>

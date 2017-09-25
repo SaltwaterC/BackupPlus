@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2017-02-07 13:43:39+0000\n"
+"PO-Revision-Date: 2017-09-23 19:31:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13,546 +13,546 @@ msgstr ""
 
 #: src/class-updraftplus.php:4741
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
-msgstr ""
+msgstr "Όσο η φιλοξενία σας στο διαδίκτυο επιτρέπει την πρόσβαση http (δηλαδή πρόσβαση χωρίς SSL) ή θα προωθεί τα αιτήματα σε https (κάτι που συμβαίνει σχεδόν πάντοτε), αυτό δεν αποτελεί πρόβλημα. Αν αυτό δεν το έχετε ρυθμίσει ακόμα, θα πρέπει να το ορίσετε ή να χρησιμοποιήσετε το %s έτσι ώστε οι σύνδεσμοι που δεν είναι https να αντικατασταθούν αυτόματα."
 
 #: src/class-updraftplus.php:4739, src/class-updraftplus.php:4741
 msgid "the migrator add-on"
-msgstr ""
+msgstr "το πρόσθετο μετανάστευσης"
 
 #: src/class-updraftplus.php:4739
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
-msgstr ""
+msgstr "Αυτή η αποκατάσταση θα λειτουργήσει εάν εξακολουθείτε να έχετε ένα πιστοποιητικό SSL (δηλ. να μπορείτε να χρησιμοποιήσετε το https) για να αποκτήσετε πρόσβαση στον ιστότοπο. Διαφορετικά, θα πρέπει να χρησιμοποιήσετε το %s για να αναζητήσετε/αντικαταστήσετε τη διεύθυνση ιστότοπου έτσι ώστε να μπορέστε να επισκεφθείτε τον ιστότοπο χωρίς https."
 
 #: src/class-updraftplus.php:4737
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
-msgstr ""
+msgstr "Αυτό το σετ αντιγράφων ασφαλείας είναι αυτού του ιστότοπου, αλλά κατά τη στιγμή της δημιουργίας αντιγράφων ασφαλείας χρησιμοποιούσατε %s, ενώ ο ιστότοπος χρησιμοποιεί τώρα %s."
 
 #: src/class-updraftplus.php:4734
 msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
-msgstr ""
+msgstr "Η διεύθυνση ιστότοπου στο αντίγραφο ασφαλείας (%s) είναι ελαφρώς διαφορετική από αυτή του ιστότοπου τώρα (%s). Αυτό δεν αναμένεται να αποτελέσει κάποιο πρόβλημα για την αποκατάσταση του ιστότοπου, εφόσον οι επισκέψεις στην προηγούμενη διεύθυνση εξακολουθούν να φθάνουν στον ιστότοπο."
 
 #: src/methods/googledrive.php:1153
 msgid "To de-authorize UpdraftPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings."
-msgstr ""
+msgstr "Για να γίνει άρση της αξουσιοδότησης του UpdraftPlus (όλους τους ιστότοπους) από την πρόσβαση στο Google Drive σας, ακολουθήστε αυτόν τον σύνδεσμο στις ρυθμίσεις του λογαριασμού σας Google."
 
 #: src/methods/googledrive.php:1149
 msgid "Follow this link to remove this site's settings for %s."
-msgstr ""
+msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για να καταργήσετε τις ρυθμίσεις του ιστότοπου για το %s."
 
 #: src/addons/sftp.php:346
 msgid "UpdraftPlus debug mode is on: detailed debugging data follows."
-msgstr ""
+msgstr "Η λειτουργία αποσφαλμάτωσης του UpdraftPlus είναι ενεργοποιημένη: ακολουθούν λεπτομερή δεδομένα εντοπισμού σφαλμάτων."
 
 #: src/admin.php:740
 msgid "Error: The chosen file is corrupt. Please choose a valid UpdraftPlus export file."
-msgstr ""
+msgstr "Σφάλμα: Το επιλεγμένο αρχείο είναι κατεστραμμένο. Επιλέξτε ένα έγκυρο αρχείο εξαγωγής του UpdraftPlus."
 
 #: src/admin.php:1286, src/admin.php:3933, src/class-updraftplus.php:2095,
 #: src/class-updraftplus.php:2160, src/class-updraftplus.php:2294
 msgid "A PHP fatal error (%s) has occurred: %s"
-msgstr ""
+msgstr "Έχει συμβεί ένα καίριο σφάλμα (%s) στην PHP: %s"
 
 #: src/admin.php:1279, src/admin.php:3925, src/class-updraftplus.php:2088,
 #: src/class-updraftplus.php:2153, src/class-updraftplus.php:2287
 msgid "A PHP exception (%s) has occurred: %s"
-msgstr ""
+msgstr "Έχει γίνει εξαίρεση (%s) στην PHP: %s"
 
 #: src/addons/googlecloud.php:56
 msgid "South-east Australia"
-msgstr ""
+msgstr "Νοτιοανατολική Αυστραλία"
 
 #: src/addons/googlecloud.php:55
 msgid "South-east Asia"
-msgstr ""
+msgstr "Νοτιοανατολική Ασία"
 
 #: src/addons/googlecloud.php:54
 msgid "North-east Asia"
-msgstr ""
+msgstr "Βορειοανατολική Ασία"
 
 #: src/udaddons/options.php:118
 msgid "Your web server's version of PHP is too old (%s) - UpdraftPlus expects at least %s. You can try it, but don't be surprised if it does not work. To fix this problem, contact your web hosting company"
-msgstr ""
+msgstr "Η έκδοση PHP του διακομιστή σας είναι πολύ παλιά (%s) - Το UpdraftPlus για να λειτουργήσει πρέπει να υπάρχει τουλάχιστον η έκδοση %s. Μπορείτε να το δοκιμάσετε, αλλά μην εκπλαγείτε αν δεν λειτουργεί. Για να διορθώσετε αυτό το πρόβλημα, επικοινωνήστε με την εταιρεία φιλοξενίας της ισοτσελίδας σας"
 
 #: src/templates/wp-admin/settings/tab-status.php:80
 msgid "Remote storage authentication"
-msgstr ""
+msgstr "Αυθεντικοποίηση απομακρυσμένης αποθήκευσης"
 
 #: src/templates/wp-admin/settings/tab-addons.php:151
 msgid "Network and multisite"
-msgstr ""
+msgstr "Δίκτυο και multisite"
 
 #: src/templates/wp-admin/settings/tab-addons.php:87
 msgid "Migrator"
-msgstr ""
+msgstr "Πρόσθετο μετανάστευσης"
 
 #: src/templates/wp-admin/settings/tab-addons.php:71
 msgid "Additional storage"
-msgstr ""
+msgstr "Πρόσθετος χώρος αποθήκευσης"
 
 #: src/templates/wp-admin/settings/tab-addons.php:55
 msgid "Remote storage"
-msgstr ""
+msgstr "Απομακρυσμένος χώρος αποθήκευσης"
 
 #: src/templates/wp-admin/settings/form-contents.php:221
 msgid "Select Files"
-msgstr ""
+msgstr "Επιλογή αρχείων"
 
 #: src/methods/cloudfiles.php:497
 msgid "Rackspace Storage Region"
-msgstr ""
+msgstr "Περιοχή χώρος αποθήκευσης του Rackspace"
 
 #: src/includes/updraftplus-notices.php:193
 msgid "Find out more about our revolutionary new WordPress plugin."
-msgstr ""
+msgstr "Μάθετε περισσότερα για το επαναστατικό νέο μας πρόσθετο της WordPress."
 
 #: src/includes/updraftplus-notices.php:193
 msgid "Instant and secure logon with a wave of your phone."
-msgstr ""
+msgstr "Άμεση και ασφαλής σύνδεση με ένα κούνημα του τηλεφώνου σας."
 
 #: src/backup.php:1907
 msgid "As previously warned (see: %s), encryption is no longer a feature of the free edition of UpdraftPlus"
-msgstr ""
+msgstr "Όπως σας προειδοποιήσαμε προηγουμένως (δείτε:%s), η κρυπτογράφηση δεν αποτελεί πλέον χαρακτηριστικό της δωρεάν έκδοσης του UpdraftPlus"
 
 #: src/admin.php:4415
 msgid "Value"
-msgstr ""
+msgstr "Αξία"
 
 #: src/admin.php:1540
 msgid "Did not know how to delete from this cloud service."
-msgstr ""
+msgstr "Δεν γνωρίζετε πώς να διαγράψετε από αυτήν την υπηρεσία στο σύννεφο."
 
 #: src/addons/sftp.php:696
 msgid "Encrypted login failed; trying non-encrypted"
-msgstr ""
+msgstr "Η κρυπτογραφημένη σύνδεση απέτυχε, προσπάθεια μη κρυπτογραφημένης σύνδεσης"
 
 #: src/addons/s3-enhanced.php:68
 msgid "__Check this box to use Amazon's server-side encryption"
-msgstr ""
+msgstr "__Επιλέξτε αυτό το πλαίσιο για να χρησιμοποιήσετε την κρυπτογράφηση από την πλευρά του διακομιστή του Amazon"
 
 #: src/addons/azure.php:535
 msgid "You must add the following as the authorised redirect URI in your Azure console (under \"API Settings\") when asked"
-msgstr ""
+msgstr "Πρέπει να προσθέσετε τα ακόλουθα ως εξουσιοδοτημένο URI ανακατεύθυνσης στην κονσόλα Azure (κάτω από τις \"Ρυθμίσεις API\") όταν σας ζητηθεί"
 
 #: src/templates/wp-admin/settings/existing-backups-table.php:70
 msgid "Stored at: %s"
-msgstr ""
+msgstr "Αποθήκευση στο: %s"
 
 #: src/methods/cloudfiles.php:520
 msgid "Cloud Files"
-msgstr ""
+msgstr "Αρχεία στο Σύννεφο"
 
 #: src/admin.php:4260
 msgid "Your settings failed to save. Please refresh the settings page and try again"
-msgstr ""
+msgstr "Οι ρυθμίσεις σας απέτυχαν να αποθηκευτούν. Ανανεώστε τη σελίδα ρυθμίσεων και δοκιμάστε ξανά"
 
 #: src/admin.php:4219
 msgid "UpdraftPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded. Please reload the settings page before trying to save settings."
-msgstr ""
+msgstr "Το UpdraftPlus φαίνεται να έχει ενημερωθεί στην έκδοση (%s), η οποία είναι διαφορετική από την εκδοχή που εκτελείται κατά τη φόρτωση αυτής της σελίδας ρυθμίσεων. Παρακαλούμε επαναφορτώστε τη σελίδα ρυθμίσεων πριν επιχειρήσετε να αποθηκεύσετε τις ρυθμίσεις."
 
 #: src/methods/updraftvault.php:71,
 #: src/templates/wp-admin/settings/tab-addons.php:277
 msgid "UpdraftVault"
-msgstr ""
+msgstr "UpdraftVault"
 
 #: src/includes/class-wpadmin-commands.php:488
 msgid "archive"
-msgstr ""
+msgstr "αρχείο"
 
 #: src/includes/class-wpadmin-commands.php:479
 msgid "Extra database"
-msgstr ""
+msgstr "Επιπρόσθετη βάση δεδομένων"
 
 #: src/admin.php:3502
 msgid "Press here to download or browse"
-msgstr ""
+msgstr "Πατήστε εδώ για λήψη ή περιήγηση"
 
 #: src/admin.php:1070, src/admin.php:1080
 msgid "Error: invalid path"
-msgstr ""
+msgstr "Σφάλμα: μη έγκυρη διαδρομή"
 
 #: src/admin.php:928
 msgid "An error occurred when fetching storage module options: "
-msgstr ""
+msgstr "Παρουσιάστηκε σφάλμα κατά την ανάκτηση των επιλογών μονάδας αποθήκευσης:"
 
 #: src/admin.php:756
 msgid "Loading log file"
-msgstr ""
+msgstr "Φόρτωση αρχείου καταγραφής"
 
 #: src/admin.php:755
 msgid "Unable to download file. This could be caused by a timeout. It would be best to download the zip to your computer."
-msgstr ""
+msgstr "Δεν είναι δυνατή η λήψη αρχείου. Αυτό θα μπορούσε να προκληθεί από την υπέρβαση του χρονικού ορίου. Θα ήταν καλύτερο να κατεβάσετε το συμπιεσμένο αρχείο στον υπολογιστή σας."
 
 #: src/admin.php:754
 msgid "Search"
-msgstr ""
+msgstr "Αναζήτηση"
 
 #: src/admin.php:753
 msgid "Select a file to view information about it"
-msgstr ""
+msgstr "Επιλέξτε ένα αρχείο για να δείτε πληροφορίες σχετικά με αυτό"
 
 #: src/admin.php:752
 msgid "Browsing zip file"
-msgstr ""
+msgstr "Περιήγηση στο αρχείο zip"
 
 #: src/admin.php:721
 msgid "With UpdraftPlus Premium, you can directly download individual files from here."
-msgstr ""
+msgstr "Με το UpdraftPlus Premium, μπορείτε να κατεβάσετε άμεσα μεμονωμένα αρχεία από εδώ."
 
 #: src/admin.php:669
 msgid "Browse contents"
-msgstr ""
+msgstr "Περιήγηση περιεχομένων"
 
 #: src/restorer.php:1692
 msgid "Skipped tables:"
-msgstr ""
+msgstr "Πίνακες που έχουν παραλειφθεί:"
 
 #: src/class-updraftplus.php:4889
 msgid "This database backup has the following WordPress tables excluded: %s"
-msgstr ""
+msgstr "Από αυτό το αντίγραφο ασφαλείας των βάσεων δεδομένων έχουν εξαιρέθει οι παρακάτω πίνακες της WordPress: %s"
 
 #: src/admin.php:2481
 msgid "With UpdraftPlus Premium, you can choose to backup non-WordPress tables, backup only specified tables, and backup other databases too."
-msgstr ""
+msgstr "Με το UpdraftPlus Premium, μπορείτε να επιλέξετε να δημιουργήσετε αντίγραφα ασφαλείας για μη πίνακες της WordPress, να δημιουργήσετε αντίγραφα ασφαλείας μόνο για συγκεκριμένους πίνακες και να δημιουργήσετε αντίγραφα ασφαλείας και για άλλες βάσεις δεδομένων."
 
 #: src/admin.php:2481
 msgid "All WordPress tables will be backed up."
-msgstr ""
+msgstr "Θα δημιουργηθούν αντίγραφα ασφαλείας για όλους τους πίνακες της WordPress."
 
 #: src/admin.php:751
 msgid "Further information may be found in the browser JavaScript console, and the server PHP error logs."
-msgstr ""
+msgstr "Περισσότερες πληροφορίες μπορούν να βρεθούν στην κονσόλα JavaScript του προγράμματος περιήγησης και οι καταγραφές σφαλμάτων του διακομιστή PHP."
 
 #: src/admin.php:751
 msgid "That you are attempting to upload a zip file previously created by UpdraftPlus."
-msgstr ""
+msgstr "Ότι προσπαθείτε να ανεβάσετε ένα αρχείο zip που δημιουργήθηκε προηγουμένως από το UpdraftPlus."
 
 #: src/admin.php:751
 msgid "The available memory on the server."
-msgstr ""
+msgstr "Η διαθέσιμη μνήμη στο διακομιστή."
 
 #: src/admin.php:751
 msgid "Any settings in your .htaccess or web.config file that affects the maximum upload or post size."
-msgstr ""
+msgstr "Οποιαδήποτε ρύθμιση στο αρχείο .htaccess ή web.config που επηρεάζει το μέγιστο μέγεθος μεταφόρτωσης ή αρθρου."
 
 #: src/admin.php:751
 msgid "The file failed to upload. Please check the following:"
-msgstr ""
+msgstr "Το αρχείο απέτυχε να ανέβει. Ελέγξτε τα εξής:"
 
 #: src/admin.php:750
 msgid "HTTP code:"
-msgstr ""
+msgstr "Κωδικός HTTP:"
 
 #: src/admin.php:646
 msgid "You have chosen to backup a database, but no tables have been selected"
-msgstr ""
+msgstr "Έχετε επιλέξει να δημιουργήσετε αντίγραφα ασφαλείας μιας βάσης δεδομένων, αλλά δεν έχετε επιλέξει πίνακες"
 
 #: src/addons/moredatabase.php:585
 msgid "tables"
-msgstr ""
+msgstr "πίνακες"
 
 #: src/addons/moredatabase.php:584
 msgid "WordPress database"
-msgstr ""
+msgstr "βάση δεδομένων της WordPress"
 
 #: src/addons/moredatabase.php:577
 msgid "You should backup all tables unless you are an expert in the internals of the WordPress database."
-msgstr ""
+msgstr "Θα πρέπει να δημιουργήσετε αντίγραφα ασφαλείας για όλους τους πίνακες εκτός αν είστε ειδικός στα εσωτερικά της βάσης δεδομένων WordPress."
 
 #: src/templates/wp-admin/settings/tab-addons.php:300
 msgid "Everyone can use the free version; but UpdraftGold bundles an enhanced paid version."
-msgstr ""
+msgstr "Ο καθένας μπορεί να χρησιμοποιήσει την δωρεάν έκδοση, αλλά το UpdraftGold περιέχει μια ενισχυμένη έκδοση με πληρωμή."
 
 #: src/templates/wp-admin/settings/tab-addons.php:298
 msgid "UpdraftCentral Cloud or Premium"
-msgstr ""
+msgstr "UpdraftCentral Cloud or Premium"
 
 #: src/templates/wp-admin/settings/tab-addons.php:281,
 #: src/templates/wp-admin/settings/tab-addons.php:301
 msgid "Find out more"
-msgstr ""
+msgstr "Δείτε περισσότερα"
 
 #: src/templates/wp-admin/settings/tab-addons.php:280
 msgid "UpdraftPlus has its own embedded storage option, providing a zero-hassle way to download, store and manage all your backups from one place."
-msgstr ""
+msgstr "Το UpdraftPlus διαθέτει τη δική του ενσωματωμένη επιλογή αποθήκευσης, παρέχοντας έναν τρόπο μηδενικής ταλαιπωρίας για τη λήψη, την αποθήκευση και τη διαχείριση όλων των αντιγράφων ασφαλείας σας από ένα μέρος."
 
 #: src/templates/wp-admin/settings/tab-addons.php:37,
 #: src/templates/wp-admin/settings/tab-addons.php:272
 msgid "UpdraftPlus Gold"
-msgstr ""
+msgstr "UpdraftPlus Gold"
 
 #: src/templates/wp-admin/settings/tab-addons.php:266
 msgid "UpdraftPlus Free"
-msgstr ""
+msgstr "Δωρεάν UpdraftPlus"
 
 #: src/templates/wp-admin/settings/tab-addons.php:263
 msgid "Other products bundled with UpdraftPlus Premium or Gold"
-msgstr ""
+msgstr "Άλλα προϊόντα που έχουν συνδυαστεί με το UpdraftPlus Premium ή το Gold"
 
 #: src/templates/wp-admin/settings/tab-addons.php:249
 msgid "Lock access to UpdraftPlus via a password so you choose which admin users can access backups."
-msgstr ""
+msgstr "Κλεiδώστε την πρόσβαση στο UpdraftPlus μέσω ενός κωδικού πρόσβασης, ώστε να επιλέξετε ποιοι διαχειριστές μπορούν να έχουν πρόσβαση στα αντίγραφα ασφαλείας."
 
 #: src/templates/wp-admin/settings/tab-addons.php:233
 msgid "Some backup plugins can’t restore a backup, so Premium allows you to restore backups from other plugins."
-msgstr ""
+msgstr "Ορισμένα πρόσθετα δημιουργίας αντιγράφων ασφαλείας δεν μπορούν να επαναφέρουν ένα αντίγραφο ασφαλείας, οπότε το Premium σας επιτρέπει να επαναφέρετε τα αντίγραφα ασφαλείας από άλλα πρόσθετα."
 
 #: src/templates/wp-admin/settings/tab-addons.php:231,
 #: src/templates/wp-admin/settings/tab-addons.php:232
 msgid "Importer"
-msgstr ""
+msgstr "Εισαγωγέας"
 
 #: src/templates/wp-admin/settings/tab-addons.php:217
 msgid "Tidy things up for clients and remove all adverts for our other products."
-msgstr ""
+msgstr "Τακτοποιήστε τα πράγματα για τους πελάτες σας κι αφαιρέστε όλες τις διαφημίσεις για τα άλλα προϊόντα μας."
 
 #: src/templates/wp-admin/settings/tab-addons.php:215,
 #: src/templates/wp-admin/settings/tab-addons.php:216
 msgid "No ads"
-msgstr ""
+msgstr "Χωρίς διαφημίσεις"
 
 #: src/templates/wp-admin/settings/tab-addons.php:201
 msgid "Sophisticated reporting and emailing capabilities."
-msgstr ""
+msgstr "Εξεζητημένες δυνατότητες αναφοράς και αποστολής μηνυμάτων ηλεκτρονικού ταχυδρομείου."
 
 #: src/templates/wp-admin/settings/tab-addons.php:185
 msgid "Encrypt your sensitive databases (e.g. customer information or passwords); Backup external databases too."
-msgstr ""
+msgstr "Κρυπτογραφήστε τις ευαίσθητες βάσεις δεδομένων σας (π.χ. πληροφορίες πελατών ή κωδικοί πρόσβασης). Δημιουργήστε αντίγραφα ασφαλείας εξωτερικών βάσεων δεδομένων."
 
 #: src/templates/wp-admin/settings/tab-addons.php:183,
 #: src/templates/wp-admin/settings/tab-addons.php:184
 msgid "More database options"
-msgstr ""
+msgstr "Περισσότερες επιλογήες για τη βάση δεδομένων"
 
 #: src/templates/wp-admin/settings/tab-addons.php:169
 msgid "Set exact times to create or delete backups."
-msgstr ""
+msgstr "Ορίστε τις ακριβείς ώρες για να δημιουργήσετε ή να διαγράψετε αντίγραφα ασφαλείας."
 
 #: src/templates/wp-admin/settings/tab-addons.php:167,
 #: src/templates/wp-admin/settings/tab-addons.php:168
 msgid "Backup time and scheduling"
-msgstr ""
+msgstr "Χρόνος δημιουργίας αντιγράφων ασφαλείας και προγραμματισμός"
 
 #: src/templates/wp-admin/settings/tab-addons.php:153
 msgid "Backup WordPress multisites (i.e, networks), securely."
-msgstr ""
+msgstr "Δημιουργήστε αντίγραφα ασφαλείας από WordPress multisites (δηλαδή, δίκτυα), με ασφάλεια."
 
 #: src/templates/wp-admin/settings/tab-addons.php:152
 msgid "Network / multisite"
-msgstr ""
+msgstr "Network / multisite"
 
 #: src/templates/wp-admin/settings/tab-addons.php:137
 msgid "Backup WordPress core and non-WP files and databases."
-msgstr ""
+msgstr "Δημιουργήστε αντίγραφα ασφαλείας του πυρήνα της WordPress και μη WP αρχεία και βάσεις δεδομένων."
 
 #: src/templates/wp-admin/settings/tab-addons.php:121
 msgid "Automatically backs up your website before any updates to plugins, themes and WordPress core."
-msgstr ""
+msgstr "Αυτόματη δημιουργία αντιγράφων ασφαλείας στον ιστότοπό σας πριν από οποιεσδήποτε ενημέρωση πρόσθετων, θεμάτων και του πυρήνα της WordPress."
 
 #: src/templates/wp-admin/settings/tab-addons.php:119,
 #: src/templates/wp-admin/settings/tab-addons.php:120
 msgid "Pre-update backups"
-msgstr ""
+msgstr "Προ-ενημέρωση αντιγράφων ασφαλείας"
 
 #: src/templates/wp-admin/settings/tab-addons.php:105
 msgid "Provides expert help and support from the developers whenever you need it."
-msgstr ""
+msgstr "Παρέχει βοήθεια και υποστήριξη από τους προγραμματιστές όποτε το χρειάζεστε."
 
 #: src/templates/wp-admin/settings/tab-addons.php:104
 msgid "Fast, personal support"
-msgstr ""
+msgstr "Γρήγορη, προσωπική υποστήριξη"
 
 #: src/templates/wp-admin/settings/tab-addons.php:89
 msgid "UpdraftPlus Migrator clones your WordPress site and moves it to a new domain directly and simply."
-msgstr ""
+msgstr "Το UpdraftPlus Migrator κλωνοποιεί τον ιστότοπό σας WordPress και τον μεταφέρει σε ένα νέο τομέα άμεσα και απλά."
 
 #: src/templates/wp-admin/settings/tab-addons.php:88
 msgid "Cloning and migration"
-msgstr ""
+msgstr "Κλωνοποίηση και μετανάστευση"
 
 #: src/templates/wp-admin/settings/tab-addons.php:73
 msgid "Get enhanced versions of the free remote storage options and even more remote storage options like OneDrive, SFTP, Azure, WebDAV and more with UpdraftPlus Premium."
-msgstr ""
+msgstr "Αποκτήστε βελτιωμένες εκδόσεις των δωρεάν επιλογών απομακρυσμένης αποθήκευσης και ακόμα πιο απομακρυσμένες επιλογές αποθήκευσης όπως τα OneDrive, SFTP, Azure, WebDAV και πολλά άλλα με το UpdraftPlus Premium."
 
 #: src/templates/wp-admin/settings/tab-addons.php:72
 msgid "Additional and enhanced remote storage locations"
-msgstr ""
+msgstr "Πρόσθετες και βελτιωμένες θέσεις απομακρυσμένης αποθήκευσης"
 
 #: src/templates/wp-admin/settings/tab-addons.php:57
 msgid "To avoid server-wide risks, always backup to remote cloud storage. UpdraftPlus free includes Dropbox, Google Drive, Amazon S3, Rackspace and more."
-msgstr ""
+msgstr "Για να αποφύγετε τους κινδύνους που σχετίζονται με το διακομιστή, δημιουργήστε πάντα αντίγραφα ασφαλείας για απομακρυσμένη αποθήκευση στο σύννεφο. Το UpdraftPlus περιλαμβάνει δωρεάν τα Dropbox, Google Drive, Amazon S3, Rackspace και πολλά άλλα."
 
 #: src/templates/wp-admin/settings/tab-addons.php:56
 msgid "Backup to remote storage locations"
-msgstr ""
+msgstr "Δημιουργία αντιγράφων ασφαλείας σε απομακρυσμένες θέσεις αποθήκευσης"
 
 #: src/templates/wp-admin/settings/tab-addons.php:47,
 #: src/templates/wp-admin/settings/tab-addons.php:50,
 #: src/templates/wp-admin/settings/tab-addons.php:320,
 #: src/templates/wp-admin/settings/tab-addons.php:323
 msgid "Upgrade now"
-msgstr ""
+msgstr "Αναβαθμίστε τώρα"
 
 #: src/templates/wp-admin/settings/tab-addons.php:44,
 #: src/templates/wp-admin/settings/tab-addons.php:317
 msgid "Installed"
-msgstr ""
+msgstr "Εγκατεστημένο"
 
 #: src/templates/wp-admin/settings/tab-addons.php:38
 msgid "Gold"
-msgstr ""
+msgstr "Χρυσό"
 
 #: src/templates/wp-admin/settings/tab-addons.php:30
 msgid "Free"
-msgstr ""
+msgstr "Ελεύθερο"
 
 #: src/templates/wp-admin/settings/tab-addons.php:30,
 #: src/templates/wp-admin/settings/tab-addons.php:34,
 #: src/templates/wp-admin/settings/tab-addons.php:38
 msgid "UpdraftPlus"
-msgstr ""
+msgstr "UpdraftPlus"
 
 #: src/templates/wp-admin/settings/form-contents.php:245
 msgid "Recommended: optimize your database with WP-Optimize."
-msgstr ""
+msgstr "Συνιστούμε: βελτιστοποιήστε τη βάση δεδομένων σας με το WP-Optimize."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:15
 msgid "When you've backed up your database, we recommend you install our WP-Optimize plugin to streamline it for better website performance."
-msgstr ""
+msgstr "Όταν δημιουργήσετε αντίγραφο ασφαλείας της βάσης δεδομένων σας, σας συνιστούμε να εγκαταστήσετε το πρόσθετο WP-Optimize για να την εξομαλύνετε για την καλύτερη απόδοση του ιστότοπου."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:15
 msgid "WP-Optimize"
-msgstr ""
+msgstr "WP-Optimize"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:31,
 #: src/templates/wp-admin/notices/horizontal-notice.php:42,
 #: src/templates/wp-admin/notices/report-plain.php:33,
 #: src/templates/wp-admin/notices/report.php:30
 msgid "Read more"
-msgstr ""
+msgstr "Διαβάστε περισσότερα"
 
 #: src/includes/updraftplus-notices.php:182
 msgid "After you've backed up your database, we recommend you install our WP-Optimize plugin to streamline it for better website performance."
-msgstr ""
+msgstr "Αφού δημιουργήσετε αντίγραφο ασφαλείας της βάσης δεδομένων σας, σας συνιστούμε να εγκαταστήσετε το πρόσθετο WP-Optimize για να την εξομαλύνετε για καλύτερη απόδοση του ιστότοπου."
 
 #: src/addons/morefiles.php:309
 msgid "Please choose a file or directory"
-msgstr ""
+msgstr "Παρακαλούμε επιλέξτε ένα αρχείο ή έναν κατάλογο"
 
 #: src/addons/morefiles.php:298
 msgid "Confirm"
-msgstr ""
+msgstr "Επιβεβαίωση"
 
 #: src/addons/morefiles.php:301
 msgid "Go up a directory"
-msgstr ""
+msgstr "Πηγαίνετε πίσω έναν κατάλογο"
 
 #: src/addons/morefiles.php:294
 msgid "Add directory..."
-msgstr ""
+msgstr "Προσθήκη καταλόγου ..."
 
 #: src/addons/morefiles.php:287, src/addons/morefiles.php:307
 msgid "Edit"
-msgstr ""
+msgstr "Επεξεργασία"
 
 #: src/addons/morefiles.php:270
 msgid "If using it, select a path from the directory tree below and then press confirm selection."
-msgstr ""
+msgstr "Εάν το χρησιμοποιείτε, επιλέξτε μια διαδρομή από το παρακάτω δέντρο καταλόγου και στη συνέχεια πατήστε επιβεβαίωση επιλογής."
 
 #: src/addons/s3-enhanced.php:338
 msgid "Europe (Frankfurt)"
-msgstr ""
+msgstr "Ευρώπη (Φρανκφούρτη)"
 
 #: src/addons/s3-enhanced.php:337
 msgid "Europe (London)"
-msgstr ""
+msgstr "Ευρώπη (Λονδίνο)"
 
 #: src/addons/s3-enhanced.php:336
 msgid "Europe (Ireland)"
-msgstr ""
+msgstr "Ευρώπη (Ιρλανδία)"
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:15
 msgid "WP-Optimize (free)"
-msgstr ""
+msgstr "WP-Optimize (δωρεάν)"
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:13
 msgid "Explore our Cloud and Premium versions."
-msgstr ""
+msgstr "Εξερευνήστε τις εκδόσεις Cloud και Premium."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:13
 msgid "Download it for free from WordPress.org"
-msgstr ""
+msgstr "Κατεβάστε το δωρεάν από το WordPress.org"
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:13
 msgid "You can even use it to centrally manage and update all themes, plugins and WordPress core on all your sites without logging into them!"
-msgstr ""
+msgstr "Μπορείτε ακόμη να το χρησιμοποιήσετε για να διαχειριστείτε και να ενημερώσετε κεντρικά όλα τα θέματα, plugins και τον πυρήνα της WordPress σε όλες τις τοποθεσίες σας χωρίς να συνδεθείτε σε αυτές!"
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:13
 msgid "UpdraftCentral is a powerful remote control plugin for WordPress that allows you to control all your UpdraftPlus installs and backups from one central location."
-msgstr ""
+msgstr "Το UpdraftCentral είναι ένα ισχυρό πρόσθετο απομακρυσμένου ελέγχου για τη WordPress που σας επιτρέπει να ελέγχετε όλες τις εγκαταστάσεις και τα αντίγραφα ασφαλείας του UpdraftPlus από μια κεντρική τοποθεσία."
 
 #: src/templates/wp-admin/notices/thanks-for-using-main-dash.php:13,
 #: src/templates/wp-admin/settings/tab-addons.php:297
 msgid "UpdraftCentral"
-msgstr ""
+msgstr "UpdraftCentral"
 
 #: src/templates/wp-admin/notices/horizontal-notice.php:6
 msgid "notice image"
-msgstr ""
+msgstr "ειδοποίηση εικόνας"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:29,
 #: src/templates/wp-admin/notices/horizontal-notice.php:40,
 #: src/templates/wp-admin/notices/report-plain.php:31,
 #: src/templates/wp-admin/notices/report.php:28
 msgid "Go there"
-msgstr ""
+msgstr "Πηγαίνετε εκεί"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:27,
 #: src/templates/wp-admin/notices/horizontal-notice.php:38,
 #: src/templates/wp-admin/notices/report-plain.php:29,
 #: src/templates/wp-admin/notices/report.php:26
 msgid "Sign up"
-msgstr ""
+msgstr "Εγγραφή"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:25,
 #: src/templates/wp-admin/notices/horizontal-notice.php:36,
 #: src/templates/wp-admin/notices/report-plain.php:27,
 #: src/templates/wp-admin/notices/report.php:24
 msgid "Get Premium"
-msgstr ""
+msgstr "Αναβαθμίστε σε Premium"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:23,
 #: src/templates/wp-admin/notices/horizontal-notice.php:34,
 #: src/templates/wp-admin/notices/report-plain.php:25,
 #: src/templates/wp-admin/notices/report.php:22
 msgid "Review UpdraftPlus"
-msgstr ""
+msgstr "Ανανεώστε το UpdraftPlus"
 
 #: src/templates/wp-admin/notices/bottom-notice.php:21,
 #: src/templates/wp-admin/notices/horizontal-notice.php:32,
 #: src/templates/wp-admin/notices/report-plain.php:23,
 #: src/templates/wp-admin/notices/report.php:20
 msgid "Get UpdraftCentral"
-msgstr ""
+msgstr "Πάρτε το UpdraftCentral"
 
 #: src/templates/wp-admin/advanced/site-info.php:84
 msgid "Apache modules"
-msgstr ""
+msgstr "Apache modules"
 
 #: src/includes/updraftplus-notices.php:255
 msgid "Summer sale - 20% off UpdraftPlus Premium until July 31st"
-msgstr ""
+msgstr "Καλοκαιρινές εκτπώσεις - 20% έκπτωση στο UpdraftPlus Premium μέχρι τις 31 Ιουλίου"
 
 #: src/includes/updraftplus-notices.php:242
 msgid "Spring sale - 20% off UpdraftPlus Premium until April 31st"
-msgstr ""
+msgstr "Εαρινές εκπτώσεις - 20% έκπτωση στο UpdraftPlus Premium μέχρι τις 31 Απριλίου"
 
 #: src/includes/updraftplus-notices.php:229
 msgid "Happy New Year - 20% off UpdraftPlus Premium until January 1st"
-msgstr ""
+msgstr "Ευτυχισμένο το Νέο Έτος - 20% έκπτωση στο UpdraftPlus Premium μέχρι την 1η Ιανουαρίου"
 
 #: src/includes/updraftplus-notices.php:216
 msgid "Christmas sale - 20% off UpdraftPlus Premium until December 25th"
-msgstr ""
+msgstr "Χριστουγεννιάτικη έκπτωση - 20% έκπτωση στο UpdraftPlus Premium μέχρι τις 25 Δεκεμβρίου"
 
 #: src/includes/updraftplus-notices.php:204,
 #: src/includes/updraftplus-notices.php:217,
@@ -560,90 +560,90 @@ msgstr ""
 #: src/includes/updraftplus-notices.php:243,
 #: src/includes/updraftplus-notices.php:256
 msgid "To benefit, use this discount code:"
-msgstr ""
+msgstr "Για να επωφεληθείτε, χρησιμοποιήστε αυτόν τον κωδικό έκπτωσης:"
 
 #: src/includes/updraftplus-notices.php:203
 msgid "Black Friday - 20% off UpdraftPlus Premium until November 30th"
-msgstr ""
+msgstr "Black Friday - 20% έκπτωση στο UpdraftPlus Premium μέχρι τις 30 Νοεμβρίου"
 
 #: src/includes/updraftplus-notices.php:172
 msgid "UpdraftPlus Premium can automatically backup your plugins/themes/database before you update, without you needing to remember."
-msgstr ""
+msgstr "Το UpdraftPlus Premium μπορεί να δημιουργήσει αυτόματα αντίγραφα ασφαλείας των πρόσθετων/θεμάτων/βάσης δεδομένων σας πριν να τα ενημερώσετε, χωρίς να χρειάζεται να το θυμόσαστε κάθε φορά."
 
 #: src/includes/updraftplus-notices.php:151,
 #: src/includes/updraftplus-notices.php:161
 msgid "UpdraftPlus Blog - get up-to-date news and offers"
-msgstr ""
+msgstr "UpdraftPlus Blog - λάβετε ενημερωμένα νέα και προσφορές"
 
 #: src/includes/updraftplus-notices.php:141
 msgid "UpdraftPlus Newsletter"
-msgstr ""
+msgstr "UpdraftPlus Newsletter"
 
 #: src/includes/updraftplus-notices.php:112
 msgid "Control all your WordPress installations from one place using UpdraftCentral remote site management!"
-msgstr ""
+msgstr "Ελέγξτε όλες τις εγκαταστάσεις σας της WordPress από ένα μέρος χρησιμοποιώντας την διαχείριση απομακρυσμένων τοποθεσιών UpdraftCentral!"
 
 #: src/includes/updraftplus-notices.php:111
 msgid "Do you use UpdraftPlus on multiple sites?"
-msgstr ""
+msgstr "Χρησιμοποιείτε το UpdraftPlus σε πολλές ιστοσελίδες;"
 
 #: src/includes/updraftplus-notices.php:92,
 #: src/templates/wp-admin/settings/tab-addons.php:300
 msgid "UpdraftCentral is a highly efficient way to manage, update and backup multiple websites from one place."
-msgstr ""
+msgstr "Το UpdraftCentral είναι ένας πολύ αποδοτικός τρόπος διαχείρισης, ενημέρωσης και δημιουργίας αντιγράφων ασφαλείας πολλών ιστοσελίδων από ένα μέρος."
 
 #: src/includes/updraftplus-notices.php:91
 msgid "Introducing UpdraftCentral"
-msgstr ""
+msgstr "Παρουσιάζοντας το UpdraftCentral"
 
 #: src/includes/updraftplus-notices.php:82
 msgid "Copy your site to another domain directly. Includes find-and-replace tool for database references."
-msgstr ""
+msgstr "Αντιγράψτε απευθείας τον ιστότοπό σας σε άλλο τομέα. Περιλαμβάνει εργαλείο εύρεσης και αντικατάστασης για αναφορές στις βάσεων δεδομένων."
 
 #: src/includes/updraftplus-notices.php:81
 msgid "easily migrate or clone your site in minutes"
-msgstr ""
+msgstr "Μεταναστεύστε εύκολα ή κλωνοποιήστε τον ιστότοπό σας μέσα σε λίγα λεπτά"
 
 #: src/includes/updraftplus-notices.php:72
 msgid "Add SFTP to send your data securely, lock settings and encrypt your database backups for extra security."
-msgstr ""
+msgstr "Προσθέστε SFTP για να στείλετε τα δεδομένα σας με ασφάλεια, να κλειδώσετε τις ρυθμίσεις και να κρυπτογραφήσετε τα αντίγραφα ασφαλείας της βάσης δεδομένων σας για επιπλέον ασφάλεια."
 
 #: src/includes/updraftplus-notices.php:71
 msgid "secure your backups"
-msgstr ""
+msgstr "ασφαλίστε τα αντίγραφα ασφαλείας σας"
 
 #: src/includes/updraftplus-notices.php:62
 msgid "Secure multisite installation, advanced reporting and much more."
-msgstr ""
+msgstr "Ασφαλής εγκατάσταση πολλαπλών σελίδων, προηγμένες αναφορές και πολλά άλλα."
 
 #: src/includes/updraftplus-notices.php:61
 msgid "advanced options"
-msgstr ""
+msgstr "προηγμένες επιλογές"
 
 #: src/includes/updraftplus-notices.php:52
 msgid "Enhanced storage options for Dropbox, Google Drive and S3. Plus many more options."
-msgstr ""
+msgstr "Ενισχυμένες επιλογές αποθήκευσης για τα Dropbox, Google Drive και S3. Πλέον πολλές άλλες επιλογές."
 
 #: src/includes/updraftplus-notices.php:51
 msgid "enhanced remote storage options"
-msgstr ""
+msgstr "βελτιωμένες επιλογές απομακρυσμένης αποθήκευσης"
 
 #: src/includes/updraftplus-notices.php:42
 msgid "The ultimately secure and convenient place to store your backups."
-msgstr ""
+msgstr "Το απόλυτα ασφαλές και βολικό μέρος για την αποθήκευση των αντιγράφων ασφαλείας σας."
 
 #: src/includes/updraftplus-notices.php:41,
 #: src/templates/wp-admin/settings/tab-addons.php:278
 msgid "UpdraftVault storage"
-msgstr ""
+msgstr "χώρος αποθήκευσης του UpdraftVault"
 
 #: src/includes/updraftplus-notices.php:32
 msgid "Enjoy professional, fast, and friendly help whenever you need it."
-msgstr ""
+msgstr "Απολαύστε επαγγελματική, γρήγορη και φιλική βοήθεια όποτε το χρειάζεστε."
 
 #: src/includes/updraftplus-notices.php:31
 msgid "support"
-msgstr ""
+msgstr "υποστήριξη"
 
 #: src/includes/updraftplus-notices.php:30,
 #: src/includes/updraftplus-notices.php:40,
@@ -652,151 +652,151 @@ msgstr ""
 #: src/includes/updraftplus-notices.php:70,
 #: src/includes/updraftplus-notices.php:80
 msgid "UpdraftPlus Premium:"
-msgstr ""
+msgstr "UpdraftPlus Premium:"
 
 #: src/templates/wp-admin/settings/tab-status.php:70
 msgid "Then, try out our \"Migrator\" add-on which can perform a direct site-to-site migration. After using it once, you'll have saved the purchase price compared to the time needed to copy a site by hand."
-msgstr ""
+msgstr "Στη συνέχεια, δοκιμάστε το πρόσθετο \"Migrator\", το οποίο μπορεί να πραγματοποιήσει απευθείας μετακίνηση ιστότοπου. Αφού το χρησιμοποιήσετε μία φορά, θα έχετε κάνει απόσβεση την αξία της αγοράς σε σύγκριση με τον χρόνο που απαιτείται για την αντιγραφή ενός ιστότοπου με το χέρι."
 
 #: src/addons/s3-enhanced.php:335
 msgid "Canada Central"
-msgstr ""
+msgstr "Canada Central"
 
 #: src/templates/wp-admin/advanced/tools-menu.php:22
 msgid "Site size"
-msgstr ""
+msgstr "Μέγεθος ιστοσελίδας"
 
 #: src/templates/wp-admin/advanced/tools-menu.php:10,
 #: src/templates/wp-admin/settings/tab-addons.php:247,
 #: src/templates/wp-admin/settings/tab-addons.php:248
 msgid "Lock settings"
-msgstr ""
+msgstr "Ρυθμίσεις κλειδώματος"
 
 #: src/templates/wp-admin/advanced/site-info.php:5,
 #: src/templates/wp-admin/advanced/tools-menu.php:6
 msgid "Site information"
-msgstr ""
+msgstr "Πληροφορίες ιστοσελίδας"
 
 #: src/templates/wp-admin/advanced/search-replace.php:9
 msgid "For the ability to migrate websites, upgrade to UpdraftPlus Premium."
-msgstr ""
+msgstr "Για τη δυνατότητα μετεγκατάστασης ιστοσελίδων, αναβαθμίστε σε UpdraftPlus Premium."
 
 #: src/templates/wp-admin/advanced/export-settings.php:15
 msgid "Import settings"
-msgstr ""
+msgstr "Εισαγωγή ρυθμίσεων"
 
 #: src/templates/wp-admin/advanced/export-settings.php:12
 msgid "You can also import previously-exported settings. This tool will replace all your saved settings."
-msgstr ""
+msgstr "Μπορείτε επίσης να εισάγετε ρυθμίσεις που έχουν εξαχθεί προηγουμένως. Αυτό το εργαλείο θα αντικαταστήσει όλες τις αποθηκευμένες ρυθμίσεις σας."
 
 #: src/templates/wp-admin/advanced/export-settings.php:9
 msgid "Export settings"
-msgstr ""
+msgstr "Εξαγωγή ρυθμίσεων"
 
 #: src/templates/wp-admin/advanced/export-settings.php:7
 msgid "including any passwords"
-msgstr ""
+msgstr "συμπεριλαμβανομένων των κωδικών πρόσβασης"
 
 #: src/templates/wp-admin/advanced/export-settings.php:7
 msgid "Here, you can export your UpdraftPlus settings (%s), either for using on another site, or to keep as a backup. This tool will export what is currently in the settings tab."
-msgstr ""
+msgstr "Εδώ, μπορείτε να εξαγάγετε τις ρυθμίσεις για το UpdraftPlus (%s), είτε για χρήση σε άλλο ιστότοπο είτε για να διατηρήσετε ως αντίγραφο ασφαλείας. Αυτό το εργαλείο θα εξάγει ό,τι βρίσκεται στην καρτέλα ρυθμίσεων."
 
 #: src/templates/wp-admin/advanced/export-settings.php:5,
 #: src/templates/wp-admin/advanced/tools-menu.php:26
 msgid "Export / import settings"
-msgstr ""
+msgstr "Ρυθμίσεις εξαγωγής / εισαγωγής"
 
 #: src/restorer.php:1869
 msgid "Processing table (%s)"
-msgstr ""
+msgstr "Επεξεργασία πίνακα (%s)"
 
 #: src/restorer.php:1658
 msgid "Backup of: %s"
-msgstr ""
+msgstr "Αντίγραφο ασφαλείας του: %s"
 
 #: src/methods/googledrive.php:248
 msgid "The client has been deleted from the Google Drive API console. Please create a new Google Drive project and reconnect with UpdraftPlus."
-msgstr ""
+msgstr "Ο πελάτης έχει διαγραφεί από την κονσόλα API του Google Drive. Δημιουργήστε ένα νέο έργο στο Google Drive και επανασυνδεθείτε με το UpdraftPlus."
 
 #: src/methods/dropbox.php:598
 msgid "%s de-authentication"
-msgstr ""
+msgstr "%s αποεπιβεβαίωση"
 
 #: src/methods/dropbox.php:563
 msgid "You must add the following as the authorised redirect URI in your Dropbox console (under \"API Settings\") when asked"
-msgstr ""
+msgstr "Πρέπει να προσθέσετε τα παρακάτω ως εξουσιοδοτημένο URI ανακατεύθυνσης στην κονσόλα Dropbox (κάτω από τις \"Ρυθμίσεις API\") όταν σας ζητηθεί"
 
 #: src/methods/dropbox.php:532
 msgid "Follow this link to  deauthenticate with %s."
-msgstr ""
+msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για αποεπιβεβαίωση του %s."
 
 #: src/central/bootstrap.php:549
 msgid "UpdraftCentral enables control of your WordPress sites (including management of backups and updates) from a central dashboard."
-msgstr ""
+msgstr "Το UpdraftCentral επιτρέπει τον έλεγχο των τοποθεσιών σας στη WordPress (συμπεριλαμβανομένης της διαχείρισης των αντιγράφων ασφαλείας και των ενημερώσεων) από έναν κεντρικό πίνακα ελέγχου."
 
 #: src/backup.php:1527
 msgid "If not, you will need to either remove data from this table, or contact your hosting company to request more resources."
-msgstr ""
+msgstr "Αν όχι, θα πρέπει να αφαιρέσετε δεδομένα από αυτόν τον πίνακα ή να επικοινωνήσετε με την εταιρεία φιλοξενίας σας για να ζητήσετε περισσότερους πόρους."
 
 #: src/templates/wp-admin/settings/tab-status.php:81
 msgid "You have selected a remote storage option which has an authorization step to complete:"
-msgstr ""
+msgstr "Έχετε επιλέξει μια επιλογή απομακρυσμένης αποθήκευσης η οποία έχει θέλει ένα βήμα εξουσιοδότησης ακόμα:"
 
 #: src/admin.php:1591
 msgid "Remote files deleted:"
-msgstr ""
+msgstr "Διαγραφή απομακρυσμένων αρχείων:"
 
 #: src/admin.php:1590
 msgid "Local files deleted:"
-msgstr ""
+msgstr "Διαγραφή τοπικών αρχείων:"
 
 #: src/admin.php:973, src/admin.php:977, src/admin.php:985, src/admin.php:989
 msgid "Follow this link to authorize access to your %s account (you will not be able to back up to %s without it)."
-msgstr ""
+msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για να επιτρέψετε την πρόσβαση στον λογαριασμό σας %s (δεν θα μπορείτε να δημιουργήσετε αντίγραφα ασφαλείας για το %s χωρίς αυτό)."
 
 #: src/admin.php:749
 msgid "remote files deleted"
-msgstr ""
+msgstr "διαγραφή απομακρυσμένων αρχείων"
 
 #: src/admin.php:747
 msgid "Complete"
-msgstr ""
+msgstr "Ολοκλήρωση"
 
 #: src/admin.php:746
 msgid "Do you want to carry out the import?"
-msgstr ""
+msgstr "Θέλετε να πραγματοποιήσετε την εισαγωγή;"
 
 #: src/admin.php:745
 msgid "Which was exported on:"
-msgstr ""
+msgstr "Που εξήχθη:"
 
 #: src/admin.php:744
 msgid "This will import data from:"
-msgstr ""
+msgstr "Αυτό θα εισαγάγει δεδομένα από:"
 
 #: src/admin.php:743
 msgid "Importing..."
-msgstr ""
+msgstr "Εισαγωγή ..."
 
 #: src/admin.php:739
 msgid "You have not yet selected a file to import."
-msgstr ""
+msgstr "Δεν έχετε επιλέξει ακόμα ένα αρχείο για εισαγωγή."
 
 #: src/admin.php:723
 msgid "Your export file will be of your displayed settings, not your saved ones."
-msgstr ""
+msgstr "Το αρχείο εξαγωγής σας θα είναι από τις εμφανιζόμενες ρυθμίσεις σας, όχι από τις αποθηκευμένες σας."
 
 #: src/admin.php:82
 msgid "template not found"
-msgstr ""
+msgstr "το πρότυπο δεν βρέθηκε"
 
 #: src/addons/s3-enhanced.php:331
 msgid "US East (Ohio)"
-msgstr ""
+msgstr "ΗΠΑ Ανατολή (Οχάιο)"
 
 #: src/addons/onedrive.php:946
 msgid "This site uses a URL which is either non-HTTPS, or is localhost or 127.0.0.1 URL. As such, you must use the main %s %s App to authenticate with your account."
-msgstr ""
+msgstr "Αυτός ο ιστότοπος χρησιμοποιεί μια διεύθυνση URL που είναι είτε μη HTTPS, είτε είναι τοπική διεύθυνση URL ή διεύθυνση URL 127.0.0.1. Ως εκ τούτου, πρέπει να χρησιμοποιήσετε την κύρια εφαρμογή %s %s για έλεγχο ταυτότητας με το λογαριασμό σας."
 
 #: src/addons/onedrive.php:634
 msgid "Account is not authorized (%s)."
@@ -1649,7 +1649,7 @@ msgstr "Πατήστε εδώ για να αναζητήσετε στα σημε
 
 #: src/admin.php:1589
 msgid "Backup sets removed:"
-msgstr ""
+msgstr "Αφαίρεση συνόλων αντιγράφων ασφαλείας:"
 
 #: src/admin.php:733
 msgid "Processing..."
@@ -2107,7 +2107,7 @@ msgstr "Μια διαδικασία «μετανάστευσης» είναι τ
 
 #: src/admin.php:706
 msgid "Resetting..."
-msgstr ""
+msgstr "Επαναφορά ..."
 
 #: src/addons/migrator.php:2190, src/admin.php:705
 msgid "Add site"
@@ -2176,7 +2176,7 @@ msgstr "Θα πρέπει να προσθέσετε το ακόλουθο ως �
 
 #: src/addons/azure.php:533
 msgid "Microsoft Azure is not compatible with sites hosted on a localhost or 127.0.0.1 URL - their developer console forbids these (current URL is: %s)."
-msgstr ""
+msgstr "Το Microsoft Azure δεν είναι συμβατό με ιστοσελίδες που φιλοξενούνται σε localhost ή URL 127.0.0.1  - οι ρυθμίσεις τους απαγορεύουν την πρόσβαση σε αυτά (η τρέχουσα διεύθυνση URL είναι: %s)."
 
 #: src/addons/onedrive.php:922, src/addons/onedrive.php:924
 msgid "%s authorisation failed:"
@@ -2438,7 +2438,7 @@ msgstr "Ακολουθήστε αυτό το σύνδεσμο για να εγγ
 #: src/templates/wp-admin/settings/tab-addons.php:135,
 #: src/templates/wp-admin/settings/tab-addons.php:136
 msgid "Backup non-WordPress files and databases"
-msgstr ""
+msgstr "Δημιουργία αντιγράφων ασφαλείας αρχείων μη WordPress και βάσεων δεδομένων"
 
 #: src/templates/wp-admin/settings/tab-addons.php:19
 msgid "Ask a pre-sales question"
@@ -2775,7 +2775,7 @@ msgstr "Twitter"
 
 #: src/includes/updraftplus-notices.php:132
 msgid "UpdraftPlus is on social media - check us out!"
-msgstr ""
+msgstr "Το UpdraftPlus είναι στα κοινωνικά δίκτυα - δείτε μας εδώ!"
 
 #: src/admin.php:3658
 msgid "Why am I seeing this?"
@@ -3408,7 +3408,7 @@ msgstr "Συνδέστε όλα τα μηνύματα στο syslog (μόνο ο
 
 #: src/addons/morefiles.php:491
 msgid "No backup of location: there was nothing found to back up"
-msgstr ""
+msgstr "Δεν υπάρχει αντίγραφο ασφαλείας της τοποθεσίας: δεν βρέθηκε τίποτα για να δημιουργηθεί αντίγραφο ασφαλείας"
 
 #: src/addons/moredatabase.php:241, src/addons/morefiles.php:287,
 #: src/addons/morefiles.php:308
@@ -4056,7 +4056,7 @@ msgstr "URL περιεχομένου:"
 
 #: src/restorer.php:149
 msgid "You should check the file ownerships and permissions in your WordPress installation"
-msgstr ""
+msgstr "Θα πρέπει να ελέγξετε την ιδιοκτησία αρχείων και τα δικαιώματα στην εγκατάσταση της WordPress"
 
 #: src/templates/wp-admin/settings/form-contents.php:176
 msgid "See also the \"More Files\" add-on from our shop."
@@ -5195,7 +5195,7 @@ msgstr "Δεν δημιουργήθηκε αντίγραφο ασφαλείας 
 
 #: src/addons/morefiles.php:272
 msgid "Be careful what you select - if you select / then it really will try to create a zip containing your entire webserver."
-msgstr ""
+msgstr "Προσέξτε τι επιλέξατε - εάν επιλέξετε / τότε πραγματικά θα γίνει προσπάθεια να δημιουργηθεί ένα αρχείο zip που περιέχει ολόκληρο το διακομιστή σας."
 
 #: src/addons/morefiles.php:270
 msgid "If you are not sure what this option is for, then you will not want it, and should turn it off."
@@ -5788,7 +5788,7 @@ msgstr "Η εγκατάσταση της PHP/Curl στον εξυπηρετητ�
 
 #: src/admin.php:3235
 msgid "Your web server's PHP/Curl installation does not support https access. Communications with %s will be unencrypted. Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on)."
-msgstr ""
+msgstr "Η εγκατάσταση της PHP/Curl στον διακομιστή σας δεν υποστηρίζει πρόσβαση https. Η επικοινωνία με το %s δε θα είναι κρυπτογραφημένη. Ζητήστε από τον πάροχό σας να εγκαταστήσει το Curl/SSL για να έχετε τη δυνατότητα κρυπτογράφησης (με χρήση ενός πρόσθετου). "
 
 #: src/methods/cloudfiles-new.php:107, src/methods/cloudfiles.php:468,
 #: src/methods/openstack-base.php:541, src/methods/s3.php:831
@@ -5841,7 +5841,7 @@ msgstr "ή, για να επαναφέρετε αυτή την επιλογή"
 
 #: src/admin.php:3101
 msgid "Follow this link to attempt to create the directory and set the permissions"
-msgstr ""
+msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για να προσπαθήσετε να δημιουργήσετε το φάκελο και να ρυθμίσετε τα δικαιώματα"
 
 #: src/admin.php:3093
 msgid "Backup directory specified is writable, which is good."
@@ -5968,7 +5968,7 @@ msgstr "Διαγραφή"
 
 #: src/admin.php:2645
 msgid "(None)"
-msgstr ""
+msgstr "(Τίποτα)"
 
 #: src/admin.php:2801
 msgid "show log"
@@ -6405,7 +6405,7 @@ msgstr "Άπειρη αναδρομή: συμβουλευτείτε το αρχ�
 
 #: src/includes/updraftplus-notices.php:102
 msgid "Please help UpdraftPlus by giving a positive review at wordpress.org."
-msgstr ""
+msgstr "Παρακαλώ βοηθήστε το UpdraftPlus δίνοντας μια θετική κριτική στο wordpress.org."
 
 #: src/includes/updraftplus-notices.php:101
 msgid "Like UpdraftPlus and can spare one minute?"

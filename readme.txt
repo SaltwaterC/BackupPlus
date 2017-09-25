@@ -14,7 +14,7 @@ Backup and restoration made easy. Complete backups; manual or scheduled (backup 
 
 <a href="https://updraftplus.com">UpdraftPlus</a> simplifies backups and restoration. It is the world's highest ranking and most popular scheduled backup plugin, with over a million currently-active installs. Backup your files and database backups into the cloud and restore with a single click!
 
-Backup into the cloud directly to Dropbox, Google Drive, Amazon S3 (or compatible), Rackspace Cloud, DreamObjects, FTP, Openstack Swift, Updraft Vault and email. The paid version also backs up to Microsoft OneDrive, Microsoft Azure, Google Cloud Storage, SFTP, SCP, and WebDAV.
+Backup into the cloud directly to Dropbox, Google Drive, Amazon S3 (or compatible), Rackspace Cloud, DreamObjects, FTP, Openstack Swift, Updraft Vault and email. The paid version also backs up to Microsoft OneDrive, Microsoft Azure, Google Cloud Storage, Backblaze B2, SFTP, SCP, and WebDAV.
 
 [vimeo https://vimeo.com/154870690]
 
@@ -101,7 +101,7 @@ The free version of UpdraftPlus works just fine, but if you need more features a
 Here are some of the key features of UpdraftPlus Premium:
 
 * Easily duplicates or migrates websites (using the built-in Migrator)
-* Backs up non WP files and databases to multiple remote destinations and to more cloud storage options (WebDAV, Microsoft OneDrive, Google Cloud, Microsoft Azure, SFTP/SCP, encrypted FTP)
+* Backs up non WP files and databases to multiple remote destinations and to more cloud storage options (WebDAV, Microsoft OneDrive, Google Cloud, Microsoft Azure, Backblaze B2, SFTP/SCP, encrypted FTP)
 * Restores and migrates backup sets from other backup plugins: BackWPUp, BackupWordPress, Simple Backup, WordPress Backup to Dropbox
 * Encrypts sensitive databases; has lock access settings
 * Offers sophisticated reporting and scheduling
@@ -150,6 +150,14 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.13.8 of the free version correspond to changes made in 2.13.8.x of the paid version.
+
+= 1.13.9 - 25/Sep/2017 =
+
+* FEATURE: Backblaze B2 (https://www.backblaze.com/b2/) support in UpdraftPlus Premium
+* TWEAK: Port job data used by Azure, Google Cloud and OneDrive storage to being instance-local (now believed to all be ported)
+* TWEAK: The automatic correcting of wrongly-input S3 and FTP settings had regressed in a recent version
+* TWEAK: Various small fixes to the standards compliance of the HTML output in the remote storage settings area
+* TWEAK: When deleting backups with multiple remote storage instances of the same type, order the attempts
 
 = 1.13.8 - 21/Sep/2017 =
 
@@ -574,4 +582,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.13.8: Better handling of incompatible MySQL character sets. S3 generic protocol improvements. Various small tweaks and internal improvements. Recommended update for all.
+* 1.13.9: Backblaze B2 support, and other small tweaks
