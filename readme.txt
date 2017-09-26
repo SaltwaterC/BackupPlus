@@ -149,7 +149,15 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.13.9 of the free version correspond to changes made in 2.13.9.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.13.10 of the free version correspond to changes made in 2.13.10.x of the paid version.
+
+= 1.13.10 - 26/Sep/2017 =
+
+* FIX: Fix a failure (regression in 1.13.8+) to download some backup sets which pre-date the existence of instances
+* TWEAK: When logging an Exception or Error, include a backtrace (WP 3.4+)
+* TWEAK: Prevent a PHP warning during a save of the backup history
+* TWEAK: Added a MetaSlider notice in the notices collection
+* TWEAK: Put a try/catch block that will catch PHP exceptions/fatals (PHP 7.0+) during encryption phase, so that any issues can be logged
 
 = 1.13.9 - 25/Sep/2017 =
 
@@ -582,4 +590,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.13.9: Backblaze B2 support, and other small tweaks
+* 1.13.10: Fix a failure to download some backup sets created with older versions. 1.13.9: Backblaze B2 support, and other small tweaks

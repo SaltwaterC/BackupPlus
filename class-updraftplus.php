@@ -2113,15 +2113,19 @@ class UpdraftPlus {
 				if (!is_array($our_files)) $our_files = array();
 			} catch (Exception $e) {
 				$log_message = 'Exception ('.get_class($e).') occurred during files backup: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				$this->log($log_message);
 				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$this->log($log_message);
 				$this->log(sprintf(__('A PHP exception (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
 				die();
 			// @codingStandardsIgnoreLine
 			} catch (Error $e) {
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				$this->log($log_message);
 				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$this->log($log_message);
 				$this->log(sprintf(__('A PHP fatal error (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
 				die();
 			}
@@ -3336,6 +3340,7 @@ class UpdraftPlus {
 			
 			// N.B. On PHP 5.5+, we'd use array_column()
 			foreach ($storage_objects_and_ids as $method => $method_information) {
+				if ('none' == $method || !$method || !$method->support_feature('multi_options')) continue;
 				$backup_array['service_instance_ids'][$method] = array_keys($method_information['instance_settings']);
 			}
 			

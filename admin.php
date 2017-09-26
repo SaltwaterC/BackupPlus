@@ -1008,6 +1008,9 @@ class UpdraftPlus_Admin {
 		return $updraft_dir;
 	}
 
+	/**
+	 * Start a download of a backup. This method is called via the AJAX action updraft_download_backup. May die instead of returning depending upon the mode in which it is called.
+	 */
 	public function updraft_download_backup() {
 
 		if (empty($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'updraftplus_download')) die;
@@ -1027,7 +1030,18 @@ class UpdraftPlus_Admin {
 		die();
 	}
 	
-	// This function may die(), depending on the request being made in $stage
+	/**
+	 * Ensure that a specified backup is present, downloading if necessary (or delete it, if the parameters so indicate). N.B. This function may die(), depending on the request being made in $stage
+	 *
+	 * @param Integer		   $findex					  - the index number of the backup archive requested
+	 * @param String		   $type					  - the entity type (e.g. 'plugins') being requested
+	 * @param Integer		   $timestamp				  - identifier for the backup being requested (UNIX epoch time)
+	 * @param Mixed			   $stage					  - the stage; valid values include (have not audited for other possibilities) at least 'delete' and 2.
+	 * @param Callable|Boolean $close_connection_callable - function used to close the connection to the caller; an array of data to return is passed. If false, then UpdraftPlus::close_browser_connection is called with a JSON version of the data.
+	 * @param String		   $file_path				  - an over-ride for where to download the file to (basename only)
+	 *
+	 * @return Array - sumary of the results. May also just die.
+	 */
 	public function do_updraft_download_backup($findex, $type, $timestamp, $stage, $close_connection_callable = false, $file_path = '') {
 	
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);
@@ -1069,7 +1083,7 @@ class UpdraftPlus_Admin {
 		// Deal with multi-archive sets
 		if (is_array($file)) $file = $file[$findex];
 
-		if (strpos($file_path, '..') !== false) {
+		if (false !== strpos($file_path, '..')) {
 			error_log("UpdraftPlus_Admin::do_updraft_download_backup : invalid file_path: $file_path");
 			return array('result' => __('Error: invalid path', 'updraftplus'));
 		}
@@ -1214,13 +1228,13 @@ class UpdraftPlus_Admin {
 			$object = $storage_objects_and_ids[$service]['object'];
 
 			if (!$object->supports_feature('multi_options')) { 
-				error_log("UpdraftPlus_Admin::get_remote_file(): Multi options not supported by: ".$service); 
+				error_log("UpdraftPlus_Admin::get_remote_file(): Multi-options not supported by: ".$service); 
 				continue; 
 			}
 			
 			$instance_ids = $storage_objects_and_ids[$service]['instance_settings'];
 			$backups_instance_ids = isset($backup_history[$timestamp]['service_instance_ids'][$service]) ? $backup_history[$timestamp]['service_instance_ids'][$service] : array(false);
-			
+
 			foreach ($backups_instance_ids as $instance_id) {
 
 				if (isset($instance_ids[$instance_id])) {
@@ -1280,15 +1294,19 @@ class UpdraftPlus_Admin {
 				return $object->download($file);
 			} catch (Exception $e) {
 				$log_message = 'Exception ('.get_class($e).') occurred during download: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				$updraftplus->log($log_message);
 				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$updraftplus->log($log_message);
 				$updraftplus->log(sprintf(__('A PHP exception (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
 				return false;
 			// @codingStandardsIgnoreLine
 			} catch (Error $e) {
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				$updraftplus->log($log_message);
+				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$updraftplus->log($log_message);
 				$updraftplus->log(sprintf(__('A PHP fatal error (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
 				return false;
 			}
@@ -3964,8 +3982,10 @@ ENDHERE;
 					$val = $updraftplus_restorer->restore_backup($file, $type, $info, $last_one);
 				} catch (Exception $e) {
 					$log_message = 'Exception ('.get_class($e).') occurred during restore: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-					error_log($log_message);
 					$display_log_message = sprintf(__('A PHP exception (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage());
+					error_log($log_message);
+					// @codingStandardsIgnoreLine
+					if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
 					$updraftplus->log($log_message);
 					$updraftplus->log($display_log_message, 'notice-restore');
 					die();
@@ -3973,8 +3993,10 @@ ENDHERE;
 				} catch (Error $e) {
 					$log_message = 'PHP Fatal error ('.get_class($e).') has occurred. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 					error_log($log_message);
-					$display_log_message = sprintf(__('A PHP fatal error (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage());
+					// @codingStandardsIgnoreLine
+					if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
 					$updraftplus->log($log_message);
+					$display_log_message = sprintf(__('A PHP fatal error (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage());
 					$updraftplus->log($display_log_message, 'notice-restore');
 					die();
 				}

@@ -20,7 +20,7 @@ abstract class UpdraftPlus_BackupModule {
 	
 		$this->_options = $options;
 		
-		if (null !== $instance_id) $this->set_instance_id($instance_id);
+		if ($instance_id) $this->set_instance_id($instance_id);
 		
 		if ($save) return $this->save_options();
 
@@ -34,11 +34,11 @@ abstract class UpdraftPlus_BackupModule {
 	private function save_options() {
 	
 		if (!$this->supports_feature('multi_options')) {
-			throw new Exception('set_options() can only be called on a storage method which supports multi_options (this module, '.$this->get_id().', does not)');
+			throw new Exception('save_options() can only be called on a storage method which supports multi_options (this module, '.$this->get_id().', does not)');
 		}
 	
 		if (!$this->_instance_id) {
-			throw new Exception('set_options() requires an instance ID, but was called without setting one (either directly or via set_instance_id())');
+			throw new Exception('save_options() requires an instance ID, but was called without setting one (either directly or via set_instance_id())');
 		}
 		
 		global $updraftplus;
@@ -46,7 +46,7 @@ abstract class UpdraftPlus_BackupModule {
 		$current_db_options = $updraftplus->update_remote_storage_options_format($this->get_id());
 
 		if (is_wp_error($current_db_options)) {
-			throw new Exception('set_options(): options fetch/update failed ('.$current_db_options->get_error_code().': '.$current_db_options->get_error_message().')');
+			throw new Exception('save_options(): options fetch/update failed ('.$current_db_options->get_error_code().': '.$current_db_options->get_error_message().')');
 		}
 
 		$current_db_options['settings'][$this->_instance_id] = $this->_options;
@@ -311,12 +311,10 @@ abstract class UpdraftPlus_BackupModule {
 		$supports_multi_options = $this->supports_feature('multi_options');
 
 		if (is_array($this->_options)) {
-		
 			// First, prioritise any options that were explicitly set. This is the eventual goal for all storage modules.
 			$options = $this->_options;
 			
 		} elseif (is_callable(array($this, 'get_opts'))) {
-		
 			// Next, get any options available via a legacy / over-ride method.
 		
 			if ($supports_multi_options) {
@@ -327,7 +325,7 @@ abstract class UpdraftPlus_BackupModule {
 			$options = $this->get_opts();
 			
 		} else {
-		
+
 			// Next, look for job options (which in turn, falls back to saved settings if no job options were set)
 	
 			$options = $updraftplus->get_job_option('updraft_'.$this->get_id());

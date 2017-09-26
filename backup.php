@@ -1904,7 +1904,26 @@ class UpdraftPlus_Backup {
 		$encryption = UpdraftPlus_Options::get_updraft_option('updraft_encryptionphrase');
 		if (strlen($encryption) > 0) {
 			$updraftplus->log("Attempting to encrypt backup file");
-			$result = apply_filters('updraft_encrypt_file', null, $file, $encryption, $this->whichdb, $this->whichdb_suffix);
+			try {
+				$result = apply_filters('updraft_encrypt_file', null, $file, $encryption, $this->whichdb, $this->whichdb_suffix);
+			} catch (Exception $e) {
+				$log_message = 'Exception ('.get_class($e).') occurred during encryption: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
+				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$updraftplus->log($log_message);
+				$updraftplus->log(sprintf(__('A PHP exception (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
+				die();
+			// @codingStandardsIgnoreLine
+			} catch (Error $e) {
+				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during encryption. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
+				error_log($log_message);
+				// @codingStandardsIgnoreLine
+				if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.wp_debug_backtrace_summary();
+				$updraftplus->log($log_message);
+				$updraftplus->log(sprintf(__('A PHP fatal error (%s) has occurred: %s', 'updraftplus'), get_class($e), $e->getMessage()), 'error');
+				die();
+			}
 			if (null === $result) {
 // 				$updraftplus->log(sprintf(__("As previously warned (see: %s), encryption is no longer a feature of the free edition of UpdraftPlus", 'updraftplus'), 'https://updraftplus.com/next-updraftplus-release-ready-testing/ + https://updraftplus.com/shop/updraftplus-premium/'), 'warning', 'needpremiumforcrypt');
 // 				UpdraftPlus_Options::update_updraft_option('updraft_encryptionphrase', '');
