@@ -3340,7 +3340,7 @@ class UpdraftPlus {
 			
 			// N.B. On PHP 5.5+, we'd use array_column()
 			foreach ($storage_objects_and_ids as $method => $method_information) {
-				if ('none' == $method || !$method || !$method->support_feature('multi_options')) continue;
+				if ('none' == $method || !$method || !$method_information['object']->supports_feature('multi_options')) continue;
 				$backup_array['service_instance_ids'][$method] = array_keys($method_information['instance_settings']);
 			}
 			
