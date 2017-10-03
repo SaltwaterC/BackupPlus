@@ -3779,7 +3779,7 @@ class UpdraftPlus {
 		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
 			foreach ($settings['settings'] as $instance_id => $instance_settings) {
 				if (!empty($instance_settings['host']) && preg_match('#ftp(es|s)?://(.*)#i', $instance_settings['host'], $matches)) {
-					$settings['settings'][$instance_id]['host'] = rtrim($matches[2], "/ \t\n\r\0x0B");
+					$settings['settings'][$instance_id]['host'] = rtrim($matches[2], "/ \t\n\r\0\x0B");
 				}
 				if (isset($instance_settings['pass'])) {
 					$settings['settings'][$instance_id]['pass'] = trim($instance_settings['pass'], "\n\r\0\x0B");
@@ -3800,7 +3800,7 @@ class UpdraftPlus {
 		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
 			foreach ($settings['settings'] as $instance_id => $instance_settings) {
 				if (!empty($instance_settings['backup_path'])) {
-					$settings['settings'][$instance_id]['backup_path'] = trim($instance_settings['backup_path'], "/ \t\n\r\0x0B");
+					$settings['settings'][$instance_id]['backup_path'] = trim($instance_settings['backup_path'], "/ \t\n\r\0\x0B");
 				}
 			}
 		}
@@ -3818,7 +3818,7 @@ class UpdraftPlus {
 		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
 			foreach ($settings['settings'] as $instance_id => $instance_settings) {
 				if (!empty($instance_settings['path'])) {
-					$settings['settings'][$instance_id]['path'] = trim($instance_settings['path'], "/ \t\n\r\0x0B");
+					$settings['settings'][$instance_id]['path'] = trim($instance_settings['path'], "/ \t\n\r\0\x0B");
 				}
 			}
 		}
