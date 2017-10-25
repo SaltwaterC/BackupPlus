@@ -375,7 +375,7 @@ class UpdraftPlus_Notices extends Updraft_Notices {
 		return false;
 	}
 	
-	protected function check_notice_dismissed($dismiss_time){
+	protected function check_notice_dismissed($dismiss_time) {
 
 		$time_now = defined('UPDRAFTPLUS_NOTICES_FORCE_TIME') ? UPDRAFTPLUS_NOTICES_FORCE_TIME : time();
 	

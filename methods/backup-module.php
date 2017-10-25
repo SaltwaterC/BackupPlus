@@ -166,16 +166,15 @@ abstract class UpdraftPlus_BackupModule {
 			$opts = $this->get_options();
 			
 			// Because of the need to support PHP 5.2+, we have to use the PHP 5.2 branch + API
-
 			if (!class_exists('Handlebars_Engine')) {
 				include_once UPDRAFTPLUS_DIR.'/vendor/xamin/handlebars.php/src/Handlebars/Autoloader.php';
 				Handlebars_Autoloader::register();
 			}
-			
+			$opts_without_transform = $this->get_options();
 			if ($this->supports_feature('multi_options')) {
-				$opts['instance_id'] = $this->_instance_id;
+				$opts_without_transform['instance_id'] = $this->_instance_id;
 			}
-			
+			$opts = $this->transform_options_for_template($opts_without_transform);
 			try {
 				$engine = new Handlebars_Engine;
 				echo $engine->render($template, $opts);
@@ -185,7 +184,6 @@ abstract class UpdraftPlus_BackupModule {
 			} catch (Exception $e) {
 				echo "Exception whilst rendering handlebars template (".$this->get_id().", ".get_class($e)."): ".$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 			}
-			
 		} else {
 
 			do_action('updraftplus_config_print_before_storage', $this->get_id(), $this);
@@ -193,6 +191,16 @@ abstract class UpdraftPlus_BackupModule {
 			// N.B. These are mutually exclusive: config_print() is not used if config_templates is supported. So, even during transition, the UpdraftPlus_BackupModule instance only needs to support one of the two, not both.
 			$this->config_print();
 		}
+	}
+	
+	/**
+	 * Modifies handerbar template options. Other child class can extend it.
+	 *
+	 * @param array $opts
+	 * @return array - Modified handerbar template options
+	 */
+	protected function transform_options_for_template($opts) {
+		return $opts;
 	}
 
 	/**
@@ -247,10 +255,11 @@ abstract class UpdraftPlus_BackupModule {
 	 */
 	protected function get_test_button_html($title) {
 		ob_start();
+		$instance_id = $this->supports_feature('config_templates') ? '{{instance_id}}' : $this->_instance_id;
 		?>
 		<tr class="<?php echo $this->get_css_classes(); ?>">
 			<th></th>
-			<td><p><button id="updraft-<?php echo $this->get_id();?>-test-<?php echo $this->_instance_id;?>" type="button" class="button-primary updraft-test-button updraft-<?php echo $this->get_id();?>-test" data-instance_id="<?php echo $this->_instance_id;?>" data-method="<?php echo $this->get_id();?>" data-method_label="<?php echo esc_attr($title);?>"><?php printf(__('Test %s Settings', 'updraftplus'), $title);?></button></p></td>
+			<td><p><button id="updraft-<?php echo $this->get_id();?>-test-<?php echo $instance_id;?>" type="button" class="button-primary updraft-test-button updraft-<?php echo $this->get_id();?>-test" data-instance_id="<?php echo $instance_id;?>" data-method="<?php echo $this->get_id();?>" data-method_label="<?php echo esc_attr($title);?>"><?php printf(__('Test %s Settings', 'updraftplus'), $title);?></button></p></td>
 		</tr>
 		<?php
 		return ob_get_clean();

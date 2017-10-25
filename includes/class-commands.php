@@ -233,26 +233,48 @@ class UpdraftPlus_Commands {
 	
 	}
 	
-	public function vault_recountquota() {
+	/**
+	 * This method will make a call to the methods responsible for recounting the quota in the UpdraftVault account
+	 *
+	 * @param  array $params - an array of parameters such as a instance_id
+	 * @return string - the result of the call
+	 */
+	public function vault_recountquota($params = array()) {
 		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return new WP_Error('no_updraftplus');
 
 		if (!UpdraftPlus_Options::user_can_manage()) return new WP_Error('updraftplus_permission_denied');
 		
-		$vault = $updraftplus_admin->get_updraftvault();
+		$instance_id = empty($params['instance_id']) ? '' : $params['instance_id'];
+
+		$vault = $updraftplus_admin->get_updraftvault($instance_id);
 
 		return $vault->ajax_vault_recountquota(false);
 	}
 	
+	/**
+	 * This method will make a call to the methods responsible for creating a connection to UpdraftVault
+	 *
+	 * @param  array $credentials - an array of parameters such as the user credentials and instance_id
+	 * @return string - the result of the call
+	 */
 	public function vault_connect($credentials) {
 	
 		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return new WP_Error('no_updraftplus');
 		
 		if (!UpdraftPlus_Options::user_can_manage()) return new WP_Error('updraftplus_permission_denied');
 
-		return $updraftplus_admin->get_updraftvault()->ajax_vault_connect(false, $credentials);
+		$instance_id = empty($credentials['instance_id']) ? '' : $credentials['instance_id'];
+
+		return $updraftplus_admin->get_updraftvault($instance_id)->ajax_vault_connect(false, $credentials);
 	
 	}
 	
+	/**
+	 * This method will make a call to the methods responsible for removing a connection to UpdraftVault
+	 *
+	 * @param array $params - an array of parameters such as a instance_id
+	 * @return string - the result of the call
+	 */
 	public function vault_disconnect($params = array()) {
 	
 		if (false === ($updraftplus_admin = $this->_load_ud_admin()) || false === ($updraftplus = $this->_load_ud())) return new WP_Error('no_updraftplus');
@@ -260,21 +282,13 @@ class UpdraftPlus_Commands {
 		if (!UpdraftPlus_Options::user_can_manage()) return new WP_Error('updraftplus_permission_denied');
 
 		$echo_results = empty($params['immediate_echo']) ? false : true;
+
+		$instance_id = empty($params['instance_id']) ? '' : $params['instance_id'];
 		
-		$results = (array) $updraftplus_admin->get_updraftvault()->ajax_vault_disconnect($echo_results);
+		$results = (array) $updraftplus_admin->get_updraftvault($instance_id)->ajax_vault_disconnect($echo_results);
 
 		return $results;
 	
-	}
-	
-	public function vault_recount_quota() {
-		if (false === ($updraftplus_admin = $this->_load_ud_admin()) || false === ($updraftplus = $this->_load_ud())) return new WP_Error('no_updraftplus');
-		
-		if (!UpdraftPlus_Options::user_can_manage()) return new WP_Error('updraftplus_permission_denied');
-	
-		$results = $updraftplus_admin->get_updraftvault()->ajax_vault_recountquota(false);
-	
-		return $results;
 	}
 	
 	/**

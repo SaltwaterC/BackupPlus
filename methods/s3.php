@@ -49,7 +49,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options');
+		return array('multi_options', 'config_templates');
 	}
 
 	/**
@@ -785,17 +785,40 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	
 	}
 
-	public function config_print() {
-	
+	/**
+	 * Get the configuration template
+	 *
+	 * @return String - the template, ready for substitutions to be carried out
+	 */
+	public function get_configuration_template() {
 		// White: https://d36cz9buwru1tt.cloudfront.net/Powered-by-Amazon-Web-Services.jpg
-		$this->config_print_engine('s3', 'S3', 'Amazon S3', 'AWS', 'https://aws.amazon.com/console/', '<img src="//awsmedia.s3.amazonaws.com/AWS_logo_poweredby_black_127px.png" alt="Amazon Web Services">');
-		
+		return $this->get_configuration_template_engine('s3', 'S3', 'Amazon S3', 'AWS', 'https://aws.amazon.com/console/', '<img src="//awsmedia.s3.amazonaws.com/AWS_logo_poweredby_black_127px.png" alt="Amazon Web Services">');
 	}
-
-	public function config_print_engine($key, $whoweare_short, $whoweare_long, $console_descrip, $console_url, $img_html = '', $include_endpoint_chooser = false) {
-
-		$opts = $this->get_config();
-
+	
+	/**
+	 * Modifies handerbar template options
+	 *
+	 * @param array $opts
+	 * @return array - Modified handerbar template options
+	 */
+	protected function transform_options_for_template($opts) {
+		return apply_filters('updraftplus_options_s3_options', $opts);
+	}
+	
+	/**
+	 * Get configuration template engine for remote method which is S3 Compatible
+	 *
+	 * @param string $key             Remote storage method key which is unique
+	 * @param string $whoweare_short  Remote storage method short name which is prefix of field label generally
+	 * @param string $whoweare_long   Remote storage method long name which is generally used in instructions
+	 * @param string $console_descrip Remote storage method console description. It is used console link text like "from your %s console"
+	 * @param string $console_url     Remote storage method console url. It is used for get credential instruction
+	 * @param string $img_html        Image html tag
+	 *
+	 * @return string $template_str handlebars template string
+	 */
+	public function get_configuration_template_engine($key, $whoweare_short, $whoweare_long, $console_descrip, $console_url, $img_html = '') {
+		ob_start();
 		$classes = $this->get_css_classes();
 		?>
 		<tr class="<?php echo $classes;?>">
@@ -803,15 +826,15 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			<td><?php echo $img_html; ?><p><em><?php printf(__('%s is a great choice, because UpdraftPlus supports chunked uploads - no matter how big your site is, UpdraftPlus can upload it a little at a time, and not get thwarted by timeouts.', 'updraftplus'), $whoweare_long);?></em></p>
 			<?php
 				if ('s3generic' == $key) {
-					_e('Examples of S3-compatible storage providers:');
-					echo ' <a href="https://updraftplus.com/use-updraftplus-digital-ocean-spaces/">DigitalOcean Spaces</a>, ';
-					echo '<a href="https://www.cloudian.com">Cloudian</a>, ';
-					echo '<a href="https://www.mh.connectria.com/rp/order/cloud_storage_index">Connectria</a>, ';
-					echo '<a href="https://www.constant.com/cloud/storage/">Constant</a>, ';
-					echo '<a href="http://www.eucalyptus.com/eucalyptus-cloud/iaas">Eucalyptus</a>, ';
-					echo '<a href="http://cloud.nifty.com/storage/">Nifty</a>, ';
-					echo '<a href="http://www.ntt.com/business/services/cloud/iaas/cloudn.html">Cloudn</a>';
-					echo ''.__('... and many more!', 'updraftplus').'<br>';
+				_e('Examples of S3-compatible storage providers:');
+				echo ' <a href="https://updraftplus.com/use-updraftplus-digital-ocean-spaces/">DigitalOcean Spaces</a>, ';
+				echo '<a href="https://www.cloudian.com">Cloudian</a>, ';
+				echo '<a href="https://www.mh.connectria.com/rp/order/cloud_storage_index">Connectria</a>, ';
+				echo '<a href="https://www.constant.com/cloud/storage/">Constant</a>, ';
+				echo '<a href="http://www.eucalyptus.com/eucalyptus-cloud/iaas">Eucalyptus</a>, ';
+				echo '<a href="http://cloud.nifty.com/storage/">Nifty</a>, ';
+				echo '<a href="http://www.ntt.com/business/services/cloud/iaas/cloudn.html">Cloudn</a>';
+				echo ''.__('... and many more!', 'updraftplus').'<br>';
 				}
 			?>
 			</td>
@@ -833,43 +856,26 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			}
 			$updraftplus_admin->curl_check($whoweare_long, true, $key);
 		?>
-
 		</td>
 		</tr>
 		<tr class="<?php echo $classes;?>">
-		<th></th>
-		<td>
-			<p>
-				<?php if ($console_url) echo sprintf(__('Get your access key and secret key <a href="%s">from your %s console</a>, then pick a (globally unique - all %s users) bucket name (letters and numbers) (and optionally a path) to use for storage. This bucket will be created for you if it does not already exist.', 'updraftplus'), $console_url, $console_descrip, $whoweare_long);?>
+			<th></th>
+			<td>
+				<p>
+					<?php if ($console_url) echo sprintf(__('Get your access key and secret key <a href="%s">from your %s console</a>, then pick a (globally unique - all %s users) bucket name (letters and numbers) (and optionally a path) to use for storage. This bucket will be created for you if it does not already exist.', 'updraftplus'), $console_url, $console_descrip, $whoweare_long);?>
 
-				<a href="<?php echo apply_filters("updraftplus_com_link", "https://updraftplus.com/faqs/i-get-ssl-certificate-errors-when-backing-up-andor-restoring/");?>"><?php _e('If you see errors about SSL certificates, then please go here for help.', 'updraftplus');?></a>
+					<a href="<?php echo apply_filters("updraftplus_com_link", "https://updraftplus.com/faqs/i-get-ssl-certificate-errors-when-backing-up-andor-restoring/");?>"><?php _e('If you see errors about SSL certificates, then please go here for help.', 'updraftplus');?></a>
 
-				<a href="<?php echo apply_filters("updraftplus_com_link", "https://updraftplus.com/faq-category/amazon-s3/");?>"><?php if ('s3' == $key) echo sprintf(__('Other %s FAQs.', 'updraftplus'), 'S3');?></a>
-			</p>
-		</td></tr>
-		<?php if (!empty($include_endpoint_chooser)) { ?>
-			<tr class="<?php echo $classes;?>">
-				<th><?php echo sprintf(__('%s end-point', 'updraftplus'), $whoweare_short);?>:</th>
-				<td>
-					<?php
-					if (is_array($include_endpoint_chooser)) {
-						?><select data-updraft_settings_test="endpoint" <?php $this->output_settings_field_name_and_id('endpoint');?> style="width: 360px">
-						<?php
-						$selected_endpoint = (!empty($opts['endpoint']) && in_array($opts['endpoint'], $include_endpoint_chooser)) ? $opts['endpoint'] : $include_endpoint_chooser[0];
-						foreach ($include_endpoint_chooser as $endpoint) {
-							?><option value="<?php esc_attr_e($endpoint);?>" <?php if ($endpoint == $selected_endpoint) echo 'selected="selected"';?>><?php echo htmlspecialchars($endpoint);?></option><?php
-						}
-					} else {
-						echo '</select>';
-					?>
-					<input data-updraft_settings_test="endpoint" type="text" style="width: 360px" <?php $this->output_settings_field_name_and_id('endpoint');?> value="<?php if (!empty($opts['endpoint'])) echo esc_attr($opts['endpoint']); ?>" />
-					<?php } ?>
-				</td>
-			</tr>
-		<?php } else { ?>
-			<input data-updraft_settings_test="endpoint" type="hidden" <?php $this->output_settings_field_name_and_id('endpoint');?> value="">
-		<?php } ?>
-		<?php if ('s3' == $key && version_compare(PHP_VERSION, '5.3.3', '>=') && class_exists('UpdraftPlus_Addon_S3_Enhanced')) { ?>
+					<a href="<?php echo apply_filters("updraftplus_com_link", "https://updraftplus.com/faq-category/amazon-s3/");?>"><?php if ('s3' == $key) echo sprintf(__('Other %s FAQs.', 'updraftplus'), 'S3');?></a>
+				</p>
+			</td>
+		</tr>
+		<?php
+		$template_str = ob_get_clean();
+		$template_str .= $this->get_partial_configuration_template_for_endpoint();
+		ob_start();
+		if ('s3' == $key && version_compare(PHP_VERSION, '5.3.3', '>=') && class_exists('UpdraftPlus_Addon_S3_Enhanced')) {
+		?>
 			<tr class="<?php echo $classes;?>">
 				<th></th>
 				<td><?php echo apply_filters('updraft_s3_apikeysetting', '<a href="'.apply_filters("updraftplus_com_link", "https://updraftplus.com/shop/s3-enhanced/").'"><em>'.__('To create a new IAM sub-user and access key that has access only to this bucket, use this add-on.', 'updraftplus').'</em></a>'); ?></td>
@@ -878,24 +884,32 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 
 		<tr class="<?php echo $classes;?>">
 			<th><?php echo sprintf(__('%s access key', 'updraftplus'), $whoweare_short);?>:</th>
-			<td><input data-updraft_settings_test="apikey" type="text" autocomplete="off" style="width: 360px" <?php $this->output_settings_field_name_and_id('accesskey');?> value="<?php echo esc_attr($opts['accesskey']); ?>" /></td>
+			<td><input data-updraft_settings_test="apikey" type="text" autocomplete="off" style="width: 360px" <?php $this->output_settings_field_name_and_id('accesskey');?> value="{{accesskey}}" /></td>
 		</tr>
 		<tr class="<?php echo $classes;?>">
 			<th><?php echo sprintf(__('%s secret key', 'updraftplus'), $whoweare_short);?>:</th>
-			<td><input data-updraft_settings_test="apisecret" type="<?php echo apply_filters('updraftplus_admin_secret_field_type', 'password'); ?>" autocomplete="off" style="width: 360px" <?php $this->output_settings_field_name_and_id('secretkey');?> value="<?php echo esc_attr($opts['secretkey']); ?>" /></td>
+			<td><input data-updraft_settings_test="apisecret" type="<?php echo apply_filters('updraftplus_admin_secret_field_type', 'password'); ?>" autocomplete="off" style="width: 360px" <?php $this->output_settings_field_name_and_id('secretkey');?> value="{{secretkey}}" /></td>
 		</tr>
 		<tr class="<?php echo $classes;?>">
 			<th><?php echo sprintf(__('%s location', 'updraftplus'), $whoweare_short);?>:</th>
-			<td><?php echo $key; ?>://<input data-updraft_settings_test="path" title="<?php echo htmlspecialchars(__('Enter only a bucket name or a bucket and path. Examples: mybucket, mybucket/mypath', 'updraftplus')); ?>" type="text" style="width: 360px" <?php $this->output_settings_field_name_and_id('path');?> value="<?php echo esc_attr($opts['path']); ?>" /></td>
+			<td><?php echo $key; ?>://<input data-updraft_settings_test="path" title="<?php echo htmlspecialchars(__('Enter only a bucket name or a bucket and path. Examples: mybucket, mybucket/mypath', 'updraftplus')); ?>" type="text" style="width: 360px" <?php $this->output_settings_field_name_and_id('path');?> value="{{path}}" /></td>
 		</tr>
 		<?php
-			do_action('updraft_'.$key.'_extra_storage_options', $this);
-			echo $this->get_test_button_html($whoweare_short);
-		?>
-
-	<?php
+		$template_str .= ob_get_clean();
+		$template_str .= apply_filters('updraft_'.$key.'_extra_storage_options_configuration_template', '', $this);
+		$template_str .= $this->get_test_button_html($whoweare_short);
+		return $template_str;
 	}
 
+	/**
+	 * Get handlebar partial template string for endpoint of s3 compatible remote storage method. Other child class can extend it.
+	 *
+	 * @return string the partial template string
+	 */
+	protected function get_partial_configuration_template_for_endpoint() {
+		return '<input data-updraft_settings_test="endpoint" type="hidden" '.$this->output_settings_field_name_and_id('endpoint', true).' value="">';
+	}
+	
 	public function credentials_test($posted_settings) {
 		return $this->credentials_test_engine($this->get_config(), $posted_settings);
 	}

@@ -558,4 +558,45 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 
 		echo $this->get_test_button_html($this->desc);
 	}
+	
+	/**
+	 * Get the configuration template
+	 *
+	 * @return String - the template, ready for substitutions to be carried out
+	 */
+	public function get_configuration_template() {
+		ob_start();
+		$classes = $this->get_css_classes();
+		?>
+		<tr class="<?php echo $classes; ?>">
+			<td></td>
+			<td>
+				<?php
+					if (!empty($this->img_url)) {
+					?>
+						<img alt="<?php echo $this->long_desc; ?>" src="<?php echo UPDRAFTPLUS_URL.$this->img_url; ?>">
+					<?php
+					}
+					?>
+				<p><em><?php printf(__('%s is a great choice, because UpdraftPlus supports chunked uploads - no matter how big your site is, UpdraftPlus can upload it a little at a time, and not get thwarted by timeouts.', 'updraftplus'), $this->long_desc);?></em></p></td>
+		</tr>
+		<tr class="<?php echo $classes; ?>">
+			<th></th>
+			<td>
+			<?php
+			// Check requirements.
+			global $updraftplus_admin;
+			if (!function_exists('mb_substr')) {
+				$updraftplus_admin->show_double_warning('<strong>'.__('Warning', 'updraftplus').':</strong> '.sprintf(__('Your web server\'s PHP installation does not included a required module (%s). Please contact your web hosting provider\'s support.', 'updraftplus'), 'mbstring').' '.sprintf(__("UpdraftPlus's %s module <strong>requires</strong> %s. Please do not file any support requests; there is no alternative.", 'updraftplus'), $this->desc, 'mbstring'), $this->method);
+			}
+			$updraftplus_admin->curl_check($this->long_desc, false, $this->method);
+			?>
+			</td>
+		</tr>
+		<?php
+		$template_str = ob_get_clean();
+		$template_str .= $this->get_configuration_middlesection_template();
+		$template_str .= $this->get_test_button_html($this->desc);
+		return $template_str;
+	}
 }

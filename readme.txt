@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.8
-Stable tag: 1.13.11
+Stable tag: 1.13.12
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -84,7 +84,7 @@ For other useful free plugins see <a href="https://profiles.wordpress.org/davida
 
 Our free version of UpdraftPlus is fully functional: it performs full, manual or scheduled backups of all your WordPress files, databases, plugins and themes, and restores them direct from your WordPress control panel.
 
-It also: 
+It also:
 * Backs up to multiple cloud storage options: Dropbox, Google Drive, Amazon S3 (or compatible, e.g. DigitalOcean Spaces), UpdraftPlus Vault, Rackspace Cloud, FTP, DreamObjects, Openstack Swift, and email.
 * Can split your website into multiple archives
 * Downloads backup archives directly from your WordPress dashboard
@@ -107,7 +107,7 @@ Here are some of the key features of UpdraftPlus Premium:
 * Offers sophisticated reporting and scheduling
 * Backs up automatically before updates to themes and plugins and cores
 * Includes 1Gb centralised remote storage (with UpdraftVault)
-* Free dedicated expert support 
+* Free dedicated expert support
 * Multisite/multi-network compatible
 
 To find out more, why not take a look at our comparison page. UpdraftPremium is available for purchase here.
@@ -124,7 +124,7 @@ Here: <a href="https://updraftplus.com/faqs/">https://updraftplus.com/faqs/</a> 
 
 Yes! We’ve developed a brilliant new plugin that allows you to backup, update and manage all of your website remotely from one central location. It’s called UpdraftCentral, and it comes in 2 different forms:
 
-* UpdraftCentral (free, self-hosted) 
+* UpdraftCentral (free, self-hosted)
 * UpdraftCentral Premium (fully-hosted and “ready-to-go”, cloud version also available)
 
 = What if I have a problem / need support ? =
@@ -149,7 +149,29 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.13.10 of the free version correspond to changes made in 2.13.10.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.13.12 of the free version correspond to changes made in 2.13.12.x of the paid version.
+
+= 1.13.12 - 25/Oct/2017 =
+
+* FEATURE: Warn the user if their .htaccess seems to contain a redirect (or any other reference) to the old site after migration.
+* FEATURE: When importing a database, warn the user if the current MySQL server does not support a used collation, and offer to replace it
+* FIX: Saving of S3 settings had taken a dislike to buckets beginning with a capital 'B'
+* FIX: UpdraftCentral users' module was failing to handle loading a very large number of users
+* TWEAK: Allows the installation and/or activation of the WP-Optimize plugin from UpdraftCentral
+* TWEAK: Add multisite attribute to the error response object for the create user, delete user and edit user actions.
+* TWEAK: All remote storage methods are ported over to using configuration templates internally
+* TWEAK: Include a method to add a manifest file inside each backup archive
+* TWEAK: All code relating to the now-dead Dropbox APIv1 removed (N.B. If you've not updated UpdraftPlus since November 2016 and were using Dropbox, it won't be working - https://blogs.dropbox.com/developers/2017/09/api-v1-shutdown-details/)
+* TWEAK: Prevent a PHP log notice upon database backup restore when using Google Drive without a client ID
+* TWEAK: Prevent the final 'Restore' button being pressed a second time
+* TWEAK: Improvements to the UpdraftCentral wizard
+* TWEAK: Update to trunk version of plugin updater (paid versions), restoring the ability to work on older WP versions (3.8 and before)
+* TWEAK: Add lbakut_activity_log to the list of large log tables
+* TWEAK: Updater in paid versions now requests JSON as response format for responses when claiming entitlements
+* TWEAK: Resolve: Backup labels could end up with extraneous slashes in output
+* TWEAK: Updater in paid versions can now receive and process update information in respond to entitlement claim - one less HTTP round-trip
+* TWEAK: Improve Google Cloud authentication success message for bucket name is not defined
+* TWEAK: UpdraftVault commands now pass an instance identifier
 
 = 1.13.11 - 27/Sep/2017 =
 
@@ -348,7 +370,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 = 1.12.30 - 23/Dec/2016 =
 
 * FIX: Fix a Dropbox APIv2 issue where paths containing certain characters were incorrectly being encoded
-* FEATURE: Add UpdraftCentral (https://updraftcentral.com) comment-control and advanced tools listeners 
+* FEATURE: Add UpdraftCentral (https://updraftcentral.com) comment-control and advanced tools listeners
 * TWEAK: Starting an operation to retrieve a remote backup from UpdraftCentral succeeded, but gave a UI error in UC when doing so
 * TWEAK: Fix a Dropbox APIv2 issue where Team storage displayed an incorrect value
 * TWEAK: Support for the new AWS S3 Canada Central 1 and London regions
@@ -591,4 +613,4 @@ We recognise and thank the following for code and/or libraries used and/or modif
 
 
 == Upgrade Notice ==
-* 1.13.11: Fix a failure to download some backup sets created with older versions, and a failure to backup in the short-lived 1.13.10. 1.13.9: Backblaze B2 support, and other small tweaks
+* 1.13.12: Handle unsupported collations, and unwanted .htaccess redirects; plus many tweaks and internal improvements

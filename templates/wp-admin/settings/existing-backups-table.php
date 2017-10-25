@@ -38,14 +38,14 @@ $image_folder_url = UPDRAFTPLUS_URL.'/images/icons/';
 			$esc_pretty_date = esc_attr($pretty_date);
 			$entities = '';
 
-			$non = $backup['nonce'];
-			$rawbackup = $updraftplus_admin->raw_backup_info($backup_history, $key, $non);
+			$nonce = $backup['nonce'];
+			$rawbackup = $updraftplus_admin->raw_backup_info($backup_history, $key, $nonce);
 
-			$jobdata = $updraftplus->jobdata_getarray($non);
+			$jobdata = $updraftplus->jobdata_getarray($nonce);
 
-			$delete_button = $updraftplus_admin->delete_button($key, $non, $backup);
+			$delete_button = $updraftplus_admin->delete_button($key, $nonce, $backup);
 
-			$date_label = $updraftplus_admin->date_label($pretty_date, $key, $backup, $jobdata, $non);
+			$date_label = $updraftplus_admin->date_label($pretty_date, $key, $backup, $jobdata, $nonce);
 
 			$log_button = $updraftplus_admin->log_button($backup);
 
@@ -53,7 +53,7 @@ $image_folder_url = UPDRAFTPLUS_URL.'/images/icons/';
 			// if ($remote_sent && !$log_button) continue;
 
 			?>
-			<tr class="updraft_existing_backups_row updraft_existing_backups_row_<?php echo $key;?>" data-key="<?php echo $key;?>" data-nonce="<?php echo $non;?>">
+			<tr class="updraft_existing_backups_row updraft_existing_backups_row_<?php echo $key;?>" data-key="<?php echo $key;?>" data-nonce="<?php echo $nonce;?>">
 
 				<td class="updraft_existingbackup_date " data-rawbackup="<?php echo $rawbackup;?>">
 					<div class="backup_date_label">
