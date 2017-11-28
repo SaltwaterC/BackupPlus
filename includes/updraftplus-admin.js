@@ -1369,7 +1369,6 @@ jQuery('#updraft_backup_started').fadeOut('slow');}, 75000);
 }
 
 jQuery(document).ready(function($) {
-	
 	// Advanced settings new menu button listeners
 	$('.expertmode .advanced_settings_container .advanced_tools_button').click(function() {
 		advanced_tool_hide($(this).attr("id"));
@@ -1406,7 +1405,7 @@ jQuery(document).ready(function($) {
 	});
 	
 	// Update WebDAV URL as user edits
-	$(".updraft_webdav_settings").on("change keyup paste", function() {
+	$('#updraft-navtab-settings-content #remote-storage-holder').on('change keyup paste', '.updraft_webdav_settings', function() {
 		
 		var updraft_webdav_settings = [];
 		var instance_id = "";
@@ -1465,7 +1464,7 @@ jQuery(document).ready(function($) {
 		}
 	});
 	
-	jQuery('#updraft-navtab-settings-content .updraftplusmethod').on('click', 'button.updraft-test-button', function() {
+	jQuery('#updraft-navtab-settings-content #remote-storage-holder').on('click', '.updraftplusmethod button.updraft-test-button', function() {
 
 		var method = jQuery(this).data('method');
 		var instance_id = jQuery(this).data('instance_id');
@@ -1735,8 +1734,6 @@ updraft_activejobs_update(false);}, 1250);
 	// Prevent profusion of notices
 	setTimeout(function() {
 jQuery('#setting-error-settings_updated').slideUp();}, 5000);
-	
-	jQuery('.updraftplusmethod').hide();
 	
 	jQuery('#updraft_restore_db').change(function() {
 		if (jQuery('#updraft_restore_db').is(':checked')) {
@@ -2444,7 +2441,7 @@ jQuery(document).ready(function($) {
 	
 	var settings_css_prefix = '#updraft-navtab-settings-content ';
 	
-	$(settings_css_prefix+'#updraftvault_settings_cell').on('click', '.updraftvault_backtostart', function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '.updraftvault_backtostart', function(e) {
 		e.preventDefault();
 		$(settings_css_prefix+'#updraftvault_settings_showoptions').slideUp();
 		$(settings_css_prefix+'#updraftvault_settings_connect').slideUp();
@@ -2460,7 +2457,7 @@ jQuery(document).ready(function($) {
 		}
 	});
 	
-	$(settings_css_prefix+'#updraftvault_settings_cell').on('click', '#updraftvault_recountquota', function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '#updraftvault_recountquota', function(e) {
 		e.preventDefault();
 		$(settings_css_prefix+'#updraftvault_recountquota').html(updraftlion.counting);
 		try {
@@ -2485,7 +2482,7 @@ jQuery(document).ready(function($) {
 		}
 	});
 	
-	$(settings_css_prefix+'#updraftvault_settings_cell').on('click', '#updraftvault_disconnect', function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '#updraftvault_disconnect', function(e) {
 		e.preventDefault();
 		$(settings_css_prefix+'#updraftvault_disconnect').html(updraftlion.disconnecting);
 		try {
@@ -2502,19 +2499,19 @@ jQuery(document).ready(function($) {
 		}
 	});
 	
-	$(settings_css_prefix+'#updraftvault_connect').click(function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '#updraftvault_connect', function(e) {
 		e.preventDefault();
 		$(settings_css_prefix+'#updraftvault_settings_default').slideUp();
 		$(settings_css_prefix+'#updraftvault_settings_connect').slideDown();
 	});
 	
-	$(settings_css_prefix+'#updraftvault_showoptions').click(function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '#updraftvault_showoptions', function(e) {
 		e.preventDefault();
 		$(settings_css_prefix+'#updraftvault_settings_default').slideUp();
 		$(settings_css_prefix+'#updraftvault_settings_showoptions').slideDown();
 	});
 	
-	$(settings_css_prefix+'#updraftvault_connect_go').click(function(e) {
+	$(settings_css_prefix+'#remote-storage-holder').on('click', '#updraftvault_connect_go', function(e) {
 		$(settings_css_prefix+'#updraftvault_connect_go').html(updraftlion.connecting);
 		updraft_send_command('vault_connect', {
 			email: $('#updraftvault_email').val(),
@@ -2634,7 +2631,53 @@ jQuery(document).ready(function($) {
 
 	jQuery('#updraft-hidethis').remove();
 	
-	updraft_remote_storage_tabs_setup();
+	/*
+        * A Handlebarsjs helper function that is used to compare
+        * two values if they are equal. Please refer to the example below.
+        * Assuming "comment_status" contains the value of "spam".
+        *
+        * @param {mixed} a The first value to compare
+        * @param {mixed} b The second value to compare
+        *
+        * @example
+        * // returns "<span>I am spam!</span>", otherwise "<span>I am not a spam!</span>"
+        * {{#ifeq "spam" comment_status}}
+        *      <span>I am spam!</span>
+        * {{else}}
+        *      <span>I am not a spam!</span>
+        * {{/ifeq}}
+        *
+        * @return {string}
+	*/
+
+	Handlebars.registerHelper('ifeq', function (a, b, opts) {
+		if ('string' !== typeof a && 'undefined' !== typeof a) a = a.toString();
+		if ('string' !== typeof b && 'undefined' !== typeof b) b = b.toString();
+		if (a === b) {
+			return opts.fn(this);
+		} else {
+			return opts.inverse(this);
+		}
+	});
+	// Add remote methods html using handlebarjs
+	if ($('#remote-storage-holder').length) {
+		var html = '';
+		for (var method in updraftlion.remote_storage_templates) {
+			if ('undefined' != typeof updraftlion.remote_storage_options[method]) {
+				var template = Handlebars.compile(updraftlion.remote_storage_templates[method]);
+				for (var instance_id in updraftlion.remote_storage_options[method]) {
+					var context = updraftlion.remote_storage_options[method][instance_id];
+					html += template(context);
+				}
+			} else {
+				html += updraftlion.remote_storage_templates[method];
+			}
+		}
+		$('#remote-storage-holder').append(html).ready(function () {
+			$('.updraftplusmethod').not('.none').hide();
+			updraft_remote_storage_tabs_setup();
+		});
+	}
 
 });
 
@@ -2716,7 +2759,7 @@ jQuery(document).ready(function($) {
 		
 		// Attach this data to an anchor on page
 		var link = document.body.appendChild(document.createElement('a'));
-		link.setAttribute('download', 'updraftplus-settings.json');
+		link.setAttribute('download', updraftlion.export_settings_file_name);
 		link.setAttribute('style', "display:none;");
 		link.setAttribute('href', 'data:text/json' + ';charset=UTF-8,' + encodeURIComponent(form_data));
 		link.click();

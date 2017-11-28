@@ -593,9 +593,9 @@ class UpdraftPlus_Admin {
 			wp_register_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery'.$min_or_not.'.js', false, $jquery_enqueue_version, false);
 			wp_enqueue_script('jquery');
 			// No plupload until 3.3
-			wp_enqueue_script('updraftplus-admin', UPDRAFTPLUS_URL.'/includes/updraft-admin'.$min_or_not.'.js', array('jquery', 'jquery-ui-dialog'), $enqueue_version, true);
+			wp_enqueue_script('updraftplus-admin', UPDRAFTPLUS_URL.'/includes/updraftplus-admin'.$min_or_not.'.js', array('jquery', 'jquery-ui-dialog'), $enqueue_version, true);
 		} else {
-			wp_enqueue_script('updraftplus-admin', UPDRAFTPLUS_URL.'/includes/updraft-admin'.$min_or_not.'.js', array('jquery', 'jquery-ui-dialog', 'plupload-all'), $enqueue_version);
+			wp_enqueue_script('updraftplus-admin', UPDRAFTPLUS_URL.'/includes/updraftplus-admin'.$min_or_not.'.js', array('jquery', 'jquery-ui-dialog', 'plupload-all'), $enqueue_version);
 		}
 		
 	}
@@ -626,7 +626,8 @@ class UpdraftPlus_Admin {
 		wp_enqueue_style('jquery-labelauty', UPDRAFTPLUS_URL.'/includes/labelauty/jquery-labelauty'.$min_or_not.'.css', array(), $enqueue_version);
 		$serialize_js_enqueue_version = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '2.8.1'.'.'.time() : '2.8.1';
 		wp_enqueue_script('jquery.serializeJSON', UPDRAFTPLUS_URL.'/includes/jquery.serializeJSON/jquery.serializejson'.$min_or_not.'.js', array('jquery'), $serialize_js_enqueue_version);
-
+		$handlebars_js_enqueue_version = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '4.0.11'.'.'.time() : '4.0.11';
+		wp_enqueue_script('handlebars', UPDRAFTPLUS_URL.'/includes/handlebars/handlebars'.$min_or_not.'.js', array(), $handlebars_js_enqueue_version);
 		$this->enqueue_jstree();
 		
 		do_action('updraftplus_admin_enqueue_scripts');
@@ -644,7 +645,7 @@ class UpdraftPlus_Admin {
 			$selected = '';
 			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
 		}
-
+		$remote_storage_options_and_templates = $updraftplus->get_remote_storage_options_and_templates();
 		wp_localize_script('updraftplus-admin', 'updraftlion', array(
 			'sendonlyonwarnings' => __('Send a report only when there are warnings/errors', 'updraftplus'),
 			'wholebackup' => __('When the Email storage method is enabled, also send the entire backup', 'updraftplus'),
@@ -767,7 +768,11 @@ class UpdraftPlus_Admin {
 			'loading_log_file' => __('Loading log file', 'updraftplus'),
 			'updraftplus_version' => $updraftplus->version,
 			'updraftcentral_wizard_empty_url' => __('Please enter the URL where your UpdraftCentral dashboard is hosted.'),
-			'updraftcentral_wizard_invalid_url' => __('Please enter a valid URL e.g http://example.com', 'updraftplus')
+			'updraftcentral_wizard_invalid_url' => __('Please enter a valid URL e.g http://example.com', 'updraftplus'),
+			'export_settings_file_name' => 'updraftplus-settings-'.sanitize_title(get_bloginfo('name')).'.json',
+			// For remote storage handlebarsjs template
+			'remote_storage_options' => $remote_storage_options_and_templates['options'],
+			'remote_storage_templates' => $remote_storage_options_and_templates['templates'],
 		));
 	}
 	
@@ -1167,6 +1172,8 @@ class UpdraftPlus_Admin {
 		} elseif ($known_size > 0 && filesize($fullpath) < $known_size) {
 			$updraftplus->log("The file was found locally (".filesize($fullpath).") but did not match the size in the backup history ($known_size) - will resume downloading");
 			$needs_downloading = true;
+		} elseif ($known_size > 0 && filesize($fullpath) > $known_size) {
+			$updraftplus->log("The file was found locally (".filesize($fullpath).") but the size is larger than what is recorded in the backup history ($known_size) - will try to continue but if errors are encountered then check that the backup is correct");
 		} elseif ($known_size > 0) {
 			$updraftplus->log('The file was found locally and matched the recorded size from the backup history ('.round($known_size/1024, 1).' KB)');
 		} else {
@@ -1248,6 +1255,8 @@ class UpdraftPlus_Admin {
 		foreach ($services as $service) {
 
 			if (empty($service) || 'none' == $service) continue;
+
+			if ($is_downloaded) continue;
 		
 			if ($restore) {
 				$service_description = empty($updraftplus->backup_methods[$service]) ? $service : $updraftplus->backup_methods[$service];
@@ -1283,6 +1292,7 @@ class UpdraftPlus_Admin {
 					} else {
 						clearstatcache();
 						$updraftplus->log('Remote fetch was successful (file size: '.round(filesize($fullpath)/1024, 1).' KB)');
+						$is_downloaded = true;
 					}
 					break 2;
 				} else {
@@ -3960,7 +3970,6 @@ ENDHERE;
 			if (!empty($_POST['updraft_restorer_restore_options'])) {
 				parse_str(stripslashes($_POST['updraft_restorer_restore_options']), $restore_options);
 			}
-			$restore_options['updraft_restorer_replacesiteurl'] = empty($_POST['updraft_restorer_replacesiteurl']) ? false : true;
 			$restore_options['updraft_encryptionphrase'] = empty($_POST['updraft_encryptionphrase']) ? '' : (string) stripslashes($_POST['updraft_encryptionphrase']);
 			$restore_options['updraft_restorer_wpcore_includewpconfig'] = empty($_POST['updraft_restorer_wpcore_includewpconfig']) ? false : true;
 			$updraftplus->jobdata_set('restore_options', $restore_options);
@@ -4038,7 +4047,7 @@ ENDHERE;
 					continue;
 				}
 
-				$this->get_remote_file($service, $file, $timestamp, true);
+				if (!is_readable($fullpath) || 0 == filesize($fullpath)) $this->get_remote_file($service, $file, $timestamp, true);
 
 				$index = (0 == $ind) ? '' : $ind;
 				// If a file size is stored in the backup data, then verify correctness of the local file
