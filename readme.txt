@@ -1,4 +1,4 @@
-=== UpdraftPlus WordPress Backup Plugin ===
+﻿=== UpdraftPlus WordPress Backup Plugin ===
 Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snightingale, bcrodua
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
@@ -162,6 +162,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Improve UI of migration notice in free version
 * TWEAK: Resolve PSR4 autoloading conflict with older version of Composer
 * TWEAK: Pruning will now prune backups from multiple storage destinations of the same type (not yet a user-visible feature)
+* TWEAK: Update the 'ifeq' handlebars helper to resolve a conflict with MainWP
 
 = 1.13.15 - 28/Nov/2017 =
 
