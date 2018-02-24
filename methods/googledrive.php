@@ -932,7 +932,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 		$size = 0;
 		$request = $storage->files->insert($gdfile);
 
-		$chunk_bytes = 1048576;
+		$chunk_size = 1048576;
 
 		$hash = md5($file);
 		$transkey = 'resume_'.$hash;
@@ -981,7 +981,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			(('.zip' == substr($basename, -4, 4)) ? 'application/zip' : 'application/octet-stream'),
 			null,
 			true,
-			$chunk_bytes
+			$chunk_size
 		);
 		$media->setFileSize($local_size);
 
@@ -1010,8 +1010,12 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 
 		try {
 			while (!$status && !feof($handle)) {
-				$chunk = fread($handle, $chunk_bytes);
-				// Error handling??
+				$chunk = '';
+				// Google requires chunks of the previous indicated size. Short reads are thus problematic.
+				while (strlen($chunk) < $chunk_size && !feof($handle)) {
+					$chunk .= fread($handle, $chunk_size - strlen($chunk));
+				}
+				// Do we need any further error handling??
 				$pointer += strlen($chunk);
 				$status = $media->nextChunk($chunk);
 				$this->jobdata_set($transkey, array($media->updraftplus_getResumeUri(), $media->getProgress()));
