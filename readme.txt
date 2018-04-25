@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 4.9
-Stable tag: 1.14.5
+Stable tag: 1.14.7
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -150,6 +150,10 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.14.4 of the free version correspond to changes made in 2.14.4.x of the paid version.
+
+= 1.14.7 - 25/Apr/2018 =
+
+* FIX: Fix incompatibility with loading the dashboard on WP 4.6 and older. If you have this problem, then you cannot visit /wp-admin/ - but you can still visit /wp-admin/update-core.php to do the update (or you can update via FTP or use another tool). Many apologies!
 
 = 1.14.6 - 25/Apr/2018 =
 
@@ -500,4 +504,4 @@ Furthermore, reliance upon any non-English translation is at your own risk. Updr
 We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
 
 == Upgrade Notice ==
-* 1.14.6 : New feature to send locally-available backups to remote storage later; various other fixes, tweaks and improvements. A recommended update for all.
+* 1.14.7 : New feature to send locally-available backups to remote storage later; various other fixes, tweaks and improvements. A recommended update for all. 1.14.7 fixes an incompatibility with 1.14.6 on WP < 4.7

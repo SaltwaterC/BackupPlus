@@ -388,7 +388,7 @@ class UpdraftPlus_Admin {
 			'item_prefix' => __('UpdraftPlus', 'updraftplus'),
 			'item_description' => __('UpdraftPlus News', 'updraftplus'),
 			'dismiss_tooltip' => __('Dismiss all UpdraftPlus news', 'updraftplus'),
-			'dismiss_confirm' => __('Are you sure to dismiss all UpdraftPlus news forever?', 'updraftplus'),
+			'dismiss_confirm' => __('Are you sure you want to dismiss all UpdraftPlus news forever?', 'updraftplus'),
 		);
 		
 		$updraftplus_dashboard_news = new Updraft_Dashboard_News('https://feeds.feedburner.com/updraftplus/', 'https://updraftplus.com/news/', $news_translations);

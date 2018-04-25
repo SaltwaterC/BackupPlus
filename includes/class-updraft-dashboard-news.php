@@ -50,8 +50,8 @@ class Updraft_Dashboard_News {
 		$this->slug = sanitize_title($translations['product_title']);
 		
 		$dashboard_news_transient_name = $this->get_transient_name();
-		add_filter('pre_set_transient_'.$dashboard_news_transient_name, array($this, 'pre_set_transient_for_dashboard_news'), 10, 3);
-		add_filter('transient_'.$dashboard_news_transient_name, array($this, 'transient_for_dashboard_news'), 10, 2);
+		add_filter('pre_set_transient_'.$dashboard_news_transient_name, array($this, 'pre_set_transient_for_dashboard_news'), 10);
+		add_filter('transient_'.$dashboard_news_transient_name, array($this, 'transient_for_dashboard_news'), 10);
 		
 		add_action('wp_ajax_'.$this->slug.'_ajax_dismiss_dashboard_news', array($this, 'dismiss_dashboard_news'));
 
@@ -66,23 +66,24 @@ class Updraft_Dashboard_News {
 	 * @return String
 	 */
 	private function get_transient_name() {
-		return 'dash_v2_'.md5('dashboard_primary_'.get_user_locale());
+		$locale = function_exists('get_user_locale') ? get_user_locale() : get_locale();
+		include(ABSPATH.WPINC.'/version.php');
+		$dash_prefix = version_compare($wp_version, '4.8', '>=') ? 'dash_v2_' : 'dash_';
+		return version_compare($wp_version, '4.3', '>=') ? $dash_prefix.md5('dashboard_primary_'.$locale) : 'dash_'.md5('dashboard_primary');
 	}
 	
 	/**
 	 * Filters a transient for dashboard news before its value is set
 	 *
-	 * @param String  $value      New value of transient
-	 * @param Integer $expiration Time until transient expiration in seconds.
-	 * @param String  $transient  Transient name.
+	 * @param String $value - New value of transient
 	 * @return String  HTML of Wordpress News & Events same as $transient param
 	 */
-	public function pre_set_transient_for_dashboard_news($value, $expiration, $transient) {
-		$dashboard_news_transient_name = $this->get_transient_name();
+	public function pre_set_transient_for_dashboard_news($value) {
+		if (!function_exists('wp_dashboard_primary_output')) return $value;
 		// Not needed first if condition, because filter hook name have already transient name. It is for better checking
-		if ($dashboard_news_transient_name == $transient && !get_user_meta(get_current_user_id(), $this->slug.'_dismiss_dashboard_news', true)) {
-			// Prints the news, When fetching WP news first time (transient cache does not exist)
-			echo $this->get_dashboard_news_html();
+		if (!get_user_meta(get_current_user_id(), $this->slug.'_dismiss_dashboard_news', true)) {
+			// Gets the news, when fetching WP news first time (transient cache does not exist)
+			$this->get_dashboard_news_html();
 		}
 		return $value;
 	}
@@ -90,14 +91,14 @@ class Updraft_Dashboard_News {
 	/**
 	 * Filters a transient for dashboard news when getting transient value
 	 *
-	 * @param String $value     New value of transient
-	 * @param String $transient Transient name.
-	 * @return String  Html of Wordpress News & Events
+	 * @param String $value - New value of transient
+	 * @return String - HTML of Wordpress News & Events
 	 */
-	public function transient_for_dashboard_news($value, $transient) {
+	public function transient_for_dashboard_news($value) {
+		if (!function_exists('wp_dashboard_primary_output')) return $value;
 		$dashboard_news_transient_name = $this->get_transient_name();
 		// Not needed first if condition, because filter hook name have already transient name. It is for better checking
-		if ($dashboard_news_transient_name == $transient && !get_user_meta(get_current_user_id(), $this->slug.'_dismiss_dashboard_news', true) && !empty($value)) {
+		if (!get_user_meta(get_current_user_id(), $this->slug.'_dismiss_dashboard_news', true) && !empty($value)) {
 			return $value.$this->get_dashboard_news_html();
 		}
 		return $value;
@@ -117,7 +118,7 @@ class Updraft_Dashboard_News {
 			$this->slug => array(
 				'link' => $this->link,
 				'url' => $this->feed_url,
-				'title' => $this->product_title,
+				'title' => $this->translations['product_title'],
 				'items' => apply_filters($this->slug.'_dashboard_news_items_count', 2),
 				'show_summary' => 0,
 				'show_author' => 0,

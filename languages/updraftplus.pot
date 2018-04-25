@@ -2214,7 +2214,7 @@ msgid "Dismiss all UpdraftPlus news"
 msgstr ""
 
 #: src/admin.php:391
-msgid "Are you sure to dismiss all UpdraftPlus news forever?"
+msgid "Are you sure you want to dismiss all UpdraftPlus news forever?"
 msgstr ""
 
 #: src/admin.php:544, src/templates/wp-admin/settings/tab-bar.php:5
