@@ -1950,6 +1950,8 @@ class UpdraftPlus_Admin {
 		if (!empty($request['extradata'])) {
 			$options['extradata'] = $request['extradata'];
 		}
+		
+		$options['always_keep'] = empty($request['always_keep']) ? false : true;
 
 		do_action($event, apply_filters('updraft_backupnow_options', $options, $request));
 	}
@@ -2725,7 +2727,7 @@ class UpdraftPlus_Admin {
 
 		$connect = htmlspecialchars(__('Connect', 'updraftplus'));
 
-		$enter_credentials_end = '<p style="margin-left: 258px;"><input id="ud_connectsubmit" type="submit" class="button-primary" value="'.$connect.'" /></p>';
+		$enter_credentials_end = '<p style="margin-left: 258px;"><input id="ud_connectsubmit" type="submit" class="button-primary" value="'.$connect.'" /><span class="updraftplus_spinner spinner">' . __('Processing', 'updraftplus') . '...</span></p>';
 
 		$enter_credentials_end .= '<p style="margin-left: 258px; font-size: 70%"><em><a href="https://updraftplus.com/faqs/tell-me-about-my-updraftplus-com-account/">'.$interested.'</a></em></p>';
 
@@ -2842,6 +2844,8 @@ class UpdraftPlus_Admin {
 		$ret .= '<div id="backupnow_includefiles_moreoptions" class="updraft-hidden" style="display:none;"><em>'.__('Your saved settings also affect what is backed up - e.g. files excluded.', 'updraftplus').'</em><br>'.$this->files_selector_widgetry('backupnow_files_', false, 'sometimes').'</div></p>';
 
 		$ret .= '<span id="backupnow_remote_container">'.$this->backup_now_remote_message().'</span>';
+		
+		$ret .= '<p><input type="checkbox" id="always_keep"> <label for="always_keep">'.__("Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).", 'updraftplus').'</label> ';
 
 		$ret .= apply_filters('updraft_backupnow_modal_afteroptions', '', '');
 
@@ -3754,7 +3758,15 @@ class UpdraftPlus_Admin {
 
 	}
 
-	private function raw_backup_info($backup_history, $key, $nonce) {
+	/**
+	 * Get backup information in HTML format for a specific backup
+	 *
+	 * @param array  $backup_history all backups history
+	 * @param string $key		     backup timestamp
+	 * @param string $nonce			 backup nonce
+	 * @return string HTML-formatted backup information
+	 */
+	public function raw_backup_info($backup_history, $key, $nonce) {
 
 		global $updraftplus;
 
@@ -3766,16 +3778,18 @@ class UpdraftPlus_Admin {
 
 		if (!empty($backup['label'])) $rawbackup .= '<span class="raw-backup-info">'.$backup['label'].'</span>';
 
-		$rawbackup .= '<hr><p>';
-
-		$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
-
 		if (!empty($nonce)) {
 			$jd = $updraftplus->jobdata_getarray($nonce);
 		} else {
 			$jd = array();
 		}
 		
+		$rawbackup .= '<hr>';
+		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="'.$key.'" '.(empty($backup['always_keep']) ? '' : 'checked ').'><label for="always_keep_this_backup">'.__('Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'updraftplus').'</label>';
+		$rawbackup .= '<hr><p>';
+
+		$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
+
 		$checksums = $updraftplus->which_checksums();
 
 		foreach ($backupable_entities as $type => $info) {
@@ -3807,9 +3821,9 @@ class UpdraftPlus_Admin {
 			if ('none' == $serv || '' == $serv) {
 				$add_none = true;
 			} elseif (isset($updraftplus->backup_methods[$serv])) {
-				$show_services .= ($show_services) ? ', '.$updraftplus->backup_methods[$serv] : $updraftplus->backup_methods[$serv];
+				$show_services .= $show_services ? ', '.$updraftplus->backup_methods[$serv] : $updraftplus->backup_methods[$serv];
 			} else {
-				$show_services .= ($show_services) ? ', '.$serv : $serv;
+				$show_services .= $show_services ? ', '.$serv : $serv;
 			}
 		}
 		if ('' == $show_services && $add_none) $show_services .= __('None', 'updraftplus');
@@ -3819,8 +3833,6 @@ class UpdraftPlus_Admin {
 		if (false !== $total_size) {
 			$rawbackup .= '</p><strong>'.__('Total backup size:', 'updraftplus').'</strong> '.UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($total_size).'<p>';
 		}
-		
-
 		
 		$rawbackup .= '</p><hr><p><pre>'.print_r($backup, true).'</p></pre>';
 
@@ -4485,7 +4497,7 @@ ENDHERE;
 	 * @uses $GLOBALS['updraftplus_restorer']
 	 * @uses UpdraftPlus::log()
 	 */
-	private function post_restore_clean_up($successful = true, $browser_context = true) {
+	public function post_restore_clean_up($successful = true, $browser_context = true) {
 		
 		global $updraftplus_restorer, $updraftplus;
 		
@@ -5165,6 +5177,7 @@ ENDHERE;
 		}
 		$corrupted_files = array();
 		foreach ($files_to_check as $file) {
+			if (!file_exists($file)) continue;
 			if (false === ($fp = fopen($file, 'r'))) continue;
 			if (false === ($file_data = fread($fp, 8192)));
 			fclose($fp);

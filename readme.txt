@@ -1,4 +1,4 @@
-﻿=== UpdraftPlus WordPress Backup Plugin ===
+=== UpdraftPlus WordPress Backup Plugin ===
 Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snightingale, bcrodua
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
@@ -151,9 +151,18 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.14.9 of the free version correspond to changes made in 2.14.9.x of the paid version.
 
-= 1.14.10 - 24/May/2018 =
+* TWEAK: Refresh UpdraftCentral keys upon successful login or registration using the UpdraftCentral Cloud wizard 
+* FIX: The Migration was not changing an unsupported database table engine with the MyISAM  engine automatically
+* FIX: Issue with the Dropbox account API call on some installs
+* FEATURE: User can mark any backup as "do not delete", and it will then not be deleted even when retention limits are hit
+* TWEAK: Prevent PHP notice when checking non-existent files in relation to an extraneous whitespace warning
+* FEATURE: WP-CLI - add a 'restore' command
+* TWEAK: Prevent call to the the wp_get_sites() deprecated function on WP 4.6 and newer
+* FIX: The web server disk space refresh link of the existing backups is not working
 
-* FIX: Revert a change in 1.14.9 that could cause backups to not be sent to remote storage
+= 1.14.11 - 25/May/2018 =
+
+* FIX: Revert a change in 1.14.9 that could cause backups to not be sent to remote storage (fix in 1.14.10 was not 100% complete (but worked for almost everyone))
 
 = 1.14.9 - 24/May/2018 =
 
@@ -538,4 +547,5 @@ Furthermore, reliance upon any non-English translation is at your own risk. Updr
 We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
 
 == Upgrade Notice ==
-* 1.14.10 : UpdraftCloud easy sign-up wizard. App privacy policy links for GDPR compliance. Azure Germany support (Azure add-on). Many tweaks for convenience and small fixes. A recommended update for all. Also fixes a change in the short-lived 1.14.9 that could cause backups to not be sent to remote storage
+* 1.14.11 : UpdraftCloud easy sign-up wizard. App privacy policy links for GDPR compliance. Azure Germany support (Azure add-on). Many tweaks for convenience and small fixes. A recommended update for all. Also fixes a change in the short-lived 1.14.9 that could cause backups to not be sent to remote storage
+

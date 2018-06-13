@@ -287,6 +287,8 @@ class Updraft_Restorer extends WP_Upgrader {
 		
 		$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
 		
+		$remove_zip = isset($restore_options['delete_during_restore']) ? $restore_options['delete_during_restore'] : false;
+		
 		// Allow add-ons to adjust the restore directory (but only in the case of restore - otherwise, they could just use the filter built into UpdraftPlus::get_backupable_file_entities)
 		$backupable_entities = apply_filters('updraft_backupable_file_entities_on_restore', $backupable_entities, $restore_options, $backup_set);
 
@@ -360,6 +362,9 @@ class Updraft_Restorer extends WP_Upgrader {
 					}
 				} elseif (false === $restore_result) {
 					return false;
+				} elseif ($restore_result && $remove_zip) {
+					$deleted = unlink($updraftplus->backups_dir_location().'/'.$file);
+					$updraftplus->log("Delete zip during restore active; removing backup file: $file: ".($deleted ? 'OK' : 'Failed'));
 				}
 				
 				unset($files[$fkey]);
@@ -437,15 +442,32 @@ class Updraft_Restorer extends WP_Upgrader {
 			$rtime = microtime(true)-$updraftplus->job_time_ms;
 			fwrite($logfile_handle, sprintf("%08.03f", round($rtime, 3))." (R) ".'['.$level.'] '.$line."\n");
 		}
-		
-		if ('warning' == $destination || 'error' == $destination || $uniq_id) {
-			$line = '<strong>'.htmlspecialchars($line).'</strong>';
+		if (defined('WP_CLI') && WP_CLI) {
+			switch ($level) {
+				case 'error':
+				case 'warning':
+					// WP_CLI::error() displays message with the prefix "Error: ", We don't like message which are double prefixed like the "Error: Error: ".
+					if (0 === stripos($line, 'Error: ')) {
+						$log_line = substr($line, 7);
+					} else {
+						$log_line = $line;
+					}
+					WP_CLI::error($log_line, false);
+					break;
+				case 'notice':
+				default:
+					WP_CLI::log($line, false);
+					break;
+			}
 		} else {
-			$line = htmlspecialchars($line);
+			if ('warning' == $destination || 'error' == $destination || $uniq_id) {
+				$line = '<strong>'.htmlspecialchars($line).'</strong>';
+			} else {
+				$line = htmlspecialchars($line);
+			}
+	
+			echo $line.'<br>';
 		}
-
-		echo $line.'<br>';
-
 		return false;
 	}
 	
@@ -2309,7 +2331,7 @@ ENDHERE;
 						}
 					} else {
 						$engine_change_message = sprintf(__('Requested table engine (%s) is not present - changing to MyISAM.', 'updraftplus'), $engine)."<br>";
-						$sql_line = UpdraftPlus_Manipulation_Functions::str_lreplace("ENGINE=$eng_match", "ENGINE=MyISAM", $sql_line);
+						$sql_line = UpdraftPlus_Manipulation_Functions::str_lreplace("ENGINE=$engine", "ENGINE=MyISAM", $sql_line);
 						// Remove (M)aria options
 						if ('maria' == strtolower($engine) || 'aria' == strtolower($engine)) {
 							$sql_line = preg_replace('/PAGE_CHECKSUM=\d\s?/', '', $sql_line, 1);

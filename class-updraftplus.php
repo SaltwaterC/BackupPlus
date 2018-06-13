@@ -1951,6 +1951,12 @@ class UpdraftPlus {
 		return $this->error_reporting_stop_when_logged;
 	}
 
+	/**
+	 * Proceed with a backup; before calling this, at least all the initial job data must be set up
+	 *
+	 * @param Integer $resumption_no - which resumption this is; from 0 upwards
+	 * @param String  $bnonce		 - the backup job identifier
+	 */
 	public function backup_resume($resumption_no, $bnonce) {
 
 		set_error_handler(array($this, 'php_error'), E_ALL & ~E_STRICT);
@@ -1971,8 +1977,10 @@ class UpdraftPlus {
 		$last_successful_resumption = -1;
 		$job_type = 'backup';
 
-		if ($resumption_no > 0) {
-
+		if (0 == $resumption_no) {
+			$label = $this->jobdata_get('label');
+			if ($label) $resumption_extralog = ", label=$label";
+		} else {
 			$this->file_nonce = apply_filters('updraftplus_incremental_backup_file_nonce', $bnonce);
 			$this->nonce = $bnonce;
 			$this->backup_time = $this->jobdata_get('backup_time');
@@ -2039,9 +2047,6 @@ class UpdraftPlus {
 				die;
 			}
 
-		} else {
-			$label = $this->jobdata_get('label');
-			if ($label) $resumption_extralog = ", label=$label";
 		}
 
 		$this->last_successful_resumption = $last_successful_resumption;
@@ -2337,7 +2342,7 @@ class UpdraftPlus {
 						$this->log("$file: $key: This file was already queued for upload (this condition should never be seen)");
 					}
 				} else {
-					$this->log("$file: $key: Note: This file was not marked as successfully uploaded, but does not exist on the local filesystem ($updraft_dir/$file)");
+					$this->log("$file: $key: Note: This file was not marked as successfully uploaded, but does not exist on the local filesystem; now marking as uploaded ($updraft_dir/$file)");
 					$this->uploaded_file($file, true);
 				}
 			}
@@ -2737,9 +2742,10 @@ class UpdraftPlus {
 			$this->log("Backup aborted (via filter)");
 			return false;
 		}
-
+	
 		if (!is_string($service) && !is_array($service)) {
 			$all_services = UpdraftPlus_Options::get_updraft_option('updraft_service');
+			if (is_string($all_services))  $all_services = (array) $all_services;
 			$enabled_storage_objects_and_ids = $this->get_enabled_storage_objects_and_ids($all_services);
 			$service = array_keys($enabled_storage_objects_and_ids);
 		}
@@ -2860,6 +2866,8 @@ class UpdraftPlus {
 		array_push($initial_jobdata, 'backup_files', (($backup_files) ? 'begun' : 'no'));
 
 		if (is_array($options) && !empty($options['label'])) array_push($initial_jobdata, 'label', $options['label']);
+		
+		if (!empty($options['always_keep'])) array_push($initial_jobdata, 'always_keep', true);
 
 		try {
 			// Use of jobdata_set_multi saves around 200ms
@@ -3442,6 +3450,7 @@ class UpdraftPlus {
 			$backup_array['nonce'] = $this->nonce;
 			$backup_array['service'] = $this->jobdata_get('service');
 			$backup_array['service_instance_ids'] = array();
+			$backup_array['always_keep'] = $this->jobdata_get('always_keep', false);
 			
 			// N.B. Though the saved 'service' option can have various forms (especially if upgrading from (very) old versions), in the jobdata, it is always an array.
 			$storage_objects_and_ids = $this->get_enabled_storage_objects_and_ids($backup_array['service']);
@@ -3574,16 +3583,23 @@ class UpdraftPlus {
 	 * @return Array					- returns an array, with a key equal to only enabled service member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an UpdraftPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated enabled instance IDs, with the values being the associated settings for the enabled instance ID.
 	 */
 	public function get_enabled_storage_objects_and_ids($services) {
+		
 		$storage_objects_and_ids = $this->get_storage_objects_and_ids($services);
+		
 		foreach ($storage_objects_and_ids as $method => $method_information) {
+
+			if (!$method_information['object']->supports_feature('multi_options')) continue;
+			
 			foreach ($method_information['instance_settings'] as $instance_id => $instance_information) {
 				if (!isset($instance_information['instance_enabled'])) $instance_information['instance_enabled'] = 1;
 				if (empty($instance_information['instance_enabled'])) {
 					unset($storage_objects_and_ids[$method]['instance_settings'][$instance_id]);
 				}
 			}
+			
 			if (empty($storage_objects_and_ids[$method]['instance_settings'])) unset($storage_objects_and_ids[$method]);
 		}
+		
 		return $storage_objects_and_ids;
 	}
 	
@@ -3647,7 +3663,7 @@ class UpdraftPlus {
 		$this->log("Terminate: ".basename($file)." exists with activity within the last 30 seconds (time_mod=$time_mod, time_now=$time_now, diff=".(floor($time_now-$time_mod)).", size=$file_size). This likely means that another UpdraftPlus run is at work; so we will exit.");
 		$increase_by = ($increase_resumption) ? 120 : 0;
 		$this->increase_resume_and_reschedule($increase_by, true);
-		if (!defined('UPDRAFTPLUS_ALLOW_RECENT_ACTIVITY') || true != UPDRAFTPLUS_ALLOW_RECENT_ACTIVITY) die;
+		if (!defined('UPDRAFTPLUS_ALLOW_RECENT_ACTIVITY') || !UPDRAFTPLUS_ALLOW_RECENT_ACTIVITY) die;
 	}
 
 	 /**

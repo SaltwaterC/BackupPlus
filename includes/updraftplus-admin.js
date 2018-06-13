@@ -1463,6 +1463,8 @@ jQuery('#updraft_backup_started').fadeOut('slow');}, 75000);
 		params.onlythesetableentities = onlythesetableentities;
 	}
 	
+	params.always_keep = (typeof extradata.always_keep !== 'undefined') ? extradata.always_keep : 0;
+	
 	updraft_send_command('backupnow', params, function(resp) {
 		jQuery('#updraft_backup_started').html(resp.m);
 		if (resp.hasOwnProperty('nonce')) {
@@ -1629,6 +1631,49 @@ jQuery(document).ready(function($) {
 		}
 	});
 
+	$('#updraft_migrate_modal_main .updraft_migrate_widget_module').on('click', '#updraft_migrate_createclone', function (e) {
+		e.preventDefault();
+
+		$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_clone_status').html('');
+		$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_spinner.spinner').addClass('visible');
+
+		var clone_id = $(this).data('clone_id');
+		var secret_token = $(this).data('secret_token');
+		var php_version = $('#updraft_migrate_modal_main .updraft_migrate_widget_module #updraftplus_clone_php_options').val();
+		var wp_version = $('#updraft_migrate_modal_main .updraft_migrate_widget_module #updraftplus_clone_wp_options').val();
+		
+		var options = {
+			form_data: {
+				clone_id: clone_id,
+				secret_token: secret_token,
+				install_info: {
+					php_version: php_version,
+					wp_version: wp_version
+				}
+			}
+		};
+		
+		updraft_send_command('process_updraftplus_clone_create', options, function (response) {
+			try {
+				$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_spinner.spinner').removeClass('visible');
+
+				if (response.hasOwnProperty('error')) {
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_clone_status').html(response.message).show();
+					return;
+				}
+
+				if ('success' === response.status) {
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage2').hide();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage3').show();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage3').html(response.html);
+				}
+			} catch (err) {
+				console.log("Error when processing the response of process_updraftplus_clone_create (as follows)");
+				console.log(err);
+			}
+		});
+	});
+
 	/**
 	 * This function will send an AJAX request to the backend to check the users credentials, then it will either inform the user of any errors or if there are none it will submit the form.
 	 *
@@ -1654,8 +1699,11 @@ jQuery(document).ready(function($) {
 	 */
 	function temporary_clone_submit(options) {
 		$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_com_login_status').html('').hide();
+		$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_spinner.spinner').addClass('visible');
 		updraft_send_command('process_updraftplus_clone_login', options, function (response) {
 			try {
+				$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_spinner.spinner').removeClass('visible');
+				
 				if (response.hasOwnProperty('error')) {
 					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraftplus_com_login_status').html(response.message).show();
 					return;
@@ -1664,11 +1712,15 @@ jQuery(document).ready(function($) {
 				if (response.hasOwnProperty('tfa_enabled') && true == response.tfa_enabled) {
 					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 .non_tfa_fields').hide();
 					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 .tfa_fields').show();
-					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 input#two_factor_code').focus();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 input#temporary_clone_options_two_factor_code').focus();
 				}
 
 				if ('authenticated' === response.status) {
 					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1').hide();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 .non_tfa_fields').show();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 .tfa_fields').hide();
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage1 input#temporary_clone_options_two_factor_code').val('');
+					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage2').show();
 					$('#updraft_migrate_modal_main .updraft_migrate_widget_module .updraft_migrate_widget_temporary_clone_stage2').html(response.html);
 				}
 			} catch (err) {
@@ -1807,7 +1859,7 @@ jQuery(document).ready(function($) {
 		$('#backupnow_database_moreoptions').toggle();
 	});
 	
-	$('#updraft-navtab-backups-content a.updraft_diskspaceused_update').click(function(e) {
+	$('#updraft-navtab-backups-content').on('click', 'a.updraft_diskspaceused_update',function(e) {
 		e.preventDefault();
 		updraftplus_diskspace();
 	});
@@ -2326,8 +2378,8 @@ jQuery('#setting-error-settings_updated').slideUp();}, 5000);
 		var backupnow_nodb = jQuery('#backupnow_includedb').is(':checked') ? 0 : 1;
 		var backupnow_nofiles = jQuery('#backupnow_includefiles').is(':checked') ? 0 : 1;
 		var backupnow_nocloud = jQuery('#backupnow_includecloud').is(':checked') ? 0 : 1;
-		
 		var onlythesetableentities = backupnow_whichtables_checked('');
+		var always_keep = jQuery('#always_keep').is(':checked') ? 1 : 0;
 
 		if ('' == onlythesetableentities && 0 == backupnow_nodb) {
 			alert(updraftlion.notableschosen);
@@ -2360,7 +2412,7 @@ jQuery('#setting-error-settings_updated').slideUp();}, 5000);
 			});
 		}, 1700);
 		
-		updraft_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_nocloud, onlythesefileentities, '', jQuery('#backupnow_label').val(), onlythesetableentities);
+		updraft_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_nocloud, onlythesefileentities, {always_keep: always_keep}, jQuery('#backupnow_label').val(), onlythesetableentities);
 	};
 	backupnow_modal_buttons[updraftlion.cancel] = function() {
  jQuery(this).dialog("close"); };
@@ -3025,6 +3077,22 @@ jQuery(document).ready(function($) {
 		});
 		return false;
 	});
+
+	// Mark a backup as always keep (do not delete)
+	$('#updraft-iframe-modal').on('change', '#always_keep_this_backup', function() {
+		var backup_key = $(this).data('backup_key');
+		var params = {
+			backup_key: backup_key,
+			always_keep: $(this).is(':checked') ? 1 : 0,
+		};
+		updraft_send_command('always_keep_this_backup', params, function(resp) {
+			if (resp.hasOwnProperty('rawbackup')) {
+				jQuery('#updraft-iframe-modal').dialog('close');
+				jQuery('.updraft_existing_backups_row_'+backup_key+' .updraft_existingbackup_date').data('rawbackup', resp.rawbackup);
+				updraft_html_modal(jQuery('.updraft_existing_backups_row_'+backup_key+' .updraft_existingbackup_date').data('rawbackup'), updraftlion.raw, 780, 500);
+			}
+		});
+	});
 });
 
 // Next: the encrypted database pluploader
@@ -3553,7 +3621,7 @@ jQuery(document).ready(function($) {
 	 * @returns {void}
 	 */
 	function updraftcentral_cloud_show_spinner(modal) {
-		$(modal).find('.updraftcentral_cloud_spinner.spinner').addClass('visible');
+		$(modal).find('.updraftplus_spinner.spinner').addClass('visible');
 	}
 
 	/**
@@ -3564,7 +3632,7 @@ jQuery(document).ready(function($) {
 	 * @returns {void}
 	 */
 	function updraftcentral_cloud_hide_spinner(modal) {
-		$(modal).find('.updraftcentral_cloud_spinner.spinner').removeClass('visible');
+		$(modal).find('.updraftplus_spinner.spinner').removeClass('visible');
 	}
 
 	/**
@@ -3678,6 +3746,11 @@ jQuery(document).ready(function($) {
 
 		if ('undefined' !== typeof data.redirect_token) {
 			form.append('<input type="hidden" name="redirect_token" value="'+data.redirect_token+'">');
+		}
+
+		// Success, so we're updating the keys in advanced tools->updraftcentral area
+		if (data.hasOwnProperty('keys_table') && data.keys_table) {
+			$('#updraftcentral_keys_content').html(data.keys_table);
 		}
 
 		$redirect_lnk = '<a href="#" class="updraftcentral_cloud_redirect_link">'+updraftlion.updraftcentral_cloud+'</a>';

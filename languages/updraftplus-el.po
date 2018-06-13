@@ -11,19 +11,56 @@ msgstr ""
 "Language: el_GR\n"
 "Project-Id-Version: UpdraftPlus\n"
 
+#: src/includes/class-commands.php:894, src/includes/class-commands.php:898
+msgid "The creation of your backup data for creating the clone should now begin."
+msgstr ""
+
+#: src/includes/class-commands.php:893
+msgid "Your temporary clone has been created:"
+msgstr ""
+
+#: src/includes/class-commands.php:892
+msgid "Your available temporary clone tokens:"
+msgstr ""
+
+#: src/admin.php:2848, src/admin.php:3788,
+#: src/templates/wp-admin/settings/existing-backups-table.php:67
+msgid "Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit)."
+msgstr ""
+
+#: src/addons/wp-cli.php:784
+msgid "You have just given the %1$s option. The %1$s is working with \"%2$s\" addon. Get the \"%2$s\" addon: %3$s"
+msgstr ""
+
+#: src/addons/wp-cli.php:743
+msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old)."
+msgstr ""
+
+#: src/addons/wp-cli.php:695, src/addons/wp-cli.php:699
+msgid "This is not an incremental backup"
+msgstr ""
+
+#: src/addons/wp-cli.php:624
+msgid "Run this command to see the log file for this restoration (needed for any support requests)."
+msgstr ""
+
+#: src/addons/migrator.php:1784
+msgid "To create a temporary clone you must first connect to your UpdraftPlus.com account (and have clone tokens available in that account)."
+msgstr ""
+
 #: src/class-updraftplus.php:159
 msgid "A version of UpdraftPlus is already installed. WordPress will only allow you to install your new version after first de-installing the existing one. That is safe - all your settings and backups will be retained. So, go to the \"Plugins\" page, de-activate and de-install UpdraftPlus, and then try again."
 msgstr ""
 
-#: src/admin.php:5216
+#: src/admin.php:5271
 msgid "(current version)"
 msgstr ""
 
-#: src/admin.php:5197
+#: src/admin.php:5252
 msgid "Forbid logins from non-administrators on this clone"
 msgstr ""
 
-#: src/admin.php:3469
+#: src/admin.php:3515
 msgid "press here"
 msgstr ""
 
@@ -49,26 +86,23 @@ msgstr ""
 msgid "Every hour"
 msgstr ""
 
-#: src/includes/class-commands.php:841
+#: src/includes/class-commands.php:867
 msgid "You can add more temporary clone tokens to your account here."
 msgstr ""
 
-#: src/includes/class-commands.php:839
+#: src/includes/class-commands.php:864
 msgid "Create clone"
 msgstr ""
 
-#: src/includes/class-commands.php:835
+#: src/includes/class-commands.php:860
 msgid "Available temporary clone tokens:"
 msgstr ""
 
-#: src/addons/migrator.php:2554
-msgid "To create a temporary clone you must first connect with your UpdraftPlus.com account and have sufficient clone tokens in your account."
-msgstr ""
-
-#: src/addons/migrator.php:2550
+#: src/addons/migrator.php:1779
 msgid "Or, create a temporary clone"
 msgstr ""
 
+#: src/admin.php:2730, src/includes/class-commands.php:865,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:71
 msgid "Processing"
 msgstr ""
@@ -85,7 +119,7 @@ msgstr ""
 msgid "I consent to %s"
 msgstr ""
 
-#: src/admin.php:2755,
+#: src/admin.php:2799,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:56
 msgid "One Time Password (check your OTP app to get this password)"
 msgstr ""
@@ -134,7 +168,7 @@ msgstr ""
 msgid "An error has occurred while processing your request. The server might be busy or you have lost your connection to the internet at the time of the request. Please try again later."
 msgstr ""
 
-#: src/admin.php:5160
+#: src/admin.php:5215
 msgid "The file %s has a \"byte order mark\" (BOM) at its beginning."
 msgid_plural "The files %s have a \"byte order mark\" (BOM) at their beginning."
 msgstr[0] ""
@@ -205,11 +239,11 @@ msgstr ""
 msgid "UpdraftPlus News"
 msgstr ""
 
-#: src/addons/wp-cli.php:509
+#: src/addons/wp-cli.php:518
 msgid "Migration key created:"
 msgstr ""
 
-#: src/addons/wp-cli.php:499
+#: src/addons/wp-cli.php:508
 msgid "Missing parameters"
 msgstr ""
 
@@ -241,7 +275,7 @@ msgstr ""
 msgid "Upload backup"
 msgstr ""
 
-#: src/admin.php:4044
+#: src/admin.php:4098
 msgid "After pressing this button, you can select where to upload your backup from a list of your currently saved remote storage locations"
 msgstr ""
 
@@ -253,7 +287,7 @@ msgstr ""
 msgid "Local backup upload has started; please check the current status tab to see the upload progress"
 msgstr ""
 
-#: src/admin.php:728, src/admin.php:4044
+#: src/admin.php:728, src/admin.php:4098
 msgid "Upload"
 msgstr ""
 
@@ -297,35 +331,37 @@ msgstr "Υποστήριξη WP-CLI"
 msgid "WP CLI"
 msgstr "WP CLI"
 
-#: src/addons/wp-cli.php:241
+#: src/addons/wp-cli.php:250
 msgid "Invalid Job Id"
 msgstr "Μη έγκυρο αναγνωριστικό εργασίας"
 
-#: src/addons/wp-cli.php:183
+#: src/addons/wp-cli.php:192
 msgid "Backup has been started successfully. You can see the last log message by running the following command: \"%s\""
 msgstr "Η δημιουργία αντιγράφων ασφαλείας ξεκίνησε με επιτυχία. Μπορείτε να δείτε το τελευταίο μήνυμα καταγραφής, εκτελώντας την ακόλουθη εντολή: \"%s\""
 
-#: src/addons/wp-cli.php:173
+#: src/addons/wp-cli.php:182
 msgid "Recently started backup job id: %s"
 msgstr "Πρόσφατα ξεκίνησε η λήψη αντιγράφου ασφαλείας με αναγνωριστικό: %s"
 
-#: src/addons/wp-cli.php:80, src/addons/wp-cli.php:466
+#: src/addons/wp-cli.php:88, src/addons/wp-cli.php:475,
+#: src/addons/wp-cli.php:590, src/addons/wp-cli.php:675,
+#: src/addons/wp-cli.php:698
 msgid "The given value for the '%s' option is not valid"
 msgstr "Η δεδομένη τιμή για την επιλογή %s δεν είναι έγκυρη"
 
-#: src/addons/migrator.php:2517
+#: src/addons/migrator.php:1746
 msgid "To allow another site to send a backup to this site, create a key below. When you are shown the key, then press the 'Migrate' button on the other (sending) site, and copy-and-paste the key over there (in the 'Send a backup to another site' section)."
 msgstr "Για να επιτρέψετε σε έναν άλλο ιστότοπο να στείλει ένα αντίγραφο ασφαλείας σε αυτόν τον ιστότοπο, δημιουργήστε ένα κλειδί παρακάτω. Όταν εμφανιστεί το κλειδί, πατήστε το κουμπί \"Μετεγκατάσταση\" στην άλλη ιστοσελίδα (απ' όπου θα γίνει η αποστολή) και αντιγράψτε και επικολλήστε το κλειδί εκεί (στην ενότητα \"Αποστολή αντιγράφου σε άλλη τοποθεσία\")."
 
-#: src/addons/migrator.php:2497
+#: src/addons/migrator.php:1726
 msgid "So, to get the key for the remote site, open the 'Migrate Site' window on that site, and go to that section."
 msgstr "Έτσι, για να πάρετε το κλειδί για την απομακρυσμένη τοποθεσία, ανοίξτε το παράθυρο \"Μετεγκατάσταση ιστοσελίδας\" σε αυτόν τον ιστότοπο και μεταβείτε σε εκείνη την ενότητα."
 
-#: src/addons/migrator.php:2497
+#: src/addons/migrator.php:1726
 msgid "Keys for a site are created in the section \"receive a backup from a remote site\"."
 msgstr "Τα κλειδιά για έναν ιστότοπο δημιουργούνται στην ενότητα \"λήψη αντιγράφου ασφαλείας από έναν απομακρυσμένο ιστότοπο\"."
 
-#: src/addons/migrator.php:2116
+#: src/includes/class-remote-send.php:413
 msgid "You must copy and paste this key on the sending site now - it cannot be shown again."
 msgstr "Πρέπει να αντιγράψετε και να επικολλήσετε αυτό το κλειδί στην τοποθεσία αποστολής τώρα - δεν θα εμφανιστεί ξανά."
 
@@ -357,19 +393,19 @@ msgstr "Ενισχύστε και ασφαλίστε τον WordPress ιστότ
 msgid "Thank you for installing UpdraftPlus!"
 msgstr "Σας ευχαριστούμε που εγκαταστήσατε το UpdraftPlus!"
 
-#: src/addons/migrator.php:2572
+#: src/includes/class-remote-send.php:506
 msgid "No keys to allow remote sites to send backup data here have yet been created."
 msgstr "Δεν έχουν δημιουργηθεί ακόμη κλειδιά για την αποστολή δεδομένων αντιγράφων ασφαλείας απομακρυσμένων τοποθεσιών εδώ."
 
-#: src/restorer.php:472
+#: src/restorer.php:494
 msgid "Failed to read from the working directory."
 msgstr "Αποτυχία ανάγνωσης από τον κατάλογο εργασίας."
 
-#: src/restorer.php:471
+#: src/restorer.php:493
 msgid "Failed to find a manifest file in the backup."
 msgstr "Δεν βρέθηκε ένα δηλωτικό αρχείο στο αντίγραφο ασφαλείας."
 
-#: src/restorer.php:470
+#: src/restorer.php:492
 msgid "Failed to read the manifest file from backup."
 msgstr "Αδυναμία ανάγνωσης του δηλωτικού αρχείου από το αντίγραφο ασφαλείας. "
 
@@ -385,11 +421,11 @@ msgstr "(Δεν έχει διαμορφωθεί)"
 msgid "Ensure you are logged into the correct account before continuing."
 msgstr "Βεβαιωθείτε ότι έχετε συνδεθεί στον σωστό λογαριασμό πριν συνεχίσετε."
 
-#: src/admin.php:4808
+#: src/admin.php:4862
 msgid "Remote storage method and instance id are required for authentication."
 msgstr "Για τον έλεγχο ταυτότητας απαιτείται το είδος της απομακρυσμένης αποθήκευσης και το αντίστοιχο αναγνωριστικό."
 
-#: src/admin.php:4804
+#: src/admin.php:4858
 msgid "authentication error"
 msgstr "σφάλμα ελέγχου ταυτότητας"
 
@@ -453,7 +489,7 @@ msgstr "Με το Metaslider, μπορείτε εύκολα να προσθέσ�
 msgid "No more forgotten passwords. Find out more about our revolutionary new WordPress plugin"
 msgstr "Τέλος στους ξεχασμένους κωδικούς πρόσβασης. Μάθετε περισσότερα για το επαναστατικό νέο μας πρόσθετο της WordPress"
 
-#: src/templates/wp-admin/settings/existing-backups-table.php:72
+#: src/templates/wp-admin/settings/existing-backups-table.php:78
 msgid "remote site"
 msgstr "απομακρυσμένη σελίδα"
 
@@ -461,21 +497,21 @@ msgstr "απομακρυσμένη σελίδα"
 msgid "Invalid bucket name"
 msgstr "Μη έγκυρο όνομα φεκέλου"
 
-#: src/restorer.php:2362
+#: src/restorer.php:2384
 msgid "Requested table collation (%1$s) is not present - changing to %2$s."
 msgid_plural "Requested table collations (%1$s) are not present - changing to %2$s."
 msgstr[0] "Η ζητηθήσα ταξινόμηση του πίνακα (%1$s) δεν υπάρχει - αλλαγή σε %2$s."
 msgstr[1] "Οι ζητηθήσες ταξινομήσεις του πίνακα (%1$s) δεν υπάρχουν - αλλαγή σε %2$s."
 
-#: src/class-updraftplus.php:4460
+#: src/class-updraftplus.php:4498
 msgid "Your chosen replacement collation"
 msgstr "Η επιλεγμένη από εσάς ταξινόμηση αντικατάστασης"
 
-#: src/class-updraftplus.php:4437
+#: src/class-updraftplus.php:4475
 msgid "You can choose another suitable collation instead and continue with the restoration (at your own risk)."
 msgstr "Μπορείτε να επιλέξετε μια άλλη κατάλληλη ταξινόμηση και να συνεχίσετε με την αποκατάσταση (με δική σας ευθύνη)."
 
-#: src/class-updraftplus.php:4437
+#: src/class-updraftplus.php:4475
 msgid "The database server that this WordPress site is running on doesn't support the collation (%s) used in the database which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support multiple collations (%s) used in the database which you are trying to import."
 msgstr[0] "Ο διακομιστής της βάσης δεδομένων στον οποίο αυτός ο ιστότοπος της WordPress βρίσκεται δεν υποστηρίζει την ταξινόμηση (%s) που χρησιμοποιείται στη βάση δεδομένων που προσπαθείτε να εισαγάγετε."
@@ -539,19 +575,19 @@ msgid_plural "Your .htaccess has an old site references on line numbers %s. You 
 msgstr[0] "Το αρχείο .htaccess έχει μια παλιά αναφορά τοποθεσίας στον αριθμό γραμμής %s. Πρέπει να το αφαιρέσετε χειροκίνητα."
 msgstr[1] "Το αρχείο .htaccess έχει παλιές αναφορές τοποθεσίας στους αριθμούς γραμμών %s. Πρέπει να τις αφαιρέσετε χειροκίνητα."
 
-#: src/restorer.php:2324
+#: src/restorer.php:2346
 msgid "Requested table character set (%s) is not present - changing to %s."
 msgstr "Το ζητούμενο σετ χαρακτήρων του πίνακα (%s) δεν υπάρχει - αλλαγή σε %s."
 
-#: src/class-updraftplus.php:4413
+#: src/class-updraftplus.php:4451
 msgid "Your chosen character set to use instead:"
 msgstr "Ο επιλεγμένος χαρακτήρας που θέλετε να χρησιμοποιήσετε αντί:"
 
-#: src/class-updraftplus.php:4403
+#: src/class-updraftplus.php:4441
 msgid "You can choose another suitable character set instead and continue with the restoration at your own risk."
 msgstr "Μπορείτε να επιλέξετε ένα άλλο κατάλληλο σύνολο χαρακτήρων και να συνεχίσετε την αποκατάσταση με δική σας ευθύνη."
 
-#: src/class-updraftplus.php:4403
+#: src/class-updraftplus.php:4441
 msgid "The database server that this WordPress site is running on doesn't support the character set (%s) which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support the character sets (%s) which you are trying to import."
 msgstr[0] "Ο διακομιστής βάσης δεδομένων στον οποίο φιλοξενείται αυτός ο ιστότοπος της WordPress δεν υποστηρίζει το σύνολο χαρακτήρων (%s) που προσπαθείτε να εισαγάγετε."
@@ -641,23 +677,23 @@ msgstr "Κλειδί Λογαριασμού"
 msgid "Account ID"
 msgstr "ID Λογαριασμού"
 
-#: src/class-updraftplus.php:4244
+#: src/class-updraftplus.php:4282
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
 msgstr "Όσο η φιλοξενία σας στο διαδίκτυο επιτρέπει την πρόσβαση http (δηλαδή πρόσβαση χωρίς SSL) ή θα προωθεί τα αιτήματα σε https (κάτι που συμβαίνει σχεδόν πάντοτε), αυτό δεν αποτελεί πρόβλημα. Αν αυτό δεν το έχετε ρυθμίσει ακόμα, θα πρέπει να το ορίσετε ή να χρησιμοποιήσετε το %s έτσι ώστε οι σύνδεσμοι που δεν είναι https να αντικατασταθούν αυτόματα."
 
-#: src/class-updraftplus.php:4242, src/class-updraftplus.php:4244
+#: src/class-updraftplus.php:4280, src/class-updraftplus.php:4282
 msgid "the migrator add-on"
 msgstr "το πρόσθετο μετανάστευσης"
 
-#: src/class-updraftplus.php:4242
+#: src/class-updraftplus.php:4280
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
 msgstr "Αυτή η αποκατάσταση θα λειτουργήσει εάν εξακολουθείτε να έχετε ένα πιστοποιητικό SSL (δηλ. να μπορείτε να χρησιμοποιήσετε το https) για να αποκτήσετε πρόσβαση στον ιστότοπο. Διαφορετικά, θα πρέπει να χρησιμοποιήσετε το %s για να αναζητήσετε/αντικαταστήσετε τη διεύθυνση ιστότοπου έτσι ώστε να μπορέστε να επισκεφθείτε τον ιστότοπο χωρίς https."
 
-#: src/class-updraftplus.php:4240
+#: src/class-updraftplus.php:4278
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
 msgstr "Αυτό το σετ αντιγράφων ασφαλείας είναι αυτού του ιστότοπου, αλλά κατά τη στιγμή της δημιουργίας αντιγράφων ασφαλείας χρησιμοποιούσατε %s, ενώ ο ιστότοπος χρησιμοποιεί τώρα %s."
 
-#: src/class-updraftplus.php:4235
+#: src/class-updraftplus.php:4273
 msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
 msgstr "Η διεύθυνση ιστότοπου στο αντίγραφο ασφαλείας (%s) είναι ελαφρώς διαφορετική από αυτή του ιστότοπου τώρα (%s). Αυτό δεν αναμένεται να αποτελέσει κάποιο πρόβλημα για την αποκατάσταση του ιστότοπου, εφόσον οι επισκέψεις στην προηγούμενη διεύθυνση εξακολουθούν να φθάνουν στον ιστότοπο."
 
@@ -673,15 +709,15 @@ msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για να κ
 msgid "Error: The chosen file is corrupt. Please choose a valid UpdraftPlus export file."
 msgstr "Σφάλμα: Το επιλεγμένο αρχείο είναι κατεστραμμένο. Επιλέξτε ένα έγκυρο αρχείο εξαγωγής του UpdraftPlus."
 
-#: src/backup.php:2106, src/class-updraftplus.php:2198,
-#: src/class-updraftplus.php:2263, src/class-updraftplus.php:2397,
-#: src/class-updraftplus.php:3900, src/restorer.php:345
+#: src/backup.php:2132, src/class-updraftplus.php:2203,
+#: src/class-updraftplus.php:2268, src/class-updraftplus.php:2402,
+#: src/class-updraftplus.php:3938, src/restorer.php:347
 msgid "A PHP fatal error (%s) has occurred: %s"
 msgstr "Έχει συμβεί ένα καίριο σφάλμα (%s) στην PHP: %s"
 
-#: src/backup.php:2097, src/class-updraftplus.php:2189,
-#: src/class-updraftplus.php:2256, src/class-updraftplus.php:2390,
-#: src/class-updraftplus.php:3891, src/restorer.php:331
+#: src/backup.php:2123, src/class-updraftplus.php:2194,
+#: src/class-updraftplus.php:2261, src/class-updraftplus.php:2395,
+#: src/class-updraftplus.php:3929, src/restorer.php:333
 msgid "A PHP exception (%s) has occurred: %s"
 msgstr "Έχει γίνει εξαίρεση (%s) στην PHP: %s"
 
@@ -733,11 +769,11 @@ msgstr "Περιοχή χώρος αποθήκευσης του Rackspace"
 msgid "Instant and secure logon with a wave of your phone."
 msgstr "Άμεση και ασφαλής σύνδεση με ένα κούνημα του τηλεφώνου σας."
 
-#: src/backup.php:2110
+#: src/backup.php:2136
 msgid "As previously warned (see: %s), encryption is no longer a feature of the free edition of UpdraftPlus"
 msgstr "Όπως σας προειδοποιήσαμε προηγουμένως (δείτε:%s), η κρυπτογράφηση δεν αποτελεί πλέον χαρακτηριστικό της δωρεάν έκδοσης του UpdraftPlus"
 
-#: src/admin.php:5014
+#: src/admin.php:5068
 msgid "Value"
 msgstr "Αξία"
 
@@ -753,7 +789,7 @@ msgstr "Η κρυπτογραφημένη σύνδεση απέτυχε, προ�
 msgid "You must add the following as the authorised redirect URI in your Azure console (under \"API Settings\") when asked"
 msgstr "Πρέπει να προσθέσετε τα ακόλουθα ως εξουσιοδοτημένο URI ανακατεύθυνσης στην κονσόλα Azure (κάτω από τις \"Ρυθμίσεις API\") όταν σας ζητηθεί"
 
-#: src/templates/wp-admin/settings/existing-backups-table.php:74
+#: src/templates/wp-admin/settings/existing-backups-table.php:80
 msgid "Stored at: %s"
 msgstr "Αποθήκευση στο: %s"
 
@@ -761,11 +797,11 @@ msgstr "Αποθήκευση στο: %s"
 msgid "Cloud Files"
 msgstr "Αρχεία στο Σύννεφο"
 
-#: src/admin.php:4759
+#: src/admin.php:4813
 msgid "Your settings failed to save. Please refresh the settings page and try again"
 msgstr "Οι ρυθμίσεις σας απέτυχαν να αποθηκευτούν. Ανανεώστε τη σελίδα ρυθμίσεων και δοκιμάστε ξανά"
 
-#: src/admin.php:4718
+#: src/admin.php:4772
 msgid "UpdraftPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded. Please reload the settings page before trying to save settings."
 msgstr "Το UpdraftPlus φαίνεται να έχει ενημερωθεί στην έκδοση (%s), η οποία είναι διαφορετική από την εκδοχή που εκτελείται κατά τη φόρτωση αυτής της σελίδας ρυθμίσεων. Παρακαλούμε επαναφορτώστε τη σελίδα ρυθμίσεων πριν επιχειρήσετε να αποθηκεύσετε τις ρυθμίσεις."
 
@@ -782,7 +818,7 @@ msgstr "αρχείο"
 msgid "Extra database"
 msgstr "Επιπρόσθετη βάση δεδομένων"
 
-#: src/admin.php:3900
+#: src/admin.php:3954
 msgid "Press here to download or browse"
 msgstr "Πατήστε εδώ για λήψη ή περιήγηση"
 
@@ -822,19 +858,19 @@ msgstr "Με το UpdraftPlus Premium, μπορείτε να κατεβάσετ�
 msgid "Browse contents"
 msgstr "Περιήγηση περιεχομένων"
 
-#: src/restorer.php:2145
+#: src/restorer.php:2167
 msgid "Skipped tables:"
 msgstr "Πίνακες που έχουν παραλειφθεί:"
 
-#: src/class-updraftplus.php:4525
+#: src/class-updraftplus.php:4563
 msgid "This database backup has the following WordPress tables excluded: %s"
 msgstr "Από αυτό το αντίγραφο ασφαλείας των βάσεων δεδομένων έχουν εξαιρέθει οι παρακάτω πίνακες της WordPress: %s"
 
-#: src/admin.php:2792
+#: src/admin.php:2836
 msgid "With UpdraftPlus Premium, you can choose to backup non-WordPress tables, backup only specified tables, and backup other databases too."
 msgstr "Με το UpdraftPlus Premium, μπορείτε να επιλέξετε να δημιουργήσετε αντίγραφα ασφαλείας για μη πίνακες της WordPress, να δημιουργήσετε αντίγραφα ασφαλείας μόνο για συγκεκριμένους πίνακες και να δημιουργήσετε αντίγραφα ασφαλείας και για άλλες βάσεις δεδομένων."
 
-#: src/admin.php:2792
+#: src/admin.php:2836
 msgid "All WordPress tables will be backed up."
 msgstr "Θα δημιουργηθούν αντίγραφα ασφαλείας για όλους τους πίνακες της WordPress."
 
@@ -862,7 +898,7 @@ msgstr "Το αρχείο απέτυχε να ανέβει. Ελέγξτε τα 
 msgid "HTTP code:"
 msgstr "Κωδικός HTTP:"
 
-#: src/addons/wp-cli.php:89, src/admin.php:684
+#: src/addons/wp-cli.php:97, src/admin.php:684
 msgid "You have chosen to backup a database, but no tables have been selected"
 msgstr "Έχετε επιλέξει να δημιουργήσετε αντίγραφα ασφαλείας μιας βάσης δεδομένων, αλλά δεν έχετε επιλέξει πίνακες"
 
@@ -1294,11 +1330,11 @@ msgstr "Εδώ, μπορείτε να εξαγάγετε τις ρυθμίσει
 msgid "Export / import settings"
 msgstr "Ρυθμίσεις εξαγωγής / εισαγωγής"
 
-#: src/restorer.php:2364
+#: src/restorer.php:2386
 msgid "Processing table (%s)"
 msgstr "Επεξεργασία πίνακα (%s)"
 
-#: src/restorer.php:2111
+#: src/restorer.php:2133
 msgid "Backup of: %s"
 msgstr "Αντίγραφο ασφαλείας του: %s"
 
@@ -1318,7 +1354,7 @@ msgstr "Πρέπει να προσθέσετε τα παρακάτω ως εξο
 msgid "UpdraftCentral enables control of your WordPress sites (including management of backups and updates) from a central dashboard."
 msgstr "Το UpdraftCentral επιτρέπει τον έλεγχο των τοποθεσιών σας στη WordPress (συμπεριλαμβανομένης της διαχείρισης των αντιγράφων ασφαλείας και των ενημερώσεων) από έναν κεντρικό πίνακα ελέγχου."
 
-#: src/backup.php:1704
+#: src/backup.php:1730
 msgid "If not, you will need to either remove data from this table, or contact your hosting company to request more resources."
 msgstr "Αν όχι, θα πρέπει να αφαιρέσετε δεδομένα από αυτόν τον πίνακα ή να επικοινωνήσετε με την εταιρεία φιλοξενίας σας για να ζητήσετε περισσότερους πόρους."
 
@@ -1399,7 +1435,7 @@ msgstr "Για να αρθούν όλα τα εμπόδια, παρακαλώ π
 msgid "An error response was received; HTTP code:"
 msgstr "Μια απάντηση σφάλματος ελήφθη. Κωδικός HTTP:"
 
-#: src/includes/class-commands.php:353
+#: src/includes/class-commands.php:378
 msgid "%s add-on not found"
 msgstr "το πρόσθετο %s δε βρέθηκε"
 
@@ -1411,11 +1447,11 @@ msgstr "ή για να το αποκαταστήσετε χειροκίνητα"
 msgid "This makes time-outs much more likely. You are recommended to turn safe_mode off, or to restore only one entity at a time"
 msgstr "Το γεγονός αυτό καθιστά την πιθανότητα να εμφανιστεί τάιμ-άουτ πολύ πιο πιθανή. Συνιστάται να απενεργοποιήσετε την ασφαλή λειτουργία, ή να επαναφέρετε μόνο ένα πράγμα κάθε φορά."
 
-#: src/admin.php:2444
+#: src/admin.php:2488
 msgid "To fix this problem go here."
 msgstr "Για να διορθώσετε αυτό το πρόβλημα πηγαίνετε εδώ."
 
-#: src/admin.php:2444
+#: src/admin.php:2488
 msgid "OptimizePress 2.0 encodes its contents, so search/replace does not work."
 msgstr "Το OptimizePress 2.0 κωδικοποιεί τα περιεχόμενό της, έτσι η αναζήτηση/αντικατάσταση δεν λειτουργεί."
 
@@ -1491,53 +1527,53 @@ msgstr "Μέγεθος κλειδιού: %d bits"
 msgid "Public key was sent to:"
 msgstr "Το δημόσιο κλειδί εστάλη στο: "
 
-#: src/backup.php:2323
+#: src/backup.php:2349
 msgid "Failed to open directory (check the file permissions and ownership): %s"
 msgstr "Απoτυχία ανοίγματος του καταλόγου (ελέγξτε τα δικαιώματα αρχείων και την ιδιοκτησία): %s"
 
-#: src/backup.php:2301
+#: src/backup.php:2327
 msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
 msgstr "%s: μη αναγνώσιμο αρχείο - δεν μπορεί να συμπεριληφθεί στο αντίγραφο ασφαλείας (ελέγξτε τα δικαιώματα αρχείων και την ιδιοκτησία)"
 
-#: src/addons/migrator.php:2530
+#: src/addons/migrator.php:1759
 msgid "Create key"
 msgstr "Δημιουργία κλειδιού"
 
-#: src/addons/migrator.php:2527, src/central/bootstrap.php:541
+#: src/addons/migrator.php:1756, src/central/bootstrap.php:541
 msgid "slower, strongest"
 msgstr "πιο αργό, δυνατότερο"
 
-#: src/addons/migrator.php:2526, src/central/bootstrap.php:540
+#: src/addons/migrator.php:1755, src/central/bootstrap.php:540
 msgid "recommended"
 msgstr "προτεινόμενο"
 
-#: src/addons/migrator.php:2526, src/central/bootstrap.php:540
+#: src/addons/migrator.php:1755, src/central/bootstrap.php:540
 msgid "%s bytes"
 msgstr "%s bytes"
 
-#: src/addons/migrator.php:2525, src/central/bootstrap.php:539
+#: src/addons/migrator.php:1754, src/central/bootstrap.php:539
 msgid "faster (possibility for slow PHP installs)"
 msgstr "γρηγορότερο (δυνατότητα λειτουργίας σε εγκαταστάσεις με αργό PHP)"
 
-#: src/addons/migrator.php:2524, src/central/bootstrap.php:538
+#: src/addons/migrator.php:1753, src/central/bootstrap.php:538
 msgid "easy to break, fastest"
 msgstr "εύκολο να σπάσει, πολύ γρήγορο"
 
-#: src/addons/migrator.php:2524, src/addons/migrator.php:2525,
-#: src/addons/migrator.php:2527, src/central/bootstrap.php:538,
+#: src/addons/migrator.php:1753, src/addons/migrator.php:1754,
+#: src/addons/migrator.php:1756, src/central/bootstrap.php:538,
 #: src/central/bootstrap.php:539, src/central/bootstrap.php:541
 msgid "%s bits"
 msgstr "%s bits"
 
-#: src/addons/migrator.php:2522, src/central/bootstrap.php:536
+#: src/addons/migrator.php:1751, src/central/bootstrap.php:536
 msgid "Encryption key size:"
 msgstr "Μέγεθος κλειδιού κρυπτογράφησης:"
 
-#: src/addons/migrator.php:2520
+#: src/addons/migrator.php:1749
 msgid "Enter your chosen name"
 msgstr "Εισάγετε το όνομα που έχετε επιλέξει"
 
-#: src/addons/migrator.php:2519
+#: src/addons/migrator.php:1748
 msgid "Create a key: give this key a unique name (e.g. indicate the site it is for), then press \"Create key\":"
 msgstr "Δημιουργήστε ένα κλειδί: δώστε σε αυτό το κλειδί ένα μοναδικό όνομα (π.χ., υποδείξτε τον ιστότοπο για τον οποίο πρόκειται) και πατήστε το πλήκτρο \"Δημιουργία κλειδιού\":"
 
@@ -1574,7 +1610,7 @@ msgstr "Το UpdraftPlus θα χωρίσει τα αντίγραφα ασφαλ�
 msgid "Now"
 msgstr "Τώρα"
 
-#: src/class-updraftplus.php:4261, src/restorer.php:1382
+#: src/class-updraftplus.php:4299, src/restorer.php:1404
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
 msgstr "Θα πρέπει να ενεργοποιήσετε το %s για να λειτουργήσουν τα pretty permalinks (e.g. %s)"
 
@@ -1680,23 +1716,23 @@ msgstr "Η σύνδεση με το UpdraftCentral έγινε επιτυχώς."
 msgid "UpdraftCentral Connection"
 msgstr "Σύνδεση στο UpdraftCentral "
 
-#: src/backup.php:1006, src/class-updraftplus.php:2952
+#: src/backup.php:1032, src/class-updraftplus.php:2959
 msgid "The backup was aborted by the user"
 msgstr "Η λήψη αντιγράφου ασφαλείας ακυρώθηκε από το χρήστη"
 
-#: src/admin.php:4754
+#: src/admin.php:4808
 msgid "Your settings have been saved."
 msgstr "Οι ρυθμίσεις έχουν αποθηκευτεί."
 
-#: src/admin.php:3778
+#: src/admin.php:3834
 msgid "Total backup size:"
 msgstr "Συνολικό μέγεθος αντιγράφων ασφαλείας:"
 
-#: src/admin.php:3132
+#: src/admin.php:3178
 msgid "stop"
 msgstr "στάση"
 
-#: src/admin.php:2974
+#: src/admin.php:3020
 msgid "The backup has finished running"
 msgstr "Η λήψη αντιγράφου ασφαλείας ολοκληρώθηκε"
 
@@ -1718,7 +1754,7 @@ msgstr "αυτά τα σετ αντιγράφων ασφαλείας"
 msgid "this backup set"
 msgstr "αυτό το σετ αντιγράφων ασφαλείας"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:42
+#: src/admin.php:1768
 msgid "calculate"
 msgstr "υπολογισμός"
 
@@ -1750,7 +1786,7 @@ msgstr "Δημιουργία..."
 msgid "Asia Pacific (Seoul)"
 msgstr "Ασίας Ειρηνικού (Σεούλ)"
 
-#: src/restorer.php:2134
+#: src/restorer.php:2156
 msgid "Uploads URL:"
 msgstr "URL Μεταφορτώσεων:"
 
@@ -1758,19 +1794,19 @@ msgstr "URL Μεταφορτώσεων:"
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it."
 msgstr "Το απαραίτητο PHP module %s δεν είναι εγκατεστημένο - επικοινωνήστε με την εταιρεία παροχής web hosting σας για να το ενεργοποιήσετε."
 
-#: src/class-updraftplus.php:4313, src/restorer.php:2153
+#: src/class-updraftplus.php:4351, src/restorer.php:2175
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr "Η εισαγωγή ενός συνηθισμένου ιστότοπου WordPress σε μια εγκατάσταση πολλαπλών ιστοτόπων απαιτεί το %s."
 
-#: src/class-updraftplus.php:4309
+#: src/class-updraftplus.php:4347
 msgid "Please read this link for important information on this process."
 msgstr "Παρακαλούμε διαβάστε αυτό το σύνδεσμο για σημαντικές πληροφορίες σχετικά με αυτή τη διαδικασία."
 
-#: src/class-updraftplus.php:4309
+#: src/class-updraftplus.php:4347
 msgid "It will be imported as a new site."
 msgstr "Θα εισαχθεί σαν καινούριος ιστότοπος."
 
-#: src/admin.php:2661, src/templates/wp-admin/notices/horizontal-notice.php:16,
+#: src/admin.php:2705, src/templates/wp-admin/notices/horizontal-notice.php:16,
 #: src/templates/wp-admin/notices/horizontal-notice.php:18
 msgid "Dismiss"
 msgstr "Ματαίωση"
@@ -1836,7 +1872,7 @@ msgstr "Επιλέξατε το %s να συμπεριληφθεί στην απ
 msgid "Call WordPress action:"
 msgstr "Κλήση ενέργειας του WordPress:"
 
-#: src/admin.php:2800
+#: src/admin.php:2844
 msgid "Your saved settings also affect what is backed up - e.g. files excluded."
 msgstr "Οι αποθηκευμένες ρυθμίσεις σας επηρεάζουν και τι θα συμπεριληφθεί στο αντίγραφο ασφαλείας - π.χ. αρχεία που αποκλείονται."
 
@@ -1868,59 +1904,59 @@ msgstr "Στη συνέχεια, θα πρέπει να εισάγετε ξαν�
 msgid "This button will delete all UpdraftPlus settings and progress information for in-progress backups (but not any of your existing backups from your cloud storage)."
 msgstr "Αυτό το κουμπί θα διαγράψει όλες τις ρυθμίσεις του UpdraftPlus καθώς και τις πληροφορίες προόδου για την δημιουργία αντιγράφων ασφαλείας που βρίσκεται σε εξέλιξη (αλλά όχι οποιοδήποτε από τα υπάρχοντα αντίγραφα ασφαλείας σας από το σημείο αποθήκευσής σας)."
 
-#: src/admin.php:4628
+#: src/admin.php:4682
 msgid "Send this backup to remote storage"
 msgstr "Αποστολή αυτού του αντιγράφου ασφαλείας στο σημείο απομακρυσμένης αποθήκευσης"
 
-#: src/admin.php:4626
+#: src/admin.php:4680
 msgid "Check out UpdraftPlus Vault."
 msgstr "Δείτε το UpdraftPlus Vault."
 
-#: src/admin.php:4626
+#: src/admin.php:4680
 msgid "Not got any remote storage?"
 msgstr "Δεν έχετε ακόμα κανένα λογαριασμό σε σημείο απομακρυσμένης αποθήκευσης;"
 
-#: src/admin.php:4626
+#: src/admin.php:4680
 msgid "settings"
 msgstr "ρυθμίσεις"
 
-#: src/admin.php:4626
+#: src/admin.php:4680
 msgid "Backup won't be sent to any remote storage - none has been saved in the %s"
 msgstr "Το αντίγραφο ασφαλείας δεν θα αποσταλεί σε κάθε απομακρυσμένη αποθήκευση - καμία δεν έχει αποθηκευτεί στο %s"
 
-#: src/admin.php:2798
+#: src/admin.php:2842
 msgid "Include any files in the backup"
 msgstr "Συμπερίληψη αρχείων στο αντίγραφο ασφαλείας"
 
-#: src/admin.php:2784
+#: src/admin.php:2828
 msgid "Include the database in the backup"
 msgstr "Συμπερίληψη της βάσης δεδομένων στο αντίγραφο ασφαλείας"
 
-#: src/admin.php:2660
+#: src/admin.php:2704
 msgid "Continue restoration"
 msgstr "Συνέχεια επαναφοράς"
 
-#: src/admin.php:2655
+#: src/admin.php:2699
 msgid "You have an unfinished restoration operation, begun %s ago."
 msgstr "Έχετε μια ημιτελή διαδικασία αποκατάστασης η οποία άρχισε πριν από %s."
 
-#: src/admin.php:2654
+#: src/admin.php:2698
 msgid "Unfinished restoration"
 msgstr "Ημιτελής αποκατάσταση"
 
-#: src/admin.php:2652
+#: src/admin.php:2696
 msgid "%s minutes, %s seconds"
 msgstr "%s λεπτά, %s δευτερόλεπτα"
 
-#: src/admin.php:2535
+#: src/admin.php:2579
 msgid "Backup Contents And Schedule"
 msgstr "Δημιουργία αντιγράφων ασφαλείας του Περιεχόμενου και Χρονοδιάγραμμα"
 
-#: src/admin.php:2498
+#: src/admin.php:2542
 msgid "Premium / Extensions"
 msgstr "Premium / Επεκτάσεις"
 
-#: src/admin.php:2309, src/admin.php:2318
+#: src/admin.php:2353, src/admin.php:2362
 msgid "Sufficient information about the in-progress restoration operation could not be found."
 msgstr "Δεν βρέθηκαν επαρκείς πληροφορίες σχετικά με τη λειτουργία αποκατάστασης που βρίσκεται σε εξέλιξη."
 
@@ -1937,7 +1973,7 @@ msgstr "Επιλέξατε να δημιουργήσετε αντίγραφο α
 msgid "Extensions"
 msgstr "Επεκτάσεις"
 
-#: src/admin.php:572, src/admin.php:2497
+#: src/admin.php:572, src/admin.php:2541
 msgid "Advanced Tools"
 msgstr "Προηγμένα εργαλεία"
 
@@ -2060,23 +2096,23 @@ msgstr "Αδυναμία δημιουργίας του φακέλου"
 msgid "Could not access container"
 msgstr "Αδυναμία πρόσβασης στο φάκελο"
 
-#: src/class-updraftplus.php:2969
+#: src/class-updraftplus.php:2976
 msgid "To complete your migration/clone, you should now log in to the remote site and restore the backup set."
 msgstr "Για να ολοκληρωθεί η μετανάστευση/κλωνοποίηση, θα πρέπει τώρα να συνδεθείτε με την απομακρυσμένη τοποθεσία και να αποκαταστήσετε το σύνολο αντιγράφων ασφαλείας."
 
-#: src/backup.php:1756
+#: src/backup.php:1782
 msgid "the options table was not found"
 msgstr "ο πίνακας με τις επιλογές δεν βρέθηκε"
 
-#: src/backup.php:1754
+#: src/backup.php:1780
 msgid "no options or sitemeta table was found"
 msgstr "δεν βρέθηκαν επιλογές ή πίνακας με sitemeta"
 
-#: src/backup.php:1754, src/backup.php:1756
+#: src/backup.php:1780, src/backup.php:1782
 msgid "The database backup appears to have failed"
 msgstr "Η δημιουργία του αντιγράφου ασφαλείας της βάσης δεδομένων φαίνεται πως έχει αποτύχει."
 
-#: src/backup.php:1626
+#: src/backup.php:1652
 msgid "The backup directory is not writable (or disk space is full) - the database backup is expected to shortly fail."
 msgstr "Ο κατάλογος αποθήκευσης του αντιγράφου ασφαλείας δεν είναι εγγράψιμος (ή ο χώρος του δίσκου είναι πλήρης) - η δημιουργία αντιγράφου ασφαλείας της βάσης δεδομένων αναμένεται να αποτύχει σύντομα."
 
@@ -2160,7 +2196,7 @@ msgstr "%s Εξαίρεση Υπηρεσίας."
 msgid "You do not have UpdraftPlus completely installed - please de-install and install it again. Most likely, WordPress malfunctioned when copying the plugin files."
 msgstr "Το UpdraftPlus δεν έχει εγκατασταθεί πλήρως - παρακαλώ απεγκαταστήσετε και εγκαταστήσετε το ξανά. Το πιο πιθανό είναι πως κάποια δυσλειτουργία συνέβη στη WordPress κατά την αντιγραφή των αρχείων του πρόσθετου."
 
-#: src/restorer.php:1154
+#: src/restorer.php:1176
 msgid "Deferring..."
 msgstr "Αναβολή..."
 
@@ -2185,7 +2221,7 @@ msgstr "Επιλογή όλων"
 msgid "Actions upon selected backups"
 msgstr "Ενέργειες σχετικά με τα επιλεγμένα αντιγράφα ασφαλείας"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:54
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:56
 msgid "Press here to look inside your remote storage methods for any existing backup sets (from any site, if they are stored in the same folder)."
 msgstr "Πατήστε εδώ για να αναζητήσετε στα σημεία απομακρυσμένης αποθήκευσης σας για οποιαδήποτε υπάρχοντα σύνολα αντιγράφων ασφαλείας (από οποιαδήποτε ιστοσελίδα, εάν είναι αποθηκευμένα στον ίδιο φάκελο)."
 
@@ -2229,11 +2265,11 @@ msgstr "(τόσο όσα επιθυμείτε)"
 msgid "Add an additional retention rule..."
 msgstr "Προσθέστε ένα πρόσθετο κανόνα διατήρησης..."
 
-#: src/restorer.php:2690
+#: src/restorer.php:2712
 msgid "This database needs to be deployed on MySQL version %s or later."
 msgstr "Αυτή η βάση δεδομένων θα πρέπει να αναπτυχθεί σε μια έκδοση %s της MySQL ή μεταγενέστερη."
 
-#: src/restorer.php:2690
+#: src/restorer.php:2712
 msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
 msgstr "Αυτό το πρόβλημα προκαλείται από την προσπάθεια να αποκατασταθεί μια βάση δεδομένων σε μια πολύ παλιά έκδοση της MySQL η οποία είναι ασύμβατη με τη βάση δεδομένων προέλευσης."
 
@@ -2241,15 +2277,15 @@ msgstr "Αυτό το πρόβλημα προκαλείται από την πρ
 msgid "You do not currently have any UpdraftPlus Vault quota"
 msgstr "Δεν έχετε επί του παρόντος κανένα ποσοστό χώρου στο UpdraftPlus Vault"
 
-#: src/class-updraftplus.php:4382
+#: src/class-updraftplus.php:4420
 msgid "You must upgrade MySQL to be able to use this database."
 msgstr "Θα πρέπει να αναβαθμίσετε τη MySQL να είναι σε θέση να χρησιμοποιήσετε αυτή τη βάση δεδομένων."
 
-#: src/class-updraftplus.php:4382
+#: src/class-updraftplus.php:4420
 msgid "The database backup uses MySQL features not available in the old MySQL version (%s) that this site is running on."
 msgstr "Η βάση δεδομένων των αντιγράφων ασφαλείας χρησιμοποιεί χαρακτηριστικά της MySQL που δεν είναι διαθέσιμα στην παλιά έκδοση της MySQL (%s) πάνω στην οποία τρέχει αυτή η σελίδα."
 
-#: src/admin.php:2429
+#: src/admin.php:2473
 msgid "The UpdraftPlus directory in wp-content/plugins has white-space in it; WordPress does not like this. You should rename the directory to wp-content/plugins/updraftplus to fix this problem."
 msgstr "Ο κατάλογος του UpdraftPlus στο wp-content/plugins έχει κενά διαστήματα; Αυτό δεν αρέσει στη WordPress. Θα πρέπει να μετονομάσετε το φάκελο σε wp-content/plugins/updraftplus για να διορθώσετε αυτό το πρόβλημα."
 
@@ -2428,7 +2464,7 @@ msgstr "Updraft Vault"
 msgid "Delete failed:"
 msgstr "Η διαγραφή απέτυχε:"
 
-#: src/backup.php:3367
+#: src/backup.php:3393
 msgid "The zip engine returned the message: %s."
 msgstr "Η ρουτίνα zip επέστρεψε αυτό το μήνυμα: %s."
 
@@ -2448,19 +2484,19 @@ msgstr "Χωρίς αυτή την άδεια, δεν μπορείτε να κα
 msgid "Allow download"
 msgstr "Επιτρέψτε τη μεταφόρτωση"
 
-#: src/addons/migrator.php:1993
+#: src/includes/class-remote-send.php:290
 msgid "If sending directly from site to site does not work for you, then there are three other methods - please try one of these instead."
 msgstr "Αν η αποστολή απευθείας από ιστοσελίδα σε ιστοσελίδα δεν λειτουργεί για σας, τότε υπάρχουν άλλες τρεις μέθοδοι - δοκιμάστε μια από αυτές τα αντ' αυτού."
 
-#: src/addons/migrator.php:1978, src/admin.php:748
+#: src/admin.php:748, src/includes/class-remote-send.php:275
 msgid "You should check that the remote site is online, not firewalled, does not have security modules that may be blocking access, has UpdraftPlus version %s or later active and that the keys have been entered correctly."
 msgstr "Θα πρέπει να ελέγξετε ότι η απομακρυσμένη τοποθεσία είναι online, δεν υπάρχει τείχος προστασίας, δεν έχει ενεργοποιημένες τυχόν μονάδες ασφαλείας που μπορεί να εμποδίζουν την πρόσβαση, έχει την έκδοση %s του UpdraftPlus ή μεταγενέστερη ενεργή και ότι τα στοιχεία έχουν εισαχθεί σωστά."
 
-#: src/addons/migrator.php:2581
+#: src/includes/class-remote-send.php:515
 msgid "Existing keys"
 msgstr "Υπάρχοντα κλειδιά"
 
-#: src/addons/migrator.php:2535
+#: src/addons/migrator.php:1764
 msgid "Your new key:"
 msgstr "Το νέο σας κλειδί:"
 
@@ -2468,27 +2504,27 @@ msgstr "Το νέο σας κλειδί:"
 msgid "You must copy and paste this key now - it cannot be shown again."
 msgstr "Θα πρέπει να κάνετε αντιγραφή κι επικόλληση την καταχώρηση τώρα - δεν είναι δυνατή η εμφάνισή της ποτέ ξανά."
 
-#: src/addons/migrator.php:2116, src/central/bootstrap.php:402
+#: src/central/bootstrap.php:402, src/includes/class-remote-send.php:413
 msgid "Key created successfully."
 msgstr "Η καταχώρηση δημιουργήθηκε επιτυχώς."
 
-#: src/addons/migrator.php:2099
+#: src/includes/class-remote-send.php:396
 msgid "A key with this name already exists; you must use a unique name."
 msgstr "Μια καταχώρηση με αυτό το όνομα υπάρχει ήδη, θα πρέπει να χρησιμοποιήσετε ένα μοναδικό όνομα."
 
-#: src/addons/migrator.php:2024
+#: src/includes/class-remote-send.php:321
 msgid "Also send this backup to the active remote storage locations"
 msgstr "Επίσης στείλετε αυτό το αντίγραφο ασφαλείας στις ενεργές τοποθεσίες απομακρυσμένης αποθήκευσης"
 
-#: src/addons/migrator.php:1989
+#: src/includes/class-remote-send.php:286
 msgid "The site URL you are sending to (%s) looks like a local development website. If you are sending from an external network, it is likely that a firewall will be blocking this."
 msgstr "Η διεύθυνση της ιστοσελίδας που κάνετε αποστολή (%s) μοιάζει με μια τοπική ιστοσελίδα ανάπτυξης. Εάν θέλετε να κάνετε αποστολή από ένα εξωτερικό δίκτυο, είναι πιθανό ότι ένα τείχος προστασίας θα μπλοκάρει αυτή τη διαδικασία."
 
-#: src/addons/migrator.php:1945
+#: src/includes/class-remote-send.php:242
 msgid "site not found"
 msgstr "η ιστοσελίδα δεν βρέθηκε"
 
-#: src/addons/migrator.php:1930
+#: src/includes/class-remote-send.php:227
 msgid "Backup data will be sent to:"
 msgstr "Τα δεδομένα του αντιγράφου ασφαλείας θα σταλούν στο:"
 
@@ -2508,17 +2544,17 @@ msgstr "Η λήψη αντιγράφων ασφαλείας γίνεται απ�
 msgid "This storage method does not allow downloading"
 msgstr "Αυτή η μέθοδος αποθήκευσης δεν επιτρέπει τη λήψη"
 
-#: src/admin.php:3963
+#: src/admin.php:4017
 msgid "(backup set imported from remote location)"
 msgstr "(τα αρχεία αντιγράφων ασφαλείας έχουν εισαχθεί από την απομακρυσμένη τοποθεσία)"
 
-#: src/addons/wp-cli.php:346,
-#: src/templates/wp-admin/settings/existing-backups-table.php:87
+#: src/addons/wp-cli.php:355,
+#: src/templates/wp-admin/settings/existing-backups-table.php:93
 msgid "Site"
 msgstr "Ιστοσελίδα"
 
-#: src/addons/wp-cli.php:344,
-#: src/templates/wp-admin/settings/existing-backups-table.php:86
+#: src/addons/wp-cli.php:353,
+#: src/templates/wp-admin/settings/existing-backups-table.php:92
 msgid "Backup sent to remote site - not available for download."
 msgstr "Το σύνολο των αντιγράφων ασφαλείας έχει αποσταλεί στο χώρο απομακρυσμένης αποθήκευσης - δεν είναι διαθέσιμο για download."
 
@@ -2530,7 +2566,7 @@ msgstr "Θα πρέπει να βεβαιωθείτε ότι αυτό είναι
 msgid "This backup set was not known by UpdraftPlus to be created by the current WordPress installation, but was either found in remote storage, or was sent from a remote site."
 msgstr "Αυτό το σύνολο αντιγράφων ασφαλείας δε θεωρείται από το UpdraftPlus πως έχει δημιουργηθεί από την τρέχουσα εγκατάσταση WordPress, αλλά είτε βρέθηκε στην τοποθεσία της απομακρυσμένης αποθήκευσης ή στάλθηκε από μια απομακρυσμένη τοποθεσία."
 
-#: src/addons/migrator.php:2006, src/admin.php:755
+#: src/admin.php:755, src/includes/class-remote-send.php:303
 msgid "Testing connection..."
 msgstr "Δοκιμή σύνδεσης..."
 
@@ -2550,60 +2586,61 @@ msgstr "Παρακαλώ δώστε σ' αυτή τη μεταβλητή ένα 
 msgid "Creating..."
 msgstr "Δημιουργία..."
 
-#: src/addons/migrator.php:2513
+#: src/addons/migrator.php:1742
 msgid "Or, receive a backup from a remote site"
 msgstr "Ή κατεβάστε ένα αντίγραφο ασφαλείας από την τοποθεσία απομακρυσμένης αποθήκευσης"
 
-#: src/addons/migrator.php:2501
+#: src/addons/migrator.php:1730
 msgid "Paste key here"
 msgstr "Κάντε επικόλληση το κλειδί εδώ"
 
-#: src/addons/migrator.php:2497
+#: src/addons/migrator.php:1726
 msgid "How do I get a site's key?"
 msgstr "Πώς μπορώ να πάρω το κλειδί μιας σελίδας;"
 
-#: src/addons/migrator.php:2497
+#: src/addons/migrator.php:1726
 msgid "To add a site as a destination for sending to, enter that site's key below."
 msgstr "Για να προσθέσετε μια τοποθεσία ως προορισμό για την αποστολή των αντιγράφων ασφαλείας, εισάγετε το κλειδί αυτής της τοποθεσίας πιο κάτω."
 
-#: src/addons/migrator.php:2491
+#: src/addons/migrator.php:1720
 msgid "Or, send a backup to another site"
 msgstr "Ή στείλτε ένα αντίγραφο ασφαλείας σε μια άλλη σελίδα"
 
-#: src/addons/migrator.php:2198, src/admin.php:756
+#: src/admin.php:756, src/includes/class-remote-send.php:495
 msgid "Send"
 msgstr "Αποστολή"
 
-#: src/addons/migrator.php:2192, src/admin.php:747
+#: src/admin.php:747, src/includes/class-remote-send.php:489
 msgid "Send to site:"
 msgstr "Αποστολή στη σελίδα:"
 
-#: src/addons/migrator.php:2190
+#: src/includes/class-remote-send.php:487
 msgid "No receiving sites have yet been added."
 msgstr "Δεν έχουν ακόμη προστεθεί σελίδες λήψεως."
 
-#: src/addons/migrator.php:2171
+#: src/includes/class-remote-send.php:468
 msgid "It is for sending backups to the following site: "
 msgstr "Είναι για την αποστολή αντιγράφων ασφαλείας στην ακόλουθη ιστοσελίδα: "
 
-#: src/addons/migrator.php:2171
+#: src/includes/class-remote-send.php:468
 msgid "The key was successfully added."
 msgstr "Το κλειδί προστέθηκε επιτυχώς."
 
-#: src/addons/migrator.php:2155
+#: src/includes/class-remote-send.php:452
 msgid "The entered key does not belong to a remote site (it belongs to this one)."
 msgstr "Το κλειδί που καταχωρήθηκε δεν ανήκει σε μια απομακρυσμένη τοποθεσία (ανήκει σε αυτή εδώ)."
 
-#: src/addons/migrator.php:2144, src/addons/migrator.php:2146,
-#: src/addons/migrator.php:2150
+#: src/includes/class-remote-send.php:441,
+#: src/includes/class-remote-send.php:443,
+#: src/includes/class-remote-send.php:447
 msgid "The entered key was corrupt - please try again."
 msgstr "Το κλειδί που καταχωρήθηκε ήταν κατεστραμμένο - παρακαλώ δοκιμάστε ξανά. "
 
-#: src/addons/migrator.php:2142
+#: src/includes/class-remote-send.php:439
 msgid "The entered key was the wrong length - please try again."
 msgstr "Το κλειδί που καταχωρήθηκε έχει λανθασμένο μήκος - παρακαλώ δοκιμάστε ξανά."
 
-#: src/addons/migrator.php:2132
+#: src/includes/class-remote-send.php:429
 msgid "key"
 msgstr "κλειδί"
 
@@ -2643,7 +2680,7 @@ msgstr "Μια διαδικασία «μετανάστευσης» είναι τ
 msgid "Resetting..."
 msgstr "Επαναφορά ..."
 
-#: src/addons/migrator.php:2501, src/admin.php:744
+#: src/addons/migrator.php:1730, src/admin.php:744
 msgid "Add site"
 msgstr "Προσθήκη σελίδας"
 
@@ -2655,7 +2692,7 @@ msgstr "Προσθήκη..."
 msgid "Claim not granted - perhaps you have already used this purchase somewhere else, or your paid period for downloading from updraftplus.com has expired?"
 msgstr "Το αίτημά σας δεν μπορεί να ικανοποιηθεί. Μήπως έχετε ήδη χρησιμοποιήσει αυτή την αγορά κάπου αλλού ή η περίοδος για την οποία έχετε πληρώσει για λήψη από updraftplus.com έχει λήξει;"
 
-#: src/restorer.php:2692
+#: src/restorer.php:2714
 msgid "To use this backup, your database server needs to support the %s character set."
 msgstr "Για να χρησιμοποιήσετε αυτό το αντίγραφο ασφαλείας, ο διακομιστής της βάσης δεδομένων πρέπει να υποστηρίζει το σύνολο χαρακτήρων %s."
 
@@ -2695,8 +2732,8 @@ msgstr "N.B. %s δεν είναι case-sensitive."
 msgid "If OneDrive later shows you the message \"unauthorized_client\", then you did not enter a valid client ID here."
 msgstr "Αν OneDrive σας δείχνει αργότερα το μήνυμα \"unauthorized_client\", τότε δεν έχετε εισάγετε ένα έγκυρο αναγνωριστικό πελάτη εδώ."
 
-#: src/addons/azure.php:605, src/addons/migrator.php:1993,
-#: src/addons/onedrive.php:1127
+#: src/addons/azure.php:605, src/addons/onedrive.php:1127,
+#: src/includes/class-remote-send.php:290
 msgid "For longer help, including screenshots, follow this link."
 msgstr "Για μεγαλύτερη βοήθεια, καθώς και στιγμιότυπα οθόνης, ακολουθήστε αυτό το σύνδεσμο."
 
@@ -2943,7 +2980,7 @@ msgstr "Να απορριφθεί (για %s μήνες)"
 msgid "(at same time as files backup)"
 msgstr "(στον ίδιο χρόνο όπως και τα αντίγραφα ασφαλείας των αρχείων)"
 
-#: src/admin.php:3434
+#: src/admin.php:3480
 msgid "No backup has been completed"
 msgstr "Δεν έχει ολοκληρωθεί καμία διαδικασία λήψης αντιγράφου ασφαλείας"
 
@@ -3017,12 +3054,12 @@ msgstr "η διεύθυνση διαχειριστή του δικτυακού �
 msgid "Check this box to have a basic report sent to"
 msgstr "Επιλέξτε αυτό το πλαίσιο για να σας αποστέλλεται μια βασική έκθεση στο"
 
-#: src/admin.php:3448
+#: src/admin.php:3494
 msgctxt "i.e. Non-automatic"
 msgid "Manual"
 msgstr "Χειροκίνητα"
 
-#: src/restorer.php:2669
+#: src/restorer.php:2691
 msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
 msgid "An error (%s) occurred:"
 msgstr "Ένα σφάλμα (%s) συνέβη:"
@@ -3035,7 +3072,7 @@ msgstr "Αλλαγή Ρυθμίσεων Κλειδώματος"
 msgid "Any other file/directory on your server that you wish to back up"
 msgstr "Οποιοδήποτε άλλο αρχείο/κατάλογος στο διακομιστή σας που θέλετε να δημιουργήσετε αντίγραφο ασφαλείας"
 
-#: src/admin.php:2446
+#: src/admin.php:2490
 msgid "For even more features and personal support, check out "
 msgstr "Για ακόμη περισσότερες δυνατότητες και προσωπική υποστήριξη, ελέγξτε"
 
@@ -3129,7 +3166,7 @@ msgstr "(μάθετε περισσότερα για αυτή τη σημαντι
 msgid "Note that after you have claimed your add-ons, you can remove your password (but not the email address) from the settings below, without affecting this site's access to updates."
 msgstr "Σημειώστε ότι αφού έχετε απαιτήσει τα πρόσθετά σας, μπορείτε να καταργήσετε τον κωδικό πρόσβασης σας (αλλά όχι η διεύθυνση ηλεκτρονικού ταχυδρομείου) από τις παρακάτω ρυθμίσεις, χωρίς να επηρεάζεται η πρόσβαση αυτού του δικτυακού τόπου για ενημερώσεις."
 
-#: src/admin.php:2974, src/admin.php:4074
+#: src/admin.php:3020, src/admin.php:4128
 msgid "View Log"
 msgstr "Δείτε το Αρχείο Καταγραφής"
 
@@ -3146,7 +3183,7 @@ msgstr "Ημερομηνία λήψης αντιγράφου ασφαλείας"
 msgid "and retain this many scheduled backups"
 msgstr "και να διατηρηθούν τόσα προγραμματισμένα αντιγράφα ασφαλείας"
 
-#: src/admin.php:3404
+#: src/admin.php:3450
 msgid "incremental backup; base backup: %s"
 msgstr "οριακό αντίγραφο ασφαλείας; βασικό αντίγραφο ασφαλείας: %s"
 
@@ -3154,32 +3191,32 @@ msgstr "οριακό αντίγραφο ασφαλείας; βασικό αντ�
 msgid "For the ability to lock access to UpdraftPlus settings with a password, upgrade to UpdraftPlus Premium."
 msgstr "Για την ικανότητα να κλειδώσετε την πρόσβαση στις ρυθμίσεις UpdraftPlus με έναν κωδικό πρόσβασης, αναβαθμίστε το λογαριασμός σας σε UpdraftPlus Premium."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:67
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:69
 msgid "Upload files into UpdraftPlus."
 msgstr "Ανεβάστε τα αρχεία στο UpdraftPlus."
 
-#: src/admin.php:995, src/includes/class-commands.php:414,
+#: src/admin.php:995, src/includes/class-commands.php:439,
 #: src/templates/wp-admin/settings/tab-status.php:22
 msgid "The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option)."
 msgstr "Το κουμπί «Δημιουργία Αντιγράφων ασφαλείας\" είναι απενεργοποιημένο διότι ο κατάλογος αποθήκευσης των αντιγράφων ασφαλείας σας δεν είναι εγγράψιμος (πηγαίνετε στην καρτέλα «Ρυθμίσεις» όπου θα βρείτε τη σχετική επιλογή)."
 
-#: src/class-updraftplus.php:4298
+#: src/class-updraftplus.php:4336
 msgid "Backup label:"
 msgstr "Ετικέτα αντιγράφων ασφαλείας:"
 
-#: src/addons/backblaze.php:205, src/admin.php:1953
+#: src/addons/backblaze.php:205, src/admin.php:1997
 msgid "Error: unexpected file read fail"
 msgstr "Σφάλμα: απροσδόκητο αποτυχία ανάγνωσης αρχείων"
 
-#: src/backup.php:3373
+#: src/backup.php:3399
 msgid "check your log for more details."
 msgstr "ελέγξτε το αρχείο καταγραφής σας για περισσότερες λεπτομέρειες."
 
-#: src/backup.php:3371
+#: src/backup.php:3397
 msgid "your web hosting account appears to be full; please see: %s"
 msgstr "ο web hosting λογαριασμός σας μοιάζει να είναι πλήρης: παρακαλούμε δείτε: %s"
 
-#: src/backup.php:3369
+#: src/backup.php:3395
 msgid "A zip error occurred"
 msgstr "Συνέβη ένα σφάλμα κατά τη συμπίεση zip"
 
@@ -3207,11 +3244,11 @@ msgstr "Πρέπει να εισάγετε και email και κωδικό"
 msgid "To proceed, press 'Backup Now'. Then, watch the 'Last Log Message' field for activity."
 msgstr "Για να συνεχίσετε, πατήστε το πλήκτρο «Δημιουργία αντιγράφων ασφαλείας τώρα». Στη συνέχεια, παρακολουθήστε το πεδίο «Τελευταίο Μήνυμα Καταγραφής» για να δείτε την εξέλιξη."
 
-#: src/class-updraftplus.php:4317
+#: src/class-updraftplus.php:4355
 msgid "If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite."
 msgstr "Εάν θέλετε να επαναφέρετε ένα multisite αντίγραφο ασφαλείας, θα πρέπει πρώτα να ρυθμίσετε αντίστοιχα και την εγκατάσταση του WordPress σας ως multisite."
 
-#: src/class-updraftplus.php:4317
+#: src/class-updraftplus.php:4355
 msgid "Your backup is of a WordPress multisite install; but this site is not. Only the first site of the network will be accessible."
 msgstr "Το αντίγραφο ασφαλείας σας είναι από μια multisite εγκατάσταση του WordPress, αλλά αυτό το site δεν είναι. Μόνο η πρώτη σελίδα του δικτύου θα είναι προσβάσιμη."
 
@@ -3248,19 +3285,19 @@ msgstr "Δεν έχετε ακόμη συνδεθεί με το λογαριασ
 msgid "You need to connect to receive future updates to UpdraftPlus."
 msgstr "Θα πρέπει να συνδεθείτε για να λαμβάνετε τις μελλοντικές ενημερώσεις για το UpdraftPlus."
 
-#: src/class-updraftplus.php:4290
+#: src/class-updraftplus.php:4328
 msgid "Any support requests to do with %s should be raised with your web hosting company."
 msgstr "Όλες οι αιτήσεις υποστήριξης που έχουν να κάνουν με το %s πρέπει να γίνουν προς την εταιρεία web hosting σας."
 
-#: src/class-updraftplus.php:4290
+#: src/class-updraftplus.php:4328
 msgid "You should only proceed if you cannot update the current server and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the older %s version."
 msgstr "Θα πρέπει να συνεχίσετε μόνο αν δεν μπορείτε να ενημερώσετε τον τρέχοντα server και είστε βέβαιοι (ή διατεθειμένοι να διακινδυνεύσετε) ότι τα πρόσθετα/θέματα/κλπ. είναι συμβατά με την παλαιότερη %s έκδοση."
 
-#: src/class-updraftplus.php:4290
+#: src/class-updraftplus.php:4328
 msgid "This is significantly newer than the server which you are now restoring onto (version %s)."
 msgstr "Αυτός είναι πολύ νεότερος από τον server στον οποίο τώρα κάνετε αποκατάσταση (έκδοση %s)."
 
-#: src/class-updraftplus.php:4290
+#: src/class-updraftplus.php:4328
 msgid "The site in this backup was running on a webserver with version %s of %s. "
 msgstr "Η ιστοσελίδα σε αυτό το αντίγραφο ασφαλείας έτρεχε σε ένα διακομιστή με έκδοση %s of %s. "
 
@@ -3289,27 +3326,27 @@ msgstr "Twitter"
 msgid "UpdraftPlus is on social media - check us out!"
 msgstr "Το UpdraftPlus είναι στα κοινωνικά δίκτυα - δείτε μας εδώ!"
 
-#: src/admin.php:4289
+#: src/addons/wp-cli.php:857, src/admin.php:4343
 msgid "Why am I seeing this?"
 msgstr "Γιατί το βλέπω αυτό;"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:53
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:55
 msgid "The location of this directory is set in the expert settings, in the Settings tab."
 msgstr "Η θέση αυτού του καταλόγου έχει οριστεί στις ρυθμίσεις για προχωρημένους, στην καρτέλα Ρυθμίσεις."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:53
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:55
 msgid "Press here to look inside your UpdraftPlus directory (in your web hosting space) for any new backup sets that you have uploaded."
 msgstr "Πατήστε εδώ για να κοιτάξετε μέσα στον κατάλογο του UpdraftPlus σας (στο χώρο φιλοξενίας της ιστοσελίδας σας) για νέα σετ αντιγράφων ασφαλείας που έχετε ανεβάσει."
 
-#: src/admin.php:1892, src/admin.php:1904, src/includes/class-commands.php:778
+#: src/admin.php:1934, src/admin.php:1946, src/includes/class-commands.php:803
 msgid "Start backup"
 msgstr "Έναρξη λήψης αντιγράφου ασφαλείας"
 
-#: src/class-updraftplus.php:4261, src/restorer.php:1382
+#: src/class-updraftplus.php:4299, src/restorer.php:1404
 msgid "You are using the %s webserver, but do not seem to have the %s module loaded."
 msgstr "Χρησιμοποιείτε το διακομιστή %s, αλλά δεν φαίνεται να έχει φορτωθεί η μονάδα %s."
 
-#: src/admin.php:3302
+#: src/admin.php:3348
 msgid "You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory."
 msgstr "Θα πρέπει να συμβουλευτείτε τον πάροχο φιλοξενίας των ιστοσελίδων σας για να μάθετε πως να ρυθμίσετε τα δικαιώματα για ένα πρόσθετο του WordPress ώστε να έχει δικαιώματα εγγραφής και να γράψει στον κατάλογο."
 
@@ -3317,11 +3354,11 @@ msgstr "Θα πρέπει να συμβουλευτείτε τον πάροχο 
 msgid "Unless you have a problem, you can completely ignore everything here."
 msgstr "Μπορείτε να αγνοήσετε τελείως τα πάντα εδώ, εκτός αν έχετε κάποιο πρόβλημα."
 
-#: src/admin.php:2128
+#: src/admin.php:2172
 msgid "This file could not be uploaded"
 msgstr "Αυτό το αρχείο δεν μπορεί να μεταφορτωθεί"
 
-#: src/admin.php:2091
+#: src/admin.php:2135
 msgid "You will find more information about this in the Settings section."
 msgstr "Μπορείτε να βρείτε περισσότερες λεπτομέρειες γι' αυτό στις Ρυθμίσεις."
 
@@ -3337,15 +3374,15 @@ msgstr "Ήταν αυτό ένα αντίγραφο ασφαλείας που δ
 msgid "Memory limit"
 msgstr "Περιορισμός μνήμης"
 
-#: src/class-updraftplus.php:4605, src/restorer.php:1942
+#: src/class-updraftplus.php:4643, src/restorer.php:1964
 msgid "restoration"
 msgstr "αποκατάσταση"
 
-#: src/backup.php:1001
+#: src/backup.php:1027
 msgid "Incremental"
 msgstr "Βήμα - βήμα"
 
-#: src/backup.php:1001
+#: src/backup.php:1027
 msgid "Full backup"
 msgstr "Πλήρης λήψη αντιγράφου ασφαλείας"
 
@@ -3363,7 +3400,7 @@ msgstr "Η λήψη του αντιγράφου ασφαλείας έγινε ε
 
 #: src/addons/incremental.php:82, src/addons/incremental.php:83,
 #: src/addons/incremental.php:84, src/addons/incremental.php:85,
-#: src/admin.php:3449, src/admin.php:3450, src/admin.php:3451,
+#: src/admin.php:3495, src/admin.php:3496, src/admin.php:3497,
 #: src/updraftplus.php:100, src/updraftplus.php:101, src/updraftplus.php:102
 msgid "Every %s hours"
 msgstr "Κάθε %s ώρες"
@@ -3402,15 +3439,15 @@ msgstr "Εύρεση / αντικατάσταση βάσης δεδομένων"
 msgid "search term"
 msgstr "όρος αναζήτησης"
 
-#: src/restorer.php:2697
+#: src/restorer.php:2719
 msgid "Too many database errors have occurred - aborting"
 msgstr "Βρέθηκαν πολλά λάθη στη βάση δεδομένων - γίνεται ματαίωση"
 
-#: src/backup.php:1067
+#: src/backup.php:1093
 msgid "read more at %s"
 msgstr "διαβάστε περισσότερα στο %s"
 
-#: src/backup.php:1067
+#: src/backup.php:1093
 msgid "Email reports created by UpdraftPlus (free edition) bring you the latest UpdraftPlus.com news"
 msgstr "Οι αναφορές μέσω ηλεκτρονικού ταχυδρομείου που δημιουργήθηκε από το UpdraftPlus (δωρεάν έκδοση) σας κάνει γνωστές τα τελευταία νέα του UpdraftPlus.com"
 
@@ -3418,7 +3455,7 @@ msgstr "Οι αναφορές μέσω ηλεκτρονικού ταχυδρομ
 msgid "N.B. If you install UpdraftPlus on several WordPress sites, then you cannot re-use your project; you must create a new one from your Google API console for each site."
 msgstr "Σημείωση. Εάν εγκαταστήσετε το UpdraftPlus σε διάφορες ιστοσελίδες του WordPress, τότε δεν θα μπορείτε να χρησιμοποιήσετε ξανά το έργο σας αλλά θα πρέπει να δημιουργήσετε ένα νέο από την κονσόλα του Google API σας για κάθε ιστοσελίδα."
 
-#: src/admin.php:3805
+#: src/admin.php:3859
 msgid "You have not yet made any backups."
 msgstr "Δεν έχετε προβεί στη λήψη αντιγράφου ασφαλείας ακόμα."
 
@@ -3438,17 +3475,17 @@ msgstr "%s (%s χρησιμοποιημένος)"
 msgid "Free disk space in account:"
 msgstr "Ελεύθερος χώρος στο δίσκο για το λογαριασμό:"
 
-#: src/admin.php:4725, src/templates/wp-admin/settings/tab-status.php:27
+#: src/admin.php:4779, src/templates/wp-admin/settings/tab-status.php:27
 msgid "This button is disabled because your backup directory is not writable (see the settings)."
 msgstr "Αυτό το κουμπί είναι απενεργοποιημένο, επειδή ο κατάλογος για την αποθήκευση του αντιγράφου ασφαλείας σας δεν είναι εγγράψιμος (δείτε τις ρυθμίσεις)."
 
 #: src/admin.php:556, src/admin.php:702, src/admin.php:1740,
-#: src/admin.php:2495, src/includes/deprecated-actions.php:29,
+#: src/admin.php:2539, src/includes/deprecated-actions.php:29,
 #: src/templates/wp-admin/settings/downloading-and-restoring.php:21
 msgid "Existing Backups"
 msgstr "Υφιστάμενα Αρχεία Αντιγράφων Ασφαλείας"
 
-#: src/admin.php:548, src/admin.php:2494
+#: src/admin.php:548, src/admin.php:2538
 msgid "Current Status"
 msgstr "Τρέχουσα Κατάσταση"
 
@@ -3550,7 +3587,7 @@ msgstr "αδυναμία πρόσβασης στο γονικό φάκελο"
 msgid "However, subsequent access attempts failed:"
 msgstr "Ωστόσο, οι επόμενες προσπάθειες πρόσβασης απέτυχαν:"
 
-#: src/addons/wp-cli.php:394, src/admin.php:3830
+#: src/addons/wp-cli.php:403, src/admin.php:3884
 msgid "External database"
 msgstr "Εξωτερική βάση δεδομένων"
 
@@ -3582,7 +3619,7 @@ msgstr "Δεν θέλετε να κατασκοπεύουν; Το UpdraftPlus Pr
 msgid "use UpdraftPlus Premium"
 msgstr "χρησιμοποιήστε το UpdraftPlus Premium"
 
-#: src/class-updraftplus.php:4141
+#: src/class-updraftplus.php:4179
 msgid "Decryption failed. The database file is encrypted."
 msgstr "Η αποκρυπτογράφηση απέτυχε. Η βάση δεδομένων είναι κρυπτογραφημένη."
 
@@ -3590,16 +3627,16 @@ msgstr "Η αποκρυπτογράφηση απέτυχε. Η βάση δεδο
 msgid "Only the WordPress database can be restored; you will need to deal with the external database manually."
 msgstr "Μόνο η βάση δεδομένων του WordPress μπορεί να αποκατασταθεί, θα πρέπει να ασχοληθείτε με την εξωτερική βάση δεδομένων με μη αυτόματο τρόπο."
 
-#: src/restorer.php:2210, src/restorer.php:2638, src/restorer.php:2679,
-#: src/restorer.php:2692
+#: src/restorer.php:2232, src/restorer.php:2660, src/restorer.php:2701,
+#: src/restorer.php:2714
 msgid "An error occurred on the first %s command - aborting run"
 msgstr "Παρουσιάστηκε σφάλμα στην πρώτης %s εντολή - ματαίωση εκτέλεσης"
 
-#: src/addons/moredatabase.php:111, src/backup.php:1567
+#: src/addons/moredatabase.php:111, src/backup.php:1593
 msgid "Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled."
 msgstr "Η σύνδεση απέτυχε: ελέγξτε τα στοιχεία πρόσβασης σας, ότι ο database server σας είναι σε λειτουργία και δεν είναι πεσμένος, και ότι η σύνδεση δικτύου δεν προστατεύεται από κάποιο τοίχος προστασίας που μπλοκάρει την πρόσβαση."
 
-#: src/backup.php:1567
+#: src/backup.php:1593
 msgid "database connection attempt failed."
 msgstr "η απόπειρα σύνδεσης με τη βάση δεδομένων απέτυχε."
 
@@ -3637,7 +3674,8 @@ msgstr "Αφήστε αυτό το αυτό κενό, και θα τεθεί η 
 msgid "Tenant"
 msgstr "Ένοικος"
 
-#: src/admin.php:4411, src/admin.php:5160, src/methods/openstack2.php:144,
+#: src/addons/wp-cli.php:750, src/admin.php:4465, src/admin.php:5215,
+#: src/methods/openstack2.php:144,
 #: src/templates/wp-admin/settings/downloading-and-restoring.php:27,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:14
 msgid "Follow this link for more information"
@@ -3771,12 +3809,12 @@ msgid "Fetch"
 msgstr "Απόκτηση"
 
 #: src/addons/migrator.php:489,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:70,
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:72,
 #: src/templates/wp-admin/settings/form-contents.php:182
 msgid "This feature requires %s version %s or later"
 msgstr "Αυτή η λειτουργία απαιτεί την έκδοση %s %s ή νεότερη "
 
-#: src/restorer.php:469
+#: src/restorer.php:491
 msgid "Failed to unpack the archive"
 msgstr "Αποτυχία αποσυμπίεσης του αρχείου"
 
@@ -3784,7 +3822,7 @@ msgstr "Αποτυχία αποσυμπίεσης του αρχείου"
 msgid "Error - failed to download the file"
 msgstr "Σφάλμα - αδυναμία μεταφόρτωσης του αρχείου"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:53
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:55
 msgid "Rescan local folder for new backup sets"
 msgstr "Επανάληψη σάρωσης του τοπικού φακέλου για εύρεση νέων σετ αντιγράφων ασφαλείας"
 
@@ -3804,8 +3842,8 @@ msgstr "Η εγκατεστημένη έκδοση του UpdraftPlus Backup/Res
 msgid "password/key"
 msgstr "κωδικός/κλειδί"
 
-#: src/addons/migrator.php:2520, src/addons/sftp.php:462, src/admin.php:750,
-#: src/admin.php:5014
+#: src/addons/migrator.php:1749, src/addons/sftp.php:462, src/admin.php:750,
+#: src/admin.php:5068
 msgid "Key"
 msgstr "Κλειδί"
 
@@ -3821,36 +3859,36 @@ msgstr "Το κλειδί που δώσατε δεν ήταν σε έγκυρη 
 msgid "SCP/SFTP password/key"
 msgstr "κωδικός/κλειδί SCP/SFTP"
 
-#: src/addons/wp-cli.php:406, src/admin.php:3874
+#: src/addons/wp-cli.php:415, src/admin.php:3928
 msgid "Files backup (created by %s)"
 msgstr "Αντίγραφο ασφαλείας αρχείων (δημιουργήθηκε από %s) "
 
-#: src/addons/wp-cli.php:406, src/admin.php:3874
+#: src/addons/wp-cli.php:415, src/admin.php:3928
 msgid "Files and database WordPress backup (created by %s)"
 msgstr "Αντίγραφο ασφαλείας αρχείων και βάσης δεδομένων του WordPress (δημιουργήθηκε από %s)"
 
-#: src/addons/importer.php:276, src/admin.php:3868,
-#: src/includes/class-backup-history.php:349
+#: src/addons/importer.php:276, src/admin.php:3922,
+#: src/includes/class-backup-history.php:368
 msgid "Backup created by: %s."
 msgstr "Το αντίγραφο ασφαλείας δημιουργήθηκε από: %s."
 
-#: src/addons/wp-cli.php:388, src/admin.php:3828
+#: src/addons/wp-cli.php:397, src/admin.php:3882
 msgid "Database (created by %s)"
 msgstr "Βάσης δεδομένων (δημιουργήθηκε από %s) "
 
-#: src/addons/wp-cli.php:386, src/admin.php:3822, src/admin.php:3870
+#: src/addons/wp-cli.php:395, src/admin.php:3876, src/admin.php:3924
 msgid "unknown source"
 msgstr "άγνωστη πηγή"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:54
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:56
 msgid "Rescan remote storage"
 msgstr "Επανασάρωση της απομακρυσμένης θέσης αποθήκευσης"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:49
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:51
 msgid "Upload backup files"
 msgstr "Ανέβασμα αρχείων αντιγράφου ασφαλείας"
 
-#: src/admin.php:2143
+#: src/admin.php:2187
 msgid "This backup was created by %s, and can be imported."
 msgstr "Αυτό το αντίγραφο ασφαλείας δημιουργήθηκε από %s, και μπορεί να εισαχθεί."
 
@@ -3862,7 +3900,7 @@ msgstr "Διαβάστε αυτή τη σελίδα για δείτε έναν �
 msgid "WordPress has a number (%d) of scheduled tasks which are overdue. Unless this is a development site, this probably means that the scheduler in your WordPress install is not working."
 msgstr "Το WordPress έχει έναν αριθμό (%d) των προγραμματισμένων εργασιών που έχουν καθυστερήσει.  Αυτό σημαίνει κατά πάσα πιθανότητα ότι το χρονοδιάγραμμα στην εγκατάσταση σας του WordPress δεν λειτουργεί, εκτός κι αν αυτή είναι μια σελίδα εξέλιξης "
 
-#: src/admin.php:714, src/includes/class-backup-history.php:356
+#: src/admin.php:714, src/includes/class-backup-history.php:375
 msgid "If this is a backup created by a different backup plugin, then UpdraftPlus Premium may be able to help you."
 msgstr "Εάν αυτό είναι ένα αντίγραφο ασφαλείας που δημιουργήθηκε από ένα διαφορετικό πρόσθετο λήψης αντιγράφων ασφαλείας, τότε το UpdraftPlus Premium μπορεί να είναι σε θέση να σας βοηθήσει."
 
@@ -3871,20 +3909,20 @@ msgid "However, UpdraftPlus archives are standard zip/SQL files - so if you are 
 msgstr "Ωστόσο, τα αρχεία του UpdraftPlus είναι σύμφωνα με το πρότυπο αρχείων zip/SQL - οπότε αν είστε βέβαιοι ότι το αρχείο σας έχει τη σωστή μορφή, τότε μπορείτε να το μετονομάσετε για να ταιριάζει με αυτό το μοτίβο."
 
 #: src/admin.php:713, src/admin.php:714,
-#: src/includes/class-backup-history.php:356
+#: src/includes/class-backup-history.php:375
 msgid "This file does not appear to be an UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
 msgstr "Αυτό το αρχείο δε μοιάζει να είναι ένα αρχείο αντιγράφων ασφαλείας του UpdraftPlus (τέτοια είναι τα .zip or .gz αρχεία που μπορεί να έχουν ένα όνομα του τύπου: backup_(time)_(site name)_(code)_(type).(zip|gz))."
 
-#: src/admin.php:3871, src/includes/class-wpadmin-commands.php:162,
-#: src/restorer.php:1911
+#: src/admin.php:3925, src/includes/class-wpadmin-commands.php:162,
+#: src/restorer.php:1933
 msgid "Backup created by unknown source (%s) - cannot be restored."
 msgstr "Το αντίγραφο ασφαλείας δημιουργήθηκε από άγνωστη πηγή (%s) - δεν μπορεί να αποκατασταθεί."
 
-#: src/restorer.php:1195, src/restorer.php:1243
+#: src/restorer.php:1217, src/restorer.php:1265
 msgid "The WordPress content folder (wp-content) was not found in this zip file."
 msgstr "Ο φάκελος περιεχομένων του WordPress (wp-content) δε βρέθηκε σ' αυτό το αρχείο zip."
 
-#: src/restorer.php:1051
+#: src/restorer.php:1073
 msgid "This version of UpdraftPlus does not know how to handle this type of foreign backup"
 msgstr "Αυτή η έκδοση του UpdraftPlus δεν μπορεί να διαχειριστεί αυτό το είδος των ξένων αντιγράφων ασφαλείας"
 
@@ -3901,7 +3939,7 @@ msgstr "Η μονάδα του UpdraftPlus γι' αυτή τη μέθοδο πρ
 msgid "No settings were found"
 msgstr "Δε βρέθηκαν ρυθμίσεις"
 
-#: src/includes/class-backup-history.php:524
+#: src/includes/class-backup-history.php:543
 msgid "One or more backups has been added from scanning remote storage; note that these backups will not be automatically deleted through the \"retain\" settings; if/when you wish to delete them then you must do so manually."
 msgstr "Ένα ή περισσότερα αντίγραφα ασφαλείας έχουν προστεθεί από τη σάρωση του σημείου απομακρυσμένης αποθήκευσης. Σημειώστε ότι αυτά τα αντίγραφα ασφαλείας δεν θα  διαγράφονται αυτόματα μέσω των ρυθμίσεων \"διατήρησης\". Αν ή όταν θέλετε να τα διαγράψετε θα πρέπει να το κάνετε χειροκίνητα."
 
@@ -3935,16 +3973,16 @@ msgstr "Άλλες %s ερωτήσεις."
 msgid "Check this to receive more information and emails on the backup process - useful if something is going wrong."
 msgstr "Επιλέξτε αυτό για να λαμβάνετε περισσότερες πληροφορίες και μηνύματα ηλεκτρονικού ταχυδρομείου σχετικά με τη διαδικασία δημιουργίας αντιγράφων ασφαλείας - είναι χρήσιμο αν κάτι πάει στραβά."
 
-#: src/addons/morefiles.php:468, src/admin.php:3553
+#: src/addons/morefiles.php:468, src/admin.php:3599
 msgid "If entering multiple files/directories, then separate them with commas. For entities at the top level, you can use a * at the start or end of the entry as a wildcard."
 msgstr "Εάν εισαγάγετε πολλαπλά αρχεία/καταλόγους, στη συνέχεια χωρίστε τα με κόμμα. Για τις οντότητες σε ανώτερο επίπεδο, μπορείτε να χρησιμοποιήσετε ένα * στην αρχή ή στο τέλος της καταχώρησης ως μπαλαντέρ."
 
-#: src/class-updraftplus.php:4605, src/methods/ftp.php:330,
-#: src/restorer.php:1942
+#: src/class-updraftplus.php:4643, src/methods/ftp.php:330,
+#: src/restorer.php:1964
 msgid "Your hosting company must enable these functions before %s can work."
 msgstr "Η εταιρεία που φιλοξενεί την ιστοσελίδα σας πρέπει να ενεργοποιήσει αυτές τις λειτουργίες πριν το %s να μπορεί να λειτουργήσει."
 
-#: src/class-updraftplus.php:4605, src/methods/ftp.php:330
+#: src/class-updraftplus.php:4643, src/methods/ftp.php:330
 msgid "Your web server's PHP installation has these functions disabled: %s."
 msgstr "Η εγκατάσταση της PHP στον web server σας έχει απενεργοποιημένες αυτές τις λειτουργίες: %s."
 
@@ -3960,7 +3998,7 @@ msgstr "κρυπτογραφημένo FTP (σιωπηρή κρυπτογράφη
 msgid "regular non-encrypted FTP"
 msgstr "απλό μη κρυπτογραφημένο FTP"
 
-#: src/restorer.php:2118
+#: src/restorer.php:2140
 msgid "Backup created by:"
 msgstr "Το αντίγραφο ασφαλείας δημιουργήθηκε από:"
 
@@ -4014,15 +4052,15 @@ msgstr "Η επί πληρωμή πρόσβασή σας στις ενημερώ
 msgid "Dismiss from main dashboard (for %s weeks)"
 msgstr "Απόκρυψη μηνύματος από την κεντρική σελίδα διαχείρισης (για %s εβδομάδες)"
 
-#: src/class-updraftplus.php:4655
+#: src/class-updraftplus.php:4693
 msgid "The attempt to undo the double-compression succeeded."
 msgstr "Η προσπάθεια αναίρεσης της διπλής συμπίεσης έγινε επιτυχώς."
 
-#: src/class-updraftplus.php:4632, src/class-updraftplus.php:4653
+#: src/class-updraftplus.php:4670, src/class-updraftplus.php:4691
 msgid "The attempt to undo the double-compression failed."
 msgstr "Η προσπάθεια αναίρεσης της διπλής συμπίεσης απέτυχε."
 
-#: src/class-updraftplus.php:4625
+#: src/class-updraftplus.php:4663
 msgid "The database file appears to have been compressed twice - probably the website you downloaded it from had a mis-configured webserver."
 msgstr "Το αρχείο της βάσης δεδομένων φαίνεται πως έχει συμπιεσθεί δύο φορές - κατά πάσα πιθανότητα η ιστοσελίδα από την οποία το μεταφορτώσατε είχε λανθασμένες ρυθμίσεις στον webserver της."
 
@@ -4030,15 +4068,15 @@ msgstr "Το αρχείο της βάσης δεδομένων φαίνεται 
 msgid "Constants"
 msgstr "Σταθερές"
 
-#: src/backup.php:1804
+#: src/backup.php:1830
 msgid "Failed to open database file for reading:"
 msgstr "Αδυναμία ανοίγματος της βάσης δεδομένων για ανάγνωση:"
 
-#: src/backup.php:1615
+#: src/backup.php:1641
 msgid "No database tables found"
 msgstr "Δεν βρέθηκαν πίνακες στη βάση δεδομένων"
 
-#: src/backup.php:1613
+#: src/backup.php:1639
 msgid "please wait for the rescheduled attempt"
 msgstr "παρακαλούμε περιμένετε για την επαναπρογραμματισμένη προσπάθεια"
 
@@ -4055,7 +4093,7 @@ msgstr "Λογαριασμός πλήρης: ο λογαριασμός %s έχε
 msgid "Errors occurred:"
 msgstr "Προέκυψαν σφάλματα:"
 
-#: src/admin.php:4331
+#: src/addons/wp-cli.php:623, src/admin.php:4385
 msgid "Follow this link to download the log file for this restoration (needed for any support requests)."
 msgstr "Ακολουθήστε αυτό το σύνδεσμο για να κατεβάσετε το αρχείο καταγραφής για αυτή την αποκατάσταση (απαιτείται για τυχόν αιτήματα υποστήριξης)."
 
@@ -4075,7 +4113,7 @@ msgstr "Ανάκτηση (αν χρειάζεται) και προετοιμασ
 msgid "The PHP setup on this webserver allows only %s seconds for PHP to run, and does not allow this limit to be raised. If you have a lot of data to import, and if the restore operation times out, then you will need to ask your web hosting company for ways to raise this limit (or attempt the restoration piece-by-piece)."
 msgstr "Η εγκατάσταση PHP σε αυτό το διακομιστή επιτρέπει μόνο %s δευτερόλεπτα για να τρέξει η PHP, και δεν επιτρέπει το όριο αυτό να αυξηθεί. Εάν έχετε πολλά δεδομένα για να εισάγετε, κι αν η λειτουργία αποκατάστασης τερματιστεί, τότε θα πρέπει να ζητήσει από την εταιρία του web hosting σας με κάποιο τρόπο να αυξήσουν το όριο αυτό (ή να επιχειρήσετε την αποκατάσταση κομμάτι-κομμάτι)."
 
-#: src/restorer.php:1044
+#: src/restorer.php:1066
 msgid "Existing unremoved folders from a previous restore exist (please use the \"Delete Old Directories\" button to delete them before trying again): %s"
 msgstr "Υπάρχουν μη διαγραμμένοι κατάλογοι από μια προηγούμενη επαναφορά εδώ (παρακαλούμε χρησιμοποιήστε το κουμπί \"Διαγραφή Παλαιών Καταλογών\" για να τους διαγράψετε πριν προσπαθήσετε ξανά): %s"
 
@@ -4096,11 +4134,11 @@ msgstr "Η διασύνδεση του %s έληξε λόγω time out. Αν έ�
 msgid "Messages:"
 msgstr "Μηνύματα:"
 
-#: src/restorer.php:2532
+#: src/restorer.php:2554
 msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
 msgstr "Βρέθηκε μια γραμμή SQL που είναι μεγαλύτερη από το μέγιστο μέγεθος πακέτου και δεν μπορεί να κατατμηθεί. η γραμμή αυτή δεν θα υποβληθεί σε επεξεργασία, αλλά θα αφεθεί ως έχει: %s"
 
-#: src/restorer.php:791
+#: src/restorer.php:813
 msgid "The directory does not exist"
 msgstr "Ο φάκελος δεν υπάρχει"
 
@@ -4253,7 +4291,7 @@ msgstr "Λογαριασμοί που δημιουργούνται στο racksp
 msgid "Authorisation failed (check your credentials)"
 msgstr "Η ταυτοποίηση απέτυχε (ελέγξτε τα διαπιστευτήριά σας)"
 
-#: src/includes/class-commands.php:741, src/methods/updraftvault.php:630,
+#: src/includes/class-commands.php:766, src/methods/updraftvault.php:630,
 #: src/udaddons/options.php:232
 msgid "An unknown error occurred when trying to connect to UpdraftPlus.Com"
 msgstr "Προέκυψε ένα άγνωστο σφάλμα κατά τη διάρκεια σύνδεσης με το UpdraftPlus.Com"
@@ -4270,39 +4308,39 @@ msgstr "Προσπάθεια..."
 msgid "The new user's RackSpace console password is (this will not be shown again):"
 msgstr "Ο νέος κωδικός χρήστη για την κονσόλα του Rackspace είναι (αυτό δεν θα εμφανιστεί ποτέ ξανά):"
 
-#: src/admin.php:699, src/admin.php:4409
+#: src/addons/wp-cli.php:747, src/admin.php:699, src/admin.php:4463
 msgid "Error data:"
 msgstr "Σφάλμα δεδομένων:"
 
-#: src/admin.php:4312
+#: src/admin.php:4366
 msgid "Backup does not exist in the backup history"
 msgstr "Δεν υπάρχει αντίγραφο ασφαλείας στο ιστορικό λήψης αντιγράφων ασφαλαείας"
 
-#: src/admin.php:2909
+#: src/admin.php:2955
 msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old). You should press this button to delete them as soon as you have verified that the restoration worked."
 msgstr "Η εγκατάσταση σας του WordPress έχει παλιούς καταλόγους από την κατάσταση πριν να γίνει  αποκατάσταση/μετανάστευση (τεχνικές πληροφορίες: αυτά επισημαίνονται με το πρόθεμα -old). Θα πρέπει να πατήσετε αυτό το κουμπί για να τα διαγράψετε μόλις διαπιστώσετε ότι η αποκατάσταση έγινε με επιτυχία."
 
-#: src/restorer.php:2185
+#: src/restorer.php:2207
 msgid "Split line to avoid exceeding maximum packet size"
 msgstr "Διαιρέστε τη γραμμή για την αποφυγή της υπέρβασης του μεγίστου μεγέθους πακέτου"
 
-#: src/restorer.php:2065
+#: src/restorer.php:2087
 msgid "Your database user does not have permission to drop tables. We will attempt to restore by simply emptying the tables; this should work as long as you are restoring from a WordPress version with the same database structure (%s)"
 msgstr "Ο χρήστης της βάσης δεδομένων σας δεν έχει άδεια να διαγράψει τους πίνακες. Εμείς θα προσπαθήσουμε να κάνουμε την αποκατάσταση απλώς αδειάζοντας τους πίνακες. Αυτό θα πρέπει να δουλέψει σωστά αν κάνετε αποκατάσταση από μια έκδοση WordPress με την ίδια δομή της βάσης δεδομένων (%s)"
 
-#: src/restorer.php:466
+#: src/restorer.php:488
 msgid "Could not move the files into place. Check your file permissions."
 msgstr "Αδυναμία μετακίνησης των αρχείων στη θέση τους. Ελέγξτε τα δικαιώματα των αρχείων σας."
 
-#: src/restorer.php:465
+#: src/restorer.php:487
 msgid "Could not move new files into place. Check your wp-content/upgrade folder."
 msgstr "Αδυναμία μετακίνησης των αρχείων στη θέση τους. Ελέγξτε τα δικαιώματα του φακέλου wp-content/upgrade. "
 
-#: src/restorer.php:463
+#: src/restorer.php:485
 msgid "Could not move old files out of the way."
 msgstr "Αδυναμία διαγραφής των παλιών δεδομένων."
 
-#: src/restorer.php:459
+#: src/restorer.php:481
 msgid "Moving old data out of the way..."
 msgstr "Διαγραφή των παλιών δεδομένων..."
 
@@ -4334,7 +4372,7 @@ msgstr "Χρησιμοποιήστε την ενότητα \"Αναφορές\" 
 msgid "Debugging information"
 msgstr "Πληροφορίες αποσφαλμάτωσης"
 
-#: src/addons/reporting.php:222, src/admin.php:3761
+#: src/addons/reporting.php:222, src/admin.php:3817
 msgid "Uploaded to:"
 msgstr "Μεταφορτώθηκε στο:"
 
@@ -4407,7 +4445,7 @@ msgstr "Για περισσότερες επιλογές, χρησιμοποιή
 msgid "Your site's admin email address (%s) will be used."
 msgstr "Θα χρησιμοποιηθεί η διεύθυνση email του διαχειριστή της σελίδας (%s)."
 
-#: src/admin.php:737, src/admin.php:2684, src/methods/updraftvault.php:319,
+#: src/admin.php:737, src/admin.php:2728, src/methods/updraftvault.php:319,
 #: src/methods/updraftvault.php:362
 msgid "Connect"
 msgstr "Σύνδεση"
@@ -4416,7 +4454,7 @@ msgstr "Σύνδεση"
 msgid "For more reporting features, use the Reporting add-on."
 msgstr "Για περισσότερες δυνατότητες αναφοράς, χρησιμοποιήστε το πρόσθετο Reporting."
 
-#: src/class-updraftplus.php:4222
+#: src/class-updraftplus.php:4260
 msgid "(version: %s)"
 msgstr "(έκδοση: %s)"
 
@@ -4428,43 +4466,43 @@ msgstr "Θα πρέπει να γνωρίζετε ότι οι διακομιστ
 msgid "When the Email storage method is enabled, also send the backup"
 msgstr "Όταν είναι ενεργοποιημένη η μέθοδος αποθήκευσης ηλεκτρονικού ταχυδρομείου, αποστέλλετε επίσης το αντίγραφο ασφαλείας"
 
-#: src/addons/reporting.php:181, src/backup.php:1102
+#: src/addons/reporting.php:181, src/backup.php:1128
 msgid "Latest status:"
 msgstr "Τελευταία κατάσταση:"
 
-#: src/backup.php:1101
+#: src/backup.php:1127
 msgid "Backup contains:"
 msgstr "Το αντίγραφο ασφαλείας περιέχει:"
 
-#: src/backup.php:1058
+#: src/backup.php:1084
 msgid "Backed up: %s"
 msgstr "Ποσοστό λήψης αντιγράφου ασφαλείας: %s"
 
-#: src/addons/reporting.php:264, src/backup.php:1052
+#: src/addons/reporting.php:264, src/backup.php:1078
 msgid "The log file has been attached to this email."
 msgstr "Το αρχείο καταγραφής έχει επισυναφθεί στο email."
 
-#: src/backup.php:1016
+#: src/backup.php:1042
 msgid "Unknown/unexpected error - please raise a support request"
 msgstr "Άγνωστο/απρόσμενο λάθος - παρακαλούμε ζητήστε βοήθεια από την υποστήριξη"
 
-#: src/backup.php:1013
+#: src/backup.php:1039
 msgid "Database only (files were not part of this particular schedule)"
 msgstr "Βάση δεδομένων (για τα αρχεία δεν είχε προγραμματιστεί για να συμπεριληφθούν στο αντίγραφο ασφαλείας) "
 
-#: src/backup.php:1013
+#: src/backup.php:1039
 msgid "Database (files backup has not completed)"
 msgstr "Βάση δεδομένων (η λήψη αντιγράφου ασφαλείας για τα αρχεία δεν έχει ολοκληρωθεί)"
 
-#: src/backup.php:1010
+#: src/backup.php:1036
 msgid "Files only (database was not part of this particular schedule)"
 msgstr "Αρχεία μόνο (η βάση δεδομένων δεν είχε προγραμματιστεί για να συμπεριληφθεί στο αντίγραφο ασφαλείας)"
 
-#: src/backup.php:1010
+#: src/backup.php:1036
 msgid "Files (database backup has not completed)"
 msgstr "Αρχεία (η λήψη αντιγράφου ασφαλείας για τη βάση δεδομένων δεν έχει ολοκληρωθεί)"
 
-#: src/admin.php:315, src/backup.php:1008
+#: src/admin.php:315, src/backup.php:1034
 msgid "Files and database"
 msgstr "Αρχεία και βάση δεδομένων"
 
@@ -4557,7 +4595,7 @@ msgstr "Αποτυχία σύνδεσης με το UpdraftPlus.Com"
 msgid "Reporting"
 msgstr "Υποβολή έκθεσης"
 
-#: src/admin.php:5011
+#: src/admin.php:5065
 msgid "Options (raw)"
 msgstr "Επιλογές (χωρίς επεξεργασία)"
 
@@ -4565,11 +4603,11 @@ msgstr "Επιλογές (χωρίς επεξεργασία)"
 msgid "Send a report only when there are warnings/errors"
 msgstr "Αποστολή αναφοράς μόνο όταν υπάρχουν προειδοποιήσεις/λάθη"
 
-#: src/restorer.php:2129
+#: src/restorer.php:2151
 msgid "Content URL:"
 msgstr "URL περιεχομένου:"
 
-#: src/restorer.php:463
+#: src/restorer.php:485
 msgid "You should check the file ownerships and permissions in your WordPress installation"
 msgstr "Θα πρέπει να ελέγξετε την ιδιοκτησία αρχείων και τα δικαιώματα στην εγκατάσταση της WordPress"
 
@@ -4577,7 +4615,7 @@ msgstr "Θα πρέπει να ελέγξετε την ιδιοκτησία αρ
 msgid "See also the \"More Files\" add-on from our shop."
 msgstr "Δείτε επίσης το πρόσθετο \"More Files\" στο κατάστημά μας."
 
-#: src/backup.php:3360, src/class-updraftplus.php:941
+#: src/backup.php:3386, src/class-updraftplus.php:941
 msgid "Your free space in your hosting account is very low - only %s Mb remain"
 msgstr "Ο ελεύθερος χώρος στο λογαριασμό σας είναι πολύ λίγος - μόνο %s Mb απομένουν"
 
@@ -4657,19 +4695,19 @@ msgstr "Εάν έχετε αγοράσει νέα πρόσθετα, ακολου
 msgid "You are presently <strong>connected</strong> to an UpdraftPlus.Com account."
 msgstr "Είστε προς το παρόν <strong>συνδεδεμένος</strong> με έναν λογαριασμό στο UpdraftPlus.Com."
 
-#: src/admin.php:2682
+#: src/admin.php:2726
 msgid "Interested in knowing about your UpdraftPlus.Com password security? Read about it here."
 msgstr "Ενδιαφέρεστε να μάθετε για την ασφάλεια του κωδικού σας στο UpdraftPlus.Com; Διαβάστε σχετικά εδώ."
 
-#: src/admin.php:2749
+#: src/admin.php:2793
 msgid "Forgotten your details?"
 msgstr "Ξεχάσατε τις λεπτομέρειές σας;"
 
-#: src/admin.php:2739
+#: src/admin.php:2783
 msgid "Not yet got an account (it's free)? Go get one!"
 msgstr "Δεν έχετε ακόμα λογαριασμό (είναι δωρεάν); Δημιουργήστε έναν!"
 
-#: src/admin.php:2728
+#: src/admin.php:2772
 msgid "Connect with your UpdraftPlus.Com account"
 msgstr "Συνδεθείτε με τον UpdraftPlus.Com λογαριασμό σας"
 
@@ -4715,7 +4753,7 @@ msgstr "Ο εξυπηρετητής σας δεν έχει εγκατεστημ�
 msgid "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
 msgstr "<strong> (Φαίνεται να έχετε ήδη πιστοποιηθεί,</strong> αν και μπορείτε να πιστοποιηθείτε και πάλι για να ανανεώσετε την πρόσβασή σας, αν αντιμετωπίσατε κάποιο πρόβλημα)."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:76
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:78
 msgid "Drop backup files here"
 msgstr "Αφήστε τα αρχεία αντιγράφων ασφαλείας εδώ"
 
@@ -4727,11 +4765,11 @@ msgstr "Ο εξυπηρετητής επέστρεψε έναν κωδικό σ�
 msgid "The restore operation has begun. Do not press stop or close your browser until it reports itself as having finished."
 msgstr "Η διαδικασία επαναφοράς έχει αρχίσει. Μην πατήσετε το κουμπί διακοπής ή κλείσετε το φυλλομετρητή σας μέχρι να δείτε την αναφορά ολοκλήρωσης της διαδικασίας."
 
-#: src/addons/wp-cli.php:95, src/admin.php:682
+#: src/addons/wp-cli.php:103, src/admin.php:682
 msgid "If you exclude both the database and the files, then you have excluded everything!"
 msgstr "Εάν εξαιρέσετε τόσο την βάση δεδομένων και τα αρχεία, τότε έχετε εξαιρέσει τα πάντα!"
 
-#: src/restorer.php:2123
+#: src/restorer.php:2145
 msgid "Site home:"
 msgstr "Αρχική σελίδα:"
 
@@ -4756,11 +4794,11 @@ msgstr "Το ανέβασμα των αρχείων απέτυχε"
 msgid "You can send a backup to more than one destination with an add-on."
 msgstr "Μπορείτε να αποθηκεύσετε το αντίγραφο ασφαλείας σε περισσότερα από ένα σημεία με ένα πρόσθετο."
 
-#: src/admin.php:3132
+#: src/admin.php:3178
 msgid "Note: the progress bar below is based on stages, NOT time. Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal."
 msgstr "Σημείωση: η γραμμή προόδου πιο κάτω βασίζεται σε στάδια, ΟΧΙ στο χρόνο. Μην σταματήσετε τη δημιουργία αντιγράφου ασφαλείας μόνο και μόνο επειδή φαίνεται να έχει παραμείνει στην ίδια θέση για λίγο - αυτό είναι φυσιολογικό."
 
-#: src/admin.php:3031
+#: src/admin.php:3077
 msgid "(%s%%, file %s of %s)"
 msgstr "(%s%%, αρχείο %s από %s)"
 
@@ -4801,11 +4839,11 @@ msgstr "Η δημιουργία αντιγράφων ασφαλείας είνα
 msgid "%s settings test result:"
 msgstr "αποτέλεσμα δοκιμής για τις ρυθμίσεις %s:"
 
-#: src/admin.php:3936, src/admin.php:3938
+#: src/admin.php:3990, src/admin.php:3992
 msgid "(Not finished)"
 msgstr "(Δεν έχει ολοκληρωθεί)"
 
-#: src/admin.php:3938
+#: src/admin.php:3992
 msgid "If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes."
 msgstr "Αν βλέπετε περισσότερα αντίγραφα ασφαλείας από ό,τι θα περιμένατε, είναι πιθανώς επειδή η διαγραφή των παλαιών αντιγράφων ασφαλείας δεν έχει συμβεί έως ότου ολοκληρωθεί η διαδικασία λήψης του νέου αντιγράφου ασφαλείας."
 
@@ -4817,73 +4855,73 @@ msgstr "<b> Μην </b> το τοποθετείτε μέσα στο φάκελο
 msgid "This is where UpdraftPlus will write the zip files it creates initially.  This directory must be writable by your web server. It is relative to your content directory (which by default is called wp-content)."
 msgstr "Αυτό είναι το σημείο όπου το UpdraftPlus θα αποθηκεύσει τα αρχεία zip που δημιουργεί αρχικά. Αυτός ο κατάλογος πρέπει να είναι εγγράψιμος από τον εξυπηρετητή σας. Έχει άμεση σχέση με τον κατάλογο του περιεχομένου σας (ο οποίος από προεπιλογή ονομάζεται wp-content)."
 
-#: src/admin.php:3127
+#: src/admin.php:3173
 msgid "Job ID: %s"
 msgstr "Ταυτότητα εργασίας: %s"
 
-#: src/admin.php:3112
+#: src/admin.php:3158
 msgid "last activity: %ss ago"
 msgstr "τελευταία δραστηριότητα πριν: %ss"
 
-#: src/admin.php:3111
+#: src/admin.php:3157
 msgid "next resumption: %d (after %ss)"
 msgstr "επόμενη επανάληψη:%d (μετά από %ss)"
 
-#: src/admin.php:3094, src/central/bootstrap.php:443,
+#: src/admin.php:3140, src/central/bootstrap.php:443,
 #: src/central/bootstrap.php:450, src/methods/updraftvault.php:410,
 #: src/methods/updraftvault.php:444, src/methods/updraftvault.php:529
 msgid "Unknown"
 msgstr "Άγνωστο"
 
-#: src/admin.php:3045
+#: src/admin.php:3091
 msgid "Backup finished"
 msgstr "Η λήψη αντιγράφων ασφαλείας ολοκληρώθηκε"
 
-#: src/admin.php:3040
+#: src/admin.php:3086
 msgid "Waiting until scheduled time to retry because of errors"
 msgstr "Αναμονή λόγω σφαλμάτων μέχρι την προγραμματισμένη ώρα της επανέναρξης "
 
-#: src/admin.php:3036
+#: src/admin.php:3082
 msgid "Pruning old backup sets"
 msgstr "Διαγραφή παλαιών αντιγράφων ασφαλείας"
 
-#: src/admin.php:3024
+#: src/admin.php:3070
 msgid "Uploading files to remote storage"
 msgstr "Μεταφορά αρχείων στο απομακρυσμένο σημείο αποθήκευσης"
 
-#: src/admin.php:3092
+#: src/admin.php:3138
 msgid "Encrypted database"
 msgstr "Κρυπτογραφήθηκε η βάση δεδομένων"
 
-#: src/admin.php:3084
+#: src/admin.php:3130
 msgid "Encrypting database"
 msgstr "Κρυπτογράφηση βάσης δεδομένων"
 
-#: src/admin.php:3058
+#: src/admin.php:3104
 msgid "Created database backup"
 msgstr "Δημιουργήθηκε το αντίγραφο ασφαλείας της βάσης δεδομένων"
 
-#: src/admin.php:3071
+#: src/admin.php:3117
 msgid "table: %s"
 msgstr "πίνακας: %s"
 
-#: src/admin.php:3069
+#: src/admin.php:3115
 msgid "Creating database backup"
 msgstr "Δημιουργία αρχείων ασφαλείας της βάσης δεδομένων"
 
-#: src/admin.php:3019
+#: src/admin.php:3065
 msgid "Created file backup zips"
 msgstr "Δημιουργήθηκαν τα συμπιεσμένα αντίγραφα ασφαλείας αρχείων "
 
-#: src/admin.php:3006
+#: src/admin.php:3052
 msgid "Creating file backup zips"
 msgstr "Δημιουργία συμπιεσμένων αντιγράφων ασφαλείας αρχείων "
 
-#: src/admin.php:3001
+#: src/admin.php:3047
 msgid "Backup begun"
 msgstr "Η δημιουργία αρχείων ασφαλείας ξεκίνησε"
 
-#: src/admin.php:2834
+#: src/admin.php:2880
 msgid "Backups in progress:"
 msgstr "Η δημιουργία αρχείων ασφαλείας βρίσκεται σε εξέλιξη:"
 
@@ -4891,23 +4929,23 @@ msgstr "Η δημιουργία αρχείων ασφαλείας βρίσκετ
 msgid "The scheduler is disabled in your WordPress install, via the DISABLE_WP_CRON setting. No backups can run (even &quot;Backup Now&quot;) unless either you have set up a facility to call the scheduler manually, or until it is enabled."
 msgstr "Ο προγραμματιστής είναι απενεργοποιημένος στην εγκατάσταση του WordPress, μέσω της ρύθμισης DISABLE_WP_CRON. Δεν μπορεί να εκτελεστεί καμία διαδικασία εκτέλεσης δημιουργίας αντιγράφων ασφαλείας (even &quot;Backup Now&quot;) εκτός εάν είτε έχετε εγκαταστήσει μια λειτουργία για να λάβετε αντίγραφο ασφαλείας χειροκίνητα, ή μέχρι να ενεργοποιηθεί."
 
-#: src/restorer.php:1029
+#: src/restorer.php:1051
 msgid "file"
 msgstr "αρχείο"
 
-#: src/restorer.php:1021
+#: src/restorer.php:1043
 msgid "folder"
 msgstr "κατάλογος"
 
-#: src/restorer.php:1021, src/restorer.php:1029
+#: src/restorer.php:1043, src/restorer.php:1051
 msgid "UpdraftPlus needed to create a %s in your content directory, but failed - please check your file permissions and enable the access (%s)"
 msgstr "Το UpdraftPlus χρειάζεται να δημιουργήσει ένα %s στον κατάλογο περιεχομένων σας, αλλά απέτυχε - παρακαλώ ελέγξτε τα δικαιώματα αρχείων σας και επιτρέψτε την πρόσβαση (%s)"
 
-#: src/class-updraftplus.php:2976
+#: src/class-updraftplus.php:2983
 msgid "The backup has not finished; a resumption is scheduled"
 msgstr "Η δημιουργία αντιγράφων ασφαλείας δεν έχει τελειώσει, έχει προγραμματιστεί επανάληψη της διαδικασίας"
 
-#: src/class-updraftplus.php:2087
+#: src/class-updraftplus.php:2092
 msgid "Your website is visited infrequently and UpdraftPlus is not getting the resources it hoped for; please read this page:"
 msgstr "Η ιστοσελίδα σας δεν έχει μεγάλη επισκεψιμότητα και το UpdraftPlus δεν μπορεί να πάρει τους πόρους που έλπιζε, παρακαλούμε διαβάστε αυτή τη σελίδα:"
 
@@ -4916,7 +4954,7 @@ msgstr "Η ιστοσελίδα σας δεν έχει μεγάλη επισκε
 msgid "The %s authentication could not go ahead, because something else on your site is breaking it. Try disabling your other plugins and switching to a default theme. (Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins. Turning off any debugging settings may also help)."
 msgstr "Η αυθεντικοποίηση του%s δεν μπορεί να προχωρήσει, γιατί κάτι άλλο στην ιστοσελίδας σας δημιουργεί πρόβλημα. Δοκιμάστε να απενεργοποιήσετε άλλα πρόσθετα που έχετε εγκατεστημένα κι ενεργοποιήστε ένα προεπιλεγμένο θέμα. (Συγκεκριμένα, ψάχνετε για το στοιχείο που στέλνει (πιθανότατα προειδοποιήσεις/σφάλματα της PHP) πριν αρχίσει η σελίδα. Απενεργοποίηση των ρυθμίσεων εντοπισμού σφαλμάτων μπορεί επίσης να βοηθήσει)."
 
-#: src/admin.php:2473
+#: src/admin.php:2517
 msgid "Your PHP memory limit (set by your web hosting company) is very low. UpdraftPlus attempted to raise it but was unsuccessful. This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary)."
 msgstr "Το όριο μνήμης της PHP (το οποίο ορίζεται από την εταιρία φιλοξενίας της ιστοσελίδας) είναι πολύ χαμηλό. Το UpdraftPlus προσπάθησε να το ανεβάσει ανεπιτυχώς. Αυτό το πρόσθετο ενδέχεται να μην μπορεί να αποδώσει σωστά με όριο μνήμης μικρότερο των 64 Mb, ειδικά αν έχετε ανεβάσει πολύ μεγάλα αρχεία (αν και από την άλλη, αρκετές ιστοσελίδες μπορούν να δουλέψουν επιτυχώς και με όριο τα 32Mb. Η εμπειρία σας μπορεί να διαφέρει)."
 
@@ -4996,23 +5034,23 @@ msgstr "Περισσότερα πρόσθετα"
 msgid "Support"
 msgstr "Υποστήριξη"
 
-#: src/class-updraftplus.php:4530
+#: src/class-updraftplus.php:4568
 msgid "UpdraftPlus was unable to find the table prefix when scanning the database backup."
 msgstr "Το UpdraftPlus δεν μπόρεσε να βρει το πρόθεμα πίνακα κατά τη σάρωση του αρχείου ασφαλείας της βάσης δεδομένων."
 
-#: src/class-updraftplus.php:4522
+#: src/class-updraftplus.php:4560
 msgid "This database backup is missing core WordPress tables: %s"
 msgstr "Από αυτό το αρχείο ασφαλείας της βάσης δεδομένων λείπουν πίνακες του πυρήνα του Wordpress: %s"
 
-#: src/class-updraftplus.php:4283
+#: src/class-updraftplus.php:4321
 msgid "You are importing from a newer version of WordPress (%s) into an older one (%s). There are no guarantees that WordPress can handle this."
 msgstr "Κάνετε εισαγωγή από μια νεότερη έκδοση του WordPress (%s) σε μια παλαιότερη (%s). Δεν υπάρχουν εγγυήσεις ότι το WordPress μπορεί να το διαχειριστεί αυτό."
 
-#: src/class-updraftplus.php:4282, src/class-updraftplus.php:4289
+#: src/class-updraftplus.php:4320, src/class-updraftplus.php:4327
 msgid "%s version: %s"
 msgstr "%s έκδοση: %s"
 
-#: src/class-updraftplus.php:4158
+#: src/class-updraftplus.php:4196
 msgid "The database is too small to be a valid WordPress database (size: %s Kb)."
 msgstr "Η βάση δεδομένων είναι πολύ μικρή για να είναι έγκυρη βάση δεδομένων WordPress (μέγεθος: %s Kb)."
 
@@ -5021,7 +5059,7 @@ msgstr "Η βάση δεδομένων είναι πολύ μικρή για ν�
 msgid "Be safe with an automatic backup"
 msgstr "Μείνετε ασφαλής με την αυτόματη λήψη αντιγράφων ασφαλείας"
 
-#: src/admin.php:2426
+#: src/admin.php:2470
 msgid "If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
 msgstr "Αν μπορείτε ακόμα να διαβάζετε αυτές τις λέξεις αφότου η σελίδα τελειώσει την φόρτωση της, τότε υπάρχει κάποιο πρόβλημα με τη JavaScript ή το jQuery στην ιστοσελίδα."
 
@@ -5069,11 +5107,11 @@ msgstr "Αποθήκευση στον υπολογιστή σας"
 msgid "Delete from your web server"
 msgstr "Διαγραφή από τον διακομιστή σας"
 
-#: src/admin.php:3908
+#: src/admin.php:3962
 msgid "You appear to be missing one or more archives from this multi-archive set."
 msgstr "Φαίνεται ότι σας λείπει ένα ή περισσότερα αρχεία από αυτό το σύνολο πολλαπλών αρχείων."
 
-#: src/admin.php:3905
+#: src/admin.php:3959
 msgid "(%d archive(s) in set)."
 msgstr "(%d αρχείο(α) στο σετ)."
 
@@ -5093,7 +5131,7 @@ msgstr "Προειδοποιήσεις:"
 msgid "Error: the server sent an empty response."
 msgstr "Σφάλμα: ο διακομιστής έστειλε κενή απάντηση."
 
-#: src/admin.php:2157
+#: src/admin.php:2201
 msgid "This looks like a file created by UpdraftPlus, but this install does not know about this type of object: %s. Perhaps you need to install an add-on?"
 msgstr "Αυτό μοιάζει να είναι αρχείο που δημιουργήθηκε με το UpdraftPlus, αλλά αυτή η εγκατάσταση δεν μπορεί να αποφανθεί για αυτό το είδος του αντικειμένου:%s. Μήπως θα πρέπει να εγκαταστήσετε κάποιο πρόσθετο;"
 
@@ -5125,19 +5163,20 @@ msgstr "Το αρχείο βρέθηκε αλλά το μέγεθός του ε�
 msgid "File not found (you need to upload it): %s"
 msgstr "Το αρχείο δεν βρέθηκε (πρέπει να το μεταφορτώσετε): %s"
 
+#: src/addons/wp-cli.php:570, src/addons/wp-cli.php:571,
 #: src/includes/class-wpadmin-commands.php:114
 msgid "No such backup set exists"
 msgstr "Δεν υπάρχει τέτοιο αντίγραφο ασφαλείας."
 
-#: src/class-updraftplus.php:3905
+#: src/class-updraftplus.php:3943
 msgid "The backup archive for this file could not be found. The remote storage method in use (%s) does not allow us to retrieve files. To perform any restoration using UpdraftPlus, you will need to obtain a copy of this file and place it inside UpdraftPlus's working folder"
 msgstr "Το αρχείο αντιγράφου ασφαλείας για αυτό το αρχείο δεν μπορεί να βρεθεί. Η απομακρυσμένη τοποθεσία αποθήκευσης που χρησιμοποιείτε (%s) δεν μας επιτρέπει να ανακτήσουμε τα αρχεία. Για να εκτελέσετε οποιαδήποτε επαναφορά με τη χρήση του UpdraftPlus, θα πρέπει να αποκτήσετε ένα αντίγραφο αυτού του αρχείου και να το τοποθετήστε το μέσα στον ενεργό φάκελο του UpdraftPlus"
 
-#: src/restorer.php:460
+#: src/restorer.php:482
 msgid "Moving unpacked backup into place..."
 msgstr "Μετακίνηση του πακεταρισμένου αντιγράφου ασφαλείας στη θέση του..."
 
-#: src/backup.php:3061, src/backup.php:3316
+#: src/backup.php:3087, src/backup.php:3342
 msgid "Failed to open the zip file (%s) - %s"
 msgstr "Αποτυχία ανοίγματος του αρχείου zip (%s) - %s"
 
@@ -5158,7 +5197,7 @@ msgstr "... και πολλά περισσότερα!"
 msgid "S3 (Compatible)"
 msgstr "S3 (Συμβατό)"
 
-#: src/class-updraftplus.php:3817
+#: src/class-updraftplus.php:3855
 msgid "File is not locally present - needs retrieving from remote storage"
 msgstr "Το αρχείο δεν είναι αποθηκευμένο τοπικά - πρέπει να ανακτηθεί από την απομακρυσμένη τοποθεσία αποθήκευσης"
 
@@ -5166,7 +5205,7 @@ msgstr "Το αρχείο δεν είναι αποθηκευμένο τοπικ�
 msgid "Looking for %s archive: file name: %s"
 msgstr "Αναζήτηση για %s αρχείο: όνομα αρχείου: %s"
 
-#: src/admin.php:4393
+#: src/addons/wp-cli.php:734, src/admin.php:4447
 msgid "Final checks"
 msgstr "Τελευταίοι έλεγχοι"
 
@@ -5178,7 +5217,7 @@ msgstr "Επιλέξτε αυτό για να διαγράψετε όλα τα �
 msgid "Drop encrypted database files (db.gz.crypt files) here to upload them for decryption"
 msgstr "Αφήστε τα κρυπτογραφημένα αρχεία της βάσης δεδομένων (db.gz.crypt αρχεία) εδώ για να ανεβάσετε για αποκρυπτογράφηση"
 
-#: src/admin.php:3542
+#: src/admin.php:3588
 msgid "Your wp-content directory server path: %s"
 msgstr "Η διαδρομή του φακέλου wp-content στον εξυπηρετητή σας είναι: %s"
 
@@ -5198,19 +5237,19 @@ msgstr "Επεξεργασία αρχείων - παρακαλώ περιμέν�
 msgid "Your WordPress installation has a problem with outputting extra whitespace. This can corrupt backups that you download from here."
 msgstr "Η εγκατάσταση σας του WordPress έχει ένα πρόβλημα με την έξοδο κενού περιεχομένου. Αυτό μπορεί να καταστρέψει τα αντίγραφα ασφαλείας που θα κατεβάσετε από εδώ."
 
-#: src/class-updraftplus.php:4166
+#: src/class-updraftplus.php:4204
 msgid "Failed to open database file."
 msgstr "Αποτυχία ανοίγματος του αρχείου της βάσης δεδομένων."
 
-#: src/admin.php:4976
+#: src/admin.php:5030
 msgid "Known backups (raw)"
 msgstr "Γνωστά αντίγραφα ασφαλείας (ανεπεξέργαστα)"
 
-#: src/restorer.php:1336
+#: src/restorer.php:1358
 msgid "Files found:"
 msgstr "Αρχεία που βρέθηκαν:"
 
-#: src/restorer.php:2311
+#: src/restorer.php:2333
 msgid "Requested table engine (%s) is not present - changing to MyISAM."
 msgstr "Η ζητηθείσα μηχανή του πίνακα (%s) δεν είναι παρούσα - αλλαγή σε MyISAM."
 
@@ -5220,8 +5259,8 @@ msgstr "μέγεθος αρχείου:"
 
 #: src/addons/googlecloud.php:1034, src/addons/migrator.php:478,
 #: src/addons/migrator.php:481, src/addons/migrator.php:484,
-#: src/admin.php:1008, src/admin.php:2431, src/backup.php:3367,
-#: src/class-updraftplus.php:4403, src/class-updraftplus.php:4403,
+#: src/admin.php:1008, src/admin.php:2475, src/backup.php:3393,
+#: src/class-updraftplus.php:4441, src/class-updraftplus.php:4441,
 #: src/updraftplus.php:158
 msgid "Go here for more information."
 msgstr "Πηγαίνετε εδώ για περισσότερες πληροφορίες."
@@ -5230,7 +5269,7 @@ msgstr "Πηγαίνετε εδώ για περισσότερες πληροφο
 msgid "Some files are still downloading or being processed - please wait."
 msgstr "Κάποια αρχεία ακόμα κατεβαίνουν ή υπόκεινται σε επεξεργασία - παρακαλώ περιμένετε."
 
-#: src/class-updraftplus.php:4253, src/class-updraftplus.php:4273
+#: src/class-updraftplus.php:4291, src/class-updraftplus.php:4311
 msgid "This backup set is from a different site - this is not a restoration, but a migration. You need the Migrator add-on in order to make this work."
 msgstr "Αυτό το σετ αντιγράφων ασφαλείας είναι από διαφορετικό ιστοσελίδα - αυτή δεν είναι μια διαδικασία επαναφοράς αλλά είναι διαδικασία μετανάστευσης. Χρειάζεται και το πρόσθετο  Migrator για να γίνει αυτή η λειτουργία."
 
@@ -5301,24 +5340,24 @@ msgid "%s authentication failed"
 msgstr "%s αποτυχία πιστοποίησης"
 
 #: src/addons/googlecloud.php:438, src/addons/migrator.php:575,
-#: src/admin.php:2128, src/admin.php:2149, src/admin.php:2157,
+#: src/admin.php:2172, src/admin.php:2193, src/admin.php:2201,
 #: src/class-updraftplus.php:1077, src/class-updraftplus.php:1083,
-#: src/class-updraftplus.php:4139, src/class-updraftplus.php:4141,
-#: src/class-updraftplus.php:4306, src/class-updraftplus.php:4313,
-#: src/class-updraftplus.php:4382, src/methods/googledrive.php:395,
+#: src/class-updraftplus.php:4177, src/class-updraftplus.php:4179,
+#: src/class-updraftplus.php:4344, src/class-updraftplus.php:4351,
+#: src/class-updraftplus.php:4420, src/methods/googledrive.php:395,
 #: src/methods/s3.php:341
 msgid "Error: %s"
 msgstr "Λάθος: %s"
 
-#: src/admin.php:3467
+#: src/admin.php:3513
 msgid "Backup directory specified exists, but is <b>not</b> writable."
 msgstr "Ο φάκελος που υπεδείχθη για την αποθήκευση των αντιγράφων ασφαλείας υπάρχει αλλά <b>δεν είναι</b> εγγράψιμος."
 
-#: src/admin.php:3465
+#: src/admin.php:3511
 msgid "Backup directory specified does <b>not</b> exist."
 msgstr "Ο φάκελος που υπεδείχθη για την αποθήκευση των αντιγράφων ασφαλείας <b>δεν</b> υπάρχει. "
 
-#: src/admin.php:3139, src/admin.php:3416
+#: src/admin.php:3185, src/admin.php:3462
 msgid "Warning: %s"
 msgstr "Προειδοποίηση: %s"
 
@@ -5326,27 +5365,27 @@ msgstr "Προειδοποίηση: %s"
 msgid "Last backup job run:"
 msgstr "Η τελευταία δημιουργία αντιγράφων ασφαλείας έγινε:"
 
-#: src/backup.php:3087
+#: src/backup.php:3113
 msgid "A very large file was encountered: %s (size: %s Mb)"
 msgstr "Βρέθηκε ένα πολύ μεγάλο αρχείο: %s (μέγεθος: %s Mb)"
 
-#: src/backup.php:2388
+#: src/backup.php:2414
 msgid "%s: unreadable file - could not be backed up"
 msgstr "%s: το αρχείο είναι μη αναγνώσιμο - δεν μπορεί να δημιουργηθεί αντίγραφο ασφαλείας γι' αυτό"
 
-#: src/backup.php:1704
+#: src/backup.php:1730
 msgid "Table %s has very many rows (%s) - we hope your web hosting company gives you enough resources to dump out that table in the backup"
 msgstr "Ο πίνακας %s έχει πάρα πολλές γραμμές (%s) - ελπίζουμε ότι η εταιρεία που παρέχει τον εξυπηρετητή για τη φιλοξενία της σελίδας σας να παρέχει επαρκείς πόρους για να συμπεριλάβουμε τον πίνακα αυτό στο αντίγραφο ασφαλείας"
 
-#: src/backup.php:1825
+#: src/backup.php:1851
 msgid "An error occurred whilst closing the final database file"
 msgstr "Συνέβη ένα λάθος κλείνοντας το τελευταίο αρχείο της βάσης δεδομένων"
 
-#: src/backup.php:1043
+#: src/backup.php:1069
 msgid "Warnings encountered:"
 msgstr "Προειδοποιήσεις που απαντήθηκαν:"
 
-#: src/class-updraftplus.php:2964
+#: src/class-updraftplus.php:2971
 msgid "The backup apparently succeeded (with warnings) and is now complete"
 msgstr "Η δημιουργία αντιγράφων ασφαλείας τελικώς πέτυχε (με προειδοποιήσεις) και είναι πλέον πλήρης"
 
@@ -5398,24 +5437,24 @@ msgstr "Παρακαλούμε ελέγξτε τα διαπιστευτήρια 
 msgid "The error reported by %s was:"
 msgstr "Το λάθος που αναφέρθηκε από το %s ήταν:"
 
-#: src/restorer.php:1852
+#: src/restorer.php:1874
 msgid "Please supply the requested information, and then continue."
 msgstr "Παρακαλούμε δώστε τις ζητηθείσες πληροφορίες και μετά συνεχίστε."
 
-#: src/class-updraftplus.php:4324, src/restorer.php:2159
+#: src/class-updraftplus.php:4362, src/restorer.php:2181
 msgid "Site information:"
 msgstr "Πληροφορίες ιστοσελίδας:"
 
-#: src/restorer.php:2026
+#: src/restorer.php:2048
 msgid "Your database user does not have permission to create tables. We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
 msgstr "Ο χρήστης της βάσης δεδομένων σας δεν έχει άδεια για τη δημιουργία πινάκων. Θα γίνει προσπάθεια επαναφοράς απλώς αδειάζοντας τους πίνακες. Αυτό θα πρέπει να λειτουργήσει για την περίπτωση που α) κάνετε επαναφορά από μια έκδοση του WordPress με την ίδια τη δομή της βάσης δεδομένων και β) η εισαγόμενη βάση δεδομένων σας δεν περιέχει πίνακες που δεν είναι ήδη υπάρχοντες στην ιστοσελίδα εισαγωγής."
 
-#: src/admin.php:2426, src/class-updraftplus.php:4317, src/restorer.php:2532
+#: src/admin.php:2470, src/class-updraftplus.php:4355, src/restorer.php:2554
 msgid "Warning:"
 msgstr "Προειδοποίηση:"
 
-#: src/class-updraftplus.php:4306, src/class-updraftplus.php:4309,
-#: src/restorer.php:468
+#: src/class-updraftplus.php:4344, src/class-updraftplus.php:4347,
+#: src/restorer.php:490
 msgid "You are running on WordPress multisite - but your backup is not of a multisite site."
 msgstr "Γίνεται εκτέλεση της διαδικασίας σε μια εγκατάσταση πολλαπλών ιστοσελίδων του Wordpress αλλά το αντίγραφο ασφαλείας σας δεν είναι από μια τέτοια εγκατάσταση. "
 
@@ -5423,7 +5462,7 @@ msgstr "Γίνεται εκτέλεση της διαδικασίας σε μι�
 msgid "Skipping restoration of WordPress core when importing a single site into a multisite installation. If you had anything necessary in your WordPress directory then you will need to re-add it manually from the zip file."
 msgstr "Παράκαμψη στην επαναφορά του πυρήνα του WordPress κατά την εισαγωγή μιας ιστοσελίδας  σε μια εγκατάσταση πολλαπλών ιστοσελίδων. Αν είχατε κάποια αναγκαία αρχεία στο φάκελο του WordPress, τότε θα πρέπει να τα προσθέσετε χειροκίνητα ξανά από το αρχείο zip."
 
-#: src/addons/azure.php:601, src/admin.php:3614,
+#: src/addons/azure.php:601, src/admin.php:3660,
 #: src/methods/updraftvault.php:306
 msgid "Your web server's PHP installation does not included a <strong>required</strong> (for %s) module (%s). Please contact your web hosting provider's support and ask for them to enable it."
 msgstr "Η εγκατάσταση PHP του εξυπηρετητή σας δεν περιελαμβάνει μια<strong>απαραίτητη</strong>  (για %s) μονάδα (%s). Παρακαλούμε επικοινωνήστε με την υποστήριξη του παρόχου του εξυπηρετητή σας και ζητήστε να το ενεργοποιήσουν."
@@ -5479,7 +5518,7 @@ msgstr "Διαγραφή... παρακαλώ περιμένετε όσο χρό�
 msgid "Also delete from remote storage"
 msgstr "Διαγραφή επίσης και από το χώρο απομακρυσμένης αποθήκευσης. "
 
-#: src/admin.php:2861
+#: src/admin.php:2907
 msgid "Latest UpdraftPlus.com news:"
 msgstr "Τελευταία νέα του UpdraftPlus.com:"
 
@@ -5522,7 +5561,7 @@ msgstr "Δεσμός ιστολογίου"
 msgid "Testing %s Settings..."
 msgstr "Δοκιμή %s Ρυθμίσεων..."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:67
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:69
 msgid "Or, you can place them manually into your UpdraftPlus directory (usually wp-content/updraft), e.g. via FTP, and then use the \"rescan\" link above."
 msgstr "Ή, μπορείτε να τα τοποθετήσετε με το χέρι στο φάκελο του UpdraftPlus (συνήθως wp-content/updraft), π.χ. μέσω FTP, και στη συνέχεια να χρησιμοποιήστε το σύνδεσμο \"επανεξέταση\" πιο πάνω."
 
@@ -5534,7 +5573,7 @@ msgstr "Η λειτουργία αποσφαλμάτωσης του UpdraftPlus 
 msgid "Notice"
 msgstr "Ειδοποίηση"
 
-#: src/backup.php:1025
+#: src/backup.php:1051
 msgid "Errors encountered:"
 msgstr "Λάθη που προέκυψαν:"
 
@@ -5665,7 +5704,7 @@ msgid "Directory path"
 msgstr "Διαδρομή φακέλου"
 
 #: src/addons/lockadmin.php:171, src/addons/moredatabase.php:252,
-#: src/addons/sftp.php:454, src/addons/webdav.php:193, src/admin.php:2744,
+#: src/addons/sftp.php:454, src/addons/webdav.php:193, src/admin.php:2788,
 #: src/methods/openstack2.php:164, src/methods/updraftvault.php:361,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:50
 msgid "Password"
@@ -5733,8 +5772,8 @@ msgid "Failed: We were not able to place a file in that directory - please check
 msgstr "Αποτυχία: Δεν μπορέσαμε να τοποθετήσουμε ένα αρχείο σε αυτόν το φάκελο - παρακαλώ ελέγξτε τα διαπιστευτήριά σας."
 
 #: src/addons/googlecloud.php:776, src/addons/googlecloud.php:810,
-#: src/addons/googlecloud.php:816, src/addons/sftp.php:549, src/admin.php:3195,
-#: src/admin.php:3231, src/admin.php:3241, src/methods/addon-base-v2.php:299,
+#: src/addons/googlecloud.php:816, src/addons/sftp.php:549, src/admin.php:3241,
+#: src/admin.php:3277, src/admin.php:3287, src/methods/addon-base-v2.php:299,
 #: src/methods/stream-base.php:356
 msgid "Failed"
 msgstr "Αποτυχία"
@@ -5950,11 +5989,11 @@ msgstr "Όνομα χρήστη"
 msgid "API key"
 msgstr "Κλειδί API"
 
-#: src/addons/migrator.php:325, src/addons/migrator.php:2132,
-#: src/addons/moredatabase.php:88, src/addons/moredatabase.php:90,
-#: src/addons/moredatabase.php:92, src/addons/sftp.php:518,
-#: src/addons/sftp.php:522, src/addons/sftp.php:526, src/addons/webdav.php:253,
-#: src/admin.php:751, src/methods/addon-base-v2.php:291,
+#: src/addons/migrator.php:325, src/addons/moredatabase.php:88,
+#: src/addons/moredatabase.php:90, src/addons/moredatabase.php:92,
+#: src/addons/sftp.php:518, src/addons/sftp.php:522, src/addons/sftp.php:526,
+#: src/addons/webdav.php:253, src/admin.php:751,
+#: src/includes/class-remote-send.php:429, src/methods/addon-base-v2.php:291,
 #: src/methods/cloudfiles-new.php:184, src/methods/cloudfiles-new.php:189,
 #: src/methods/cloudfiles.php:519, src/methods/cloudfiles.php:524,
 #: src/methods/ftp.php:412, src/methods/ftp.php:416,
@@ -6092,7 +6131,7 @@ msgstr "έχετε πιστοποιήσει το λογαριασμό σας %s.
 
 #: src/addons/googlecloud.php:718, src/addons/googlecloud.php:839,
 #: src/addons/onedrive.php:920, src/addons/sftp.php:583,
-#: src/addons/wp-cli.php:472, src/methods/addon-base-v2.php:308,
+#: src/addons/wp-cli.php:481, src/methods/addon-base-v2.php:308,
 #: src/methods/cloudfiles.php:575, src/methods/googledrive.php:467,
 #: src/methods/openstack-base.php:530, src/methods/s3.php:1154,
 #: src/methods/stream-base.php:372
@@ -6131,99 +6170,99 @@ msgstr "Δεν έχετε εγκατεστημένο το πρόσθετο %s τ
 msgid "You need to re-authenticate with %s, as your existing credentials are not working."
 msgstr "Θα πρέπει να επαναλάβει την πιστοποίηση με το%s, καθώς τα υφιστάμενα διαπιστευτήρια σας δεν λειτουργούν."
 
-#: src/addons/migrator.php:2006, src/admin.php:3199, src/admin.php:3234,
-#: src/admin.php:3238, src/class-updraftplus.php:3845, src/restorer.php:194,
-#: src/restorer.php:2773, src/restorer.php:2878
+#: src/admin.php:3245, src/admin.php:3280, src/admin.php:3284,
+#: src/class-updraftplus.php:3883, src/includes/class-remote-send.php:303,
+#: src/restorer.php:194, src/restorer.php:2795, src/restorer.php:2900
 msgid "OK"
 msgstr "Εντάξει"
 
-#: src/restorer.php:2767, src/restorer.php:2842
+#: src/restorer.php:2789, src/restorer.php:2864
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr "Το πρόθεμα του πίνακα έχει αλλάξει: γίνεται αλλαγή του-των πεδίου-ων %s του πίνακα αναλόγως:"
 
-#: src/addons/migrator.php:1305, src/restorer.php:2669
+#: src/addons/migrator.php:1305, src/restorer.php:2691
 msgid "the database query being run was:"
 msgstr "το ερώτημα που τρέχει στη βάση δεδομένων ήταν:"
 
-#: src/restorer.php:2368
+#: src/restorer.php:2390
 msgid "will restore as:"
 msgstr "θα γίνει επαναφορά ως:"
 
-#: src/class-updraftplus.php:4295, src/restorer.php:2141,
-#: src/restorer.php:2230, src/restorer.php:2256
+#: src/class-updraftplus.php:4333, src/restorer.php:2163,
+#: src/restorer.php:2252, src/restorer.php:2278
 msgid "Old table prefix:"
 msgstr "Παλιό πρόθεμα πίνακα:"
 
 #: src/addons/reporting.php:71, src/addons/reporting.php:180,
-#: src/backup.php:1099, src/class-updraftplus.php:4222
+#: src/backup.php:1125, src/class-updraftplus.php:4260
 msgid "Backup of:"
 msgstr "Αντίγραφο ασφαλείας του:"
 
-#: src/restorer.php:1948
+#: src/restorer.php:1970
 msgid "Failed to open database file"
 msgstr "Αποτυχία ανοίγματος του αρχείου της βάσης δεδομένων "
 
-#: src/restorer.php:1927
+#: src/restorer.php:1949
 msgid "Failed to find database file"
 msgstr "Αποτυχία εύρεσης του αρχείου της βάσης δεδομένων"
 
-#: src/restorer.php:1904
+#: src/restorer.php:1926
 msgid "Warning: PHP safe_mode is active on your server. Timeouts are much more likely. If these happen, then you will need to manually restore the file via phpMyAdmin or another method."
 msgstr "Προειδοποίηση: Είναι ενεργή η ασφαλής λειτουργία της PHP στον εξυπηρετητή σας. Είναι πολύ πιθανόν να έχουν τεθεί χρονικά όρια. Αν συμβαίνει αυτό, τότε θα χρειαστεί να επαναφέρετε το χέρι το αρχείο μέσω phpMyAdmin ή άλλης μεθόδου."
 
-#: src/restorer.php:838
+#: src/restorer.php:860
 msgid "wp-config.php from backup: restoring (as per user's request)"
 msgstr "wp-config.php από το αντίγραφο ασφαλείας: επαναφορά (σύμφωνα με το αίτημα του χρήστη)"
 
-#: src/restorer.php:831
+#: src/restorer.php:853
 msgid "wp-config.php from backup: will restore as wp-config-backup.php"
 msgstr "wp-config.php από το αντίγραφο ασφαλείας: θα γίνει επαναφορά ως wp-config-backup.php"
 
-#: src/restorer.php:714
+#: src/restorer.php:736
 msgid "Failed to write out the decrypted database to the filesystem"
 msgstr "Αδυναμία εγγραφής της αποκρυπτογραφημένης βάσης δεδομένων στο σύστημα αρχείων"
 
-#: src/restorer.php:698
+#: src/restorer.php:720
 msgid "Failed to create a temporary directory"
 msgstr "Αδυναμία δημιουργίας προσωρινού φακέλου."
 
-#: src/restorer.php:467
+#: src/restorer.php:489
 msgid "Failed to delete working directory after restoring."
 msgstr "Αδυναμία διαγραφής του ενεργού φακέλου μετά την επαναφορά."
 
-#: src/restorer.php:464
+#: src/restorer.php:486
 msgid "Could not delete old directory."
 msgstr "Αδυναμία διαγραφής παλιού φακέλου."
 
-#: src/restorer.php:462
+#: src/restorer.php:484
 msgid "Cleaning up rubbish..."
 msgstr "Γίνεται εκκαθάριση των περιττών..."
 
-#: src/restorer.php:461
+#: src/restorer.php:483
 msgid "Restoring the database (on a large site this can take a long time - if it times out (which can happen if your web hosting company has configured your hosting to limit resources) then you should use a different method, such as phpMyAdmin)..."
 msgstr "Επαναφορά της βάσης δεδομένων (για μια μεγάλη ιστοσελίδα η διαδικασία μπορεί να πάρει πολύ χρόνο - εάν παρουσιαστεί πρόβλημα λήξης χρόνου -timeout- (το οποίο μπορεί να συμβεί εάν ο πάροχος του εξυπηρετητή σας έχει ρυθμίσει τη φιλοξενία σας με περιορισμό των πόρων), τότε θα πρέπει να χρησιμοποιήσετε μια διαφορετική μέθοδο, όπως το phpMyAdmin)..."
 
-#: src/restorer.php:458
+#: src/restorer.php:480
 msgid "Database successfully decrypted."
 msgstr "Η βάση δεδομένων αποκρυπτογραφήθηκε επιτυχώς."
 
-#: src/restorer.php:457
+#: src/restorer.php:479
 msgid "Decrypting database (can take a while)..."
 msgstr "Αποκρυπτογραφείται η βάση δεδομένων (μπορεί να διαρκέσει λίγο χρόνο)..."
 
-#: src/restorer.php:456
+#: src/restorer.php:478
 msgid "Unpacking backup..."
 msgstr "Αποσυσκευάζεται το αντίγραφο ασφαλείας..."
 
-#: src/restorer.php:455
+#: src/restorer.php:477
 msgid "Copying this entity failed."
 msgstr "Η αντιγραφή αυτής της οντότητας απέτυχε."
 
-#: src/restorer.php:454
+#: src/restorer.php:476
 msgid "Backup file not available."
 msgstr "Δεν είναι διαθέσιμο αντίγραφο ασφαλείας γι' αυτό το αρχείο."
 
-#: src/restorer.php:453
+#: src/restorer.php:475
 msgid "UpdraftPlus is not able to directly restore this kind of entity. It must be restored manually."
 msgstr "Το UpdraftPlus δεν μπορεί να επαναφέρει απευθείας αυτού του είδους την οντότητα. Πρέπει να γίνει επαναφορά με το χέρι."
 
@@ -6231,7 +6270,7 @@ msgstr "Το UpdraftPlus δεν μπορεί να επαναφέρει απευ�
 msgid "Could not find one of the files for restoration"
 msgstr "Δεν μπόρεσε να βρεθεί ένα από τα αρχεία για την επαναφορά"
 
-#: src/restorer.php:357
+#: src/restorer.php:359
 msgid "Error message"
 msgstr "Μήνυμα λάθους"
 
@@ -6243,39 +6282,39 @@ msgstr "Τα στοιχεία μητρώου του αντιγράφου ασφ�
 msgid "Archive is expected to be size:"
 msgstr "Το αρχείο αναμένεται να έχει μέγεθος:"
 
-#: src/admin.php:4341
+#: src/admin.php:4395
 msgid "If making a request for support, please include this information:"
 msgstr "Αν κάνετε ένα αίτημα υποστήριξης, παρακαλούμε να συμπεριλάβετε αυτές τις πληροφορίες:"
 
-#: src/admin.php:4340
+#: src/admin.php:4394
 msgid "ABORT: Could not find the information on which entities to restore."
 msgstr "ΑΚΥΡΩΣΗ: Δε βρέθηκαν οι πληροφορίες για το ποιες οντότητες να επαναφερθούν."
 
-#: src/admin.php:4319
+#: src/addons/wp-cli.php:606, src/admin.php:4373
 msgid "UpdraftPlus Restoration: Progress"
 msgstr "Επαναφορά του UpdraftPlus: Πρόοδος "
 
-#: src/admin.php:4311
+#: src/admin.php:4365
 msgid "This backup does not exist in the backup history - restoration aborted. Timestamp:"
 msgstr "Αυτό το αντίγραφο ασφαλείας δεν υπάρχει στο ιστορικό των αντιγράφων ασφαλείας - η επαναφορά ακυρώθηκε. Σφραγίδα χρόνου:"
 
-#: src/admin.php:3966
+#: src/admin.php:4020
 msgid "After pressing this button, you will be given the option to choose which components you wish to restore"
 msgstr "Αφού πατήσετε αυτό το κουμπί, θα σας δοθεί η δυνατότητα να επιλέξετε ποια μέρη θέλετε να επαναφέρετε "
 
-#: src/admin.php:4064
+#: src/admin.php:4118
 msgid "Delete this backup set"
 msgstr "Διαγραφή αυτού του συνόλου αντιγράφων ασφαλείας"
 
-#: src/admin.php:3626
+#: src/admin.php:3672
 msgid "Good news: Your site's communications with %s can be encrypted. If you see any errors to do with encryption, then look in the 'Expert Settings' for more help."
 msgstr "Καλά νέα: Η επικοινωνία με το %s μπορεί να κρυπτογραφηθεί. Εάν δείτε λάθη που έχουν να κάνουν με την κρυπτογράφηση παρακαλούμε ανατρέξτε στις 'Ρυθμίσεις για προχωρημένους' για περισσότερη βοήθεια."
 
-#: src/admin.php:3623
+#: src/admin.php:3669
 msgid "Your web server's PHP/Curl installation does not support https access. We cannot access %s without this support. Please contact your web hosting provider's support. %s <strong>requires</strong> Curl+https. Please do not file any support requests; there is no alternative."
 msgstr "Η εγκατάσταση της PHP/Curl στον εξυπηρετητή σας δεν υποστηρίζει πρόσβαση https. Υπάρχει αδυναμία πρόσβασης του %s χωρίς αυτό. Παρακαλούμε επικοινωνήστε με το τμήμα υποστήριξης του παρόχου του εξυπηρετητή σας. %s <strong>απαιτεί</strong> Curl+https. Παρακαλούμε μην υποβάλετε οποιαδήποτε αιτήματα υποστήριξης, δεν υπάρχει εναλλακτική λύση."
 
-#: src/admin.php:3621
+#: src/admin.php:3667
 msgid "Your web server's PHP/Curl installation does not support https access. Communications with %s will be unencrypted. Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on)."
 msgstr "Η εγκατάσταση της PHP/Curl στον διακομιστή σας δεν υποστηρίζει πρόσβαση https. Η επικοινωνία με το %s δε θα είναι κρυπτογραφημένη. Ζητήστε από τον πάροχό σας να εγκαταστήσει το Curl/SSL για να έχετε τη δυνατότητα κρυπτογράφησης (με χρήση ενός πρόσθετου). "
 
@@ -6316,19 +6355,19 @@ msgstr "Από προεπιλογή το UpdraftPlus χρησιμοποιεί δ
 msgid "Use the server's SSL certificates"
 msgstr "Χρήση των πιστοποιητικών SSL του εξυπηρετητή σας"
 
-#: src/admin.php:3469
+#: src/admin.php:3515
 msgid "If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process."
 msgstr "Εάν αυτό έγινε ανεπιτυχώς ελέγξτε τα δικαιώματα στον εξυπηρετητή σας ή αλλάξτε το σε έναν άλλο φάκελο που να είναι εγγράψιμος στον εξυπηρετητή σας από τη διεργασία."
 
-#: src/admin.php:3469
+#: src/admin.php:3515
 msgid "or, to reset this option"
 msgstr "ή, για να επαναφέρετε αυτή την επιλογή"
 
-#: src/admin.php:3469
+#: src/admin.php:3515
 msgid "Follow this link to attempt to create the directory and set the permissions"
 msgstr "Ακολουθήστε αυτόν τον σύνδεσμο για να προσπαθήσετε να δημιουργήσετε το φάκελο και να ρυθμίσετε τα δικαιώματα"
 
-#: src/admin.php:3461
+#: src/admin.php:3507
 msgid "Backup directory specified is writable, which is good."
 msgstr "Ο φάκελος που υπεδείχθη για τα αντίγραφα ασφαλείας είναι εγγράψιμος, πράγμα που είναι καλό. "
 
@@ -6369,7 +6408,7 @@ msgid "Cancel"
 msgstr "Άκυρο"
 
 #: src/addons/incremental.php:80, src/addons/reporting.php:244,
-#: src/admin.php:3773
+#: src/admin.php:3829
 msgid "None"
 msgstr "Κανένα"
 
@@ -6385,7 +6424,7 @@ msgstr "Χειροκίνητη αποκρυπτογράφηση αντιγράφ
 msgid "Database encryption phrase"
 msgstr "Φράση κρυπτογράφησης της βάσης δεδομένων"
 
-#: src/admin.php:2734, src/templates/wp-admin/settings/form-contents.php:255,
+#: src/admin.php:2778, src/templates/wp-admin/settings/form-contents.php:255,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:44
 msgid "Email"
 msgstr "Ηλεκτρονικό ταχυδρομείο"
@@ -6394,11 +6433,11 @@ msgstr "Ηλεκτρονικό ταχυδρομείο"
 msgid "The above directories are everything, except for WordPress core itself which you can download afresh from WordPress.org."
 msgstr "Τα παραπάνω είναι όλα όσα μπορούν να συμπεριληφθούν στο αντίγραφο ασφαλείας, εκτός από τον τον ίδιο τον πυρήνα του WordPress τον οποίο μπορείτε να κατεβάσετε εκ νέου από το WordPress.org."
 
-#: src/addons/morefiles.php:466, src/admin.php:3551
+#: src/addons/morefiles.php:466, src/admin.php:3597
 msgid "Exclude these:"
 msgstr "Να εξαιρεθούν αυτά:"
 
-#: src/admin.php:3542
+#: src/admin.php:3588
 msgid "Any other directories found inside wp-content"
 msgstr "Όλοι οι άλλοι φάκελοι που βρίσκονται μέσα στο wp-content"
 
@@ -6414,45 +6453,45 @@ msgstr "π.χ. εάν ο εξυπηρετητής σας είναι απασχο
 msgid "To fix the time at which a backup should take place,"
 msgstr "Για να ρυθμίσετε την ώρα που θα λαμβάνεται το αντίγραφο ασφαλείας,"
 
-#: src/addons/incremental.php:89, src/admin.php:3455
+#: src/addons/incremental.php:89, src/admin.php:3501
 msgid "Monthly"
 msgstr "Μηνιαία"
 
-#: src/addons/incremental.php:88, src/admin.php:3454
+#: src/addons/incremental.php:88, src/admin.php:3500
 msgid "Fortnightly"
 msgstr "Δεκαπενθήμερα"
 
-#: src/addons/incremental.php:87, src/admin.php:3453
+#: src/addons/incremental.php:87, src/admin.php:3499
 msgid "Weekly"
 msgstr "Εβδομαδιαία"
 
-#: src/addons/incremental.php:86, src/admin.php:3452
+#: src/addons/incremental.php:86, src/admin.php:3498
 msgid "Daily"
 msgstr "Ημερήσια"
 
-#: src/admin.php:733, src/admin.php:3430
+#: src/admin.php:733, src/admin.php:3476
 msgid "Download log file"
 msgstr "Μεταφόρτωση αρχείου καταγραφής"
 
-#: src/admin.php:3302
+#: src/admin.php:3348
 msgid "The folder exists, but your webserver does not have permission to write to it."
 msgstr "Ο φάκελος υπάρχει, αλλά ο διακομιστής σας δεν έχει άδεια για να γράψει σε αυτό."
 
-#: src/admin.php:3297
+#: src/admin.php:3343
 msgid "The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it. You should check with your hosting provider that this will not cause any problems"
 msgstr "Ο φάκελος δημιουργήθηκε, αλλά έπρεπε να αλλάξουμε τα δικαιώματα του αρχείου σε 777 (world-writable) για να είμαστε σε θέση να γράψουμε σε αυτό. Θα πρέπει να ελέγξετε με τον πάροχο φιλοξενίας σας ότι αυτό δεν θα προκαλέσει κανένα πρόβλημα"
 
-#: src/admin.php:3283
+#: src/admin.php:3329
 msgid "The request to the filesystem to create the directory failed."
 msgstr "Η αίτηση στο σύστημα αρχείων για τη δημιουργία του φακέλου απέτυχε."
 
-#: src/addons/migrator.php:2584, src/admin.php:726, src/admin.php:3192,
-#: src/admin.php:3226, src/admin.php:4064,
+#: src/admin.php:726, src/admin.php:3238, src/admin.php:3272,
+#: src/admin.php:4118, src/includes/class-remote-send.php:518,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:5
 msgid "Delete"
 msgstr "Διαγραφή"
 
-#: src/admin.php:3130
+#: src/admin.php:3176
 msgid "show log"
 msgstr "προβολή αρχείου καταγραφής"
 
@@ -6529,7 +6568,7 @@ msgstr "Όχι"
 msgid "Yes"
 msgstr "Ναι"
 
-#: src/admin.php:5192, src/admin.php:5194,
+#: src/admin.php:5247, src/admin.php:5249,
 #: src/templates/wp-admin/advanced/site-info.php:45,
 #: src/templates/wp-admin/advanced/site-info.php:46,
 #: src/templates/wp-admin/advanced/site-info.php:53,
@@ -6569,7 +6608,7 @@ msgstr "Εκτέλεση δημιουργίας αντιγράφου ασφαλ�
 msgid "Do read this helpful article of useful things to know before restoring."
 msgstr "Διαβάστε αυτό το άρθρο το οποίο θα σας βοηθήσει να μάθετε χρήσιμα πράγματα πριν κάνετε επαναφορά. "
 
-#: src/class-updraftplus.php:4256
+#: src/class-updraftplus.php:4294
 msgid "You can search and replace your database (for migrating a website to a new location/URL) with the Migrator add-on - follow this link for more information"
 msgstr "Μπορείτε να αναζητήσετε και να αντικαταστήσετε τη βάση δεδομένων σας (για τη μετάβαση ενός δικτυακού τόπου σε μια νέα τοποθεσία/διεύθυνση URL) με το πρόσθετο Migrator - ακολουθήστε αυτό το σύνδεσμο για περισσότερες πληροφορίες"
 
@@ -6617,39 +6656,39 @@ msgstr "Λάθος μεταφόρτωσης: ο εξυπηρετητής έστ�
 #: src/addons/backblaze.php:225, src/addons/cloudfiles-enhanced.php:117,
 #: src/addons/migrator.php:878, src/addons/migrator.php:1175,
 #: src/addons/migrator.php:1256, src/addons/migrator.php:1305,
-#: src/addons/migrator.php:1543, src/addons/migrator.php:1945,
-#: src/addons/migrator.php:1972, src/addons/migrator.php:1978,
-#: src/addons/migrator.php:2040, src/addons/migrator.php:2099,
-#: src/addons/migrator.php:2140, src/addons/migrator.php:2150,
-#: src/addons/migrator.php:2155, src/addons/s3-enhanced.php:164,
+#: src/addons/migrator.php:1543, src/addons/s3-enhanced.php:164,
 #: src/addons/s3-enhanced.php:169, src/addons/s3-enhanced.php:171,
 #: src/addons/sftp.php:848, src/addons/webdav.php:203, src/admin.php:91,
-#: src/admin.php:700, src/methods/remotesend.php:71,
+#: src/admin.php:700, src/includes/class-remote-send.php:242,
+#: src/includes/class-remote-send.php:269,
+#: src/includes/class-remote-send.php:275,
+#: src/includes/class-remote-send.php:337,
+#: src/includes/class-remote-send.php:396,
+#: src/includes/class-remote-send.php:437,
+#: src/includes/class-remote-send.php:447,
+#: src/includes/class-remote-send.php:452, src/methods/remotesend.php:71,
 #: src/methods/remotesend.php:239, src/methods/updraftvault.php:527,
-#: src/restorer.php:196, src/restorer.php:224, src/restorer.php:1857
+#: src/restorer.php:196, src/restorer.php:224, src/restorer.php:1879
 msgid "Error:"
 msgstr "Λάθος:"
 
-#: src/admin.php:691,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:42
+#: src/admin.php:691
 msgid "calculating..."
 msgstr "υπολογισμός..."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:66
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:68
 msgid "UpdraftPlus - Upload backup files"
 msgstr "UpdraftPlus - Ανέβασμα αρχείων αντιγράφων ασφαλείας"
 
-#: src/templates/wp-admin/advanced/site-info.php:38,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:42
+#: src/admin.php:1761, src/templates/wp-admin/advanced/site-info.php:38
 msgid "refresh"
 msgstr "ανανέωση"
 
-#: src/templates/wp-admin/advanced/site-info.php:38,
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:42
+#: src/admin.php:1781, src/templates/wp-admin/advanced/site-info.php:38
 msgid "Web-server disk space in use by UpdraftPlus"
 msgstr "Χώρος αποθήκευσης σε χρήση στο διακομιστή από το UpdraftPlus"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:42
+#: src/admin.php:1781
 msgid "This is a count of the contents of your Updraft directory"
 msgstr "Αυτή είναι μια καταμέτρηση του περιεχομένου του φακέλου σας του Updraft "
 
@@ -6665,19 +6704,19 @@ msgstr "Αυτή είναι μια καταμέτρηση του περιεχο�
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:57
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:59
 msgid "If you are using this, then turn Turbo/Road mode off."
 msgstr "Εάν χρησιμοποιείτε αυτόν τον φυλλομετρητή τότε απενεργοποιήστε το Turbo/Road mode."
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:57
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:59
 msgid "Opera web browser"
 msgstr "Φυλλομετρητής Opera"
 
-#: src/templates/wp-admin/settings/downloading-and-restoring.php:45
+#: src/templates/wp-admin/settings/downloading-and-restoring.php:47
 msgid "More tasks:"
 msgstr "Περισσότερες εργασίες:"
 
-#: src/admin.php:2888
+#: src/admin.php:2934
 msgid "Download most recently modified log file"
 msgstr "Κατεβάστε το πιο πρόσφατα τροποποιημένο αρχείο καταγραφής"
 
@@ -6686,11 +6725,11 @@ msgid "(Nothing yet logged)"
 msgstr "(Τίποτα δεν έχει ακόμη συνδεθεί)"
 
 #: src/addons/autobackup.php:339, src/addons/autobackup.php:434,
-#: src/admin.php:2843, src/admin.php:2848
+#: src/admin.php:2889, src/admin.php:2894
 msgid "Last log message"
 msgstr "Τελευταίο μήνυμα αρχείου καταγραφής"
 
-#: src/addons/migrator.php:259, src/admin.php:732, src/admin.php:3966,
+#: src/addons/migrator.php:259, src/admin.php:732, src/admin.php:4020,
 #: src/templates/wp-admin/settings/tab-status.php:30
 msgid "Restore"
 msgstr "Επαναφορά"
@@ -6700,17 +6739,17 @@ msgstr "Επαναφορά"
 msgid "Backup Now"
 msgstr "Λήψη αντιγράφου ασφαλείας"
 
-#: src/addons/migrator.php:2010, src/addons/moredatabase.php:253,
-#: src/addons/reporting.php:259, src/addons/wp-cli.php:388, src/admin.php:319,
-#: src/admin.php:3748, src/admin.php:3828,
+#: src/addons/moredatabase.php:253, src/addons/reporting.php:259,
+#: src/addons/wp-cli.php:397, src/admin.php:319, src/admin.php:3804,
+#: src/admin.php:3882, src/includes/class-remote-send.php:307,
 #: src/includes/class-wpadmin-commands.php:157,
-#: src/includes/class-wpadmin-commands.php:526, src/restorer.php:315,
+#: src/includes/class-wpadmin-commands.php:526, src/restorer.php:317,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:82,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:83
 msgid "Database"
 msgstr "Βάση δεδομένων"
 
-#: src/admin.php:315, src/admin.php:4983
+#: src/admin.php:315, src/admin.php:5037
 msgid "Files"
 msgstr "Αρχεία"
 
@@ -6738,15 +6777,15 @@ msgstr "Η διεπαφή του διαχειριστή χρησιμοποιεί
 msgid "JavaScript warning"
 msgstr "προειδοποίηση JavaScript "
 
-#: src/admin.php:711, src/admin.php:2915
+#: src/admin.php:711, src/admin.php:2961
 msgid "Delete Old Directories"
 msgstr "Διαγραφή Παλαιών Φακέλων"
 
-#: src/admin.php:2473
+#: src/admin.php:2517
 msgid "Current limit is:"
 msgstr "Το τρέχων όριο είναι:"
 
-#: src/admin.php:2448
+#: src/admin.php:2492
 msgid "Your backup has been restored."
 msgstr "Έγινε επαναφορά από το αντίγραφο ασφαλείας σας"
 
@@ -6762,85 +6801,85 @@ msgstr "Ιστοσελίδα του αρχι-προγραμματιστή"
 msgid "UpdraftPlus.Com"
 msgstr "UpdraftPlus.Com"
 
-#: src/admin.php:4875
+#: src/admin.php:4929
 msgid "Your settings have been wiped."
 msgstr "Οι ρυθμίσεις σας διεγράφησαν."
 
-#: src/admin.php:2408
+#: src/admin.php:2452
 msgid "Backup directory successfully created."
 msgstr "Η δημιουργία φακέλου των αντιγράφων ασφαλείας έγινε επιτυχώς."
 
-#: src/admin.php:2401
+#: src/admin.php:2445
 msgid "Backup directory could not be created"
 msgstr "Αποτυχία δημιουργίας φακέλου των αντιγράφων ασφαλείας"
 
-#: src/admin.php:3162
+#: src/admin.php:3208
 msgid "Old directory removal failed for some reason. You may want to do this manually."
 msgstr "Η διαγραφή των παλαιών φακέλων απέτυχε για κάποιο λόγο. Ίσως χρειαστεί να το κάνετε χειροκίνητα."
 
-#: src/admin.php:3160
+#: src/admin.php:3206
 msgid "Old directories successfully removed."
 msgstr "Οι παλαιοί φάκελοι διεγράφησαν επιτυχώς."
 
-#: src/admin.php:3157, src/admin.php:3157
+#: src/admin.php:3203, src/admin.php:3203
 msgid "Remove old directories"
 msgstr "Διαγραφή παλαιών φακέλων "
 
 #: src/addons/migrator.php:328, src/addons/migrator.php:343,
-#: src/admin.php:2349, src/admin.php:2359, src/admin.php:2368,
-#: src/admin.php:2410, src/admin.php:3164
+#: src/admin.php:2393, src/admin.php:2403, src/admin.php:2412,
+#: src/admin.php:2454, src/admin.php:3210
 msgid "Return to UpdraftPlus Configuration"
 msgstr "Επιστροφή στις Ρυθμίσεις του UpdraftPlus "
 
-#: src/admin.php:704, src/admin.php:2349, src/admin.php:2359,
-#: src/admin.php:2368, src/admin.php:2410, src/admin.php:3164,
+#: src/admin.php:704, src/admin.php:2393, src/admin.php:2403,
+#: src/admin.php:2412, src/admin.php:2454, src/admin.php:3210,
 #: src/templates/wp-admin/settings/existing-backups-table.php:16
 msgid "Actions"
 msgstr "Ενέργειες"
 
-#: src/admin.php:2249
+#: src/admin.php:2293
 msgid "Bad filename format - this does not look like an encrypted database file created by UpdraftPlus"
 msgstr "Λανθασμένη μορφή αρχείου - αυτό δε μοιάζει με κρυπτογραφημένο αρχείο βάσης δεδομένων που έχει δημιουργηθεί από το UpdraftPlus "
 
-#: src/admin.php:2149
+#: src/admin.php:2193
 msgid "Bad filename format - this does not look like a file created by UpdraftPlus"
 msgstr "Λανθασμένη μορφή αρχείου - αυτό δε μοιάζει με αρχείο που έχει δημιουργηθεί από το UpdraftPlus"
 
-#: src/admin.php:2045
+#: src/admin.php:2089
 msgid "No local copy present."
 msgstr "Δεν υπάρχει τοπικό αντίγραφο."
 
-#: src/admin.php:2042
+#: src/admin.php:2086
 msgid "Download in progress"
 msgstr "Μεταφόρτωση σε εξέλιξη"
 
-#: src/admin.php:703, src/admin.php:2031
+#: src/admin.php:703, src/admin.php:2075
 msgid "File ready."
 msgstr "Το αρχείο είναι έτοιμο."
 
-#: src/admin.php:2012
+#: src/admin.php:2056
 msgid "Download failed"
 msgstr "Αποτυχία μεταφόρτωσης "
 
-#: src/addons/wp-cli.php:475, src/admin.php:701, src/admin.php:1779,
+#: src/addons/wp-cli.php:484, src/admin.php:701, src/admin.php:1821,
 #: src/class-updraftplus.php:1375, src/class-updraftplus.php:1419,
-#: src/class-updraftplus.php:3854, src/methods/addon-base-v2.php:93,
+#: src/class-updraftplus.php:3892, src/methods/addon-base-v2.php:93,
 #: src/methods/addon-base-v2.php:98, src/methods/addon-base-v2.php:205,
 #: src/methods/addon-base-v2.php:225, src/methods/stream-base.php:219,
-#: src/restorer.php:2769, src/restorer.php:2794, src/restorer.php:2875,
+#: src/restorer.php:2791, src/restorer.php:2816, src/restorer.php:2897,
 #: src/updraftplus.php:158
 msgid "Error"
 msgstr "Λάθος"
 
-#: src/admin.php:1814
+#: src/admin.php:1856
 msgid "Could not find that job - perhaps it has already finished?"
 msgstr "Δεν μπόρεσε να βρεθεί αυτή η εργασία - μήπως έχει ήδη τελειώσει;"
 
-#: src/admin.php:1806
+#: src/admin.php:1848
 msgid "Job deleted"
 msgstr "Η εργασία διεγράφη. "
 
-#: src/admin.php:1892, src/includes/class-commands.php:778
+#: src/admin.php:1934, src/includes/class-commands.php:803
 msgid "OK. You should soon see activity in the \"Last log message\" field below."
 msgstr "Εντάξει. Θα πρέπει σύντομα να δείτε δραστηριότητα στο πεδίο \"Τελευταίο μήνυμα αρχείου καταγραφής\" πιο κάτω."
 
@@ -6866,8 +6905,8 @@ msgstr "Έχετε λιγότερο από %s ελεύθερο χώρο στο �
 
 #: src/addons/azure.php:601, src/addons/migrator.php:933, src/admin.php:1004,
 #: src/admin.php:1008, src/admin.php:1012, src/admin.php:1016,
-#: src/admin.php:1020, src/admin.php:1029, src/admin.php:3614,
-#: src/admin.php:3621, src/admin.php:3623, src/admin.php:5160,
+#: src/admin.php:1020, src/admin.php:1029, src/admin.php:3660,
+#: src/admin.php:3667, src/admin.php:3669, src/admin.php:5215,
 #: src/methods/cloudfiles-new.php:100, src/methods/cloudfiles.php:440,
 #: src/methods/ftp.php:330, src/methods/openstack-base.php:571,
 #: src/methods/s3.php:859, src/methods/s3.php:863,
@@ -6881,7 +6920,7 @@ msgstr "Προειδοποίηση"
 msgid "Add-Ons / Pro Support"
 msgstr "Πρόσθετα / Πρόσθετη Υποστήριξη "
 
-#: src/admin.php:564, src/admin.php:948, src/admin.php:2496
+#: src/admin.php:564, src/admin.php:948, src/admin.php:2540
 msgid "Settings"
 msgstr "Ρυθμίσεις"
 
@@ -6889,7 +6928,7 @@ msgstr "Ρυθμίσεις"
 msgid "Could not create %s zip. Consult the log file for more information."
 msgstr "Αδυναμία δημιουργίας του αρχείου zip %s. συμβουλευτείτε το αρχείο καταγραφής για περισσότερες πληροφορίες."
 
-#: src/backup.php:2268
+#: src/backup.php:2294
 msgid "Infinite recursion: consult your log for more information"
 msgstr "Άπειρη αναδρομή: συμβουλευτείτε το αρχείο καταγραφής σας για περισσότερες πληροφορίες"
 
@@ -6901,7 +6940,7 @@ msgstr "Παρακαλώ βοηθήστε το UpdraftPlus δίνοντας μι
 msgid "Like UpdraftPlus and can spare one minute?"
 msgstr "Σας αρέσει το UpdraftPlus και μπορείτε να αφιερώσετε ένα λεπτό;"
 
-#: src/addons/azure.php:268, src/class-updraftplus.php:3959,
+#: src/addons/azure.php:268, src/class-updraftplus.php:3997,
 #: src/methods/googledrive.php:1112, src/methods/s3.php:341
 msgid "File not found"
 msgstr "Το αρχείο δεν βρέθηκε"
@@ -6910,41 +6949,41 @@ msgstr "Το αρχείο δεν βρέθηκε"
 msgid "The decryption key used:"
 msgstr "Το κλειδί αποκρυπτογράφησης που χρησιμοποιήθηκε είναι το:"
 
-#: src/class-updraftplus.php:4151,
-#: src/includes/class-updraftplus-encryption.php:337, src/restorer.php:719
+#: src/class-updraftplus.php:4189,
+#: src/includes/class-updraftplus-encryption.php:337, src/restorer.php:741
 msgid "Decryption failed. The most likely cause is that you used the wrong key."
 msgstr "Η αποκρυπτογράφηση απέτυχε. Η πιο πιθανή αιτία είναι ότι χρησιμοποιήσατε λάθος κλειδί."
 
-#: src/class-updraftplus.php:4139,
-#: src/includes/class-updraftplus-encryption.php:319, src/restorer.php:706
+#: src/class-updraftplus.php:4177,
+#: src/includes/class-updraftplus-encryption.php:319, src/restorer.php:728
 msgid "Decryption failed. The database file is encrypted, but you have no encryption key entered."
 msgstr "Η αποκρυπτογράφηση απέτυχε. Το αρχείο της βάσης δεδομένων είναι κρυπτογραφημένο αλλά δεν έχει εισαχθεί κανένα κλειδί κρυπτογράφησης."
 
-#: src/backup.php:2142
+#: src/backup.php:2168
 msgid "Could not open the backup file for writing"
 msgstr "Αδυναμία ανοίγματος του αρχείου του αντιγράφου ασφαλείας για εγγραφή"
 
-#: src/class-updraftplus.php:3462
+#: src/class-updraftplus.php:3470
 msgid "Could not save backup history because we have no backup array. Backup probably failed."
 msgstr "Δεν ήταν δυνατή η αποθήκευση του ιστορικού των αντιγράφων ασφαλείας επειδή δεν υπάρχει πίνακας αντιγράφων ασφαλείας. Η δημιουργία αντιγράφων ασφαλείας πιθανώς απέτυχε."
 
-#: src/class-updraftplus.php:3423
+#: src/class-updraftplus.php:3430
 msgid "Could not read the directory"
 msgstr "Αδυναμία ανάγνωσης του φακέλου"
 
-#: src/admin.php:2091, src/backup.php:1323
+#: src/admin.php:2135, src/backup.php:1349
 msgid "Backup directory (%s) is not writable, or does not exist."
 msgstr "Ο φάκελος (%s) των αντιγράφων ασφαλείας δεν είναι εγγράψιμος ή δεν υπάρχει."
 
-#: src/backup.php:1100
+#: src/backup.php:1126
 msgid "WordPress backup is complete"
 msgstr "Η λήψη αντιγράφων ασφαλείας του WordPress ολοκληρώθηκε"
 
-#: src/class-updraftplus.php:2973
+#: src/class-updraftplus.php:2980
 msgid "The backup attempt has finished, apparently unsuccessfully"
 msgstr "Η προσπάθεια για τη λήψη αντιγράφων ασφαλείας τελείωσε, προφανώς όμως ανεπιτυχώς"
 
-#: src/class-updraftplus.php:2958
+#: src/class-updraftplus.php:2965
 msgid "The backup apparently succeeded and is now complete"
 msgstr "Η διαδικασία λήψης αντιγράφων ασφαλείας ξεκίνησε και ολοκληρώθηκε επιτυχώς"
 
@@ -6952,7 +6991,7 @@ msgstr "Η διαδικασία λήψης αντιγράφων ασφαλεία
 msgid "Encryption error occurred when encrypting database. Encryption aborted."
 msgstr "Παρουσιάστηκε σφάλμα κρυπτογράφησης κατά την κρυπτογράφηση της βάσης δεδομένων. Η κρυπτογράφηση ματαιώθηκε."
 
-#: src/class-updraftplus.php:2674
+#: src/class-updraftplus.php:2679
 msgid "Could not create files in the backup directory. Backup aborted - check your UpdraftPlus settings."
 msgstr "Αδυναμία δημιουργίας αρχείων στο φάκελο των αντιγράφων ασφαλείας. Η δημιουργία αντιγράφων ασφαλείας ματαιώθηκε - ελέγξτε τις ρυθμίσεις του UpdraftPlus."
 
@@ -6976,7 +7015,7 @@ msgstr "Πρόσθετα"
 msgid "No log files were found."
 msgstr "Δεν βρέθηκε κανένα αρχείο καταγραφής."
 
-#: src/admin.php:1961, src/admin.php:1965, src/class-updraftplus.php:679
+#: src/admin.php:2005, src/admin.php:2009, src/class-updraftplus.php:679
 msgid "The log file could not be read."
 msgstr "Το αρχείο καταγραφής δεν μπορεί να διαβαστεί."
 
