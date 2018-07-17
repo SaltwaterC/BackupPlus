@@ -91,9 +91,49 @@ class UpdraftPlus_Clone extends UpdraftPlus_Login {
 	 * @return array      - The response from the request
 	 */
 	public function create_clone($data) {
-		global $updraftplus;
+		global $updraftplus, $table_prefix;
 
 		$action = 'updraftplus_clone_create';
+		if (empty($data['site_url'])) $data['site_url'] = trailingslashit(network_site_url());
+		if (empty($data['install_info']['table_prefix'])) $data['install_info']['table_prefix'] = $table_prefix;
+		if (empty($data['install_info']['subdirectory'])) $data['install_info']['subdirectory'] = parse_url(network_site_url(), PHP_URL_PATH);
+		if (is_multisite()) {
+			$data['install_info']['multisite'] = true;
+			$data['install_info']['multisite_subdomain_install'] = is_subdomain_install();
+		}
+
+		$response = $this->send_remote_request($data, $action);
+		if (is_wp_error($response)) {
+			$response = array('error' => true, 'code' => $response->get_error_code(), 'message' => $response->get_error_message());
+		} else {
+			if (isset($response['status'])) {
+				if ('error' === $response['status']) {
+					$response = array(
+						'error' => true,
+						'code' => isset($response['code']) ? $response['code'] : -1,
+						'message' => isset($response['message']) ? $response['message'] : $this->translate_message('generic'),
+						'response' => $response
+					);
+				}
+			} else {
+				$response = array('error' => true, 'message' => $this->translate_message('generic'));
+			}
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Executes the clone restore complete process. Connects and sends request to the UpdraftPlus clone and returns the response coming from the server
+	 *
+	 * @internal
+	 * @param array $data - The submitted form data
+	 * @return array      - The response from the request
+	 */
+	public function clone_restore_complete($data) {
+		global $updraftplus;
+
+		$action = 'clone_complete';
 		if (empty($data['site_url'])) $data['site_url'] = trailingslashit(network_site_url());
 
 		$response = $this->send_remote_request($data, $action);

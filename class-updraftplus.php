@@ -67,7 +67,7 @@ class UpdraftPlus {
 	 * Class constructor
 	 */
 	public function __construct() {
-
+		global $pagenow;
 		// Initialisation actions - takes place on plugin load
 
 		if ($fp = fopen(UPDRAFTPLUS_DIR.'/updraftplus.php', 'r')) {
@@ -83,6 +83,12 @@ class UpdraftPlus {
 			'UpdraftPlus_Encryption' => 'includes/class-updraftplus-encryption.php',
 			'UpdraftPlus_Manipulation_Functions' => 'includes/class-manipulation-functions.php'
 		);
+
+		if (defined('UPDRAFTPLUS_THIS_IS_CLONE') && UPDRAFTPLUS_THIS_IS_CLONE) {
+			$load_classes['UpdraftPlus_Temporary_Clone_Dash_Notice'] = 'includes/updraftplus-temporary-clone-dash-notice.php';
+			$load_classes['UpdraftPlus_Temporary_Clone_User_Notice'] = 'includes/updraftplus-temporary-clone-user-notice.php';
+			$load_classes['UpdraftPlus_Temporary_Clone_Commands'] = 'includes/updraftplus-temporary-clone-commands.php';
+		}
 		
 		foreach ($load_classes as $class => $relative_path) {
 			if (!class_exists($class)) include_once(UPDRAFTPLUS_DIR.'/'.$relative_path);
@@ -128,7 +134,12 @@ class UpdraftPlus {
 		if (!empty($_POST) && !empty($_GET['udm_action']) && 'vault_disconnect' == $_GET['udm_action'] && !empty($_POST['udrpc_message']) && !empty($_POST['reset_hash'])) {
 			add_action('wp_loaded', array($this, 'wp_loaded_vault_disconnect'), 1);
 		}
-
+		
+		// Remove the notice on the Updates page that confuses users who already have backups installed
+		if ('update-core.php' == $pagenow) {
+			// added filter here instead of admin.php because the  jetpack_just_in_time_msgs filter applied in init hook
+			add_filter('jetpack_just_in_time_msgs', '__return_false', 20);
+		}
 	}
 
 	
@@ -2494,6 +2505,53 @@ class UpdraftPlus {
 		$this->jobdata = null;
 	}
 
+	/**
+	 * This function will update the database backup jobdata and set each entity to finished or encrypted to prevent that entity from being backed up again. This will also return the blog name that the database backup belongs to, just in case it's from another site.
+	 *
+	 * @param array $db_backups - the database backup jobdata
+	 * @param array $backup     - the backup history for this backup
+	 *
+	 * @return array            - an array that contains the updated database backup jobdata and the blog name
+	 */
+	public function update_database_jobdata($db_backups, $backup) {
+		
+		$backup_database_info = array(
+			'blog_name' => '',
+			'db_backups' => $db_backups
+		);
+
+		/*
+			We need to tweak the database array here by setting each database entity to finished or encrypted if it's an encrypted archive.
+			I also grab the backups blog name here ready to be used later, just in case this backup set is from another site.
+		*/
+		foreach ($db_backups as $key => $db_info) {
+			$status = 'finished';
+			$db_index = ('wp' == $key) ? 0 : $key;
+
+			if (isset($backup['db'][$db_index])) {
+				$db_backup_name = $backup['db'][$db_index];
+				
+				if (preg_match('/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $db_backup_name, $matches)) {
+					$backup_database_info['blog_name'] = $matches[2];
+				}
+
+				if (UpdraftPlus_Encryption::is_file_encrypted($db_backup_name)) $status = 'encrypted';
+
+				if (is_array($db_info) && isset($db_info['status'])) {
+					$db_backups[$key]['status'] = $status;
+				} else {
+					$db_backups[$key] = $status;
+				}
+			} else {
+				unset($db_backups[$key]);
+			}
+		}
+
+		$backup_database_info['db_backups'] = $db_backups;
+
+		return $backup_database_info;
+	}
+
 	private function ensure_semaphore_exists($semaphore) {
 		// Make sure the options for semaphores exist
 		global $wpdb;
@@ -2644,7 +2702,7 @@ class UpdraftPlus {
 	 * @return string       - the backup nonce
 	 */
 	public function incremental_backup_file_nonce($nonce) {
-		if (!empty($this->file_nonce)) return $this->file_nonce;
+		if (apply_filters('updraftplus_incremental_addon_installed', false) && !empty($this->file_nonce)) return $this->file_nonce;
 		return $nonce;
 	}
 
@@ -3380,7 +3438,7 @@ class UpdraftPlus {
 		$dirlist = array();
 		$added = 0;
 
-		$this->log('Looking for candidates to back up in: '.$backup_from_inside_dir);
+		$this->log('Looking for candidates to backup in: '.$backup_from_inside_dir);
 		$updraft_dir = $this->backups_dir_location();
 
 		if (is_file($backup_from_inside_dir)) {
@@ -3451,6 +3509,7 @@ class UpdraftPlus {
 			$backup_array['service'] = $this->jobdata_get('service');
 			$backup_array['service_instance_ids'] = array();
 			$backup_array['always_keep'] = $this->jobdata_get('always_keep', false);
+			$backup_array['files_enumerated_at'] = $this->jobdata_get('files_enumerated_at');
 			
 			// N.B. Though the saved 'service' option can have various forms (especially if upgrading from (very) old versions), in the jobdata, it is always an array.
 			$storage_objects_and_ids = $this->get_enabled_storage_objects_and_ids($backup_array['service']);
@@ -3468,7 +3527,7 @@ class UpdraftPlus {
 			if (is_array($remotesend_info) && !empty($remotesend_info['url'])) $backup_array['remotesend_url'] = $remotesend_info['url'];
 			if (false != ($autobackup = $this->jobdata_get('is_autobackup', false))) $backup_array['autobackup'] = true;
 			
-			UpdraftPlus_Backup_History::save_backup($this->backup_time, $backup_array);
+			UpdraftPlus_Backup_History::save_backup(apply_filters('updraftplus_backup_timestamp', $this->backup_time), $backup_array);
 			
 		} else {
 			$this->log('Could not save backup history because we have no backup array. Backup probably failed.');
@@ -4372,6 +4431,8 @@ class UpdraftPlus {
 					$skipped_tables = explode(',', $matches[1]);
 				}
 
+			} elseif (preg_match('#/\*\!40\d+ SET NAMES (.*)\*\/#i', $buffer, $smatches)) {
+				$db_charsets_found[] = rtrim($smatches[1]);
 			} elseif (preg_match('/^\s*create table \`?([^\`\(]*)\`?\s*\(/i', $buffer, $matches)) {
 				$table = $matches[1];
 				$tables_found[] = $table;
@@ -4827,7 +4888,7 @@ class UpdraftPlus {
 
 		foreach ($dbsinfo as $key => $value) {
 			if ('wp' == $key) {
-				// The table prefix after being filtered - i.e. what filters what we'll actually back up
+				// The table prefix after being filtered - i.e. what filters what we'll actually backup
 				$table_prefix = $this->get_table_prefix(true);
 				// The unfiltered table prefix - i.e. the real prefix that things are relative to
 				$table_prefix_raw = $this->get_table_prefix(false);

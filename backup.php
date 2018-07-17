@@ -182,7 +182,7 @@ class UpdraftPlus_Backup {
 				if (!function_exists('get_mu_plugins')) include_once(ABSPATH.'wp-admin/includes/plugin.php');
 				$mu_plugins = get_mu_plugins();
 				if (count($mu_plugins) == 0) {
-					$updraftplus->log("There appear to be no mu-plugins to back up. Will not raise an error.");
+					$updraftplus->log("There appear to be no mu-plugins to backup. Will not raise an error.");
 					$flag_error = false;
 				}
 			}
@@ -1462,7 +1462,7 @@ class UpdraftPlus_Backup {
 							// Now, store the results
 							if (!is_string($created) && !is_array($created)) $updraftplus->log("$youwhat: create_zip returned an error");
 						} else {
-							$updraftplus->log("No backup of $youwhat: there was nothing found to back up");
+							$updraftplus->log("No backup of $youwhat: there was nothing found to backup");
 						}
 					}
 
@@ -1576,7 +1576,7 @@ class UpdraftPlus_Backup {
 
 		if ('wp' == $this->whichdb) {
 			$this->wpdb_obj = $wpdb;
-			// The table prefix after being filtered - i.e. what filters what we'll actually back up
+			// The table prefix after being filtered - i.e. what filters what we'll actually backup
 			$this->table_prefix = $updraftplus->get_table_prefix(true);
 			// The unfiltered table prefix - i.e. the real prefix that things are relative to
 			$this->table_prefix_raw = $updraftplus->get_table_prefix(false);

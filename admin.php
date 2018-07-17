@@ -67,6 +67,15 @@ class UpdraftPlus_Admin {
 
 	}
 
+	/**
+	 * Output, or return, the results of running a template (from the 'templates' directory, unless a filter over-rides it). Templates are run with $updraftplus, $updraftplus_admin and $wpdb set.
+	 *
+	 * @param String  $path					  - path to the template
+	 * @param Boolean $return_instead_of_echo - by default, the template is echo-ed; set this to instead return it
+	 * @param Array	  $extract_these		  - variables to inject into the template's run context
+	 *
+	 * @return Void|String
+	 */
 	public function include_template($path, $return_instead_of_echo = false, $extract_these = array()) {
 		if ($return_instead_of_echo) ob_start();
 
@@ -78,9 +87,7 @@ class UpdraftPlus_Admin {
 			}
 		}
 
-		if (!isset($template_file)) {
-			$template_file = UPDRAFTPLUS_DIR.'/templates/'.$path;
-		}
+		if (!isset($template_file)) $template_file = UPDRAFTPLUS_DIR.'/templates/'.$path;
 
 		$template_file = apply_filters('updraftplus_template', $template_file, $path);
 
@@ -408,7 +415,7 @@ class UpdraftPlus_Admin {
 	 * Sets up what is needed to allow an in-page backup to be run. Will enqueue scripts and output appropriate HTML (so, should be run when at a suitable place). Not intended for use on the UpdraftPlus settings page.
 	 *
 	 * @param string   $title    Text to use for the title of the modal
-	 * @param callable $callback Callable function to output the contents of the updraft_inpage_prebackup element - i.e. what shows in the modal before a backup beings.
+	 * @param callable $callback Callable function to output the contents of the updraft_inpage_prebackup element - i.e. what shows in the modal before a backup begins.
 	 */
 	public function add_backup_scaffolding($title, $callback) {
 		$this->admin_enqueue_scripts();
@@ -545,7 +552,7 @@ class UpdraftPlus_Admin {
 		
 		$args = array(
 			'id' => 'updraft_admin_node_status',
-			'title' => __('Current Status', 'updraftplus').' / '.__('Backup Now', 'updraftplus'),
+			'title' => __('Current Status', 'updraftplus').' / '.str_ireplace('Back Up', 'Backup', __('Backup Now', 'updraftplus')),
 			'parent' => 'updraft_admin_node',
 			'href' => $option_location.'?page=updraftplus&tab=status'
 		);
@@ -671,6 +678,7 @@ class UpdraftPlus_Admin {
 			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
 		}
 		$remote_storage_options_and_templates = $updraftplus->get_remote_storage_options_and_templates();
+		$main_tabs = $this->get_main_tabs_array();
 		wp_localize_script('updraftplus-admin', 'updraftlion', array(
 			'sendonlyonwarnings' => __('Send a report only when there are warnings/errors', 'updraftplus'),
 			'wholebackup' => __('When the Email storage method is enabled, also send the backup', 'updraftplus'),
@@ -721,7 +729,8 @@ class UpdraftPlus_Admin {
 			'unknownresp' => __('Unknown server response:', 'updraftplus'),
 			'ukrespstatus' => __('Unknown server response status:', 'updraftplus'),
 			'uploaded' => __('The file was uploaded.', 'updraftplus'),
-			'backupnow' => __('Backup Now', 'updraftplus'),
+			// One of the translators has erroneously changed "Backup" into "Back up" (which means, "reverse" !)
+			'backupnow' => str_ireplace('Back Up', 'Backup', __('Backup Now', 'updraftplus')),
 			'cancel' => __('Cancel', 'updraftplus'),
 			'deletebutton' => __('Delete', 'updraftplus'),
 			'createbutton' => __('Create', 'updraftplus'),
@@ -818,6 +827,7 @@ class UpdraftPlus_Admin {
 			'data_consent_required' => __('You need to read and accept the UpdraftCentral Cloud data and privacy policies before you can proceed.', 'updraftplus'),
 			'close_wizard' => __('You can also close this wizard.', 'updraftplus'),
 			'control_udc_connections' => __('For future control of all your UpdraftCentral connections, go to the "Advanced Tools" tab.', 'updraftplus'),
+			'main_tabs_keys' => array_keys($main_tabs),
 		));
 	}
 	
@@ -992,12 +1002,13 @@ class UpdraftPlus_Admin {
 	}
 
 	public function show_admin_warning_unwritable() {
-		$unwritable_mess = htmlspecialchars(__("The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option).", 'updraftplus'));
+		// One of the translators has erroneously changed "Backup" into "Back up" (which means, "reverse" !)
+		$unwritable_mess = htmlspecialchars(str_ireplace('Back Up', 'Backup', __("The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option).", 'updraftplus')));
 		$this->show_admin_warning($unwritable_mess, "error");
 	}
 	
 	public function show_admin_nosettings_warning() {
-		$this->show_admin_warning('<strong>'.__('Welcome to UpdraftPlus!', 'updraftplus').'</strong> '.__('To make a backup, just press the Backup Now button.', 'updraftplus').' <a href="#" id="updraft-navtab-settings2">'.__('To change any of the default settings of what is backed up, to configure scheduled backups, to send your backups to remote storage (recommended), and more, go to the settings tab.', 'updraftplus').'</a>', 'updated notice is-dismissible');
+		$this->show_admin_warning('<strong>'.__('Welcome to UpdraftPlus!', 'updraftplus').'</strong> '.str_ireplace('Back Up', 'Backup', __('To make a backup, just press the Backup Now button.', 'updraftplus')).' <a href="#" id="updraft-navtab-settings2">'.__('To change any of the default settings of what is backed up, to configure scheduled backups, to send your backups to remote storage (recommended), and more, go to the settings tab.', 'updraftplus').'</a>', 'updated notice is-dismissible');
 	}
 
 	public function show_admin_warning_execution_time() {
@@ -2532,16 +2543,8 @@ class UpdraftPlus_Admin {
 			}
 
 			$tabflag = 'status';
-			$main_tabs = apply_filters(
-				'updraftplus_main_tabs',
-				array(
-					'status' => __('Current Status', 'updraftplus'),
-					'backups' => __('Existing Backups', 'updraftplus').' ('.count($backup_history).')',
-					'settings' => __('Settings', 'updraftplus'),
-					'expert' => __('Advanced Tools', 'updraftplus'),
-					'addons' => __('Premium / Extensions', 'updraftplus'),
-				)
-			);
+			$backup_count = count($backup_history);
+			$main_tabs = $this->get_main_tabs_array($backup_count);
 			
 			if (isset($_REQUEST['tab'])) {
 				$request_tab = sanitize_text_field($_REQUEST['tab']);
@@ -2572,6 +2575,16 @@ class UpdraftPlus_Admin {
 				$this->settings_downloading_and_restoring($backup_history, false, $tmp_opts);
 				$this->include_template('wp-admin/settings/delete-and-restore-modals.php');
 				$this->include_template('wp-admin/settings/upload-backups-modal.php');
+			?>
+		</div>
+		
+		<div id="updraft-navtab-migrate-content"<?php if ('migrate' != $tabflag) echo ' class="updraft-hidden"'; ?> style="<?php if ('expert' != $tabflag) echo 'display:none;'; ?>">
+			<?php
+			if (has_action('updraftplus_migrate_tab_output')) {
+				do_action('updraftplus_migrate_tab_output');
+			} else {
+				$this->include_template('wp-admin/settings/migrator-no-migrator.php');
+			}
 			?>
 		</div>
 		
@@ -2665,7 +2678,32 @@ class UpdraftPlus_Admin {
 		// settings_header() opens a div
 		echo '</div>';
 	}
-
+	
+	/**
+	 * Get main tabs array
+	 *
+	 * @param Integer|Boolean $backup_count No. of backup exist or false by default
+	 * @return Array Array which have key as a tab key and value as tab label
+	 */
+	private function get_main_tabs_array($backup_count = false) {
+		if (false === $backup_count) {
+			$backups_label_postfix = '';
+		} else {
+			$backups_label_postfix = ' ('.$backup_count.')';
+		}
+		return apply_filters(
+			'updraftplus_main_tabs',
+			array(
+				'status' => __('Current Status', 'updraftplus'),
+				'backups' => __('Existing Backups', 'updraftplus').$backups_label_postfix,
+				'migrate' => __('Migrate / Clone', 'updraftplus'),
+				'settings' => __('Settings', 'updraftplus'),
+				'expert' => __('Advanced Tools', 'updraftplus'),
+				'addons' => __('Premium / Extensions', 'updraftplus'),
+			)
+		);
+	}
+	
 	private function print_restore_in_progress_box_if_needed() {
 		$restore_in_progress = get_site_option('updraft_restore_in_progress');
 		if (!empty($restore_in_progress)) {
@@ -2788,7 +2826,7 @@ class UpdraftPlus_Admin {
 					<th><?php _e('Password', 'updraftplus'); ?></th>
 					<td>
 						<label for="<?php echo $option_page; ?>'_options_password">
-							<input id="<?php echo $option_page; ?>_options_password" type="password" size="36" name="<?php echo $option_page; ?>_options[password]" value="<?php echo htmlspecialchars($options['password']); ?>" />
+							<input id="<?php echo $option_page; ?>_options_password" type="password" size="36" name="<?php echo $option_page; ?>_options[password]" value="<?php echo empty($options['password']) ? '' : htmlspecialchars($options['password']); ?>" />
 							<br/>
 							<a href="https://updraftplus.com/my-account/?action=lostpassword"><?php _e('Forgotten your details?', 'updraftplus'); ?></a>
 						</label>
@@ -2813,7 +2851,8 @@ class UpdraftPlus_Admin {
 	}
 
 	/**
-	 * Return widgetry for the 'backup now' modal
+	 * Return widgetry for the 'backup now' modal.
+	 * Don't optimise this method away; it's used by third-party plugins (e.g. EUM).
 	 *
 	 * @return String
 	 */
@@ -4183,34 +4222,7 @@ ENDHERE;
 			if (isset($backup[$entity.'-size'])) $file_backups[$entity.'-size'] = $backup[$entity.'-size'];
 		}
 
-		$blog_name = '';
-
-		/*
-			We need to tweak the database array here by setting each database entity to finished or encrypted if it's an encrypted archive.
-			I also grab the backups blog name here ready to be used later, just in case this backup set is from another site.
-		*/
-		foreach ($db_backups as $key => $db_info) {
-			$status = 'finished';
-			$db_index = ('wp' == $key) ? 0 : $key;
-
-			if (isset($backup['db'][$db_index])) {
-				$db_backup_name = $backup['db'][$db_index];
-				
-				if (preg_match('/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $db_backup_name, $matches)) {
-					$blog_name = $matches[2];
-				}
-
-				if (UpdraftPlus_Encryption::is_file_encrypted($db_backup_name)) $status = 'encrypted';
-
-				if (is_array($db_info) && isset($db_info['status'])) {
-					$db_backups[$key]['status'] = $status;
-				} else {
-					$db_backups[$key] = $status;
-				}
-			} else {
-				unset($db_backups[$key]);
-			}
-		}
+		$db_backup_info = $updraftplus->update_database_jobdata($db_backups, $backup);
 		
 		// Next we need to build the services array using the remote storage destinations the user has selected to upload this backup set to
 		$selected_services = array();
@@ -4225,8 +4237,8 @@ ENDHERE;
 		$jobdata[] = 'backup_files_array';
 		$jobdata[] = $file_backups;
 		$jobdata[] = 'blog_name';
-		$jobdata[] = $blog_name;
-		$jobdata[$backup_database_key] = $db_backups;
+		$jobdata[] = $db_backup_info['blog_name'];
+		$jobdata[$backup_database_key] = $db_backup_info['db_backups'];
 		if (!empty($selected_services)) $jobdata[$service_key] = $selected_services;
 		
 		

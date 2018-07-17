@@ -331,6 +331,7 @@ abstract class UpdraftPlus_RemoteSend {
 			}
 
 			$ret .= apply_filters('updraft_backupnow_modal_afteroptions', '', 'remotesend_');
+			$ret .= '<button class="button-primary" style="height:30px; font-size:16px; margin-left: 3px; width:85px;" id="updraft_migrate_send_button" onclick="updraft_migrate_go_backup();">'.__('Send', 'updraftplus').'</button>';
 
 			echo json_encode(array('success' => 1, 'r' => $ret));
 		} catch (Exception $e) {
