@@ -20,6 +20,7 @@ $premv = UPDRAFTPLUS_URL.'/images/updraft_premv.png';
 						<li><a target="_blank" href="<?php echo apply_filters('updraftplus_com_link', "https://updraftplus.com/ask-a-pre-sales-question/");?>"><?php _e('Ask a pre-sales question', 'updraftplus');?></a></li>
 						<li><a target="_blank" href="<?php echo apply_filters('updraftplus_com_link', "https://updraftplus.com/support/");?>"><?php _e('Support', 'updraftplus');?></a></li>
 						<li><a href="#other-plugins"><?php _e('Other great plugins', 'updraftplus');?></a></li>
+						<li><a href="https://www.simbahosting.co.uk/s3/shop/"><?php _e('WooCommerce plugins', 'updraftplus');?></a></li>
 					</ul>
 				</div>
 				<a target="_blank" class="button button-primary button-hero" href="<?php echo apply_filters('updraftplus_com_link', "https://updraftplus.com/shop/updraftplus-premium/");?>"><?php _e('Get it here', 'updraftplus');?></a>
