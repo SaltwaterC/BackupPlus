@@ -353,7 +353,7 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 					if (file_exists($this->path)) {
 						$new_size = @filesize($this->path);
 						if (!$something_useful_happened && $new_size > $orig_size + 20) {
-							$updraftplus->something_useful_happened();
+							UpdraftPlus_Job_Scheduler::something_useful_happened();
 							$something_useful_happened = true;
 						}
 						clearstatcache();
