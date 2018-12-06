@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.0
-Stable tag: 1.15.6
+Stable tag: 1.15.7
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -161,7 +161,11 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.15.6.x of the free version correspond to changes made in 2.15.6.x of the paid version.
+N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.15.7.x of the free version correspond to changes made in 2.15.6.x of the paid version.
+
+= 1.15.7 - 06/Dec/2018 =
+
+* FIX: a method call on an incorrect class which caused a fatal error
 
 = 1.15.6 - 06/Dec/2018 =
 
@@ -692,5 +696,5 @@ Furthermore, reliance upon any non-English translation is at your own risk. Updr
 We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
 
 == Upgrade Notice ==
-* 1.15.6: Various small/minor improvements, including ability to clone a WP 5.0 site, and scheduling improvements on some very large sites. A recommended update for all.
+* 1.15.7: Various small/minor improvements, including ability to clone a WP 5.0 site, and scheduling improvements on some very large sites. A recommended update for all.
 

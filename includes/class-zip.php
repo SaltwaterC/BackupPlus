@@ -347,7 +347,7 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 					// Logging all this really slows things down; use debug to mitigate
 					if ($w && $updraftplus_backup->debug) $updraftplus->log("Output from zip: ".trim($w), 'debug');
 					if (time() > $last_recorded_alive + 5) {
-						$updraftplus->record_still_alive();
+						UpdraftPlus_Job_Scheduler::record_still_alive();
 						$last_recorded_alive = time();
 					}
 					if (file_exists($this->path)) {
