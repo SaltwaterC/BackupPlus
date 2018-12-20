@@ -52,12 +52,17 @@ On our website, we've got a whole page dedicated to how our Premium version comp
 
 The free version of UpdraftPlus works just fine, but if you need more features and options you can purchase our Premium version. Here are some of the many features of UpdraftPlus Premium:
 
+* Incremental backups
 * Easily duplicates or migrates websites (with Migrator)
 * Multisite/multi-network compatible
 * Backs up non WP files and databases to multiple remote destinations
+* More storage destinations (e.g. OneDrive, BackBlaze, Azure, SFTP) and multiple destinations
+* Database encrpytion
+* Advanced reporting
+* Supports WP-CLI
 * Free dedicated expert support
 
-Find out more on our comparison page. UpdraftPlus Premium is available for purchase <a href="https://updraftplus.com/shop/">here</a>
+Find out more <a href="https://updraftplus.com/comparison-updraftplus-free-updraftplus-premium/">on our comparison page</a>. UpdraftPlus Premium is available for purchase <a href="https://updraftplus.com/shop/">here</a>
 
 = Managing multiple website backups =
 
@@ -165,7 +170,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 
 = 1.16.0 - 19/Dec/2018 =
 
-* FEATURE: Added the abilty to create and restore Incremental Backups
+* FEATURE: Added the abilty to create and restore Incremental Backups (Premium version)
 * FIX: Work around an issue with 'SSH2 Server Host Key Algorithm Mismatch' occurring with the current phpseclib release by temporarily reverting to an earlier one
 * TWEAK: Improve performance by aggregating separate SQL SELECT queries (previously one for each backup) when loading the settings page
 * TWEAK: internal backup extradata parameter to prevent unwanted PHP notices
