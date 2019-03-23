@@ -514,6 +514,10 @@ class UpdraftPlus_Admin {
 			include_once(UPDRAFTPLUS_DIR.'/includes/updraftplus-tour.php');
 		}
 
+		if ('index.php' == $GLOBALS['pagenow'] && UpdraftPlus_Options::user_can_manage()) {
+			add_action('admin_print_footer_scripts', array($this, 'admin_index_print_footer_scripts'));
+		}
+		
 		// Next, the actions that only come on the UpdraftPlus page
 		if (UpdraftPlus_Options::admin_page() != $pagenow || empty($_REQUEST['page']) || 'updraftplus' != $_REQUEST['page']) return;
 		$this->setup_all_admin_notices_udonly($service);
@@ -560,6 +564,20 @@ class UpdraftPlus_Admin {
 		}
 	}
 
+	/**
+	 * Runs upon the WP action admin_print_footer_scripts if an entitled user is on the main WP dashboard page
+	 */
+	public function admin_index_print_footer_scripts() {
+		?>
+		<script>
+			jQuery(document).ready(function($) {
+				if ($('#dashboard-widgets #dashboard_php_nag').length < 1) return;
+				$('#dashboard-widgets #dashboard_php_nag .button-container').before('<a href="<?php echo UpdraftPlus_Options::admin_page_url(); ?>?page=updraftplus&amp;tab=migrate"><?php echo esc_js(__('You can test running your site on a different PHP (or WordPress) version using UpdraftClone credits.', 'updraftplus')); ?></a>');
+			});
+		</script>
+		<?php
+	}
+	
 	/**
 	 * Sets up what is needed to allow an in-page backup to be run. Will enqueue scripts and output appropriate HTML (so, should be run when at a suitable place). Not intended for use on the UpdraftPlus settings page.
 	 *
