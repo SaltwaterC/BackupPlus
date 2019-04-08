@@ -830,5 +830,6 @@ Furthermore, reliance upon any non-English translation is at your own risk. Updr
 
 We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
 
+
 == Upgrade Notice ==
 * 1.16.11: Small tweaks and fixes. A recommended update for all.
