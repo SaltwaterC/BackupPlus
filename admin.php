@@ -19,7 +19,7 @@ class UpdraftPlus_Admin {
 
 	private $php_versions = array('5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3');
 
-	private $wp_versions = array('3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4.0', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '5.0');
+	private $wp_versions = array('3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4.0', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '5.0', '5.1');
 	
 	private $regions = array('London', 'New York', 'San Francisco', 'Amsterdam', 'Singapore', 'Frankfurt', 'Toronto', 'Bangalore');
 
@@ -507,6 +507,8 @@ class UpdraftPlus_Admin {
 			'dismiss_confirm' => __('Are you sure you want to dismiss all UpdraftPlus news forever?', 'updraftplus'),
 		);
 		
+		add_filter('woocommerce_in_plugin_update_message', array($this, 'woocommerce_in_plugin_update_message'));
+		
 		$updraftplus_dashboard_news = new Updraft_Dashboard_News('https://feeds.feedburner.com/updraftplus/', 'https://updraftplus.com/news/', $news_translations);
 		
 		// New-install admin tour
@@ -565,6 +567,17 @@ class UpdraftPlus_Admin {
 	}
 
 	/**
+	 * Runs upon the WP action woocommerce_in_plugin_update_message
+	 *
+	 * @param String $msg - the message that WooCommerce will print
+	 *
+	 * @return String - filtered value
+	 */
+	public function woocommerce_in_plugin_update_message($msg) {
+		return '<br><strong>'.__('You can test upgrading your site on an instant copy using UpdraftClone credits', 'updraftplus').' - <a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&amp;tab=migrate#updraft-navtab-migrate-content">'.__('go here', 'updraftplus').'</a></strong>'.$msg;
+	}
+
+	/**
 	 * Runs upon the WP action admin_print_footer_scripts if an entitled user is on the main WP dashboard page
 	 */
 	public function admin_index_print_footer_scripts() {
@@ -572,7 +585,7 @@ class UpdraftPlus_Admin {
 		<script>
 			jQuery(document).ready(function($) {
 				if ($('#dashboard-widgets #dashboard_php_nag').length < 1) return;
-				$('#dashboard-widgets #dashboard_php_nag .button-container').before('<a href="<?php echo UpdraftPlus_Options::admin_page_url(); ?>?page=updraftplus&amp;tab=migrate"><?php echo esc_js(__('You can test running your site on a different PHP (or WordPress) version using UpdraftClone credits.', 'updraftplus')); ?></a>');
+				$('#dashboard-widgets #dashboard_php_nag .button-container').before('<a href="<?php echo UpdraftPlus_Options::admin_page_url(); ?>?page=updraftplus&amp;tab=migrate#updraft-navtab-migrate-content"><?php echo esc_js(__('You can test running your site on a different PHP (or WordPress) version using UpdraftClone credits.', 'updraftplus')); ?></a>');
 			});
 		</script>
 		<?php
@@ -4423,15 +4436,15 @@ ENDHERE;
 	public function prepare_restore() {
 
 		global $updraftplus;
+
+		// on restore start job_id is empty but if we needed file system permissions or this is a resumption then we have already started a job so reuse it
+		$restore_job_id = empty($_REQUEST['job_id']) ? false : $_REQUEST['job_id'];
+
+		// Set up nonces, log files etc.
+		$updraftplus->initiate_restore_job($restore_job_id);
 		
 		// If this is the start of a restore then get the restore data from the posted data and put it into jobdata.
 		if (isset($_REQUEST['action']) && 'updraft_restore' == $_REQUEST['action']) {
-
-			// on restore start job_id is empty but if we needed file system permissions then we have already started a job so reuse it
-			$restore_job_id = empty($_REQUEST['job_id']) ? false : $_REQUEST['job_id'];
-
-			// Set up nonces, log files etc.
-			$updraftplus->initiate_restore_job($restore_job_id);
 			
 			if (empty($restore_job_id)) {
 				$jobdata_to_save = array();
