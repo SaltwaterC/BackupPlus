@@ -530,6 +530,8 @@ class UpdraftPlus_Filesystem_Functions {
 			$updraftplus->log(sprintf(__('Unzip progress: %d out of %d files', 'updraftplus').' (%s, %s)', $i+1, $num_files, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($size_written), $info['name']), 'notice-restore');
 			$updraftplus->log(sprintf('Unzip progress: %d out of %d files (%s, %s)', $i+1, $num_files, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($size_written), $info['name']), 'notice');
 			
+			do_action('updraftplus_unzip_progress_restore_info', $file, $i, $size_written, $num_files);
+
 			$last_logged_bytes = $size_written;
 			$last_logged_index = $i;
 			$last_logged_time = time();

@@ -453,6 +453,8 @@ class UpdraftPlus_Admin {
 		add_action('wp_ajax_updraft_ajax', array($this, 'updraft_ajax_handler'));
 		add_action('wp_ajax_updraft_ajaxrestore', array($this, 'updraft_ajaxrestore'));
 		add_action('wp_ajax_nopriv_updraft_ajaxrestore', array($this, 'updraft_ajaxrestore'));
+		add_action('wp_ajax_updraft_ajaxrestore_continue', array($this, 'updraft_ajaxrestore'));
+		add_action('wp_ajax_nopriv_updraft_ajaxrestore_continue', array($this, 'updraft_ajaxrestore'));
 		
 		add_action('wp_ajax_plupload_action', array($this, 'plupload_action'));
 		add_action('wp_ajax_plupload_action2', array($this, 'plupload_action2'));
@@ -977,7 +979,10 @@ class UpdraftPlus_Admin {
 				.'	<a href="'.apply_filters('updraftplus_com_link', 'https://updraftplus.com/updraftvault/').'" target="_blank">'.__('Find out more here.', 'updraftplus').'</a>'
 				.'</p>'
 				.'<p><a href="'.apply_filters('updraftplus_com_link', $updraftplus->get_url('shop_vault_5')).'" target="_blank" '.$checkout_embed_5gb_trial_attribute.' class="button button-primary">'.__('Try it - 1 month for $1!', 'updraftplus').'</a></p>',
-			'login_udc_no_licences_short' => __('No UpdraftCentral licences were available. Continuing to connect to account.')
+			'login_udc_no_licences_short' => __('No UpdraftCentral licences were available. Continuing to connect to account.'),
+			'credentials' => __('credentials', 'updraftplus'),
+			'username' => __('Username', 'updraftplus'),
+			'password' => __('Password', 'updraftplus'),
 
 		));
 	}
@@ -1979,7 +1984,15 @@ class UpdraftPlus_Admin {
 			global $updraftplus;
 			$cron = get_option('cron', array());
 			$found_it = false;
-		
+
+			$jobdata = $updraftplus->jobdata_getarray($job_id);
+			
+			if (!empty($jobdata['clone_job']) && !empty($jobdata['clone_id']) && !empty($jobdata['secret_token'])) {
+				$clone_id = $jobdata['clone_id'];
+				$secret_token = $jobdata['secret_token'];
+				$updraftplus->get_updraftplus_clone()->clone_failed_delete(array('clone_id' => $clone_id, 'secret_token' => $secret_token));
+			}
+
 			$updraft_dir = $updraftplus->backups_dir_location();
 			if (file_exists($updraft_dir.'/log.'.$job_id.'.txt')) touch($updraft_dir.'/deleteflag-'.$job_id.'.txt');
 			
@@ -4492,7 +4505,7 @@ ENDHERE;
 
 		if (!empty($_REQUEST['updraftplus_ajax_restore'])) add_filter('updraftplus_logline', array($this, 'updraftplus_logline'), 10, 5);
 		
-		$is_continuation = ('updraft_restore_continue' == $_REQUEST['action']) ? true : false;
+		$is_continuation = ('updraft_ajaxrestore_continue' == $_REQUEST['action']) ? true : false;
 
 		if ($is_continuation) {
 			$restore_in_progress = get_site_option('updraft_restore_in_progress');
@@ -4581,6 +4594,7 @@ ENDHERE;
 		$debug = $updraftplus->use_unminified_scripts();
 		$enqueue_version = $debug ? $updraftplus->version . '.' . time() : $updraftplus->version;
 		$min_or_not = $debug ? '' : '.min';
+		$ajax_action = isset($_REQUEST['updraftplus_ajax_restore']) && 'continue_ajax_restore' == $_REQUEST['updraftplus_ajax_restore'] ? 'updraft_ajaxrestore_continue' : 'updraft_ajaxrestore';
 
 		wp_enqueue_script('updraft-admin-restore', UPDRAFTPLUS_URL . '/js/updraft-admin-restore' . $min_or_not . '.js', array(), $enqueue_version);
 
@@ -4591,6 +4605,7 @@ ENDHERE;
 		
 		if ($debug) echo '<input type="hidden" id="updraftplus_ajax_restore_debug" name="updraftplus_ajax_restore_debug" value="1">';
 		echo '<input type="hidden" id="updraftplus_ajax_restore_job_id" name="updraftplus_restore_job_id" value="' . $updraftplus->nonce . '">';
+		echo '<input type="hidden" id="updraftplus_ajax_restore_action" name="updraftplus_restore_action" value="' . $ajax_action . '">';
 		echo '<div id="updraftplus_ajax_restore_progress" style="display: none;"></div>';
 		echo '<div id="updraftplus_ajax_restore_output"></div>';
 	}
@@ -4727,6 +4742,8 @@ ENDHERE;
 		$restore_result = $updraftplus_restorer->perform_restore($entities_to_restore, $restore_options);
 		
 		$updraftplus_restorer->post_restore_clean_up($restore_result);
+
+		$updraftplus->log_restore_update(array('type' => 'state', 'stage' => 'finished', 'data' => array()));
 		
 		return $restore_result;
 	}
@@ -5133,9 +5150,7 @@ ENDHERE;
 
 		foreach ($settings as $s) UpdraftPlus_Options::delete_updraft_option($s);
 
-		// These aren't in get_settings_keys() because they are always in the options table, regardless of context
-		global $wpdb;
-		$wpdb->query("DELETE FROM $wpdb->options WHERE (option_name LIKE 'updraftplus_unlocked_%' OR option_name LIKE 'updraftplus_locked_%' OR option_name LIKE 'updraftplus_last_lock_time_%' OR option_name LIKE 'updraftplus_semaphore_%' OR option_name LIKE 'updraft_jobdata_%' OR option_name LIKE 'updraft_last_scheduled_%' )");
+		$updraftplus->wipe_state_data(true);
 
 		$site_options = array('updraft_oneshotnonce');
 		foreach ($site_options as $s) delete_site_option($s);
@@ -5474,21 +5489,22 @@ ENDHERE;
 			if (!$backup_local) unset($backup_history[$key]);
 		}
 
-		if (!empty($backup_history)) {
-			$output .= '<p class="updraftplus-option updraftplus-option-inline updraftclone-backup">';
-			$output .= ' <span class="updraftplus-option-label">'.__('Clone:', 'updraftplus').'</span> ';
-			$output .= '<select id="updraftplus_clone_backup_options" name="updraftplus_clone_backup_options">';
-			$output .= '<option value="current" data-nonce="current" data-timestamp="current" selected="selected">'. __('This current site', 'updraftplus') .'</option>';
+		
+		$output .= '<p class="updraftplus-option updraftplus-option-inline updraftclone-backup">';
+		$output .= ' <span class="updraftplus-option-label">'.__('Clone:', 'updraftplus').'</span> ';
+		$output .= '<select id="updraftplus_clone_backup_options" name="updraftplus_clone_backup_options">';
+		$output .= '<option value="current" data-nonce="current" data-timestamp="current" selected="selected">'. __('This current site', 'updraftplus') .'</option>';
+		$output .= '<option value="wp_only" data-nonce="wp_only" data-timestamp="wp_only">'. __('An empty WordPress install', 'updraftplus') .'</option>';
 
+		if (!empty($backup_history)) {
 			foreach ($backup_history as $key => $backup) {
 				$pretty_date = get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $key), 'M d, Y G:i');
 				$label = isset($backup['label']) ? ' ' . $backup['label'] : '';
 				$output .= '<option value="'.$key. '" data-nonce="'.$backup['nonce'].'" data-timestamp="'.$key.'">' . $pretty_date . $label . '</option>';
 			}
-
-			$output .= '</select>';
-			$output .= '</p>';
 		}
+		$output .= '</select>';
+		$output .= '</p>';
 
 		if ((defined('UPDRAFTPLUS_UPDRAFTCLONE_DEVELOPMENT') && UPDRAFTPLUS_UPDRAFTCLONE_DEVELOPMENT) || $is_admin_user) {
 			$output .= '<p class="updraftplus-option updraftplus-option-inline updraftclone-branch">';

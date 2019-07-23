@@ -1470,7 +1470,7 @@ function ud_parse_json(json_mix_str, analyse) {
 		try {
 			var parsed = JSON.parse(json_str);
 			if (!analyse) { console.log('UpdraftPlus: JSON re-parse successful'); }
-			return analyse ? { parsed: parsed, json_start_pos: json_start_pos, json_last_pos: json_last_pos } : parsed;
+			return analyse ? { parsed: parsed, json_start_pos: json_start_pos, json_last_pos: json_last_pos + 1 } : parsed;
 		} catch (e) {
 			console.log('UpdraftPlus: Exception when trying to parse JSON (2) - will attempt to fix/re-parse based upon bracket counting');
 			 
@@ -2090,6 +2090,15 @@ jQuery(document).ready(function($) {
 		var updraftclone_branch = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_updraftclone_branch').val();
 		var updraftplus_branch = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_updraftplus_branch').val();
 		var admin_only = $('.updraftplus_clone_admin_login_options').is(':checked');
+
+		var backup_nonce = 'current';
+		var backup_timestamp = 'current';
+		var clone_backup_select_length = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_backup_options').length;
+		var clone_backup_select = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_backup_options').find('option:selected');
+		if (0 !== clone_backup_select_length && 'undefined' !== typeof clone_backup_select) {
+			backup_nonce = clone_backup_select.data('nonce');
+			backup_timestamp = clone_backup_select.data('timestamp');
+		}
 		
 		var options = {
 			form_data: {
@@ -2105,6 +2114,10 @@ jQuery(document).ready(function($) {
 				}
 			}
 		};
+
+		if ('wp_only' === backup_nonce) {
+			options['form_data']['install_info']['wp_only'] = 1;
+		}
 		
 		updraft_send_command('process_updraftplus_clone_create', options, function (response) {
 			try {
@@ -2120,17 +2133,14 @@ jQuery(document).ready(function($) {
 					$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content .updraft_migrate_widget_temporary_clone_stage2').hide();
 					$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content .updraft_migrate_widget_temporary_clone_stage3').show();
 					$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content .updraft_migrate_widget_temporary_clone_stage3').html(response.html);
-					jQuery('#updraft_clone_progress .updraftplus_spinner.spinner').addClass('visible');
-					
-					var backup_nonce = 'current';
-					var backup_timestamp = 'current';
-					var clone_backup_select_length = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_backup_options').length;
-					var clone_backup_select = $('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraftplus_clone_backup_options').find('option:selected');
-					if (0 !== clone_backup_select_length && 'undefined' !== typeof clone_backup_select) {
-						backup_nonce = clone_backup_select.data('nonce');
-						backup_timestamp = clone_backup_select.data('timestamp');
+
+					if ('wp_only' === backup_nonce) {
+						jQuery('#updraft_clone_progress .updraftplus_spinner.spinner').addClass('visible');
+						temporary_clone_poll(clone_id, secret_token);
+					} else {
+						jQuery('#updraft_clone_progress .updraftplus_spinner.spinner').addClass('visible');
+						temporary_clone_boot_backup(clone_id, secret_token, response.url, response.key, backup_nonce, backup_timestamp);
 					}
-					temporary_clone_boot_backup(clone_id, secret_token, response.url, response.key, backup_nonce, backup_timestamp);
 				}
 			} catch (err) {
 				$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraft_migrate_createclone').prop('disabled', false);
@@ -2472,6 +2482,42 @@ jQuery(document).ready(function($) {
 			
 			updraft_activejobs_update(true);
 		});
+	}
+
+	/**
+	 * This function will send an AJAX request to the backend to poll for the clones install information
+	 *
+	 * @param {string} clone_id     - the clone id
+	 * @param {string} secret_token - the clone secret
+	 */
+	function temporary_clone_poll(clone_id, secret_token) {
+		var options = {
+			clone_id: clone_id,
+			secret_token: secret_token,
+		};
+
+		setTimeout(function () {
+			updraft_send_command('process_updraftplus_clone_poll', options, function (response) {
+				if (response.hasOwnProperty('status')) {
+					
+					if ('error' == response.status) {
+						$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content .updraftplus_clone_status').html(updraftlion.error + ' ' + response.message).show();
+						return;
+					}
+
+					if ('success' === response.status) {
+						if (response.hasOwnProperty('data') && response.data.hasOwnProperty('wordpress_credentials')) {
+							$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content .updraftplus_spinner.spinner').removeClass('visible');
+							$('#updraft-navtab-migrate-content .updraft_migrate_widget_module_content #updraft_clone_progress').append('<br>WordPress ' + updraftlion.credentials + ':<br>' + updraftlion.username + ': ' + response.data.wordpress_credentials.username + '<br>' + updraftlion.password + ': ' + response.data.wordpress_credentials.password);
+							return;
+						}
+					}
+				} else {
+					console.log(response);
+				}
+				temporary_clone_poll(clone_id, secret_token);
+			});
+		}, 60000);
 	}
 
 	$('#updraft-navtab-settings-content #remote-storage-holder').on('click', '.updraftplusmethod a.updraft_add_instance', function(e) {
