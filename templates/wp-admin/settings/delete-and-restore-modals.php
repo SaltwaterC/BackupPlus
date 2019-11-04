@@ -66,10 +66,9 @@
 
 								foreach ($backupable_entities as $type => $info) {
 									if (!isset($info['restorable']) || true == $info['restorable']) {
-										echo '<div class="updraft-restore-item"><input id="updraft_restore_'.$type.'" type="checkbox" name="updraft_restore[]" value="'.$type.'"> <label id="updraft_restore_label_'.$type.'" for="updraft_restore_'.$type.'">'.$info['description'].'</label><br>';
-
+										$sdescrip = isset($info['shortdescription']) ? $info['shortdescription'] : $info['description'];
+										echo '<div class="updraft-restore-item"><input id="updraft_restore_'.$type.'" type="checkbox" name="updraft_restore[]" value="'.$type.'"> <label id="updraft_restore_label_'.$type.'" for="updraft_restore_'.$type.'">'.$sdescrip.'</label><br>';
 										do_action("updraftplus_restore_form_$type");
-
 										echo '</div>';
 									} else {
 										$sdescrip = isset($info['shortdescription']) ? $info['shortdescription'] : $info['description'];
