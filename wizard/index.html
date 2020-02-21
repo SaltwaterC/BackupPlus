@@ -1,0 +1,98 @@
+?>
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" type="text/css" href="../../dist-wizard/style.min.css" inline>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+		<title>UpdraftPlus Restorer</title>
+	</head>
+	<body>
+		<div class="container-fluid" id="app">
+			<div class="row">
+				<div class="col-xs-3 col-sm-3 col-md-3 col-lg-3"></div>
+				<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+					<div class="logo">
+						<img class="updraftplus_logo" src='data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5Ny44NSA5Ny44NSI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNkZTY3MjY7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5MT0dPXzI8L3RpdGxlPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTE0Ni40OSw3OS43OGwuMTItLjA2aDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTE5LjE4IC03NC43NCkiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNjguMTEsNzQuNzRhNDguNzMsNDguNzMsMCwwLDAtMTYuOTMsM2gwYTQ0LjI2LDQ0LjI2LDAsMCwwLTQuNTcsMmMxLjU2LS43MywyLjc4Ljg4LDIuODYsMy42NnY0MC4yOWExOC42NCwxOC42NCwwLDAsMCwzNy4yOCwwVjEwNEgxODFsMTIuOTEtMTUuNTQuMjQtLjI5LjE0LS4xNywxMy4zLDE2aC01Ljc1djE3LjgyYzAsLjYsMCwxLjIsMCwxLjhhMzMuNzgsMzMuNzgsMCwwLDEtNjcuNTcsMHEwLS44MSwwLTEuNjJWOTQuNjljMC00LTEuOTUtNC4zMS0yLjU5LTMuNzVsMCwwYTQ4LjkxLDQ4LjkxLDAsMSwwLDM2LjM1LTE2LjIxWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTExOS4xOCAtNzQuNzQpIi8+PC9zdmc+'
+						/>
+					</div>
+					<div class="card">
+						<div class="card-body">
+							<div class="border-bottom">
+								<h2 class="text-center">UpdraftPlus Restorer</h2>
+							</div>
+
+							<p>Welcome to the UpdraftPlus Restorer. To get started, please make sure all your backup files are located in the same directory as this script. Then, please enter the requested information below.</p>
+							<form>
+								<div class="form-group row" v-bind:class="{ 'has-error': state.accessError }">
+									<label for="host" class="col-xs-4 col-sm-4 col-md-4 col-lg-4 col-form-label">Database host:</label>
+									<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<input v-model="host" type="text" id="host" class="form-control" :disabled="loading" placeholder="Database host">
+										<span v-if="state.accessError" class="form-text">{{ state.accessError }}</span>
+									</div>
+								</div>
+								<div class="form-group row" v-bind:class="{ 'has-error': state.authError }">
+									<label for="username" class="col-xs-4 col-sm-4 col-md-4 col-lg-4 col-form-label">Database username:</label>
+									<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<input v-model="username" type="text" id="username" class="form-control" :disabled="loading" placeholder="Database username">
+									</div>
+								</div>
+								<div class="form-group row" v-bind:class="{ 'has-error': state.authError }">
+									<label for="password" class="col-xs-4 col-sm-4 col-md-4 col-lg-4 col-form-label">Database password:</label>
+									<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<input v-model="password" type="text" id="password" class="form-control" :disabled="loading" placeholder="Database password">
+										<span v-if="state.authError" class="form-text">{{ state.authError }}</span>
+									</div>
+								</div>
+								<div class="form-group row" v-bind:class="{ 'has-error': state.databaseError }">
+									<label for="name" class="col-xs-4 col-sm-4 col-md-4 col-lg-4 col-form-label">Database name:</label>
+									<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<input v-model="name" type="text" id="name" class="form-control" :disabled="loading" placeholder="Database name">
+										<span v-if="state.databaseError" class="form-text">{{ state.databaseError }}</span>
+									</div>
+								</div>
+								<div class="form-group row" v-bind:class="{ 'has-error': state.decryptionError }">
+									<label for="decryption" class="col-xs-4 col-sm-4 col-md-4 col-lg-4 col-form-label">Database decryption phrase:</label>
+									<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<input v-model="decryption" type="text" id="decryption" class="form-control" :disabled="loading" placeholder="Database decryption phrase">
+										<span v-if="state.decryptionError" class="form-text">{{ state.decryptionError }}</span>
+									</div>
+								</div>
+								<div class="form-group row">
+									<div class="col-xs-offset-4 col-sm-offset-4 col-md-offset-4 col-lg-offset-4 col-xs-8 col-sm-8 col-md-8 col-lg-8">
+										<button class="btn btn-secondary" v-on:click="verify" :disabled="loading">Start restore</button>
+									</div>
+								</div>
+							</form>
+							<div v-if="loading" class="progress">
+								<div class="progress-bar progress-bar-striped bg-success active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" :style="{width: progress + '%'}">
+									<span class="sr-only">{{ progress }} %</span>
+									{{ progress }} %
+								</div>
+							</div>
+							<div v-if="state.error" class="alert alert-danger" role="alert">
+								{{ state.error }}
+							</div>
+						</div>
+					</div>
+
+
+					<div class="log">
+						<input class="log__checkbox" id="show-log" type="checkbox" />
+						<div class="log__container">
+							<pre>
+								<p v-for="item in log">{{ item }}</p>
+							</pre>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-3 col-sm-3 col-md-3 col-lg-3"></div>
+				<label class="log__button" for="show-log">Toggle log</label>
+			</div>
+		</div>
+
+		<script src="../../dist-wizard/vue.min.js" inline></script>
+		<script src="../../dist-wizard/index.min.js" inline></script>
+	</body>
+</html>
