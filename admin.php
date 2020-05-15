@@ -784,6 +784,7 @@ class UpdraftPlus_Admin {
 			$selected = '';
 			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
 		}
+		$backup_methods = $updraftplus->backup_methods;
 		$remote_storage_options_and_templates = UpdraftPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
 		$main_tabs = $this->get_main_tabs_array();
 
@@ -805,6 +806,7 @@ class UpdraftPlus_Admin {
 			'excludedeverything' => __('If you exclude both the database and the files, then you have excluded everything!', 'updraftplus'),
 			'nofileschosen' => __('You have chosen to backup files, but no file entities have been selected', 'updraftplus'),
 			'notableschosen' => __('You have chosen to backup a database, but no tables have been selected', 'updraftplus'),
+			'nocloudserviceschosen' => __('You have chosen to send this backup to remote storage, but no remote storage locations have been selected', 'updraftplus'),
 			'restore_proceeding' => __('The restore operation has begun. Do not close your browser until it reports itself as having finished.', 'updraftplus'),
 			'unexpectedresponse' => __('Unexpected response:', 'updraftplus'),
 			'servererrorcode' => __('The web server returned an error code (try again, or check your web server logs)', 'updraftplus'),
@@ -926,6 +928,7 @@ class UpdraftPlus_Admin {
 			// For remote storage handlebarsjs template
 			'remote_storage_options' => $remote_storage_options_and_templates['options'],
 			'remote_storage_templates' => $remote_storage_options_and_templates['templates'],
+			'remote_storage_methods' => $backup_methods,
 			'instance_enabled' => __('Currently enabled', 'updraftplus'),
 			'instance_disabled' => __('Currently disabled', 'updraftplus'),
 			'local_upload_started' => __('Local backup upload has started; please check the log file to see the upload progress', 'updraftplus'),
@@ -2180,6 +2183,20 @@ class UpdraftPlus_Admin {
 
 		$entities = !empty($request['onlythisfileentity']) ? explode(',', $request['onlythisfileentity']) : array();
 
+		$remote_storage_instances = array();
+
+		// if only_these_cloud_services is not an array then all connected remote storage locations are being backed up to and we don't need to do this
+		if (!empty($request['only_these_cloud_services']) && is_array($request['only_these_cloud_services'])) {
+			$remote_storage_locations = $request['only_these_cloud_services'];
+			
+			foreach ($remote_storage_locations as $key => $value) {
+				/*
+					This name key inside the value array is the remote storage method name prefixed by 31 characters (updraft_include_remote_service_) so we need to remove them to get the actual name, then the value key inside the value array has the instance id.
+				*/
+				$remote_storage_instances[substr($value['name'], 31)][$key] = $value['value'];
+			}
+		}
+
 		$incremental = $request['incremental'] ? apply_filters('updraftplus_prepare_incremental_run', false, $entities) : false;
 
 		// The call to backup_time_nonce() allows us to know the nonce in advance, and return it
@@ -2220,6 +2237,8 @@ class UpdraftPlus_Admin {
 		}
 
 		if (!empty($request['extradata'])) $options['extradata'] = $request['extradata'];
+
+		if (!empty($remote_storage_instances)) $options['remote_storage_instances'] = $remote_storage_instances;
 		
 		$options['always_keep'] = !empty($request['always_keep']);
 
@@ -2488,7 +2507,18 @@ class UpdraftPlus_Admin {
 				if ($wh = fopen($updraft_dir.'/'.$final_file, 'wb')) {
 					for ($i = 0; $i < $_POST['chunks']; $i++) {
 						$rf = $updraft_dir.'/'.$final_file.'.'.$i.'.zip.tmp';
-						if ($rh = fopen($rf, 'rb')) {
+						if ($rh = fopen($rf, 'rb+')) {
+
+							// April 1st 2020 - Due to a bug during uploads to Dropbox some backups had string "null" appended to the end which caused warnings, this removes the string "null" from these backups
+							fseek($rh, -4, SEEK_END);
+							$data = fgets($rh, 5);
+							
+							if ("null" === $data) {
+								ftruncate($rh, filesize($rf) - 4);
+							}
+
+							fseek($rh, 0, SEEK_SET);
+							
 							while ($line = fread($rh, 262144)) {
 								fwrite($wh, $line);
 							}
@@ -3380,6 +3410,8 @@ class UpdraftPlus_Admin {
 
 		$began_at = isset($jobdata['backup_time']) ? get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $jobdata['backup_time']), 'D, F j, Y H:i') : '?';
 
+		$backup_label = !empty($jobdata['label']) ? $jobdata['label'] : '';
+
 		$remote_sent = (!empty($jobdata['service']) && ((is_array($jobdata['service']) && in_array('remotesend', $jobdata['service'])) || 'remotesend' === $jobdata['service'])) ? true : false;
 
 		$jobstatus = empty($jobdata['jobstatus']) ? 'unknown' : $jobdata['jobstatus'];
@@ -3523,7 +3555,7 @@ class UpdraftPlus_Admin {
 
 		$clone_url = empty($jobdata['clone_url']) ? false : true;
 		
-		$ret .= '" data-jobid="'.$job_id.'" data-lastactivity="'.(int) $last_checkin_ago.'" data-nextresumption="'.$next_resumption.'" data-nextresumptionafter="'.$next_res_after.'" title="'.esc_attr(sprintf(__('Job ID: %s', 'updraftplus'), $job_id)).$title_info.'">'.$began_at.
+		$ret .= '" data-jobid="'.$job_id.'" data-lastactivity="'.(int) $last_checkin_ago.'" data-nextresumption="'.$next_resumption.'" data-nextresumptionafter="'.$next_res_after.'" title="'.esc_attr(sprintf(__('Job ID: %s', 'updraftplus'), $job_id)).$title_info.'">'.(!empty($backup_label) ? esc_html($backup_label) : $began_at).
 		'</div></div>';
 
 		$ret .= '<div class="updraft_col updraft_progress_container">';
@@ -5099,20 +5131,46 @@ ENDHERE;
 		die;
 	}
 	
+	/**
+	 * This function will get a list of remote storage methods with valid connection details and create a HTML list of checkboxes
+	 *
+	 * @return String - HTML checkbox list of remote storage methods with valid connection details
+	 */
 	private function backup_now_remote_message() {
 		global $updraftplus;
 		
+		$all_services = UpdraftPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array_keys($updraftplus->backup_methods));
+		$active_remote_storage_list = '';
+		
+		foreach ($all_services as $method => $sinfo) {
+			if (empty($sinfo['object']) || empty($sinfo['instance_settings']) || !is_callable(array($sinfo['object'], 'options_exist'))) continue;
+			$instance_count = 1;
+			foreach ($sinfo['instance_settings'] as $instance => $opt) {
+				if ($sinfo['object']->options_exist($opt)) {
+					$instance_count_label = (1 == $instance_count) ? '' : ' ('.$instance_count.')';
+					$label = empty($opt['instance_label']) ? $sinfo['object']->get_description() . $instance_count_label : $opt['instance_label'];
+					$checked = empty($opt['instance_enabled']) ? 'data-instance_disabled="true"' : 'checked="checked"';
+					$active_remote_storage_list .= '<input class="updraft_remote_service_entity" id="'.$method.'updraft_service_'.$instance.'" ' . $checked . ' type="checkbox" name="updraft_include_remote_service_'. $method . '" value="'.$instance.'"> <label for="'.$method.'updraft_service_'.$instance.'">'.$label.'</label><br>';
+					$instance_count++;
+				}
+			}
+		}
+
 		$service = $updraftplus->just_one(UpdraftPlus_Options::get_updraft_option('updraft_service'));
 		if (is_string($service)) $service = array($service);
 		if (!is_array($service)) $service = array();
 
 		$no_remote_configured = (empty($service) || array('none') === $service || array('') === $service) ? true : false;
 
-		if ($no_remote_configured) {
+		if ($no_remote_configured && empty($active_remote_storage_list)) {
 			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>'.sprintf(__("Backup won't be sent to any remote storage - none has been saved in the %s", 'updraftplus'), '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&amp;tab=settings" id="updraft_backupnow_gotosettings">'.__('settings', 'updraftplus')).'</a>. '.__('Not got any remote storage?', 'updraftplus').' <a href="'.apply_filters('updraftplus_com_link', "https://updraftplus.com/landing/vault/").'" target="_blank">'.__("Check out UpdraftPlus Vault.", 'updraftplus').'</a></em>';
-		} else {
-			return '<input type="checkbox" id="backupnow_includecloud" checked="checked"> <label for="backupnow_includecloud">'.__("Send this backup to remote storage", 'updraftplus').'</label>';
 		}
+
+		if (empty($active_remote_storage_list)) {
+			$active_remote_storage_list = '<p>'.__('No remote storage locations with valid options found.', 'updraftplus').'</p>';
+		}
+
+		return '<input type="checkbox" id="backupnow_includecloud" checked="checked"> <label for="backupnow_includecloud">'.__("Send this backup to remote storage", 'updraftplus').'</label> (<a href="'.$updraftplus->get_current_clean_url().'" id="backupnow_includecloud_showmoreoptions">...</a>)<br><div id="backupnow_includecloud_moreoptions" class="updraft-hidden" style="display:none;"><em>'. __('The following remote storage options are configured.', 'updraftplus').'</em><br>'.$active_remote_storage_list.'</div>';
 	}
 	
 	/**
@@ -5715,18 +5773,18 @@ ENDHERE;
 		}
 		$output .= '</select>';
 		$output .= '</p>';
+		$output .= '<p class="updraftplus-option updraftplus-option-inline package">';
+		$output .= ' <span class="updraftplus-option-label">'.__('Clone package:', 'updraftplus').'</span> ';
+		$output .= '<select id="updraftplus_clone_package_options" name="updraftplus_clone_package_options" data-package_version="starter">';
+		foreach ($supported_packages as $key => $value) {
+			$output .= '<option value="'.esc_attr($key).'" data-size="'.esc_attr($value).'"';
+			if ('starter' == $key) $output .= 'selected="selected"';
+			$output .= ">".htmlspecialchars($key) . ('starter' == $key ? ' ' . __('(current version)', 'updraftplus') : '')."</option>\n";
+		}
+		$output .= '</select>';
+		$output .= '</p>';
 
 		if ((defined('UPDRAFTPLUS_UPDRAFTCLONE_DEVELOPMENT') && UPDRAFTPLUS_UPDRAFTCLONE_DEVELOPMENT) || $is_admin_user) {
-			$output .= '<p class="updraftplus-option updraftplus-option-inline package">';
-			$output .= ' <span class="updraftplus-option-label">'.__('Clone package:', 'updraftplus').'</span> ';
-			$output .= '<select id="updraftplus_clone_package_options" name="updraftplus_clone_package_options" data-package_version="starter">';
-			foreach ($supported_packages as $key => $value) {
-				$output .= "<option value=\"$key\" data-size=\"$value\"";
-				if ('starter' == $key) $output .= 'selected="selected"';
-				$output .= ">".htmlspecialchars($key) . ('starter' == $key ? ' ' . __('(current version)', 'updraftplus') : '')."</option>\n";
-			}
-			$output .= '</select>';
-			$output .= '</p>';
 			$output .= '<p class="updraftplus-option updraftplus-option-inline updraftclone-branch">';
 			$output .= ' <span class="updraftplus-option-label">UpdraftClone Branch:</span> ';
 			$output .= '<input id="updraftplus_clone_updraftclone_branch" type="text" size="36" name="updraftplus_clone_updraftclone_branch" value="">';

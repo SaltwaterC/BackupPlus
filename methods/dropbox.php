@@ -94,6 +94,18 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 	}
 
 	/**
+	 * Check whether options have been set up by the user, or not
+	 *
+	 * @param Array $opts - the potential options
+	 *
+	 * @return Boolean
+	 */
+	public function options_exist($opts) {
+		if (is_array($opts) && !empty($opts['tk_access_token'])) return true;
+		return false;
+	}
+
+	/**
 	 * Acts as a WordPress options filter
 	 *
 	 * @param  Array $dropbox - An array of Dropbox options
