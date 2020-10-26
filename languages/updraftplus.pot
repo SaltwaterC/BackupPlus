@@ -761,7 +761,7 @@ msgstr ""
 msgid "Otherwise, you can leave it blank."
 msgstr ""
 
-#: src/addons/googlecloud.php:1055, src/addons/migrator.php:491, src/addons/migrator.php:494, src/addons/migrator.php:497, src/admin.php:1225, src/admin.php:2756, src/backup.php:3673, src/class-updraftplus.php:4868, src/class-updraftplus.php:4868, src/updraftplus.php:157
+#: src/addons/googlecloud.php:1055, src/addons/migrator.php:491, src/addons/migrator.php:494, src/addons/migrator.php:497, src/admin.php:1225, src/admin.php:2756, src/backup.php:3671, src/class-updraftplus.php:4868, src/class-updraftplus.php:4868, src/updraftplus.php:157
 msgid "Go here for more information."
 msgstr ""
 
@@ -1097,7 +1097,7 @@ msgstr ""
 msgid "other content from wp-content"
 msgstr ""
 
-#: src/addons/migrator.php:497, src/addons/multisite.php:732
+#: src/addons/migrator.php:497, src/addons/multisite.php:734
 msgid "Must-use plugins"
 msgstr ""
 
@@ -1243,11 +1243,11 @@ msgstr ""
 msgid "rows: %d"
 msgstr ""
 
-#: src/addons/migrator.php:1539, src/backup.php:486, src/backup.php:2363, src/class-updraftplus.php:2352, src/class-updraftplus.php:2419, src/includes/class-storage-methods-interface.php:369, src/restorer.php:587
+#: src/addons/migrator.php:1539, src/backup.php:484, src/backup.php:2361, src/class-updraftplus.php:2352, src/class-updraftplus.php:2419, src/includes/class-storage-methods-interface.php:369, src/restorer.php:587
 msgid "A PHP exception (%s) has occurred: %s"
 msgstr ""
 
-#: src/addons/migrator.php:1546, src/backup.php:492, src/backup.php:2372, src/class-updraftplus.php:2361, src/class-updraftplus.php:2426, src/includes/class-storage-methods-interface.php:378, src/restorer.php:601
+#: src/addons/migrator.php:1546, src/backup.php:490, src/backup.php:2370, src/class-updraftplus.php:2361, src/class-updraftplus.php:2426, src/includes/class-storage-methods-interface.php:378, src/restorer.php:601
 msgid "A PHP fatal error (%s) has occurred: %s"
 msgstr ""
 
@@ -1359,7 +1359,7 @@ msgstr ""
 msgid "database connection attempt failed"
 msgstr ""
 
-#: src/addons/moredatabase.php:136, src/backup.php:1487
+#: src/addons/moredatabase.php:136, src/backup.php:1485
 msgid "Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled."
 msgstr ""
 
@@ -1664,7 +1664,7 @@ msgstr ""
 msgid "(Nothing has been logged yet)"
 msgstr ""
 
-#: src/addons/multisite.php:96, src/addons/multisite.php:776, src/options.php:84
+#: src/addons/multisite.php:96, src/addons/multisite.php:778, src/options.php:84
 msgid "UpdraftPlus Backups"
 msgstr ""
 
@@ -1672,27 +1672,27 @@ msgstr ""
 msgid "Multisite Install"
 msgstr ""
 
-#: src/addons/multisite.php:503, src/class-updraftplus.php:1974
+#: src/addons/multisite.php:505, src/class-updraftplus.php:1974
 msgid "Uploads"
 msgstr ""
 
-#: src/addons/multisite.php:641
+#: src/addons/multisite.php:643
 msgid "Which site to restore"
 msgstr ""
 
-#: src/addons/multisite.php:645
+#: src/addons/multisite.php:647
 msgid "All sites"
 msgstr ""
 
-#: src/addons/multisite.php:650
+#: src/addons/multisite.php:652
 msgid "may include some site-wide data"
 msgstr ""
 
-#: src/addons/multisite.php:659
+#: src/addons/multisite.php:661
 msgid "Read more..."
 msgstr ""
 
-#: src/addons/multisite.php:739
+#: src/addons/multisite.php:741
 msgid "Blog uploads"
 msgstr ""
 
@@ -3405,7 +3405,7 @@ msgstr ""
 msgid "No local copy present."
 msgstr ""
 
-#: src/admin.php:2469, src/backup.php:1240
+#: src/admin.php:2469, src/backup.php:1238
 msgid "Backup directory (%s) is not writable, or does not exist."
 msgstr ""
 
@@ -4016,111 +4016,111 @@ msgstr ""
 msgid "Could not create %s zip. Consult the log file for more information."
 msgstr ""
 
-#: src/backup.php:1487
+#: src/backup.php:1485
 msgid "database connection attempt failed."
 msgstr ""
 
-#: src/backup.php:1537
+#: src/backup.php:1535
 msgid "please wait for the rescheduled attempt"
 msgstr ""
 
-#: src/backup.php:1539
+#: src/backup.php:1537
 msgid "No database tables found"
 msgstr ""
 
-#: src/backup.php:1550
+#: src/backup.php:1548
 msgid "The backup directory is not writable (or disk space is full) - the database backup is expected to shortly fail."
 msgstr ""
 
-#: src/backup.php:1605
+#: src/backup.php:1603
 msgid "Failed to open directory for reading:"
 msgstr ""
 
-#: src/backup.php:1652
+#: src/backup.php:1650
 msgid "Table %s has very many rows (%s) - we hope your web hosting company gives you enough resources to dump out that table in the backup"
 msgstr ""
 
-#: src/backup.php:1652
+#: src/backup.php:1650
 msgid "If not, you will need to either remove data from this table, or contact your hosting company to request more resources."
 msgstr ""
 
-#: src/backup.php:1709
+#: src/backup.php:1707
 msgid "Failed to backup database table:"
 msgstr ""
 
-#: src/backup.php:1751, src/backup.php:1753
+#: src/backup.php:1749, src/backup.php:1751
 msgid "The database backup appears to have failed"
 msgstr ""
 
-#: src/backup.php:1751
+#: src/backup.php:1749
 msgid "no options or sitemeta table was found"
 msgstr ""
 
-#: src/backup.php:1753
+#: src/backup.php:1751
 msgid "the options table was not found"
 msgstr ""
 
-#: src/backup.php:1801
+#: src/backup.php:1799
 msgid "Failed to open database file for reading:"
 msgstr ""
 
-#: src/backup.php:1873
+#: src/backup.php:1871
 msgid "An error occurred whilst closing the final database file"
 msgstr ""
 
-#: src/backup.php:2087
+#: src/backup.php:2085
 msgid "Error getting table details"
 msgstr ""
 
-#: src/backup.php:2410
+#: src/backup.php:2408
 msgid "Could not open the backup file for writing"
 msgstr ""
 
-#: src/backup.php:2425, src/backup.php:2429
+#: src/backup.php:2423, src/backup.php:2427
 msgid "There was an error writing a line to the backup script:"
 msgstr ""
 
-#: src/backup.php:2523
+#: src/backup.php:2521
 msgid "Infinite recursion: consult your log for more information"
 msgstr ""
 
-#: src/backup.php:2556
+#: src/backup.php:2554
 msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
 msgstr ""
 
-#: src/backup.php:2578
+#: src/backup.php:2576
 msgid "Failed to open directory (check the file permissions and ownership): %s"
 msgstr ""
 
-#: src/backup.php:2643
+#: src/backup.php:2641
 msgid "%s: unreadable file - could not be backed up"
 msgstr ""
 
-#: src/backup.php:3329, src/backup.php:3622
+#: src/backup.php:3327, src/backup.php:3620
 msgid "Failed to open the zip file (%s) - %s"
 msgstr ""
 
-#: src/backup.php:3355
+#: src/backup.php:3353
 msgid "A very large file was encountered: %s (size: %s Mb)"
 msgstr ""
 
-#: src/backup.php:3666, src/class-updraftplus.php:966
+#: src/backup.php:3664, src/class-updraftplus.php:966
 msgid "Your free space in your hosting account is very low - only %s Mb remain"
 msgstr ""
 
-#: src/backup.php:3673
+#: src/backup.php:3671
 msgid "The zip engine returned the message: %s."
 msgstr ""
 
-#: src/backup.php:3675
+#: src/backup.php:3673
 msgid "A zip error occurred"
 msgstr ""
 
-#: src/backup.php:3677
+#: src/backup.php:3675
 msgid "your web hosting account appears to be full; please see: %s"
 msgstr ""
 
-#: src/backup.php:3679
+#: src/backup.php:3677
 msgid "check your log for more details."
 msgstr ""
 

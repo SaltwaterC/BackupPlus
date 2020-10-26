@@ -353,13 +353,12 @@ class UpdraftPlus_Backup {
 	public function do_prune_standalone() {
 		global $updraftplus;
 
-		$services = $updraftplus->just_one($updraftplus->jobdata_get('service'));
-		if (!is_array($services)) $services = array($services);
+		$services = (array) $updraftplus->just_one($updraftplus->jobdata_get('service'));
 
 		$prune_services = array();
 
 		foreach ($services as $ind => $service) {
-			if ("none" == $service || '' == $service) continue;
+			if ('none' === $service || '' == $service) continue;
 
 			$objname = "UpdraftPlus_BackupModule_${service}";
 			if (!class_exists($objname) && file_exists(UPDRAFTPLUS_DIR.'/methods/'.$service.'.php')) {
@@ -386,9 +385,8 @@ class UpdraftPlus_Backup {
 
 		global $updraftplus;
 
-		$services = $updraftplus->just_one($updraftplus->jobdata_get('service'));
+		$services = (array) $updraftplus->just_one($updraftplus->jobdata_get('service'));
 		$remote_storage_instances = $updraftplus->jobdata_get('remote_storage_instances', array());
-		if (!is_array($services)) $services = array($services);
 
 		// We need to make sure that the loop below actually runs
 		if (empty($services)) $services = array('none');
