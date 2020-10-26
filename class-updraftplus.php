@@ -1914,8 +1914,12 @@ class UpdraftPlus {
 	 * @return String            - returns the entity output string
 	 */
 	public function get_entity_row($file, $history, $entity, $checksums, $jobdata, $ind) {
-		$op = htmlspecialchars($file)."\n";
+		$op = htmlspecialchars($file);
 		$skey = $entity.((0 == $ind) ? '' : $ind).'-size';
+
+		$op = apply_filters('updraft_report_downloadable_file_link', $op, $entity, $ind, $jobdata);
+
+		$op .= "\n";
 
 		$meta = '';
 		if ('db' == substr($entity, 0, 2) && 'db' != $entity) {
@@ -1948,7 +1952,7 @@ class UpdraftPlus {
 
 		// if ($meta) $meta = " ($meta)";
 		if ($meta) $meta = "<br><em>$meta</em>";
-		
+
 		return $op.$meta;
 	}
 
@@ -2858,16 +2862,16 @@ class UpdraftPlus {
 		// Note that nothing will happen if the file backup had the same schedule
 		$this->boot_backup(false, true);
 	}
-
+	
 	/**
-	 * Start a files + database backup (used by WP cron and 'Backup Now')
+	 * Start a files + database backup (used by users manually in WP cron, and 'Backup Now')
 	 *
 	 * @param array $options
 	 * @return Boolean|Void - as for UpdraftPlus::boot_backup()
 	 */
 	public function backup_all($options) {
 		$skip_cloud = empty($options['nocloud']) ? false : true;
-		return $this->boot_backup(1, 1, false, false, ($skip_cloud) ? 'none' : false, $options);
+		return $this->boot_backup(1, 1, false, false, $skip_cloud ? 'none' : false, $options);
 	}
 	
 	/**
@@ -2878,7 +2882,7 @@ class UpdraftPlus {
 	 */
 	public function backupnow_files($options) {
 		$skip_cloud = empty($options['nocloud']) ? false : true;
-		return $this->boot_backup(1, 0, false, false, ($skip_cloud) ? 'none' : false, $options);
+		return $this->boot_backup(1, 0, false, false, $skip_cloud ? 'none' : false, $options);
 	}
 	
 	/**
@@ -2995,8 +2999,8 @@ class UpdraftPlus {
 	 * This procedure initiates a backup run
 	 * $backup_files/$backup_database: true/false = yes/no (over-write allowed); 1/0 = yes/no (force)
 	 *
-	 * @param  Boolean				$backup_files
-	 * @param  Boolean				$backup_database
+	 * @param  Boolean|Integer		$backup_files
+	 * @param  Boolean|Integer		$backup_database
 	 * @param  Boolean|Array		$restrict_files_to_override
 	 * @param  Boolean				$one_shot
 	 * @param  Boolean|Array|String	$service
@@ -3105,7 +3109,7 @@ class UpdraftPlus {
 		}
 		$service = $this->just_one($service);
 		if (is_string($service)) $service = array($service);
-		if (!is_array($service)) $service = array('none');
+		if (!is_array($service)) $service = array();
 
 		if (!empty($options['extradata']) && !empty($options['extradata']['services']) && preg_match('#remotesend/(\d+)#', $options['extradata']['services'])) {
 			if (array('none') === $service) $service = array();
@@ -3114,8 +3118,9 @@ class UpdraftPlus {
 
 		$option_cache = array();
 
+		$service = $this->get_canonical_service_list($service);
+		
 		foreach ($service as $serv) {
-			if ('' == $serv || 'none' == $serv) continue;
 			include_once(UPDRAFTPLUS_DIR.'/methods/'.$serv.'.php');
 			$cclass = 'UpdraftPlus_BackupModule_'.$serv;
 			if (!class_exists($cclass)) {

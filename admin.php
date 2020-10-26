@@ -437,6 +437,8 @@ class UpdraftPlus_Admin {
 	 */
 	private function admin_init() {
 
+		add_action('admin_init', array($this, 'maybe_download_backup_from_email'));
+
 		add_action('core_upgrade_preamble', array($this, 'core_upgrade_preamble'));
 		add_action('admin_action_upgrade-plugin', array($this, 'admin_action_upgrade_pluginortheme'));
 		add_action('admin_action_upgrade-theme', array($this, 'admin_action_upgrade_pluginortheme'));
@@ -1025,10 +1027,7 @@ class UpdraftPlus_Admin {
 				global $updraftplus_notices;
 				echo apply_filters('updraftplus_autobackup_blurb', $updraftplus_notices->do_notice('autobackup', 'autobackup', true));
 			} else {
-				echo '<div class="updraft-ad-container updated" style="display:block;">';
-				echo '<h3 style="margin-top: 2px;">'. __('Be safe with an automatic backup', 'updraftplus').'</h3>';
 				echo apply_filters('updraftplus_autobackup_blurb', '');
-				echo '</div>';
 			}
 		?>
 		<script>
@@ -1451,15 +1450,16 @@ class UpdraftPlus_Admin {
 			$known_size = isset($backup_history[$timestamp][$type.$itext.'-size']) ? $backup_history[$timestamp][$type.$itext.'-size'] : 0;
 
 			$services = isset($backup_history[$timestamp]['service']) ? $backup_history[$timestamp]['service'] : false;
-			if (is_string($services)) $services = array($services);
-
+			
+			$services = $updraftplus->get_canonical_service_list($services);
+			
 			$updraftplus->jobdata_set('service', $services);
 
 			// Fetch it from the cloud, if we have not already got it
 
 			$needs_downloading = false;
 
-			if (!file_exists($fullpath) && (array('none') === $services || empty($services))) {
+			if (!file_exists($fullpath) && empty($services)) {
 				$updraftplus->log('This file does not exist locally, and there is no remote storage for this file.');
 			} elseif (!file_exists($fullpath)) {
 				// If the file doesn't exist and they're using one of the cloud options, fetch it down from the cloud.
@@ -6043,5 +6043,23 @@ ENDHERE;
 		$txt3 = __('Due to the restriction, some settings can be automatically adjusted, disabled or not available.', 'updraftplus');
 
 		$this->show_plugin_page_admin_warning('<strong>'.__('Warning', 'updraftplus').':</strong> '.sprintf("$txt1 $txt2 $txt3", $hosting_company['name'], $hosting_company['website'], $hosting_company['name']), 'update-nag notice notice-warning', true);
+	}
+
+	/**
+	 * Find out if the current request is a backup download request, and proceed with the download if it is
+	 */
+	public function maybe_download_backup_from_email() {
+		global $pagenow;
+		if ((!defined('DOING_AJAX') || !DOING_AJAX) && UpdraftPlus_Options::admin_page() === $pagenow && isset($_REQUEST['page']) && 'updraftplus' === $_REQUEST['page'] && isset($_REQUEST['action']) && 'updraft_download_backup' === $_REQUEST['action']) {
+			$findexes = empty($_REQUEST['findex']) ? array(0) : $_REQUEST['findex'];
+			$timestamp = empty($_REQUEST['timestamp']) ? '' : $_REQUEST['timestamp'];
+			$nonce = empty($_REQUEST['nonce']) ? '' : $_REQUEST['nonce'];
+			$type = empty($_REQUEST['type']) ? '' : $_REQUEST['type'];
+			if (empty($timestamp) || empty($nonce) || empty($type)) wp_die(__('The download link is broken, you may have clicked the link from untrusted source', 'updraftplus'), '', array('back_link' => true));
+			$backup_history = UpdraftPlus_Backup_History::get_history();
+			if (!isset($backup_history[$timestamp]['nonce']) || $backup_history[$timestamp]['nonce'] !== $nonce) wp_die(__("The download link is broken or the backup file is no longer available", 'updraftplus'), '', array('back_link' => true));
+			$this->do_updraft_download_backup($findexes, $type, $timestamp, 2, false, '');
+			exit; // we don't need anything else but an exit
+		}
 	}
 }
