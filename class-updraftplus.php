@@ -104,6 +104,7 @@ class UpdraftPlus {
 		add_action(apply_filters('updraft_admin_menu_hook', 'admin_menu'), array($this, 'admin_menu'), 9);
 		// Not a mistake: admin-ajax.php calls only admin_init and not admin_menu
 		add_action('admin_init', array($this, 'admin_menu'), 9);
+		add_action('admin_init', array($this, 'wordpress_55_updates_potential_migration'));
 
 		// The two actions which we schedule upon
 		add_action('updraft_backup', array($this, 'backup_files'));
@@ -125,8 +126,11 @@ class UpdraftPlus {
 		
 		add_action('plugins_loaded', array($this, 'plugins_loaded'));
 
-		// Auto update plugin
-		add_filter('auto_update_plugin', array($this, 'maybe_auto_update_plugin'), 20, 2);
+		// Since the WordPress version 5.5, we are no longer forcing an auto update by hooking the auto_update_plugin filter because WordPress does something different to its auto-update interface
+		if (version_compare($this->get_wordpress_version(), '5.5', '<')) {
+			// Auto update plugin
+			add_filter('auto_update_plugin', array($this, 'maybe_auto_update_plugin'), 20, 2);
+		}
 
 		// Prevent iThemes Security from telling people that they have no backups (and advertising them another product on that basis!)
 		add_filter('itsec_has_external_backup', '__return_true', 999);
@@ -166,8 +170,8 @@ class UpdraftPlus {
 	 */
 	public function maybe_auto_update_plugin($update, $item) {
 		if (!isset($item->plugin) || basename(UPDRAFTPLUS_DIR).'/updraftplus.php' !== $item->plugin) return $update;
-		$option_auto_update_settings = UpdraftPlus_Options::get_updraft_option('updraft_auto_updates');
-		return (1 == $option_auto_update_settings);
+		$option_auto_update_settings = (array) get_site_option('auto_update_plugins', array());
+		return in_array($item->plugin, $option_auto_update_settings, true);
 	}
 	
 	/**
@@ -935,7 +939,7 @@ class UpdraftPlus {
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 		$max_execution_time = (int) @ini_get("max_execution_time");// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 
-		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".PHP_SAPI.", ".@php_uname().") MySQL: $mysql_version WPLANG: ".get_locale()." Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? (is_subdomain_install() ? 'Y (sub-domain)' : 'Y (sub-folder)') : 'N')." openssl: ".(defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+		$logline = "UpdraftPlus WordPress backup plugin (https://updraftplus.com): ".$this->version." WP: ".$wp_version." PHP: ".phpversion()." (".PHP_SAPI.", ".(function_exists('php_uname') ? @php_uname() : PHP_OS).") MySQL: $mysql_version WPLANG: ".get_locale()." Server: ".$_SERVER["SERVER_SOFTWARE"]." safe_mode: $safe_mode max_execution_time: $max_execution_time memory_limit: $memory_limit (used: ${memory_usage}M | ${memory_usage2}M) multisite: ".(is_multisite() ? (is_subdomain_install() ? 'Y (sub-domain)' : 'Y (sub-folder)') : 'N')." openssl: ".(defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : 'N')." mcrypt: ".(function_exists('mcrypt_encrypt') ? 'Y' : 'N')." LANG: ".getenv('LANG')." ZipArchive::addFile: ";// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 
 		// method_exists causes some faulty PHP installations to segfault, leading to support requests
 		if (version_compare(phpversion(), '5.2.0', '>=') && extension_loaded('zip')) {
@@ -2145,8 +2149,9 @@ class UpdraftPlus {
 				}
 			}
 
-			for ($i = 0; $i <= $prev_resumption; $i++) {
-				if (isset($time_passed[$i])) $last_successful_resumption = $i;
+			$useful_checkins = $this->jobdata_get('useful_checkins', array());
+			if (!empty($useful_checkins)) {
+				$last_successful_resumption = min(max($useful_checkins), $prev_resumption);
 			}
 			
 			if (isset($time_passed[$prev_resumption])) {
@@ -2269,8 +2274,9 @@ class UpdraftPlus {
 		} else {
 		
 			// We're in over-time - we only reschedule if something useful happened last time (used to be that we waited for it to happen this time - but that meant that temporary errors, e.g. Google 400s on uploads, scuppered it all - we'd do better to have another chance
-			$useful_checkin = $this->jobdata_get('useful_checkin');
-			$last_resumption = $resumption_no-1;
+			// 'useful_checkin' is < 1.16.35 (Nov 2020). It is only supported here for resumptions that span upgrades. Later it can be removed.
+			$useful_checkin = max($this->jobdata_get('useful_checkin', 0), max($this->jobdata_get('useful_checkins', 0)));
+			$last_resumption = $resumption_no - 1;
 			$fail_on_resume = $this->jobdata_get('fail_on_resume');
 			
 			if (empty($useful_checkin) || $useful_checkin < $last_resumption) {
@@ -2620,6 +2626,11 @@ class UpdraftPlus {
 		if ($this->nonce) update_site_option('updraft_jobdata_'.$this->nonce, $this->jobdata);
 	}
 
+	/**
+	 * Delete a jobdata item, by key
+	 *
+	 * @param String $key
+	 */
 	public function jobdata_delete($key) {
 		if (!is_array($this->jobdata)) {
 			$this->jobdata = empty($this->nonce) ? array() : get_site_option("updraft_jobdata_".$this->nonce);
@@ -2638,9 +2649,17 @@ class UpdraftPlus {
 		return isset($this->jobdata['option_cache'][$opt]) ? $this->jobdata['option_cache'][$opt] : UpdraftPlus_Options::get_updraft_option($opt);
 	}
 
+	/**
+	 * Get a job data item, or the specified default if it is not yet set
+	 *
+	 * @param String $key
+	 * @param Mixed	 $default
+	 *
+	 * @return Mixed
+	 */
 	public function jobdata_get($key, $default = null) {
 		if (empty($this->jobdata)) {
-			$this->jobdata = empty($this->nonce) ? array() : get_site_option("updraft_jobdata_".$this->nonce, array());
+			$this->jobdata = empty($this->nonce) ? array() : get_site_option('updraft_jobdata_'.$this->nonce, array());
 			if (!is_array($this->jobdata)) return $default;
 		}
 		return isset($this->jobdata[$key]) ? $this->jobdata[$key] : $default;
@@ -3013,6 +3032,8 @@ class UpdraftPlus {
 		@ignore_user_abort(true);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 		@set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 
+		$is_scheduled_backup = is_bool($backup_files) || is_bool($backup_database);
+
 		$hosting_company = $this->get_hosting_info();
 		if (!empty($options['incremental']) && in_array('only_one_incremental_per_day', $this->is_hosting_backup_limit_reached())) {
 			$this->log(__("You have reached the daily limit for the number of incremental backups you can create at this time.", 'updraftplus').' '.__(' Your hosting provider only allows you to take one incremental backup per day.', 'updraftplus').' '.sprintf(__('Please contact your hosting company (%s) if you require further support.', 'updraftplus'), $hosting_company['name']));
@@ -3107,6 +3128,15 @@ class UpdraftPlus {
 			$enabled_storage_objects_and_ids = UpdraftPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($all_services, $remote_storage_instances);
 			$service = array_keys($enabled_storage_objects_and_ids);
 		}
+
+		if ($is_scheduled_backup && !empty($enabled_storage_objects_and_ids)) {
+			// only a scheduled and selected remote storage backup will go through this
+			$remote_storage_instances = is_array($remote_storage_instances) ? $remote_storage_instances : array();
+			$options['remote_storage_instances'] = apply_filters('updraft_remote_storage_instances', $remote_storage_instances, $enabled_storage_objects_and_ids, $options);
+			$service = array_keys($options['remote_storage_instances']);
+			if (empty($service)) return false; // this supposed to be remote storages backup operation, but we should fallback due to no conditional logic matched the storages' specified rules or because of other filters' callback that returned no service
+		}
+
 		$service = $this->just_one($service);
 		if (is_string($service)) $service = array($service);
 		if (!is_array($service)) $service = array();
@@ -3495,7 +3525,7 @@ class UpdraftPlus {
 
 		// We have to use the action in order to set the MIME type on the attachment - by default, WordPress just puts application/octet-stream
 
-		$subject = apply_filters('updraft_report_subject', sprintf(__('Backed up: %s', 'updraftplus'), get_bloginfo('name')).' (UpdraftPlus '.$this->version.') '.get_date_from_gmt(gmdate('Y-m-d H:i:s', time()), 'Y-m-d H:i'), $error_count, count($warnings));
+		$subject = apply_filters('updraft_report_subject', sprintf(__('Backed up: %s', 'updraftplus'), wp_specialchars_decode(get_option('blogname'), ENT_QUOTES)).' (UpdraftPlus '.$this->version.') '.get_date_from_gmt(gmdate('Y-m-d H:i:s', time()), 'Y-m-d H:i'), $error_count, count($warnings));
 
 		// The class_exists() check here is a micro-optimization to prevent a possible HTTP call whose results may be disregarded by the filter
 		$feed = '';
@@ -4030,12 +4060,13 @@ class UpdraftPlus {
 	}
 
 	/**
-	 * avoid_these_dirs and skip_these_dirs ultimately do the same thing; but avoid_these_dirs takes full paths whereas skip_these_dirs takes basenames; and they are logged differently (dirs in avoid are potentially dangerous to include; skip is just a user-level preference). They are allowed to overlap.
+	 * avoid_these_dirs and skip_these_dirs ultimately do the same thing; but avoid_these_dirs takes full paths whereas skip_these_dirs takes basenames; and they are logged differently (dirs in avoid_these_dirs are potentially dangerous to include; skip is just a user-level preference). They are allowed to overlap.
 	 *
-	 * @param  string $backup_from_inside_dir
-	 * @param  string $avoid_these_dirs
-	 * @param  string $skip_these_dirs
-	 * @return array
+	 * @param String $backup_from_inside_dir
+	 * @param Array	 $avoid_these_dirs
+	 * @param Array	 $skip_these_dirs
+	 *
+	 * @return Array
 	 */
 	public function compile_folder_list_for_backup($backup_from_inside_dir, $avoid_these_dirs, $skip_these_dirs) {
 
@@ -4043,6 +4074,8 @@ class UpdraftPlus {
 
 		$dirlist = array();
 		$added = 0;
+		$log_skipped = 0;
+		$log_skipped_last = '';
 
 		$this->log('Looking for candidates to backup in: '.$backup_from_inside_dir);
 		$updraft_dir = $this->backups_dir_location();
@@ -4090,12 +4123,26 @@ class UpdraftPlus {
 					if ($add_to_list) {
 						array_push($dirlist, $candidate);
 						$added++;
-						$skip_dblog = (($added > 50 && 0 != $added % 100) || ($added > 2000 && 0 != $added % 500));
-						$this->log("finding files: $entry: adding to list ($added)", 'notice', false, $skip_dblog);
+						if ($added > 500) {
+							if ($log_skipped >= 500) {
+								$this->log("finding files: $entry: adding to list ($added, $log_skipped log lines skipped)");
+								$log_skipped = 0;
+								$log_skipped_last = '';
+							} else {
+								$log_skipped++;
+								$log_skipped_last = $entry;
+							}
+						} else {
+							$skip_dblog = (($added > 50 && 0 != $added % 100) || ($added > 2000 && 0 != $added % 500));
+							$this->log("finding files: $entry: adding to list ($added)", 'notice', false, $skip_dblog);
+						}
 					}
 				}
 			}
 			@closedir($handle);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+			if ($log_skipped > 0) {
+				$this->log("finding files: $log_skipped_last: adding to list ($added, last; $log_skipped log lines skipped)");
+			}
 		} else {
 			$this->log('ERROR: Could not read the directory: '.$backup_from_inside_dir);
 			$this->log(__('Could not read the directory', 'updraftplus').': '.$backup_from_inside_dir, 'error');
@@ -4218,7 +4265,7 @@ class UpdraftPlus {
 		if (empty($valid_schedules[$interval])) $interval = 'daily';
 
 		// Try to avoid changing the time is one was already scheduled. This is fairly conservative - we could do more, e.g. check if a backup already happened today.
-		$default_time = ($interval == $previous_interval && $previous_time>0) ? $previous_time : time()+120;
+		$default_time = ($interval == $previous_interval && $previous_time>0) ? $previous_time : $this->random_schedule_time();
 		$first_time = apply_filters('updraftplus_schedule_firsttime_files', $default_time);
 
 		wp_schedule_event($first_time, $interval, 'updraft_backup');
@@ -4245,7 +4292,7 @@ class UpdraftPlus {
 		if (empty($valid_schedules[$interval])) $interval = 'daily';
 
 		// Try to avoid changing the time is one was already scheduled. This is fairly conservative - we could do more, e.g. check if a backup already happened today.
-		$default_time = ($interval == $previous_interval && $previous_time>0) ? $previous_time : time()+120;
+		$default_time = ($interval == $previous_interval && $previous_time>0) ? $previous_time : $this->random_schedule_time();
 
 		$first_time = apply_filters('updraftplus_schedule_firsttime_db', $default_time);
 		wp_schedule_event($first_time, $interval, 'updraft_backup_database');
@@ -4277,6 +4324,31 @@ class UpdraftPlus {
 		wp_schedule_event($first_time, $interval, 'updraft_backup_increments');
 
 		return $interval;
+	}
+
+	/**
+	 * This function will generate a random backup schedule timestamp between the hours of 9PM and 7AM and return it
+	 *
+	 * @return string - the random timestamp
+	 */
+	private function random_schedule_time() {
+
+		static $scheduled_timestamp = false;
+
+		if ($scheduled_timestamp) return $scheduled_timestamp;
+
+		$valid_hours = array(21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7);
+
+		$current_hour = current_time('G');
+		$current_timestamp = current_time('timestamp');
+
+		if (in_array($current_hour, $valid_hours)) {
+			$scheduled_timestamp = $current_timestamp;
+		} else {
+			$scheduled_timestamp = $current_timestamp + 43200;
+		}
+
+		return $scheduled_timestamp;
 	}
 
 	/**
@@ -4623,7 +4695,7 @@ class UpdraftPlus {
 		$line = 0;
 		$old_siteurl = '';
 		$old_home = '';
-		$old_table_prefix = '';
+		$old_table_prefix = null;
 		$old_siteinfo = array();
 		$gathering_siteinfo = true;
 		$old_wp_version = '';
@@ -4746,9 +4818,9 @@ class UpdraftPlus {
 							$warn[] = sprintf(__('The site in this backup was running on a webserver with version %s of %s. ', 'updraftplus'), $old_php_version, 'PHP').' '.sprintf(__('This is older than the server which you are now restoring onto (version %s).', 'updraftplus'), PHP_VERSION).' '.sprintf(__('You should only proceed if you have checked and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the new %s version.', 'updraftplus'), 'PHP').' '.sprintf(__('Any support requests to do with %s should be raised with your web hosting company.', 'updraftplus'), 'PHP');
 						}
 					}
-				} elseif ('' == $old_table_prefix && (preg_match('/^\# Table prefix: (\S+)$/', $buffer, $matches) || preg_match('/^-- Table prefix: (\S+)$/i', $buffer, $matches))) {
+				} elseif (null === $old_table_prefix && (preg_match('/^\# Table prefix: ?(\S*)$/', $buffer, $matches) || preg_match('/^-- Table prefix: ?(\S*)$/i', $buffer, $matches))) {
 					$old_table_prefix = $matches[1];
-// echo '<strong>'.__('Old table prefix:', 'updraftplus').'</strong> '.htmlspecialchars($old_table_prefix).'<br>';
+					// echo '<strong>'.__('Old table prefix:', 'updraftplus').'</strong> '.htmlspecialchars($old_table_prefix).'<br>';
 				} elseif (empty($info['label']) && preg_match('/^\# Label: (.*)$/', $buffer, $matches)) {
 					$info['label'] = $matches[1];
 					$mess[] = __('Backup label:', 'updraftplus').' '.htmlspecialchars($info['label']);
@@ -4793,9 +4865,9 @@ class UpdraftPlus {
 			} elseif (!$processing_routine && preg_match('/^\s*create table \`?([^\`\(]*)\`?\s*\(/i', $buffer, $matches)) {
 				$table = $matches[1];
 				$tables_found[] = $table;
-				if ($old_table_prefix) {
+				if (null !== $old_table_prefix) {
 					// Remove prefix
-					$table = UpdraftPlus_Manipulation_Functions::str_replace_once($old_table_prefix, '', $table);
+					$table = $old_table_prefix ? UpdraftPlus_Manipulation_Functions::str_replace_once($old_table_prefix, '', $table) : $table;
 					if (in_array($table, $wanted_tables)) {
 						$wanted_tables = array_diff($wanted_tables, array($table));
 					}
@@ -4983,7 +5055,11 @@ class UpdraftPlus {
 		*/
 		if (!isset($skipped_tables)) $skipped_tables = array();
 		$missing_tables = array();
-		if ($old_table_prefix) {
+
+		if (null !== $old_table_prefix) {
+		
+			if ('' === $old_table_prefix) $warn[] = __('This backup is of a site with an empty table prefix, which WordPress does not officially support; the results may be unreliable.', 'updraftplus');
+		
 			if (!$header_only) {
 				foreach ($wanted_tables as $table) {
 					if (!in_array($old_table_prefix.$table, $tables_found)) {
@@ -5142,11 +5218,12 @@ class UpdraftPlus {
 		// Within an UpdraftCentral context, there should be no prefix on the anchor link
 		if (defined('UPDRAFTCENTRAL_COMMAND') && UPDRAFTCENTRAL_COMMAND || defined('WP_CLI') && WP_CLI) return '';
 		
-		if (defined('DOING_AJAX') && DOING_AJAX) {
-			$current_url = $_SERVER["HTTP_REFERER"];
+		if (defined('DOING_AJAX') && DOING_AJAX && !empty($_SERVER['HTTP_REFERER'])) {
+			$current_url = $_SERVER['HTTP_REFERER'];
 		} else {
 			$url_prefix = is_ssl() ? 'https' : 'http';
-			$current_url = $url_prefix."://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+			$host = empty($_SERVER['HTTP_HOST']) ? parse_url(network_site_url(),  PHP_URL_HOST) : $_SERVER['HTTP_HOST'];
+			$current_url = $url_prefix."://".$host.$_SERVER['REQUEST_URI'];
 		}
 		$remove_query_args = array('state', 'action', 'oauth_verifier', 'nonce', 'updraftplus_instance', 'access_token', 'user_id', 'updraftplus_googledriveauth');
 		
@@ -5199,7 +5276,7 @@ class UpdraftPlus {
 			'updraft_include_more',
 			'updraft_include_blogs',
 			'updraft_include_mu-plugins',
-			'updraft_auto_updates',
+			'updraft_auto_updates', // since WordPress 5.5, updraft_auto_updates option is no longer used and has been removed from the code, but the HTML IDs which use the same name that represent the automatic update setting are still zealously preserved so this one cannot be removed
 			'updraft_include_others_exclude',
 			'updraft_include_uploads_exclude',
 			'updraft_lastmessage',
@@ -5583,5 +5660,101 @@ class UpdraftPlus {
 			if ($this->is_restricted_hosting('only_one_backup_per_month') && $current_time < $next_thirty_days_from_last_backup) $res[] = 'only_one_backup_per_month';
 		}
 		return $res;
+	}
+
+	/**
+	 * Maintain compatibility on all versions between WordPress and UpdraftPlus, specifically since WordPress 5.5
+	 */
+	public function wordpress_55_updates_potential_migration() {
+		// Due to the new WP's auto-updates interface in WordPress version 5.5, we need to maintain the auto update compatibility on all versions of WordPress and UpdraftPlus
+		$udp_saved_version = UpdraftPlus_Options::get_updraft_option('updraftplus_version');
+		$updraft_auto_updates = UpdraftPlus_Options::get_updraft_option('updraft_auto_updates');
+		if (!$udp_saved_version || version_compare($udp_saved_version, '1.16.34', '<=') || (version_compare($udp_saved_version, '2.0.0', '>=') && version_compare($udp_saved_version, '2.16.34', '<=')) || null !== $updraft_auto_updates) {
+			$this->replace_auto_updates_option();
+		}
+	}
+
+	/**
+	 * Remove the use of updraft_auto_updates option/meta (single & multisite) and replace it with auto_update_plugins site option that is used in WordPress's core since version 5.5
+	 * This needs to be done in order to maintain auto-updates compatibility between WordPress and Updraftplus and to synchronise the auto-updates setting for both
+	 */
+	private function replace_auto_updates_option() {
+		$old_setting_value = UpdraftPlus_Options::get_updraft_option('updraft_auto_updates');
+		UpdraftPlus_Options::delete_updraft_option('updraft_auto_updates');
+		$new_setting_value = (array) get_site_option('auto_update_plugins', array());
+		if (!empty($old_setting_value)) $new_setting_value[] = basename(UPDRAFTPLUS_DIR).'/updraftplus.php';
+		$new_setting_value = array_unique($new_setting_value);
+		update_site_option('auto_update_plugins', $new_setting_value);
+	}
+
+	/**
+	 * Set the plugin's automatic updates setting to either on or off by removing/adding plugin basename from/into the auto_update_plugins option
+	 *
+	 * @param Mixed $value The new value which auto_update_plugins option value is replaced with
+	 */
+	public function set_automatic_updates($value) {
+		$auto_update_plugins = (array) get_site_option('auto_update_plugins', array());
+		if (!empty($value)) {
+			$auto_update_plugins[] = basename(UPDRAFTPLUS_DIR).'/updraftplus.php';
+			$auto_update_plugins = array_unique($auto_update_plugins);
+		} else {
+			$auto_update_plugins = array_diff($auto_update_plugins, array(basename(UPDRAFTPLUS_DIR).'/updraftplus.php'));
+		}
+		update_site_option('auto_update_plugins', $auto_update_plugins);
+	}
+
+	/**
+	 * Check whether the automatic-updates is set for UpdraftPlus
+	 *
+	 * @return Boolean True if set, false otherwise
+	 */
+	public function is_automatic_updating_enabled() {
+		$auto_update_plugins = (array) get_site_option('auto_update_plugins', array());
+		return in_array(basename(UPDRAFTPLUS_DIR).'/updraftplus.php', $auto_update_plugins, true);
+	}
+
+	/**
+	 * Perform conditional checking of two values with the specified operator
+	 *
+	 * @param Mixed  $value1   the first value to compare
+	 * @param String $operator the operator that is used for comparison of the two values
+	 * @param Mixed  $value2   the second value to compare
+	 *
+	 * @return Boolean true if the first value matches against the second value, false otherwise
+	 */
+	public function if_cond($value1, $operator, $value2) {
+		switch (strtolower($operator)) {
+			case 'is':
+			case '==':
+				return $value1 == $value2;
+				break;
+			case 'is_not':
+			case '!=':
+				return $value1 != $value2;
+				break;
+			default:
+				throw new Exception(__METHOD__.": Unsupported (".$operator.") operator", 1);
+				break;
+		}
+	}
+
+	/**
+	 * Return a listing of days of the week
+	 *
+	 * @param Boolean $respect_start_of_week whether to use the WordPress's start_of_week setting
+	 * @return Array the days of the week
+	 */
+	public function list_days_of_the_week($respect_start_of_week = true) {
+		global $wp_locale;
+		$days_of_the_week = array();
+		$i = $respect_start_of_week ? get_option('start_of_week', 1) : 1;
+		foreach (range(0, 6) as $day) { // 7 days
+			$days_of_the_week[] = array(
+				'index' => $i % 7,
+				'value' => $wp_locale->get_weekday($i % 7),
+			);
+			$i++;
+		}
+		return $days_of_the_week;
 	}
 }

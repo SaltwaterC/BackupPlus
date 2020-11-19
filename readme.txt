@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.5
-Stable tag: 1.16.34
+Stable tag: 1.16.35
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,34 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.16.35 - 19/Nov/2020 =
+
+* FEATURE: Backup destinations with conditional logic rules for scheduled backups (Premium)
+* FIX: A regression in 1.16.30 meant that the term_relationships table could have rows missing in the backup if mysqldump was not present/used; this meant that items with multiple terms were only having one relationship backed up (e.g. multiple tags being assigned to one post)
+* TWEAK: Adding remote block assets support when editing post from UpdraftCentral
+* TWEAK: Rename UpdraftCentral's main and listener classes
+* TWEAK: Improve error message when encrypted key given by user for SFTP/SCP remote storage method
+* TWEAK: Enhance the algorithm when dumping large tables via PHP, by also consulting the size of the current uncompressed data and passed time and resumption state
+* TWEAK: When there are no backups in existence, display some help text explaining how to upload one for restoration
+* TWEAK: Prevent composer 2 run-time platform checks
+* TWEAK: Update bundled cacert.pem file
+* TWEAK: When fetching less rows due to previous failures, make this persist across resumptions when on the same table
+* TWEAK: Raise the default for UPDRAFTPLUS_MAXBATCHFILES
+* TWEAK: Improve handling of the situation when the source database has no table prefix (which is officially unsupported by WordPress, but people have them)
+* TWEAK: When fetching the site name from the database, process it via wp_specialchars_decode() to remove HTML encodings that WP applied before storage
+* TWEAK: Replace uses of php_uname() function with PHP_OS constant when the server where PHP is running on disables the function for security reasons
+* TWEAK: When the definition of a VIEW cannot be fetched, report this nicely, do not let it be flagged as a fatal error, and log it in the backup file and log
+* TWEAK: Integrate UpdraftPlus and WordPress 5.5 core's automatic update settings
+* TWEAK: When a backup resumed, the last successful resumption was incorrectly set as the last successful resumption when an 'alive' event was recorded, rather than a 'useful' one; this deferred some mitigations when there was insufficient progress
+* TWEAK: Add another tweak to paid versions' update checking time algorithm
+* TWEAK: Add "Select all" and "Deselect all" link texts for bulk selecting/deselecting tables from the database table list on the manual backup dialog
+* TWEAK: Ensure all code paths use internal ud_parse_json function for decoding JSON in JavaScript
+* TWEAK: When using UpdraftVault, only cache results of a vault_getconfig call conditionally (retry on potentially transient errors)
+* TWEAK: Prevent a PHP coding notice if running an UpdraftVault backup on the CLI
+* TWEAK: Reduce the on-disk logging of entity base directories containing vast numbers of entries
+* TWEAK: When we first save the backup schedule set the scheduled time randomly between 9PM and 7AM
+* TWEAK: During a remote storage rescan correctly update the backup file sizes to prevent incorrect 'may have changed' warnings
 
 = 1.16.34 - 30/Oct/2020 =
 
@@ -1117,9 +1145,9 @@ Older changes are found <a href="https://plugins.svn.wordpress.org/updraftplus/t
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-Furthermore, reliance upon any non-English translation is at your own risk. UpdraftPlus can give no guarantees that translations from the original English are accurate.
+Reliance upon any non-English translation is at your own risk; UpdraftPlus can give no guarantees that translations from the original English are accurate.
 
-We recognise and thank the following for code and/or libraries used and/or modified under the terms of their open source licences; see: https://updraftplus.com/acknowledgements/
+We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.16.34: Improve performance on sites with vast numbers of table (e.g. very large multisites), plus a couple of other small tweaks. A recommended update for all.
+* 1.16.35: Many and various small improvements and fixes, including a fix to a data-loss issue on the term_relationships table since 1.16.30. A strongly recommended update for all.

@@ -9,9 +9,9 @@ define('UPDRAFTCENTRAL_CLIENT_DIR', dirname(__FILE__));
 // This file is included during plugins_loaded
 
 // Load the listener class that we rely on to pick up messages
-if (!class_exists('UpdraftPlus_UpdraftCentral_Listener')) require_once('listener.php');
+if (!class_exists('UpdraftCentral_Listener')) require_once('listener.php');
 
-class UpdraftPlus_UpdraftCentral_Main {
+class UpdraftCentral_Main {
 
 	/**
 	 * Class constructor
@@ -45,7 +45,7 @@ class UpdraftPlus_UpdraftCentral_Main {
 		// These are different from the remote send keys, which are set up in the Migrator add-on
 		$our_keys = UpdraftPlus_Options::get_updraft_option('updraft_central_localkeys');
 		if (is_array($our_keys) && !empty($our_keys)) {
-			new UpdraftPlus_UpdraftCentral_Listener($our_keys, $command_classes);
+			new UpdraftCentral_Listener($our_keys, $command_classes);
 		}
 
 	}
@@ -630,5 +630,5 @@ class UpdraftPlus_UpdraftCentral_Main {
 	}
 }
 
-global $updraftplus_updraftcentral_main;
-$updraftplus_updraftcentral_main = new UpdraftPlus_UpdraftCentral_Main();
+global $updraftcentral_main;
+$updraftcentral_main = new UpdraftCentral_Main();

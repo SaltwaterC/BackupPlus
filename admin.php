@@ -1006,6 +1006,43 @@ class UpdraftPlus_Admin {
 			'hosting_restriction_one_backup_permonth' => __("You have reached the monthly limit for the number of backups you can create at this time.", 'updraftplus').' '.__('Your hosting provider only allows you to take one backup per month.', 'updraftplus').' '.sprintf(__("Please contact your hosting company (%s) if you require further support.", 'updraftplus'), $hosting_company['name']),
 			'hosting_restriction_one_incremental_perday' => __("You have reached the daily limit for the number of incremental backups you can create at this time.", 'updraftplus').' '.__("Your hosting provider only allows you to take one incremental backup per day.", 'updraftplus').' '.sprintf(__("Please contact your hosting company (%s) if you require further support.", 'updraftplus'), $hosting_company['name']),
 			'hosting_restriction' => $updraftplus->is_hosting_backup_limit_reached(),
+			'conditional_logic' => array(
+				'day_of_the_week_options' => $updraftplus->list_days_of_the_week(),
+				'logic_options' => array(
+					array(
+						'label' => __('on every backup', 'updraftplus'),
+						'value' => '',
+					),
+					array(
+						'label' => __('if any of the following conditions are matched:', 'updraftplus'),
+						'value' => 'any',
+					),
+					array(
+						'label' => __('if all of the following conditions are matched:', 'updraftplus'),
+						'value' => 'all',
+					),
+				),
+				'operand_options' => array(
+					array(
+						'label' => __('Day of the week', 'updraftplus'),
+						'value' => 'day_of_the_week',
+					),
+					array(
+						'label' => __('Day of the month', 'updraftplus'),
+						'value' => 'day_of_the_month',
+					),
+				),
+				'operator_options' => array(
+					array(
+						'label' => __('is', 'updraftplus'),
+						'value' => 'is',
+					),
+					array(
+						'label' => __('is not', 'updraftplus'),
+						'value' => 'is_not',
+					),
+				)
+			),
 		));
 	}
 	
@@ -2195,6 +2232,7 @@ class UpdraftPlus_Admin {
 			'j' => $active_jobs,
 			'ds' => $download_status,
 			'u' => $logupdate_array,
+			'automatic_updates' => $updraftplus->is_automatic_updating_enabled()
 		);
 
 		$res['hosting_restriction'] = $updraftplus->is_hosting_backup_limit_reached();
@@ -3164,7 +3202,7 @@ class UpdraftPlus_Admin {
 						<th></th>
 						<td>
 							<label>
-								<input type="checkbox" id="<?php echo $option_page; ?>_options_auto_updates" data-updraft_settings_test="updraft_auto_updates" name="<?php echo $option_page; ?>_options[updraft_auto_update]" value="1" <?php if (UpdraftPlus_Options::get_updraft_option('updraft_auto_updates')) echo 'checked="checked"'; ?> />
+								<input type="checkbox" id="<?php echo $option_page; ?>_options_auto_updates" data-updraft_settings_test="updraft_auto_updates" name="<?php echo $option_page; ?>_options[updraft_auto_update]" value="1" <?php if ($updraftplus->is_automatic_updating_enabled()) echo 'checked="checked"'; ?> />
 								<?php _e('Ask WordPress to update UpdraftPlus automatically when an update is available', 'updraftplus');?>
 							</label>
 							<?php
@@ -5301,7 +5339,12 @@ ENDHERE;
 			UpdraftPlus_Options::update_updraft_option('updraft_include_more_path', array());
 			
 			$relevant_keys = $updraftplus->get_settings_keys();
-			
+
+			if (isset($settings['updraft_auto_updates']) && in_array('updraft_auto_updates', $relevant_keys)) {
+				$updraftplus->set_automatic_updates($settings['updraft_auto_updates']);
+				unset($settings['updraft_auto_updates']); // unset the key and its value to prevent being processed the second time
+			}
+
 			if (method_exists('UpdraftPlus_Options', 'mass_options_update')) {
 				$original_settings = $settings;
 				$settings = UpdraftPlus_Options::mass_options_update($settings);

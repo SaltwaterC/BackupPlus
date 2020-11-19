@@ -16,7 +16,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 	 * @param array  $data       an array of data post or get fields
 	 * @param array  $extra_info extrainfo use in the udrpc_action, e.g. user_id
 	 *
-	 * link to udrpc_action main function in class UpdraftPlus_UpdraftCentral_Listener
+	 * link to udrpc_action main function in class UpdraftCentral_Listener
 	 */
 	public function _pre_action($command, $data, $extra_info) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		// Here we assign the current blog_id to a variable $blog_id
@@ -35,7 +35,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 	 * @param array  $data       an array of data post or get fields
 	 * @param array  $extra_info extrainfo use in the udrpc_action, e.g. user_id
 	 *
-	 * link to udrpc_action main function in class UpdraftPlus_UpdraftCentral_Listener
+	 * link to udrpc_action main function in class UpdraftCentral_Listener
 	 */
 	public function _post_action($command, $data, $extra_info) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		// Here, we're restoring to the current (default) blog before we switched
