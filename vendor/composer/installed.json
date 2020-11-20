@@ -849,5 +849,6 @@
             "install-path": "../team-updraft/common-libs"
         }
     ],
-    "dev": false
+    "dev": false,
+    "dev-package-names": []
 }

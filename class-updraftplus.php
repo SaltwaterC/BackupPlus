@@ -251,7 +251,7 @@ class UpdraftPlus {
 			return $opts;
 		} elseif (!empty($opts['settings'])) {
 
-			foreach ($opts['settings'] as $instance_id => $storage_options) {
+			foreach ($opts['settings'] as $storage_options) {
 				if (!empty($storage_options['token']) && $storage_options['token']) {
 					$site_id = $this->siteid();
 					$hash = hash('sha256', $site_id.':::'.$storage_options['token']);
@@ -2975,7 +2975,7 @@ class UpdraftPlus {
 
 		$backup_history = UpdraftPlus_Backup_History::get_history();
 
-		foreach ($backup_history as $key => $backup) {
+		foreach ($backup_history as $backup) {
 			$nonce = $backup['nonce'];
 			
 			// Check the job is not still running.
@@ -4636,6 +4636,8 @@ class UpdraftPlus {
 		$wp_version = $this->get_wordpress_version();
 		global $wpdb;
 
+		if (!class_exists('UpdraftPlus_Database_Utility')) include_once(UPDRAFTPLUS_DIR.'/includes/class-database-utility.php');
+
 		$updraft_dir = $this->backups_dir_location();
 
 		if (false === $db_file) {
@@ -5093,6 +5095,18 @@ class UpdraftPlus {
 		} elseif (count($tables_found) >= 0.90 * $php_max_input_vars) {
 			$php_max_input_vars_exceeded = true;
 		}
+		
+		// On UD 1.16.30 - 1.16.34 there was a serious bug that did not backup all content in composite key tables, if this is not a migration and the backup was created on one of these versions do not restore this table.
+		$skip_composite_tables = (!empty($info['created_by_version']) && version_compare("1" . substr($info['created_by_version'], 1), '1.16.30', '>=') && version_compare("1" . substr($info['created_by_version'], 1), '1.16.34', '<=')) ? true : false;
+		
+		if ($skip_composite_tables) {
+			if (!empty($info['migration'])) {
+				$skip_composite_tables = false;
+				$warn[] = sprintf(__('This backup was created on a previous UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes).', 'updraftplus').' '.__('Therefore it is advised that you take a fresh backup on the source site, using a later version.', 'updraftplus'), $info['created_by_version']);
+			} else {
+				$warn[] = sprintf(__('This backup was created on a previous UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes).', 'updraftplus').' '.__('Therefore, affected tables on the current site which already exist will not be replaced by default, to avoid corrupting them (you can review this in the list of tables below).', 'updraftplus'), $info['created_by_version']);
+			}
+		}
 
 		$select_restore_tables = '<div class="notice below-h2 updraft-restore-option">';
 		$select_restore_tables .= '<p>'.__('If you do not want to restore all your tables, then choose some to exclude here.', 'updraftplus').'(<a href="#" id="updraftplus_restore_tables_showmoreoptions">...</a>)</p>';
@@ -5107,7 +5121,8 @@ class UpdraftPlus {
 		}
 
 		foreach ($tables_found as $table) {
-			$select_restore_tables .= '<input class="updraft_restore_table_options" id="updraft_restore_table_'.$table.'" checked="checked" type="checkbox" name="updraft_restore_table_options[]" value="'.$table.'"> ';
+			$checked = $skip_composite_tables && UpdraftPlus_Database_Utility::table_has_composite_private_key($table) ? '' : 'checked="checked"';
+			$select_restore_tables .= '<input class="updraft_restore_table_options" id="updraft_restore_table_'.$table.'" '. $checked .' type="checkbox" name="updraft_restore_table_options[]" value="'.$table.'"> ';
 			$select_restore_tables .= '<label for="updraft_restore_table_'.$table.'">'.$table.'</label><br>';
 		}
 		$select_restore_tables .= '</div></div>';
@@ -5747,8 +5762,8 @@ class UpdraftPlus {
 	public function list_days_of_the_week($respect_start_of_week = true) {
 		global $wp_locale;
 		$days_of_the_week = array();
-		$i = $respect_start_of_week ? get_option('start_of_week', 1) : 1;
-		foreach (range(0, 6) as $day) { // 7 days
+		$i = $j = $respect_start_of_week ? get_option('start_of_week', 1) : 1;
+		while ($i < $j+7) { // 7 days
 			$days_of_the_week[] = array(
 				'index' => $i % 7,
 				'value' => $wp_locale->get_weekday($i % 7),

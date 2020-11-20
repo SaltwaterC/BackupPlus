@@ -18,7 +18,7 @@ class UpdraftCentral_Posts_Commands extends UpdraftCentral_Commands {
 	 *
 	 * link to udrpc_action main function in class UpdraftCentral_Listener
 	 */
-	public function _pre_action($command, $data, $extra_info) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+	public function _pre_action($command, $data, $extra_info) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This function is called from listner.php and $extra_info is being sent.
 		// Here we assign the current blog_id to a variable $blog_id
 		$blog_id = get_current_blog_id();
 		if (!empty($data['site_id'])) $blog_id = $data['site_id'];
@@ -827,7 +827,7 @@ class UpdraftCentral_Posts_Commands extends UpdraftCentral_Commands {
 		$result = array();
 		if (!empty($params['list'])) {
 			$posts = array();
-			foreach ($params['list'] as $key => $id) {
+			foreach ($params['list'] as $id) {
 				$post = $this->apply_state($id, $params['action']);
 				if (!empty($post)) {
 					array_push($posts, $post);
@@ -1128,7 +1128,7 @@ class UpdraftCentral_Posts_Commands extends UpdraftCentral_Commands {
 				$categories_updated = false;
 				if (!empty($params['categories'])) {
 					$term_ids = array();
-					foreach ($params['categories'] as $key => $value) {
+					foreach ($params['categories'] as $value) {
 						$category = sanitize_text_field($value);
 						$parent = 0;
 
@@ -1156,7 +1156,7 @@ class UpdraftCentral_Posts_Commands extends UpdraftCentral_Commands {
 				$tags_updated = false;
 				if (!empty($params['tags'])) {
 					$term_ids = array();
-					foreach ($params['tags'] as $key => $value) {
+					foreach ($params['tags'] as $value) {
 						$tag = sanitize_text_field($value);
 						$field = is_numeric($tag) ? 'id' : 'name';
 
