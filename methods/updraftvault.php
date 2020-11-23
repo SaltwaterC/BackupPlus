@@ -44,7 +44,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'conditional_logic');
+		return array('multi_options', 'config_templates');
 	}
 	
 	/**

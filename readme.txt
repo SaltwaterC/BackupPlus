@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.6
-Stable tag: 1.16.36
+Stable tag: 1.16.37
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,14 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.16.37 - 23/Nov/2020 =
+
+* FIX: Scheduled backups to remote storage not being correctly sent in 1.16.35/36 in the absence of the "More Storage" add-on
+* TWEAK: Wording tweak to clarify the effect of the conditional logic settings
+* TWEAK: Add a warning to the restore page to inform the user if JavaScript is broken and as a result the restore won't start
+* TWEAK: Replace intval() with casting to (int)
+* TWEAK: If the first fetch from a table failed, then the algorithm to fetch fewer rows failed to reduce the fetch size more than once
 
 = 1.16.36 - 20/Nov/2020 =
 
@@ -1154,4 +1162,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.16.36: Many and various small improvements and fixes, including a fix and mitigation to a backup corruption issue on the term_relationships table in 1.16.30-34. A strongly recommended update for all.
+* 1.16.37: Fixes a remote storage regression in the free version in 1.16.35. A recommended update for all.

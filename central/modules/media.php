@@ -516,7 +516,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 		$error = $this->_validate_capabilities(array('edit_posts'));
 		if (!empty($error)) return $error;
 
-		$attachment_id = intval($params['postid']);
+		$attachment_id = (int) $params['postid'];
 		$this->populate_request($params);
 
 		if (!function_exists('load_image_to_edit')) {
@@ -555,7 +555,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 
 		include_once(ABSPATH.'wp-admin/includes/image-edit.php');
 		$this->populate_request($params);
-		$post_id = intval($params['postid']);
+		$post_id = (int) $params['postid'];
 
 		ob_start();
 		stream_preview_image($post_id);

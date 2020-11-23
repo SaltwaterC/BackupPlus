@@ -2152,11 +2152,14 @@ class UpdraftPlus_Backup {
 				$fetch_rows_reductions = array_merge($fetch_rows_reductions, array(50, 20, 5));
 			}
 			
+			$break_after = $is_first_fetch_for_table ? $resumptions_since_last_successful - 1 : 1;
+			
 			foreach ($fetch_rows_reductions as $reduce_to) {
 				if ($fetch_rows > $reduce_to) {
 					// Go down one level
 					$fetch_rows = $reduce_to;
-					break;
+					$break_after--;
+					if ($break_after < 1) break;
 				}
 			}
 			

@@ -2192,7 +2192,7 @@ class UpdraftPlus {
 
 		// Schedule again, to run in 5 minutes again, in case we again fail
 		// The actual interval can be increased (for future resumptions) by other code, if it detects apparent overlapping
-		$resume_interval = max(intval($this->jobdata_get('resume_interval')), 100);
+		$resume_interval = max((int) $this->jobdata_get('resume_interval'), 100);
 
 		$btime = $this->backup_time;
 
@@ -3120,23 +3120,44 @@ class UpdraftPlus {
 			$this->log("Backup aborted (via filter)");
 			return false;
 		}
-	
+
+		// All scheduled backups will go through this condition (and some others may too)
+		// This section sets up default options, filters services/instances, and populates $options['remote_storage_instances']
 		if (!is_string($service) && !is_array($service)) {
 			$all_services = !empty($options['remote_storage_instances']) ? array_keys($options['remote_storage_instances']) : UpdraftPlus_Options::get_updraft_option('updraft_service');
-			$remote_storage_instances = !empty($options['remote_storage_instances']) ? $options['remote_storage_instances'] : array();
-			if (is_string($all_services))  $all_services = (array) $all_services;
-			$enabled_storage_objects_and_ids = UpdraftPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($all_services, $remote_storage_instances);
-			$service = array_keys($enabled_storage_objects_and_ids);
+			if (is_string($all_services)) $all_services = (array) $all_services;
+			
+			$enabled_storage_objects_and_ids = UpdraftPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($all_services);
+			$legacy_storage_instances = array();
+			
+			if (!isset($options['remote_storage_instances'])) {
+			
+				$remote_storage_instances = array();
+			
+				foreach ($enabled_storage_objects_and_ids as $method_id => $method_info) {
+				
+					if ($method_info['object']->supports_feature('multi_options')) {
+						foreach ($method_info['instance_settings'] as $instance_id => $instance_settings) {
+							// We already know the instance is enabled, as we only selected those. We just want to give add-ons an opportunity to filter it.
+							
+							if (!apply_filters('updraft_boot_backup_remote_storage_instance_include', true, $instance_settings, $method_id, $instance_id, $is_scheduled_backup)) continue;
+							
+							if (!isset($remote_storage_instances[$method_id])) $remote_storage_instances[$method_id] = array();
+							
+							$remote_storage_instances[$method_id][] = $instance_id;
+						}
+					} else {
+						$legacy_storage_instances[] = $method_id;
+					}
+				
+				}
+				
+				$options['remote_storage_instances'] = $remote_storage_instances;
+			}
+			
+			$service = array_merge(array_keys($options['remote_storage_instances']), $legacy_storage_instances);
 		}
-
-		if ($is_scheduled_backup && !empty($enabled_storage_objects_and_ids)) {
-			// only a scheduled and selected remote storage backup will go through this
-			$remote_storage_instances = is_array($remote_storage_instances) ? $remote_storage_instances : array();
-			$options['remote_storage_instances'] = apply_filters('updraft_remote_storage_instances', $remote_storage_instances, $enabled_storage_objects_and_ids, $options);
-			$service = array_keys($options['remote_storage_instances']);
-			if (empty($service)) return false; // this supposed to be remote storages backup operation, but we should fallback due to no conditional logic matched the storages' specified rules or because of other filters' callback that returned no service
-		}
-
+		
 		$service = $this->just_one($service);
 		if (is_string($service)) $service = array($service);
 		if (!is_array($service)) $service = array();
@@ -3208,7 +3229,7 @@ class UpdraftPlus {
 
 		$followups_allowed = (((!$one_shot && defined('DOING_CRON') && DOING_CRON)) || (defined('UPDRAFTPLUS_FOLLOWUPS_ALLOWED') && UPDRAFTPLUS_FOLLOWUPS_ALLOWED));
 
-		$split_every = max(intval(UpdraftPlus_Options::get_updraft_option('updraft_split_every', 400)), UPDRAFTPLUS_SPLIT_MIN);
+		$split_every = max((int) UpdraftPlus_Options::get_updraft_option('updraft_split_every', 400), UPDRAFTPLUS_SPLIT_MIN);
 
 		$initial_jobdata = array(
 			'resume_interval',
@@ -5201,7 +5222,7 @@ class UpdraftPlus {
 		foreach ($db_collates_found as $db_collate_found) {
 			if (isset($db_supported_collations[$db_collate_found])) {
 				if (isset($db_supported_collates_found_with_occurrence[$db_collate_found])) {
-					$db_supported_collates_found_with_occurrence[$db_collate_found] = intval($db_supported_collates_found_with_occurrence[$db_collate_found]) + 1;
+					$db_supported_collates_found_with_occurrence[$db_collate_found] = (int) $db_supported_collates_found_with_occurrence[$db_collate_found] + 1;
 				} else {
 					$db_supported_collates_found_with_occurrence[$db_collate_found] = 1;
 				}

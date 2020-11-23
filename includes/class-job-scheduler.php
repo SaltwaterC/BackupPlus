@@ -186,7 +186,7 @@ class UpdraftPlus_Job_Scheduler {
 
 		global $updraftplus;
 	
-		$resume_interval = max(intval($updraftplus->jobdata_get('resume_interval')), (0 === $howmuch) ? 120 : 300);
+		$resume_interval = max((int) $updraftplus->jobdata_get('resume_interval'), (0 === $howmuch) ? 120 : 300);
 
 		if (empty($updraftplus->newresumption_scheduled) && $due_to_overlap) {
 			$updraftplus->log('A new resumption will be scheduled to prevent the job ending');
