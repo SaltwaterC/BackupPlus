@@ -834,19 +834,6 @@
                 }
             ],
             "install-path": "../symfony/process"
-        },
-        {
-            "name": "team-updraft/common-libs",
-            "version": "3.0.0",
-            "version_normalized": "3.0.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://gitlab-ci-token:QE3SYA7dXzsWUzRYT78-@source.updraftplus.com/team-updraft/common-libs.git",
-                "reference": "v3.0.0"
-            },
-            "type": "library",
-            "installation-source": "source",
-            "install-path": "../team-updraft/common-libs"
         }
     ],
     "dev": false,
