@@ -2147,7 +2147,7 @@ class UpdraftPlus_Backup {
 			// A future improvement could, when things get drastic, grab and log data on the size of what is required, so that we can respond more dynamically. The strategy currently here will run out of road if memory falls short multiple times. See: https://stackoverflow.com/questions/4524019/how-to-get-the-byte-size-of-resultset-in-an-sql-query
 			$fetch_rows_reductions = array(500, 250, 200, 100);
 			
-			if ($allow_further_reductions && $resumptions_since_last_successful > 2) {
+			if ($allow_further_reductions) {
 				// If we're relying on LIMIT with offsets, then we have to be mindful of how that performs
 				$fetch_rows_reductions = array_merge($fetch_rows_reductions, array(50, 20, 5));
 			}
@@ -2163,7 +2163,7 @@ class UpdraftPlus_Backup {
 				}
 			}
 			
-			$updraftplus->log("Last successful resumption was $resumptions_since_last_successful runs ago; fetch_rows will thus be: $fetch_rows");
+			$updraftplus->log("Last successful resumption was $resumptions_since_last_successful runs ago; fetch_rows will thus be: $fetch_rows (allow_further_reductions=$allow_further_reductions, is_first_fetch=$is_first_fetch_for_table)");
 		}
 		
 		// If it has changed, then preserve it in the job for the next resumption (of this table)
