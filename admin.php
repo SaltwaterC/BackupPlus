@@ -1085,7 +1085,7 @@ class UpdraftPlus_Admin {
 		?>
 		<script>
 		jQuery(function() {
-			jQuery('.updraft-ad-container').appendTo('.wrap p').first();
+			jQuery('.updraft-ad-container').appendTo('.wrap p:first');
 		});
 		</script>
 		<?php
