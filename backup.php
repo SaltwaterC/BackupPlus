@@ -2869,8 +2869,6 @@ class UpdraftPlus_Backup {
 		return unserialize($var);
 	}
 
-
-
 	/**
 	 * Make Zip File.
 	 *
@@ -3255,8 +3253,14 @@ class UpdraftPlus_Backup {
 
 	}
 
+	/**
+	 * This function is an ugly, conservative workaround for https://bugs.php.net/bug.php?id=62119. It does not aim to always work-around, but to ensure that nothing is made worse.
+	 *
+	 * @param String $element
+	 *
+	 * @return String
+	 */
 	private function basename($element) {
-		// This function is an ugly, conservative workaround for https://bugs.php.net/bug.php?id=62119. It does not aim to always work-around, but to ensure that nothing is made worse.
 		$dirname = dirname($element);
 		$basename_manual = preg_replace('#^[\\/]+#', '', substr($element, strlen($dirname)));
 		$basename = basename($element);
@@ -3487,11 +3491,31 @@ class UpdraftPlus_Backup {
 
 			$fsize = filesize($file);
 
+			$large_file_warning_key = 'vlargefile_'.md5($this->whichone.'#'.$add_as);
+			
 			if (defined('UPDRAFTPLUS_SKIP_FILE_OVER_SIZE') && UPDRAFTPLUS_SKIP_FILE_OVER_SIZE && $fsize > UPDRAFTPLUS_SKIP_FILE_OVER_SIZE) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 				$updraftplus->log("File is larger than the user-configured (UPDRAFTPLUS_SKIP_FILE_OVER_SIZE) maximum (is: ".round($fsize/1024, 1)." KB); will skip: ".$add_as);
 				continue;
 			} elseif ($fsize > UPDRAFTPLUS_WARN_FILE_SIZE) {
-				$updraftplus->log(sprintf(__('A very large file was encountered: %s (size: %s Mb)', 'updraftplus'), $add_as, round($fsize/1048576, 1)), 'warning', 'vlargefile_'.md5($this->whichone.'#'.$add_as));
+			
+				$log_msg = __('A very large file was encountered: %s (size: %s Mb)', 'updraftplus');
+			
+				// Was this warned about on a previous run?
+				if ($updraftplus->warning_exists($large_file_warning_key)) {
+					$updraftplus->log_remove_warning($large_file_warning_key);
+					$large_file_warning_key .= '-2';
+					$log_msg .= ' - '.__('a second attempt is being made (upon further failure it will be skipped)', 'updraftplus');
+				} elseif ($updraftplus->warning_exists($large_file_warning_key.'-2') || $updraftplus->warning_exists($large_file_warning_key.'-final')) {
+					$updraftplus->log_remove_warning($large_file_warning_key.'-2');
+					$large_file_warning_key .= '-final';
+					$log_msg .= ' - '.__('two unsuccessful attempts were made to include it, and it will now be omitted from the backup', 'updraftplus');
+				}
+			
+				$updraftplus->log(sprintf($log_msg, $add_as, round($fsize/1048576, 1)), 'warning', $large_file_warning_key);
+				
+				if ('-final' == substr($large_file_warning_key, -6, 6)) {
+					continue;
+				}
 			}
 
 			// Skips files that are already added
@@ -3510,7 +3534,6 @@ class UpdraftPlus_Backup {
 				// N.B., Since makezip_addfiles() can get called more than once if there were errors detected, potentially $zipfiles_added_thisrun can exceed the total number of batched files (if they get processed twice).
 				$this->zipfiles_added_thisrun++;
 				$files_zipadded_since_open[] = array('file' => $file, 'addas' => $add_as);
-				$updraftplus->log_remove_warning('vlargefile_'.md5($this->whichone.'#'.$add_as));
 
 				$data_added_since_reopen += $fsize;
 				// $data_added_this_resumption += $fsize;

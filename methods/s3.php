@@ -99,7 +99,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @param  Null|String $endpoint 	   S3 endpoint to use
 	 * @param  Boolean	   $sse 		   A flag to use server side encryption
 	 * @param  String	   $session_token  The session token returned by AWS for temporary credentials access
-	 * @return array
+	 * @return Array
 	 */
 	public function getS3($key, $secret, $useservercerts, $disableverify, $nossl, $endpoint = null, $sse = false, $session_token = null) {
 		$storage = $this->get_storage();
@@ -581,10 +581,10 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	/**
 	 * The purpose of splitting this into a separate method, is to also allow listing with a different path
 	 *
-	 * @param  string  $path 			   Path to check
-	 * @param  string  $match 			   THe match for idetifying the bucket name
-	 * @param  boolean $include_subfolders Check if list file need to include sub folders
-	 * @return array
+	 * @param  String  $path 			   Path to check
+	 * @param  String  $match 			   THe match for idetifying the bucket name
+	 * @param  Boolean $include_subfolders Check if list file need to include sub folders
+	 * @return Array
 	 */
 	public function listfiles_with_path($path, $match = 'backup_', $include_subfolders = false) {
 		
@@ -937,7 +937,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * Modifies handerbar template options
 	 *
 	 * @param array $opts
-	 * @return array - Modified handerbar template options
+	 * @return Array - Modified handerbar template options
 	 */
 	public function transform_options_for_template($opts) {
 		return apply_filters('updraftplus_options_s3_options', $opts);
@@ -953,7 +953,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @param String $console_url     Remote storage method console url. It is used for get credential instruction
 	 * @param String $img_html        Image html tag
 	 *
-	 * @return string $template_str handlebars template string
+	 * @return String $template_str handlebars template string
 	 */
 	public function get_configuration_template_engine($key, $whoweare_short, $whoweare_long, $console_descrip, $console_url, $img_html = '') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $whoweare_long, $console_descrip, $console_url, $img_html unused
 		ob_start();
@@ -1029,7 +1029,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * This is not pretty, but is the simplest way to accomplish the task within the pre-existing structure (no need to re-invent the wheel of code with corner-cases debugged over years)
 	 *
 	 * @param  object $storage S3 Name
-	 * @param  string $bucket  S3 Bucket
+	 * @param  String $bucket  S3 Bucket
 	 * @return Boolean
 	 */
 	public function use_dns_bucket_name($storage, $bucket) {

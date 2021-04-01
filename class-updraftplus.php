@@ -1128,6 +1128,20 @@ class UpdraftPlus {
 		}
 		unset($this->errors[$uniq_id]);
 	}
+	
+	/**
+	 * Indicate whether or not a warning is logged with a specific identifier
+	 *
+	 * @see self::log()
+	 *
+	 * @param String $uniq_id - the identifier, previously passed to self::log()
+	 *
+	 * @return Boolean
+	 */
+	public function warning_exists($uniq_id) {
+		$warnings = $this->jobdata_get('warnings');
+		return !empty($warnings[$uniq_id]);
+	}
 
 	/**
 	 * For efficiency, you can also feed false or a string into this function

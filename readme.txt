@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.7
-Stable tag: 1.16.50
+Stable tag: 1.16.51
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,17 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.16.51 - 01/Apr/2021 =
+
+* FIX: Backup before updating dialog was not working on the inline informational pop-up on the Plugins page
+* TWEAK: Refactor how translatable texts are being handled and displayed within the UpdraftCentral client code
+* TWEAK: Fix parameter passing for UpdraftCentral multiplexed request
+* TWEAK: Exclude/skip very large files from the backup operation if the first and second attempt at backing them up didn't succeed
+* TWEAK: Backblaze multi-deletion code did not properly handle files that were already deleted (could abort deletion of others)
+* TWEAK: Replace the table prefix in the constraint name if it is found
+* TWEAK: Don't perform an atomic restore on tables with constraints
+* TWEAK: Add atomic restore support for non-WordPress tables
 
 = 1.16.50 - 16/Mar/2021 =
 
@@ -1271,4 +1282,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.16.50: Improve handling of Dropbox access tokens, and Google upload memory usage/logging.
+* 1.16.51: Various tweaks and fixes, including relating to atomic table restores.
