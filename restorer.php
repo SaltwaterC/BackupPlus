@@ -2465,7 +2465,7 @@ class Updraft_Restorer {
 
 		$updraftplus->log($logline);
 		$updraftplus->log($print_line, 'notice-restore');
-		$this->original_table_name = $this->table_name;
+		$this->original_table_name = UpdraftPlus_Manipulation_Functions::str_replace_once($this->import_table_prefix, $this->final_import_table_prefix, $this->new_table_name);
 		$this->restoring_table = $this->new_table_name;
 		if ($charset_change_message) $updraftplus->log($charset_change_message, 'notice-restore');
 		if ($constraint_change_message) $updraftplus->log($constraint_change_message, 'notice-restore');

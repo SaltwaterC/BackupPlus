@@ -2184,6 +2184,45 @@ class UpdraftPlus_Backup {
 	}
 	
 	/**
+	 * Return a list of primary keys (N.B. the method should not be called unless the caller already knows that the table has a single/simple primary key) for rows that have "over-sized" data.
+	 * Currently this only examines the "posts" table, which is the primary cause of problems. If others are revealed in future, it can be generalised (e.g. examine the whole definition/all cells).
+	 *
+	 * @param String $table - table name
+	 *
+	 * @return Array - list of IDs
+	 */
+	private function get_oversized_rows($table) {
+	
+		if ($this->table_prefix_raw.'posts' != $table) return array();
+	
+		global $updraftplus;
+	
+		// Look for the jobdata_delete() call elsewhere in this class - the key name needs to match
+		$jobdata_key = 'oversized_rows_'.$table;
+		
+		$oversized_list = $updraftplus->jobdata_get($jobdata_key);
+		
+		if (is_array($oversized_list)) return $oversized_list;
+	
+		$oversized_list = array();
+		
+		// Allow over-ride via a constant
+		$oversized_row_size = defined('UPDRAFTPLUS_OVERSIZED_ROW_SIZE') ? UPDRAFTPLUS_OVERSIZED_ROW_SIZE : 2048576;
+		
+		$sql = $this->wpdb_obj->prepare("SELECT id FROM ".UpdraftPlus_Manipulation_Functions::backquote($table)." WHERE LENGTH(post_content) > %d ORDER BY id ASC", $oversized_row_size);
+		
+		$oversized_rows = $this->wpdb_obj->get_col($sql);
+		
+		// Upon an error, just return an empty list
+		if (!is_array($oversized_rows)) return array();
+		
+		$updraftplus->jobdata_set($jobdata_key, $oversized_rows);
+		
+		return $oversized_rows;
+	
+	}
+	
+	/**
 	 * Original version taken partially from phpMyAdmin and partially from Alain Wolf, Zurich - Switzerland to use the WordPress $wpdb object
 	 * Website: http://restkultur.ch/personal/wolf/scripts/db_backup/
 	 * Modified by Scott Merrill (http://www.skippy.net/)
@@ -2282,6 +2321,8 @@ class UpdraftPlus_Backup {
 			$use_primary_key = false;
 			if ($can_use_primary_key && is_string($primary_key) && preg_match('#^(small|medium|big)?int\(#i', $primary_key_type)) {
 				$use_primary_key = true;
+				$oversized_rows = $this->get_oversized_rows($table);
+
 				if (preg_match('# unsigned$#i', $primary_key_type)) {
 					if (true === $start_record) $start_record = -1;
 				} else {
@@ -2329,6 +2370,24 @@ class UpdraftPlus_Backup {
 					// If it's -1, then we avoid mentioning a negative value, as the value may be unsigned
 					$final_where .= UpdraftPlus_Manipulation_Functions::backquote($primary_key).((-1 === $start_record) ? ' >= 0' : " > $start_record");
 				
+					$oversized_last = false;
+					// Remove ones we've gone past
+					foreach ($oversized_rows as $k => $row_id) {
+						if ($start_record >= $row_id) {
+							unset($oversized_rows[$k]);
+						} else {
+							$oversized_last = $row_id;
+							// At this point we are only willing to fetch a single over-sized row. If this ever changes, we'll need to also keep track of their length.
+							break;
+						}
+					}
+					// Number the keys again from zero
+					$oversized_rows = array_values($oversized_rows);
+				
+					if ($oversized_last) {
+						$final_where .= " AND ". UpdraftPlus_Manipulation_Functions::backquote($primary_key)." <= $oversized_last";
+					}
+				
 					$limit_statement = sprintf('LIMIT %d', $fetch_rows);
 					
 					$order_by = 'ORDER BY '.UpdraftPlus_Manipulation_Functions::backquote($primary_key).' ASC';
@@ -2346,7 +2405,23 @@ class UpdraftPlus_Backup {
 				// Allow the data to be filtered (e.g. anonymisation)
 				$table_data = apply_filters('updraftplus_backup_table_results', $this->wpdb_obj->get_results($select_sql, ARRAY_A), $table, $this->table_prefix, $this->whichdb);
 				
-				if (!$table_data) continue;
+				if (null === $table_data) {
+					$updraftplus->log("Database fetch error (null returned) when running: $select_sql");
+				}
+				
+				$oversized_changes = false;
+				
+				if (!$table_data) {
+					// Nothing was found - not even the expected over-sized row; this means it was deleted - so don't try to use a limitation based on it again, or we may get an infinite loop.
+					if (isset($oversized_last) && false !== $oversized_last) {
+						if (false !== ($key = array_search($oversized_last, $oversized_rows))) {
+							unset($oversized_rows[$key]);
+							$oversized_changes = true;
+						}
+					}
+					if ($oversized_changes) $updraftplus->jobdata_set('oversized_rows_'.$table, $oversized_rows);
+					continue;
+				}
 				$entries = 'INSERT INTO '.UpdraftPlus_Manipulation_Functions::backquote($dump_as_table).' VALUES ';
 
 				// \x08\\x09, not required
@@ -2364,6 +2439,13 @@ class UpdraftPlus_Backup {
 					
 						if ($use_primary_key && strtolower($primary_key) == strtolower($key) && $value > $start_record) {
 							$start_record = $value;
+							foreach ($oversized_rows as $k => $row_id) {
+								if ($start_record >= $row_id) {
+									unset($oversized_rows[$k]);
+								} else {
+									break;
+								}
+							}
 						}
 					
 						if (isset($integer_fields[strtolower($key)])) {
@@ -2430,7 +2512,8 @@ class UpdraftPlus_Backup {
 				
 				if ($process_pages > 0) $process_pages--;
 				
-			} while (!$enough_for_now && count($table_data) > 0 && (-1 == $process_pages || $process_pages > 0));
+			// The condition involving count($oversized_rows) is for when rows that were in oversized_rows got deleted before being fetched; the "ID < (row)" condition could result in no data being returned, even though the table isn't finished
+			} while (!$enough_for_now && (count($table_data) > 0 || (isset($oversized_rows) && count($oversized_rows) > 0)) && (-1 == $process_pages || $process_pages > 0));
 		}
 		
 		$updraftplus->log("Table $table: Rows added in this batch (next record: $start_record): $total_rows (uncompressed bytes in this segment=".$this->db_current_raw_bytes.") in ".sprintf("%.02f", max(microtime(true)-$microtime, 0.00001))." seconds");
@@ -2438,6 +2521,8 @@ class UpdraftPlus_Backup {
 		// If all data has been fetched, then write out the closing comment
 		if (-1 == $process_pages || 0 == count($table_data)) {
 			$this->stow("\n# End of data contents of table ".UpdraftPlus_Manipulation_Functions::backquote($table)."\n\n");
+			// Keep the keyname here in sync with what is in self::get_oversized_rows()
+			$updraftplus->jobdata_delete('oversized_rows_'.$table);
 			return is_numeric($start_record) ? array('next_record' => (int) $start_record) : array();
 		}
 

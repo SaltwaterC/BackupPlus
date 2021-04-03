@@ -2243,7 +2243,7 @@ class UpdraftPlus {
 		if ($resumption_no > 0 && isset($runs_started[$prev_resumption])) {
 			$our_expected_start = $runs_started[$prev_resumption] + $resume_interval;
 			// If the previous run increased the resumption time, then it is timed from the end of the previous run, not the start
-			if (isset($time_passed[$prev_resumption]) && $time_passed[$prev_resumption]>0) $our_expected_start += $time_passed[$prev_resumption];
+			if (isset($time_passed[$prev_resumption]) && $time_passed[$prev_resumption] > 0) $our_expected_start += $time_passed[$prev_resumption];
 			$our_expected_start = apply_filters('updraftplus_expected_start', $our_expected_start, $job_type);
 			// More than 12 minutes late?
 			if ($time_now > $our_expected_start + 720) {
@@ -2256,27 +2256,52 @@ class UpdraftPlus {
 
 		$first_run = apply_filters('updraftplus_filerun_firstrun', 0);
 
-		// We just do this once, as we don't want to be in permanent conflict with the overlap detector
+		// We don't want to be in permanent conflict with the overlap detector
 		if ($resumption_no >= $first_run + 8 && $resumption_no < $first_run + 15 && $resume_interval >= 300) {
 
 			// $time_passed is set earlier
 			list($max_time, $timings_string, $run_times_known) = UpdraftPlus_Manipulation_Functions::max_time_passed($time_passed, $resumption_no - 1, $first_run);
 
-			// Do this on resumption 8, or the first time that we have 6 data points
+			// Do this on resumption 8, or the first time that we have 6 data points. This is only done once to prevent any potential for back-and-forth.
 			if (($first_run + 8 == $resumption_no && $run_times_known >= 6) || (6 == $run_times_known && !empty($time_passed[$prev_resumption]))) {
 				$this->log("Time passed on previous resumptions: $timings_string (known: $run_times_known, max: $max_time)");
 				// Remember that 30 seconds is used as the 'perhaps something is still running' detection threshold, and that 45 seconds is used as the 'the next resumption is approaching - reschedule!' interval
-				if ($max_time + 52 < $resume_interval) {
+				if ($resume_interval > $max_time + 52) {
 					$resume_interval = round($max_time + 52);
 					$this->log("Based on the available data, we are bringing the resumption interval down to: $resume_interval seconds");
 					$this->jobdata_set('resume_interval', $resume_interval);
 				}
-				// This next condition was added in response to HS#9174, a case where on one resumption, PHP was allowed to run for >3000 seconds - but other than that, up to 500 seconds. As a result, the resumption interval got stuck at a large value, whilst resumptions were only allowed to run for a much smaller amount.
+				
+			} elseif (isset($time_passed[$prev_resumption]) && $time_passed[$prev_resumption] > 50 && $resume_interval > 300 && $time_passed[$prev_resumption] < $resume_interval/2) {
+				// This next condition was added in response to HS#9174, a case where on one resumption, PHP was allowed to run for >3000 seconds - but other than that, up to 500 seconds. As a result, the resumption interval got stuck at a large value, whilst resumptions were only being allowed to run for a much smaller amount.
 				// This detects whether our last run was less than half the resume interval,  but was non-trivial (at least 50 seconds - so, indicating it didn't just error out straight away), but with a resume interval of over 300 seconds. In this case, it is reduced.
-			} elseif (isset($time_passed[$prev_resumption]) && $time_passed[$prev_resumption] > 50 && $resume_interval > 300 && $time_passed[$prev_resumption] < $resume_interval/2 && 'clouduploading' == $this->jobdata_get('jobstatus')) {
-				$resume_interval = round($time_passed[$prev_resumption] + 52);
-				$this->log("Time passed on previous resumptions: $timings_string (known: $run_times_known, max: $max_time). Based on the available data, we are bringing the resumption interval down to: $resume_interval seconds");
-				$this->jobdata_set('resume_interval', $resume_interval);
+				if ('clouduploading' == $this->jobdata_get('jobstatus')) {
+					$resume_interval = round($time_passed[$prev_resumption] + 52);
+					$this->log("Time passed on previous resumptions: $timings_string (known: $run_times_known, max: $max_time). Based on the available data, we are bringing the resumption interval down to: $resume_interval seconds");
+					$this->jobdata_set('resume_interval', $resume_interval);
+				} elseif ($run_times_known > 4) {
+					// Added in response to the similar HS#66907 - in that case, resumption 0 ran for over an hour; nothing subsequently for more than ~3 minutes; and it didn't reach the uploading stage until resumption 19, so the previous fragment was not helping. The cause was that the backup initially started under WP-CLI, but then resumed through the web - different conditions led to different permitted run-times. (The user could also mitigate this by running WP-Cron in a CLI environment).
+					$examined_values = 0;
+					$matching_values = 0;
+					$looking_at_resumption = $prev_resumption - 1;
+					$largest_recent = false;
+					while ($looking_at_resumption > 0 && $examined_values < 3) {
+						if (isset($time_passed[$looking_at_resumption])) {
+							$examined_values++;
+							if ($time_passed[$looking_at_resumption] > 50 && $time_passed[$looking_at_resumption] < $resume_interval/2) {
+								$matching_values++;
+								$largest_recent = max($largest_recent, $time_passed[$looking_at_resumption]);
+							}
+						}
+						$looking_at_resumption--;
+					}
+					// If the previous three found values were all less than half the resumption interval....
+					if (3 == $examined_values && 3 == $matching_values) {
+						$resume_interval = round($largest_recent + 52);
+						$this->log("Time passed on previous resumptions: $timings_string (known: $run_times_known, max: $max_time). Based on the available data (most recent 3 resumptions compared to longest), we are bringing the resumption interval down to: $resume_interval seconds");
+						$this->jobdata_set('resume_interval', $resume_interval);
+					}
+				}
 			}
 
 		}

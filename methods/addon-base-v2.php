@@ -166,7 +166,7 @@ abstract class UpdraftPlus_RemoteStorage_Addons_Base_v2 extends UpdraftPlus_Back
 		$ret = true;
 
 		if ($this->supports_feature('multi_delete')) {
-			$updraftplus->log("Delete remote files: ".implode($files));
+			$updraftplus->log("Delete remote files: ".implode(', ', $files));
 			try {
 				$responses = $this->do_delete($files);
 

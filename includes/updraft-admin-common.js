@@ -4475,7 +4475,7 @@ jQuery(function($) {
 	jQuery("#updraft-upload-modal").dialog({
 		autoOpen: false, modal: true, resizeOnWindowResize: true, scrollWithViewport: true, resizeAccordingToViewport: true, useContentSize: false,
 		open: function(event, ui) {
-			$(this).parent().focus();
+			$(this).parent().trigger('focus');
 			$(this).dialog('option', 'width', 308);
 			if (jQuery(window).height() > 460) {
 				$(this).dialog('option', 'height', 218);

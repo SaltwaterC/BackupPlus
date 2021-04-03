@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.7
-Stable tag: 1.16.51
+Stable tag: 1.16.53
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,15 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.16.53 - 03/Apr/2021 =
+
+* FIX: Incorrect final table name being used during an atomic restore when restoring using a different table prefix
+* FIX: Fix variable re-use issue in Backblaze multi-delete code which halted deletion
+* TWEAK: Prevent unnecessary logging when testing data for serialization on PHP 8.0 during migration
+* TWEAK: Update jsTree library to version 3.3.12-rc0 to work around deprecated jQuery functions
+* TWEAK: Add an extra check for whether it looks reasonable to reduce the resumption time, increasing efficiency
+* TWEAK: On the posts table, detect over-sized rows in advance, and fetch them one at a time.
 
 = 1.16.51 - 01/Apr/2021 =
 
@@ -1282,4 +1291,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.16.51: Various tweaks and fixes, including relating to atomic table restores.
+* 1.16.53: Various tweaks and fixes, including relating to restoring with a different table prefix, the scheduling algorithm and Backblaze deletion.

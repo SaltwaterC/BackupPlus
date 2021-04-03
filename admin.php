@@ -5787,7 +5787,7 @@ ENDHERE;
 		if ($already_enqueued) return;
 		
 		$already_enqueued = true;
-		$jstree_enqueue_version = $updraftplus->use_unminified_scripts() ? '3.3'.'.'.time() : '3.3';
+		$jstree_enqueue_version = $updraftplus->use_unminified_scripts() ? '3.3.12-rc.0'.'.'.time() : '3.3.12-rc.0';
 		$min_or_not = $updraftplus->use_unminified_scripts() ? '' : '.min';
 		
 		wp_enqueue_script('jstree', UPDRAFTPLUS_URL.'/includes/jstree/jstree'.$min_or_not.'.js', array('jquery'), $jstree_enqueue_version);
