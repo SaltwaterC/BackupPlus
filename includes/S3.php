@@ -265,7 +265,7 @@ class UpdraftPlus_S3 {
 		$this->__signingKeyPairId = $keyPairId;
 		if (($this->__signingKeyResource = openssl_pkey_get_private($isFile ?
 		file_get_contents($signingKey) : $signingKey)) !== false) return true;
-		$this->__triggerError('UpdraftPlus_S3::setSigningKey(): Unable to open load private key: '.$signingKey, __FILE__, __LINE__);
+		$this->triggerError('UpdraftPlus_S3::setSigningKey(): Unable to open load private key: '.$signingKey, __FILE__, __LINE__);
 		return false;
 	}
 
@@ -294,24 +294,30 @@ class UpdraftPlus_S3 {
 	/**
 	 * Internal error handler
 	 *
-	 * @param string $message Error message
-	 * @param string $file Filename
-	 * @param integer $line Line number
-	 * @param integer $code Error code
+	 * @param string         $message Error message
+	 * @param string         $file    Filename
+	 * @param integer        $line    Line number
+	 * @param string|boolean $code    Error sub-class, or false if not being used
 	 *
 	 * @internal Internal error handler
 	 * @throws  UpdraftPlus_S3Exception
 	 *
 	 * @return void
 	 */
-	private function __triggerError($message, $file, $line, $code = 0) {// phpcs:ignore PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.MethodDoubleUnderscore -- Method name "UpdraftPlus_S3Request::__responseHeaderCallback" is discouraged; PHP has reserved all method names with a double underscore prefix for future use.
+	private function triggerError($message, $file, $line, $code = false) {
 		if ($this->useExceptions) {
-			throw new UpdraftPlus_S3Exception($message, $file, $line, $code);
+			$exception_class = 'UpdraftPlus_S3Exception';
+			if (is_string($code) && class_exists($exception_class.'_'.$code)) $exception_class .= '_'.$code;
+			$exception = new $exception_class;
+			$exception->setMessage($message);
+			$exception->setFile($file);
+			$exception->setLine($line);
+			if (is_a($exception, 'UpdraftPlus_S3Exception_AuthorizationHeaderMalformed')) $exception->setRegion($this->region);
+			throw $exception;
 		} else {
 			trigger_error($message, E_USER_WARNING);
 		}
 	}
-
 
 	/**
 	 * Get a list of buckets
@@ -327,7 +333,7 @@ class UpdraftPlus_S3 {
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::listBuckets(): [%s] %s", $rest->error['code'],
+			$this->triggerError(sprintf("UpdraftPlus_S3::listBuckets(): [%s] %s", $rest->error['code'],
 			$rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -383,8 +389,9 @@ class UpdraftPlus_S3 {
 			$response->error = array('code' => $response->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $response->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucket(): [%s] %s",
-			$response->error['code'], $response->error['message']), __FILE__, __LINE__);
+			if (!empty($response->error['region'])) $this->region = $response->error['region'];
+			$this->triggerError(sprintf("UpdraftPlus_S3::getBucket(): [%s] %s",
+			$response->error['code'], $response->error['message']), __FILE__, __LINE__, $response->error['code']);
 			return false;
 		}
 
@@ -479,8 +486,9 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::putBucket({$bucket}, {$acl}, {$location}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
+			if (!empty($rest->error['region'])) $this->region = $rest->error['region'];
+			$this->triggerError(sprintf("UpdraftPlus_S3::putBucket({$bucket}, {$acl}, {$location}): [%s] %s",
+			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__, $rest->error['code']);
 			return false;
 		}
 		return true;
@@ -502,7 +510,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteBucket({$bucket}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::deleteBucket({$bucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -519,7 +527,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function inputFile($file, $md5sum = true) {
 		if (!file_exists($file) || !is_file($file) || !is_readable($file)) {
-			$this->__triggerError('UpdraftPlus_S3::inputFile(): Unable to open input file: '.$file, __FILE__, __LINE__);
+			$this->triggerError('UpdraftPlus_S3::inputFile(): Unable to open input file: '.$file, __FILE__, __LINE__);
 			return false;
 		}
 		return array('file' => $file, 'size' => filesize($file), 'md5sum' => $md5sum !== false ?
@@ -537,7 +545,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function inputResource(&$resource, $bufferSize, $md5sum = '') {
 		if (!is_resource($resource) || $bufferSize < 0) {
-			$this->__triggerError('UpdraftPlus_S3::inputResource(): Invalid resource or buffer size', __FILE__, __LINE__);
+			$this->triggerError('UpdraftPlus_S3::inputResource(): Invalid resource or buffer size', __FILE__, __LINE__);
 			return false;
 		}
 		$input = array('size' => $bufferSize, 'md5sum' => $md5sum);
@@ -582,7 +590,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->response->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::initiateMultipartUpload(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::initiateMultipartUpload(): [%s] %s",
 			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
 			return false;
 		} elseif (isset($rest->response->body)) {
@@ -650,7 +658,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::uploadPart(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::uploadPart(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -692,7 +700,7 @@ class UpdraftPlus_S3 {
 			if ('InternalError' == $rest->error['code'] && 'This multipart completion is already in progress' == $rest->error['message']) {
 				return true;
 			}
-			$this->__triggerError(sprintf("UpdraftPlus_S3::completeMultipartUpload(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::completeMultipartUpload(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -718,7 +726,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::abortMultipartUpload(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::abortMultipartUpload(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -807,8 +815,9 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->response->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::putObject(): [%s] %s",
-			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
+			if (!empty($rest->response->error['region'])) $this->region = $rest->response->error['region'];
+			$this->triggerError(sprintf("UpdraftPlus_S3::putObject(): [%s] %s",
+			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__, $rest->response->error['code']);
 			return false;
 		}
 		return true;
@@ -885,7 +894,7 @@ class UpdraftPlus_S3 {
 		if (false === $rest->response->error && ( !$resume && 200 != $rest->response->code) || ( $resume && 206 != $rest->response->code && 200 != $rest->response->code))
 			$rest->response->error = array('code' => $rest->response->code, 'message' => 'Unexpected HTTP status');
 		if (false !== $rest->response->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getObject({$bucket}, {$uri}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getObject({$bucket}, {$uri}): [%s] %s",
 			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -908,7 +917,7 @@ class UpdraftPlus_S3 {
 		if (false === $rest->error && (200 !== $rest->code && 404 !== $rest->code))
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getObjectInfo({$bucket}, {$uri}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getObjectInfo({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -948,7 +957,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::copyObject({$srcBucket}, {$srcUri}, {$bucket}, {$uri}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::copyObject({$srcBucket}, {$srcUri}, {$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1012,7 +1021,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::setBucketLogging({$bucket}, {$targetBucket}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::setBucketLogging({$bucket}, {$targetBucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1039,7 +1048,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucketLogging({$bucket}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getBucketLogging({$bucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1078,8 +1087,9 @@ class UpdraftPlus_S3 {
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucketLocation({$bucket}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
+			if (!empty($rest->error['region'])) $this->region = $rest->error['region'];
+			$this->triggerError(sprintf("UpdraftPlus_S3::getBucketLocation({$bucket}): [%s] %s",
+			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__, $rest->error['code']);
 			return false;
 		}
 		
@@ -1144,7 +1154,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::setAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::setAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1168,7 +1178,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1226,7 +1236,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteObject(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::deleteObject(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1374,7 +1384,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function createDistribution($bucket, $enabled = true, $cnames = array(), $comment = null, $defaultRootObject = null, $originAccessIdentity = null, $trustedSigners = array()) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1404,7 +1414,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		} elseif ($rest->body instanceof SimpleXMLElement) {
@@ -1422,7 +1432,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function getDistribution($distributionId) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1439,7 +1449,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		} elseif ($rest->body instanceof SimpleXMLElement) {
@@ -1461,7 +1471,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function updateDistribution($dist) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1492,7 +1502,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		} else {
@@ -1513,7 +1523,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function deleteDistribution($dist) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1532,7 +1542,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1547,7 +1557,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function listDistributions() {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1563,7 +1573,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		} elseif ($rest->body instanceof SimpleXMLElement && isset($rest->body->DistributionSummary)) {
@@ -1588,7 +1598,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function listOriginAccessIdentities() {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::listOriginAccessIdentities(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::listOriginAccessIdentities(): [%s] %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1632,7 +1642,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function invalidateDistribution($distributionId, $paths) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::invalidateDistribution(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::invalidateDistribution(): [%s] %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1700,7 +1710,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function getDistributionInvalidationList($distributionId) {
 		if (!extension_loaded('openssl')) {
-			$this->__triggerError(sprintf("UpdraftPlus_S3::getDistributionInvalidationList(): [%s] %s",
+			$this->triggerError(sprintf("UpdraftPlus_S3::getDistributionInvalidationList(): [%s] %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -2325,6 +2335,8 @@ final class UpdraftPlus_S3Request {
 				$this->response->error['message'] = isset($this->response->body->Message) ? $this->response->body->Message : '';
 				if (isset($this->response->body->Resource))
 					$this->response->error['resource'] = (string)$this->response->body->Resource;
+				if (isset($this->response->body->Region))
+					$this->response->error['region'] = (string)$this->response->body->Region;
 				unset($this->response->body);
 			}
 		}
