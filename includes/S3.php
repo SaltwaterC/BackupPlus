@@ -265,7 +265,7 @@ class UpdraftPlus_S3 {
 		$this->__signingKeyPairId = $keyPairId;
 		if (($this->__signingKeyResource = openssl_pkey_get_private($isFile ?
 		file_get_contents($signingKey) : $signingKey)) !== false) return true;
-		$this->triggerError('UpdraftPlus_S3::setSigningKey(): Unable to open load private key: '.$signingKey, __FILE__, __LINE__);
+		$this->__triggerError('UpdraftPlus_S3::setSigningKey(): Unable to open load private key: '.$signingKey, __FILE__, __LINE__);
 		return false;
 	}
 
@@ -294,30 +294,24 @@ class UpdraftPlus_S3 {
 	/**
 	 * Internal error handler
 	 *
-	 * @param string         $message Error message
-	 * @param string         $file    Filename
-	 * @param integer        $line    Line number
-	 * @param string|boolean $code    Error sub-class, or false if not being used
+	 * @param string $message Error message
+	 * @param string $file Filename
+	 * @param integer $line Line number
+	 * @param integer $code Error code
 	 *
 	 * @internal Internal error handler
 	 * @throws  UpdraftPlus_S3Exception
 	 *
 	 * @return void
 	 */
-	private function triggerError($message, $file, $line, $code = false) {
+	private function __triggerError($message, $file, $line, $code = 0) {// phpcs:ignore PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.MethodDoubleUnderscore -- Method name "UpdraftPlus_S3Request::__responseHeaderCallback" is discouraged; PHP has reserved all method names with a double underscore prefix for future use.
 		if ($this->useExceptions) {
-			$exception_class = 'UpdraftPlus_S3Exception';
-			if (is_string($code) && class_exists($exception_class.'_'.$code)) $exception_class .= '_'.$code;
-			$exception = new $exception_class;
-			$exception->setMessage($message);
-			$exception->setFile($file);
-			$exception->setLine($line);
-			if (is_a($exception, 'UpdraftPlus_S3Exception_AuthorizationHeaderMalformed')) $exception->setRegion($this->region);
-			throw $exception;
+			throw new UpdraftPlus_S3Exception($message, $file, $line, $code);
 		} else {
 			trigger_error($message, E_USER_WARNING);
 		}
 	}
+
 
 	/**
 	 * Get a list of buckets
@@ -333,7 +327,7 @@ class UpdraftPlus_S3 {
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::listBuckets(): [%s] %s", $rest->error['code'],
+			$this->__triggerError(sprintf("UpdraftPlus_S3::listBuckets(): [%s] %s", $rest->error['code'],
 			$rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -389,9 +383,8 @@ class UpdraftPlus_S3 {
 			$response->error = array('code' => $response->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $response->error) {
-			if (!empty($response->error['region'])) $this->region = $response->error['region'];
-			$this->triggerError(sprintf("UpdraftPlus_S3::getBucket(): [%s] %s",
-			$response->error['code'], $response->error['message']), __FILE__, __LINE__, $response->error['code']);
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucket(): [%s] %s",
+			$response->error['code'], $response->error['message']), __FILE__, __LINE__);
 			return false;
 		}
 
@@ -486,9 +479,8 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			if (!empty($rest->error['region'])) $this->region = $rest->error['region'];
-			$this->triggerError(sprintf("UpdraftPlus_S3::putBucket({$bucket}, {$acl}, {$location}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__, $rest->error['code']);
+			$this->__triggerError(sprintf("UpdraftPlus_S3::putBucket({$bucket}, {$acl}, {$location}): [%s] %s",
+			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
 		return true;
@@ -510,7 +502,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::deleteBucket({$bucket}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteBucket({$bucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -527,7 +519,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function inputFile($file, $md5sum = true) {
 		if (!file_exists($file) || !is_file($file) || !is_readable($file)) {
-			$this->triggerError('UpdraftPlus_S3::inputFile(): Unable to open input file: '.$file, __FILE__, __LINE__);
+			$this->__triggerError('UpdraftPlus_S3::inputFile(): Unable to open input file: '.$file, __FILE__, __LINE__);
 			return false;
 		}
 		return array('file' => $file, 'size' => filesize($file), 'md5sum' => $md5sum !== false ?
@@ -545,7 +537,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function inputResource(&$resource, $bufferSize, $md5sum = '') {
 		if (!is_resource($resource) || $bufferSize < 0) {
-			$this->triggerError('UpdraftPlus_S3::inputResource(): Invalid resource or buffer size', __FILE__, __LINE__);
+			$this->__triggerError('UpdraftPlus_S3::inputResource(): Invalid resource or buffer size', __FILE__, __LINE__);
 			return false;
 		}
 		$input = array('size' => $bufferSize, 'md5sum' => $md5sum);
@@ -590,7 +582,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->response->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::initiateMultipartUpload(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::initiateMultipartUpload(): [%s] %s",
 			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
 			return false;
 		} elseif (isset($rest->response->body)) {
@@ -658,7 +650,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::uploadPart(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::uploadPart(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -700,7 +692,7 @@ class UpdraftPlus_S3 {
 			if ('InternalError' == $rest->error['code'] && 'This multipart completion is already in progress' == $rest->error['message']) {
 				return true;
 			}
-			$this->triggerError(sprintf("UpdraftPlus_S3::completeMultipartUpload(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::completeMultipartUpload(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -726,7 +718,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::abortMultipartUpload(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::abortMultipartUpload(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -815,9 +807,8 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->response->error) {
-			if (!empty($rest->response->error['region'])) $this->region = $rest->response->error['region'];
-			$this->triggerError(sprintf("UpdraftPlus_S3::putObject(): [%s] %s",
-			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__, $rest->response->error['code']);
+			$this->__triggerError(sprintf("UpdraftPlus_S3::putObject(): [%s] %s",
+			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
 			return false;
 		}
 		return true;
@@ -894,7 +885,7 @@ class UpdraftPlus_S3 {
 		if (false === $rest->response->error && ( !$resume && 200 != $rest->response->code) || ( $resume && 206 != $rest->response->code && 200 != $rest->response->code))
 			$rest->response->error = array('code' => $rest->response->code, 'message' => 'Unexpected HTTP status');
 		if (false !== $rest->response->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getObject({$bucket}, {$uri}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getObject({$bucket}, {$uri}): [%s] %s",
 			$rest->response->error['code'], $rest->response->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -917,7 +908,7 @@ class UpdraftPlus_S3 {
 		if (false === $rest->error && (200 !== $rest->code && 404 !== $rest->code))
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getObjectInfo({$bucket}, {$uri}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getObjectInfo({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -957,7 +948,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::copyObject({$srcBucket}, {$srcUri}, {$bucket}, {$uri}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::copyObject({$srcBucket}, {$srcUri}, {$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1021,7 +1012,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::setBucketLogging({$bucket}, {$targetBucket}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::setBucketLogging({$bucket}, {$targetBucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1048,7 +1039,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getBucketLogging({$bucket}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucketLogging({$bucket}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1087,9 +1078,8 @@ class UpdraftPlus_S3 {
 			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
 		}
 		if (false !== $rest->error) {
-			if (!empty($rest->error['region'])) $this->region = $rest->error['region'];
-			$this->triggerError(sprintf("UpdraftPlus_S3::getBucketLocation({$bucket}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__, $rest->error['code']);
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getBucketLocation({$bucket}): [%s] %s",
+			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
 		
@@ -1154,7 +1144,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::setAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::setAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1178,7 +1168,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::getAccessControlPolicy({$bucket}, {$uri}): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1236,7 +1226,7 @@ class UpdraftPlus_S3 {
 		}
 
 		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::deleteObject(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::deleteObject(): [%s] %s",
 			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
 			return false;
 		}
@@ -1368,229 +1358,6 @@ class UpdraftPlus_S3 {
 		return $params;
 	}
 
-
-	/**
-	 * Create a CloudFront distribution
-	 *
-	 * @param string $bucket Bucket name
-	 * @param boolean $enabled Enabled (true/false)
-	 * @param array $cnames Array containing CNAME aliases
-	 * @param string $comment Use the bucket name as the hostname
-	 * @param string $defaultRootObject Default root object
-	 * @param string $originAccessIdentity Origin access identity
-	 * @param array $trustedSigners Array of trusted signers
-	 *
-	 * @return array | false
-	 */
-	public function createDistribution($bucket, $enabled = true, $cnames = array(), $comment = null, $defaultRootObject = null, $originAccessIdentity = null, $trustedSigners = array()) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-		$useSSL = $this->useSSL;
-
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('POST', '', '2010-11-01/distribution', 'cloudfront.amazonaws.com');
-		$rest->data = $this->__getCloudFrontDistributionConfigXML(
-			$bucket.'.s3.amazonaws.com',
-			$enabled,
-			(string)$comment,
-			(string)microtime(true),
-			$cnames,
-			$defaultRootObject,
-			$originAccessIdentity,
-			$trustedSigners
-		);
-
-		$rest->size = strlen($rest->data);
-		$rest->setHeader('Content-Type', 'application/xml');
-		$rest = $this->__getCloudFrontResponse($rest);
-
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 201 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::createDistribution({$bucket}, ".(int)$enabled.", [], '$comment'): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
-			return false;
-		} elseif ($rest->body instanceof SimpleXMLElement) {
-			return $this->__parseCloudFrontDistributionConfig($rest->body);
-		}
-		return false;
-	}
-
-
-	/**
-	 * Get CloudFront distribution info
-	 *
-	 * @param string $distributionId Distribution ID from listDistributions()
-	 * @return array | false
-	 */
-	public function getDistribution($distributionId) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-		$useSSL = $this->useSSL;
-
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('GET', '', '2010-11-01/distribution/'.$distributionId, 'cloudfront.amazonaws.com');
-		$rest = $this->__getCloudFrontResponse($rest);
-
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 200 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getDistribution($distributionId): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
-			return false;
-		} elseif ($rest->body instanceof SimpleXMLElement) {
-			$dist = $this->__parseCloudFrontDistributionConfig($rest->body);
-			$dist['hash'] = $rest->headers['hash'];
-			$dist['id'] = $distributionId;
-			return $dist;
-		}
-		return false;
-	}
-
-
-	/**
-	 * Update a CloudFront distribution
-	 *
-	 * @param array $dist Distribution array info identical to output of getDistribution()
-	 *
-	 * @return array | false
-	 */
-	public function updateDistribution($dist) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-
-		$useSSL = $this->useSSL;
-
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('PUT', '', '2010-11-01/distribution/'.$dist['id'].'/config', 'cloudfront.amazonaws.com');
-		$rest->data = $this->__getCloudFrontDistributionConfigXML(
-			$dist['origin'],
-			$dist['enabled'],
-			$dist['comment'],
-			$dist['callerReference'],
-			$dist['cnames'],
-			$dist['defaultRootObject'],
-			$dist['originAccessIdentity'],
-			$dist['trustedSigners']
-		);
-
-		$rest->size = strlen($rest->data);
-		$rest->setHeader('If-Match', $dist['hash']);
-		$rest = $this->__getCloudFrontResponse($rest);
-
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 200 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::updateDistribution({$dist['id']}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
-			return false;
-		} else {
-			$dist = $this->__parseCloudFrontDistributionConfig($rest->body);
-			$dist['hash'] = $rest->headers['hash'];
-			return $dist;
-		}
-		return false;
-	}
-
-
-	/**
-	 * Delete a CloudFront distribution
-	 *
-	 * @param array $dist Distribution array info identical to output of getDistribution()
-	 *
-	 * @return boolean
-	 */
-	public function deleteDistribution($dist) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-
-		$useSSL = $this->useSSL;
-
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('DELETE', '', '2008-06-30/distribution/'.$dist['id'], 'cloudfront.amazonaws.com');
-		$rest->setHeader('If-Match', $dist['hash']);
-		$rest = $this->__getCloudFrontResponse($rest);
-
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 204 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::deleteDistribution({$dist['id']}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
-			return false;
-		}
-		return true;
-	}
-
-
-	/**
-	 * Get a list of CloudFront distributions
-	 *
-	 * @return array
-	 */
-	public function listDistributions() {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-
-		$useSSL = $this->useSSL;
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('GET', '', '2010-11-01/distribution', 'cloudfront.amazonaws.com');
-		$rest = $this->__getCloudFrontResponse($rest);
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 200 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::listDistributions(): [%s] %s",
-			$rest->error['code'], $rest->error['message']), __FILE__, __LINE__);
-			return false;
-		} elseif ($rest->body instanceof SimpleXMLElement && isset($rest->body->DistributionSummary)) {
-			$list = array();
-			if (isset($rest->body->Marker, $rest->body->MaxItems, $rest->body->IsTruncated)) {
-				//$info['marker'] = (string)$rest->body->Marker;
-				//$info['maxItems'] = (int)$rest->body->MaxItems;
-				//$info['isTruncated'] = (string)$rest->body->IsTruncated == 'true' ? true : false;
-			}
-			foreach ($rest->body->DistributionSummary as $summary)
-				$list[(string)$summary->Id] = $this->__parseCloudFrontDistributionConfig($summary);
-
-			return $list;
-		}
-		return array();
-	}
-
 	/**
 	 * List CloudFront Origin Access Identities
 	 *
@@ -1598,7 +1365,7 @@ class UpdraftPlus_S3 {
 	 */
 	public function listOriginAccessIdentities() {
 		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::listOriginAccessIdentities(): [%s] %s",
+			$this->__triggerError(sprintf("UpdraftPlus_S3::listOriginAccessIdentities(): [%s] %s",
 			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
 			return false;
 		}
@@ -1629,45 +1396,6 @@ class UpdraftPlus_S3 {
 		return false;
 	}
 
-
-	/**
-	 * Invalidate objects in a CloudFront distribution
-	 *
-	 * Thanks to Martin Lindkvist for $this->s3->invalidateDistribution()
-	 *
-	 * @param string $distributionId Distribution ID from listDistributions()
-	 * @param array $paths Array of object paths to invalidate
-	 *
-	 * @return boolean
-	 */
-	public function invalidateDistribution($distributionId, $paths) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::invalidateDistribution(): [%s] %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-
-		$useSSL = $this->useSSL;
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('POST', '', '2010-08-01/distribution/'.$distributionId.'/invalidation', 'cloudfront.amazonaws.com');
-		$rest->data = $this->__getCloudFrontInvalidationBatchXML($paths, (string)microtime(true));
-		$rest->size = strlen($rest->data);
-		$rest = $this->__getCloudFrontResponse($rest);
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 201 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			trigger_error(sprintf("UpdraftPlus_S3::invalidateDistribution('{$distributionId}',{$paths}): [%s] %s",
-			$rest->error['code'], $rest->error['message']), E_USER_WARNING);
-			return false;
-		}
-		return true;
-	}
-
-
 	/**
 	 * Get a InvalidationBatch DOMDocument
 	 *
@@ -1689,166 +1417,6 @@ class UpdraftPlus_S3 {
 		$dom->appendChild($invalidationBatch);
 		return $dom->saveXML();
 	}
-
-
-	/**
-	 * List your invalidation batches for invalidateDistribution() in a CloudFront distribution
-	 *
-	 * http://docs.amazonwebservices.com/AmazonCloudFront/latest/APIReference/ListInvalidation.html
-	 * returned array looks like this:
-	 *	Array
-	 *	(
-	 *		[I31TWB0CN9V6XD] => InProgress
-	 *		[IT3TFE31M0IHZ] => Completed
-	 *		[I12HK7MPO1UQDA] => Completed
-	 *		[I1IA7R6JKTC3L2] => Completed
-	 *	)
-     *
-	 * @param string $distributionId Distribution ID from listDistributions()
-	 *
-	 * @return array
-	 */
-	public function getDistributionInvalidationList($distributionId) {
-		if (!extension_loaded('openssl')) {
-			$this->triggerError(sprintf("UpdraftPlus_S3::getDistributionInvalidationList(): [%s] %s",
-			"CloudFront functionality requires SSL"), __FILE__, __LINE__);
-			return false;
-		}
-
-		$useSSL = $this->useSSL;
-		$this->useSSL = true; // CloudFront requires SSL
-		$rest = new UpdraftPlus_S3Request('GET', '', '2010-11-01/distribution/'.$distributionId.'/invalidation', 'cloudfront.amazonaws.com');
-		$rest = $this->__getCloudFrontResponse($rest);
-		$this->useSSL = $useSSL;
-
-		if (false === $rest->error && 200 !== $rest->code) {
-			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
-		}
-
-		if (false !== $rest->error) {
-			trigger_error(sprintf("UpdraftPlus_S3::getDistributionInvalidationList('{$distributionId}'): [%s]",
-			$rest->error['code'], $rest->error['message']), E_USER_WARNING);
-			return false;
-		} elseif ($rest->body instanceof SimpleXMLElement && isset($rest->body->InvalidationSummary)) {
-			$list = array();
-			foreach ($rest->body->InvalidationSummary as $summary)
-				$list[(string)$summary->Id] = (string)$summary->Status;
-
-			return $list;
-		}
-		return array();
-	}
-
-
-	/**
-	 * Get a DistributionConfig DOMDocument
-	 *
-	 * http://docs.amazonwebservices.com/AmazonCloudFront/latest/APIReference/index.html?PutConfig.html
-	 *
-	 * @internal Used to create XML in createDistribution() and updateDistribution()
-	 * @param string $bucket S3 Origin bucket
-	 * @param boolean $enabled Enabled (true/false)
-	 * @param string $comment Comment to append
-	 * @param string $callerReference Caller reference
-	 * @param array $cnames Array of CNAME aliases
-	 * @param string $defaultRootObject Default root object
-	 * @param string $originAccessIdentity Origin access identity
-	 * @param array $trustedSigners Array of trusted signers
-	 *
-	 * @return string
-	 */
-	private function __getCloudFrontDistributionConfigXML($bucket, $enabled, $comment, $callerReference = '0', $cnames = array(), $defaultRootObject = null, $originAccessIdentity = null, $trustedSigners = array()) {// phpcs:ignore PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.MethodDoubleUnderscore -- Method name "UpdraftPlus_S3Request::__responseHeaderCallback" is discouraged; PHP has reserved all method names with a double underscore prefix for future use.
-		$dom = new DOMDocument('1.0', 'UTF-8');
-		$dom->formatOutput = true;
-		$distributionConfig = $dom->createElement('DistributionConfig');
-		$distributionConfig->setAttribute('xmlns', 'http://cloudfront.amazonaws.com/doc/2010-11-01/');
-
-		$origin = $dom->createElement('S3Origin');
-		$origin->appendChild($dom->createElement('DNSName', $bucket));
-		if (null !== $originAccessIdentity) $origin->appendChild($dom->createElement('OriginAccessIdentity', $originAccessIdentity));
-		$distributionConfig->appendChild($origin);
-
-		if (null !== $defaultRootObject) $distributionConfig->appendChild($dom->createElement('DefaultRootObject', $defaultRootObject));
-
-		$distributionConfig->appendChild($dom->createElement('CallerReference', $callerReference));
-		foreach ($cnames as $cname)
-			$distributionConfig->appendChild($dom->createElement('CNAME', $cname));
-		if ('' !== $comment) $distributionConfig->appendChild($dom->createElement('Comment', $comment));
-		$distributionConfig->appendChild($dom->createElement('Enabled', $enabled ? 'true' : 'false'));
-
-		if (!empty($trustedSigners)) {
-			$trusted = $dom->createElement('TrustedSigners');
-			foreach ($trustedSigners as $id => $type) {
-				$trusted->appendChild(('' !== $id) ? $dom->createElement($type, $id) : $dom->createElement($type));
-			}
-			$distributionConfig->appendChild($trusted);
-		}
-
-		$dom->appendChild($distributionConfig);
-		//var_dump($dom->saveXML());
-		return $dom->saveXML();
-	}
-
-
-	/**
-	 * Parse a CloudFront distribution config
-	 *
-	 * See http://docs.amazonwebservices.com/AmazonCloudFront/latest/APIReference/index.html?GetDistribution.html
-	 *
-	 * @internal Used to parse the CloudFront DistributionConfig node to an array
-	 *
-	 * @param object &$node DOMNode
-	 *
-	 * @return array
-	 */
-	private function __parseCloudFrontDistributionConfig(&$node) {// phpcs:ignore PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.MethodDoubleUnderscore -- Method name "UpdraftPlus_S3Request::__responseHeaderCallback" is discouraged; PHP has reserved all method names with a double underscore prefix for future use.
-		if (isset($node->DistributionConfig))
-			return $this->__parseCloudFrontDistributionConfig($node->DistributionConfig);
-
-		$dist = array();
-		if (isset($node->Id, $node->Status, $node->LastModifiedTime, $node->DomainName)) {
-			$dist['id'] = (string)$node->Id;
-			$dist['status'] = (string)$node->Status;
-			$dist['time'] = strtotime((string)$node->LastModifiedTime);
-			$dist['domain'] = (string)$node->DomainName;
-		}
-
-		if (isset($node->CallerReference))
-			$dist['callerReference'] = (string)$node->CallerReference;
-
-		if (isset($node->Enabled))
-			$dist['enabled'] = (string)$node->Enabled == 'true' ? true : false;
-
-		if (isset($node->S3Origin)) {
-			if (isset($node->S3Origin->DNSName))
-				$dist['origin'] = (string)$node->S3Origin->DNSName;
-
-			$dist['originAccessIdentity'] = isset($node->S3Origin->OriginAccessIdentity) ?
-			(string)$node->S3Origin->OriginAccessIdentity : null;
-		}
-
-		$dist['defaultRootObject'] = isset($node->DefaultRootObject) ? (string)$node->DefaultRootObject : null;
-
-		$dist['cnames'] = array();
-		if (isset($node->CNAME))
-			foreach ($node->CNAME as $cname)
-				$dist['cnames'][(string)$cname] = (string)$cname;
-
-		$dist['trustedSigners'] = array();
-		if (isset($node->TrustedSigners))
-			foreach ($node->TrustedSigners as $signer) {
-				if (isset($signer->Self))
-					$dist['trustedSigners'][''] = 'Self';
-				elseif (isset($signer->KeyPairId))
-					$dist['trustedSigners'][(string)$signer->KeyPairId] = 'KeyPairId';
-				elseif (isset($signer->AwsAccountNumber))
-					$dist['trustedSigners'][(string)$signer->AwsAccountNumber] = 'AwsAccountNumber';
-			}
-
-		$dist['comment'] = isset($node->Comment) ? (string)$node->Comment : null;
-		return $dist;
-	}
-
 
 	/**
 	 * Grab CloudFront response
@@ -2335,8 +1903,6 @@ final class UpdraftPlus_S3Request {
 				$this->response->error['message'] = isset($this->response->body->Message) ? $this->response->body->Message : '';
 				if (isset($this->response->body->Resource))
 					$this->response->error['resource'] = (string)$this->response->body->Resource;
-				if (isset($this->response->body->Region))
-					$this->response->error['region'] = (string)$this->response->body->Region;
 				unset($this->response->body);
 			}
 		}

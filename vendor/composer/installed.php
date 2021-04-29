@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '8fc7a6455f5675b80f895f6f7241143884e785ff',
+    'reference' => '0e226d1d0b3027e276a6a5059de1b4808692bd3d',
     'name' => 'updraftplus/updraftplus',
   ),
   'versions' => 
@@ -321,7 +321,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => '8fc7a6455f5675b80f895f6f7241143884e785ff',
+      'reference' => '0e226d1d0b3027e276a6a5059de1b4808692bd3d',
     ),
     'vakata/jstree' => 
     array (

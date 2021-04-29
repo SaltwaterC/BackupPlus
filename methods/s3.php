@@ -8,68 +8,10 @@ if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed.');
  * This class is used by both UpdraftPlus_S3 and UpdraftPlus_S3_Compat
  */
 class UpdraftPlus_S3Exception extends Exception {
-	/**
-	 * Set the exception message
-	 *
-	 * @param String $msg Error message
-	 */
-	public function setMessage($msg) {
-		$this->message = $msg;
-	}
-
-	/**
-	 * Set the exception file
-	 * 
-	 * @param String $file File from which the exception is originated
-	 */
-	public function setFile($file) {
+	public function __construct($message, $file, $line, $code = 0) {
+		parent::__construct($message, $code);
 		$this->file = $file;
-	}
-
-	/**
-	 * Set the exception line
-	 *
-	 * @param String $line Line number from which the exception is triggered
-	 */
-	public function setLine($line) {
 		$this->line = $line;
-	}
-}
-
-class UpdraftPlus_S3Exception_AccessDenied extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_InvalidAccessKeyId extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_SignatureDoesNotMatch extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_NoSuchBucket extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_BucketAlreadyOwnedByYou extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_IllegalLocationConstraintException extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_PermanentRedirect extends UpdraftPlus_S3Exception {}
-
-class UpdraftPlus_S3Exception_AuthorizationHeaderMalformed extends UpdraftPlus_S3Exception {
-
-	private $region = '';
-
-	/**
-	 * Set the exception region
-	 *
-	 * @param String $region The region that was issued by the server (e.g Amazon when giving an AuthorizationHeaderMalformed response to a request)
-	 */
-	public function setRegion($region) {
-		$this->region = $region;
-	}
-
-	/**
-	 * Get the exception region
-	 * 
-	 * @return String The region 
-	 */
-	public function getRegion() {
-		return $this->region;
 	}
 }
 
@@ -1125,9 +1067,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	private function get_bucket_access($storage, $config, $bucket, $path, $endpoint = false) {
 	
 		$bucket_exists = false;
-		$access_denied = false;
-		$invalid_key = false;
-		$no_such_bucket = false;
 		
 		if ('s3' == $config['key'] || 'updraftvault' == $config['key'] || 'dreamobjects' == $config['key']) {
 		
@@ -1140,62 +1079,43 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 				// We want to distinguish between an empty region (null), and an exception or missing bucket (false)
 				if (empty($region) && false !== $region) $region = null;
 			} catch (Exception $e) {
-				if (is_a($e, 'Aws\S3\Exception\AccessDeniedException') || $e instanceof UpdraftPlus_S3Exception_AccessDenied) { // got an access denied response, which means the user don't have access to the bucket
-					$region = null;
-					$access_denied = true;
-					$this->s3_exception = $e;
-				} elseif (is_a($e, 'Aws\S3\Exception\InvalidAccessKeyIdException') || $e instanceof UpdraftPlus_S3Exception_InvalidAccessKeyId) { // invalid access key response
-					$region = null;
-					$invalid_key = true;
-					$this->s3_exception = $e;
-				} elseif (is_a($e, 'Aws\S3\Exception\SignatureDoesNotMatchException') || $e instanceof UpdraftPlus_S3Exception_SignatureDoesNotMatch) { // invalid secret key
-					$region = null;
-					$invalid_key = true;
-					$this->s3_exception = $e;
-				} elseif (is_a($e, 'Aws\S3\Exception\NoSuchBucketException') || $e instanceof UpdraftPlus_S3Exception_NoSuchBucket) { // bucket doesn't exist
-					$region = null;
-					$no_such_bucket = true;
-					$this->s3_exception = $e;
-				} else {
-					$region = false;
-			
-					// On this 'first try', we trap this particular condition. So, whatever S3 network call it happens on, we'll eventually get it here on the resumption.
-					if (false !== strpos($e->getMessage(), 'The provided token has expired')) {
-					
-						$this->log($e->getMessage().": Requesting new credentials");
-								
-						$new_config = $this->get_config(true);
-	
-						if (empty($new_config['sessiontoken'])) $new_config['sessiontoken'] = null;
-			
-						if (!empty($new_config['accesskey'])) {
+				$region = false;
+		
+				// On this 'first try', we trap this particular condition. So, whatever S3 network call it happens on, we'll eventually get it here on the resumption.
+				if (false !== strpos($e->getMessage(), 'The provided token has expired')) {
 				
-							$new_storage = $this->getS3(
-								$new_config['accesskey'],
-								$new_config['secretkey'],
-								UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'),
-								UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'),
-								UpdraftPlus_Options::get_updraft_option('updraft_ssl_nossl'),
-								null,
-								!empty($new_config['server_side_encryption']),
-								$new_config['sessiontoken']
-							);
+					$this->log($e->getMessage().": Requesting new credentials");
 							
-							if (!is_wp_error($new_storage)) {
-								// Try again
-								try {
-									$region = @$new_storage->getBucketLocation($bucket);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
-									// We want to distinguish between an empty region (null), and an exception or missing bucket (false)
-									if (empty($region) && false !== $region) $region = null;
-									// Worked this time; update the passed-in information
-									$storage = $new_storage;
-									$config = $new_config;
-								} catch (Exception $e) {
-									$region = false;
-								}
+					$new_config = $this->get_config(true);
+
+					if (empty($new_config['sessiontoken'])) $new_config['sessiontoken'] = null;
+		
+					if (!empty($new_config['accesskey'])) {
+			
+						$new_storage = $this->getS3(
+							$new_config['accesskey'],
+							$new_config['secretkey'],
+							UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'),
+							UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'),
+							UpdraftPlus_Options::get_updraft_option('updraft_ssl_nossl'),
+							null,
+							!empty($new_config['server_side_encryption']),
+							$new_config['sessiontoken']
+						);
+						
+						if (!is_wp_error($new_storage)) {
+							// Try again
+							try {
+								$region = @$new_storage->getBucketLocation($bucket);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+								// We want to distinguish between an empty region (null), and an exception or missing bucket (false)
+								if (empty($region) && false !== $region) $region = null;
+								// Worked this time; update the passed-in information
+								$storage = $new_storage;
+								$config = $new_config;
+							} catch (Exception $e) {
+								$region = false;
 							}
 						}
-					
 					}
 				}
 				
@@ -1208,83 +1128,42 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 		
 		// See if we can detect the region (which implies the bucket exists and is ours), or if not create it
 		if (false === $region || 'n/a' === $region) {
-			$attempt = 1;
 			$storage->setExceptions(true);
-			do {
-				$retry = false;
+			try {
+				if (@$storage->putBucket($bucket, 'private')) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+					$bucket_exists = true;
+				}
+				
+			} catch (Exception $e) {
+				$this->s3_exception = $e;
 				try {
-					if ($attempt < 2 && @$storage->putBucket($bucket, 'private')) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+					if ($this->maybe_use_dns_bucket_name($storage, $config) && false !== @$storage->getBucket($bucket, $path, null, 1)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 						$bucket_exists = true;
-						$access_denied = false;
-						$invalid_key = false;
-						$no_such_bucket = false;
-						if (!$endpoint) $endpoint = $storage->endpoint;
-					} elseif (false !== @$storage->getBucket($bucket, $path, null, 1)) {
-						$bucket_exists = true;
-						$access_denied = false;
-						$invalid_key = false;
-						$no_such_bucket = false;
 					}
 				} catch (Exception $e) {
-					if (is_a($e, 'Aws\S3\Exception\InvalidAccessKeyIdException') || $e instanceof UpdraftPlus_S3Exception_InvalidAccessKeyId) { // invalid access key response
-						$invalid_key = true;
-						$this->s3_exception = $e;
-					} elseif (is_a($e, 'Aws\S3\Exception\SignatureDoesNotMatchException') || $e instanceof UpdraftPlus_S3Exception_SignatureDoesNotMatch) { // invalid secret key
-						$invalid_key = true;
-						$this->s3_exception = $e;
-					} elseif (is_a($e, 'Aws\S3\Exception\NoSuchBucketException') || $e instanceof UpdraftPlus_S3Exception_NoSuchBucket) { // bucket doesn't exist
-						$no_such_bucket = true;
-						$this->s3_exception = $e;
-					} elseif (is_a($e, 'Aws\S3\Exception\AccessDeniedException') || $e instanceof UpdraftPlus_S3Exception_AccessDenied) {
-						// got an access denied response, which means the user don't have access to the bucket, 403 status code https://aws.amazon.com/premiumsupport/knowledge-center/s3-troubleshoot-403/
-						$access_denied = true;
-						$retry = true; // retry to see if the bucket really exists
-						$this->s3_exception = $e;
-					} elseif (is_a($e, 'Aws\S3\Exception\BucketAlreadyOwnedByYouException') || $e instanceof UpdraftPlus_S3Exception_BucketAlreadyOwnedByYou) {
-						// the bucket already exists and the previous request to create the bucket cannot be done because of it
-						// putting/creating a bucket that doesn't exist or already exist where you have an adequate access to do it will throw this exception, it doesn't care about the region at the time
-						// but from here on if it is about to upload/download something from the storage then it's going to need the correct region and endpoint
-						// so if the endpoint setting is mismatched doing the below will resolve to S3 servers in the right region and endpoint
-						$region = @$storage->getBucketLocation($bucket);
-						if(!empty($region)) self::set_region($storage, $region); // for amazonaws even if it came from S3-Compatible/s3generic, always use the parent implemantation of set_region (self::set_region)
-						$bucket_exists = true;
-						if (!$endpoint) $endpoint = $storage->endpoint;
-						$this->s3_exception = $e;
-					} elseif (is_a($e, 'Aws\S3\Exception\InvalidLocationConstraintException') || $e instanceof UpdraftPlus_S3Exception_IllegalLocationConstraintException) {
-						$retry = true;
-						$this->s3_exception = $e;
-					} elseif ($e instanceof UpdraftPlus_S3Exception_AuthorizationHeaderMalformed) {
-						self::set_region($storage, $e->getRegion()); // for amazonaws even if it came from S3-Compatible/s3generic, always use the parent implemantation of set_region (self::set_region)
-						if (!$endpoint) $endpoint = $storage->endpoint;
-						$retry = true;
-						$this->s3_exception = $e;
-						$attempt = 0;
-					} elseif (is_a($e, 'Aws\S3\Exception\PermanentRedirectException') || $e instanceof UpdraftPlus_S3Exception_PermanentRedirect) {
-						self::set_region($storage, 'us-east-1'); // us-east-1 might not the actual region but doing this will reset endpoint to s3.amazonaws.com which will also resolve to S3 servers in the right region especially when using virtual-host access style, but if it's path style it will then throw an AuthorizationHeaderMalformed exception which then a correct region is presented along with a response from the server
-						if (!$endpoint) $endpoint = $storage->endpoint;
-						$retry = true;
-						if (!is_object($this->s3_exception)) $this->s3_exception = $e; // we set $this->s3_exception to PermanentRedirect exception only if no previous exception was set, permanentredirect sounds confusing to the user
-						if (!is_object($this->s3_exception) || (!is_a($this->s3_exception, 'Aws\S3\Exception\AccessDeniedException') && !$this->s3_exception instanceof UpdraftPlus_S3Exception_AccessDenied)) $attempt = 0;
-					} else {
-						if (!is_object($this->s3_exception)) $this->s3_exception = $e;
-						if (is_a($storage, 'UpdraftPlus_S3_Compat') && is_a($e, 'Aws\S3\Exception\S3Exception')) {
-							$xml = $e->getResponse()->xml();
-	
-							if (!empty($xml->Code) && 'AuthorizationHeaderMalformed' == $xml->Code && !empty($xml->Region)) {
-	
-								$this->set_region($storage, $xml->Region);
-								$storage->setExceptions(false);
-								
-								if (false !== @$storage->getBucket($bucket, $path, null, 1)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
-									$bucket_exists = true;
-								}
-								
+
+					// We don't put this in a separate catch block, since we need to be compatible with PHP 5.2 still
+					if (is_a($storage, 'UpdraftPlus_S3_Compat') && is_a($e, 'Aws\S3\Exception\S3Exception')) {
+						$xml = $e->getResponse()->xml();
+
+						if (!empty($xml->Code) && 'AuthorizationHeaderMalformed' == $xml->Code && !empty($xml->Region)) {
+
+							$this->set_region($storage, $xml->Region);
+							$storage->setExceptions(false);
+							
+							if (false !== @$storage->getBucket($bucket, $path, null, 1)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+								$bucket_exists = true;
 							}
+							
+						} else {
+							$this->s3_exception = $e;
 						}
+					} else {
+						$this->s3_exception = $e;
 					}
 				}
-				$attempt++;
-			} while ($retry && $attempt < 3);
+			
+			}
 			$storage->setExceptions(false);
 			
 		} else {
@@ -1294,9 +1173,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 		// For a region-less S3 system, we set this to true so that we can carry on trying anyway, since the behaviour of different S3-compatible systems can vary. e.g. DigitalOcean spaces API keys allow you to create a bucket.
 		if ('n/a' == $region) $bucket_exists = true;
 
-		// if the bucket exists but the user doesn't have access to it then flag the bucket_exists to false
-		if ($no_such_bucket || $invalid_key || ($bucket_exists && $access_denied)) $bucket_exists = false;
-		
 		if ($bucket_exists) {
 			if ('s3' != $config['key'] && 'updraftvault' != $config['key']) {
 				if (!$endpoint || 's3generic' != $config['key']) $this->set_region($storage, $endpoint, $bucket);
@@ -1389,14 +1265,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			if ('s3' == $config['key'] && 'AK' != substr($key, 0, 2)) echo "\n\n".sprintf(__('The AWS access key looks to be wrong (valid %s access keys begin with "AK")', 'updraftplus'), $whoweare);
 		
 		} else {
-			echo __('Success', 'updraftplus').": ${bucket_verb}".__('We accessed the bucket, and were able to create files within it.', 'updraftplus').' ';
-			$comm_with = ('s3generic' == $config['key']) ? $endpoint : $config['whoweare_long'];
-			if ($storage->getuseSSL()) {
-				echo sprintf(__('The communication with %s was encrypted.', 'updraftplus'), $comm_with);
-			} else {
-				echo sprintf(__('The communication with %s was not encrypted.', 'updraftplus'), $comm_with);
-			}
-		/*
+		
 			$try_file = md5(rand());
 
 			$storage->setExceptions(true);
@@ -1424,7 +1293,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 					echo ' '.__('Delete failed:', 'updraftplus').' '.$e->getMessage();
 				}
 			}
-		*/
+
 		}
 
 	}
