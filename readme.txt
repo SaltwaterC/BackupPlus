@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.8
-Stable tag: 1.16.60
+Stable tag: 1.16.61
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,13 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.16.61 - 28/Aug/2021 =
+
+* FIX: If MySQL performance was very fast on large tables, and if fallback fetch mode was being used (which should not occur on any WordPress core table, but can be triggered on recent Oracle MySQL 8.0 versions), then when increasing rows fetched on large tables, some rows could be unintentionally skipped.
+* TWEAK: Oracle MySQL 8.0 from somewhere after 8.0.17 has removed the display width from the response to SHOW CREATE TABLE, resulting in failure (prior to this tweak) to detect a primary key type that can be used with faster fetching
+* TWEAK: Use 'wp_mail_failed' action hook to improve logging of email delivery failures caused by a PHPMailer exception
+* TWEAK: Add additional log information to themes and plugins modules
 
 = 1.16.60 - 23/Aug/2021 =
 
@@ -1367,4 +1374,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.16.60: Many and various tweaks and improvements; a recommended update for all.
+* 1.16.61: Database fetching tweaks including an important fix for later Oracle MySQL 8.0 versions on large tables; a recommended update for all.

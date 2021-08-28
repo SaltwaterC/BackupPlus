@@ -136,7 +136,7 @@ msgstr ""
 msgid "%s Error"
 msgstr ""
 
-#: src/addons/azure.php:260, src/class-updraftplus.php:4653, src/methods/googledrive.php:1343, src/methods/s3.php:383
+#: src/addons/azure.php:260, src/class-updraftplus.php:4664, src/methods/googledrive.php:1343, src/methods/s3.php:383
 msgid "File not found"
 msgstr ""
 
@@ -656,7 +656,7 @@ msgstr ""
 msgid "No refresh token was received from Google. This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it. Re-check it, then follow the link to authenticate again. Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again."
 msgstr ""
 
-#: src/addons/googlecloud.php:478, src/addons/migrator.php:588, src/admin.php:2570, src/admin.php:2591, src/admin.php:2599, src/class-updraftplus.php:1161, src/class-updraftplus.php:1167, src/class-updraftplus.php:4866, src/class-updraftplus.php:4868, src/class-updraftplus.php:5046, src/class-updraftplus.php:5053, src/class-updraftplus.php:5130, src/methods/googledrive.php:534, src/methods/s3.php:383
+#: src/addons/googlecloud.php:478, src/addons/migrator.php:588, src/admin.php:2570, src/admin.php:2591, src/admin.php:2599, src/class-updraftplus.php:1161, src/class-updraftplus.php:1167, src/class-updraftplus.php:4877, src/class-updraftplus.php:4879, src/class-updraftplus.php:5057, src/class-updraftplus.php:5064, src/class-updraftplus.php:5141, src/methods/googledrive.php:534, src/methods/s3.php:383
 msgid "Error: %s"
 msgstr ""
 
@@ -780,7 +780,7 @@ msgstr ""
 msgid "Otherwise, you can leave it blank."
 msgstr ""
 
-#: src/addons/googlecloud.php:1070, src/addons/migrator.php:493, src/addons/migrator.php:496, src/addons/migrator.php:499, src/admin.php:1284, src/admin.php:2820, src/admin.php:4908, src/backup.php:4011, src/class-updraftplus.php:5155, src/class-updraftplus.php:5155, src/updraftplus.php:158
+#: src/addons/googlecloud.php:1070, src/addons/migrator.php:493, src/addons/migrator.php:496, src/addons/migrator.php:499, src/admin.php:1284, src/admin.php:2820, src/admin.php:4908, src/backup.php:4012, src/class-updraftplus.php:5166, src/class-updraftplus.php:5166, src/updraftplus.php:158
 msgid "Go here for more information."
 msgstr ""
 
@@ -1262,11 +1262,11 @@ msgstr ""
 msgid "rows: %d"
 msgstr ""
 
-#: src/addons/migrator.php:1542, src/backup.php:496, src/backup.php:2669, src/class-updraftplus.php:2435, src/class-updraftplus.php:2504, src/includes/class-storage-methods-interface.php:372, src/restorer.php:591
+#: src/addons/migrator.php:1542, src/backup.php:496, src/backup.php:2670, src/class-updraftplus.php:2435, src/class-updraftplus.php:2504, src/includes/class-storage-methods-interface.php:372, src/restorer.php:591
 msgid "A PHP exception (%s) has occurred: %s"
 msgstr ""
 
-#: src/addons/migrator.php:1549, src/backup.php:502, src/backup.php:2678, src/class-updraftplus.php:2444, src/class-updraftplus.php:2511, src/includes/class-storage-methods-interface.php:381, src/restorer.php:605
+#: src/addons/migrator.php:1549, src/backup.php:502, src/backup.php:2679, src/class-updraftplus.php:2444, src/class-updraftplus.php:2511, src/includes/class-storage-methods-interface.php:381, src/restorer.php:605
 msgid "A PHP fatal error (%s) has occurred: %s"
 msgstr ""
 
@@ -1863,7 +1863,7 @@ msgstr ""
 msgid "Your label for this backup (optional)"
 msgstr ""
 
-#: src/addons/reporting.php:87, src/addons/reporting.php:196, src/class-updraftplus.php:3701, src/class-updraftplus.php:4957
+#: src/addons/reporting.php:87, src/addons/reporting.php:196, src/class-updraftplus.php:3701, src/class-updraftplus.php:4968
 msgid "Backup of:"
 msgstr ""
 
@@ -1915,7 +1915,7 @@ msgstr ""
 msgid "Uploaded to:"
 msgstr ""
 
-#: src/addons/reporting.php:280, src/class-updraftplus.php:3654, src/class-updraftplus.php:3818
+#: src/addons/reporting.php:280, src/class-updraftplus.php:3654, src/class-updraftplus.php:3829
 msgid "The log file has been attached to this email."
 msgstr ""
 
@@ -1955,7 +1955,7 @@ msgstr ""
 msgid "Send a report only when there are warnings/errors"
 msgstr ""
 
-#: src/addons/reporting.php:538, src/addons/reporting.php:538, src/addons/reporting.php:540, src/methods/email.php:102
+#: src/addons/reporting.php:538, src/addons/reporting.php:538, src/addons/reporting.php:540, src/methods/email.php:104
 msgid "Be aware that mail servers tend to have size limits; typically around %s MB; backups larger than any limits will likely not arrive."
 msgstr ""
 
@@ -3272,7 +3272,7 @@ msgstr ""
 msgid "Restore error:"
 msgstr ""
 
-#: src/admin.php:1023, src/admin.php:2815, src/class-updraftplus.php:5057, src/restorer.php:3600
+#: src/admin.php:1023, src/admin.php:2815, src/class-updraftplus.php:5068, src/restorer.php:3600
 msgid "Warning:"
 msgstr ""
 
@@ -4219,59 +4219,59 @@ msgstr ""
 msgid "Error getting table details"
 msgstr ""
 
-#: src/backup.php:2718
+#: src/backup.php:2719
 msgid "Could not open the backup file for writing"
 msgstr ""
 
-#: src/backup.php:2835
+#: src/backup.php:2836
 msgid "Infinite recursion: consult your log for more information"
 msgstr ""
 
-#: src/backup.php:2868
+#: src/backup.php:2869
 msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
 msgstr ""
 
-#: src/backup.php:2890
+#: src/backup.php:2891
 msgid "Failed to open directory (check the file permissions and ownership): %s"
 msgstr ""
 
-#: src/backup.php:2947
+#: src/backup.php:2948
 msgid "%s: unreadable file - could not be backed up"
 msgstr ""
 
-#: src/backup.php:3650, src/backup.php:3960
+#: src/backup.php:3651, src/backup.php:3961
 msgid "Failed to open the zip file (%s) - %s"
 msgstr ""
 
-#: src/backup.php:3679
+#: src/backup.php:3680
 msgid "A very large file was encountered: %s (size: %s Mb)"
 msgstr ""
 
-#: src/backup.php:3685
+#: src/backup.php:3686
 msgid "a second attempt is being made (upon further failure it will be skipped)"
 msgstr ""
 
-#: src/backup.php:3689
+#: src/backup.php:3690
 msgid "two unsuccessful attempts were made to include it, and it will now be omitted from the backup"
 msgstr ""
 
-#: src/backup.php:4004, src/class-updraftplus.php:974
+#: src/backup.php:4005, src/class-updraftplus.php:974
 msgid "Your free space in your hosting account is very low - only %s Mb remain"
 msgstr ""
 
-#: src/backup.php:4011
+#: src/backup.php:4012
 msgid "The zip engine returned the message: %s."
 msgstr ""
 
-#: src/backup.php:4013
+#: src/backup.php:4014
 msgid "A zip error occurred"
 msgstr ""
 
-#: src/backup.php:4015
+#: src/backup.php:4016
 msgid "your web hosting account appears to be full; please see: %s"
 msgstr ""
 
-#: src/backup.php:4017
+#: src/backup.php:4018
 msgid "check your log for more details."
 msgstr ""
 
@@ -4699,235 +4699,235 @@ msgstr ""
 msgid "Backup contains:"
 msgstr ""
 
-#: src/class-updraftplus.php:3804
+#: src/class-updraftplus.php:3815
 msgid "UpdraftPlus on %s"
 msgstr ""
 
-#: src/class-updraftplus.php:3846
+#: src/class-updraftplus.php:3857
 msgid "You can view the log by pressing the 'View log' button."
 msgstr ""
 
-#: src/class-updraftplus.php:3852
+#: src/class-updraftplus.php:3863
 msgid "View log"
 msgstr ""
 
-#: src/class-updraftplus.php:4352
+#: src/class-updraftplus.php:4363
 msgid "Could not read the directory"
 msgstr ""
 
-#: src/class-updraftplus.php:4368
+#: src/class-updraftplus.php:4379
 msgid "Could not save backup history because we have no backup array. Backup probably failed."
 msgstr ""
 
-#: src/class-updraftplus.php:4866, src/includes/class-updraftplus-encryption.php:336, src/restorer.php:1054
+#: src/class-updraftplus.php:4877, src/includes/class-updraftplus-encryption.php:336, src/restorer.php:1054
 msgid "Decryption failed. The database file is encrypted, but you have no encryption key entered."
 msgstr ""
 
-#: src/class-updraftplus.php:4868
+#: src/class-updraftplus.php:4879
 msgid "Decryption failed. The database file is encrypted."
 msgstr ""
 
-#: src/class-updraftplus.php:4878, src/includes/class-updraftplus-encryption.php:354, src/restorer.php:1067
+#: src/class-updraftplus.php:4889, src/includes/class-updraftplus-encryption.php:354, src/restorer.php:1067
 msgid "Decryption failed. The most likely cause is that you used the wrong key."
 msgstr ""
 
-#: src/class-updraftplus.php:4885
+#: src/class-updraftplus.php:4896
 msgid "The database is too small to be a valid WordPress database (size: %s Kb)."
 msgstr ""
 
-#: src/class-updraftplus.php:4899
+#: src/class-updraftplus.php:4910
 msgid "Failed to open database file."
 msgstr ""
 
-#: src/class-updraftplus.php:4957
+#: src/class-updraftplus.php:4968
 msgid "(version: %s)"
 msgstr ""
 
-#: src/class-updraftplus.php:4971
+#: src/class-updraftplus.php:4982
 msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
 msgstr ""
 
-#: src/class-updraftplus.php:4976
+#: src/class-updraftplus.php:4987
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
 msgstr ""
 
-#: src/class-updraftplus.php:4978
+#: src/class-updraftplus.php:4989
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
 msgstr ""
 
-#: src/class-updraftplus.php:4978, src/class-updraftplus.php:4980
+#: src/class-updraftplus.php:4989, src/class-updraftplus.php:4991
 msgid "the migrator add-on"
 msgstr ""
 
-#: src/class-updraftplus.php:4980
+#: src/class-updraftplus.php:4991
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
 msgstr ""
 
-#: src/class-updraftplus.php:4990, src/class-updraftplus.php:5011
+#: src/class-updraftplus.php:5001, src/class-updraftplus.php:5022
 msgid "This backup set is from a different site (%s) - this is not a restoration, but a migration. You need the Migrator add-on in order to make this work."
 msgstr ""
 
-#: src/class-updraftplus.php:4993
+#: src/class-updraftplus.php:5004
 msgid "You can search and replace your database (for migrating a website to a new location/URL) with the Migrator add-on - follow this link for more information"
 msgstr ""
 
-#: src/class-updraftplus.php:4998, src/restorer.php:1704
+#: src/class-updraftplus.php:5009, src/restorer.php:1704
 msgid "You are using the %s webserver, but do not seem to have the %s module loaded."
 msgstr ""
 
-#: src/class-updraftplus.php:4998, src/restorer.php:1704
+#: src/class-updraftplus.php:5009, src/restorer.php:1704
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
 msgstr ""
 
-#: src/class-updraftplus.php:5020, src/class-updraftplus.php:5027
+#: src/class-updraftplus.php:5031, src/class-updraftplus.php:5038
 msgid "%s version: %s"
 msgstr ""
 
-#: src/class-updraftplus.php:5021
+#: src/class-updraftplus.php:5032
 msgid "You are importing from a newer version of WordPress (%s) into an older one (%s). There are no guarantees that WordPress can handle this."
 msgstr ""
 
-#: src/class-updraftplus.php:5028, src/class-updraftplus.php:5030
+#: src/class-updraftplus.php:5039, src/class-updraftplus.php:5041
 msgid "The site in this backup was running on a webserver with version %s of %s. "
 msgstr ""
 
-#: src/class-updraftplus.php:5028
+#: src/class-updraftplus.php:5039
 msgid "This is significantly newer than the server which you are now restoring onto (version %s)."
 msgstr ""
 
-#: src/class-updraftplus.php:5028
+#: src/class-updraftplus.php:5039
 msgid "You should only proceed if you cannot update the current server and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the older %s version."
 msgstr ""
 
-#: src/class-updraftplus.php:5028, src/class-updraftplus.php:5030
+#: src/class-updraftplus.php:5039, src/class-updraftplus.php:5041
 msgid "Any support requests to do with %s should be raised with your web hosting company."
 msgstr ""
 
-#: src/class-updraftplus.php:5030
+#: src/class-updraftplus.php:5041
 msgid "This is older than the server which you are now restoring onto (version %s)."
 msgstr ""
 
-#: src/class-updraftplus.php:5030
+#: src/class-updraftplus.php:5041
 msgid "You should only proceed if you have checked and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the new %s version."
 msgstr ""
 
-#: src/class-updraftplus.php:5035, src/restorer.php:2257, src/restorer.php:2885, src/restorer.php:3045
+#: src/class-updraftplus.php:5046, src/restorer.php:2257, src/restorer.php:2885, src/restorer.php:3045
 msgid "Old table prefix:"
 msgstr ""
 
-#: src/class-updraftplus.php:5038
+#: src/class-updraftplus.php:5049
 msgid "Backup label:"
 msgstr ""
 
-#: src/class-updraftplus.php:5046, src/class-updraftplus.php:5049, src/restorer.php:748
+#: src/class-updraftplus.php:5057, src/class-updraftplus.php:5060, src/restorer.php:748
 msgid "You are running on WordPress multisite - but your backup is not of a multisite site."
 msgstr ""
 
-#: src/class-updraftplus.php:5049
+#: src/class-updraftplus.php:5060
 msgid "It will be imported as a new site."
 msgstr ""
 
-#: src/class-updraftplus.php:5049
+#: src/class-updraftplus.php:5060
 msgid "Please read this link for important information on this process."
 msgstr ""
 
-#: src/class-updraftplus.php:5053, src/restorer.php:2896
+#: src/class-updraftplus.php:5064, src/restorer.php:2896
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr ""
 
-#: src/class-updraftplus.php:5057
+#: src/class-updraftplus.php:5068
 msgid "Your backup is of a WordPress multisite install; but this site is not. Only the first site of the network will be accessible."
 msgstr ""
 
-#: src/class-updraftplus.php:5057
+#: src/class-updraftplus.php:5068
 msgid "If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite."
 msgstr ""
 
-#: src/class-updraftplus.php:5064, src/restorer.php:2902
+#: src/class-updraftplus.php:5075, src/restorer.php:2902
 msgid "Site information:"
 msgstr ""
 
-#: src/class-updraftplus.php:5130
+#: src/class-updraftplus.php:5141
 msgid "The database backup uses MySQL features not available in the old MySQL version (%s) that this site is running on."
 msgstr ""
 
-#: src/class-updraftplus.php:5130
+#: src/class-updraftplus.php:5141
 msgid "You must upgrade MySQL to be able to use this database."
 msgstr ""
 
-#: src/class-updraftplus.php:5155
+#: src/class-updraftplus.php:5166
 msgid "The database server that this WordPress site is running on doesn't support the character set (%s) which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support the character sets (%s) which you are trying to import."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/class-updraftplus.php:5155
+#: src/class-updraftplus.php:5166
 msgid "You can choose another suitable character set instead and continue with the restoration at your own risk."
 msgstr ""
 
-#: src/class-updraftplus.php:5165
+#: src/class-updraftplus.php:5176
 msgid "Your chosen character set to use instead:"
 msgstr ""
 
-#: src/class-updraftplus.php:5189
+#: src/class-updraftplus.php:5200
 msgid "The database server that this WordPress site is running on doesn't support the collation (%s) used in the database which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support multiple collations (%s) used in the database which you are trying to import."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/class-updraftplus.php:5189
+#: src/class-updraftplus.php:5200
 msgid "You can choose another suitable collation instead and continue with the restoration (at your own risk)."
 msgstr ""
 
-#: src/class-updraftplus.php:5212
+#: src/class-updraftplus.php:5223
 msgid "Your chosen replacement collation"
 msgstr ""
 
-#: src/class-updraftplus.php:5235
+#: src/class-updraftplus.php:5246
 msgid "Choose a default for each table"
 msgstr ""
 
-#: src/class-updraftplus.php:5276
+#: src/class-updraftplus.php:5287
 msgid "This backup is of a site with an empty table prefix, which WordPress does not officially support; the results may be unreliable."
 msgstr ""
 
-#: src/class-updraftplus.php:5292
+#: src/class-updraftplus.php:5303
 msgid "This database backup is missing core WordPress tables: %s"
 msgstr ""
 
-#: src/class-updraftplus.php:5295
+#: src/class-updraftplus.php:5306
 msgid "This database backup has the following WordPress tables excluded: %s"
 msgstr ""
 
-#: src/class-updraftplus.php:5300
+#: src/class-updraftplus.php:5311
 msgid "UpdraftPlus was unable to find the table prefix when scanning the database backup."
 msgstr ""
 
-#: src/class-updraftplus.php:5323, src/class-updraftplus.php:5325
+#: src/class-updraftplus.php:5334, src/class-updraftplus.php:5336
 msgid "This backup was created on a previous UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes)."
 msgstr ""
 
-#: src/class-updraftplus.php:5323
+#: src/class-updraftplus.php:5334
 msgid "Therefore it is advised that you take a fresh backup on the source site, using a later version."
 msgstr ""
 
-#: src/class-updraftplus.php:5325
+#: src/class-updraftplus.php:5336
 msgid "Therefore, affected tables on the current site which already exist will not be replaced by default, to avoid corrupting them (you can review this in the list of tables below)."
 msgstr ""
 
-#: src/class-updraftplus.php:5330
+#: src/class-updraftplus.php:5341
 msgid "If you do not want to restore all your database tables, then choose some to exclude here."
 msgstr ""
 
-#: src/class-updraftplus.php:5335
+#: src/class-updraftplus.php:5346
 msgid "The database scan was taking too long and consequently the list of all tables in the database could not be completed. This option will ensure all tables not found will be backed up."
 msgstr ""
 
-#: src/class-updraftplus.php:5336
+#: src/class-updraftplus.php:5347
 msgid "The amount of database tables scanned is near or over the php_max_input_vars value so some tables maybe truncated. This option will ensure all tables not found will be backed up."
 msgstr ""
 
-#: src/class-updraftplus.php:5338
+#: src/class-updraftplus.php:5349
 msgid "Include all tables not listed below"
 msgstr ""
 
@@ -5948,27 +5948,27 @@ msgstr ""
 msgid "WordPress Backup"
 msgstr ""
 
-#: src/methods/email.php:47
+#: src/methods/email.php:48
 msgid "Backup is of: %s."
 msgstr ""
 
-#: src/methods/email.php:68
+#: src/methods/email.php:70
 msgid "The attempt to send the backup via email failed (probably the backup was too large for this method)"
 msgstr ""
 
-#: src/methods/email.php:94
+#: src/methods/email.php:96
 msgid "Note:"
 msgstr ""
 
-#: src/methods/email.php:98
+#: src/methods/email.php:100
 msgid "Your site's admin email address (%s) will be used."
 msgstr ""
 
-#: src/methods/email.php:98
+#: src/methods/email.php:100
 msgid "configure it here"
 msgstr ""
 
-#: src/methods/email.php:99
+#: src/methods/email.php:101
 msgid "For more options, use Premium"
 msgstr ""
 

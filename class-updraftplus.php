@@ -3757,7 +3757,9 @@ class UpdraftPlus {
 				} else {
 					$this->log("Sending email ('$backup_contains') report (attachments: ".count($attachments).", size: ".round($attach_size/1024, 1)." KB) to: ".substr($sendmail_addr, 0, 5)."...");
 					try {
+						add_action('wp_mail_failed', array($this, 'log_email_delivery_failure'));
 						wp_mail(trim($sendmail_addr), $subject, $body, array("X-UpdraftPlus-Backup-ID: ".$this->nonce));
+						remove_action('wp_mail_failed', array($this, 'log_email_delivery_failure'));
 					} catch (Exception $e) {
 						$this->log("Exception occurred when sending mail (".get_class($e)."): ".$e->getMessage());
 					}
@@ -3771,6 +3773,15 @@ class UpdraftPlus {
 		remove_action('phpmailer_init', array($this, 'set_sender_email_address'), 9);
 		if (count($this->attachments) > 0) remove_action('phpmailer_init', array($this, 'phpmailer_init'));
 
+	}
+
+	/**
+	 * Log the email delivery failure to the log file when a PHPMailer exception is caught
+	 *
+	 * @param WP_Error $error A WP_Error object with the PHPMailer\PHPMailer\Exception message, and an array containing the mail recipient, subject, message, headers, and attachments.
+	 */
+	public function log_email_delivery_failure($error) {
+		$this->log("An error occurred when sending a backup report email and/or backup file(s) via email (".$error->get_error_code()."): ".$error->get_error_message());
 	}
 
 	/**

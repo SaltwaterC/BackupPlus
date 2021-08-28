@@ -419,7 +419,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			$client_id = $opts['clientid'];
 			$token = 'token'.$prefixed_instance_id;
 		}
-		// We require access to all Google Drive files (not just ones created by this app - scope https://www.googleapis.com/auth/drive.file) - because we need to be able to re-scan storage for backups uploaded by other installs. But, if you are happy to lose that capability, you can use the filter below to remove the drive.readonly scope.
+		// We require access to all Google Drive files (not just ones created by this app - scope https://www.googleapis.com/auth/drive.file) - because we need to be able to re-scan storage for backups uploaded by other installs, or manually by the user into their Google Drive. But, if you are happy to lose that capability, you can use the filter below to remove the drive.readonly scope.
 		$params = array(
 			'response_type' => 'code',
 			'client_id' => $client_id,
