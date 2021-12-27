@@ -11,6 +11,18 @@ msgstr ""
 "Language: tr\n"
 "Project-Id-Version: UpdraftPlus\n"
 
+#: src/templates/wp-admin/advanced/site-info.php:109
+msgid "Install debugging plugins:"
+msgstr ""
+
+#: src/restorer.php:2918
+msgid "Old ABSPATH:"
+msgstr ""
+
+#: src/admin.php:2772
+msgid "Enjoyed %s? Please leave us a %s rating. We really appreciate your support!"
+msgstr ""
+
 #: src/udaddons/options.php:98
 msgid "An update is available for UpdraftPlus - please connect here to gain access to it."
 msgstr ""
@@ -229,47 +241,47 @@ msgstr ""
 msgid "If you have an existing backup that you wish to upload and restore from, then please use the \"Upload backup files\" link above."
 msgstr ""
 
-#: src/class-updraftplus.php:5353
+#: src/class-updraftplus.php:5358
 msgid "Include all tables not listed below"
 msgstr ""
 
-#: src/class-updraftplus.php:5351
+#: src/class-updraftplus.php:5356
 msgid "The amount of database tables scanned is near or over the php_max_input_vars value so some tables maybe truncated. This option will ensure all tables not found will be backed up."
 msgstr ""
 
-#: src/class-updraftplus.php:5350
+#: src/class-updraftplus.php:5355
 msgid "The database scan was taking too long and consequently the list of all tables in the database could not be completed. This option will ensure all tables not found will be backed up."
 msgstr ""
 
-#: src/class-updraftplus.php:5340
+#: src/class-updraftplus.php:5345
 msgid "Therefore, affected tables on the current site which already exist will not be replaced by default, to avoid corrupting them (you can review this in the list of tables below)."
 msgstr ""
 
-#: src/class-updraftplus.php:5338
+#: src/class-updraftplus.php:5343
 msgid "Therefore it is advised that you take a fresh backup on the source site, using a later version."
 msgstr ""
 
-#: src/class-updraftplus.php:5338, src/class-updraftplus.php:5340
+#: src/class-updraftplus.php:5343, src/class-updraftplus.php:5345
 msgid "This backup was created on a previous UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes)."
 msgstr ""
 
-#: src/class-updraftplus.php:5291
+#: src/class-updraftplus.php:5296
 msgid "This backup is of a site with an empty table prefix, which WordPress does not officially support; the results may be unreliable."
 msgstr ""
 
-#: src/class-updraftplus.php:3863
+#: src/class-updraftplus.php:3868
 msgid "View log"
 msgstr ""
 
-#: src/class-updraftplus.php:3857
+#: src/class-updraftplus.php:3862
 msgid "You can view the log by pressing the 'View log' button."
 msgstr ""
 
-#: src/class-updraftplus.php:3815
+#: src/class-updraftplus.php:3820
 msgid "UpdraftPlus on %s"
 msgstr ""
 
-#: src/class-updraftplus.php:3149
+#: src/class-updraftplus.php:3154
 msgid " Your hosting provider only allows you to take one incremental backup per day."
 msgstr ""
 
@@ -317,71 +329,71 @@ msgstr ""
 msgid "The plugin you wish to activate is either not installed or has been removed recently."
 msgstr ""
 
-#: src/backup.php:3840
+#: src/backup.php:3844
 msgid "two unsuccessful attempts were made to include it, and it will now be omitted from the backup"
 msgstr ""
 
-#: src/backup.php:3836
+#: src/backup.php:3840
 msgid "a second attempt is being made (upon further failure it will be skipped)"
 msgstr ""
 
-#: src/backup.php:2378
+#: src/backup.php:2381
 msgid "Error getting table details"
 msgstr ""
 
-#: src/backup.php:1758
+#: src/backup.php:1761
 msgid "Failed to backup database table:"
 msgstr ""
 
-#: src/backup.php:1607
+#: src/backup.php:1610
 msgid "Failed to open directory for reading:"
 msgstr ""
 
-#: src/admin.php:6183
+#: src/admin.php:6206
 msgid "The download link is broken or the backup file is no longer available"
 msgstr ""
 
-#: src/admin.php:6181
+#: src/admin.php:6204
 msgid "The download link is broken, you may have clicked the link from untrusted source"
 msgstr ""
 
-#: src/admin.php:6166
+#: src/admin.php:6189
 msgid "Due to the restriction, some settings can be automatically adjusted, disabled or not available."
 msgstr ""
 
-#: src/admin.php:6165
+#: src/admin.php:6188
 msgid "%s permits UpdraftPlus to perform only one backup per month. Thus, we recommend you choose a full backup when performing a manual backup and to use that option when creating a scheduled backup."
 msgstr ""
 
-#: src/admin.php:6164
+#: src/admin.php:6187
 msgid "Your website is hosted with %s (%s)."
 msgstr ""
 
-#: src/admin.php:6100
+#: src/admin.php:6123
 msgid "The following remote storage (%s) have only been partially configured, if you are having problems you can try to manually authorise at the UpdraftPlus settings page."
 msgstr ""
 
-#: src/admin.php:6094
+#: src/admin.php:6117
 msgid "The following remote storage (%s) have only been partially configured, manual authorization is not supported with this remote storage, please try again and if the problem persists contact support."
 msgstr ""
 
-#: src/admin.php:5958
+#: src/admin.php:5981
 msgid "more info"
 msgstr ""
 
-#: src/admin.php:5348
+#: src/admin.php:5371
 msgid "The following remote storage options are configured."
 msgstr ""
 
-#: src/admin.php:5345
+#: src/admin.php:5368
 msgid "No remote storage locations with valid options found."
 msgstr ""
 
-#: src/admin.php:4942
+#: src/admin.php:4965
 msgid "This may prevent the restore procedure from being able to proceed."
 msgstr ""
 
-#: src/admin.php:4171
+#: src/admin.php:4192
 msgid "(the asterisk character matches zero or more characters)"
 msgstr ""
 
@@ -437,20 +449,20 @@ msgstr ""
 msgid "Your hosting provider only allows you to take one incremental backup per day."
 msgstr ""
 
-#: src/admin.php:1049, src/class-updraftplus.php:3149
+#: src/admin.php:1049, src/class-updraftplus.php:3154
 msgid "You have reached the daily limit for the number of incremental backups you can create at this time."
 msgstr ""
 
-#: src/admin.php:1048, src/admin.php:1049, src/class-updraftplus.php:3149,
-#: src/class-updraftplus.php:3152
+#: src/admin.php:1048, src/admin.php:1049, src/class-updraftplus.php:3154,
+#: src/class-updraftplus.php:3157
 msgid "Please contact your hosting company (%s) if you require further support."
 msgstr ""
 
-#: src/admin.php:1048, src/class-updraftplus.php:3152
+#: src/admin.php:1048, src/class-updraftplus.php:3157
 msgid "Your hosting provider only allows you to take one backup per month."
 msgstr ""
 
-#: src/admin.php:1048, src/class-updraftplus.php:3152
+#: src/admin.php:1048, src/class-updraftplus.php:3157
 msgid "You have reached the monthly limit for the number of backups you can create at this time."
 msgstr ""
 
@@ -470,7 +482,7 @@ msgstr ""
 msgid "Exit full-screen"
 msgstr ""
 
-#: src/admin.php:904, src/admin.php:4971
+#: src/admin.php:904, src/admin.php:4994
 msgid "Full-screen"
 msgstr ""
 
@@ -747,35 +759,35 @@ msgstr ""
 msgid "Makes your site fast and efficient. It cleans the database, compresses images and caches pages for ultimate speed."
 msgstr ""
 
-#: src/restorer.php:3787
+#: src/restorer.php:3798
 msgid "The Database connection has been closed and cannot be reopened."
 msgstr ""
 
-#: src/restorer.php:3451
+#: src/restorer.php:3462
 msgid "Skipping table %s: already restored on a prior run; next table to restore: %s"
 msgstr ""
 
-#: src/restorer.php:3448
+#: src/restorer.php:3459
 msgid "Skipping table %s: user has chosen not to restore this table"
 msgstr ""
 
-#: src/restorer.php:2381
+#: src/restorer.php:2384
 msgid "Found and replaced existing table foreign key constraints as the table prefix has changed."
 msgstr ""
 
-#: src/restorer.php:2224
+#: src/restorer.php:2227
 msgid "An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s"
 msgstr ""
 
-#: src/restorer.php:2217
+#: src/restorer.php:2220
 msgid "An error occurred while attempting to retrieve the MySQL global log_bin_trust_function_creators variable %s"
 msgstr ""
 
-#: src/restorer.php:1145
+#: src/restorer.php:1148
 msgid "The directory does not exist, and the attempt to create it failed"
 msgstr ""
 
-#: src/restorer.php:747
+#: src/restorer.php:750
 msgid "Could not delete old path."
 msgstr ""
 
@@ -968,31 +980,31 @@ msgstr ""
 msgid "No backup will be started. The creation of your clone should now begin, and your WordPress username and password will be displayed below when ready."
 msgstr ""
 
-#: src/class-updraftplus.php:5345
+#: src/class-updraftplus.php:5350
 msgid "If you do not want to restore all your database tables, then choose some to exclude here."
 msgstr ""
 
-#: src/class-updraftplus.php:5045
+#: src/class-updraftplus.php:5050
 msgid "You should only proceed if you have checked and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the new %s version."
 msgstr ""
 
-#: src/class-updraftplus.php:5045
+#: src/class-updraftplus.php:5050
 msgid "This is older than the server which you are now restoring onto (version %s)."
 msgstr ""
 
-#: src/class-updraftplus.php:3615
+#: src/class-updraftplus.php:3620
 msgid "Incomplete"
 msgstr ""
 
-#: src/class-updraftplus.php:2381
+#: src/class-updraftplus.php:2385
 msgid "The backup is being aborted for a repeated failure to progress."
 msgstr ""
 
-#: src/class-updraftplus.php:648
+#: src/class-updraftplus.php:652
 msgid "Briefly unavailable for scheduled maintenance. Check back in a minute."
 msgstr ""
 
-#: src/class-updraftplus.php:648
+#: src/class-updraftplus.php:652
 msgid "Under Maintenance"
 msgstr ""
 
@@ -1044,81 +1056,81 @@ msgstr ""
 msgid "Unable to connect to the filesystem"
 msgstr ""
 
-#: src/admin.php:6109, src/admin.php:6111
+#: src/admin.php:6132, src/admin.php:6134
 msgid "You have requested saving to remote storage (%s), but without entering any settings for that storage."
 msgstr ""
 
-#: src/admin.php:5958
+#: src/admin.php:5981
 msgid "Clone package"
 msgstr ""
 
-#: src/admin.php:5945
+#: src/admin.php:5968
 msgid "An empty WordPress install"
 msgstr ""
 
-#: src/admin.php:5944
+#: src/admin.php:5967
 msgid "This current site"
 msgstr ""
 
-#: src/admin.php:5942
+#: src/admin.php:5965
 msgid "Clone:"
 msgstr ""
 
-#: src/admin.php:4979,
+#: src/admin.php:5002,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:98
 msgid "3. Restoration"
 msgstr ""
 
-#: src/admin.php:4978,
+#: src/admin.php:5001,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:97
 msgid "2. Verifications"
 msgstr ""
 
-#: src/admin.php:4977,
+#: src/admin.php:5000,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:96
 msgid "1. Component selection"
 msgstr ""
 
-#: src/admin.php:4971
+#: src/admin.php:4994
 msgid "Activity log"
 msgstr ""
 
-#: src/admin.php:4964
+#: src/admin.php:4987
 msgid "Cleaning"
 msgstr ""
 
-#: src/admin.php:4958
+#: src/admin.php:4981
 msgid "Verifying"
 msgstr ""
 
-#: src/admin.php:4955
+#: src/admin.php:4978
 msgid "Restoration progress:"
 msgstr ""
 
-#: src/admin.php:4954
+#: src/admin.php:4977
 msgid "The restore operation has begun (%s). Do not close this page until it reports itself as having finished."
 msgstr ""
 
-#: src/admin.php:4945,
+#: src/admin.php:4968,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:30
 msgid "UpdraftPlus Restoration"
 msgstr ""
 
-#: src/admin.php:4442
+#: src/admin.php:4463
 msgid "(%d archive(s) in set, total %s)."
 msgstr ""
 
-#: src/admin.php:3291
+#: src/admin.php:3312
 msgid "Learn more about UpdraftCentral"
 msgstr ""
 
-#: src/admin.php:3291
+#: src/admin.php:3312
 msgid "Add this website to UpdraftCentral (remote, centralised control) - free for up to 5 sites."
 msgstr ""
 
-#: src/admin.php:2838, src/admin.php:3756, src/admin.php:4887,
-#: src/admin.php:4899, src/admin.php:4910, src/admin.php:5145,
-#: src/admin.php:6100, src/admin.php:6111
+#: src/admin.php:2852, src/admin.php:3777, src/admin.php:4910,
+#: src/admin.php:4922, src/admin.php:4933, src/admin.php:5168,
+#: src/admin.php:6123, src/admin.php:6134
 msgid "Return to UpdraftPlus configuration"
 msgstr ""
 
@@ -1202,7 +1214,7 @@ msgstr ""
 msgid "Begun"
 msgstr ""
 
-#: src/admin.php:1038, src/admin.php:4965
+#: src/admin.php:1038, src/admin.php:4988
 msgid "Finished"
 msgstr ""
 
@@ -1444,7 +1456,7 @@ msgstr ""
 msgid "Azure China"
 msgstr ""
 
-#: src/admin.php:5928
+#: src/admin.php:5951
 msgid "Clone region:"
 msgstr "Klonlama bölgesi:"
 
@@ -1478,7 +1490,7 @@ msgstr "Burada klon anahtarları hakkında daha fazla bilgi bulabilirsiniz."
 msgid "Or, use an UpdraftClone key"
 msgstr "Veya, bir UpdraftClone anahtarı kullanın"
 
-#: src/restorer.php:3153
+#: src/restorer.php:3164
 msgid "Found SET NAMES %s, but changing to %s as suggested by WPDB::determine_charset()."
 msgstr "%s adları ayarlandı, ancak WPDB::determine_charset() tarafından önerilen %s olarak değişiyor."
 
@@ -1502,11 +1514,11 @@ msgstr "Kullanılabilir bir güncelleme bulduğunda WordPress'ten UpdraftPlus'u 
 msgid "Automatic updates"
 msgstr "Otomatik güncellemeler"
 
-#: src/restorer.php:2732, src/restorer.php:2783
+#: src/restorer.php:2735, src/restorer.php:2786
 msgid "Your database user does not have permission to drop tables"
 msgstr "Veritabanı kullanıcınızın tabloları bırakma izni yok"
 
-#: src/admin.php:3280
+#: src/admin.php:3301
 msgid "Ask WordPress to update UpdraftPlus automatically when an update is available"
 msgstr "Bir güncelleme olduğunda WordPress'e UpdraftPlus'u otomatik olarak güncellemesini isteyin"
 
@@ -1670,11 +1682,11 @@ msgstr "Site verileri alınıyor  "
 msgid "WordPress installed"
 msgstr "WordPress yüklü"
 
-#: src/admin.php:6033
+#: src/admin.php:6056
 msgid "Your clone has started, network information is not yet available but will be displayed here and at your updraftplus.com account once it is ready."
 msgstr "Klonunuz başladı, ağ bilgileri henüz mevcut değil ama hazır olduğunda burada ve updraftplus.com hesabınızda görüntülenecek."
 
-#: src/admin.php:4171
+#: src/admin.php:4192
 msgid "Exclude these from"
 msgstr "Bunları hariç tut"
 
@@ -1722,15 +1734,15 @@ msgstr "SSS bölümüne bakınız."
 msgid "failed to upload file to %s (see log file for more)"
 msgstr "%s dosyasına dosya yüklenemedi (daha fazla bilgi için günlük dosyasına bakın)"
 
-#: src/admin.php:6029
+#: src/admin.php:6052
 msgid "Dashboard:"
 msgstr "Pano:"
 
-#: src/admin.php:6028
+#: src/admin.php:6051
 msgid "Front page:"
 msgstr "Ön sayfa:"
 
-#: src/admin.php:6027
+#: src/admin.php:6050
 msgid "Your clone has started and will be available at the following URLs once it is ready."
 msgstr "Klonunuz başladı ve hazır olduğunda aşağıdaki URL'lerde kullanılabilir olacaktır."
 
@@ -1742,7 +1754,7 @@ msgstr "yönetmek"
 msgid "Current clones"
 msgstr "Mevcut klonlar"
 
-#: src/class-updraftplus.php:3533
+#: src/class-updraftplus.php:3538
 msgid "Your clone will now deploy this data to re-create your site."
 msgstr "Klonunuz şimdi sitenizi yeniden oluşturmak için bu verileri dağıtacak."
 
@@ -1750,7 +1762,7 @@ msgstr "Klonunuz şimdi sitenizi yeniden oluşturmak için bu verileri dağıtac
 msgid "The clone has been provisioned, and its data has been sent to it. Once the clone has finished deploying it, you will receive an email."
 msgstr "Klon sağlandı ve verileri kendisine gönderildi. Klon dağıtma tamamladığında, bir e-posta alacaksınız."
 
-#: src/addons/migrator.php:1377
+#: src/addons/migrator.php:1402
 msgid "Site key"
 msgstr "Site anahtarı"
 
@@ -1758,16 +1770,16 @@ msgstr "Site anahtarı"
 msgid "Add a site"
 msgstr "Site ekle"
 
-#: src/addons/migrator.php:230, src/addons/migrator.php:1364,
-#: src/addons/migrator.php:1384
+#: src/addons/migrator.php:233, src/addons/migrator.php:1389,
+#: src/addons/migrator.php:1409
 msgid "back"
 msgstr "geri"
 
-#: src/addons/migrator.php:196
+#: src/addons/migrator.php:199
 msgid "Read this article to see step-by-step how it's done."
 msgstr "Nasıl yapıldığını adım adım görmek için bu makaleyi okuyun."
 
-#: src/addons/migrator.php:190,
+#: src/addons/migrator.php:193,
 #: src/templates/wp-admin/settings/migrator-no-migrator.php:6
 msgid "Migrate (create a copy of a site on hosting you control)"
 msgstr "Geçiş yap (kontrolü sizde barındıran bir sitenin kopyasını oluşturun)"
@@ -2044,7 +2056,7 @@ msgstr ""
 msgid "You can buy more temporary clone tokens here."
 msgstr ""
 
-#: src/admin.php:5981
+#: src/admin.php:6004
 msgid "Forbid non-administrators to login to WordPress on your clone"
 msgstr ""
 
@@ -2064,19 +2076,19 @@ msgstr ""
 msgid "The creation of your data for creating the clone should now begin."
 msgstr ""
 
-#: src/admin.php:6031, src/admin.php:6034
+#: src/admin.php:6054, src/admin.php:6057
 msgid "You can find your temporary clone information in your updraftplus.com account here."
 msgstr ""
 
-#: src/class-updraftplus.php:5250
+#: src/class-updraftplus.php:5255
 msgid "Choose a default for each table"
 msgstr ""
 
-#: src/admin.php:3596
+#: src/admin.php:3617
 msgid "Sending files to remote site"
 msgstr ""
 
-#: src/admin.php:3591
+#: src/admin.php:3612
 msgid "Clone server being provisioned and booted (can take several minutes)"
 msgstr ""
 
@@ -2084,15 +2096,15 @@ msgstr ""
 msgid "Warning: you have selected a lower version than your currently installed version. This may fail if you have components that are incompatible with earlier versions."
 msgstr ""
 
-#: src/addons/migrator.php:234
+#: src/addons/migrator.php:237
 msgid "To import a backup set, go to the \"Existing backups\" section in the \"Backup/Restore\" tab"
 msgstr ""
 
-#: src/admin.php:3070
+#: src/admin.php:3091
 msgid "Backup / Restore"
 msgstr ""
 
-#: src/admin.php:701, src/admin.php:4945
+#: src/admin.php:701, src/admin.php:4968
 msgid "Backup"
 msgstr ""
 
@@ -2112,7 +2124,7 @@ msgstr ""
 msgid "No previous backup found to add an increment to."
 msgstr ""
 
-#: src/restorer.php:3159
+#: src/restorer.php:3170
 msgid "Requested character set (%s) is not present - changing to %s."
 msgstr ""
 
@@ -2164,11 +2176,11 @@ msgstr ""
 msgid "More information here."
 msgstr ""
 
-#: src/admin.php:709, src/admin.php:3071
+#: src/admin.php:709, src/admin.php:3092
 msgid "Migrate / Clone"
 msgstr ""
 
-#: src/admin.php:4302, src/templates/wp-admin/settings/backupnow-modal.php:60,
+#: src/admin.php:4323, src/templates/wp-admin/settings/backupnow-modal.php:60,
 #: src/templates/wp-admin/settings/existing-backups-table.php:76,
 #: src/templates/wp-admin/settings/existing-backups-table.php:79
 msgid "Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit)."
@@ -2178,7 +2190,7 @@ msgstr ""
 msgid "You have given the %1$s option. The %1$s is working with \"%2$s\" addon. Get the \"%2$s\" addon: %3$s"
 msgstr ""
 
-#: src/restorer.php:276
+#: src/restorer.php:279
 msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old)."
 msgstr ""
 
@@ -2190,15 +2202,15 @@ msgstr ""
 msgid "Run this command to see the log file for this restoration (needed for any support requests)."
 msgstr ""
 
-#: src/class-updraftplus.php:212
+#: src/class-updraftplus.php:216
 msgid "A version of UpdraftPlus is already installed. WordPress will only allow you to install your new version after first de-installing the existing one. That is safe - all your settings and backups will be retained. So, go to the \"Plugins\" page, de-activate and de-install UpdraftPlus, and then try again."
 msgstr ""
 
-#: src/admin.php:5963, src/admin.php:6007
+#: src/admin.php:5986, src/admin.php:6030
 msgid "(current version)"
 msgstr ""
 
-#: src/admin.php:4080
+#: src/admin.php:4101
 msgid "press here"
 msgstr ""
 
@@ -2220,7 +2232,7 @@ msgstr ""
 msgid "And then add an incremental backup"
 msgstr ""
 
-#: src/addons/incremental.php:339, src/admin.php:4053, src/updraftplus.php:100
+#: src/addons/incremental.php:339, src/admin.php:4074, src/updraftplus.php:100
 msgid "Every hour"
 msgstr ""
 
@@ -2232,7 +2244,7 @@ msgstr ""
 msgid "Available temporary clone tokens:"
 msgstr ""
 
-#: src/admin.php:3204, src/includes/class-commands.php:1027,
+#: src/admin.php:3225, src/includes/class-commands.php:1027,
 #: src/includes/class-commands.php:1081, src/includes/class-commands.php:1083,
 #: src/methods/backup-module.php:663,
 #: src/templates/wp-admin/settings/temporary-clone.php:83,
@@ -2252,7 +2264,7 @@ msgstr ""
 msgid "I consent to %s"
 msgstr ""
 
-#: src/admin.php:3317,
+#: src/admin.php:3338,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:56
 msgid "One Time Password (check your OTP app to get this password)"
 msgstr ""
@@ -2301,7 +2313,7 @@ msgstr ""
 msgid "An error has occurred while processing your request. The server might be busy or you have lost your connection to the internet at the time of the request. Please try again later."
 msgstr ""
 
-#: src/admin.php:5890
+#: src/admin.php:5913
 msgid "The file %s has a \"byte order mark\" (BOM) at its beginning."
 msgid_plural "The files %s have a \"byte order mark\" (BOM) at their beginning."
 msgstr[0] ""
@@ -2405,7 +2417,7 @@ msgstr ""
 msgid "Upload backup"
 msgstr ""
 
-#: src/admin.php:4559
+#: src/admin.php:4580
 msgid "After pressing this button, you can select where to upload your backup from a list of your currently saved remote storage locations"
 msgstr ""
 
@@ -2417,7 +2429,7 @@ msgstr ""
 msgid "Local backup upload has started; please check the log file to see the upload progress"
 msgstr ""
 
-#: src/admin.php:902, src/admin.php:4559
+#: src/admin.php:902, src/admin.php:4580
 msgid "Upload"
 msgstr ""
 
@@ -2433,7 +2445,7 @@ msgstr ""
 msgid "Use this option to only send database backups when sending to email, and skip other components."
 msgstr ""
 
-#: src/addons/migrator.php:276
+#: src/addons/migrator.php:279
 msgid "For incremental backups, you will be able to choose which increments to restore at a later stage."
 msgstr ""
 
@@ -2479,15 +2491,15 @@ msgstr ""
 msgid "The given value for the '%s' option is not valid"
 msgstr ""
 
-#: src/addons/migrator.php:1387
+#: src/addons/migrator.php:1412
 msgid "To allow another site to send a backup to this site, create a key below. When you are shown the key, then press the 'Migrate' button on the other (sending) site, and copy-and-paste the key over there (in the 'Send a backup to another site' section)."
 msgstr ""
 
-#: src/addons/migrator.php:1373
+#: src/addons/migrator.php:1398
 msgid "So, to get the key for the remote site, open the 'Migrate Site' window on that site, and go to that section."
 msgstr ""
 
-#: src/addons/migrator.php:1373
+#: src/addons/migrator.php:1398
 msgid "Keys for a site are created in the section \"receive a backup from a remote site\"."
 msgstr ""
 
@@ -2515,15 +2527,15 @@ msgstr ""
 msgid "No keys to allow remote sites to send backup data here have yet been created."
 msgstr ""
 
-#: src/restorer.php:755
+#: src/restorer.php:758
 msgid "Failed to read from the working directory."
 msgstr ""
 
-#: src/restorer.php:754
+#: src/restorer.php:757
 msgid "Failed to find a manifest file in the backup."
 msgstr ""
 
-#: src/restorer.php:753
+#: src/restorer.php:756
 msgid "Failed to read the manifest file from backup."
 msgstr ""
 
@@ -2535,11 +2547,11 @@ msgstr ""
 msgid "Ensure you are logged into the correct account before continuing."
 msgstr ""
 
-#: src/admin.php:5535
+#: src/admin.php:5558
 msgid "Remote storage method and instance id are required for authentication."
 msgstr ""
 
-#: src/admin.php:5531
+#: src/admin.php:5554
 msgid "authentication error"
 msgstr ""
 
@@ -2547,15 +2559,15 @@ msgstr ""
 msgid "(Nothing has been logged yet)"
 msgstr ""
 
-#: src/addons/migrator.php:441
+#: src/addons/migrator.php:444
 msgid "you will want to use below search and replace site location in the database (migrate) to search/replace the site address."
 msgstr ""
 
-#: src/addons/migrator.php:430
+#: src/addons/migrator.php:433
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use below search and replace so that the non-https links are automatically replaced."
 msgstr ""
 
-#: src/addons/migrator.php:419
+#: src/addons/migrator.php:422
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use below search and replace to search/replace the site address so that the site can be visited without https."
 msgstr ""
 
@@ -2603,31 +2615,31 @@ msgstr ""
 msgid "Invalid bucket name"
 msgstr ""
 
-#: src/restorer.php:2425
+#: src/restorer.php:2428
 msgid "Requested table collation (%1$s) is not present - changing to %2$s."
 msgid_plural "Requested table collations (%1$s) are not present - changing to %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/class-updraftplus.php:5227
+#: src/class-updraftplus.php:5232
 msgid "Your chosen replacement collation"
 msgstr ""
 
-#: src/class-updraftplus.php:5204
+#: src/class-updraftplus.php:5209
 msgid "You can choose another suitable collation instead and continue with the restoration (at your own risk)."
 msgstr ""
 
-#: src/class-updraftplus.php:5204
+#: src/class-updraftplus.php:5209
 msgid "The database server that this WordPress site is running on doesn't support the collation (%s) used in the database which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support multiple collations (%s) used in the database which you are trying to import."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/addons/migrator.php:565
+#: src/addons/migrator.php:568
 msgid "Database restoration options:"
 msgstr ""
 
-#: src/addons/migrator.php:408
+#: src/addons/migrator.php:411
 msgid "This looks like a migration (the backup is from a site with a different address/URL, %s)."
 msgstr ""
 
@@ -2675,25 +2687,25 @@ msgstr ""
 msgid "At your UpdraftCentral dashboard you should press the \"Add Site\" button then paste the key in the input box."
 msgstr ""
 
-#: src/addons/migrator.php:961
+#: src/addons/migrator.php:978
 msgid "Your .htaccess has an old site reference on line number %s. You should remove it manually."
 msgid_plural "Your .htaccess has an old site references on line numbers %s. You should remove them manually."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/restorer.php:2366
+#: src/restorer.php:2369
 msgid "Requested table character set (%s) is not present - changing to %s."
 msgstr ""
 
-#: src/class-updraftplus.php:5180
+#: src/class-updraftplus.php:5185
 msgid "Your chosen character set to use instead:"
 msgstr ""
 
-#: src/class-updraftplus.php:5170
+#: src/class-updraftplus.php:5175
 msgid "You can choose another suitable character set instead and continue with the restoration at your own risk."
 msgstr ""
 
-#: src/class-updraftplus.php:5170
+#: src/class-updraftplus.php:5175
 msgid "The database server that this WordPress site is running on doesn't support the character set (%s) which you are trying to import."
 msgid_plural "The database server that this WordPress site is running on doesn't support the character sets (%s) which you are trying to import."
 msgstr[0] ""
@@ -2786,23 +2798,23 @@ msgstr ""
 msgid "Account ID"
 msgstr ""
 
-#: src/class-updraftplus.php:4995
+#: src/class-updraftplus.php:5000
 msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem. If that is not yet set up, then you should set it up, or use %s so that the non-https links are automatically replaced."
 msgstr ""
 
-#: src/class-updraftplus.php:4993, src/class-updraftplus.php:4995
+#: src/class-updraftplus.php:4998, src/class-updraftplus.php:5000
 msgid "the migrator add-on"
 msgstr ""
 
-#: src/class-updraftplus.php:4993
+#: src/class-updraftplus.php:4998
 msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site. Otherwise, you will want to use %s to search/replace the site address so that the site can be visited without https."
 msgstr ""
 
-#: src/class-updraftplus.php:4991
+#: src/class-updraftplus.php:4996
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
 msgstr ""
 
-#: src/class-updraftplus.php:4986
+#: src/class-updraftplus.php:4991
 msgid "The website address in the backup set (%s) is slightly different from that of the site now (%s). This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
 msgstr ""
 
@@ -2818,15 +2830,15 @@ msgstr ""
 msgid "Error: The chosen file is corrupt. Please choose a valid UpdraftPlus export file."
 msgstr ""
 
-#: src/backup.php:511, src/backup.php:2758, src/class-updraftplus.php:2444,
-#: src/class-updraftplus.php:2511, src/includes/class-search-replace.php:291,
-#: src/includes/class-storage-methods-interface.php:381, src/restorer.php:608
+#: src/backup.php:514, src/backup.php:2761, src/class-updraftplus.php:2449,
+#: src/class-updraftplus.php:2516, src/includes/class-search-replace.php:291,
+#: src/includes/class-storage-methods-interface.php:381, src/restorer.php:611
 msgid "A PHP fatal error (%s) has occurred: %s"
 msgstr ""
 
-#: src/backup.php:505, src/backup.php:2749, src/class-updraftplus.php:2435,
-#: src/class-updraftplus.php:2504, src/includes/class-search-replace.php:284,
-#: src/includes/class-storage-methods-interface.php:372, src/restorer.php:596
+#: src/backup.php:508, src/backup.php:2752, src/class-updraftplus.php:2440,
+#: src/class-updraftplus.php:2509, src/includes/class-search-replace.php:284,
+#: src/includes/class-storage-methods-interface.php:372, src/restorer.php:599
 msgid "A PHP exception (%s) has occurred: %s"
 msgstr ""
 
@@ -2876,7 +2888,7 @@ msgstr ""
 msgid "Rackspace Storage Region"
 msgstr ""
 
-#: src/admin.php:5737
+#: src/admin.php:5760
 msgid "Value"
 msgstr ""
 
@@ -2892,11 +2904,11 @@ msgstr ""
 msgid "Cloud Files"
 msgstr "Bulut dosyaları"
 
-#: src/admin.php:5483
+#: src/admin.php:5506
 msgid "Your settings failed to save. Please refresh the settings page and try again"
 msgstr ""
 
-#: src/admin.php:5442
+#: src/admin.php:5465
 msgid "UpdraftPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded. Please reload the settings page before trying to save settings."
 msgstr ""
 
@@ -2913,7 +2925,7 @@ msgstr ""
 msgid "Extra database"
 msgstr ""
 
-#: src/admin.php:4441
+#: src/admin.php:4462
 msgid "Press here to download or browse"
 msgstr ""
 
@@ -2953,11 +2965,11 @@ msgstr ""
 msgid "Browse contents"
 msgstr ""
 
-#: src/restorer.php:2891
+#: src/restorer.php:2894
 msgid "Skipped tables:"
 msgstr ""
 
-#: src/class-updraftplus.php:5310
+#: src/class-updraftplus.php:5315
 msgid "This database backup has the following WordPress tables excluded: %s"
 msgstr ""
 
@@ -3395,11 +3407,11 @@ msgstr ""
 msgid "Export / import settings"
 msgstr "Dışa/İçe aktarma ayarları"
 
-#: src/restorer.php:2427
+#: src/restorer.php:2430
 msgid "Processing table (%s)"
 msgstr ""
 
-#: src/restorer.php:2858
+#: src/restorer.php:2861
 msgid "Backup of: %s"
 msgstr ""
 
@@ -3419,7 +3431,7 @@ msgstr ""
 msgid "UpdraftCentral enables control of your WordPress sites (including management of backups and updates) from a central dashboard."
 msgstr ""
 
-#: src/backup.php:2004
+#: src/backup.php:2007
 msgid "If not, you will need to either remove data from this table, or contact your hosting company to request more resources."
 msgstr ""
 
@@ -3512,11 +3524,11 @@ msgstr ""
 msgid "This makes time-outs much more likely. You are recommended to turn safe_mode off, or to restore only one entity at a time"
 msgstr ""
 
-#: src/admin.php:2868
+#: src/admin.php:2889
 msgid "To fix this problem go here."
 msgstr "Bu sorunu gidermek için buraya gidin."
 
-#: src/admin.php:2868
+#: src/admin.php:2889
 msgid "OptimizePress 2.0 encodes its contents, so search/replace does not work."
 msgstr ""
 
@@ -3596,31 +3608,31 @@ msgstr ""
 msgid "Public key was sent to:"
 msgstr ""
 
-#: src/backup.php:2972
+#: src/backup.php:2975
 msgid "Failed to open directory (check the file permissions and ownership): %s"
 msgstr ""
 
-#: src/backup.php:2950
+#: src/backup.php:2953
 msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
 msgstr ""
 
-#: src/addons/migrator.php:1399
+#: src/addons/migrator.php:1424
 msgid "Create key"
 msgstr ""
 
-#: src/addons/migrator.php:1396, src/central/translations-updraftplus.php:54
+#: src/addons/migrator.php:1421, src/central/translations-updraftplus.php:54
 msgid "slower, strongest"
 msgstr "daha yavaş, en güçlü"
 
-#: src/addons/migrator.php:1395, src/central/translations-updraftplus.php:53
+#: src/addons/migrator.php:1420, src/central/translations-updraftplus.php:53
 msgid "recommended"
 msgstr "tavsiye edilen"
 
-#: src/addons/migrator.php:1395, src/central/translations-updraftplus.php:50
+#: src/addons/migrator.php:1420, src/central/translations-updraftplus.php:50
 msgid "%s bytes"
 msgstr ""
 
-#: src/addons/migrator.php:1394, src/central/translations-updraftplus.php:52
+#: src/addons/migrator.php:1419, src/central/translations-updraftplus.php:52
 msgid "faster (possibility for slow PHP installs)"
 msgstr ""
 
@@ -3628,20 +3640,20 @@ msgstr ""
 msgid "easy to break, fastest"
 msgstr "kırılması kolay, en hızlı"
 
-#: src/addons/migrator.php:1394, src/addons/migrator.php:1396,
+#: src/addons/migrator.php:1419, src/addons/migrator.php:1421,
 #: src/central/translations-updraftplus.php:49
 msgid "%s bits"
 msgstr ""
 
-#: src/addons/migrator.php:1392, src/central/translations-updraftplus.php:48
+#: src/addons/migrator.php:1417, src/central/translations-updraftplus.php:48
 msgid "Encryption key size:"
 msgstr "Şifreleme anahtarı boyutu:"
 
-#: src/addons/migrator.php:1390
+#: src/addons/migrator.php:1415
 msgid "Enter your chosen name"
 msgstr ""
 
-#: src/addons/migrator.php:1389
+#: src/addons/migrator.php:1414
 msgid "Create a key: give this key a unique name (e.g. indicate the site it is for), then press \"Create key\":"
 msgstr ""
 
@@ -3666,7 +3678,7 @@ msgstr ""
 msgid "This backup archive is %s MB in size - the attempt to send this via email is likely to fail (few email servers allow attachments of this size). If so, you should switch to using a different remote storage method."
 msgstr "Bu yedek arşivi boyut olarak %s MB, bunu email ile göndermek yüksek olasılıkla başarısız olacaktır (çok az email sunucusu bu boyutta dosyalara izin veriyor). Eğer başarısız olursa farklı bir uzak depo alanına geçiş yapmalısınız."
 
-#: src/class-updraftplus.php:1980
+#: src/class-updraftplus.php:1984
 msgid "Size: %s MB"
 msgstr "Boyut: %s MB"
 
@@ -3674,7 +3686,7 @@ msgstr "Boyut: %s MB"
 msgid "UpdraftPlus will split up backup archives when they exceed this file size. The default value is %s megabytes. Be careful to leave some margin if your web-server has a hard size limit (e.g. the 2 GB / 2048 MB limit on some 32-bit servers/file systems)."
 msgstr ""
 
-#: src/class-updraftplus.php:5013, src/restorer.php:1707
+#: src/class-updraftplus.php:5018, src/restorer.php:1710
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
 msgstr ""
 
@@ -3696,7 +3708,7 @@ msgstr "ya da (yıllık indirim)"
 msgid "No Vault connection was found for this site (has it moved?); please disconnect and re-connect."
 msgstr ""
 
-#: src/class-updraftplus.php:613, src/class-updraftplus.php:690
+#: src/class-updraftplus.php:617, src/class-updraftplus.php:694
 msgid "The given file was not found, or could not be read."
 msgstr ""
 
@@ -3780,23 +3792,23 @@ msgstr ""
 msgid "UpdraftCentral Connection"
 msgstr ""
 
-#: src/class-updraftplus.php:3514, src/class-updraftplus.php:3606
+#: src/class-updraftplus.php:3519, src/class-updraftplus.php:3611
 msgid "The backup was aborted by the user"
 msgstr "Yedekleme kullanıcı tarafından iptal edildi"
 
-#: src/admin.php:5478
+#: src/admin.php:5501
 msgid "Your settings have been saved."
 msgstr "Ayarlarınız kaydedildi."
 
-#: src/admin.php:4350
+#: src/admin.php:4371
 msgid "Total backup size:"
 msgstr "Toplam yedek boyutu:"
 
-#: src/admin.php:3739
+#: src/admin.php:3760
 msgid "stop"
 msgstr "durdur"
 
-#: src/admin.php:964, src/admin.php:3526
+#: src/admin.php:964, src/admin.php:3547
 msgid "The backup has finished running"
 msgstr "Yedekleme çalışmayı bitirdi"
 
@@ -3850,7 +3862,7 @@ msgstr "Getiriliyor..."
 msgid "Asia Pacific (Seoul)"
 msgstr ""
 
-#: src/restorer.php:2881
+#: src/restorer.php:2884
 msgid "Uploads URL:"
 msgstr ""
 
@@ -3858,19 +3870,19 @@ msgstr ""
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it."
 msgstr ""
 
-#: src/class-updraftplus.php:5068, src/restorer.php:2899
+#: src/class-updraftplus.php:5073, src/restorer.php:2902
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr ""
 
-#: src/class-updraftplus.php:5064
+#: src/class-updraftplus.php:5069
 msgid "Please read this link for important information on this process."
 msgstr ""
 
-#: src/class-updraftplus.php:5064
+#: src/class-updraftplus.php:5069
 msgid "It will be imported as a new site."
 msgstr ""
 
-#: src/admin.php:3157, src/templates/wp-admin/notices/autobackup-notice.php:16,
+#: src/admin.php:3178, src/templates/wp-admin/notices/autobackup-notice.php:16,
 #: src/templates/wp-admin/notices/autobackup-notice.php:18,
 #: src/templates/wp-admin/notices/horizontal-notice.php:48,
 #: src/templates/wp-admin/notices/horizontal-notice.php:50
@@ -3897,40 +3909,40 @@ msgstr ""
 msgid "Which site to restore"
 msgstr ""
 
-#: src/addons/migrator.php:633, src/addons/migrator.php:634
+#: src/addons/migrator.php:636, src/addons/migrator.php:637
 msgid "Error when creating new site at your chosen address:"
 msgstr ""
 
-#: src/addons/migrator.php:577
+#: src/addons/migrator.php:580
 msgid "Required information for restoring this backup was not given (%s)"
 msgstr ""
 
-#: src/addons/migrator.php:529
+#: src/addons/migrator.php:532
 msgid "Attribute imported content to user"
 msgstr ""
 
-#: src/addons/migrator.php:519, src/addons/migrator.php:521
+#: src/addons/migrator.php:522, src/addons/migrator.php:524
 msgid "You must use lower-case letters or numbers for the site path, only."
 msgstr ""
 
-#: src/addons/migrator.php:507
+#: src/addons/migrator.php:510
 msgid "This feature is not compatible with %s"
 msgstr ""
 
-#: src/addons/migrator.php:505, src/addons/migrator.php:507
+#: src/addons/migrator.php:508, src/addons/migrator.php:510
 msgid "Importing a single site into a multisite install"
 msgstr ""
 
-#: src/addons/migrator.php:497
+#: src/addons/migrator.php:500
 msgid "other content from wp-content"
 msgstr ""
 
-#: src/addons/migrator.php:494
+#: src/addons/migrator.php:497
 msgid "WordPress core"
 msgstr ""
 
-#: src/addons/migrator.php:494, src/addons/migrator.php:497,
-#: src/addons/migrator.php:500
+#: src/addons/migrator.php:497, src/addons/migrator.php:500,
+#: src/addons/migrator.php:503
 msgid "You selected %s to be included in the restoration - this cannot / should not be done when importing a single site into a network."
 msgstr ""
 
@@ -3942,7 +3954,7 @@ msgstr ""
 msgid "Your saved settings also affect what is backed up - e.g. files excluded."
 msgstr ""
 
-#: src/restorer.php:418
+#: src/restorer.php:421
 msgid "Skipping: this archive was already restored."
 msgstr ""
 
@@ -3970,23 +3982,23 @@ msgstr ""
 msgid "This button will delete all UpdraftPlus settings and progress information for in-progress backups (but not any of your existing backups from your cloud storage)."
 msgstr ""
 
-#: src/admin.php:5348
+#: src/admin.php:5371
 msgid "Send this backup to remote storage"
 msgstr "Bu yedeği uzak depolama alanına gönder"
 
-#: src/admin.php:5341
+#: src/admin.php:5364
 msgid "Check out UpdraftPlus Vault."
 msgstr ""
 
-#: src/admin.php:5341
+#: src/admin.php:5364
 msgid "Not got any remote storage?"
 msgstr ""
 
-#: src/admin.php:5341
+#: src/admin.php:5364
 msgid "settings"
 msgstr "ayarlar"
 
-#: src/admin.php:5341
+#: src/admin.php:5364
 msgid "Backup won't be sent to any remote storage - none has been saved in the %s"
 msgstr ""
 
@@ -3998,31 +4010,31 @@ msgstr ""
 msgid "Include your database in the backup"
 msgstr ""
 
-#: src/admin.php:3153, src/admin.php:3155
+#: src/admin.php:3174, src/admin.php:3176
 msgid "Continue restoration"
 msgstr ""
 
-#: src/admin.php:3145
+#: src/admin.php:3166
 msgid "You have an unfinished restoration operation, begun %s ago."
 msgstr ""
 
-#: src/admin.php:3144
+#: src/admin.php:3165
 msgid "Unfinished restoration"
 msgstr ""
 
-#: src/admin.php:3141
+#: src/admin.php:3162
 msgid "%s minutes, %s seconds"
 msgstr "%s dakika, %s saniye"
 
-#: src/admin.php:2971
+#: src/admin.php:2992
 msgid "Backup Contents And Schedule"
 msgstr "Yedekleme içeriği ve zamanlama"
 
-#: src/admin.php:3074
+#: src/admin.php:3095
 msgid "Premium / Extensions"
 msgstr "Premium / Eklentiler"
 
-#: src/admin.php:4837, src/admin.php:4846
+#: src/admin.php:4860, src/admin.php:4869
 msgid "Sufficient information about the in-progress restoration operation could not be found."
 msgstr ""
 
@@ -4039,7 +4051,7 @@ msgstr ""
 msgid "Extensions"
 msgstr "Eklentiler"
 
-#: src/admin.php:725, src/admin.php:3073
+#: src/admin.php:725, src/admin.php:3094
 msgid "Advanced Tools"
 msgstr "Gelişmiş araçlar"
 
@@ -4159,23 +4171,23 @@ msgstr ""
 msgid "Could not access container"
 msgstr ""
 
-#: src/class-updraftplus.php:3533
+#: src/class-updraftplus.php:3538
 msgid "To complete your migration/clone, you should now log in to the remote site and restore the backup set."
 msgstr ""
 
-#: src/backup.php:1809
+#: src/backup.php:1812
 msgid "the options table was not found"
 msgstr "seçenekler tablosu bulunamadı"
 
-#: src/backup.php:1807
+#: src/backup.php:1810
 msgid "no options or sitemeta table was found"
 msgstr ""
 
-#: src/backup.php:1807, src/backup.php:1809
+#: src/backup.php:1810, src/backup.php:1812
 msgid "The database backup appears to have failed"
 msgstr ""
 
-#: src/backup.php:1569
+#: src/backup.php:1572
 msgid "The backup directory is not writable (or disk space is full) - the database backup is expected to shortly fail."
 msgstr ""
 
@@ -4327,11 +4339,11 @@ msgstr "(istediğiniz kadar)"
 msgid "Add an additional retention rule..."
 msgstr "Ekstra bir saklama kuralı belirleyin..."
 
-#: src/restorer.php:3814
+#: src/restorer.php:3825
 msgid "This database needs to be deployed on MySQL version %s or later."
 msgstr "Bu veritabanı %s ve sonrası bir MySQL versiyonuna yüklenebilir."
 
-#: src/restorer.php:3814
+#: src/restorer.php:3825
 msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
 msgstr "Bu problem kaynak veritabanıyla uyumsuz çok eski bir MySQL versiyonuna geri yükleme yapılırken oluşur."
 
@@ -4339,15 +4351,15 @@ msgstr "Bu problem kaynak veritabanıyla uyumsuz çok eski bir MySQL versiyonuna
 msgid "You do not currently have any UpdraftPlus Vault quota"
 msgstr "Şuan da bir UpdraftPlus Vault kotasına sahip değilsiniz"
 
-#: src/class-updraftplus.php:5145
+#: src/class-updraftplus.php:5150
 msgid "You must upgrade MySQL to be able to use this database."
 msgstr "Bu veritabanını kullanmak için MySQL sürümünüzü yükseltmelisiniz."
 
-#: src/class-updraftplus.php:5145
+#: src/class-updraftplus.php:5150
 msgid "The database backup uses MySQL features not available in the old MySQL version (%s) that this site is running on."
 msgstr "Bu veritabanı yedeği bu sitenin çalıştığı eski MySQL versiyonunda (%s) bulunmayan özellikler kullanmaktadır."
 
-#: src/admin.php:2853
+#: src/admin.php:2874
 msgid "The UpdraftPlus directory in wp-content/plugins has white-space in it; WordPress does not like this. You should rename the directory to wp-content/plugins/updraftplus to fix this problem."
 msgstr "wp-content/plugins altındaki UpdraftPlus klasörü isminde boşluk bulunuyor; WordPress bunu sevmez. Bu problemi çözmek için klasörü  wp-content/plugins/updraftplus olarak yeniden adlandırın."
 
@@ -4413,7 +4425,7 @@ msgid "Get more quota"
 msgstr "Daha fazla kota"
 
 #: src/methods/updraftvault.php:529, src/methods/updraftvault.php:545,
-#: src/methods/updraftvault.php:588
+#: src/methods/updraftvault.php:589
 msgid "Current use:"
 msgstr "Mevcut kullanım"
 
@@ -4510,7 +4522,7 @@ msgstr "Updraft Vault"
 msgid "Delete failed:"
 msgstr "Silme başarısız:"
 
-#: src/backup.php:4165
+#: src/backup.php:4169
 msgid "The zip engine returned the message: %s."
 msgstr "Sıkıştırma motoru şu mesajı dönderdi : %s."
 
@@ -4542,7 +4554,7 @@ msgstr "Uzaktaki sitenin online, güvenlik duvarsız, erişimi engelleyecek her 
 msgid "Existing keys"
 msgstr "Mevcut anahtarlar"
 
-#: src/addons/migrator.php:1404
+#: src/addons/migrator.php:1429
 msgid "Your new key:"
 msgstr "Yeni anahtarınız:"
 
@@ -4575,11 +4587,11 @@ msgstr "site bulunamadı"
 msgid "Backup data will be sent to:"
 msgstr "Yedekleme verisi şuraya  gönderilecek:"
 
-#: src/addons/migrator.php:231
+#: src/addons/migrator.php:234
 msgid "Restore an existing backup set onto this site"
 msgstr "Bu siteye varolan bir yedek setini geri yükleyin"
 
-#: src/addons/migrator.php:237
+#: src/addons/migrator.php:240
 msgid "This site has no backups to restore from yet."
 msgstr "Bu site henüz geri yükleme yapacak bir yedeğe sahip değil."
 
@@ -4591,7 +4603,7 @@ msgstr "%s tarafından yapılan yedek"
 msgid "This storage method does not allow downloading"
 msgstr "Bu saklama metodu indirmeye izin vermez"
 
-#: src/admin.php:4492
+#: src/admin.php:4513
 msgid "(backup set imported from remote location)"
 msgstr "(uzak konumdan içeri aktarılan yedek seti)"
 
@@ -4634,23 +4646,23 @@ msgstr "Lütfen anahtara bir isim verin (hangi siteye ait olduğunu belirtecek �
 msgid "Creating..."
 msgstr "Yaratılıyor..."
 
-#: src/addons/migrator.php:1385
+#: src/addons/migrator.php:1410
 msgid "Receive a backup from a remote site"
 msgstr "Uzak bir siteden yedek alma"
 
-#: src/addons/migrator.php:1377
+#: src/addons/migrator.php:1402
 msgid "Paste key here"
 msgstr "Anahtarı buraya yapıştırın"
 
-#: src/addons/migrator.php:1373
+#: src/addons/migrator.php:1398
 msgid "How do I get a site's key?"
 msgstr "Bir sitenin anahtarını nasıl alırım?"
 
-#: src/addons/migrator.php:1373
+#: src/addons/migrator.php:1398
 msgid "To add a site as a destination for sending to, enter that site's key below."
 msgstr "Yükleme konumu olarak bir site eklemek için, hedef sitenin anahtarını aşağıya girin."
 
-#: src/addons/migrator.php:1365
+#: src/addons/migrator.php:1390
 msgid "Send a backup to another site"
 msgstr "Yedeği başka bir siteye gönder"
 
@@ -4717,11 +4729,11 @@ msgstr "FTP kullanıcı"
 msgid "FTP server"
 msgstr "FTP sunucusu"
 
-#: src/addons/migrator.php:195
+#: src/addons/migrator.php:198
 msgid "The UpdraftPlus Migrator modifies the restoration operation appropriately, to fit the backup data to the new site."
 msgstr "UpdraftPlus Migrator geri yükleme işlemini uygun şekilde modifiye eder, böylece yedekleme verisi yeni siteye uyum sağlar."
 
-#: src/addons/migrator.php:195
+#: src/addons/migrator.php:198
 msgid "A \"migration\" is ultimately the same as a restoration - but using backup archives that you import from another site."
 msgstr "Bir \"taşıma\" geri yükleme ile tamamen aynıdır - ancak başka bir siteden içeri aktardığınız yedekleri kullanırsınız."
 
@@ -4729,7 +4741,7 @@ msgstr "Bir \"taşıma\" geri yükleme ile tamamen aynıdır - ancak başka bir 
 msgid "Resetting..."
 msgstr ""
 
-#: src/addons/migrator.php:1377, src/admin.php:920
+#: src/addons/migrator.php:1402, src/admin.php:920
 msgid "Add site"
 msgstr "Site ekle"
 
@@ -4741,7 +4753,7 @@ msgstr "Ekleniyor..."
 msgid "Claim not granted - perhaps you have already used this purchase somewhere else, or your paid period for downloading from updraftplus.com has expired?"
 msgstr "Alacak hakkınız onaylanmadı - belki bu satınalmayı başka bir yerde kullandınız, veya updraftplus.com'dan indirme yapmak için ödenmiş süreniz doldu?"
 
-#: src/restorer.php:3816
+#: src/restorer.php:3827
 msgid "To use this backup, your database server needs to support the %s character set."
 msgstr "Bu yedeği kullanabilmek için, veritabanı sunucunuz %s karakter setini desteklemelidir."
 
@@ -4757,7 +4769,7 @@ msgstr "Şifrenizi unuttuysanız"
 msgid "Go here to re-enter your password."
 msgstr "Şifrenizi tekrar girmek için buraya gidin."
 
-#: src/addons/migrator.php:272
+#: src/addons/migrator.php:275
 msgid "After pressing this button, you will be given the option to choose which components you wish to migrate"
 msgstr "Bu butona tıkladıktan sonra, hangi bileşenleri taşımak istediğinizi seçme imkanı elde edeceksiniz"
 
@@ -5016,7 +5028,7 @@ msgstr "Ertele (%s ay için)"
 msgid "(at same time as files backup)"
 msgstr "(dosya yedekleriyle aynı zamanda)"
 
-#: src/admin.php:4028
+#: src/admin.php:4049
 msgid "No backup has been completed"
 msgstr "Tamamlanan bir yedek yok"
 
@@ -5090,12 +5102,12 @@ msgstr "site yöneticinizin adresine"
 msgid "Check this box to have a basic report sent to"
 msgstr "Temel bir rapor göndermek için bu kutucuğu işaretleyin"
 
-#: src/admin.php:4047, src/admin.php:4052
+#: src/admin.php:4068, src/admin.php:4073
 msgctxt "i.e. Non-automatic"
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/restorer.php:3769
+#: src/restorer.php:3780
 msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
 msgid "An error (%s) occurred:"
 msgstr "Bir hata (%s) oluştu:"
@@ -5108,7 +5120,7 @@ msgstr "Kilit Ayarlarını Değiştir"
 msgid "Any other file/directory on your server that you wish to backup"
 msgstr ""
 
-#: src/admin.php:2870
+#: src/admin.php:2891
 msgid "For even more features and personal support, check out "
 msgstr "Daha fazla özellik ve kişisel destek için, göz atın"
 
@@ -5202,7 +5214,7 @@ msgstr "(bu iyi seçenek hakkında daha fazla öğren)"
 msgid "Note that after you have claimed your add-ons, you can remove your password (but not the email address) from the settings below, without affecting this site's access to updates."
 msgstr "Eklentilerinizi aktive ettikten sonra, sitenin güncellemelere erişimini etkilemeden şifrenizi (mail adresiniz hariç) aşağıdaki ayarlardan kaldırabilirsiniz."
 
-#: src/admin.php:3526, src/admin.php:4589
+#: src/admin.php:3547, src/admin.php:4610
 msgid "View Log"
 msgstr "Log kaydını göster"
 
@@ -5221,7 +5233,7 @@ msgstr "Yedek tarihi"
 msgid "and retain this many scheduled backups"
 msgstr "ve bu kadar zamanlanmış yedek tut"
 
-#: src/admin.php:3998
+#: src/admin.php:4019
 msgid "incremental backup; base backup: %s"
 msgstr "Arttırılan yedek; temel yedek; %s"
 
@@ -5239,7 +5251,7 @@ msgstr "UpdraftPlus'a dosya yükleyin."
 msgid "The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option)."
 msgstr "Yedekleme klasörünüz yazılabilir olmadığı için 'Şimdi Yedekle' butonu etkisizleştirilmiştir ('Ayarlar' menüsünde ilgili seçeneğe gidin)"
 
-#: src/class-updraftplus.php:5053
+#: src/class-updraftplus.php:5058
 msgid "Backup label:"
 msgstr "Yedek etiketi:"
 
@@ -5247,15 +5259,15 @@ msgstr "Yedek etiketi:"
 msgid "Error: unexpected file read fail"
 msgstr "Hata: beklenmeyen dosya okuma hatası"
 
-#: src/backup.php:4171
+#: src/backup.php:4175
 msgid "check your log for more details."
 msgstr "daha fazla detay için log kayıtlarını inceleyiniz."
 
-#: src/backup.php:4169
+#: src/backup.php:4173
 msgid "your web hosting account appears to be full; please see: %s"
 msgstr "web hosting hesabınız dolmuş durumda; lütfen inceleyin: %s"
 
-#: src/backup.php:4167
+#: src/backup.php:4171
 msgid "A zip error occurred"
 msgstr "Bir sıkıştırma hatası oluştu"
 
@@ -5279,36 +5291,36 @@ msgstr "Email adresiniz geçerli, fakat şifreniz UpdraftPlus.Com tarafından ta
 msgid "You need to supply both an email address and a password"
 msgstr "Email ve şifre alanlarını doldurmanız gerekmektedir"
 
-#: src/class-updraftplus.php:5072
+#: src/class-updraftplus.php:5077
 msgid "If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite."
 msgstr "Eğer çoklu site yedeği geri yüklemek istiyorsanız, ilk önde Wordpress kurulumunuzu çoklu site olarak ayarlamalısınız."
 
-#: src/class-updraftplus.php:5072
+#: src/class-updraftplus.php:5077
 msgid "Your backup is of a WordPress multisite install; but this site is not. Only the first site of the network will be accessible."
 msgstr "Yedeğiniz bir WordPress çoklu site kurulumu içeriyor; ancak bu site çoklu değil. Ağın sadece ilk sitesi erişilebilir olacak."
 
-#: src/addons/migrator.php:1266
+#: src/addons/migrator.php:1291
 msgid "already done"
 msgstr "zaten yapılmış"
 
-#: src/addons/migrator.php:1226
+#: src/addons/migrator.php:1251
 msgid "skipped (not in list)"
 msgstr "esgeçildi (listede yok)"
 
-#: src/addons/migrator.php:1226, src/addons/migrator.php:1266,
+#: src/addons/migrator.php:1251, src/addons/migrator.php:1291,
 #: src/includes/class-search-replace.php:91
 msgid "Search and replacing table:"
 msgstr "Tablo bul ve değiştiriliyor:"
 
-#: src/addons/migrator.php:389
+#: src/addons/migrator.php:392
 msgid "Enter a comma-separated list; otherwise, leave blank for all tables."
 msgstr "Virgülle ayrılmış bir liste girin; aksi takdirde, bütün tablolar için boş bırakın."
 
-#: src/addons/migrator.php:389
+#: src/addons/migrator.php:392
 msgid "These tables only"
 msgstr "Sadece bu tablolar"
 
-#: src/addons/migrator.php:388
+#: src/addons/migrator.php:391
 msgid "Rows per batch"
 msgstr "satır grup başına"
 
@@ -5320,19 +5332,19 @@ msgstr "UpdraftPlus.Com hesabınızla henüz bağlanmadınız."
 msgid "You need to connect to receive future updates to UpdraftPlus."
 msgstr "UpdraftPlus güncellemelerini almak için bağlanmalısınız."
 
-#: src/class-updraftplus.php:5043, src/class-updraftplus.php:5045
+#: src/class-updraftplus.php:5048, src/class-updraftplus.php:5050
 msgid "Any support requests to do with %s should be raised with your web hosting company."
 msgstr "%s konusuyla ilgili herhangi bir destek talebi hosting firmanıza iletilmelidir."
 
-#: src/class-updraftplus.php:5043
+#: src/class-updraftplus.php:5048
 msgid "You should only proceed if you cannot update the current server and are confident (or willing to risk) that your plugins/themes/etc. are compatible with the older %s version."
 msgstr "Sadece şuan ki sunucunuzu güncelleyemediğiniz de ve eklentilerinizin/temalarınızın vb. eski sürümle (%s) uyumlu olduğundan emin olduktan (veya riske girmek istiyorsanız) sonra devam etmelisiniz."
 
-#: src/class-updraftplus.php:5043
+#: src/class-updraftplus.php:5048
 msgid "This is significantly newer than the server which you are now restoring onto (version %s)."
 msgstr "Bu şuan geri yükleme yaptığınız sunucudan oldukça daha yeni (version %s)."
 
-#: src/class-updraftplus.php:5043, src/class-updraftplus.php:5045
+#: src/class-updraftplus.php:5048, src/class-updraftplus.php:5050
 msgid "The site in this backup was running on a webserver with version %s of %s. "
 msgstr "Bu yedekteki site %s nin %s versiyonuyla çalışan bir web sunucusunda çalışıyordu."
 
@@ -5369,11 +5381,11 @@ msgstr "UpdraftPlus dizininize (web hosting alanınızda) yüklenmiş yeni yedek
 msgid "Start backup"
 msgstr "Yedeklemeyi başlat"
 
-#: src/class-updraftplus.php:5013, src/restorer.php:1707
+#: src/class-updraftplus.php:5018, src/restorer.php:1710
 msgid "You are using the %s webserver, but do not seem to have the %s module loaded."
 msgstr "%s web sunucusunu kullanıyorsunuz ama %s modülü yüklenmemiş görünüyor."
 
-#: src/admin.php:3896
+#: src/admin.php:3917
 msgid "You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory."
 msgstr "WordPress eklentisinin klasöre yazma yetkisinin nasıl ayarlanacağı ile ilgili olarak web hosting sağlayıcınıza danışmanız gerekir."
 
@@ -5405,15 +5417,15 @@ msgstr "Artan yedekleme ile ilgili daha fazla bilgi"
 msgid "Memory limit"
 msgstr "Hafıza limiti"
 
-#: src/includes/class-filesystem-functions.php:302, src/restorer.php:2624
+#: src/includes/class-filesystem-functions.php:302, src/restorer.php:2627
 msgid "restoration"
 msgstr "geri yükleme"
 
-#: src/class-updraftplus.php:3601
+#: src/class-updraftplus.php:3606
 msgid "Incremental"
 msgstr "Artan"
 
-#: src/class-updraftplus.php:3601
+#: src/class-updraftplus.php:3606
 msgid "Full backup"
 msgstr "Tam yedekleme"
 
@@ -5431,55 +5443,56 @@ msgstr "Yedekleme başarılı"
 
 #: src/addons/incremental.php:340, src/addons/incremental.php:341,
 #: src/addons/incremental.php:342, src/addons/incremental.php:343,
-#: src/admin.php:4054, src/admin.php:4055, src/admin.php:4056,
-#: src/admin.php:4057, src/updraftplus.php:101, src/updraftplus.php:102,
+#: src/admin.php:4075, src/admin.php:4076, src/admin.php:4077,
+#: src/admin.php:4078, src/updraftplus.php:101, src/updraftplus.php:102,
 #: src/updraftplus.php:103
 msgid "Every %s hours"
 msgstr "%s saatte bir"
 
-#: src/addons/migrator.php:920, src/addons/migrator.php:922
+#: src/addons/migrator.php:937, src/addons/migrator.php:939,
+#: src/restorer.php:4146, src/restorer.php:4148
 msgid "search and replace"
 msgstr "bul ve değiştir"
 
-#: src/addons/migrator.php:391
+#: src/addons/migrator.php:394
 msgid "Go"
 msgstr "Başla"
 
-#: src/addons/migrator.php:380
+#: src/addons/migrator.php:383
 msgid "A search/replace cannot be undone - are you sure you want to do this?"
 msgstr "Bul/değiştir işlemi geri alınamaz - bunu yapmak istediğinizden emin misiniz?"
 
-#: src/addons/migrator.php:379
+#: src/addons/migrator.php:382
 msgid "This can easily destroy your site; so, use it with care!"
 msgstr "Bu işlem sitenizi kolayca bozabilir; dikkatli kullanın!"
 
-#: src/addons/migrator.php:334, src/addons/migrator.php:387
+#: src/addons/migrator.php:337, src/addons/migrator.php:390
 msgid "Replace with"
 msgstr "Bununla değiştir"
 
-#: src/addons/migrator.php:333, src/addons/migrator.php:386
+#: src/addons/migrator.php:336, src/addons/migrator.php:389
 msgid "Search for"
 msgstr "Şunu ara"
 
-#: src/addons/migrator.php:332, src/addons/migrator.php:378,
+#: src/addons/migrator.php:335, src/addons/migrator.php:381,
 #: src/templates/wp-admin/advanced/search-replace.php:7,
 #: src/templates/wp-admin/advanced/tools-menu.php:18
 msgid "Search / replace database"
 msgstr "Veritabanında bul / değiştir"
 
-#: src/addons/migrator.php:338
+#: src/addons/migrator.php:341
 msgid "search term"
 msgstr "arama terimi"
 
-#: src/restorer.php:3828
+#: src/restorer.php:3839
 msgid "Too many database errors have occurred - aborting"
 msgstr "Çok fazla veritabanı hatası oluştu - iptal ediliyor"
 
-#: src/class-updraftplus.php:3669
+#: src/class-updraftplus.php:3674
 msgid "read more at %s"
 msgstr "daha fazlasını okuyun: %s"
 
-#: src/class-updraftplus.php:3669
+#: src/class-updraftplus.php:3674
 msgid "Email reports created by UpdraftPlus (free edition) bring you the latest UpdraftPlus.com news"
 msgstr "UpdraftPlus (ücretsiz sürüm) tarafından oluşturulam email raporları, size en son UpdraftPlus.com haberlerini iletir"
 
@@ -5495,10 +5508,6 @@ msgstr "Henüz bir yedekleme yapmadınız."
 msgid "Database Options"
 msgstr "Veritabanı Seçenekleri"
 
-#: src/templates/wp-admin/advanced/site-info.php:109
-msgid "Plugins for debugging:"
-msgstr "Hata ayıklama eklentileri:"
-
 #: src/templates/wp-admin/advanced/site-info.php:88
 msgid "%s (%s used)"
 msgstr "%s (%s kullanılıyor)"
@@ -5507,7 +5516,7 @@ msgstr "%s (%s kullanılıyor)"
 msgid "Free disk space in account:"
 msgstr "Hesaptaki kullanılabilir disk alanı:"
 
-#: src/admin.php:5449, src/templates/wp-admin/settings/take-backup.php:52
+#: src/admin.php:5472, src/templates/wp-admin/settings/take-backup.php:52
 msgid "This button is disabled because your backup directory is not writable (see the settings)."
 msgstr "Yedek klasörünüz yazılabilir olmadığı için bu buton pasif (ayarlara bakınız)."
 
@@ -5591,7 +5600,7 @@ msgstr "host"
 msgid "user"
 msgstr "kullanıcı"
 
-#: src/class-updraftplus.php:1977
+#: src/class-updraftplus.php:1981
 msgid "External database (%s)"
 msgstr "Harici veritabanı (%s)"
 
@@ -5609,7 +5618,7 @@ msgstr "üst dizine erişim başarısız"
 msgid "However, subsequent access attempts failed:"
 msgstr "Ancak, tekrar eden denemeler başarısız olmuştur:"
 
-#: src/addons/wp-cli.php:434, src/admin.php:4375
+#: src/addons/wp-cli.php:434, src/admin.php:4396
 msgid "External database"
 msgstr "Harici veritabanı"
 
@@ -5641,7 +5650,7 @@ msgstr "Gözetlenmek istemiyor musunuz? UpdraftPlus Premium veritabanı yedeğin
 msgid "use UpdraftPlus Premium"
 msgstr "UpdraftPlus Premium kullanın"
 
-#: src/class-updraftplus.php:4883
+#: src/class-updraftplus.php:4888
 msgid "Decryption failed. The database file is encrypted."
 msgstr "Şifre çözme başarısız. Veritabanı dosyası şifrelenmiş."
 
@@ -5649,20 +5658,20 @@ msgstr "Şifre çözme başarısız. Veritabanı dosyası şifrelenmiş."
 msgid "Only the WordPress database can be restored; you will need to deal with the external database manually."
 msgstr "Sadece Wordpress veritabanı geri yüklenebilir; dış veritabanı ile manuel olarak ilgilenmelisiniz."
 
-#: src/restorer.php:3022, src/restorer.php:3726, src/restorer.php:3799,
-#: src/restorer.php:3816
+#: src/restorer.php:3033, src/restorer.php:3737, src/restorer.php:3810,
+#: src/restorer.php:3827
 msgid "An error occurred on the first %s command - aborting run"
 msgstr "İlk %s komutunda bir hata oluştu - işlem iptal ediliyor."
 
-#: src/addons/moredatabase.php:136, src/backup.php:1506
+#: src/addons/moredatabase.php:136, src/backup.php:1509
 msgid "Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled."
 msgstr "Bağlantı başarısız: erişim bilgilerinizi kontrol edin, veri tabanınızın çalışır olduğundan ve ağ bağlantısında güvenlik duvarı olmadığından emin olun."
 
-#: src/backup.php:1506
+#: src/backup.php:1509
 msgid "database connection attempt failed."
 msgstr "veritabanı bağlantı denemesi başarısız."
 
-#: src/addons/migrator.php:1157
+#: src/addons/migrator.php:1182
 msgid "Warning: the database's home URL (%s) is different to what we expected (%s)"
 msgstr "veritabanındaki anasayfa adresi (%s), beklenenden (%s) farklı"
 
@@ -5696,8 +5705,8 @@ msgstr "Burayı boş bırakırsanız varsayılan seçim kullanılır."
 msgid "Tenant"
 msgstr "Kullanıcı"
 
-#: src/admin.php:1044, src/admin.php:5890, src/methods/openstack2.php:144,
-#: src/restorer.php:286, src/restorer.php:288,
+#: src/admin.php:1044, src/admin.php:5913, src/methods/openstack2.php:144,
+#: src/restorer.php:289, src/restorer.php:291,
 #: src/templates/wp-admin/settings/downloading-and-restoring.php:27,
 #: src/templates/wp-admin/settings/tab-backups.php:27,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:14
@@ -5830,18 +5839,18 @@ msgstr "Çağır"
 msgid "Fetch"
 msgstr "Getir"
 
-#: src/addons/migrator.php:505,
+#: src/addons/migrator.php:508,
 #: src/templates/wp-admin/settings/downloading-and-restoring.php:72,
 #: src/templates/wp-admin/settings/form-contents.php:183,
 #: src/templates/wp-admin/settings/tab-backups.php:74
 msgid "This feature requires %s version %s or later"
 msgstr "Bu özellik %s %s sürümü veya daha güncelini gerektiriyor"
 
-#: src/restorer.php:752
+#: src/restorer.php:755
 msgid "Failed to unpack the archive"
 msgstr "Arşiv açılamadı"
 
-#: src/class-updraftplus.php:1569, src/methods/cloudfiles.php:428
+#: src/class-updraftplus.php:1573, src/methods/cloudfiles.php:428
 msgid "Error - failed to download the file"
 msgstr "Hata - dosya indirilemedi"
 
@@ -5866,8 +5875,8 @@ msgstr "Yüklü UpdraftPlus Yedekleme/Geri Yükleme versiyonu kullandığınız 
 msgid "password/key"
 msgstr "parola/anahtar"
 
-#: src/addons/migrator.php:1390, src/addons/sftp.php:504, src/admin.php:926,
-#: src/admin.php:5737, src/templates/wp-admin/settings/temporary-clone.php:63
+#: src/addons/migrator.php:1415, src/addons/sftp.php:504, src/admin.php:926,
+#: src/admin.php:5760, src/templates/wp-admin/settings/temporary-clone.php:63
 msgid "Key"
 msgstr "Anahtar"
 
@@ -5883,24 +5892,24 @@ msgstr "Anahtar geçerli formatta değil veya bozulmuş."
 msgid "SCP/SFTP password/key"
 msgstr "SCP/SFTP parola/anahtar"
 
-#: src/addons/wp-cli.php:445, src/admin.php:4419
+#: src/addons/wp-cli.php:445, src/admin.php:4440
 msgid "Files backup (created by %s)"
 msgstr "Yedeklenen dosyalar (%s tarafından oluşturulmuş)"
 
-#: src/addons/wp-cli.php:445, src/admin.php:4419
+#: src/addons/wp-cli.php:445, src/admin.php:4440
 msgid "Files and database WordPress backup (created by %s)"
 msgstr "Dosyalar ve veritabanı Wordpress yedeği (%s tarafından oluşturulmuş)"
 
-#: src/addons/importer.php:276, src/admin.php:4413,
+#: src/addons/importer.php:276, src/admin.php:4434,
 #: src/includes/class-backup-history.php:505
 msgid "Backup created by: %s."
 msgstr "Yedek %s tarafından oluşturuldu."
 
-#: src/addons/wp-cli.php:428, src/admin.php:4373
+#: src/addons/wp-cli.php:428, src/admin.php:4394
 msgid "Database (created by %s)"
 msgstr "Veritabanı (%s tarafından oluşturuldu)"
 
-#: src/addons/wp-cli.php:426, src/admin.php:4367, src/admin.php:4415
+#: src/addons/wp-cli.php:426, src/admin.php:4388, src/admin.php:4436
 msgid "unknown source"
 msgstr "bilinmeyen kaynak"
 
@@ -5940,16 +5949,16 @@ msgstr "Ancak, UpdraftPlus arşivleri standart zip/SQL dosyalarıdır - eğer do
 msgid "This file does not appear to be an UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
 msgstr "Bu dosya bir UpdraftPlus yedek arşivi gibi durmuyor. (arşivler backup_(saat)_(site adı)_kod_(tip).(zip|gz) gibi bir isme sahip .zip veya .gz uzantılı dosyalardır)"
 
-#: src/admin.php:4416, src/includes/class-wpadmin-commands.php:159,
-#: src/restorer.php:2593
+#: src/admin.php:4437, src/includes/class-wpadmin-commands.php:159,
+#: src/restorer.php:2596
 msgid "Backup created by unknown source (%s) - cannot be restored."
 msgstr "Bilinmeyen kaynak tarafından oluşturulmuş yedek (%s) - geri yüklenemiyor."
 
-#: src/restorer.php:1519, src/restorer.php:1567
+#: src/restorer.php:1522, src/restorer.php:1570
 msgid "The WordPress content folder (wp-content) was not found in this zip file."
 msgstr "Zip dosyasında WordPress içerik klasörü (wp-content) bulunamadı."
 
-#: src/restorer.php:1413
+#: src/restorer.php:1416
 msgid "This version of UpdraftPlus does not know how to handle this type of foreign backup"
 msgstr "UpdraftPlus'ın bu sürümü bu tip yabancı yedeği nasıl işleyeceğini bilmiyor"
 
@@ -6001,12 +6010,12 @@ msgstr "Diğer %s SSS."
 msgid "Check this to receive more information and emails on the backup process - useful if something is going wrong."
 msgstr "Yedekleme işlemi ile ilgili daha fazla bilgi ve email almak için buraya bakın - özellikle bir şeyler hatalı çalışıyorsa faydalı olacaktır."
 
-#: src/addons/morefiles.php:357, src/admin.php:4174
+#: src/addons/morefiles.php:357, src/admin.php:4195
 msgid "If entering multiple files/directories, then separate them with commas. For entities at the top level, you can use a * at the start or end of the entry as a wildcard."
 msgstr "Birden fazla dosya/klasör girmek için virgül ile ayırın. Üst seviye girişler için, girişin başına joker olarak kullanmak için * koyabilirsiniz."
 
 #: src/includes/class-filesystem-functions.php:302, src/methods/ftp.php:344,
-#: src/restorer.php:2624
+#: src/restorer.php:2627
 msgid "Your hosting company must enable these functions before %s can work."
 msgstr "%s çalışmadan önce, hosting firmanız bu fonksiyonları aktive etmelidir."
 
@@ -6026,7 +6035,7 @@ msgstr "kriptolanmış FTP (kapalı kriptolama)"
 msgid "regular non-encrypted FTP"
 msgstr "yaygın kriptolanmamış FTP"
 
-#: src/restorer.php:2865
+#: src/restorer.php:2868
 msgid "Backup created by:"
 msgstr "Yedeği yaratan:"
 
@@ -6097,15 +6106,15 @@ msgstr "Veritabanı dosyası iki kez sıkıştırılmış gözüküyor - muhteme
 msgid "Constants"
 msgstr "Sabitler"
 
-#: src/backup.php:1880
+#: src/backup.php:1883
 msgid "Failed to open database file for reading:"
 msgstr "Veri tabanı dosyasını okumak için açma başarısız:"
 
-#: src/backup.php:1558
+#: src/backup.php:1561
 msgid "No database tables found"
 msgstr "Database tablosu bulunamadı"
 
-#: src/backup.php:1556
+#: src/backup.php:1559
 msgid "please wait for the rescheduled attempt"
 msgstr "lütfen tekrar zamanlanmış deneme için bekleyin"
 
@@ -6122,7 +6131,7 @@ msgstr "Hesap dolu: %s hesabınızda sadece %d byte kaldı, ancak yüklenecek do
 msgid "Errors occurred:"
 msgstr "Oluşan hatalar:"
 
-#: src/addons/wp-cli.php:752, src/admin.php:4968
+#: src/addons/wp-cli.php:752, src/admin.php:4991
 msgid "Follow this link to download the log file for this restoration (needed for any support requests)."
 msgstr "Bu geri yüklemeye ait log dosyasını indirmek için bu linki takip edin (destek talepleriniz için gereklidir)"
 
@@ -6142,15 +6151,15 @@ msgstr "Geri alınıyor (gerekli ise) ve yedek dosyaları hazırlanıyor..."
 msgid "The PHP setup on this webserver allows only %s seconds for PHP to run, and does not allow this limit to be raised. If you have a lot of data to import, and if the restore operation times out, then you will need to ask your web hosting company for ways to raise this limit (or attempt the restoration piece-by-piece)."
 msgstr "Bu web sunucusundaki PHP ayarları PHP isteklerinin sadece %s saniye çalışmasına izin veriyor, ve bu limitin artmasına müsade etmiyor. Eğer içeri yükleyeceğiniz çok büyük verileriniz varsa, ve geri yükleme işlemi zaman aşımına uğrarsa, web hosting firmanızdan bu limiti yükseltmesini isteyebilirsiniz (ya da parça parça geri yükleme deneyebilirsiniz)"
 
-#: src/restorer.php:1405
+#: src/restorer.php:1408
 msgid "Existing unremoved folders from a previous restore exist (please use the \"Delete Old Directories\" button to delete them before trying again): %s"
 msgstr "Önceki geri yüklemeden kalmış silinmemiş klasörler bulunuyor (lütfen tekrar denemeden önce bu klasörleri silmek için \"Eski Klasörleri Sil\" butonunu kullanın) : %s"
 
-#: src/admin.php:1300, src/class-updraftplus.php:961
+#: src/admin.php:1300, src/class-updraftplus.php:965
 msgid "The amount of time allowed for WordPress plugins to run is very low (%s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %s seconds or more)"
 msgstr "Wordpress eklentilerini çalıştırmak için izin verilen süre çok az (%s saniye) - yedekleme hatalarını ve zaman aşımlarını engellemek için bu süreyi arttırmalısınız (daha fazla yardım için hosting firmanıza danışın - PHP ayarlarındaki max_execution_time ayarından kaynaklanıyor; tavsiye edilen süre %s saniye ve daha fazlası)"
 
-#: src/addons/migrator.php:305
+#: src/addons/migrator.php:308
 msgid "Disabled this plugin: %s: re-activate it manually when you are ready."
 msgstr "Bu eklenti devre dışı: %s: Hazır olduğunuzda yeniden etkinleştirin."
 
@@ -6163,11 +6172,11 @@ msgstr "%s bağlantısı zaman aşımına uğradı; eğer sunucu bilgilerini do�
 msgid "Messages:"
 msgstr "Mesajlar:"
 
-#: src/restorer.php:3603
+#: src/restorer.php:3614
 msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
 msgstr "Maksimum paket boyutundan büyük ve bölünemeyen bir SQL satırı bulundu; bu satır işlenmeyecek ve düşürülecek: %s"
 
-#: src/restorer.php:1148
+#: src/restorer.php:1151
 msgid "The directory does not exist"
 msgstr "Dizin bulunamadı"
 
@@ -6337,39 +6346,39 @@ msgstr "Deneniyor..."
 msgid "The new user's RackSpace console password is (this will not be shown again):"
 msgstr "Yeni kullanıcının RackSpace konsol şifresi (tekrak gösterilmeyecektir):"
 
-#: src/admin.php:872, src/restorer.php:282
+#: src/admin.php:872, src/restorer.php:285
 msgid "Error data:"
 msgstr "Veri hatası:"
 
-#: src/admin.php:5061
+#: src/admin.php:5084
 msgid "Backup does not exist in the backup history"
 msgstr "Yedek, yedekleme geçmişinde mevcut deil."
 
-#: src/admin.php:3458
+#: src/admin.php:3479
 msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old). You should press this button to delete them as soon as you have verified that the restoration worked."
 msgstr "Wordress kurulumunuz geri yükleme/taşımanızdan önceki eski klasörleri içeriyor (teknik bilgi: bunlar -old soneki ile işaretlenmiştir).  Geri yüklemenin hatasız çalıştığından emin olur olmaz eski klasörleri silmek için bu butona tıklamalısınız."
 
-#: src/restorer.php:2991
+#: src/restorer.php:3002
 msgid "Split line to avoid exceeding maximum packet size"
 msgstr "Maksimum paket boyutunu aşmamak için satırları ayır"
 
-#: src/restorer.php:2788
+#: src/restorer.php:2791
 msgid "Your database user does not have permission to drop tables. We will attempt to restore by simply emptying the tables; this should work as long as you are restoring from a WordPress version with the same database structure (%s)"
 msgstr "Veritabanı kullanıcınızın tabloları silme (drop) yetkisi yok. Tabloları boşaltıp bunun üstesinden gelmeye çalışacağız; aynı veritabanı yapısına (%s) sahip bir Wordpress versiyonundan geri yükleme yaptığınız sürece bu işe yaramalıdır "
 
-#: src/restorer.php:749
+#: src/restorer.php:752
 msgid "Could not move the files into place. Check your file permissions."
 msgstr "Dosyaları hedef konuma taşınamadı. Dosya izinlerinizi kontrol edin."
 
-#: src/restorer.php:748
+#: src/restorer.php:751
 msgid "Could not move new files into place. Check your wp-content/upgrade folder."
 msgstr "Yeni dosyalar taşınamadı. wp-content/upgrade klasörünü kontrol ediniz."
 
-#: src/restorer.php:746
+#: src/restorer.php:749
 msgid "Could not move old files out of the way."
 msgstr "Eski dosyalar yolun dışına taşınamadı."
 
-#: src/restorer.php:742
+#: src/restorer.php:745
 msgid "Moving old data out of the way..."
 msgstr "Eski veriler yolun dışına taşınıyor..."
 
@@ -6381,11 +6390,11 @@ msgstr "Başka adres ekle..."
 msgid "Enter addresses here to have a report sent to them when a backup job finishes."
 msgstr "Yedekleme işi bittiğinde rapor göndermek için mail adreslerini buraya girin."
 
-#: src/class-updraftplus.php:1985, src/class-updraftplus.php:1990
+#: src/class-updraftplus.php:1989, src/class-updraftplus.php:1994
 msgid "%s checksum: %s"
 msgstr "%s checksum: %s"
 
-#: src/class-updraftplus.php:1917, src/class-updraftplus.php:1919
+#: src/class-updraftplus.php:1921, src/class-updraftplus.php:1923
 msgid "files: %s"
 msgstr "dosyalar: %s"
 
@@ -6397,7 +6406,7 @@ msgstr "Kullanılacak email adresini ayarlamak için \"Raporlama\" sekmesini kul
 msgid "Debugging information"
 msgstr "Bilgi ayıklanıyor"
 
-#: src/addons/reporting.php:238, src/admin.php:4333
+#: src/addons/reporting.php:238, src/admin.php:4354
 msgid "Uploaded to:"
 msgstr "Şuraya yüklendi:"
 
@@ -6442,7 +6451,7 @@ msgstr "%d hata, %d uyarı"
 msgid "%s authentication"
 msgstr "%s yetkilendirme"
 
-#: src/addons/onedrive.php:891, src/class-updraftplus.php:561,
+#: src/addons/onedrive.php:891, src/class-updraftplus.php:565,
 #: src/methods/dropbox.php:267, src/methods/dropbox.php:757,
 #: src/methods/dropbox.php:814, src/methods/dropbox.php:828,
 #: src/methods/dropbox.php:848, src/methods/dropbox.php:1005
@@ -6465,13 +6474,13 @@ msgstr "Gerekli %s PHP modülü yüklü değil - hosting firmanızdan yüklemesi
 msgid "Your site's admin email address (%s) will be used."
 msgstr "Sitenizin yönetici email adresi (%s) kullanılacak."
 
-#: src/admin.php:913, src/admin.php:3194, src/methods/updraftvault.php:356,
+#: src/admin.php:913, src/admin.php:3215, src/methods/updraftvault.php:356,
 #: src/methods/updraftvault.php:411,
 #: src/templates/wp-admin/settings/temporary-clone.php:82
 msgid "Connect"
 msgstr "Bağlan"
 
-#: src/class-updraftplus.php:4972
+#: src/class-updraftplus.php:4977
 msgid "(version: %s)"
 msgstr "(versiyon: %s)"
 
@@ -6479,44 +6488,44 @@ msgstr "(versiyon: %s)"
 msgid "Be aware that mail servers tend to have size limits; typically around %s Mb; backups larger than any limits will likely not arrive."
 msgstr "Mail sunucularının boyut limitleri olduğunu unutmayın; genellikle yaklaşık %s Mb; limit boyutunu aşan yedekler ulaşmayabilir"
 
-#: src/addons/reporting.php:197, src/class-updraftplus.php:3704
+#: src/addons/reporting.php:197, src/class-updraftplus.php:3709
 msgid "Latest status:"
 msgstr "Son durum:"
 
-#: src/class-updraftplus.php:3703
+#: src/class-updraftplus.php:3708
 msgid "Backup contains:"
 msgstr "Yedek içeriği:"
 
-#: src/class-updraftplus.php:3660
+#: src/class-updraftplus.php:3665
 msgid "Backed up: %s"
 msgstr "Yedeklendi: %s"
 
-#: src/addons/reporting.php:280, src/class-updraftplus.php:3654,
-#: src/class-updraftplus.php:3829
+#: src/addons/reporting.php:280, src/class-updraftplus.php:3659,
+#: src/class-updraftplus.php:3834
 msgid "The log file has been attached to this email."
 msgstr "Log dosyası bu e-mail'e eklendi."
 
-#: src/class-updraftplus.php:3618
+#: src/class-updraftplus.php:3623
 msgid "Unknown/unexpected error - please raise a support request"
 msgstr "Bilinmeyen/beklenmeyen hata - lütfen destek talebi açınız"
 
-#: src/class-updraftplus.php:3613
+#: src/class-updraftplus.php:3618
 msgid "Database only (files were not part of this particular schedule)"
 msgstr "Sadece veritabanı (dosyalar bu plana dahil değil)"
 
-#: src/class-updraftplus.php:3613
+#: src/class-updraftplus.php:3618
 msgid "Database (files backup has not completed)"
 msgstr "Veritabanı (dosyaların yedeklemesi tamamlanmadı)"
 
-#: src/class-updraftplus.php:3610
+#: src/class-updraftplus.php:3615
 msgid "Files only (database was not part of this particular schedule)"
 msgstr "Sadece dosyalar (veritabanı bu plana dahil değil)"
 
-#: src/class-updraftplus.php:3610
+#: src/class-updraftplus.php:3615
 msgid "Files (database backup has not completed)"
 msgstr "Dosyalar (veritabanı yedeklemesi tamamlanmadı)"
 
-#: src/admin.php:384, src/class-updraftplus.php:3608
+#: src/admin.php:384, src/class-updraftplus.php:3613
 msgid "Files and database"
 msgstr "Dosyalar ve veritabanı"
 
@@ -6604,7 +6613,7 @@ msgstr "UpdraftPlus.Com bağlantısı başarısız"
 msgid "Reporting"
 msgstr "Raporlama"
 
-#: src/admin.php:5734
+#: src/admin.php:5757
 msgid "Options (raw)"
 msgstr "Seçenekler (ham)"
 
@@ -6612,19 +6621,19 @@ msgstr "Seçenekler (ham)"
 msgid "Send a report only when there are warnings/errors"
 msgstr "Sadece hatalar/uyarılar olduğunda rapor gönder"
 
-#: src/restorer.php:2876
+#: src/restorer.php:2879
 msgid "Content URL:"
 msgstr "İçerik URLsi:"
 
-#: src/restorer.php:746
+#: src/restorer.php:749
 msgid "You should check the file ownerships and permissions in your WordPress installation"
 msgstr "WordPress yüklemenizdeki dosya izinlerini ve sahipliklerini kontrol etmelisiniz"
 
-#: src/backup.php:4158, src/class-updraftplus.php:974
+#: src/backup.php:4162, src/class-updraftplus.php:978
 msgid "Your free space in your hosting account is very low - only %s Mb remain"
 msgstr "Hosting hesabınızdaki boş alan çok az kaldı - sadece %s Mb kaldı"
 
-#: src/class-updraftplus.php:958
+#: src/class-updraftplus.php:962
 msgid "The amount of memory (RAM) allowed for PHP is very low (%s Mb) - you should increase it to avoid failures due to insufficient memory (consult your web hosting company for more help)"
 msgstr "PHP için ayrılan hafıza (RAM) çok düşük (%s Mb) - yetersiz hafızadan kaynaklı hatalar yaşanmaması için hafızayı arttırmalısınız (daha fazla bilgi için hosting şirketinize danışın)"
 
@@ -6700,19 +6709,19 @@ msgstr "Yeni eklenti satın aldıysanız bu linke tıklayarak bağlantınızı y
 msgid "You are presently <strong class=\"success\">connected</strong> to an UpdraftPlus.Com account."
 msgstr ""
 
-#: src/admin.php:3192
+#: src/admin.php:3213
 msgid "Interested in knowing about your UpdraftPlus.Com password security? Read about it here."
 msgstr "UpdraftPlus.Com parola güvenliğiniz ile ilgili bilgi almak ister misiniz? Burayı okuyun."
 
-#: src/admin.php:3268
+#: src/admin.php:3289
 msgid "Forgotten your details?"
 msgstr "Bilgilerini mi unuttun?"
 
-#: src/admin.php:3181
+#: src/admin.php:3202
 msgid "Not yet got an account (it's free)? Go get one!"
 msgstr "Hala bir hesabın yok mu? Hemen bir tane al! (beleş beleş)"
 
-#: src/admin.php:3247
+#: src/admin.php:3268
 msgid "Connect with your UpdraftPlus.Com account"
 msgstr "UpdraftPlus.com hesabınızla bağlanın"
 
@@ -6775,7 +6784,7 @@ msgstr ""
 msgid "If you exclude both the database and the files, then you have excluded everything!"
 msgstr "Eğer hem veritabanını hem de dosyaları hariç tutarsanız, her şeyi hariç tutmuş ollursunuz."
 
-#: src/restorer.php:2870
+#: src/restorer.php:2873
 msgid "Site home:"
 msgstr "Site Anasayfa:"
 
@@ -6800,11 +6809,11 @@ msgstr "Yükleme başarısız"
 msgid "You can send a backup to more than one destination with Premium."
 msgstr ""
 
-#: src/admin.php:3739
+#: src/admin.php:3760
 msgid "Note: the progress bar below is based on stages, NOT time. Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal."
 msgstr "Not: aşağıdaki ilerleme çubuğu aşama tabanlıdır, zaman tabanlı DEĞİLDİR. Yedeklemeyi aynı aşamada bir süre kaldığı için durdurmayın - bu normaldir."
 
-#: src/admin.php:3603
+#: src/admin.php:3624
 msgid "(%s%%, file %s of %s)"
 msgstr "(%s%%,  dosya %s  / %s)"
 
@@ -6845,11 +6854,11 @@ msgstr "Yedek kaynağı: %s."
 msgid "%s settings test result:"
 msgstr "%s ayarları test sonucu:"
 
-#: src/admin.php:4465, src/admin.php:4467
+#: src/admin.php:4486, src/admin.php:4488
 msgid "(Not finished)"
 msgstr "(Tamamlanmadı)"
 
-#: src/admin.php:4467
+#: src/admin.php:4488
 msgid "If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes."
 msgstr "Umduğunuzdan fazla yedek görüyorsanız, bu belkide eski yedek setlerinin yeni yedekler tamamlanmadan silinmesinden olabilir."
 
@@ -6861,69 +6870,69 @@ msgstr "<b>Sakın</b> uploads ya da plugins klasörünün altı olarak belirleme
 msgid "This is where UpdraftPlus will write the zip files it creates initially.  This directory must be writable by your web server. It is relative to your content directory (which by default is called wp-content)."
 msgstr "Burası UpdraftPlus'ın başlangıçta zip dosyalarını oluşturacağı yerdir. Bu klasör web sunucunuz tarafından yazılabilir olmalıdır. İçerik klasörünüzün altında olmalıdır (varsayılan olarak wp-content klasörünün altıdır)"
 
-#: src/admin.php:3704
+#: src/admin.php:3725
 msgid "Job ID: %s"
 msgstr "İş ID: %s"
 
-#: src/admin.php:3684
+#: src/admin.php:3705
 msgid "last activity: %ss ago"
 msgstr "son etkinlig: %ss önce"
 
-#: src/admin.php:3683
+#: src/admin.php:3704
 msgid "next resumption: %d (after %ss)"
 msgstr "yeniden başlama: %d (%ss sonra)"
 
-#: src/admin.php:3666, src/central/translations-updraftplus.php:28,
+#: src/admin.php:3687, src/central/translations-updraftplus.php:28,
 #: src/methods/updraftvault.php:459, src/methods/updraftvault.php:506,
 #: src/methods/updraftvault.php:594
 msgid "Unknown"
 msgstr "Bilinmiyor"
 
-#: src/admin.php:3617
+#: src/admin.php:3638
 msgid "Backup finished"
 msgstr "Yedekleme tamamlandı"
 
-#: src/admin.php:3612
+#: src/admin.php:3633
 msgid "Waiting until scheduled time to retry because of errors"
 msgstr "Hatalar yüzünden belirlenmiş tekrar deneme zamanını bekliyor"
 
-#: src/admin.php:3608
+#: src/admin.php:3629
 msgid "Pruning old backup sets"
 msgstr "Eski yedek setleri siliniyor"
 
-#: src/admin.php:3595
+#: src/admin.php:3616
 msgid "Uploading files to remote storage"
 msgstr "Dosyalar uzak depolama birimine yükleniyor"
 
-#: src/admin.php:3664
+#: src/admin.php:3685
 msgid "Encrypted database"
 msgstr "Veritabanı şifrelendi"
 
-#: src/admin.php:3656
+#: src/admin.php:3677
 msgid "Encrypting database"
 msgstr "Veritabanı şifreleniyor"
 
-#: src/admin.php:3630
+#: src/admin.php:3651
 msgid "Created database backup"
 msgstr "Veritabanı yedeği oluşturuldu"
 
-#: src/admin.php:3643
+#: src/admin.php:3664
 msgid "table: %s"
 msgstr "tablo: %s"
 
-#: src/admin.php:3641
+#: src/admin.php:3662
 msgid "Creating database backup"
 msgstr "Veritabanı yedeği oluşturuluyor"
 
-#: src/admin.php:3586
+#: src/admin.php:3607
 msgid "Created file backup zips"
 msgstr "Yedek zip dosyaları oluşturuldu"
 
-#: src/admin.php:3573
+#: src/admin.php:3594
 msgid "Creating file backup zips"
 msgstr "Yedek zip dosyaları oluşturuluyor"
 
-#: src/admin.php:3568
+#: src/admin.php:3589
 msgid "Backup begun"
 msgstr "Yedekleme başladı"
 
@@ -6931,23 +6940,23 @@ msgstr "Yedekleme başladı"
 msgid "The scheduler is disabled in your WordPress install, via the DISABLE_WP_CRON setting. No backups can run (even &quot;Backup Now&quot;) unless either you have set up a facility to call the scheduler manually, or until it is enabled."
 msgstr "WordPress yüklemenizin planlayıcısı, DISABLE_WP_CRON ayarı ile pasifleştirilmiş. Planlayıcıyı manuel olarak çalıştıran bir aracınız yoksa veya bu ayar aktifleştirilmezse yedeklemeler çalışmayacaktır (&quot;Şimdi Yedekle&quot; bile)."
 
-#: src/restorer.php:1389
+#: src/restorer.php:1392
 msgid "file"
 msgstr "dosya"
 
-#: src/addons/onedrive.php:1243, src/restorer.php:1381
+#: src/addons/onedrive.php:1243, src/restorer.php:1384
 msgid "folder"
 msgstr "klasör"
 
-#: src/restorer.php:1381, src/restorer.php:1389
+#: src/restorer.php:1384, src/restorer.php:1392
 msgid "UpdraftPlus needed to create a %s in your content directory, but failed - please check your file permissions and enable the access (%s)"
 msgstr "UpdraftPlus içerik klasörünüzde %s oluşturmak zorundaydı, ancak başarısız oldu - lütfen dosya izinlerinizi kontrol edin ve erişime izin verin (%s)"
 
-#: src/class-updraftplus.php:3548
+#: src/class-updraftplus.php:3553
 msgid "The backup has not finished; a resumption is scheduled"
 msgstr "Yedekleme henüz bitmedi; yeniden başlama zamanlandı"
 
-#: src/class-updraftplus.php:2279
+#: src/class-updraftplus.php:2283
 msgid "Your website is visited infrequently and UpdraftPlus is not getting the resources it hoped for; please read this page:"
 msgstr "Web sayfanız seyrek ziyaret ediliyor ve UpdraftPlus umduğu kaynaklara ulaşamıyor; lütfen bu sayfayı okuyun:"
 
@@ -6956,7 +6965,7 @@ msgstr "Web sayfanız seyrek ziyaret ediliyor ve UpdraftPlus umduğu kaynaklara 
 msgid "The %s authentication could not go ahead, because something else on your site is breaking it. Try disabling your other plugins and switching to a default theme. (Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins. Turning off any debugging settings may also help)."
 msgstr "%s girişi devam edemiyor, çünkü sitenizdeki başka bir şey buna engel oluyor. Diğer eklentilerinizi etkisizleştirmeyi ve varsayılan bir temaya dönmeyi deneyin. (Özellikle, sayfa başlamadan çıktı gönderen (büyük ihtimalle PHP uyarıları/hataları) gönderen bir bileşen arıyorsunuz. Hata ayıklama ayarlarını kapatmak da faydalı olabilir)."
 
-#: src/admin.php:2910
+#: src/admin.php:2931
 msgid "Your PHP memory limit (set by your web hosting company) is very low. UpdraftPlus attempted to raise it but was unsuccessful. This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary)."
 msgstr "PHP bellek limitiniz (hosting firmanız tarafından ayarlanan) çok düşük. UpdraftPlus bunu yükseltmeye çalıştı ama başarısız oldu. Bu eklenti 64 Mb ve daha küçük bir bellek limitiyle sıkıntı yaşayabilir - özellikle çok büyük dosyalar yüklemişseniz (ancak, bazı siteler 32Mb ile bile başarılı olabilir - deneyimleriniz değişiklik gösterebilir)."
 
@@ -7036,23 +7045,23 @@ msgstr "Daha fazla eklenti"
 msgid "Support"
 msgstr "Destek"
 
-#: src/class-updraftplus.php:5315
+#: src/class-updraftplus.php:5320
 msgid "UpdraftPlus was unable to find the table prefix when scanning the database backup."
 msgstr "UpdraftPlus veritabanı yedeğini tararken veritabanı önekini bulamadı."
 
-#: src/class-updraftplus.php:5307
+#: src/class-updraftplus.php:5312
 msgid "This database backup is missing core WordPress tables: %s"
 msgstr "Bu veritabanında ana Wordpress tabloları eksik: %s"
 
-#: src/class-updraftplus.php:5036
+#: src/class-updraftplus.php:5041
 msgid "You are importing from a newer version of WordPress (%s) into an older one (%s). There are no guarantees that WordPress can handle this."
 msgstr "Yeni bir WordPress versiyonunu (%s) eski versiyonuna (%s) içeri aktarıyorsunuz. WordPress'in bunu kaldıracağının hiç bir garantisi yok."
 
-#: src/class-updraftplus.php:5035, src/class-updraftplus.php:5042
+#: src/class-updraftplus.php:5040, src/class-updraftplus.php:5047
 msgid "%s version: %s"
 msgstr ""
 
-#: src/class-updraftplus.php:4900
+#: src/class-updraftplus.php:4905
 msgid "The database is too small to be a valid WordPress database (size: %s Kb)."
 msgstr "Veritabanı geçerli bir WordPress veritabanı olmak için çok küçük (Boyut: %s Kb)."
 
@@ -7060,7 +7069,7 @@ msgstr "Veritabanı geçerli bir WordPress veritabanı olmak için çok küçük
 msgid "Be safe with an automatic backup"
 msgstr "Otomatik yedekleme ile güvende kalın"
 
-#: src/admin.php:2850
+#: src/admin.php:2871
 msgid "If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
 msgstr "Sayfanın yüklenmesi sona ermesine rağmen bu yazıyı hala okuyabiliyorsanız, sitede JavaScript veya jQuery ile ilgili bir problem var demektir."
 
@@ -7112,7 +7121,7 @@ msgstr "Web sunucunuzdan silin"
 msgid "Examples of S3-compatible storage providers:"
 msgstr "Örnek S3-uyumlu depo sağlayıcılar:"
 
-#: src/admin.php:4443
+#: src/admin.php:4464
 msgid "You appear to be missing one or more archives from this multi-archive set."
 msgstr "Bu çoklu arşiv kümesinden bir veya birkaç arşiv eksik gibi görünüyor."
 
@@ -7174,11 +7183,11 @@ msgstr "Böyle bir yedek mevcut değil"
 msgid "The backup archive for this file could not be found. The remote storage method in use (%s) does not allow us to retrieve files. To perform any restoration using UpdraftPlus, you will need to obtain a copy of this file and place it inside UpdraftPlus's working folder"
 msgstr "Bu dosya için yedek arşivi bulunamadı. Kullanılan uzak depo metodu (%s) dosyaları almamıza izin vermiyor. UpdraftPlus kullanarak geri yükleme yapmak için, bu dosyanın bir kopyasını alıp UpdraftPlus'ın çalışma klasörüne koymanız gerekiyor. "
 
-#: src/restorer.php:743
+#: src/restorer.php:746
 msgid "Moving unpacked backup into place..."
 msgstr "Açılmış yedek yerine taşınıyor..."
 
-#: src/backup.php:3801, src/backup.php:4111
+#: src/backup.php:3805, src/backup.php:4115
 msgid "Failed to open the zip file (%s) - %s"
 msgstr "Zip dosyası (%s) açılamadı - %s"
 
@@ -7203,11 +7212,11 @@ msgstr "S3 (Uyumlu)"
 msgid "File is not locally present - needs retrieving from remote storage"
 msgstr "Dosya lokalde mevcut değil - uzak depodan alınması gerekiyor"
 
-#: src/restorer.php:415
+#: src/restorer.php:418
 msgid "Looking for %s archive: file name: %s"
 msgstr "%s arşivi aranıyor: dosya adı: %s"
 
-#: src/restorer.php:531
+#: src/restorer.php:534
 msgid "Final checks"
 msgstr "Son kontroller"
 
@@ -7219,7 +7228,7 @@ msgstr "Yedekleme sonrası gerek olmayan yedekleme dosyalarını sunucunuzdan si
 msgid "Drop encrypted database files (db.gz.crypt files) here to upload them for decryption"
 msgstr "Şifre çözme amaçlı upload etmek için şifreli veritabanı dosyalarınızı (db.gx.crypt uzantılı dosyalar) buraya bırakın"
 
-#: src/admin.php:4160
+#: src/admin.php:4181
 msgid "Your wp-content directory server path: %s"
 msgstr "Sizin wp-content dizini sunucu yolunuz: %s"
 
@@ -7240,15 +7249,15 @@ msgstr "Dosyalar işleniyor - lütfen bekleyin..."
 msgid "Your WordPress installation has a problem with outputting extra whitespace. This can corrupt backups that you download from here."
 msgstr "Şu anki WordPress sisteminizin ekstra boşluklarla ilgili bir problemi var. Bu durum buradan indireceğiniz yedeklere zarar verebilir. "
 
-#: src/class-updraftplus.php:4914
+#: src/class-updraftplus.php:4919
 msgid "Failed to open database file."
 msgstr "Veritabanı dosyası açılamadı."
 
-#: src/admin.php:5699
+#: src/admin.php:5722
 msgid "Known backups (raw)"
 msgstr "Bilinen yedekler (ham)"
 
-#: src/restorer.php:1660
+#: src/restorer.php:1663
 msgid "Files found:"
 msgstr "Bulunan dosyalar:"
 
@@ -7256,23 +7265,23 @@ msgstr "Bulunan dosyalar:"
 msgid "Restoring table: %s"
 msgstr ""
 
-#: src/restorer.php:2352
+#: src/restorer.php:2355
 msgid "Requested table engine (%s) is not present - changing to MyISAM."
 msgstr "İstenen tablo motoru (%s) mevcut değil - MyISAM'a geçiliyor"
 
-#: src/restorer.php:435
+#: src/restorer.php:438
 msgid "file is size:"
 msgstr "dosya boyutu:"
 
-#: src/addons/googlecloud.php:1067, src/addons/migrator.php:494,
-#: src/addons/migrator.php:497, src/addons/migrator.php:500,
-#: src/admin.php:1305, src/admin.php:2855, src/admin.php:4943,
-#: src/backup.php:4165, src/class-updraftplus.php:5170,
-#: src/class-updraftplus.php:5170, src/updraftplus.php:158
+#: src/addons/googlecloud.php:1067, src/addons/migrator.php:497,
+#: src/addons/migrator.php:500, src/addons/migrator.php:503,
+#: src/admin.php:1305, src/admin.php:2876, src/admin.php:4966,
+#: src/backup.php:4169, src/class-updraftplus.php:5175,
+#: src/class-updraftplus.php:5175, src/updraftplus.php:158
 msgid "Go here for more information."
 msgstr "Daha fazla bilgi için buraya gidin."
 
-#: src/admin.php:4942
+#: src/admin.php:4965
 msgid "Warning: If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
 msgstr ""
 
@@ -7280,7 +7289,7 @@ msgstr ""
 msgid "Some files are still downloading or being processed - please wait."
 msgstr "Bazı dosyalar hala indiriliyor veya işleniyor - lütfen bekleyin."
 
-#: src/class-updraftplus.php:5005, src/class-updraftplus.php:5026
+#: src/class-updraftplus.php:5010, src/class-updraftplus.php:5031
 msgid "This backup set is from a different site (%s) - this is not a restoration, but a migration. You need the Migrator add-on in order to make this work."
 msgstr ""
 
@@ -7322,7 +7331,7 @@ msgstr "%s Hata"
 msgid "%s error - failed to upload file"
 msgstr "%s hata - Dosya upload işlemi başarısız"
 
-#: src/class-updraftplus.php:1458
+#: src/class-updraftplus.php:1462
 msgid "%s error - failed to re-assemble chunks"
 msgstr "%s hata: Yığınları yeniden birleştirme işlemi başarısız"
 
@@ -7333,77 +7342,77 @@ msgstr "%s hata: Yığınları yeniden birleştirme işlemi başarısız"
 msgid "%s authentication failed"
 msgstr "%s kimlik denetimi başarısız"
 
-#: src/addons/googlecloud.php:475, src/addons/migrator.php:589,
+#: src/addons/googlecloud.php:475, src/addons/migrator.php:592,
 #: src/admin.php:2605, src/admin.php:2626, src/admin.php:2634,
-#: src/class-updraftplus.php:1161, src/class-updraftplus.php:1167,
-#: src/class-updraftplus.php:4881, src/class-updraftplus.php:4883,
-#: src/class-updraftplus.php:5061, src/class-updraftplus.php:5068,
-#: src/class-updraftplus.php:5145, src/methods/googledrive.php:534,
+#: src/class-updraftplus.php:1165, src/class-updraftplus.php:1171,
+#: src/class-updraftplus.php:4886, src/class-updraftplus.php:4888,
+#: src/class-updraftplus.php:5066, src/class-updraftplus.php:5073,
+#: src/class-updraftplus.php:5150, src/methods/googledrive.php:534,
 #: src/methods/s3.php:383
 msgid "Error: %s"
 msgstr "Hata: %s"
 
-#: src/admin.php:4078
+#: src/admin.php:4099
 msgid "Backup directory specified exists, but is <b>not</b> writable."
 msgstr "Belirtilen yedek dizini mevcut, ama yazılabilir <b>değil</b>."
 
-#: src/admin.php:4076
+#: src/admin.php:4097
 msgid "Backup directory specified does <b>not</b> exist."
 msgstr "Belirtilen yedek dizini mevcut <b>değil</b>."
 
-#: src/admin.php:3718, src/admin.php:4010
+#: src/admin.php:3739, src/admin.php:4031
 msgid "Warning: %s"
 msgstr "Uyarı: %s"
 
-#: src/backup.php:3830
+#: src/backup.php:3834
 msgid "A very large file was encountered: %s (size: %s Mb)"
 msgstr "Çok büyük boyutlu bir dosya ile karşılaşıldı: %s (boyut: %s Mb)"
 
-#: src/backup.php:3033
+#: src/backup.php:3036
 msgid "%s: unreadable file - could not be backed up"
 msgstr "%s: okunamayan dosya - yedeklenemedi"
 
-#: src/backup.php:2004
+#: src/backup.php:2007
 msgid "Table %s has very many rows (%s) - we hope your web hosting company gives you enough resources to dump out that table in the backup."
 msgstr ""
 
-#: src/backup.php:1958
+#: src/backup.php:1961
 msgid "An error occurred whilst closing the final database file"
 msgstr "En son veritabanı dosyasını kapatırken bir hata oluştu. "
 
-#: src/class-updraftplus.php:3645
+#: src/class-updraftplus.php:3650
 msgid "Warnings encountered:"
 msgstr "Karşılaşılan uyarılar:"
 
-#: src/class-updraftplus.php:3527
+#: src/class-updraftplus.php:3532
 msgid "The backup apparently succeeded (with warnings) and is now complete"
 msgstr "Yedekleme başarılı oldu (uyarılarla) ve tamamlandı."
 
-#: src/class-updraftplus.php:987
+#: src/class-updraftplus.php:991
 msgid "Your free disk space is very low - only %s Mb remain"
 msgstr "Boş disk alanınız çok düşük - sadece %s Mb kalmış."
 
-#: src/addons/migrator.php:597
+#: src/addons/migrator.php:600
 msgid "New site:"
 msgstr "Yeni site:"
 
-#: src/addons/migrator.php:574
+#: src/addons/migrator.php:577
 msgid "Migrated site (from UpdraftPlus)"
 msgstr "Taşınmış site (UpdraftPlus'tan)"
 
-#: src/addons/migrator.php:514
+#: src/addons/migrator.php:517
 msgid "Enter details for where this new site is to live within your multisite install:"
 msgstr "Çoklu-site yükleme işleminde bu yeni sitenin yeri ile ilgili detayları girin:"
 
-#: src/addons/migrator.php:513
+#: src/addons/migrator.php:516
 msgid "Information needed to continue:"
 msgstr "Devam etmek için bilgi gerekiyor:"
 
-#: src/addons/migrator.php:456
+#: src/addons/migrator.php:459
 msgid "Network activating theme:"
 msgstr "Ağ etkinleştiren tema:"
 
-#: src/addons/migrator.php:446
+#: src/addons/migrator.php:449
 msgid "Processed plugin:"
 msgstr "İşlenen eklenti:"
 
@@ -7427,33 +7436,33 @@ msgstr "Lütfen giriş kimlik bilgilerinizi kontrol edin."
 msgid "The error reported by %s was:"
 msgstr "%s tarafından bildirilen hata şu şekildeydi:"
 
-#: src/restorer.php:2147
+#: src/restorer.php:2150
 msgid "Please supply the requested information, and then continue."
 msgstr "Lütfen talep edilen bilgiyi sağlayın ve devam edin."
 
-#: src/class-updraftplus.php:5079, src/restorer.php:2905
+#: src/class-updraftplus.php:5084, src/restorer.php:2908
 msgid "Site information:"
 msgstr "Site bilgisi:"
 
-#: src/restorer.php:2735
+#: src/restorer.php:2738
 msgid "Your database user does not have permission to create tables. We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
 msgstr "Veritabanı kullanıcınızın tablo yaratma yetkisi yok. Basitçe tabloları boşaltarak geriyükleme işlemini deneyeceğiz, aşağıdaki durumlarda bu yöntem işe yarar: a) Aynı veritabanı yapısına sahip bir WordPress versiyonundan geriyükleme yapılıyorsa b) İçeri aktardığınız veritabanı şu anki sitede olmayan bir tablo içermiyorsa"
 
-#: src/admin.php:1044, src/admin.php:2850, src/class-updraftplus.php:5072,
-#: src/restorer.php:3603
+#: src/admin.php:1044, src/admin.php:2871, src/class-updraftplus.php:5077,
+#: src/restorer.php:3614
 msgid "Warning:"
 msgstr "Uyarı:"
 
-#: src/class-updraftplus.php:5061, src/class-updraftplus.php:5064,
-#: src/restorer.php:751
+#: src/class-updraftplus.php:5066, src/class-updraftplus.php:5069,
+#: src/restorer.php:754
 msgid "You are running on WordPress multisite - but your backup is not of a multisite site."
 msgstr "WordPress çoklu-sitesi üzerinde çalışıyorsunuz - ama yedeğiniz çoklu-siteden alınmış değil."
 
-#: src/restorer.php:404
+#: src/restorer.php:407
 msgid "Skipping restoration of WordPress core when importing a single site into a multisite installation. If you had anything necessary in your WordPress directory then you will need to re-add it manually from the zip file."
 msgstr "Tekli siteyi çoklu-site kurulumunun içine aktarırken WordPress çekirdeğinin geriyüklenmesi atlanıyor. Eğer WordPress dizininizde önemli/gerekli şeyler varsa bunları zip dosyasından sizin yeniden eklemeniz gerekecek. "
 
-#: src/addons/azure.php:604, src/admin.php:4252,
+#: src/addons/azure.php:604, src/admin.php:4273,
 #: src/methods/updraftvault.php:343
 msgid "Your web server's PHP installation does not included a <strong>required</strong> (for %s) module (%s). Please contact your web hosting provider's support and ask for them to enable it."
 msgstr "Web sunucunuzun PHP kurulumu <strong>gerekli</strong> (%s için) bir modülü (%s) içermiyor. Lütfen servis sağlayıcınıza ulaşın ve bu modülü aktive etmelerini sağlayın.  "
@@ -7497,7 +7506,7 @@ msgstr ""
 msgid "Also delete from remote storage"
 msgstr "Uzak depodan da sil"
 
-#: src/admin.php:3388
+#: src/admin.php:3409
 msgid "Latest UpdraftPlus.com news:"
 msgstr "UpdraftPlus.com'dan son haberler:"
 
@@ -7514,7 +7523,7 @@ msgstr "Haberler"
 msgid "Backup set not found"
 msgstr "Yedek kümesi bulunamadı"
 
-#: src/backup.php:234
+#: src/backup.php:237
 msgid "%s - could not back this entity up; the corresponding directory does not exist (%s)"
 msgstr "%s - Bu birim yedeklenemedi; ilgili dizin mevcut değil (%s)"
 
@@ -7549,7 +7558,7 @@ msgstr "UpdraftPlus'ın hata ayıklama (debug) modu açıktır. Sadece UpdraftPl
 msgid "Notice"
 msgstr "Duyuru"
 
-#: src/class-updraftplus.php:3627
+#: src/class-updraftplus.php:3632
 msgid "Errors encountered:"
 msgstr "Karşılaşılan hatalar:"
 
@@ -7581,65 +7590,67 @@ msgstr "\"%s\" tablosunda birincil anahtar mevcut değil, %s satırında manuel 
 msgid "rows: %d"
 msgstr "satırlar: %d"
 
-#: src/addons/migrator.php:1317
+#: src/addons/migrator.php:1342
 msgid "Time taken (seconds):"
 msgstr "Süre (saniye):"
 
-#: src/addons/migrator.php:1316, src/admin.php:870
+#: src/addons/migrator.php:1341, src/admin.php:870
 msgid "Errors:"
 msgstr "Hatalar:"
 
-#: src/addons/migrator.php:1315
+#: src/addons/migrator.php:1340
 msgid "SQL update commands run:"
 msgstr "Çalıştırılan SQL güncelleme komutları:"
 
-#: src/addons/migrator.php:1314
+#: src/addons/migrator.php:1339
 msgid "Changes made:"
 msgstr "Yapılan değişiklikler:"
 
-#: src/addons/migrator.php:1313
+#: src/addons/migrator.php:1338
 msgid "Rows examined:"
 msgstr "İncelenen satırlar:"
 
-#: src/addons/migrator.php:1312
+#: src/addons/migrator.php:1337
 msgid "Tables examined:"
 msgstr "Kontrol edilen tablolar:"
 
-#: src/addons/migrator.php:1204
+#: src/addons/migrator.php:1229
 msgid "Could not get list of tables"
 msgstr "Tablo listesi alınamadı"
 
-#: src/addons/migrator.php:1149
+#: src/addons/migrator.php:1174
 msgid "Warning: the database's site URL (%s) is different to what we expected (%s)"
 msgstr "Uyarı: veritabanının site URL'si (%s) beklenenden (%s) farklı"
 
-#: src/addons/migrator.php:1138
+#: src/addons/migrator.php:1163
 msgid "Nothing to do: the site URL is already: %s"
 msgstr "Yapacak bir şey yok: Site URL'si zaten: %s"
 
-#: src/addons/migrator.php:1101, src/addons/migrator.php:1105,
-#: src/addons/migrator.php:1109, src/addons/migrator.php:1114,
-#: src/addons/migrator.php:1118, src/addons/migrator.php:1123
+#: src/addons/migrator.php:1126, src/addons/migrator.php:1130,
+#: src/addons/migrator.php:1134, src/addons/migrator.php:1139,
+#: src/addons/migrator.php:1143, src/addons/migrator.php:1148
 msgid "Error: unexpected empty parameter (%s, %s)"
 msgstr "Hata: Beklenmeyen boş parametre (%s, %s)"
 
-#: src/addons/migrator.php:1061
+#: src/addons/migrator.php:1084
 msgid "Database: search and replace site URL"
 msgstr "Veritabanı: Site URL'sini ara ve değiştir"
 
-#: src/addons/migrator.php:922, src/addons/migrator.php:1298
+#: src/addons/migrator.php:939, src/addons/migrator.php:1323,
+#: src/restorer.php:4148
 msgid "Failed: we did not understand the result returned by the %s operation."
 msgstr "Başarısız: %s işleminden dönen sonuç anlaşılamadı."
 
-#: src/addons/migrator.php:920, src/addons/migrator.php:1296
+#: src/addons/migrator.php:937, src/addons/migrator.php:1321,
+#: src/restorer.php:4146
 msgid "Failed: the %s operation was not able to start."
 msgstr "Başarısız: %s işlemi başlatılamadı."
 
-#: src/addons/migrator.php:566
+#: src/addons/migrator.php:569
 msgid "Search and replace site location in the database (migrate)"
 msgstr "Veritabanında site adresini ara ve değiştir"
 
-#: src/addons/migrator.php:566
+#: src/addons/migrator.php:569
 msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
 msgstr "Veritabanında site adresine verilen tüm referanslar şu anki site URL'si (%s) ile değiştirilecek"
 
@@ -7647,7 +7658,7 @@ msgstr "Veritabanında site adresine verilen tüm referanslar şu anki site URL'
 msgid "Blog uploads"
 msgstr "Blog upload'ları"
 
-#: src/addons/migrator.php:500, src/addons/multisite.php:742
+#: src/addons/migrator.php:503, src/addons/multisite.php:742
 msgid "Must-use plugins"
 msgstr "En popüler eklentiler"
 
@@ -7685,7 +7696,7 @@ msgstr "Dizin adresi"
 
 #: src/addons/lockadmin.php:171, src/addons/moredatabase.php:265,
 #: src/addons/sftp.php:496, src/addons/webdav.php:248, src/admin.php:1032,
-#: src/admin.php:3263, src/methods/openstack2.php:164,
+#: src/admin.php:3284, src/methods/openstack2.php:164,
 #: src/methods/updraftvault.php:410,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:50
 msgid "Password"
@@ -7754,8 +7765,8 @@ msgstr "Başarısız: Bu dizine bir dosya yerleştirmeyi başaramadık - lütfen
 
 #: src/addons/googlecloud.php:809, src/addons/googlecloud.php:843,
 #: src/addons/googlecloud.php:849, src/addons/sftp.php:591,
-#: src/addons/webdav.php:325, src/admin.php:3789, src/admin.php:3825,
-#: src/admin.php:3835, src/methods/addon-base-v2.php:356
+#: src/addons/webdav.php:325, src/admin.php:3810, src/admin.php:3846,
+#: src/admin.php:3856, src/methods/addon-base-v2.php:356
 msgid "Failed"
 msgstr "Başarısız"
 
@@ -7957,7 +7968,7 @@ msgstr "Kullanıcı adı"
 msgid "API key"
 msgstr "API anahtarı"
 
-#: src/addons/migrator.php:338, src/addons/moredatabase.php:113,
+#: src/addons/migrator.php:341, src/addons/moredatabase.php:113,
 #: src/addons/moredatabase.php:115, src/addons/moredatabase.php:117,
 #: src/addons/sftp.php:560, src/addons/sftp.php:564, src/addons/sftp.php:568,
 #: src/addons/webdav.php:316, src/admin.php:927,
@@ -8007,8 +8018,8 @@ msgstr ""
 msgid "Test %s Settings"
 msgstr "%s Ayarlarını Test Edin"
 
-#: src/addons/webdav.php:638, src/class-updraftplus.php:1501,
-#: src/class-updraftplus.php:1545, src/methods/cloudfiles.php:398
+#: src/addons/webdav.php:638, src/class-updraftplus.php:1505,
+#: src/class-updraftplus.php:1549, src/methods/cloudfiles.php:398
 msgid "Error opening local file: Failed to download"
 msgstr " Yerel dosyayı açarken hata: İndirme başarısız"
 
@@ -8017,7 +8028,7 @@ msgstr " Yerel dosyayı açarken hata: İndirme başarısız"
 msgid "%s Error: Failed to upload"
 msgstr "%s Hatası: yüklenemedi"
 
-#: src/class-updraftplus.php:1343
+#: src/class-updraftplus.php:1347
 msgid "%s Error: Failed to open local file"
 msgstr "%s Hata: Yerel dosya açılamadı"
 
@@ -8126,120 +8137,120 @@ msgstr "%s UpdraftPlus eklentisi yüklü değil - %s den yükleyin"
 msgid "You need to re-authenticate with %s, as your existing credentials are not working."
 msgstr "%s ile tekrar giriş yapmalısınız, varolan giriş bilgileriniz çalışmıyor."
 
-#: src/admin.php:3793, src/admin.php:3828, src/admin.php:3832,
+#: src/admin.php:3814, src/admin.php:3849, src/admin.php:3853,
 #: src/includes/class-remote-send.php:441,
-#: src/includes/class-storage-methods-interface.php:323, src/restorer.php:433,
-#: src/restorer.php:3964, src/restorer.php:4084
+#: src/includes/class-storage-methods-interface.php:323, src/restorer.php:436,
+#: src/restorer.php:3975, src/restorer.php:4095
 msgid "OK"
 msgstr "Tamam"
 
-#: src/restorer.php:3958, src/restorer.php:4048
+#: src/restorer.php:3969, src/restorer.php:4059
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr "Tablo öneki değişti: %s tablo alan(lar)ı uygun şekilde değiştiriliyor:"
 
-#: src/includes/class-search-replace.php:496, src/restorer.php:3769
+#: src/includes/class-search-replace.php:496, src/restorer.php:3780
 msgid "the database query being run was:"
 msgstr "çalıştırılan veri tabanı sorgusu şuydu:"
 
-#: src/restorer.php:2431
+#: src/restorer.php:2434
 msgid "will restore as:"
 msgstr "olarak geri yükle:"
 
-#: src/class-updraftplus.php:5050, src/restorer.php:2260,
-#: src/restorer.php:2888, src/restorer.php:3048
+#: src/class-updraftplus.php:5055, src/restorer.php:2263,
+#: src/restorer.php:2891, src/restorer.php:3059
 msgid "Old table prefix:"
 msgstr "Eski tablo öneki:"
 
 #: src/addons/reporting.php:87, src/addons/reporting.php:196,
-#: src/class-updraftplus.php:3701, src/class-updraftplus.php:4972
+#: src/class-updraftplus.php:3706, src/class-updraftplus.php:4977
 msgid "Backup of:"
 msgstr "Yedek:"
 
-#: src/restorer.php:2630
+#: src/restorer.php:2633
 msgid "Failed to open database file"
 msgstr "Veritabanı dosyası açılamadı"
 
-#: src/restorer.php:2609
+#: src/restorer.php:2612
 msgid "Failed to find database file"
 msgstr "Veritabanı dosyası bulunamadı"
 
-#: src/restorer.php:2586
+#: src/restorer.php:2589
 msgid "Warning: PHP safe_mode is active on your server. Timeouts are much more likely. If these happen, then you will need to manually restore the file via phpMyAdmin or another method."
 msgstr "Dikkat: PHP safe_mode sunucunuzda aktif. Zaman aşımı olması muhtemel. Eğer zaman aşımı olursa, dosyayı phpMyAdmin ve ya başka bir metod ile manuel olarak geri yüklemelisiniz."
 
-#: src/restorer.php:1196
+#: src/restorer.php:1199
 msgid "wp-config.php from backup: restoring (as per user's request)"
 msgstr "Yedekten wp-config.php : geri yükleniyor (kullanıcı isteği üzerine)"
 
-#: src/restorer.php:1189
+#: src/restorer.php:1192
 msgid "wp-config.php from backup: will restore as wp-config-backup.php"
 msgstr "Yedekten wp-config.php: wp-config-backup.php olarak geri yüklenecek"
 
-#: src/restorer.php:1065
+#: src/restorer.php:1068
 msgid "Failed to write out the decrypted database to the filesystem"
 msgstr "Çözümlenmiş veritabanını dosya sistemine yazma başarısız."
 
-#: src/restorer.php:1049
+#: src/restorer.php:1052
 msgid "Failed to create a temporary directory"
 msgstr "Geçici dizin oluşturma başarısız"
 
-#: src/restorer.php:750
+#: src/restorer.php:753
 msgid "Failed to delete working directory after restoring."
 msgstr "Geri yükleme sonrasında çalışılan klasörü silme başarısız."
 
-#: src/restorer.php:745
+#: src/restorer.php:748
 msgid "Cleaning up rubbish..."
 msgstr "Çöp kutusu boşaltılıyor..."
 
-#: src/restorer.php:744
+#: src/restorer.php:747
 msgid "Restoring the database (on a large site this can take a long time - if it times out (which can happen if your web hosting company has configured your hosting to limit resources) then you should use a different method, such as phpMyAdmin)..."
 msgstr "Veritabanı geri yükleniyor (büyük bir sitede bu uzun zaman alabilir - eğer zaman aşımına uğrarsa (eğer hosting şirketiniz hosting kaynaklarına limit koyduysa) phpMyAdmin gibi başka bir metod kullanın)"
 
-#: src/restorer.php:741
+#: src/restorer.php:744
 msgid "Database successfully decrypted."
 msgstr "Veritabanı başarıyla çözüldü."
 
-#: src/restorer.php:740
+#: src/restorer.php:743
 msgid "Decrypting database (can take a while)..."
 msgstr "Veritabanı çözülüyor (biraz zaman alabilir)..."
 
-#: src/restorer.php:739
+#: src/restorer.php:742
 msgid "Unpacking backup..."
 msgstr "Yedek çıkartılıyor..."
 
-#: src/restorer.php:738
+#: src/restorer.php:741
 msgid "Copying this entity failed."
 msgstr "Bu nesneyi kopyalama başarısız."
 
-#: src/restorer.php:737
+#: src/restorer.php:740
 msgid "Backup file not available."
 msgstr "Yedek dosyası geçerli değil"
 
-#: src/restorer.php:736
+#: src/restorer.php:739
 msgid "UpdraftPlus is not able to directly restore this kind of entity. It must be restored manually."
 msgstr "UpdraftPlus bu tip dosyaları direkt olarak geri yükleyemiyor. Manuel geri yükleme yapılmalı."
 
-#: src/restorer.php:441, src/restorer.php:442
+#: src/restorer.php:444, src/restorer.php:445
 msgid "Could not read one of the files for restoration"
 msgstr ""
 
-#: src/restorer.php:620
+#: src/restorer.php:623
 msgid "Error message"
 msgstr "Hata mesajı"
 
-#: src/restorer.php:438
+#: src/restorer.php:441
 msgid "The backup records do not contain information about the proper size of this file."
 msgstr "Yedek kayıtları bu dosyanın tam boyutu ile ilgili bilgi içermiyor."
 
-#: src/restorer.php:430
+#: src/restorer.php:433
 msgid "Archive is expected to be size:"
 msgstr "Beklenen arşiv boyutu:"
 
-#: src/admin.php:5097
+#: src/admin.php:5120
 msgid "If making a request for support, please include this information:"
 msgstr "Eğer destek talebinde bulunacaksanız, lütfen şu bilgiyi ekleyin:"
 
-#: src/admin.php:5097
+#: src/admin.php:5120
 msgid "ABORT: Could not find the information on which entities to restore."
 msgstr "İPTAL: Hangi nesnelerin geri yükleneceği ile ilgili bilgi bulunamadı."
 
@@ -8247,27 +8258,27 @@ msgstr "İPTAL: Hangi nesnelerin geri yükleneceği ile ilgili bilgi bulunamadı
 msgid "UpdraftPlus Restoration: Progress"
 msgstr "UpdraftPlus Geri Yükleme: İlerleme"
 
-#: src/admin.php:5060
+#: src/admin.php:5083
 msgid "This backup does not exist in the backup history - restoration aborted. Timestamp:"
 msgstr "Bu yedek, yedek geçmişinde bulunmuyor - geri yükleme iptal edildi. Zaman damgası:"
 
-#: src/admin.php:4495
+#: src/admin.php:4516
 msgid "After pressing this button, you will be given the option to choose which components you wish to restore"
 msgstr "Bu butona bastıktan sonra, hangi bileşenleri geri yükleyeceğinizi seçmek için seçenekler sunulacak"
 
-#: src/admin.php:4579
+#: src/admin.php:4600
 msgid "Delete this backup set"
 msgstr "Bu yedek setini sil"
 
-#: src/admin.php:4264
+#: src/admin.php:4285
 msgid "Good news: Your site's communications with %s can be encrypted. If you see any errors to do with encryption, then look in the 'Expert Settings' for more help."
 msgstr "İyi haber: Sitenizin %s ile iletişimi kriptolanabilir. Kriptolama ile ilgili hatalarla karşılaşırsanız, daha fazla yardım için 'Uzman Ayarları' bölümüne bakın."
 
-#: src/admin.php:4261
+#: src/admin.php:4282
 msgid "Your web server's PHP/Curl installation does not support https access. We cannot access %s without this support. Please contact your web hosting provider's support. %s <strong>requires</strong> Curl+https. Please do not file any support requests; there is no alternative."
 msgstr "Web sunucunuzun PHP/Curl yüklemesi https erişimini desteklemiyor. Bu destek olmadan %s erişimi kurulamaz. Lütfen hosting firmanızın destek talebinde bulunun. %s için Curl+https <strong>zorunludur</strong>. Lütfen başka bir yöntem denemeyin; başka bir alternatif yok."
 
-#: src/admin.php:4259
+#: src/admin.php:4280
 msgid "Your web server's PHP/Curl installation does not support https access. Communications with %s will be unencrypted. Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on)."
 msgstr "Web sunucunuzun PHP/Curl yüklemesi https erişimini desteklemiyor. %s ile iletişimler kriptosuz olacak. Kriptolama (eklenti ile) için barındırma firmanızdan Curl/SSL yüklemesini isteyin."
 
@@ -8308,19 +8319,19 @@ msgstr "Varsayılan olarak UpdraftPlus uzak sitelerin kimliklerini doğrulamak (
 msgid "Use the server's SSL certificates"
 msgstr "Sunucunun SSL sertifkalarını kullan"
 
-#: src/admin.php:4080
+#: src/admin.php:4101
 msgid "If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process."
 msgstr "Eğer başarısız olursa, sunucunuzdaki izinleri kontrol edin veya web sunucu işleminiz tarafından yazılabilir olan başka bir klasör olarak değiştirin."
 
-#: src/admin.php:4080
+#: src/admin.php:4101
 msgid "or, to reset this option"
 msgstr "ya da bu seçeneği sıfırla"
 
-#: src/admin.php:4080
+#: src/admin.php:4101
 msgid "Follow this link to attempt to create the directory and set the permissions"
 msgstr ""
 
-#: src/admin.php:4072
+#: src/admin.php:4093
 msgid "Backup directory specified is writable, which is good."
 msgstr "Yedekleme dizini yazılabilir olarak belirlenmiş, bu güzel :)"
 
@@ -8362,7 +8373,7 @@ msgid "Cancel"
 msgstr "İptal"
 
 #: src/addons/incremental.php:330, src/addons/incremental.php:338,
-#: src/addons/reporting.php:260, src/admin.php:4345
+#: src/addons/reporting.php:260, src/admin.php:4366
 msgid "None"
 msgstr "Hiçbiri"
 
@@ -8378,7 +8389,7 @@ msgstr "Veritabanı dosyasını manuel çözümle"
 msgid "Database encryption phrase"
 msgstr "Veritabanı şifreleme anahtarı"
 
-#: src/admin.php:3253, src/methods/updraftvault.php:409,
+#: src/admin.php:3274, src/methods/updraftvault.php:409,
 #: src/templates/wp-admin/settings/form-contents.php:256,
 #: src/templates/wp-admin/settings/updraftcentral-connect.php:44
 msgid "Email"
@@ -8392,7 +8403,7 @@ msgstr "Yukarıdaki klasörler herşeydir, WordPress.org'dan taze olarak indireb
 msgid "Exclude these:"
 msgstr "Şunları hariç tut:"
 
-#: src/admin.php:4160
+#: src/admin.php:4181
 msgid "Any other directories found inside wp-content"
 msgstr "wp-content klasörünün içinde bulunan diğer tüm klasörler"
 
@@ -8413,22 +8424,22 @@ msgid "Database backup interval"
 msgstr ""
 
 #: src/addons/incremental.php:334, src/addons/incremental.php:347,
-#: src/admin.php:4048, src/admin.php:4061
+#: src/admin.php:4069, src/admin.php:4082
 msgid "Monthly"
 msgstr "Aylık"
 
 #: src/addons/incremental.php:333, src/addons/incremental.php:346,
-#: src/admin.php:4060
+#: src/admin.php:4081
 msgid "Fortnightly"
 msgstr "İki haftada bir"
 
 #: src/addons/incremental.php:332, src/addons/incremental.php:345,
-#: src/admin.php:4059
+#: src/admin.php:4080
 msgid "Weekly"
 msgstr "Haftalık"
 
 #: src/addons/incremental.php:331, src/addons/incremental.php:344,
-#: src/admin.php:4058
+#: src/admin.php:4079
 msgid "Daily"
 msgstr "Günlük"
 
@@ -8436,30 +8447,30 @@ msgstr "Günlük"
 msgid "Files backup interval"
 msgstr ""
 
-#: src/admin.php:909, src/admin.php:4024
+#: src/admin.php:909, src/admin.php:4045
 msgid "Download log file"
 msgstr "Log kaydını indir"
 
-#: src/admin.php:3896
+#: src/admin.php:3917
 msgid "The folder exists, but your webserver does not have permission to write to it."
 msgstr "Klasör var fakat webserverınız klasörü yazmak için gerekli izne sahip değil."
 
-#: src/admin.php:3891
+#: src/admin.php:3912
 msgid "The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it. You should check with your hosting provider that this will not cause any problems"
 msgstr "Klasör oluşturuldu ancak yazılabilir olması için izin dosya izinlerini 777 (world-writable) olarak değiştirmeliyiz. Bir sorun oluşmaması için hosting sağlayıcınızla kontrol etmelisiniz."
 
-#: src/admin.php:3877
+#: src/admin.php:3898
 msgid "The request to the filesystem to create the directory failed."
 msgstr "Dosya sistemine klasör oluşturma talebi başarısız oldu."
 
-#: src/admin.php:900, src/admin.php:3786, src/admin.php:3820,
-#: src/admin.php:4579, src/includes/class-remote-send.php:692,
+#: src/admin.php:900, src/admin.php:3807, src/admin.php:3841,
+#: src/admin.php:4600, src/includes/class-remote-send.php:692,
 #: src/templates/wp-admin/settings/existing-backups-table.php:167,
 #: src/templates/wp-admin/settings/file-backup-exclude.php:11
 msgid "Delete"
 msgstr "Sil"
 
-#: src/admin.php:3738
+#: src/admin.php:3759
 msgid "show log"
 msgstr "log kaydını göster"
 
@@ -8524,7 +8535,7 @@ msgstr "Hayır"
 msgid "Yes"
 msgstr "Evet"
 
-#: src/admin.php:5920, src/admin.php:5924,
+#: src/admin.php:5943, src/admin.php:5947,
 #: src/templates/wp-admin/advanced/site-info.php:58,
 #: src/templates/wp-admin/advanced/site-info.php:64,
 #: src/templates/wp-admin/advanced/site-info.php:72,
@@ -8556,7 +8567,7 @@ msgstr "Multisite"
 msgid "Do read this helpful article of useful things to know before restoring."
 msgstr "Geri yükleme yapmadan önce faydalı bilgiler içeren bu yardımcı makaleyi okuyun."
 
-#: src/class-updraftplus.php:5008
+#: src/class-updraftplus.php:5013
 msgid "You can search and replace your database (for migrating a website to a new location/URL) with the Migrator add-on - follow this link for more information"
 msgstr "Migrator eklentisiyle veritabanızda bul ve değiştir (sitenizi yeni bir URL/lokasyona taşımak için) yapabilirsiniz - daha fazla bilgi için bu linki takip edin"
 
@@ -8598,8 +8609,8 @@ msgid "Download error: the server sent us a response which we did not understand
 msgstr "İndirme hatası: sunucu bize anlamadığımız bir yanıt verdi."
 
 #: src/addons/backblaze.php:205, src/addons/backblaze.php:230,
-#: src/addons/cloudfiles-enhanced.php:123, src/addons/migrator.php:907,
-#: src/addons/migrator.php:1204, src/addons/migrator.php:1282,
+#: src/addons/cloudfiles-enhanced.php:123, src/addons/migrator.php:924,
+#: src/addons/migrator.php:1229, src/addons/migrator.php:1307,
 #: src/addons/s3-enhanced.php:161, src/addons/s3-enhanced.php:166,
 #: src/addons/s3-enhanced.php:168, src/addons/sftp.php:962,
 #: src/addons/webdav.php:258, src/admin.php:91, src/admin.php:873,
@@ -8616,7 +8627,8 @@ msgstr "İndirme hatası: sunucu bize anlamadığımız bir yanıt verdi."
 #: src/includes/class-search-replace.php:326,
 #: src/includes/class-search-replace.php:496, src/methods/remotesend.php:74,
 #: src/methods/remotesend.php:252, src/methods/updraftvault.php:592,
-#: src/restorer.php:435, src/restorer.php:463, src/restorer.php:2152
+#: src/restorer.php:438, src/restorer.php:466, src/restorer.php:2155,
+#: src/restorer.php:4135
 msgid "Error:"
 msgstr "Hata:"
 
@@ -8670,7 +8682,7 @@ msgstr "Opera Web tarayıcısı"
 msgid "More tasks:"
 msgstr "Başka görevler:"
 
-#: src/admin.php:3415
+#: src/admin.php:3436
 msgid "Download most recently modified log file"
 msgstr "En son değiştirilen günlük dosyası indir"
 
@@ -8679,13 +8691,13 @@ msgid "(Nothing yet logged)"
 msgstr "(Henüz giriş yapılmadı)"
 
 #: src/addons/autobackup.php:368, src/addons/autobackup.php:463,
-#: src/admin.php:3371, src/admin.php:3377,
+#: src/admin.php:3392, src/admin.php:3398,
 #: src/templates/wp-admin/settings/take-backup.php:72
 msgid "Last log message"
 msgstr "Son log mesajı"
 
-#: src/addons/migrator.php:272, src/admin.php:701, src/admin.php:908,
-#: src/admin.php:4495
+#: src/addons/migrator.php:275, src/admin.php:701, src/admin.php:908,
+#: src/admin.php:4516
 msgid "Restore"
 msgstr "Geri yükle"
 
@@ -8698,18 +8710,18 @@ msgid "Time now"
 msgstr "Şu anki saat"
 
 #: src/addons/moredatabase.php:266, src/addons/reporting.php:275,
-#: src/addons/wp-cli.php:428, src/admin.php:394, src/admin.php:4320,
-#: src/admin.php:4373, src/admin.php:4961,
+#: src/addons/wp-cli.php:428, src/admin.php:394, src/admin.php:4341,
+#: src/admin.php:4394, src/admin.php:4984,
 #: src/includes/class-remote-send.php:445,
 #: src/includes/class-wpadmin-commands.php:154,
-#: src/includes/class-wpadmin-commands.php:612, src/restorer.php:573,
+#: src/includes/class-wpadmin-commands.php:612, src/restorer.php:576,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:81,
 #: src/templates/wp-admin/settings/delete-and-restore-modals.php:82,
 #: src/templates/wp-admin/settings/take-backup.php:34
 msgid "Database"
 msgstr "Veritabanı"
 
-#: src/admin.php:384, src/admin.php:5706,
+#: src/admin.php:384, src/admin.php:5729,
 #: src/templates/wp-admin/settings/take-backup.php:24
 msgid "Files"
 msgstr "Dosyalar"
@@ -8735,15 +8747,15 @@ msgstr "Bu yönetici arayüzü yoğun bir şekilde JavaScript kullanmaktadır. W
 msgid "JavaScript warning"
 msgstr "JavaScript uyarısı"
 
-#: src/admin.php:884, src/admin.php:3464
+#: src/admin.php:884, src/admin.php:3485
 msgid "Delete Old Directories"
 msgstr "Eski Dizinleri Sil"
 
-#: src/admin.php:2910
+#: src/admin.php:2931
 msgid "Current limit is:"
 msgstr "Geçerli limit:"
 
-#: src/admin.php:2872
+#: src/admin.php:2893
 msgid "Your backup has been restored."
 msgstr "Yedeğiniz geri yüklendi."
 
@@ -8755,36 +8767,36 @@ msgstr "Versiyon"
 msgid "Lead developer's homepage"
 msgstr "Öncü geliştiricinin web sayfası"
 
-#: src/admin.php:5600
+#: src/admin.php:5623
 msgid "Your settings have been wiped."
 msgstr "Ayarlarınız temizlendi."
 
-#: src/admin.php:2836
+#: src/admin.php:2850
 msgid "Backup directory successfully created."
 msgstr "Yedekleme dizini başarılı bir şekilde yaratıldı."
 
-#: src/admin.php:2829
+#: src/admin.php:2843
 msgid "Backup directory could not be created"
 msgstr "Yedekleme dizini yaratılamadı"
 
-#: src/admin.php:3754
+#: src/admin.php:3775
 msgid "Old directory removal failed for some reason. You may want to do this manually."
 msgstr "Eski dizinlerin kaldırılması işlemi başarısız. Bu işlemi manuel olarak yapmanız gerekebilir."
 
-#: src/admin.php:3752
+#: src/admin.php:3773
 msgid "Old directories successfully removed."
 msgstr "Eski dizinler başarılı bir şekilde kaldırıldı."
 
-#: src/admin.php:3749, src/admin.php:3749
+#: src/admin.php:3770, src/admin.php:3770
 msgid "Remove old directories"
 msgstr "Eski dizinleri kaldır"
 
-#: src/addons/migrator.php:341, src/addons/migrator.php:357
+#: src/addons/migrator.php:344, src/addons/migrator.php:360
 msgid "Return to UpdraftPlus Configuration"
 msgstr "UpdraftPlus Yapılandırmasına Geri Dön"
 
-#: src/admin.php:877, src/admin.php:2838, src/admin.php:3756,
-#: src/admin.php:4887, src/admin.php:4899, src/admin.php:4910,
+#: src/admin.php:877, src/admin.php:2852, src/admin.php:3777,
+#: src/admin.php:4910, src/admin.php:4922, src/admin.php:4933,
 #: src/templates/wp-admin/settings/existing-backups-table.php:19,
 #: src/templates/wp-admin/settings/existing-backups-table.php:142
 msgid "Actions"
@@ -8815,13 +8827,13 @@ msgid "Download failed"
 msgstr "İndirme işlemi başarısız"
 
 #: src/addons/webdav.php:584, src/addons/wp-cli.php:497, src/admin.php:874,
-#: src/class-updraftplus.php:1501, src/class-updraftplus.php:1545,
+#: src/class-updraftplus.php:1505, src/class-updraftplus.php:1549,
 #: src/includes/class-filesystem-functions.php:437,
 #: src/includes/class-storage-methods-interface.php:332,
 #: src/methods/addon-base-v2.php:93, src/methods/addon-base-v2.php:98,
 #: src/methods/addon-base-v2.php:251, src/methods/addon-base-v2.php:271,
-#: src/methods/googledrive.php:1343, src/restorer.php:3960,
-#: src/restorer.php:3985, src/restorer.php:4081, src/udaddons/options.php:236,
+#: src/methods/googledrive.php:1343, src/restorer.php:3971,
+#: src/restorer.php:3996, src/restorer.php:4092, src/udaddons/options.php:236,
 #: src/updraftplus.php:158
 msgid "Error"
 msgstr "Hata"
@@ -8858,11 +8870,11 @@ msgstr "UpdraftPlus %s öncesi WordPress versiyonlarını resmi olarak desteklem
 msgid "You have less than %s of free disk space on the disk which UpdraftPlus is configured to use to create backups. UpdraftPlus could well run out of space. Contact your the operator of your server (e.g. your web hosting company) to resolve this issue."
 msgstr "UpdraftPlus yedeklerini oluşturmak için kullanmak üzere yapılandırılmış diskte %s az disk alanı var. UpdraftPlus iyi çalışmayabilir. Bu sorunu çözmek için sunucu yetkilisine (örn. web hosting şirketi) başvurun."
 
-#: src/addons/azure.php:604, src/addons/migrator.php:961, src/admin.php:1300,
+#: src/addons/azure.php:604, src/addons/migrator.php:978, src/admin.php:1300,
 #: src/admin.php:1305, src/admin.php:1311, src/admin.php:1315,
-#: src/admin.php:1319, src/admin.php:1328, src/admin.php:4252,
-#: src/admin.php:4259, src/admin.php:4261, src/admin.php:5890,
-#: src/admin.php:6168, src/methods/cloudfiles-new.php:96,
+#: src/admin.php:1319, src/admin.php:1328, src/admin.php:4273,
+#: src/admin.php:4280, src/admin.php:4282, src/admin.php:5913,
+#: src/admin.php:6191, src/methods/cloudfiles-new.php:96,
 #: src/methods/cloudfiles.php:455, src/methods/ftp.php:344,
 #: src/methods/openstack-base.php:576, src/methods/s3.php:892,
 #: src/methods/s3.php:896, src/methods/updraftvault.php:343,
@@ -8872,19 +8884,19 @@ msgstr "UpdraftPlus yedeklerini oluşturmak için kullanmak üzere yapılandır�
 msgid "Warning"
 msgstr "Uyarı"
 
-#: src/admin.php:717, src/admin.php:1222, src/admin.php:3072
+#: src/admin.php:717, src/admin.php:1222, src/admin.php:3093
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: src/backup.php:307
+#: src/backup.php:310
 msgid "Could not create %s zip. Consult the log file for more information."
 msgstr "%s zip dosyası yaratılamadı. Daha fazla bilgi için lütfen logunuzu inceleyin."
 
-#: src/backup.php:2915
+#: src/backup.php:2918
 msgid "Infinite recursion: consult your log for more information"
 msgstr "Sonsuz döngü: Daha fazla bilgi için lütfen logunuzu inceleyin"
 
-#: src/addons/azure.php:267, src/class-updraftplus.php:4668,
+#: src/addons/azure.php:267, src/class-updraftplus.php:4673,
 #: src/methods/googledrive.php:1343, src/methods/s3.php:383
 msgid "File not found"
 msgstr "Dosya bulunamadı"
@@ -8893,41 +8905,41 @@ msgstr "Dosya bulunamadı"
 msgid "The decryption key used:"
 msgstr "Kod çözme anahtarı kullanıldı:"
 
-#: src/class-updraftplus.php:4893,
-#: src/includes/class-updraftplus-encryption.php:354, src/restorer.php:1070
+#: src/class-updraftplus.php:4898,
+#: src/includes/class-updraftplus-encryption.php:354, src/restorer.php:1073
 msgid "Decryption failed. The most likely cause is that you used the wrong key."
 msgstr "Kod çözme başarısız. Büyük olasılıkla hatalı anahtar kullandınız."
 
-#: src/class-updraftplus.php:4881,
-#: src/includes/class-updraftplus-encryption.php:336, src/restorer.php:1057
+#: src/class-updraftplus.php:4886,
+#: src/includes/class-updraftplus-encryption.php:336, src/restorer.php:1060
 msgid "Decryption failed. The database file is encrypted, but you have no encryption key entered."
 msgstr "Şifre çözme başarısız. Veritabanı dosyası şifrelenmiş, fakat şifreleme anahtarını girmemişsiniz."
 
-#: src/backup.php:2798
+#: src/backup.php:2801
 msgid "Could not open the backup file for writing"
 msgstr "Yedekleme dosyası yazmak için açılamadı."
 
-#: src/class-updraftplus.php:4383
+#: src/class-updraftplus.php:4388
 msgid "Could not save backup history because we have no backup array. Backup probably failed."
 msgstr "Yedekleme tarihçesi kaydedilemedi çünkü yedekleme dizisi mevcut değil. Yedekleme büyük ihtimalle başarısız oldu."
 
-#: src/class-updraftplus.php:4367
+#: src/class-updraftplus.php:4372
 msgid "Could not read the directory"
 msgstr "Dizin okunamadı"
 
-#: src/admin.php:2568, src/backup.php:1259
+#: src/admin.php:2568, src/backup.php:1262
 msgid "Backup directory (%s) is not writable, or does not exist."
 msgstr "Yedekleme dizini (%s) yazılabilir değil, veya mevcut değil."
 
-#: src/class-updraftplus.php:3702
+#: src/class-updraftplus.php:3707
 msgid "WordPress backup is complete"
 msgstr "WordPress yedeklemesi tamamlandı."
 
-#: src/class-updraftplus.php:3544
+#: src/class-updraftplus.php:3549
 msgid "The backup attempt has finished, apparently unsuccessfully"
 msgstr "Yedekleme girişimi başarısız oldu."
 
-#: src/class-updraftplus.php:3521
+#: src/class-updraftplus.php:3526
 msgid "The backup apparently succeeded and is now complete"
 msgstr "Yedekleme başarılı bir şekilde tamamlandı."
 
@@ -8935,37 +8947,37 @@ msgstr "Yedekleme başarılı bir şekilde tamamlandı."
 msgid "Encryption error occurred when encrypting database. Encryption aborted."
 msgstr "Veritabanını şifrelerken hata oluştu. Şifreleme işlemi iptal edildi. "
 
-#: src/class-updraftplus.php:3167
+#: src/class-updraftplus.php:3172
 msgid "Could not create files in the backup directory. Backup aborted - check your UpdraftPlus settings."
 msgstr "Yedekleme dizininde dosyalar yaratılamadı. Yedekleme işlemi iptal edildi - UpdraftPlus ayarlarınızı kontrol edin."
 
-#: src/class-updraftplus.php:2037
+#: src/class-updraftplus.php:2041
 msgid "Others"
 msgstr "Diğer"
 
-#: src/addons/multisite.php:504, src/class-updraftplus.php:2022
+#: src/addons/multisite.php:504, src/class-updraftplus.php:2026
 msgid "Uploads"
 msgstr "Upload'lar"
 
-#: src/class-updraftplus.php:2021
+#: src/class-updraftplus.php:2025
 msgid "Themes"
 msgstr "Temalar"
 
-#: src/class-updraftplus.php:2020
+#: src/class-updraftplus.php:2024
 msgid "Plugins"
 msgstr "Eklentiler"
 
-#: src/class-updraftplus.php:685
+#: src/class-updraftplus.php:689
 msgid "No log files were found."
 msgstr "Log dosyası bulunamadı."
 
-#: src/admin.php:2430, src/admin.php:2434, src/class-updraftplus.php:680
+#: src/admin.php:2430, src/admin.php:2434, src/class-updraftplus.php:684
 msgid "The log file could not be read."
 msgstr "Log dosyası okunamadı."
 
 #: src/admin.php:1348, src/admin.php:1369, src/admin.php:1407,
-#: src/class-updraftplus.php:613, src/class-updraftplus.php:680,
-#: src/class-updraftplus.php:685, src/class-updraftplus.php:690
+#: src/class-updraftplus.php:617, src/class-updraftplus.php:684,
+#: src/class-updraftplus.php:689, src/class-updraftplus.php:694
 msgid "UpdraftPlus notice:"
 msgstr "UpdraftPlus bildirisi:"
 
