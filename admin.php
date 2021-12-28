@@ -4980,11 +4980,12 @@ ENDHERE;
 		echo '	<ul class="updraft_restore_components_list">';
 		echo '		<li data-component="verifying" class="active"><span class="updraft_component--description">'.__('Verifying', 'updraftplus').'</span><span class="updraft_component--progress"></span></li>';
 		foreach ($restore_components as $restore_component) {
-			if (!isset($backupable_entities[$restore_component])) {
-				die('Abort: invalid data');
-			}
 			// Set Database description
 			if ('db' == $restore_component && !isset($backupable_entities[$restore_component]['description'])) $backupable_entities[$restore_component]['description'] = __('Database', 'updraftplus');
+			if (!isset($backupable_entities[$restore_component])) {
+				echo '<pre>'.$restore_component.':'.htmlspecialchars(print_r($backupable_entities, true)).'</pre>';
+				die('Abort: invalid data');
+			}
 			echo '		<li data-component="'.esc_attr($restore_component).'"><span class="updraft_component--description">'.(isset($backupable_entities[$restore_component]['description']) ? htmlspecialchars($backupable_entities[$restore_component]['description']) : htmlspecialchars($restore_component)).'</span><span class="updraft_component--progress"></span></li>';
 		}
 		echo '		<li data-component="cleaning"><span class="updraft_component--description">'.__('Cleaning', 'updraftplus').'</span><span class="updraft_component--progress"></span></li>';
