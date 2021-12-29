@@ -4983,7 +4983,6 @@ ENDHERE;
 			// Set Database description
 			if ('db' == $restore_component && !isset($backupable_entities[$restore_component]['description'])) $backupable_entities[$restore_component]['description'] = __('Database', 'updraftplus');
 			if (!isset($backupable_entities[$restore_component])) {
-				echo '<pre>'.$restore_component.':'.htmlspecialchars(print_r($backupable_entities, true)).'</pre>';
 				die('Abort: invalid data');
 			}
 			echo '		<li data-component="'.esc_attr($restore_component).'"><span class="updraft_component--description">'.(isset($backupable_entities[$restore_component]['description']) ? htmlspecialchars($backupable_entities[$restore_component]['description']) : htmlspecialchars($restore_component)).'</span><span class="updraft_component--progress"></span></li>';
