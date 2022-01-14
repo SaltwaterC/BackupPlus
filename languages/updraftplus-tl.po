@@ -112,7 +112,7 @@ msgstr ""
 msgid "UpdraftClone image:"
 msgstr ""
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "WordPress Multisite is supported, with extra features, by UpdraftPlus Premium."
 msgstr ""
 
@@ -2555,7 +2555,7 @@ msgstr ""
 msgid "authentication error"
 msgstr ""
 
-#: src/addons/multisite.php:44, src/options.php:48
+#: src/addons/multisite.php:49, src/options.php:48
 msgid "(Nothing has been logged yet)"
 msgstr ""
 
@@ -3893,19 +3893,19 @@ msgstr "Alisin"
 msgid "Please fill in the required information."
 msgstr ""
 
-#: src/addons/multisite.php:669
+#: src/addons/multisite.php:687
 msgid "Read more..."
 msgstr ""
 
-#: src/addons/multisite.php:660
+#: src/addons/multisite.php:678
 msgid "may include some site-wide data"
 msgstr ""
 
-#: src/addons/multisite.php:655
+#: src/addons/multisite.php:673
 msgid "All sites"
 msgstr ""
 
-#: src/addons/multisite.php:651
+#: src/addons/multisite.php:669
 msgid "Which site to restore"
 msgstr ""
 
@@ -6529,19 +6529,19 @@ msgstr "File (database backup ay hindi nakumpleto)"
 msgid "Files and database"
 msgstr "Mga File at database"
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "(This applies to all WordPress backup plugins unless they have been explicitly coded for multisite compatibility)."
 msgstr "(Ito ay angkop sa lahat ng WordPress backup plugin maliban kung ang mga ito ay tahasang naka-code para sa multisite compatibility)."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "Without upgrading, UpdraftPlus allows <strong>every</strong> blog admin who can modify plugin settings to backup (and hence access the data, including passwords, from) and restore (including with customized modifications, e.g. changed passwords) <strong>the entire network</strong>."
 msgstr ""
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "This is a WordPress multi-site (a.k.a. network) installation."
 msgstr "Ito ay isang WordPress multi-site (aka network) pag-install."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "UpdraftPlus warning:"
 msgstr "UpdraftPlus warning:"
 
@@ -7654,15 +7654,15 @@ msgstr "Hanapin at palitan ang lokasyon ng site sa database (migrate)"
 msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
 msgstr "Ang lahat ng mga sanggunian sa lokasyon ng site sa database ay mapapalitan ng iyong kasalukuyang URL ng site, kung saan ay:%s"
 
-#: src/addons/multisite.php:749
+#: src/addons/multisite.php:767
 msgid "Blog uploads"
 msgstr "upload blog"
 
-#: src/addons/migrator.php:503, src/addons/multisite.php:742
+#: src/addons/migrator.php:503, src/addons/multisite.php:760
 msgid "Must-use plugins"
 msgstr "Dapat gamitin ng mga plugin"
 
-#: src/addons/multisite.php:207
+#: src/addons/multisite.php:225
 msgid "Multisite Install"
 msgstr "Multisite I-install"
 
@@ -8711,7 +8711,7 @@ msgstr "Time now"
 
 #: src/addons/moredatabase.php:266, src/addons/reporting.php:275,
 #: src/addons/wp-cli.php:428, src/admin.php:394, src/admin.php:4341,
-#: src/admin.php:4394, src/admin.php:4987,
+#: src/admin.php:4394, src/admin.php:4984,
 #: src/includes/class-remote-send.php:445,
 #: src/includes/class-wpadmin-commands.php:154,
 #: src/includes/class-wpadmin-commands.php:612, src/restorer.php:576,
@@ -8955,7 +8955,7 @@ msgstr "Hindi makalikha ng mga file sa backup na direktoryo. Backup iniurong - s
 msgid "Others"
 msgstr "Others"
 
-#: src/addons/multisite.php:504, src/class-updraftplus.php:2026
+#: src/addons/multisite.php:522, src/class-updraftplus.php:2026
 msgid "Uploads"
 msgstr "Uploads"
 
@@ -8981,7 +8981,7 @@ msgstr "Ang log file ay hindi mabasa."
 msgid "UpdraftPlus notice:"
 msgstr "UpdraftPlus notice:"
 
-#: src/addons/multisite.php:94, src/addons/multisite.php:786,
-#: src/options.php:84
+#: src/addons/multisite.php:112, src/addons/multisite.php:804,
+#: src/options.php:92
 msgid "UpdraftPlus Backups"
 msgstr "UpdraftPlus Backups"

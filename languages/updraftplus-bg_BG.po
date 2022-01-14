@@ -112,7 +112,7 @@ msgstr ""
 msgid "UpdraftClone image:"
 msgstr ""
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "WordPress Multisite is supported, with extra features, by UpdraftPlus Premium."
 msgstr ""
 
@@ -2555,7 +2555,7 @@ msgstr "Метод за отдалечено съхранение и идент�
 msgid "authentication error"
 msgstr "грешка при удостоверяване"
 
-#: src/addons/multisite.php:44, src/options.php:48
+#: src/addons/multisite.php:49, src/options.php:48
 msgid "(Nothing has been logged yet)"
 msgstr "(Нищо не е записано още)"
 
@@ -3893,19 +3893,19 @@ msgstr "Отхвърли"
 msgid "Please fill in the required information."
 msgstr "Моля, попълнете необходимата информация."
 
-#: src/addons/multisite.php:669
+#: src/addons/multisite.php:687
 msgid "Read more..."
 msgstr "Прочетете повече..."
 
-#: src/addons/multisite.php:660
+#: src/addons/multisite.php:678
 msgid "may include some site-wide data"
 msgstr "може да включва някои данни за целия сайт"
 
-#: src/addons/multisite.php:655
+#: src/addons/multisite.php:673
 msgid "All sites"
 msgstr "Всички сайтове"
 
-#: src/addons/multisite.php:651
+#: src/addons/multisite.php:669
 msgid "Which site to restore"
 msgstr "Кой сайт да се възстанови"
 
@@ -6529,19 +6529,19 @@ msgstr "Файлове (архивирането на базата данни н
 msgid "Files and database"
 msgstr "Файлове и база данни"
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "(This applies to all WordPress backup plugins unless they have been explicitly coded for multisite compatibility)."
 msgstr "(Това важи за всички WordPress резервни плъгини, освен ако те са изрично кодирани за многостранна съвместимост)."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "Without upgrading, UpdraftPlus allows <strong>every</strong> blog admin who can modify plugin settings to backup (and hence access the data, including passwords, from) and restore (including with customized modifications, e.g. changed passwords) <strong>the entire network</strong>."
 msgstr "Без да се обновява, UpdraftPlus позволява <strong>на всеки</strong> администратор на блог, който може да променя настройките на плъгин за архивиране (и следователно достъп до данните, включително пароли, от) и възстановяване (включително с персонализирани модификации, например променени пароли) <strong>цялата мрежа</strong>."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "This is a WordPress multi-site (a.k.a. network) installation."
 msgstr "Това е WordPress мулти-сайт (a.k.a. мрежова) инсталация."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "UpdraftPlus warning:"
 msgstr "Предупреждение за UpdraftPlus:"
 
@@ -7654,15 +7654,15 @@ msgstr "Търсене и заместване на местоположение
 msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
 msgstr "Всички препратки към местоположението на сайта в базата данни ще бъдат заменени с текущия url адрес на сайта ви, което е: %s"
 
-#: src/addons/multisite.php:749
+#: src/addons/multisite.php:767
 msgid "Blog uploads"
 msgstr "Качвания на блогове"
 
-#: src/addons/migrator.php:503, src/addons/multisite.php:742
+#: src/addons/migrator.php:503, src/addons/multisite.php:760
 msgid "Must-use plugins"
 msgstr "Приставки за задължително използване"
 
-#: src/addons/multisite.php:207
+#: src/addons/multisite.php:225
 msgid "Multisite Install"
 msgstr "Инсталиране на множество"
 
@@ -8711,7 +8711,7 @@ msgstr "Време е"
 
 #: src/addons/moredatabase.php:266, src/addons/reporting.php:275,
 #: src/addons/wp-cli.php:428, src/admin.php:394, src/admin.php:4341,
-#: src/admin.php:4394, src/admin.php:4987,
+#: src/admin.php:4394, src/admin.php:4984,
 #: src/includes/class-remote-send.php:445,
 #: src/includes/class-wpadmin-commands.php:154,
 #: src/includes/class-wpadmin-commands.php:612, src/restorer.php:576,
@@ -8955,7 +8955,7 @@ msgstr "Не можаха да се създадат файлове в дире�
 msgid "Others"
 msgstr "Други"
 
-#: src/addons/multisite.php:504, src/class-updraftplus.php:2026
+#: src/addons/multisite.php:522, src/class-updraftplus.php:2026
 msgid "Uploads"
 msgstr "Качвания"
 
@@ -8981,7 +8981,7 @@ msgstr "Регистрационният файл не можа да бъде п
 msgid "UpdraftPlus notice:"
 msgstr "Известие за UpdraftPlus:"
 
-#: src/addons/multisite.php:94, src/addons/multisite.php:786,
-#: src/options.php:84
+#: src/addons/multisite.php:112, src/addons/multisite.php:804,
+#: src/options.php:92
 msgid "UpdraftPlus Backups"
 msgstr "Резервни копия на updraftPlus"

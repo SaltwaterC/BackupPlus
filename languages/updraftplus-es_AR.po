@@ -112,7 +112,7 @@ msgstr "Modo de SQL actual:"
 msgid "UpdraftClone image:"
 msgstr "Imagen de UpdraftClone:"
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "WordPress Multisite is supported, with extra features, by UpdraftPlus Premium."
 msgstr "UpdraftPlus Premium es compatible con WordPress multisitios, con funciones adicionales."
 
@@ -2555,7 +2555,7 @@ msgstr "Para la identificación es obligatorio el método de almacenamiento remo
 msgid "authentication error"
 msgstr "error de identificación"
 
-#: src/addons/multisite.php:44, src/options.php:48
+#: src/addons/multisite.php:49, src/options.php:48
 msgid "(Nothing has been logged yet)"
 msgstr "(Todavía no hay nada registrado)"
 
@@ -3893,19 +3893,19 @@ msgstr "Descartar"
 msgid "Please fill in the required information."
 msgstr "Por favor, completá la información requerida."
 
-#: src/addons/multisite.php:669
+#: src/addons/multisite.php:687
 msgid "Read more..."
 msgstr "Leer más..."
 
-#: src/addons/multisite.php:660
+#: src/addons/multisite.php:678
 msgid "may include some site-wide data"
 msgstr "puede incluir algunos datos de todo el sitio"
 
-#: src/addons/multisite.php:655
+#: src/addons/multisite.php:673
 msgid "All sites"
 msgstr "Todos los sitios"
 
-#: src/addons/multisite.php:651
+#: src/addons/multisite.php:669
 msgid "Which site to restore"
 msgstr "Cuál sitio restaurar"
 
@@ -6529,19 +6529,19 @@ msgstr "Archivos (el respaldo de la base de datos no se completó)"
 msgid "Files and database"
 msgstr "Archivos y base de datos"
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "(This applies to all WordPress backup plugins unless they have been explicitly coded for multisite compatibility)."
 msgstr "(Esto se aplica a todos los plugins de respaldo de WordPress a menos que hayan sido codificados explícitamente para compatibilidad con multisitio)."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "Without upgrading, UpdraftPlus allows <strong>every</strong> blog admin who can modify plugin settings to backup (and hence access the data, including passwords, from) and restore (including with customized modifications, e.g. changed passwords) <strong>the entire network</strong>."
 msgstr "Sin la actualización, UpdraftPlus permite <strong>a todos</strong> los administradores de blog que puedan modificar los ajustes del plugin para respaldos (y por tanto acceder a los datos, incluidas las contraseñas) y restaurar (incluido con modificaciones personalizadas, por ejemplo, cambiar las contraseñas) <strong>toda la red</strong>."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "This is a WordPress multi-site (a.k.a. network) installation."
 msgstr "Esta es una instalación Multisitio de WordPress."
 
-#: src/options.php:221
+#: src/options.php:229
 msgid "UpdraftPlus warning:"
 msgstr "Advertencia de UpdraftPlus:"
 
@@ -7654,15 +7654,15 @@ msgstr "Buscar y reemplazar la ubicación del sitio en la base de datos (migrar)
 msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
 msgstr "Todas la referencias a la ubicación del sitio en la base de datos han sido reemplazadas con la URL del sitio actual: %s"
 
-#: src/addons/multisite.php:749
+#: src/addons/multisite.php:767
 msgid "Blog uploads"
 msgstr "Subidas del blog"
 
-#: src/addons/migrator.php:503, src/addons/multisite.php:742
+#: src/addons/migrator.php:503, src/addons/multisite.php:760
 msgid "Must-use plugins"
 msgstr "Plugins indispensables (MU)"
 
-#: src/addons/multisite.php:207
+#: src/addons/multisite.php:225
 msgid "Multisite Install"
 msgstr "Instalación multisitio"
 
@@ -8711,7 +8711,7 @@ msgstr "Hora actual"
 
 #: src/addons/moredatabase.php:266, src/addons/reporting.php:275,
 #: src/addons/wp-cli.php:428, src/admin.php:394, src/admin.php:4341,
-#: src/admin.php:4394, src/admin.php:4987,
+#: src/admin.php:4394, src/admin.php:4984,
 #: src/includes/class-remote-send.php:445,
 #: src/includes/class-wpadmin-commands.php:154,
 #: src/includes/class-wpadmin-commands.php:612, src/restorer.php:576,
@@ -8955,7 +8955,7 @@ msgstr "No se pudieron crear archivos en el directorio del respaldo. La respaldo
 msgid "Others"
 msgstr "Otros"
 
-#: src/addons/multisite.php:504, src/class-updraftplus.php:2026
+#: src/addons/multisite.php:522, src/class-updraftplus.php:2026
 msgid "Uploads"
 msgstr "Subidas"
 
@@ -8981,7 +8981,7 @@ msgstr "No se pudo leer el archivo de registro."
 msgid "UpdraftPlus notice:"
 msgstr "Aviso de UpdraftPlus:"
 
-#: src/addons/multisite.php:94, src/addons/multisite.php:786,
-#: src/options.php:84
+#: src/addons/multisite.php:112, src/addons/multisite.php:804,
+#: src/options.php:92
 msgid "UpdraftPlus Backups"
 msgstr "Respaldos UpdraftPlus"
