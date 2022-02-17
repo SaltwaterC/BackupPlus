@@ -105,7 +105,15 @@ class UpdraftPlus_S3_Compat {
 	 * @param Null|String    $region        Region. Currently unused, but harmonised with UpdraftPlus_S3 class
 	 * @return void
 	 */
-	public function __construct($access_key = null, $secret_key = null, $use_ssl = true, $ssl_ca_cert = true, $endpoint = null, $session_token = null, $region = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $region is unused 
+	public function __construct($access_key = null, $secret_key = null, $use_ssl = true, $ssl_ca_cert = true, $endpoint = null, $session_token = null, $region = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $region is unused
+		
+		// Work round bug in the JetPack autoloader
+		$potentially_include_in = array('guzzlehttp/guzzle', 'guzzlehttp/promises', 'guzzlehttp/psr7');
+		foreach ($potentially_include_in as $package) {
+			$file = UPDRAFTPLUS_DIR.'/vendor/'.$package.'/src/functions_include.php';
+			if (file_exists($file)) include_once($file);
+		}
+		
 		if (null !== $access_key && null !== $secret_key)
 			$this->setAuth($access_key, $secret_key, $session_token);
 

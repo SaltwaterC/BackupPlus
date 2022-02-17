@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.9
-Stable tag: 1.22.3
+Stable tag: 1.22.4
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -167,6 +167,14 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+
+
+
+= 1.22.4 - 17/Feb/2022 =
+
+* TWEAK: Prevent a couple of possible fatal errors when printing autobackup options on PHP 8
+* TWEAK: Work around a bug in the JetPack autoloader that was triggered when projects using that also used Guzzle in a different namespace
 
 = 1.22.3 - 15/Feb/2022 =
 
@@ -1449,4 +1457,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.22.3: Fixes a security issue (see the changelog for more info) on sites that have non-trusted logins. Fix potential issues with scanning of backup history. Update AWS SDK version. Various other small tweaks and fixes. A recommended update for all.
+* 1.22.4: Fixes a conflict with plugins using guzzlehttp 6/7 and with a buggy JetPack autloader. N.B. 1.22.3 fixed a security issue (see the changelog for more info) on sites that have non-trusted logins. A recommended update for all.
