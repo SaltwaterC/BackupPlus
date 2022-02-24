@@ -4,7 +4,7 @@
 
 /**
  *
- * Copyright (c) 2012-9, David Anderson (https://www.simbahosting.co.uk).  All rights reserved.
+ * Copyright (c) 2012-22, David Anderson (https://www.simbahosting.co.uk).  All rights reserved.
  * Portions copyright (c) 2011, Donovan Schönknecht.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,16 @@
  */
 // @codingStandardsIgnoreEnd
 
-require_once(UPDRAFTPLUS_DIR.'/vendor/autoload.php');
-
 // SDK requires PHP 5.5+
 use Aws\Common\RulesEndpointProvider;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\NoSuchBucketException;
 use Aws\S3\S3MultiRegionClient;
+
+global $updraftplus;
+$updraftplus->potentially_remove_composer_autoloaders(array('GuzzleHttp\\', 'Aws\\'));
+include(UPDRAFTPLUS_DIR.'/vendor/autoload.php');
+$updraftplus->mitigate_guzzle_autoloader_conflicts();
 
 /**
  * Amazon S3 PHP class
@@ -107,12 +110,8 @@ class UpdraftPlus_S3_Compat {
 	 */
 	public function __construct($access_key = null, $secret_key = null, $use_ssl = true, $ssl_ca_cert = true, $endpoint = null, $session_token = null, $region = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $region is unused
 		
-		// Work round bug in the JetPack autoloader
-		$potentially_include_in = array('guzzlehttp/guzzle', 'guzzlehttp/promises', 'guzzlehttp/psr7');
-		foreach ($potentially_include_in as $package) {
-			$file = UPDRAFTPLUS_DIR.'/vendor/'.$package.'/src/functions_include.php';
-			if (file_exists($file)) include_once($file);
-		}
+		global $updraftplus;
+		$updraftplus->mitigate_guzzle_autoloader_conflicts();
 		
 		if (null !== $access_key && null !== $secret_key)
 			$this->setAuth($access_key, $secret_key, $session_token);
