@@ -101,7 +101,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			$day_score = $days_since_24feb2022 * 5;
 			
 			// Switch to AWS SDK increasingly less over time
-			if ($day_score <= $site_based_num || (defined('UPDRAFTPLUS_FORCE_S3_AWS_SDK') && UPDRAFTPLUS_FORCE_S3_AWS_SDK) || apply_filters('updraftplus_indicate_s3_class_prefer_aws_sdk', false)) {
+			if (!function_exists('curl_init') || $day_score <= $site_based_num || (defined('UPDRAFTPLUS_FORCE_S3_AWS_SDK') && UPDRAFTPLUS_FORCE_S3_AWS_SDK) || apply_filters('updraftplus_indicate_s3_class_prefer_aws_sdk', false)) {
 				$class_to_use = 'UpdraftPlus_S3_Compat';
 			}
 		}
@@ -128,9 +128,11 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @param  Null|String $endpoint 	   S3 endpoint to use
 	 * @param  Boolean	   $sse 		   A flag to use server side encryption
 	 * @param  String	   $session_token  The session token returned by AWS for temporary credentials access
-	 * @return Array
+	 *
+	 * @return Object|WP_Error
 	 */
 	public function getS3($key, $secret, $useservercerts, $disableverify, $nossl, $endpoint = null, $sse = false, $session_token = null) {
+		
 		$storage = $this->get_storage();
 		if (!empty($storage) && !is_wp_error($storage)) return $storage;
 
@@ -330,7 +332,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 *
 	 * @param Array $backup_array - a list of file names (basenames) (within UD's directory) to be uploaded
 	 *
-	 * @return Mixed - return (boolean)false ot indicate failure, or anything else to have it passed back at the delete stage (most useful for a storage object).
+	 * @return Mixed - return (boolean)false to indicate failure, or anything else to have it passed back at the delete stage (most useful for a storage object).
 	 */
 	public function backup($backup_array) {
 
@@ -480,7 +482,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 					$etags = array();
 					for ($i = 1; $i <= $chunks; $i++) {
 						$etag = $this->jobdata_get($hash.'_etag_'.$i, null, "ud_${whoweare_keys}_${hash}_e$i");
-						if (strlen($etag) > 0) {
+						if (null !== $etag && strlen($etag) > 0) {
 							$this->log("chunk $i: was already completed (etag: $etag)");
 							$successes++;
 							array_push($etags, $etag);
@@ -1011,7 +1013,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @param Object $storage S3 Name
 	 * @param Array	 $config  an array of specific options for particular S3 remote storage module
 	 *
-	 * @return Boolean - looking use_dns_bucket_name(), this should apparently always be true
+	 * @return Boolean - looking at use_dns_bucket_name(), this should apparently always be true
 	 */
 	protected function maybe_use_dns_bucket_name($storage, $config) {
 		if ('s3' === $config['key']) return $this->use_dns_bucket_name($storage, '');
