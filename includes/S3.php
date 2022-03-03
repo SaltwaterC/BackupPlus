@@ -3,7 +3,7 @@
  * $Id$
  *
  * Copyright (c) 2011, Donovan Schönknecht.  All rights reserved.
- * Portions copyright (c) 2012-2021, David Anderson (https://david.dw-perspective.org.uk).  All rights reserved.
+ * Portions copyright (c) 2012-2022, David Anderson (https://david.dw-perspective.org.uk).  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,6 @@
  *
  * Forked originally from:
  * @link http://undesigned.org.za/2007/10/22/amazon-s3-php-class
- * @version 0.5.0-dev
  */
 class UpdraftPlus_S3 {
 	// ACL flags
@@ -85,7 +84,7 @@ class UpdraftPlus_S3 {
 	 * @param string|null $endpoint Endpoint
 	 * @param string|null $session_token The session token returned by AWS for temporary credentials access
 	 * @param string $region Region
-
+	 *
 	 * @throws Exception If cURL extension is not present
 	 *
 	 * @return self
@@ -1081,8 +1080,8 @@ class UpdraftPlus_S3 {
 		$rest = $rest->getResponse();
 		
 		global $updraftplus;
-		
-		if (false !== $rest->error && 200 !== $rest->code && 'AuthorizationHeaderMalformed' == $rest->error['code'] && !empty($rest->error['region'])) {
+
+		if (false !== $rest->error && 'AuthorizationHeaderMalformed' == $rest->error['code'] && !empty($rest->error['region'])) {
 			// The location request was sent to the wrong region... but the response tells us the correct region, which is all we wanted.
 			return $rest->error['region'];
 		}
@@ -1647,7 +1646,9 @@ final class UpdraftPlus_S3Request {
 		//var_dump('bucket: ' . $this->bucket, 'uri: ' . $this->uri, 'resource: ' . $this->resource, 'url: ' . $url);
 
 		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_USERAGENT, 'S3/php');
+		
+		global $updraftplus;
+		curl_setopt($curl, CURLOPT_USERAGENT, 'S3/UpdraftPlus-'.$updraftplus->version);
 
 		if ($this->s3->useSSL) {
 			// SSL Validation can now be optional for those with broken OpenSSL installations
@@ -1694,7 +1695,7 @@ final class UpdraftPlus_S3Request {
 		// AMZ headers must be sorted
 		if (sizeof($amz) > 0) {
 			//sort($amz);
-			usort($amz, array(&$this, '__sortMetaHeadersCmp'));
+			usort($amz, array($this, '__sortMetaHeadersCmp'));
 			$amz = "\n".implode("\n", $amz);
 		} else {
 			$amz = '';
@@ -1733,8 +1734,8 @@ final class UpdraftPlus_S3Request {
 		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-		curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, '_responseWriteCallback'));
-		curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, '_responseHeaderCallback'));
+		curl_setopt($curl, CURLOPT_WRITEFUNCTION, array($this, '_responseWriteCallback'));
+		curl_setopt($curl, CURLOPT_HEADERFUNCTION, array($this, '_responseHeaderCallback'));
 		@curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 
 		// Request types
@@ -1766,14 +1767,15 @@ final class UpdraftPlus_S3Request {
 		}
 
 		// Execute, grab errors
-		if (curl_exec($curl))
+		if (curl_exec($curl)) {
 			$this->response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		else
+		} else {
 			$this->response->error = array(
 				'code' => curl_errno($curl),
 				'message' => curl_error($curl),
 				'resource' => $this->resource
 			);
+		}
 
 		@curl_close($curl);
 

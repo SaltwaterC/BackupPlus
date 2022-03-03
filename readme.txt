@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 5.9
-Stable tag: 1.22.7
+Stable tag: 1.22.8
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -168,6 +168,12 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
+
+
+= 1.22.8 - 03/Mar/2022 =
+
+* FIX: Do not attempt to use S3 DNS-style bucket naming in alternative library if SSL validation will fail due to AWS certificate wildcard policies or other bucket naming-related reasons
+* TWEAK: Add version number to alternative S3 library requests
 
 = 1.22.7 - 01/Mar/2022 =
 
@@ -1479,4 +1485,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.22.7: Various tweaks/fixes to handling of S3 using bundled internal library. N.B. 1.22.3 fixed a security issue (see the changelog for more info). A recommended update for all.
+* 1.22.8: Various tweaks/fixes to handling of S3 using bundled internal library. N.B. 1.22.3 fixed a security issue (see the changelog for more info). A recommended update for all.

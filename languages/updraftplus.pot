@@ -140,7 +140,7 @@ msgstr ""
 msgid "%s Error"
 msgstr ""
 
-#: src/addons/azure.php:267, src/class-updraftplus.php:4663, src/methods/googledrive.php:1343, src/methods/s3.php:398
+#: src/addons/azure.php:267, src/class-updraftplus.php:4663, src/methods/googledrive.php:1343, src/methods/s3.php:396
 msgid "File not found"
 msgstr ""
 
@@ -152,7 +152,7 @@ msgstr ""
 msgid "Upload failed"
 msgstr ""
 
-#: src/addons/azure.php:443, src/addons/backblaze.php:564, src/addons/googlecloud.php:1024, src/methods/s3.php:1309
+#: src/addons/azure.php:443, src/addons/backblaze.php:564, src/addons/googlecloud.php:1024, src/methods/s3.php:1330
 msgid "Delete failed:"
 msgstr ""
 
@@ -168,7 +168,7 @@ msgstr ""
 msgid "You must add the following as the authorised redirect URI in your Azure console (under \"API Settings\") when asked"
 msgstr ""
 
-#: src/addons/azure.php:604, src/addons/migrator.php:978, src/admin.php:1307, src/admin.php:1312, src/admin.php:1318, src/admin.php:1322, src/admin.php:1326, src/admin.php:1335, src/admin.php:4281, src/admin.php:4288, src/admin.php:4290, src/admin.php:5925, src/admin.php:6205, src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/ftp.php:344, src/methods/openstack-base.php:576, src/methods/s3.php:908, src/methods/s3.php:912, src/methods/updraftvault.php:345, src/templates/wp-admin/settings/downloading-and-restoring.php:27, src/templates/wp-admin/settings/tab-backups.php:27, src/udaddons/updraftplus-addons.php:303
+#: src/addons/azure.php:604, src/addons/migrator.php:978, src/admin.php:1307, src/admin.php:1312, src/admin.php:1318, src/admin.php:1322, src/admin.php:1326, src/admin.php:1335, src/admin.php:4281, src/admin.php:4288, src/admin.php:4290, src/admin.php:5925, src/admin.php:6205, src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/ftp.php:344, src/methods/openstack-base.php:576, src/methods/s3.php:906, src/methods/s3.php:910, src/methods/updraftvault.php:345, src/templates/wp-admin/settings/downloading-and-restoring.php:27, src/templates/wp-admin/settings/tab-backups.php:27, src/udaddons/updraftplus-addons.php:303
 msgid "Warning"
 msgstr ""
 
@@ -272,7 +272,7 @@ msgstr ""
 msgid "Invalid bucket name"
 msgstr ""
 
-#: src/addons/backblaze.php:533, src/methods/s3.php:1277
+#: src/addons/backblaze.php:533, src/methods/s3.php:1298
 msgid "Failure: We could not successfully access or create such a bucket. Please check your access credentials, and if those are correct then try another bucket name (as another %s user may already have taken your name)."
 msgstr ""
 
@@ -620,7 +620,7 @@ msgstr ""
 msgid "Frankfurt"
 msgstr ""
 
-#: src/addons/googlecloud.php:140, src/addons/googlecloud.php:974, src/methods/s3.php:1228
+#: src/addons/googlecloud.php:140, src/addons/googlecloud.php:974, src/methods/s3.php:1249
 msgid "Failure: No bucket details were given."
 msgstr ""
 
@@ -660,7 +660,7 @@ msgstr ""
 msgid "No refresh token was received from Google. This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it. Re-check it, then follow the link to authenticate again. Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again."
 msgstr ""
 
-#: src/addons/googlecloud.php:507, src/addons/migrator.php:592, src/admin.php:2613, src/admin.php:2634, src/admin.php:2642, src/class-updraftplus.php:1172, src/class-updraftplus.php:1178, src/class-updraftplus.php:4876, src/class-updraftplus.php:4878, src/class-updraftplus.php:5056, src/class-updraftplus.php:5063, src/class-updraftplus.php:5140, src/methods/googledrive.php:534, src/methods/s3.php:398
+#: src/addons/googlecloud.php:507, src/addons/migrator.php:592, src/admin.php:2613, src/admin.php:2634, src/admin.php:2642, src/class-updraftplus.php:1172, src/class-updraftplus.php:1178, src/class-updraftplus.php:4876, src/class-updraftplus.php:4878, src/class-updraftplus.php:5056, src/class-updraftplus.php:5063, src/class-updraftplus.php:5140, src/methods/googledrive.php:534, src/methods/s3.php:396
 msgid "Error: %s"
 msgstr ""
 
@@ -692,7 +692,7 @@ msgstr ""
 msgid "However, subsequent access attempts failed:"
 msgstr ""
 
-#: src/addons/googlecloud.php:894, src/addons/googlecloud.php:1020, src/addons/onedrive.php:980, src/addons/sftp.php:629, src/addons/sftp.php:633, src/addons/webdav.php:341, src/addons/wp-cli.php:494, src/methods/addon-base-v2.php:370, src/methods/cloudfiles.php:590, src/methods/googledrive.php:613, src/methods/openstack-base.php:535, src/methods/s3.php:1292
+#: src/addons/googlecloud.php:894, src/addons/googlecloud.php:1020, src/addons/onedrive.php:980, src/addons/sftp.php:629, src/addons/sftp.php:633, src/addons/webdav.php:341, src/addons/wp-cli.php:494, src/methods/addon-base-v2.php:370, src/methods/cloudfiles.php:590, src/methods/googledrive.php:613, src/methods/openstack-base.php:535, src/methods/s3.php:1313
 msgid "Success"
 msgstr ""
 
@@ -712,15 +712,15 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: src/addons/googlecloud.php:1014, src/addons/googlecloud.php:1028, src/methods/s3.php:1290, src/methods/s3.php:1302
+#: src/addons/googlecloud.php:1014, src/addons/googlecloud.php:1028, src/methods/s3.php:1311, src/methods/s3.php:1323
 msgid "Failure"
 msgstr ""
 
-#: src/addons/googlecloud.php:1014, src/addons/googlecloud.php:1028, src/methods/s3.php:1290, src/methods/s3.php:1302
+#: src/addons/googlecloud.php:1014, src/addons/googlecloud.php:1028, src/methods/s3.php:1311, src/methods/s3.php:1323
 msgid "We successfully accessed the bucket, but the attempt to create a file in it failed."
 msgstr ""
 
-#: src/addons/googlecloud.php:1020, src/methods/s3.php:1292
+#: src/addons/googlecloud.php:1020, src/methods/s3.php:1313
 msgid "We accessed the bucket, and were able to create files within it."
 msgstr ""
 
@@ -1056,7 +1056,7 @@ msgstr ""
 msgid "Replace with"
 msgstr ""
 
-#: src/addons/migrator.php:341, src/addons/moredatabase.php:113, src/addons/moredatabase.php:115, src/addons/moredatabase.php:117, src/addons/sftp.php:560, src/addons/sftp.php:564, src/addons/sftp.php:568, src/addons/webdav.php:316, src/admin.php:934, src/includes/class-remote-send.php:576, src/methods/addon-base-v2.php:348, src/methods/cloudfiles-new.php:181, src/methods/cloudfiles-new.php:186, src/methods/cloudfiles.php:534, src/methods/cloudfiles.php:539, src/methods/ftp.php:426, src/methods/ftp.php:430, src/methods/openstack2.php:180, src/methods/openstack2.php:185, src/methods/openstack2.php:190, src/methods/openstack2.php:195, src/methods/s3.php:1202, src/methods/s3.php:1206
+#: src/addons/migrator.php:341, src/addons/moredatabase.php:113, src/addons/moredatabase.php:115, src/addons/moredatabase.php:117, src/addons/sftp.php:560, src/addons/sftp.php:564, src/addons/sftp.php:568, src/addons/webdav.php:316, src/admin.php:934, src/includes/class-remote-send.php:576, src/methods/addon-base-v2.php:348, src/methods/cloudfiles-new.php:181, src/methods/cloudfiles-new.php:186, src/methods/cloudfiles.php:534, src/methods/cloudfiles.php:539, src/methods/ftp.php:426, src/methods/ftp.php:430, src/methods/openstack2.php:180, src/methods/openstack2.php:185, src/methods/openstack2.php:190, src/methods/openstack2.php:195, src/methods/s3.php:1223, src/methods/s3.php:1227
 msgid "Failure: No %s was given."
 msgstr ""
 
@@ -2019,7 +2019,7 @@ msgstr ""
 msgid "Failure: We could not successfully access or create such a bucket. Please check your access credentials, and if those are correct then try another bucket name (as another AWS user may already have taken your name)."
 msgstr ""
 
-#: src/addons/s3-enhanced.php:219, src/methods/s3.php:1279
+#: src/addons/s3-enhanced.php:219, src/methods/s3.php:1300
 msgid "The error reported by %s was:"
 msgstr ""
 
@@ -2243,7 +2243,7 @@ msgstr ""
 msgid "Error: Failed to upload"
 msgstr ""
 
-#: src/addons/sftp.php:188, src/methods/openstack-base.php:314, src/methods/s3.php:436, src/methods/s3.php:448, src/methods/s3.php:449
+#: src/addons/sftp.php:188, src/methods/openstack-base.php:314, src/methods/s3.php:434, src/methods/s3.php:446, src/methods/s3.php:447
 msgid "%s Error: Failed to upload"
 msgstr ""
 
@@ -5848,11 +5848,11 @@ msgstr ""
 msgid "Complete manual authentication"
 msgstr ""
 
-#: src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/openstack-base.php:576, src/methods/s3.php:912
+#: src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/openstack-base.php:576, src/methods/s3.php:910
 msgid "Your web server's PHP installation does not included a required module (%s). Please contact your web hosting provider's support."
 msgstr ""
 
-#: src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/openstack-base.php:576, src/methods/s3.php:912
+#: src/methods/cloudfiles-new.php:96, src/methods/cloudfiles.php:455, src/methods/openstack-base.php:576, src/methods/s3.php:910
 msgid "UpdraftPlus's %s module <strong>requires</strong> %s. Please do not file any support requests; there is no alternative."
 msgstr ""
 
@@ -5884,7 +5884,7 @@ msgstr ""
 msgid "Cloud Files API Key"
 msgstr ""
 
-#: src/methods/cloudfiles-new.php:181, src/methods/cloudfiles.php:534, src/methods/s3.php:1202
+#: src/methods/cloudfiles-new.php:181, src/methods/cloudfiles.php:534, src/methods/s3.php:1223
 msgid "API key"
 msgstr ""
 
@@ -6245,7 +6245,7 @@ msgstr ""
 msgid "Tenant"
 msgstr ""
 
-#: src/methods/openstack2.php:150, src/methods/s3.php:1271
+#: src/methods/openstack2.php:150, src/methods/s3.php:1292
 msgid "Region"
 msgstr ""
 
@@ -6266,107 +6266,107 @@ msgstr ""
 msgid "No settings were found - please go to the Settings tab and check your settings"
 msgstr ""
 
-#: src/methods/s3.php:216, src/methods/s3.php:217, src/methods/s3.php:229, src/methods/s3.php:230
+#: src/methods/s3.php:215, src/methods/s3.php:216, src/methods/s3.php:227, src/methods/s3.php:228
 msgid "Error: Failed to initialise"
 msgstr ""
 
-#: src/methods/s3.php:218, src/methods/s3.php:231
+#: src/methods/s3.php:217, src/methods/s3.php:229
 msgid "%s Error: Failed to initialise"
 msgstr ""
 
-#: src/methods/s3.php:369
+#: src/methods/s3.php:367
 msgid "The required %s PHP module is not installed - ask your web hosting company to enable it"
 msgstr ""
 
-#: src/methods/s3.php:471
+#: src/methods/s3.php:469
 msgid "%s upload: getting uploadID for multipart upload failed - see log file for more details"
 msgstr ""
 
-#: src/methods/s3.php:493
+#: src/methods/s3.php:491
 msgid "error: file %s was shortened unexpectedly"
 msgstr ""
 
-#: src/methods/s3.php:503
+#: src/methods/s3.php:501
 msgid "chunk %s: upload failed"
 msgstr ""
 
-#: src/methods/s3.php:519
+#: src/methods/s3.php:517
 msgid "upload (%s): re-assembly failed (see log for more details)"
 msgstr ""
 
-#: src/methods/s3.php:523
+#: src/methods/s3.php:521
 msgid "%s re-assembly error (%s): (see log file for more)"
 msgstr ""
 
-#: src/methods/s3.php:545, src/methods/s3.php:732, src/methods/s3.php:842
+#: src/methods/s3.php:543, src/methods/s3.php:730, src/methods/s3.php:840
 msgid "Error: Failed to access bucket %s. Check your permissions and credentials."
 msgstr ""
 
-#: src/methods/s3.php:823, src/methods/s3.php:867
+#: src/methods/s3.php:821, src/methods/s3.php:865
 msgid "Error: Failed to download %s. Check your permissions and credentials."
 msgstr ""
 
-#: src/methods/s3.php:835
+#: src/methods/s3.php:833
 msgid "%s Error: Failed to download %s. Check your permissions and credentials."
 msgstr ""
 
-#: src/methods/s3.php:908
+#: src/methods/s3.php:906
 msgid "Your web server's PHP installation does not included a required module (%s). Please contact your web hosting provider's support and ask for them to enable it."
 msgstr ""
 
-#: src/methods/s3.php:918
+#: src/methods/s3.php:916
 msgid "Get your access key and secret key from your <a href=\"%s\">%s console</a>, then pick a (globally unique - all %s users) bucket name (letters and numbers) (and optionally a path) to use for storage. This bucket will be created for you if it does not already exist."
 msgstr ""
 
-#: src/methods/s3.php:920
+#: src/methods/s3.php:918
 msgid "If you see errors about SSL certificates, then please go here for help."
 msgstr ""
 
-#: src/methods/s3.php:922
+#: src/methods/s3.php:920
 msgid "Other %s FAQs."
 msgstr ""
 
-#: src/methods/s3.php:973
+#: src/methods/s3.php:971
 msgid "To create a new IAM sub-user and access key that has access only to this bucket, upgrade to Premium."
 msgstr ""
 
-#: src/methods/s3.php:982
+#: src/methods/s3.php:980
 msgid "%s access key"
 msgstr ""
 
-#: src/methods/s3.php:986
+#: src/methods/s3.php:984
 msgid "%s secret key"
 msgstr ""
 
-#: src/methods/s3.php:990
+#: src/methods/s3.php:988
 msgid "%s location"
 msgstr ""
 
-#: src/methods/s3.php:991
+#: src/methods/s3.php:989
 msgid "Enter only a bucket name or a bucket and path. Examples: mybucket, mybucket/mypath"
 msgstr ""
 
-#: src/methods/s3.php:1206
+#: src/methods/s3.php:1227
 msgid "API secret"
 msgstr ""
 
-#: src/methods/s3.php:1233
+#: src/methods/s3.php:1254
 msgid "Failure: No endpoint details were given."
 msgstr ""
 
-#: src/methods/s3.php:1281
+#: src/methods/s3.php:1302
 msgid "The AWS access key looks to be wrong (valid %s access keys begin with \"AK\")"
 msgstr ""
 
-#: src/methods/s3.php:1295
+#: src/methods/s3.php:1316
 msgid "The communication with %s was encrypted."
 msgstr ""
 
-#: src/methods/s3.php:1297
+#: src/methods/s3.php:1318
 msgid "The communication with %s was not encrypted."
 msgstr ""
 
-#: src/methods/s3.php:1302
+#: src/methods/s3.php:1323
 msgid "Please check your access credentials."
 msgstr ""
 

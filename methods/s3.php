@@ -197,7 +197,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			$storage = new $use_s3_class($key, $secret, $use_ssl, $ssl_ca, $endpoint, $session_token);
 
 			// The use of calling use_dns_bucket_name method here is to switch the storage from using path-style to dns style.
-			// regardless of what the $storage object is instantiated from (UpdraftPlus_S3_Compat class (S3compat.php) or UpdraftPlus_S3 class (S3.php)), the method doesn't use the bucket name for any purpose so it's not needed to pass it
 			$this->maybe_use_dns_bucket_name($storage, $config);
 
 			$signature_version = empty($this->use_v4) ? 'v2' : 'v4';
@@ -223,14 +222,13 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			try {
 				$storage = new $use_s3_class($key, $secret, $use_ssl, $ssl_ca, $endpoint, $session_token);
 				// The use of calling use_dns_bucket_name method here is to switch the storage from using path-style to dns style.
-				// regardless of what the $storage object is instantiated from (UpdraftPlus_S3_Compat class (S3compat.php) or UpdraftPlus_S3 class (S3.php)), the method doesn't use the bucket name for any purpose so it's not needed to pass it
 				$this->maybe_use_dns_bucket_name($storage, $config);
 			} catch (Exception $e) {
 				$this->log(__('Error: Failed to initialise', 'updraftplus').": ".$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
 				$this->log(__('Error: Failed to initialise', 'updraftplus'));
 				return new WP_Error('s3_init_failed', sprintf(__('%s Error: Failed to initialise', 'updraftplus'), 'S3').": ".$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
 			}
-			$this->log("Hit a PHP engine bug - had to switch to the older S3 library");
+			$this->log("Hit a PHP engine bug - had to switch to the internal S3 library");
 		}
 
 		if ($proxy->is_enabled()) {
@@ -248,7 +246,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			$storage->setProxy($proxy->host(), $user, $pass, CURLPROXY_HTTP, $port);
 		}
 		
-		if (method_exists($storage, 'setServerSideEncryption') && ($this->use_sse() || $sse)) $storage->setServerSideEncryption('AES256');
+		if ($this->use_sse() || $sse) $storage->setServerSideEncryption('AES256');
 
 		$this->set_storage($storage);
 
@@ -304,7 +302,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			default:
 				break;
 		}
-
+		
 		if (isset($endpoint)) {
 			$this->log("Set region (".get_class($obj)."): $region");
 			$obj->setRegion($region);
@@ -1013,11 +1011,33 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @param Object $storage S3 Name
 	 * @param Array	 $config  an array of specific options for particular S3 remote storage module
 	 *
-	 * @return Boolean - looking at use_dns_bucket_name(), this should apparently always be true
+	 * @return Boolean - whether or not DNS bucket naming will be used
 	 */
 	protected function maybe_use_dns_bucket_name($storage, $config) {
-		if ('s3' === $config['key']) return $this->use_dns_bucket_name($storage, '');
-		return true;
+		if ('s3' === $config['key'] && isset($config['path']) && '' !== $config['path']) {
+			
+			if (preg_match("#^([^/]+)/(.*)$#", $config['path'], $pmatches)) {
+				$bucket = $pmatches[1];
+			} else {
+				$bucket = $config['path'];
+			}
+			
+			// AWS SSL certificates have wildcards at one level only, i.e. *.s3.amazonaws.com, so cannot be validated if the bucket brings in a further sub-domain level
+			if (false !== strstr($bucket, '.') && $storage->getuseSSL() && $storage->useSSLValidation) return false;
+			
+			if (strlen($bucket) > 63 || !preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
+			// A DNS bucket name cannot contain -.
+			if (false !== strstr($bucket, '-.')) return false;
+			// A DNS bucket name cannot contain ..
+			if (false !== strstr($bucket, '..')) return false;
+			// A DNS bucket name must begin with 0-9a-z
+			if (!preg_match("/^[0-9a-z]/", $bucket)) return false;
+			// A DNS bucket name must end with 0-9 a-z
+			if (!preg_match("/[0-9a-z]$/", $bucket)) return false;
+			
+			return $this->use_dns_bucket_name($storage, '');
+		}
+		return false;
 	}
 	
 	/**
@@ -1025,7 +1045,8 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 *
 	 * @param  object $storage S3 Name
 	 * @param  String $bucket  S3 Bucket
-	 * @return Boolean
+	 *
+	 * @return Boolean - true if the operation was accepted
 	 */
 	public function use_dns_bucket_name($storage, $bucket) {
 		return is_a($storage, 'UpdraftPlus_S3_Compat') ? true : $storage->useDNSBucketName(true, $bucket);
@@ -1060,7 +1081,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 	 * @return Array - N.B. May contain updated versions of $storage and $config
 	 */
 	private function get_bucket_access($storage, $config, $bucket, $path) {
-	
+
 		$bucket_exists = false;
 		
 		if ($this->provider_has_regions) {
@@ -1123,7 +1144,7 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			$region = false;
 			$this->set_region($storage, $config['endpoint'], $bucket);
 		}
-		
+
 		// See if we can detect the region (which implies the bucket exists and is ours), or if not create it
 		if (!$this->provider_has_regions || false === $region) {
 			$storage->setExceptions(true);
