@@ -95,10 +95,10 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			// From 0 to 255. Not intended to be perfectly evenly distributed.
 			$site_based_num = hexdec(substr(md5(network_site_url()), 0, 2));
 			
-			$days_since_24feb2022 = floor((time() - 1645700793)/86400);
+			$days_since_1mar2022 = floor((time() - 1646136000)/86400);
 			
-			// Starts at 0 and hits 255 after 51 days
-			$day_score = $days_since_24feb2022 * 5;
+			// Starts at 0 and hits 255 after 36 days
+			$day_score = $days_since_1mar2022 * 7;
 			
 			// Switch to AWS SDK increasingly less over time
 			if (!function_exists('curl_init') || $day_score <= $site_based_num || (defined('UPDRAFTPLUS_FORCE_S3_AWS_SDK') && UPDRAFTPLUS_FORCE_S3_AWS_SDK) || apply_filters('updraftplus_indicate_s3_class_prefer_aws_sdk', false)) {
@@ -1021,11 +1021,10 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			} else {
 				$bucket = $config['path'];
 			}
-			
 			// AWS SSL certificates have wildcards at one level only, i.e. *.s3.amazonaws.com, so cannot be validated if the bucket brings in a further sub-domain level
-			if (false !== strstr($bucket, '.') && $storage->getuseSSL() && $storage->useSSLValidation) return false;
-			
-			if (strlen($bucket) > 63 || !preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
+			if (false !== strstr($bucket, '.') && $storage->getuseSSL() && $storage->getUseSSLValidation()) return false;
+			if (strlen($bucket) > 63) return false;
+			if (preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
 			// A DNS bucket name cannot contain -.
 			if (false !== strstr($bucket, '-.')) return false;
 			// A DNS bucket name cannot contain ..
@@ -1034,7 +1033,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			if (!preg_match("/^[0-9a-z]/", $bucket)) return false;
 			// A DNS bucket name must end with 0-9 a-z
 			if (!preg_match("/[0-9a-z]$/", $bucket)) return false;
-			
 			return $this->use_dns_bucket_name($storage, '');
 		}
 		return false;
@@ -1160,7 +1158,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 						$bucket_exists = true;
 					}
 				} catch (Exception $e) {
-
 					// We don't put this in a separate catch block which names the exception, since we need to remain compatible with PHP 5.2
 					if (is_a($storage, 'UpdraftPlus_S3_Compat') && is_a($e, 'Aws\S3\Exception\S3Exception')) {
 						

@@ -218,6 +218,15 @@ class UpdraftPlus_S3 {
 	}
 
 	/**
+	 * Get SSL validation value.
+	 *
+	 * @return bool
+	 */
+	public function getUseSSLValidation() {
+		return $this->useSSLValidation;
+	}
+	
+	/**
 	 * Set SSL client certificates (experimental)
 	 *
 	 * @param string $sslCert SSL client certificate
@@ -1846,7 +1855,10 @@ final class UpdraftPlus_S3Request {
 
 
 	/**
-	 * Check DNS conformity
+	 * Check DNS conformity (suitability for Host: header addressing).
+	 * Many of the rules below apply to all new buckets; but some don't apply to legacy buckets created before certain dates.
+	 *
+	 * @see https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
 	 *
 	 * @param  string $bucket Bucket name
 	 *
@@ -1854,9 +1866,9 @@ final class UpdraftPlus_S3Request {
 	 */
 	private function _dnsBucketName($bucket) {
 		// A DNS bucket name cannot have len>63
-		// A DNS bucket name must have a character in other than a-z, 0-9, . -
-		// The purpose of this second check is not clear - is it that there's some limitation somewhere on bucket names that match that pattern that means that the bucket must be accessed by hostname?
-		if (strlen($bucket) > 63 || !preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
+		if (strlen($bucket) > 63) return false;
+		// A DNS bucket name must not have a character in other than a-z, 0-9, . -
+		if (preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
 		# A DNS bucket name cannot contain -.
 		if (false !== strstr($bucket, '-.')) return false;
 		# A DNS bucket name cannot contain ..
