@@ -1549,7 +1549,7 @@ final class UpdraftPlus_S3Request {
 	 * @param string  $bucket Bucket name
 	 * @param string  $uri Object URI
 	 * @param string  $endpoint Endpoint of storage
-	 * @param boolean $use_dns_bucket_name
+	 * @param boolean $use_dns_bucket_name - if set, then constructs an endpoint based upon the bucket name as well as $endpoint (otherwise, uses $endpoint only)
 	 * @param object  $s3 S3 Object that calls these requests
 	 *
 	 * @return mixed
@@ -1567,7 +1567,8 @@ final class UpdraftPlus_S3Request {
 		//	$this->resource = $this->uri;
 
 		if ('' !== $this->bucket) {
-			if ($this->_dnsBucketName($this->bucket) || $use_dns_bucket_name) {
+			// Use host-style access if the consumer requested it and we don't see a problem.
+			if ($use_dns_bucket_name && $this->_dnsBucketName($this->bucket)) {
 				$this->headers['Host'] = $this->bucket.'.'.$this->endpoint;
 				$this->resource = '/'.$this->bucket.$this->uri;
 			} else {
@@ -1857,6 +1858,8 @@ final class UpdraftPlus_S3Request {
 	/**
 	 * Check DNS conformity (suitability for Host: header addressing).
 	 * Many of the rules below apply to all new buckets; but some don't apply to legacy buckets created before certain dates.
+	 * 
+	 * This is used to rule out invalid names
 	 *
 	 * @see https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
 	 *
@@ -1869,14 +1872,14 @@ final class UpdraftPlus_S3Request {
 		if (strlen($bucket) > 63) return false;
 		// A DNS bucket name must not have a character in other than a-z, 0-9, . -
 		if (preg_match("/[^a-z0-9\.-]/", $bucket)) return false;
-		# A DNS bucket name cannot contain -.
+		// A DNS bucket name cannot contain -.
 		if (false !== strstr($bucket, '-.')) return false;
-		# A DNS bucket name cannot contain ..
+		// A DNS bucket name cannot contain ..
 		if (false !== strstr($bucket, '..')) return false;
-		# A DNS bucket name must begin with 0-9a-z
+		// A DNS bucket name must begin with 0-9a-z
 		if (!preg_match("/^[0-9a-z]/", $bucket)) return false;
 		# A DNS bucket name must end with 0-9 a-z
-		if (!preg_match("/[0-9a-z]$/", $bucket)) return false;
+		// (!preg_match("/[0-9a-z]$/", $bucket)) return false;
 		return true;
 	}
 
