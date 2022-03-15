@@ -1064,7 +1064,6 @@ class UpdraftPlus_S3 {
 		);
 	}
 
-
 	/**
 	 * Disable bucket logging
 	 *
@@ -1462,9 +1461,13 @@ class UpdraftPlus_S3 {
 		if (strpos($uri, '?')) {
 			list($uri, $query_str) = @explode('?', $uri);
 			parse_str($query_str, $parameters);
+			// "Sort the parameter names by character code point in ascending order. Parameters with duplicate names should be sorted by value. For example, a parameter name that begins with the uppercase letter F precedes a parameter name that begins with a lowercase letter b."
+			// N.B. Here we've not looked at the values as we don't expect duplicates
+			uksort($parameters, 'strcmp');
 		}
 
 		// Canonical Requests
+		// "Start with the HTTP request method (GET, PUT, POST, etc.)"
 		$amzRequests[] = $method;
 		$uriQmPos = strpos($uri, '?');
 		$amzRequests[] = (false === $uriQmPos ? $uri : substr($uri, 0, $uriQmPos));

@@ -5,7 +5,7 @@
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '46c9d2be368f86866a75ff261c468e57ad70dd4a',
+        'reference' => 'ecd24f7615fe236497b073a1f0ce655f3120f082',
         'name' => 'updraftplus/updraftplus',
         'dev' => false,
     ),
@@ -20,12 +20,12 @@
             'dev_requirement' => false,
         ),
         'aws/aws-sdk-php' => array(
-            'pretty_version' => '3.212.6',
-            'version' => '3.212.6.0',
+            'pretty_version' => '3.213.0',
+            'version' => '3.213.0.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../aws/aws-sdk-php',
             'aliases' => array(),
-            'reference' => 'fcb57b1f840938813e83f521e169914a076b3be9',
+            'reference' => '61875282d6ec1c441ca0af94fc00a5f516db12ef',
             'dev_requirement' => false,
         ),
         'components/jquery' => array(
@@ -421,7 +421,7 @@
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '46c9d2be368f86866a75ff261c468e57ad70dd4a',
+            'reference' => 'ecd24f7615fe236497b073a1f0ce655f3120f082',
             'dev_requirement' => false,
         ),
         'vakata/jstree' => array(

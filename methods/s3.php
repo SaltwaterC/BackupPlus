@@ -218,7 +218,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 		}
 		
 		if (!empty($try_again)) {
-echo "TRY AGAIN!\n";
 			try {
 				$storage = new $use_s3_class($key, $secret, $use_ssl, $ssl_ca, $endpoint, $session_token);
 				// Comment before 1.22.10 - "the use of calling use_dns_bucket_name method here is to switch the storage from using path-style to dns style." But at this stage, we don't have a bucket name, so this shouldn't be here.
@@ -1085,6 +1084,9 @@ echo "TRY AGAIN!\n";
 
 		$bucket_exists = false;
 		
+		// If using Amazon S3, then always prefer using host-based access
+		$this->maybe_use_dns_bucket_name($storage, $bucket);
+		
 		if ($this->provider_has_regions) {
 
 			$storage->setExceptions(true);
@@ -1159,10 +1161,12 @@ echo "TRY AGAIN!\n";
 			} catch (Exception $e) {
 				$this->s3_exception = $e;
 				try {
-					if ($this->maybe_use_dns_bucket_name($storage, $bucket) && false !== @$storage->getBucket($bucket, $path, null, 1)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+					
+					if (false !== @$storage->getBucket($bucket, $path, null, 1)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 						$bucket_exists = true;
 					}
 				} catch (Exception $e) {
+
 					// We don't put this in a separate catch block which names the exception, since we need to remain compatible with PHP 5.2
 					if (is_a($storage, 'UpdraftPlus_S3_Compat') && is_a($e, 'Aws\S3\Exception\S3Exception')) {
 						
