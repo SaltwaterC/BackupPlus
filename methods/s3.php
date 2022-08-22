@@ -790,7 +790,6 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			$bucket_name = $bmatches[1];
 			$bucket_path = $bmatches[2]."/";
 		}
-
 		
 		list($storage, $config, $bucket_exists, $region) = $this->get_bucket_access($storage, $config, $bucket_name, $bucket_path);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- The value is passed back from get_bucket_access
 
@@ -1089,13 +1088,25 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			}
 			try {
 				$region = @$storage->getBucketLocation($bucket);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
-
+				
 				// We want to distinguish between an empty region (null), and an exception or missing bucket (false)
 				if (empty($region) && false !== $region) $region = null;
 			} catch (Exception $e) {
 				$region = false;
-		
-				// On this 'first try', we trap this particular condition. So, whatever S3 network call it happens on, we'll eventually get it here on the resumption.
+				
+				// This is not ideal, but helps with detection/trapping of other "permanent" conditions
+				if (UpdraftPlus_Options::get_updraft_option('updraft_debug_mode')) {
+					global $updraftplus;
+					$updraftplus->log("get_bucket_access(): getBucketLocation exception (".get_class($e)."): ".$e->getMessage());
+				}
+
+				// On this 'first try', we trap these particular conditions. So, whatever S3 network call it happens on, we'll eventually get it here on the resumption.
+				
+				if (false !== strpos($e->getMessage(), '[RequestTimeTooSkewed]')) {
+					$this->s3_exception = $e;
+					return array($storage, $config, false, false);
+				}
+				
 				// TODO: If this is a credentials test, then $config/$new_config may get wrongly populated with saved instead of test values here
 				if (false !== strpos($e->getMessage(), 'The provided token has expired')) {
 				

@@ -23,6 +23,14 @@ class UpdraftPlus_Admin {
 
 	private $storage_service_with_partial_settings;
 
+	private $storage_module_option_errors = '';
+	
+	private $no_settings_warning = false;
+	
+	private $restore_in_progress_jobdata = array();
+	
+	private $entities_to_restore = array();
+
 	/**
 	 * Constructor
 	 */
@@ -3995,6 +4003,7 @@ class UpdraftPlus_Admin {
 	
 	/**
 	 * Returns html for a storage method using the parameters passed in, this version of the method is compatible with multi storage options
+	 * DEV NOTE: please don't use this method in a handlebars template, but write the HTML code directly in the template. Also, this method might be no longer available in future releases
 	 *
 	 * @param  string $classes  a list of classes to be used when
 	 * @param  string $header   the table header content
