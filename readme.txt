@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, DNutbourne, aporter, snigh
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 6.0
-Stable tag: 1.22.15
+Stable tag: 1.22.16
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -189,6 +189,10 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Add a twice-daily cron to clear temporary files so that they are cleared even in the absence of new backups beginning and prior backup completion failure
 * TWEAK: Declare some class variables to avoid warnings in PHP 8.2
 
+
+= 1.22.16 - 23/Aug/2022 =
+
+* TWEAK: Temporarily revert "upload immediately after create" feature from 1.22.15
 
 = 1.22.15 - 22/Aug/2022 =
 
@@ -1593,4 +1597,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.22.15: Various tweaks and fixes. Each archive created will now be uploaded immediately directly after creation, to save disk space. See changelog for full details. A recommended update for all.
+* 1.22.16: Various tweaks and fixes (including revert for upload-after-create enabling in 1.22.15). See changelog for full details. A recommended update for all.

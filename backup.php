@@ -438,7 +438,7 @@ class UpdraftPlus_Backup {
 		global $updraftplus;
 
 		// Check if the feature is disabled
-		if (!defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') || UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
+		if (defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') && UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
 
 			if ($updraftplus->is_uploaded($file) || !is_file($this->updraft_dir.'/'.$file)) return;
 			
