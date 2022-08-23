@@ -438,7 +438,7 @@ class UpdraftPlus_Backup {
 		global $updraftplus;
 
 		// Check if the feature is disabled
-		if (defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') && UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
+		if (!defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') || UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
 
 			if ($updraftplus->is_uploaded($file) || !is_file($this->updraft_dir.'/'.$file)) return;
 			
@@ -4345,11 +4345,11 @@ class UpdraftPlus_Backup {
 
 		// No need to add $itext here - we can just delete any temporary files for this zip
 		UpdraftPlus_Filesystem_Functions::clean_temporary_files('_'.$updraftplus->file_nonce."-".$youwhat, 600);
-		$this->maybe_cloud_backup(basename($full_path), $this->whichone, $this->index);
 
 		$this->index++;
 		$this->job_file_entities[$youwhat]['index'] = $this->index;
 		$updraftplus->jobdata_set('job_file_entities', $this->job_file_entities);
+		$this->maybe_cloud_backup(basename($full_path), $this->whichone, $this->index);
 	}
 
 	/**
