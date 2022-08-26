@@ -1095,7 +1095,9 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 				$region = false;
 				
 				// This is not ideal, but helps with detection/trapping of other "permanent" conditions
-				if (UpdraftPlus_Options::get_updraft_option('updraft_debug_mode')) {
+				// All these codes are likely to indicate things that we want to be logged, rather than suppressing logging until the final method used to get a bucket location
+				$curl_error_codes = array(1, 2, 3, 4, 5, 6, 7, 8, 16, 23, 26, 27, 28, 33, 35, 41, 43, 47, 48, 49, 53, 54, 55, 56, 58, 59, 60, 61, 66, 77, 81, 82, 83, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99);
+				if (UpdraftPlus_Options::get_updraft_option('updraft_debug_mode') || (preg_match('/\[(\d+)\]/', $e->getMessage(), $matches) && in_array($matches[1], $curl_error_codes))) {
 					global $updraftplus;
 					$updraftplus->log("get_bucket_access(): getBucketLocation exception (".get_class($e)."): ".$e->getMessage());
 				}
