@@ -47,8 +47,9 @@ class UpdraftCentral_Factory {
 		$path = $host_class = '';
 		foreach ($hosts as $plugin) {
 			// Make sure that we have a registered host class with a valid file that exist
-			if (isset($mapped_classes[$plugin]) && file_exists(dirname(__FILE__).'/'.$plugin.'.php')) {
-				$path = dirname(__FILE__).'/'.$plugin.'.php';
+			$host_file = dirname(__FILE__).'/'.$plugin.'.php';
+			if (isset($mapped_classes[$plugin]) && file_exists($host_file)) {
+				$path = $host_file;
 				$host_class = $mapped_classes[$plugin];
 				break;
 			}
@@ -60,7 +61,13 @@ class UpdraftCentral_Factory {
 
 		if (!class_exists($host_class)) include_once($path);
 
-		return call_user_func(array($host_class, 'instance'));
+		// Re-check host class once again just to make sure that we have the desired
+		// class loaded before calling its instance method
+		if (class_exists($host_class)) {
+			return call_user_func(array($host_class, 'instance'));
+		}
+		
+		return null;
 	}
 }
 

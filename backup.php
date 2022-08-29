@@ -302,7 +302,7 @@ class UpdraftPlus_Backup {
 		}
 
 		if (file_exists($zip_name)) {
-			$updraftplus->log("File exists ($zip_name), but was apparently not modified within the last 30 seconds, so we assume that any previous run has now terminated (time_mod=$time_mod, time_now=$time_now, diff=".($time_now-$time_mod).")");
+			$updraftplus->log("File exists ($zip_name), but was not modified within the last 30 seconds, so we assume that any previous run has now terminated (time_mod=$time_mod, time_now=$time_now, diff=".($time_now-$time_mod).")");
 		}
 
 		// Now, check for other forms of temporary file, which would indicate that some activity is going on (even if it hasn't made it into the main zip file yet)
@@ -437,8 +437,8 @@ class UpdraftPlus_Backup {
 
 		global $updraftplus;
 
-		// Check if the feature is disabled
-		if (!defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') || UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
+		// Check if the feature is enabled
+		if (defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') && UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
 
 			if ($updraftplus->is_uploaded($file) || !is_file($this->updraft_dir.'/'.$file)) return;
 			
@@ -1915,7 +1915,7 @@ class UpdraftPlus_Backup {
 		}
 		
 		if (file_exists($backup_final_file_name)) {
-			$updraftplus->log("The final database file ($backup_final_file_name) exists, but was apparently not modified within the last 30 seconds (time_mod=$time_mod, time_now=$time_now, diff=".($time_now-$time_mod)."). Thus we assume that another UpdraftPlus terminated; thus we will continue.");
+			$updraftplus->log("The final database file ($backup_final_file_name) exists, but was not modified within the last 30 seconds (time_mod=$time_mod, time_now=$time_now, diff=".($time_now-$time_mod)."). Thus we assume that another UpdraftPlus terminated; thus we will continue.");
 		}
 
 		// Finally, stitch the files together

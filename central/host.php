@@ -2,8 +2,6 @@
 
 if (!defined('ABSPATH')) die('No direct access.');
 
-if (class_exists('UpdraftCentral_Host')) return;
-
 /**
  * The template definition for UpdraftCentral host
  */
@@ -28,11 +26,7 @@ abstract class UpdraftCentral_Host {
 	 * Class constructor
 	 */
 	public function __construct() {
-		if (!defined('UPDRAFTCENTRAL_CLIENT_DIR')) define('UPDRAFTCENTRAL_CLIENT_DIR', dirname(__FILE__));
-		if (!defined('UPDRAFTCENTRAL_CLIENT_URL')) define('UPDRAFTCENTRAL_CLIENT_URL', plugins_url('', __FILE__));
-
 		add_action('wp_ajax_updraft_central_ajax', array($this, 'updraft_central_ajax_handler'));
-
 	}
 
 	/**

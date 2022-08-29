@@ -934,7 +934,7 @@ class UpdraftPlus {
 				// Return to the end of the file
 				$read_recent = fread($handle, $bytes_back);
 				// Move to end of file - ought to be redundant
-				if (false !== strpos($read_recent, ') The backup apparently succeeded') && false !== strpos($read_recent, 'and is now complete')) {
+				if ((false !== strpos($read_recent, ') The backup apparently succeeded') || false !== strpos($read_recent, ') The backup succeeded')) && false !== strpos($read_recent, 'and is now complete')) {
 					$backup_is_already_complete = true;
 				}
 			}

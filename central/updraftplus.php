@@ -2,7 +2,11 @@
 
 if (class_exists('UpdraftPlus_Host')) return;
 
-if (!class_exists('UpdraftCentral_Host')) require_once('host.php');
+if (!defined('UPDRAFTCENTRAL_CLIENT_DIR')) define('UPDRAFTCENTRAL_CLIENT_DIR', dirname(__FILE__));
+if (!defined('UPDRAFTCENTRAL_CLIENT_URL')) define('UPDRAFTCENTRAL_CLIENT_URL', plugins_url('', __FILE__));
+if (!class_exists('UpdraftCentral_Host')) {
+	include_once(UPDRAFTCENTRAL_CLIENT_DIR.'/host.php');
+}
 
 /**
  * This class is the basic bridge between UpdraftCentral and UpdraftPlus.
