@@ -438,7 +438,7 @@ class UpdraftPlus_Backup {
 		global $updraftplus;
 
 		// Check if the feature is enabled
-		if (defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') && UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
+		if (!defined('UPDRAFTPLUS_UPLOAD_AFTER_CREATE') || UPDRAFTPLUS_UPLOAD_AFTER_CREATE) {
 
 			if ($updraftplus->is_uploaded($file) || !is_file($this->updraft_dir.'/'.$file)) return;
 			
@@ -3416,6 +3416,8 @@ class UpdraftPlus_Backup {
 			} elseif (file_exists($examine_zip)) {
 				$updraftplus->log("Zip file already exists, but is not readable or was zero-sized; will remove: ".basename($examine_zip));
 				@unlink($examine_zip);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+			} elseif ($updraftplus->is_uploaded(basename($examine_zip))) {
+				$this->populate_existing_files_list($examine_zip, true);
 			}
 		}
 
@@ -4346,10 +4348,11 @@ class UpdraftPlus_Backup {
 		// No need to add $itext here - we can just delete any temporary files for this zip
 		UpdraftPlus_Filesystem_Functions::clean_temporary_files('_'.$updraftplus->file_nonce."-".$youwhat, 600);
 
+		$prior_index = $this->index;
 		$this->index++;
 		$this->job_file_entities[$youwhat]['index'] = $this->index;
 		$updraftplus->jobdata_set('job_file_entities', $this->job_file_entities);
-		$this->maybe_cloud_backup(basename($full_path), $this->whichone, $this->index);
+		$this->maybe_cloud_backup(basename($full_path), $this->whichone, $prior_index);
 	}
 
 	/**
@@ -4410,15 +4413,14 @@ class UpdraftPlus_Backup {
 
 			@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 
-			if (preg_match('/\.tmp$/', $zip_path)) {
-				$manifest = preg_replace('/\.tmp$/', '.list-temp.tmp', $zip_path);
-			} else {
-				$manifest = $zip_path.'.list-temp.tmp';
-			}
+			$updraftplus->log(basename($zip_path).": Zip file already exists, with ".count($this->existing_files)." files");
+
+			// If this is a .tmp file (partial zip) then return we do not want to create an incomplete manifest file
+			if (preg_match('/\.tmp$/', $zip_path)) return;
+			
+			$manifest = $zip_path.'.list-temp.tmp';
 
 			$this->write_zip_manifest_from_list($manifest, $this->existing_files);
-
-			$updraftplus->log(basename($zip_path).": Zip file already exists, with ".count($this->existing_files)." files");
 		}
 	}
 

@@ -3454,13 +3454,16 @@ class Updraft_Restorer {
 						$this->restoring_table = ''; // reset this variable so that the same table renaming procedure at the end of this method doesn't get executed
 					}
 				}
+			} elseif (preg_match('/^SET @@GLOBAL.GTID_PURGED/i', $sql_line)) {
+				// skip the SET @@GLOBAL.GTID_PURGED command
+				$sql_type = 17;
 			} else {
 				// Prevent the previous value of $sql_type being retained for an unknown type
 				$sql_type = 0;
 			}
 
-			// Do not execute "USE" or "CREATE|DROP DATABASE" commands
-			if (6 != $sql_type && 7 != $sql_type && (9 != $sql_type || false == $this->triggers_forbidden) && 10 != $sql_type) {
+			// Do not execute "USE" or "CREATE|DROP DATABASE" or "SET @@GLOBAL.GTID_PURGED" commands
+			if (6 != $sql_type && 7 != $sql_type && (9 != $sql_type || false == $this->triggers_forbidden) && 10 != $sql_type && 17 != $sql_type) {
 				$do_exec = $this->sql_exec($sql_line, $sql_type);
 				if (is_wp_error($do_exec)) return $do_exec;
 			} else {
@@ -3826,6 +3829,7 @@ class Updraft_Restorer {
 	 * 14 ALTER
 	 * 15 UNLOCK
 	 * 16 DROP VIEW
+	 * 17 SET GLOBAL.GTID_PURGED
 	 *
 	 * @param  String  $sql_line            sql line to execute
 	 * @param  Integer $sql_type            sql type

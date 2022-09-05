@@ -4265,10 +4265,6 @@ class UpdraftPlus {
 			if (realpath($fullpath)) {
 				$deleted = unlink($fullpath);
 				$this->log($log.(($deleted) ? 'OK' : 'failed'));
-				if (file_exists($fullpath.'.list.tmp')) {
-					$this->log("Deleting zip manifest ({$file}.list.tmp)");
-					unlink($fullpath.'.list.tmp');
-				}
 				return $deleted;
 			}
 		} else {
