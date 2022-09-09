@@ -363,6 +363,7 @@ class UpdraftPlus_Backup {
 					@rename($full_path.'.tmp', $full_path);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
 					$timetaken = max(microtime(true)-$this->zip_microtime_start, 0.000001);
 					$kbsize = filesize($full_path)/1024;
+					$updraftplus->jobdata_set('filesize-'.$whichone.$this->index, filesize($full_path));
 					$rate = round($kbsize/$timetaken, 1);
 					$updraftplus->log("Created $whichone zip (".$this->index.") - ".round($kbsize, 1)." KB in ".round($timetaken, 1)." s ($rate KB/s) ($checksum_description)");
 					// We can now remove any left-over temporary files from this job
@@ -1459,9 +1460,13 @@ class UpdraftPlus_Backup {
 					foreach ($created as $fname) {
 						$backup_array[$youwhat][$index] = $fname;
 						$itext = (0 == $index) ? '' : $index;
+						// File may have already been uploaded and removed so get the size from jobdata
+						if (file_exists($this->updraft_dir.'/'.$fname)) {
+							$backup_array[$youwhat.$itext.'-size'] = filesize($this->updraft_dir.'/'.$fname);
+						} else {
+							$backup_array[$youwhat.$itext.'-size'] = $updraftplus->jobdata_get('filesize-'.$youwhat.$index);
+						}
 						$index++;
-						// File may have already been uploaded so don't try to get the size
-						if (file_exists($this->updraft_dir.'/'.$fname)) $backup_array[$youwhat.$itext.'-size'] = filesize($this->updraft_dir.'/'.$fname);
 					}
 				}
 
@@ -4392,13 +4397,19 @@ class UpdraftPlus_Backup {
 		$zip = new $this->use_zip_object;
 		if (true !== $zip->open($zip_path)) {
 			$updraftplus->log("Could not open zip file to examine (".$zip->last_error."); will remove: ".basename($zip_path));
-			@unlink($zip_path);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+			unlink($zip_path);
 		} else {
 
 			$this->existing_zipfiles_size += filesize($zip_path);
 			
 			// Don't put this in the for loop, or the magic __get() method which accessing the property invokes gets repeatedly called every time the loop goes round
 			$numfiles = $zip->numFiles;
+
+			if (false === $numfiles) {
+				$updraftplus->log("Could not read any files from the zip (".$zip->last_error."): ".basename($zip_path));
+				$zip->close();
+				return;
+			}
 
 			for ($i=0; $i < $numfiles; $i++) {
 				$si = $zip->statIndex($i);
@@ -4444,6 +4455,8 @@ class UpdraftPlus_Backup {
 		} else {
 			// Don't put this in the for loop, or the magic __get() method gets repeatedly called every time the loop goes round
 			$numfiles = $zip->numFiles;
+
+			if (false === $numfiles) $updraftplus->log("write_zip_manifest_from_zip(): Could not read any files from the zip: (".basename($zip_path).") Zip error: (".$zip->last_error.")");
 
 			for ($i=0; $i < $numfiles; $i++) {
 				$si = $zip->statIndex($i);

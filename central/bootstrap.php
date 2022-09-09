@@ -756,17 +756,19 @@ class UpdraftCentral_Main {
 	public function debugtools_dashboard() {
 		global $updraftcentral_host_plugin;
 
-		$screen = get_current_screen();
-		$hosts = apply_filters('updraftcentral_host_plugins', array());
-		$includes = $updraftcentral_host_plugin->retrieve_show_message('including_description');
-
 		$including_desc = '';
-		foreach ($hosts as $plugin) {
-			if (false !== stripos($screen->id, $plugin)) {
-				$key = str_replace('-', '_', strtolower($plugin)).'_desc';
-				if (isset($includes[$key])) {
-					$including_desc = $includes[$key];
-					break;
+		if (function_exists('get_current_screen')) {
+			$screen = get_current_screen();
+			$hosts = apply_filters('updraftcentral_host_plugins', array());
+			$includes = $updraftcentral_host_plugin->retrieve_show_message('including_description');
+
+			foreach ($hosts as $plugin) {
+				if (false !== stripos($screen->id, $plugin)) {
+					$key = str_replace('-', '_', strtolower($plugin)).'_desc';
+					if (isset($includes[$key])) {
+						$including_desc = $includes[$key];
+						break;
+					}
 				}
 			}
 		}
