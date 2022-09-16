@@ -2344,7 +2344,8 @@ jQuery(function($) {
 
 		var backup_options = {
 			db_anon_all: db_anon_all,
-			db_anon_non_staff: db_anon_non_staff
+			db_anon_non_staff: db_anon_non_staff,
+			clone_region: region
 		}
 
 		if ('wp_only' === backup_nonce) {
@@ -2774,7 +2775,8 @@ jQuery(function($) {
 			backup_nonce: backup_nonce,
 			backup_timestamp: backup_timestamp,
 			db_anon_all: backup_options['db_anon_all'],
-			db_anon_non_staff: backup_options['db_anon_non_staff']
+			db_anon_non_staff: backup_options['db_anon_non_staff'],
+			clone_region: backup_options['clone_region']
 		};
 
 		updraft_activejobslist_backupnownonce_only = 1;
@@ -3282,6 +3284,7 @@ jQuery(function($) {
 			// Setup cancel button events
 			$('.updraft-restore--cancel').on('click', function(e) {
 				e.preventDefault();
+				jQuery('#ud_downloadstatus2').html('');
 				this.close();
 			}.bind(this));
 

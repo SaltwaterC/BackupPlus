@@ -2838,6 +2838,7 @@ class UpdraftPlus {
 		
 		if (isset($request['clone_url'])) $options['clone_url'] = $request['clone_url'];
 		if (isset($request['key'])) $options['key'] = $request['key'];
+		if (isset($request['clone_region'])) $options['clone_region'] = $request['clone_region'];
 		if (isset($request['backup_nonce']) && isset($request['backup_timestamp'])) {
 			if ('current' != $request['backup_nonce'] && 'current' != $request['backup_timestamp']) {
 				$options['use_nonce'] = $request['backup_nonce'];
@@ -2894,6 +2895,8 @@ class UpdraftPlus {
 		$jobdata[] = $options['clone_url'];
 		$jobdata[] = 'clone_key';
 		$jobdata[] = $options['key'];
+		$jobdata[] = 'clone_region';
+		$jobdata[] = $options['clone_region'];
 		$jobdata[] = 'remotesend_info';
 		$jobdata[] = array('url' => $options['clone_url']);
 		$jobdata[$backup_database_key] = $db_backups;
@@ -3584,7 +3587,7 @@ class UpdraftPlus {
 		if ($force_abort) {
 			$send_an_email = true;
 			$final_message = __('The backup was aborted by the user', 'updraftplus');
-			if (!empty($clone_job)) $this->get_updraftplus_clone()->clone_failed_delete(array('clone_id' => $clone_id, 'secret_token' => $secret_token));
+			if (!empty($clone_job)) $this->get_updraftplus_clone()->clone_failed_delete(array('clone_id' => $clone_id, 'secret_token' => $secret_token, 'reason' => 'The backup was aborted by the user'));
 		} elseif (0 == $this->error_count()) {
 			$send_an_email = true;
 			$service = $this->jobdata_get('service');
@@ -3614,7 +3617,7 @@ class UpdraftPlus {
 		
 			$send_an_email = true;
 			$final_message = __('The backup attempt has finished, apparently unsuccessfully', 'updraftplus');
-			if (!empty($clone_job)) $this->get_updraftplus_clone()->clone_failed_delete(array('clone_id' => $clone_id, 'secret_token' => $secret_token));
+			if (!empty($clone_job)) $this->get_updraftplus_clone()->clone_failed_delete(array('clone_id' => $clone_id, 'secret_token' => $secret_token, 'reason' => 'The backup attempt has finished, apparently unsuccessfully'));
 		} else {
 			// There are errors, but a resumption will be attempted
 			$final_message = __('The backup has not finished; a resumption is scheduled', 'updraftplus');

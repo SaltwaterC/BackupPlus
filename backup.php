@@ -2160,7 +2160,7 @@ class UpdraftPlus_Backup {
 			$where_array = str_replace('%', '[percent_sign]', $where_array);
 		}
 		$where = '';
-		
+
 		if (!empty($where_array) && is_array($where_array)) {
 			// N.B. Don't add a WHERE prefix here; most versions of mysqldump silently strip it out, but one was encountered that didn't.
 			$first_loop = true;
@@ -2215,6 +2215,7 @@ class UpdraftPlus_Backup {
 		
 		$ret = false;
 		$any_output = false;
+		$gtid_found = false;
 		$writes = 0;
 		$write_bytes = 0;
 		$handle = function_exists('popen') ? popen($exec, 'r') : false;
@@ -2222,6 +2223,14 @@ class UpdraftPlus_Backup {
 			while (!feof($handle)) {
 				$w = fgets($handle, 1048576);
 				if (is_string($w) && $w) {
+
+					if (preg_match('/^SET @@GLOBAL.GTID_PURGED/i', $w)) $gtid_found = true;
+
+					if ($gtid_found) {
+						if (false !== strpos($w, ';')) $gtid_found = false;
+						continue;
+					}
+
 					$this->stow($w);
 					$writes++;
 					$write_bytes += strlen($w);
