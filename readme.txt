@@ -164,24 +164,6 @@ Unfortunately not; since this is free software, there’s no warranty and no gua
 
 == Changelog ==
 
-The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
-
-N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
-
-
-* TWEAK: Do not write `SET @@GLOBAL.GTID_PURGED` statements
-* TWEAK: Improve the Handlebars template of the Rackspace Cloud Files remote storage by taking PHP code out of it
-* TWEAK: Improve the Handlebars template of the OpenStack (Swift) remote storage by taking PHP code out of it
-* TWEAK: Do not run out-of-place "SET @@GLOBAL.GTID_PURGED" statements upon restore
-* TWEAK: WP Rocket - disable CDN upon migration completion since key will be invalid.
-* TWEAK: Improve the UpdraftClone user-visible feedback and logging on delay or failure conditions
-* TWEAK: Improve the Handlebars template of the OpenStack (Swift) remote storage by taking PHP code out of it
-* FIX: Restrict the CSS scope for our jQuery to prevent conflicts
-* FIX: UI bug when unable to download a database for restoration and then retrying before refreshing the page
-* TWEAK: Improve the Handlebars template of the Rackspace Cloud Files remote storage by taking PHP code out of it   
-* TWEAK: WebDAV refactor part 2: Eliminate the stream-wrapper layer
-
-
 = 1.22.22 - 16/Sep/2022 =
 
 * FIX: Restrict the CSS scope for our jQuery to prevent conflicts
@@ -192,7 +174,6 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Improve the Handlebars template of the Rackspace Cloud Files remote storage by taking PHP code out of it
 * TWEAK: WP Rocket - disable CDN upon migration completion since key will be invalid.
 * TWEAK: Improve the UpdraftClone user-visible feedback and logging on delay or failure conditions
-* TWEAK: Improve the Handlebars template of the Rackspace Cloud Files remote storage by taking PHP code out of it   
 * TWEAK: WebDAV refactor part 2: Eliminate the stream-wrapper layer
 
 = 1.22.21 - 09/Sep/2022 =
