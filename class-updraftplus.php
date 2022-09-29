@@ -5428,11 +5428,17 @@ class UpdraftPlus {
 				$select_restore_tables .= '<label for="updraft_restore_table_udp_all_other_tables"  title="'.$all_other_table_title.'">'.__('Include all tables not listed below', 'updraftplus').'</label><br>';
 			}
 
+			$select_table_button = '<p><a href="#" class="updraft-select-all-tables">'.__('Select All', 'updraftplus').'</a> | <a href="#" class="updraft-deselect-all-tables">'.__('Deselect All', 'updraftplus').'</a></p>';
+			$select_restore_tables .= $select_table_button;
+
 			foreach ($tables_found as $table) {
 				$checked = $skip_composite_tables && UpdraftPlus_Database_Utility::table_has_composite_private_key($table) ? '' : 'checked="checked"';
 				$select_restore_tables .= '<input class="updraft_restore_tables_options" id="updraft_restore_table_'.$table.'" '. $checked .' type="checkbox" name="updraft_restore_tables_options[]" value="'.$table.'"> ';
 				$select_restore_tables .= '<label for="updraft_restore_table_'.$table.'">'.$table.'</label><br>';
 			}
+
+			$select_restore_tables .= $select_table_button;
+
 			$select_restore_tables .= '</div></div>';
 
 			$info['addui'] = empty($info['addui']) ? $select_restore_tables : $info['addui'].'<br>'.$select_restore_tables;

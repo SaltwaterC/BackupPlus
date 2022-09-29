@@ -4580,6 +4580,7 @@ class UpdraftPlus_Admin {
 		} elseif (!empty($backup['service']) && array('none') != $backup['service'] && array('') != $backup['service'] && 'none' != $backup['service']) {
 			
 			foreach ($services as $key => $value) {
+				if (is_string($backup['service'])) $backup['service'] = array($backup['service']);
 				if (in_array($value, $backup['service'])) unset($services[$key]);
 			}
 
