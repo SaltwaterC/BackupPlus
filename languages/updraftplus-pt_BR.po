@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2022-11-07 18:23:50+0000\n"
+"PO-Revision-Date: 2023-03-01 16:29:16+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -3834,7 +3834,7 @@ msgstr "parar"
 
 #: src/admin.php:971, src/admin.php:3555
 msgid "The backup has finished running"
-msgstr "O backup terminou de executar"
+msgstr "O backup terminou de ser executado"
 
 #: src/templates/wp-admin/advanced/tools-menu.php:30,
 #: src/templates/wp-admin/advanced/wipe-settings.php:5,
@@ -4647,7 +4647,7 @@ msgstr "Você deveria certificar-se de que este é realmente um conjunto de back
 
 #: src/includes/class-wpadmin-commands.php:134
 msgid "This backup set was not known by UpdraftPlus to be created by the current WordPress installation, but was either found in remote storage, or was sent from a remote site."
-msgstr "Este conjunto de backup não foi reconhecido pelo UpdraftPlus para ser criado na instalação atual do WordPress, mas foi encontrada no armazenamento remotou ou foi enviada de um site remoto."
+msgstr "O UpdraftPlus não reconheceu este conjunto de backup como criado pela instalação atual do WordPress, mas o encontrou em um armazenamento remoto ou ele foi enviado de um site remoto."
 
 #: src/admin.php:938, src/includes/class-remote-send.php:441
 msgid "Testing connection..."
@@ -5268,7 +5268,7 @@ msgstr "Para poder bloquear o acesso às configurações do UpdraftPlus com uma 
 #: src/templates/wp-admin/settings/downloading-and-restoring.php:69,
 #: src/templates/wp-admin/settings/tab-backups.php:71
 msgid "Upload files into UpdraftPlus."
-msgstr "Enviar arquivos para o UpdraftPlus."
+msgstr "Envie arquivos para o UpdraftPlus."
 
 #: src/admin.php:1298, src/includes/class-commands.php:495,
 #: src/templates/wp-admin/settings/take-backup.php:13
@@ -7032,7 +7032,7 @@ msgstr "Criando backup %s e base dados com UpdraftPlus..."
 
 #: src/addons/autobackup.php:324
 msgid "Automatically backup (where relevant) plugins, themes and the WordPress database with UpdraftPlus before updating"
-msgstr "Efetue o backup automáticamente (quando relevante) dos plugins, temas e banco de dados do WordPress com UpdraftsPlus antes de atualizar"
+msgstr "Automaticamente fazer backup (quando pertinente) de plugins, temas e do banco de dados do WordPress com o UpdraftPlus antes de atualizar"
 
 #: src/addons/morefiles.php:265, src/addons/morefiles.php:266
 msgid "If you are not sure then you should stop; otherwise you may destroy this WordPress installation."

@@ -1478,17 +1478,17 @@
         },
         {
             "name": "vakata/jstree",
-            "version": "3.3.12",
-            "version_normalized": "3.3.12.0",
+            "version": "3.3.15",
+            "version_normalized": "3.3.15.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/vakata/jstree.git",
-                "reference": "7a03954015eaea2467956dc05e6be78f4d1a1ff0"
+                "reference": "8c1bcc87771f5be0b70cd49d6a7888707ebcc64e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vakata/jstree/zipball/7a03954015eaea2467956dc05e6be78f4d1a1ff0",
-                "reference": "7a03954015eaea2467956dc05e6be78f4d1a1ff0",
+                "url": "https://api.github.com/repos/vakata/jstree/zipball/8c1bcc87771f5be0b70cd49d6a7888707ebcc64e",
+                "reference": "8c1bcc87771f5be0b70cd49d6a7888707ebcc64e",
                 "shasum": ""
             },
             "require": {
@@ -1497,7 +1497,7 @@
             "suggest": {
                 "robloach/component-installer": "Allows installation of Components via Composer"
             },
-            "time": "2021-09-03T12:55:53+00:00",
+            "time": "2023-02-19T23:38:56+00:00",
             "type": "component",
             "extra": {
                 "component": {
@@ -1521,7 +1521,7 @@
                     ]
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1540,10 +1540,6 @@
                 "source": "https://github.com/vakata/jstree"
             },
             "funding": [
-                {
-                    "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=paypal@vakata.com&currency_code=USD&amount=&return=http://jstree.com/donation&item_name=Buy+me+a+coffee+for+jsTree",
-                    "type": "custom"
-                },
                 {
                     "url": "https://github.com/vakata",
                     "type": "github"
