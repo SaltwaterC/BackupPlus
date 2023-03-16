@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 6.2
-Stable tag: 1.23.2
+Stable tag: 1.23.3
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -170,7 +170,11 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 
 
 
-= 1.23.2 - 15/March/2023 =
+= 1.23.3 - 16/Mar/2023 =
+
+* SECURITY: This release fixes an important security defect - please update. Full details: https://updraftplus.com/updraftplus-1-23-3-2-23-3-important-security-release/. Sites are affected if there are WordPress users (i.e. people who can login) who can reach the back-end (i.e. wp-admin) dashboard (but we recommend everyone updates in any case).
+
+= 1.23.2 - 15/Mar/2023 =
 
 * FIX: Automatic backups before updating a plugin, theme, or WP core were not working (regression in 1.23.1)
 * FIX: A database backup couldn't be taken from WP-Optimize and All-In-One Security (AIOS) (regression)
@@ -180,7 +184,7 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Improve the Handlebars template of the UpdraftVault remote storage by taking PHP code out of it
 * TWEAK: Improve the Handlebars template of the pCloud remote storage by taking PHP code out of it
 
-= 1.23.1 - 08/March/2023 =
+= 1.23.1 - 08/Mar/2023 =
 
 * FEATURE: Support Cloudflare R2 as a generic S3 storage provider (always use v4 signature)
 * FEATURE: Added the ability to get an accurate row count for all tables in the advanced tools
@@ -1693,7 +1697,7 @@ Older changes are found <a href="https://plugins.svn.wordpress.org/updraftplus/t
 
 == License ==
 
-    Copyright 2011-20 David Anderson
+    Copyright 2011-23 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1714,4 +1718,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.23.2: Some fixes and tweaks - a recommended update for all.
+* 1.23.3: A security fix release - please update. More details: https://updraftplus.com/updraftplus-1-23-3-2-23-3-important-security-release/
