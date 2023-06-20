@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, restore, database backup, wordpress backup, cloud backup, s3, dropbox, google drive, onedrive, ftp, backups
 Requires at least: 3.2
 Tested up to: 6.2
-Stable tag: 1.23.5
+Stable tag: 1.23.6
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -181,12 +181,13 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 * TWEAK: Fixed Missing/ broken links for the pcloud image in addons tab
 
 
-= 1.23.5 - 19/Jun/2023 =
+= 1.23.6 - 19/Jun/2023 =
 
 * FIX: Search / replace database not working on Admin dashboard > Settings > UpdraftPlus Backups > Advanced Tools > Search / replace database on PHP 8.2 due to stricter type checking
 * TWEAK: Remove the incremental dropdown on incremental backup restore when the user selects only the database to restore
 * TWEAK: Validate SFTP key field on credential test and before save
 * TWEAK: Remove the unused UpdraftPlus_S3::getHttpUploadPostParams() method
+* TWEAK: Attempt to workaround some web hosts' opcode cache producing incorrect error upon upgrade
 * COMPATIBILITY: Fix pCloud deprecated warning in PHP 8.2
 * COMPATIBILITY: Fix Google Cloud deprecated warning in PHP 8.2
 * COMPATIBILITY: Fix Google Drive deprecated warning in PHP 8.2
@@ -1767,4 +1768,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.23.5: Various tweaks and fixes a fatal error when searching / replacing database manually. A recommended update for all.
+* 1.23.6: Various tweaks and fixes a fatal error when searching / replacing database manually. A recommended update for all.
