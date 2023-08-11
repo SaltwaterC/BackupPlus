@@ -1450,7 +1450,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			'account_name_label' => __("Account holder's name", 'updraftplus'),
 		);
 		if (preg_match('#^(https?://(\d+)\.(\d+)\.(\d+)\.(\d+))/#i', apply_filters('updraftplus_gdrive_admin_page_url', UpdraftPlus_Options::admin_page_url()), $matches)) $properties['ip_address'] = $matches[1];
-		if (isset($properties['ip_address'])) $properties['unallowed_direct_ip_address'] = wp_kses(sprintf(__("%s does not allow authorisation of sites hosted on direct IP addresses.", 'updraftplus')).' '.sprintf(__("You will need to change your site's address (%s) before you can use %s for storage.", 'updraftplus'), $matches[1], __('Google Drive', 'updraftplus')), $this->allowed_html_for_content_sanitisation());
+		if (isset($properties['ip_address'])) $properties['unallowed_direct_ip_address'] = wp_kses(sprintf(__("%s does not allow authorisation of sites hosted on direct IP addresses.", 'updraftplus').' '.__("You will need to change your site's address (%s) before you can use %s for storage.", 'updraftplus'), __('Google Drive', 'updraftplus'), $matches[1], __('Google Drive', 'updraftplus')), $this->allowed_html_for_content_sanitisation());
 		return wp_parse_args(apply_filters('updraft_'.$this->get_id().'_template_properties', array()), wp_parse_args($properties, $this->get_persistent_variables_and_methods()));
 	}
 

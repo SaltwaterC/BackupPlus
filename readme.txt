@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.3
-Stable tag: 1.23.8
+Stable tag: 1.23.9
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -177,6 +177,12 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
 
+
+= 1.23.9 - 14/Aug/2023 =
+
+* FIX: Fatal error of Uncaught ArgumentCountError when the UpdraftPlus settings page is browsed from an IP-adressed site (i.e. no hostname) on PHP 7.1+
+* FIX: Incorrect caching mechanism such that when multiple Google Drive storage back-ends were in use (Premium feature), uploading to a storage would fail due to unmatched folder ID taken from a different storage instance
+* TWEAK: Define class properties in UpdraftPlus_Addons_Migrator class for PHP 8.2 compatibility
 
 = 1.23.8 - 08/Aug/2023 =
 
@@ -1805,4 +1811,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.23.8: Given the basic migration to the free version, various fixes and tweaks. A recommended update for all.
+* 1.23.9: Various fixes and tweaks. A recommended update for all.
