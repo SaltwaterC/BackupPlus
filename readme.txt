@@ -2,7 +2,7 @@
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
-Tested up to: 6.3
+Tested up to: 6.4
 Stable tag: 1.23.10
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
