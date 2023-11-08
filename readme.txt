@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.4
-Stable tag: 1.23.11
+Stable tag: 1.23.12
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -182,6 +182,11 @@ N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which i
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.23.1.x of the free version correspond to changes made in 2.23.1.x of the paid version.
+
+= 1.23.12 - 08/Nov/2023 =
+
+* FIX: Issue that prevented some database restores from completing due to a change in wpdb in WordPress 6.4
+* TWEAK: Replace Javascript onchange event with oninput event to detect changes made for HTML <input> tags on the settings page, also to add <textarea> to the event handler so that unsaved changes can be detected
 
 = 1.23.11 - 03/Nov/2023 =
 
@@ -1843,4 +1848,4 @@ Reliance upon any non-English translation is at your own risk; UpdraftPlus can g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.23.11: Fixes a targeted Google Drive security issue, and a couple of potential bugs with OneDrive and WebDAV. Adds separate mu-plugins backup and easier Google Drive folder navigation. Various further tweaks. A recommended update for all.
+* 1.23.12: Fixes an issue that prevented some database restores from completing due to a change in wpdb in WordPress 6.4. Various further tweaks. A recommended update for all.

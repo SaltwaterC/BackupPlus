@@ -3,7 +3,7 @@
         'name' => 'updraftplus/updraftplus',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '3aaa20618ec6c845050c1ccd8020e228353061bf',
+        'reference' => '3a5f74bcb89b071c6493ae71ba3de3647fd74ca4',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -355,7 +355,7 @@
         'updraftplus/updraftplus' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '3aaa20618ec6c845050c1ccd8020e228353061bf',
+            'reference' => '3a5f74bcb89b071c6493ae71ba3de3647fd74ca4',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
