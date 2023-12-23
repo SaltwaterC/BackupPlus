@@ -580,19 +580,23 @@ class UpdraftPlus_Admin {
 			$this->setup_all_admin_notices_global($service);
 		}
 		
-		if (!class_exists('Updraft_Dashboard_News_Offer')) updraft_try_include_file('includes/class-updraft-dashboard-news-offer.php', 'include_once');
+		if (file_exists(UPDRAFTPLUS_DIR.'/udaddons')) {
+			if (!class_exists('Updraft_Dashboard_News_Offer')) updraft_try_include_file('includes/class-updraft-dashboard-news-offer.php', 'include_once');
 
-		$news_translations = array(
-			'product_title' => 'UpdraftPlus',
-			'item_prefix' => __('UpdraftPlus', 'updraftplus'),
-			'item_description' => __('UpdraftPlus News', 'updraftplus'),
-			'dismiss_tooltip' => __('Dismiss all UpdraftPlus news', 'updraftplus'),
-			'dismiss_confirm' => __('Are you sure you want to dismiss all UpdraftPlus news forever?', 'updraftplus'),
-		);
+			$news_translations = array(
+				'product_title' => 'UpdraftPlus',
+				'item_prefix' => __('UpdraftPlus', 'updraftplus'),
+				'item_description' => __('UpdraftPlus News', 'updraftplus'),
+				'dismiss_tooltip' => __('Dismiss all UpdraftPlus news', 'updraftplus'),
+				'dismiss_confirm' => __('Are you sure you want to dismiss all UpdraftPlus news forever?', 'updraftplus'),
+			);
+		}
 		
 		add_filter('woocommerce_in_plugin_update_message', array($this, 'woocommerce_in_plugin_update_message'));
-		
-		new Updraft_Dashboard_News_Offer('https://feeds.feedburner.com/UpdraftPlus', 'https://updraftplus.com/news/', $news_translations);
+
+		if (file_exists(UPDRAFTPLUS_DIR.'/udaddons')) {
+			new Updraft_Dashboard_News_Offer('https://feeds.feedburner.com/UpdraftPlus', 'https://updraftplus.com/news/', $news_translations);
+		}
 
 		// New-install admin tour
 		if ((!defined('UPDRAFTPLUS_ENABLE_TOUR') || UPDRAFTPLUS_ENABLE_TOUR) && (!defined('UPDRAFTPLUS_THIS_IS_CLONE') || !UPDRAFTPLUS_THIS_IS_CLONE)) {
@@ -5211,14 +5215,19 @@ ENDHERE;
 			$updraftplus->output_to_browser(''); // Start timer
 			// Force output buffering off so that we get log lines sent to the browser as they come not all at once at the end of the ajax restore
 			// zlib creates an output buffer, and waits for the entire page to be generated before it can send it to the client try to turn it off
-			@ini_set("zlib.output_compression", 0);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@ini_set("zlib.output_compression", '0');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 			// Turn off PHP output buffering for NGINX
 			header('X-Accel-Buffering: no');
 			header('Content-Encoding: none');
 			while (ob_get_level()) {
 				ob_end_flush();
 			}
-			ob_implicit_flush(1);
+			if (version_compare(PHP_VERSION, '8.0.0', '>=')) {
+				$flush = true; // PHP 8.0.0 or newer, use bool
+			} else {
+				$flush = 1; // PHP older than 8.0.0, use int
+			}
+			ob_implicit_flush($flush);
 		}
 
 		$updraftplus->log("Ensuring WP_Filesystem is setup for a restore");
