@@ -1501,11 +1501,11 @@ class UpdraftPlus_Admin {
 			if (empty($_REQUEST['timestamp']) || !is_numeric($_REQUEST['timestamp']) || empty($_REQUEST['type'])) die;
 	
 			$findexes = empty($_REQUEST['findex']) ? array(0) : $_REQUEST['findex'];
-			$stage = empty($_REQUEST['stage']) ? '' : $_REQUEST['stage'];
+			$stage = empty($_REQUEST['stage']) ? '' : sanitize_text_field($_REQUEST['stage']);
 			$file_path = empty($_REQUEST['filepath']) ? '' : $_REQUEST['filepath'];
 	
 			// This call may not actually return, depending upon what mode it is called in
-			$result = $this->do_updraft_download_backup($findexes, $_REQUEST['type'], $_REQUEST['timestamp'], $stage, false, $file_path);
+			$result = $this->do_updraft_download_backup($findexes, (string) $_REQUEST['type'], (int) $_REQUEST['timestamp'], $stage, false, $file_path);
 			
 			// In theory, if a response was already sent, then Connection: close has been issued, and a Content-Length. However, in https://updraftplus.com/forums/topic/pclzip_err_bad_format-10-invalid-archive-structure/ a browser ignores both of these, and then picks up the second output and complains.
 			if (empty($result['already_closed'])) echo json_encode($result);
@@ -1568,7 +1568,7 @@ class UpdraftPlus_Admin {
 			// This is a bit ugly; these variables get placed back into $_POST (where they may possibly have come from), so that UpdraftPlus::log() can detect exactly where to log the download status.
 			$_POST['findex'] = $findex;
 			$_POST['type'] = $type;
-			$_POST['timestamp'] = $timestamp;
+			$_POST['timestamp'] = (int) $timestamp;
 
 			// We already know that no possible entities have an MD5 clash (even after 2 characters)
 			// Also, there's nothing enforcing a requirement that nonces are hexadecimal
@@ -3272,7 +3272,7 @@ class UpdraftPlus_Admin {
 
 		if ($return_instead_of_echo) return $html;
 
-		echo $html;
+		echo wp_kses_post($html);
 	}
 
 	/**
@@ -3342,7 +3342,7 @@ class UpdraftPlus_Admin {
 		
 			echo $nonce_field;
 
-			$referer = esc_attr(UpdraftPlus_Manipulation_Functions::wp_unslash($_SERVER['REQUEST_URI']));
+			$referer = esc_url(UpdraftPlus_Manipulation_Functions::wp_unslash($_SERVER['REQUEST_URI']));
 
 			// This one is used on single site installs
 			if (false === strpos($referer, '?')) {
@@ -4051,9 +4051,9 @@ class UpdraftPlus_Admin {
 	 */
 	public function storagemethod_row($method, $header, $contents) {
 		?>
-			<tr class="updraftplusmethod <?php echo $method;?>">
-				<th><?php echo $header;?></th>
-				<td><?php echo $contents;?></td>
+			<tr class="updraftplusmethod <?php echo esc_attr($method);?>">
+				<th><?php echo wp_kses_post($header);?></th>
+				<td><?php echo wp_kses_post($contents);?></td>
 			</tr>
 		<?php
 	}
@@ -4067,9 +4067,9 @@ class UpdraftPlus_Admin {
 	 */
 	public function storagemethod_row_multi($classes, $header, $contents) {
 		?>
-			<tr class="<?php echo $classes;?>">
-				<th><?php echo $header;?></th>
-				<td><?php echo $contents;?></td>
+			<tr class="<?php echo esc_attr($classes);?>">
+				<th><?php echo wp_kses_post($header);?></th>
+				<td><?php echo wp_kses_post($contents);?></td>
 			</tr>
 		<?php
 	}
@@ -4707,23 +4707,20 @@ class UpdraftPlus_Admin {
 		$ret = '';
 		if (isset($backup['nonce']) && preg_match("/^[0-9a-f]{12}$/", $backup['nonce']) && is_readable($updraft_dir.'/log.'.$backup['nonce'].'.txt')) {
 			$nval = $backup['nonce'];
-			$lt = __('View Log', 'updraftplus');
-			$url = esc_attr(UpdraftPlus_Options::admin_page()."?page=updraftplus&action=downloadlog&amp;updraftplus_backup_nonce=$nval");
-			$ret .= <<<ENDHERE
-				<div style="clear:none;" class="updraft-viewlogdiv">
-					<a class="button no-decoration updraft-log-link" href="$url" data-jobid="$nval">
-						$lt
+			$url = UpdraftPlus_Options::admin_page()."?page=updraftplus&action=downloadlog&amp;updraftplus_backup_nonce=$nval";
+			$ret .= '<div style="clear:none;" class="updraft-viewlogdiv">
+					<a class="button no-decoration updraft-log-link" href="'.esc_attr($url).'" data-jobid="'.esc_attr($nval).'">
+						'.__('View Log', 'updraftplus').'
 					</a>
 					<!--
 					<form action="$url" method="get">
 						<input type="hidden" name="action" value="downloadlog" />
 						<input type="hidden" name="page" value="updraftplus" />
 						<input type="hidden" name="updraftplus_backup_nonce" value="$nval" />
-						<input type="submit" value="$lt" class="updraft-log-link" onclick="event.preventDefault(); updraft_popuplog('$nval');" />
+						<input type="submit" value="$lt" class="updraft-log-link" onclick="event.preventDefault(); updraft_popuplog(\''.esc_attr($nval).'\');" />
 					</form>
 					-->
-				</div>
-ENDHERE;
+				</div>';
 			return $ret;
 		}
 	}

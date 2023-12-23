@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.4
-Stable tag: 1.23.15
+Stable tag: 1.23.16
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -183,13 +183,14 @@ The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place t
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.23.1.x of the free version correspond to changes made in 2.23.1.x of the paid version.
 
-= 1.23.15 - 23/Dec/2023 =
+= 1.23.16 - 23/Dec/2023 =
 
 * TWEAK: Added demo link for the family plugin in advertisement
 * TWEAK: Removed https / http prefix from s3generic endpoints
 * TWEAK: Resolve PHP 8.0 compatibility with ob_implicit_flush function
 * TWEAK: Dropbox error logs improvement
 * TWEAK: As required by the wordpress.org plugin team, all UpdraftPlus news is forbidden to be displayed in the "WordPress News" section of the dashboard for users of the free plugin even if consent is first given.
+* TWEAK: Fix some incorrect calls to translation functions
 
 = 1.23.14 - 30/Nov/2023 =
 
@@ -1877,4 +1878,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.23.15: Various small tweaks. A recommended update for all.
+* 1.23.16: Various small tweaks. A recommended update for all.

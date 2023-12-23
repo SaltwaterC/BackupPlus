@@ -4297,7 +4297,7 @@ class Updraft_Restorer {
 				$um_sql = "SELECT umeta_id, meta_key 
 					FROM {$import_table_prefix}usermeta 
 					WHERE meta_key 
-					LIKE '".str_replace('_', '\_', $old_table_prefix)."%'";
+					LIKE '".UpdraftPlus_Database_Utility::esc_like($old_table_prefix)."%'";
 				$meta_keys = $wpdb->get_results($um_sql);
 
 				foreach ($meta_keys as $meta_key) {
@@ -4312,7 +4312,7 @@ class Updraft_Restorer {
 				}
 			} else {
 				// New, fast way: do it in a single query
-				$sql = "UPDATE {$import_table_prefix}usermeta SET meta_key = REPLACE(meta_key, '$old_table_prefix', '{$import_table_prefix}') WHERE meta_key LIKE '".str_replace('_', '\_', $old_table_prefix)."%';";
+				$sql = "UPDATE {$import_table_prefix}usermeta SET meta_key = REPLACE(meta_key, '$old_table_prefix', '{$import_table_prefix}') WHERE meta_key LIKE '".UpdraftPlus_Database_Utility::esc_like($old_table_prefix)."%';";
 				if (false === $wpdb->query($sql)) $errors_occurred = true;
 			}
 
