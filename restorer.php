@@ -1656,7 +1656,8 @@ class Updraft_Restorer {
 		$working_dir = $this->unpack_package($backup_file, $this->delete, $type);
 		if (is_wp_error($working_dir)) return $working_dir;
 
-		$working_dir_localpath = WP_CONTENT_DIR.'/upgrade/'.basename($working_dir);
+		$working_dir_localpath = apply_filters('updraftplus_working_dir_localpath', WP_CONTENT_DIR.'/upgrade/'.basename($working_dir));
+
 		if (function_exists('set_time_limit')) @set_time_limit(1800);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 		// We copy the variable because we may be importing with a different prefix (e.g. on multisite imports of individual blog data)
