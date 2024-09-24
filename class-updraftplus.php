@@ -5389,7 +5389,7 @@ class UpdraftPlus {
 					$similar_type_collate = UpdraftPlus_Manipulation_Functions::get_matching_str_from_array_elems($db_unsupported_collate_unique, array_keys($db_supported_collations), false);
 				}
 
-				$collate_select_html = '<div class="notice below-h2 updraft-restore-option"><label>'.__('Your chosen replacement collation', 'updraftplus').':</label>';
+				$collate_select_html = '<div class="udp-notice below-h2 updraft-restore-option"><label>'.__('Your chosen replacement collation', 'updraftplus').':</label>';
 				$collate_select_html .= '<select name="updraft_restorer_collate" id="updraft_restorer_collate">';
 				$db_charsets_found_unique = array_unique($db_charsets_found);
 				foreach ($db_supported_collations as $collate => $collate_info_obj) {
@@ -5510,7 +5510,7 @@ class UpdraftPlus {
 		if (empty($tables_found)) {
 			$warn[] = __('UpdraftPlus was unable to find any tables when scanning the database backup; it maybe corrupt.', 'updraftplus');
 		} else {
-			$select_restore_tables = '<div class="notice below-h2 updraft-restore-option">';
+			$select_restore_tables = '<div class="udp-notice below-h2 updraft-restore-option">';
 			$select_restore_tables .= '<p>'.__('If you do not want to restore all your database tables, then choose some to exclude here.', 'updraftplus').'(<a href="#" id="updraftplus_restore_tables_showmoreoptions">...</a>)</p>';
 
 			$select_restore_tables .= '<div class="updraftplus_restore_tables_options_container" style="display:none;">';
@@ -6386,5 +6386,22 @@ class UpdraftPlus {
 	public function get_avatar_url($url) {
 		if (preg_match('/gravatar.com/i', $url)) return UPDRAFTPLUS_URL.'/images/default-avatar.jpg';
 		return $url;
+	}
+
+	/**
+	 * Modifies the parent file value.
+	 *
+	 * This modification is necessary to prevent the active menu selection from pointing to the
+	 * old "Settings" menu and to ensure correct menu highlighting.
+	 *
+	 * @param string $parent_file The current parent file value.
+	 *
+	 * @return string The modified parent file value.
+	 */
+	public static function parent_file($parent_file) {
+		// Set the global variable 'self' and update the parent file to UpdraftPlus_Options::PARENT_FILE
+		$GLOBALS['self'] = $parent_file = UpdraftPlus_Options::PARENT_FILE;
+
+		return $parent_file;
 	}
 }

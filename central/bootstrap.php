@@ -186,7 +186,7 @@ class UpdraftCentral_Main {
 		if ('ok' == $result['responsetype']) {
 			$updraftcentral_host_plugin->retrieve_show_message('updraftcentral_connection_successful', true);
 		} else {
-			echo '<strong>'.$updraftcentral_host_plugin->retrieve_show_message('updraftcentral_connection_failed').'</strong><br>';
+			echo '<strong><span id="udc-connect-failed">'.$updraftcentral_host_plugin->retrieve_show_message('updraftcentral_connection_failed').'</span></strong><br>';
 			switch ($result['code']) {
 				case 'unknown_key':
 					$updraftcentral_host_plugin->retrieve_show_message('unknown_key', true);

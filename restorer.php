@@ -1301,16 +1301,16 @@ class Updraft_Restorer {
 
 			if ('wp-config.php' == $file && 'wpcore' == $type) {
 				if (empty($this->restore_options['updraft_restorer_wpcore_includewpconfig'])) {
-					$updraftplus->log_e('wp-config.php from backup: will restore as wp-config-backup.php', 'updraftplus');
-					if (!$wpfs->move($working_dir . "/$file", $working_dir . "/wp-config-backup.php", true)) {
-						$this->restore_log_permission_failure_message($working_dir, 'Move '.$working_dir . "/$file -> ".$working_dir . "/wp-config-backup.php", 'Destination');
+					$updraftplus->log_e('wp-config.php from backup: will restore as wp-config-pre-ud-restore-backup.php', 'updraftplus');
+					if (!$wpfs->move($working_dir . "/$file", $working_dir . "/wp-config-pre-ud-restore-backup.php", true)) {
+						$this->restore_log_permission_failure_message($working_dir, 'Move '.$working_dir . "/$file -> ".$working_dir . "/wp-config-pre-ud-restore-backup.php", 'Destination');
 					}
-					$file = "wp-config-backup.php";
+					$file = "wp-config-pre-ud-restore-backup.php";
 					$wpcore_config_moved = true;
 				} else {
 					$updraftplus->log_e("wp-config.php from backup: restoring (as per user's request)", 'updraftplus');
 				}
-			} elseif ('wpcore' == $type && 'wp-config-backup.php' == $file && $wpcore_config_moved) {
+			} elseif ('wpcore' == $type && 'wp-config-pre-ud-restore-backup.php' == $file && $wpcore_config_moved) {
 				// The file is already gone; nothing to do
 				continue;
 			}

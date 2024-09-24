@@ -1453,7 +1453,7 @@ class UpdraftPlus_Admin {
 	}
 
 	public function show_admin_warning_updraftvault() {
-		$this->show_admin_warning('<strong>'.__('UpdraftPlus notice:', 'updraftplus').'</strong> '.sprintf(__('%s has been chosen for remote storage, but you are not currently connected.', 'updraftplus'), 'UpdraftVault').' '.__('Go to the remote storage settings in order to connect.', 'updraftplus'), 'updated');
+		$this->show_admin_warning('<strong>'.__('UpdraftPlus notice:', 'updraftplus').'</strong> '.sprintf(__('%s has been chosen for remote storage, but you are not currently connected.', 'updraftplus'), 'UpdraftVault').' <a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&amp;tab=settings#remote-storage-updraftvault" class="updraftplus-remote-storage-link">'.sprintf(__('Go here to complete your settings for %s.', 'updraftplus'), 'UpdraftVault').'</a>', 'updated');
 	}
 
 	/**
@@ -3896,7 +3896,7 @@ class UpdraftPlus_Admin {
 	}
 
 	/**
-	 * Deletes the -old directories that are created when a backup is restored.
+	 * Deletes the -old directories and wp-config-pre-ud-restore-backup.php that are created when a backup is restored.
 	 *
 	 * @return Boolean. Can also exit (something we ought to probably review)
 	 */
@@ -3935,7 +3935,20 @@ class UpdraftPlus_Admin {
 			$ret3 = true;
 		}
 
-		return $ret && $ret3 && $ret4;
+		$ret2 = true;
+		if ($wp_filesystem->is_file(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
+			echo "<strong>".__('Delete', 'updraftplus').": </strong>wp-config-pre-ud-restore-backup.php: ";
+
+			if ($wp_filesystem->delete(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
+				echo "<strong>".__('OK', 'updraftplus')."</strong><br>";
+			} else {
+				$ret2 = false;
+				echo "<strong>".__('Failed', 'updraftplus')."</strong><br>";
+			}
+		}
+
+
+		return $ret && $ret2 && $ret3 && $ret4;
 	}
 
 	private function delete_old_dirs_dir($dir, $wpfs = true) {
@@ -4065,6 +4078,12 @@ class UpdraftPlus_Admin {
 			if ($print_as_comment) echo '<!--'.htmlspecialchars(untrailingslashit(WP_PLUGIN_DIR).'-old').'-->';
 			return true;
 		}
+
+		if (is_file(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
+			if ($print_as_comment) echo '<!--'.htmlspecialchars(ABSPATH.'wp-config-pre-ud-restore-backup.php').'-->';
+			return true;
+		}
+
 		return false;
 	}
 
