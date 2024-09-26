@@ -101,12 +101,12 @@ class UpdraftPlus_Options {
 
 			global $submenu, $title;
 
-			$title = 'UpdraftPlus';
+			if (isset($_GET['page']) && 'updraftplus' == $_GET['page']) $title = 'UpdraftPlus';
 
 			// Add "UpdraftPlus" as the main menu item
 			add_menu_page(
-				$title,
-				$title,
+				'UpdraftPlus',
+				'UpdraftPlus',
 				$capability,
 				'options-general.php?page=updraftplus',
 				'', // Set the callback to empty string because it's unused

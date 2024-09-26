@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.6
-Stable tag: 1.24.5
+Stable tag: 1.24.6
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,10 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.24.6 - 25/Sep/2024 =
+
+* TWEAK: In 1.24.5, the browser title wrongly displayed as "UpdraftPlus" when accessing an unrelated plugin page using the main menu.
 
 = 1.24.5 - 24/Sep/2024 =
 
@@ -1927,7 +1931,7 @@ Older changes are found <a href="https://plugins.svn.wordpress.org/updraftplus/t
 
 == License ==
 
-    Copyright 2011-23 David Anderson
+    Copyright 2011-24 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1948,4 +1952,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.5: UpdraftPlus independent menu that sits in the left panel of the admin dashboard - see: https://updraftplus.com/new-location-of-updraftplus-in-the-wordpress-dashboard/ - improvements and various small tweaks. A recommended update for all.
+* 1.24.6: Top level menu correction from 1.24.5. A recommended update for all.
