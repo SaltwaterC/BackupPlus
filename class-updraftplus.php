@@ -3310,8 +3310,12 @@ class UpdraftPlus {
 		if (!is_file($this->logfile_name)) {
 			$this->log('Failed to open log file ('.$this->logfile_name.') - you need to check your UpdraftPlus settings (your chosen directory for creating files in is not writable, or you ran out of disk space). Backup aborted.');
 			$this->log(__('Could not create files in the backup directory.', 'updraftplus').' '.__('Backup aborted - check your UpdraftPlus settings.', 'updraftplus'), 'error');
-			$final_message = __('UpdraftPlus is unable to perform backups as your backup directory is not writable or the disk space is full.', 'updraftplus').' '.__('Please check the backup directory and ensure it is writable so that backups may continue.', 'updraftplus');
-			$this->send_results_email($final_message, $this->jobdata);
+			
+			if (!defined('UPDRAFTPLUS_SEND_UNWRITABLE_BACKUP_DIRECTORY_EMAIL') || UPDRAFTPLUS_SEND_UNWRITABLE_BACKUP_DIRECTORY_EMAIL) {
+				$final_message = __('UpdraftPlus is unable to perform backups as your backup directory is not writable or the disk space is full.', 'updraftplus').' '.__('Please check the backup directory and ensure it is writable so that backups may continue.', 'updraftplus');
+				$this->send_results_email($final_message, $this->jobdata);
+			}
+			
 			return false;
 		}
 
@@ -6403,5 +6407,22 @@ class UpdraftPlus {
 		$GLOBALS['self'] = $parent_file = UpdraftPlus_Options::PARENT_FILE;
 
 		return $parent_file;
+	}
+
+	/**
+	 * Unserialize data while maintaining compatibility across PHP versions due to different number of arguments required by PHP's "unserialize" function
+	 *
+	 * @param string        $serialized_data Data to be unserialized, should be one that is already serialized
+	 * @param boolean|array $allowed_classes Either an array of class names which should be accepted, false to accept no classes, or true to accept all classes
+	 * @param integer       $max_depth       The maximum depth of structures permitted during unserialization, and is intended to prevent stack overflows
+	 * @return mixed Unserialized data can be any of types (integer, float, boolean, string, array or object)
+	 */
+	public static function unserialize($serialized_data, $allowed_classes = false, $max_depth = 0) {
+		if (version_compare(PHP_VERSION, '7.0', '<')) {
+			$result = unserialize($serialized_data);
+		} else {
+			$result = unserialize($serialized_data, array('allowed_classes' => $allowed_classes, 'max_depth' => $max_depth)); //phpcs:ignore PHPCompatibility.FunctionUse.NewFunctionParameters.unserialize_optionsFound
+		}
+		return $result;
 	}
 }

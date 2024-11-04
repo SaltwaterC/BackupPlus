@@ -2,8 +2,8 @@
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
-Tested up to: 6.6
-Stable tag: 1.24.6
+Tested up to: 6.7
+Stable tag: 1.24.7
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,16 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+* TWEAK: The update functionalities in the WordPress plugin information box (6.5 and later) have been adjusted to stop updates from taking place in the same window, ensuring that the "auto-backup before update" dialog appears as intended
+* TWEAK: Add customized "unserialized" method into the UpdraftPlus class which can handle the use of the "options" argument or its absence when running across different PHP versions
+* TWEAK: Add the UPDRAFTPLUS_SEND_UNWRITABLE_BACKUP_DIRECTORY_EMAIL constant to disable the sending of unwritable backup directory emails to users.
+* TWEAK: Clearer notifications to users regarding unconfigured remote storage settings and/or the selection of remote storage that are not part of their UpdraftPlus version
+* TWEAK: During the resumption of OneDrive’s chunk uploads, the authorisation header and bearer token should not be included as it may lead to an unauthenticated error due to a different upload URL.
+* TWEAK: Implement code to enable automatic activation of the UpdraftPlus plugin during the migration process from a multisite setup to a standalone site
+* TWEAK: In a multisite environment, ensure that users can access the UpdraftPlus plugin page even in the absence of the WP_ALLOW_MULTISITE constant
+* TWEAK: UpdraftClone now supports PHP 8.4
+* TWEAK: Prevent a potential PHP deprecation notice when zip creation fails
 
 = 1.24.6 - 25/Sep/2024 =
 
@@ -1952,4 +1962,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.6: Top level menu correction from 1.24.5. A recommended update for all.
+* 1.24.7: Top level menu adjustments on the multisite install, OneDrive resumable file upload and auto-backup dialog functionality improvements and various small tweaks. A recommended update for all.

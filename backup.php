@@ -3552,7 +3552,7 @@ class UpdraftPlus_Backup {
 						if (is_array($var)) {
 							$this->zipfiles_batched = $var;
 							if (file_exists($cache_file_base.'-info.tmp')) {
-								$var = maybe_unserialize(file_get_contents($cache_file_base.'-info.tmp'));
+								$var = $updraftplus->unserialize(file_get_contents($cache_file_base.'-info.tmp'));
 								if (is_array($var) && isset($var['makezip_recursive_batchedbytes'])) {
 									$this->makezip_recursive_batchedbytes = $var['makezip_recursive_batchedbytes'];
 									if (file_exists($cache_file_base.'-zfs.gz.tmp')) {
@@ -4379,7 +4379,7 @@ class UpdraftPlus_Backup {
 		}
 
 		// Always warn of this
-		if (strpos($msg, 'File Size Limit Exceeded') !== false && 'UpdraftPlus_BinZip' == $this->use_zip_object) {
+		if (is_string($msg) && strpos($msg, 'File Size Limit Exceeded') !== false && 'UpdraftPlus_BinZip' == $this->use_zip_object) {
 			$updraftplus->log(sprintf(__('The zip engine returned the message: %s.', 'updraftplus'), 'File Size Limit Exceeded'). __('Go here for more information.', 'updraftplus').' https://updraftplus.com/what-should-i-do-if-i-see-the-message-file-size-limit-exceeded/', 'warning', 'zipcloseerror-filesizelimit');
 		} elseif ($warn) {
 			$warn_msg = __('A zip error occurred', 'updraftplus').' - ';

@@ -154,7 +154,7 @@ class UpdraftPlus_Filesystem_Functions {
 			
 			foreach ($all_jobs as $job) {
 				$nonce = str_replace('updraft_jobdata_', '', $job[$key_column]);
-				$val = maybe_unserialize($job[$value_column]);
+				$val = empty($job[$value_column]) ? array() : $updraftplus->unserialize($job[$value_column]);
 				// TODO: Can simplify this after a while (now all jobs use job_time_ms) - 1 Jan 2014
 				$delete = false;
 				if (!empty($val['next_increment_start_scheduled_for'])) {
@@ -199,10 +199,11 @@ class UpdraftPlus_Filesystem_Functions {
 				$binzip_match = preg_match("/^zi([A-Za-z0-9]){6}$/", $entry);
 				$cachelist_match = ($include_cachelist) ? preg_match("/-cachelist-.*(?:info|\.tmp)$/i", $entry) : false;
 				$browserlog_match = preg_match('/^log\.[0-9a-f]+-browser\.txt$/', $entry);
+				$downloader_client_match = preg_match("/$match([0-9]+)?\.zip\.tmp\.(?:[A-Za-z0-9]+)\.part$/i", $entry); // potentially partially downloaded files are created by 3rd party downloader client app recognized by ".part" extension at the end of the backup file name (e.g. .zip.tmp.3b9r8r.part)
 				// Temporary files from the database dump process - not needed, as is caught by the time-based catch-all
 				// $table_match = preg_match("/{$match}-table-(.*)\.table(\.tmp)?\.gz$/i", $entry);
 				// The gz goes in with the txt, because we *don't* want to reap the raw .txt files
-				if ((preg_match("/$match\.(tmp|table|txt\.gz)(\.gz)?$/i", $entry) || $cachelist_match || $ziparchive_match || $pclzip_match || $binzip_match || $manifest_match || $browserlog_match) && is_file($updraft_dir.'/'.$entry)) {
+				if ((preg_match("/$match\.(tmp|table|txt\.gz)(\.gz)?$/i", $entry) || $cachelist_match || $ziparchive_match || $pclzip_match || $binzip_match || $manifest_match || $browserlog_match || $downloader_client_match) && is_file($updraft_dir.'/'.$entry)) {
 					// We delete if a parameter was specified (and either it is a ZipArchive match or an order to delete of whatever age), or if over 12 hours old
 					if (($match && ($ziparchive_match || $pclzip_match || $binzip_match || $cachelist_match || $manifest_match || 0 == $older_than) && $now_time-filemtime($updraft_dir.'/'.$entry) >= $older_than) || $now_time-filemtime($updraft_dir.'/'.$entry)>43200) {
 						$skip_dblog = (0 == $files_deleted % 25) ? false : true;
