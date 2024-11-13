@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.24.7
+Stable tag: 1.24.8
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,6 +179,16 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
+= 1.24.8 - 14/Nov/2024 =
+
+* TWEAK: Add descriptions for the 'Clone Package' dropdown when creating a clone.
+* TWEAK: Move the "load_plugin_textdomain" call from being called through "plugins_loaded" action to being called via "init" action
+* TWEAK: Update the log message to specify that backup files are marked as "processed" when no remote storage is selected, and as "uploaded" when remote storage is selected.
+* TWEAK: Some code tidying in the restore class
+
+= 1.24.7 - 04/Nov/2024 =
+
+* TWEAK: Include the .part file extension into the cleanup list, guaranteeing that files associated with this extension are regularly deleted from the backup directory
 * TWEAK: The update functionalities in the WordPress plugin information box (6.5 and later) have been adjusted to stop updates from taking place in the same window, ensuring that the "auto-backup before update" dialog appears as intended
 * TWEAK: Add customized "unserialized" method into the UpdraftPlus class which can handle the use of the "options" argument or its absence when running across different PHP versions
 * TWEAK: Add the UPDRAFTPLUS_SEND_UNWRITABLE_BACKUP_DIRECTORY_EMAIL constant to disable the sending of unwritable backup directory emails to users.
@@ -1962,4 +1972,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.7: Top level menu adjustments on the multisite install, OneDrive resumable file upload and auto-backup dialog functionality improvements and various small tweaks. A recommended update for all.
+* 1.24.8: Improvements and various small tweaks. The loading of translations has been adjusted to meet the best practices recommended by WordPress. A recommended update for all.

@@ -442,8 +442,8 @@ class UpdraftPlus_Filesystem_Functions {
 	
 	/**
 	 * Unzips a specified ZIP file to a location on the filesystem via the WordPress
-	 * Filesystem Abstraction. Forked from WordPress core in version 5.1-alpha-44182.
-	 * Forked to allow us to modify the behaviour (eventually, to provide feedback on progress)
+	 * Filesystem Abstraction. Forked from WordPress core in version 5.1-alpha-44182,
+	 * to allow us to provide feedback on progress.
 	 *
 	 * Assumes that WP_Filesystem() has already been called and set up. Does not extract
 	 * a root-level __MACOSX directory, if present.
@@ -595,6 +595,92 @@ class UpdraftPlus_Filesystem_Functions {
 	}
 	
 	/**
+	 * Log permission failure message when restoring a backup
+	 *
+	 * @param string $path                            full path of file or folder
+	 * @param string $log_message_prefix              action which is performed to path
+	 * @param string $directory_prefix_in_log_message Directory Prefix. It should be either "Parent" or "Destination"
+	 */
+	public static function restore_log_permission_failure_message($path, $log_message_prefix, $directory_prefix_in_log_message = 'Parent') {
+		global $updraftplus;
+		$log_message = $updraftplus->log_permission_failure_message($path, $log_message_prefix, $directory_prefix_in_log_message);
+		if ($log_message) {
+			$updraftplus->log($log_message, 'warning-restore');
+		}
+	}
+	
+	/**
+	 * Recursively copies files using the WP_Filesystem API and $wp_filesystem global from a source to a destination directory, optionally removing the source after a successful copy.
+	 *
+	 * @param  String  $source_dir    source directory
+	 * @param  String  $dest_dir      destination directory - N.B. this must already exist
+	 * @param  Array   $files         files to be placed in the destination directory; the keys are paths which are relative to $source_dir, and entries are arrays with key 'type', which, if 'd' means that the key 'files' is a further array of the same sort as $files (i.e. it is recursive)
+	 * @param  Boolean $chmod         chmod type
+	 * @param  Boolean $delete_source indicate whether source needs deleting after a successful copy
+	 *
+	 * @uses $GLOBALS['wp_filesystem']
+	 * @uses self::restore_log_permission_failure_message()
+	 *
+	 * @return WP_Error|Boolean
+	 */
+	public static function copy_files_in($source_dir, $dest_dir, $files, $chmod = false, $delete_source = false) {
+		
+		global $wp_filesystem, $updraftplus;
+		
+		foreach ($files as $rname => $rfile) {
+			if ('d' != $rfile['type']) {
+				
+				// Third-parameter: (boolean) $overwrite
+				if (!$wp_filesystem->move($source_dir.'/'.$rname, $dest_dir.'/'.$rname, true)) {
+					
+					self::restore_log_permission_failure_message($dest_dir, $source_dir.'/'.$rname.' -> '.$dest_dir.'/'.$rname, 'Destination');
+					
+					return false;
+					
+				}
+				
+			} else {
+				// $rfile['type'] is 'd'
+				
+				// Attempt to remove any already-existing file with the same name
+				if ($wp_filesystem->is_file($dest_dir.'/'.$rname)) @$wp_filesystem->delete($dest_dir.'/'.$rname, false, 'f');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- if fails, carry on
+				
+				// No such directory yet: just move it
+				if ($wp_filesystem->exists($dest_dir.'/'.$rname) && !$wp_filesystem->is_dir($dest_dir.'/'.$rname) && !$wp_filesystem->move($source_dir.'/'.$rname, $dest_dir.'/'.$rname, false)) {
+					
+					self::restore_log_permission_failure_message($dest_dir, 'Move '.$source_dir.'/'.$rname.' -> '.$dest_dir.'/'.$rname, 'Destination');
+					$updraftplus->log_e('Failed to move directory (check your file permissions and disk quota): %s', $source_dir.'/'.$rname." -&gt; ".$dest_dir.'/'.$rname);
+					
+					return false;
+					
+				} elseif (!empty($rfile['files'])) {
+					
+					if (!$wp_filesystem->exists($dest_dir.'/'.$rname)) $wp_filesystem->mkdir($dest_dir.'/'.$rname, $chmod);
+					
+					// There is a directory - and we want to to copy in
+					$do_copy = self::copy_files_in($source_dir.'/'.$rname, $dest_dir.'/'.$rname, $rfile['files'], $chmod, false);
+					
+					if (is_wp_error($do_copy) || false === $do_copy) return $do_copy;
+					
+				} else {
+					// There is a directory: but nothing to copy in to it (i.e. $file['files'] is empty). Just remove the directory.
+					@$wp_filesystem->rmdir($source_dir.'/'.$rname);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+				}
+			}
+		}
+		
+		// We are meant to leave the working directory empty. Hence, need to rmdir() once a directory is empty. But not the root of it all in case of others/wpcore.
+		if ($delete_source || false !== strpos($source_dir, '/')) {
+			if (!$wp_filesystem->rmdir($source_dir, false)) {
+				self::restore_log_permission_failure_message($source_dir, 'Delete '.$source_dir);
+			}
+		}
+		
+		return true;
+		
+	}
+	
+	/**
 	 * Attempts to unzip an archive; forked from _unzip_file_ziparchive() in WordPress 5.1-alpha-44182, and modified to use the UD zip classes.
 	 *
 	 * Assumes that WP_Filesystem() has already been called and set up.
@@ -666,6 +752,10 @@ class UpdraftPlus_Filesystem_Functions {
 				// Path to a file.
 				$needed_dirs[] = $to . untrailingslashit($dirname);
 			}
+			
+			// Protect against memory over-use
+			if (0 == $i % 500) $needed_dirs = array_unique($needed_dirs);
+			
 		}
 
 		/*
@@ -674,7 +764,7 @@ class UpdraftPlus_Filesystem_Functions {
 		* Require we have enough space to unzip the file and copy its contents, with a 10% buffer.
 		*/
 		if (self::wp_doing_cron()) {
-			$available_space = function_exists('disk_free_space') ? @disk_free_space(WP_CONTENT_DIR) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			$available_space = function_exists('disk_free_space') ? @disk_free_space(WP_CONTENT_DIR) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Call is speculative
 			if ($available_space && ($uncompressed_size * 2.1) > $available_space) {
 				return new WP_Error('disk_full_unzip_file', __('Could not copy files.', 'updraftplus').' '.__('You may have run out of disk space.'), compact('uncompressed_size', 'available_space'));
 			}
@@ -683,11 +773,12 @@ class UpdraftPlus_Filesystem_Functions {
 		$needed_dirs = array_unique($needed_dirs);
 		foreach ($needed_dirs as $dir) {
 			// Check the parent folders of the folders all exist within the creation array.
-			if (untrailingslashit($to) == $dir) { // Skip over the working directory, We know this exists (or will exist)
+			if (untrailingslashit($to) == $dir) {
+				// Skip over the working directory, We know this exists (or will exist)
 				continue;
 			}
 			
-			// If the directory is not within the working directory, Skip it
+			// If the directory is not within the working directory then skip it
 			if (false === strpos($dir, $to)) continue;
 
 			$parent_folder = dirname($dir);
@@ -733,7 +824,7 @@ class UpdraftPlus_Filesystem_Functions {
 				if (isset($path[1]) && !in_array($path[1], $folders_to_include)) continue;
 			}
 
-			// PclZip will return (boolean)false for an empty file
+			// N.B. PclZip will return (boolean)false for an empty file
 			if (isset($info['size']) && 0 == $info['size']) {
 				$contents = '';
 			} else {

@@ -6113,15 +6113,16 @@ class UpdraftPlus_Admin {
 	/**
 	 * This function will build and return the UpdraftPlus temporary clone ui widget
 	 *
-	 * @param boolean $include_testing_ui	 - a boolean to indicate if testing-only UI elements should be shown (N.B. they can only work if the user also has testing permissions)
-	 * @param array   $supported_wp_versions - an array of supported WordPress versions
-	 * @param array   $supported_packages    - an array of supported clone packages
-	 * @param array   $supported_regions     - an array of supported clone regions
-	 * @param string  $nearest_region        - the user's nearest region
+	 * @param boolean $include_testing_ui	    - a boolean to indicate if testing-only UI elements should be shown (N.B. they can only work if the user also has testing permissions)
+	 * @param array   $supported_wp_versions    - an array of supported WordPress versions
+	 * @param array   $supported_packages       - an array of supported clone packages
+	 * @param array   $supported_regions        - an array of supported clone regions
+	 * @param string  $nearest_region           - the user's nearest region
+	 * @param array   $supported_packages_label - an array of supported clone packages label
 	 *
 	 * @return string - the clone UI widget
 	 */
-	public function updraftplus_clone_ui_widget($include_testing_ui, $supported_wp_versions, $supported_packages, $supported_regions, $nearest_region = '') {
+	public function updraftplus_clone_ui_widget($include_testing_ui, $supported_wp_versions, $supported_packages, $supported_regions, $nearest_region = '', $supported_packages_label = array()) {
 		global $updraftplus;
 
 		$output = '<p class="updraftplus-option updraftplus-option-inline php-version">';
@@ -6168,7 +6169,8 @@ class UpdraftPlus_Admin {
 		foreach ($supported_packages as $key => $value) {
 			$output .= '<option value="'.esc_attr($key).'" data-size="'.esc_attr($value).'"';
 			if ('starter' == $key) $output .= 'selected="selected"';
-			$output .= ">".htmlspecialchars($key) . ('starter' == $key ? ' ' . __('(current version)', 'updraftplus') : '')."</option>\n";
+			$label = isset($supported_packages_label[$key]) ? $supported_packages_label[$key] : $key;
+			$output .= ">".esc_html($label).('starter' == $key ? ' ' . __('(current version)', 'updraftplus') : '')."</option>\n";
 		}
 		$output .= '</select>';
 		$output .= '</p>';

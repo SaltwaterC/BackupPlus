@@ -123,8 +123,7 @@ class UpdraftPlus {
 		}
 
 		// Create admin page
-		add_action('init', array($this, 'handle_url_actions'));
-		add_action('init', array($this, 'updraftplus_single_site_maintenance_init'));
+		add_action('init', array($this, 'initialize_required_settings'));
 		// Run earlier than default - hence earlier than other components
 		// admin_menu runs earlier, and we need it because options.php wants to use $updraftplus_admin before admin_init happens
 		add_action(apply_filters('updraft_admin_menu_hook', 'admin_menu'), array($this, 'admin_menu'), 9);
@@ -553,13 +552,24 @@ class UpdraftPlus {
 	}
 
 	/**
+	 * Initialize all settings required for the plugin to work properly
+	 */
+	public function initialize_required_settings() {
+		// Tell WordPress where to find the translations
+		load_plugin_textdomain('updraftplus', false, basename(dirname(__FILE__)).'/languages/');
+		do_action('updraftplus_load_translations_for_udcentral');
+		$this->handle_url_actions();
+		$this->updraftplus_single_site_maintenance_init();
+	}
+
+	/**
 	 * Handle actions passed on to method plugins; e.g. Google OAuth 2.0 - ?action=updraftmethod-googledrive-auth&page=updraftplus
 	 * Nov 2013: Google's new cloud console, for reasons as yet unknown, only allows you to enter a redirect_uri with a single URL parameter... thus, we put page second, and re-add it if necessary. Apr 2014: Bitcasa already do this, so perhaps it is part of the OAuth2 standard or best practice somewhere.
 	 * Also handle action=downloadlog
 	 *
 	 * @return Void - may not necessarily return at all, depending on the action
 	 */
-	public function handle_url_actions() {
+	private function handle_url_actions() {
 
 		// First, basic security check: must be an admin page, with ability to manage options, with the right parameters
 		// Also, only on GET because WordPress on the options page repeats parameters sometimes when POST-ing via the _wp_referer field
@@ -678,7 +688,7 @@ class UpdraftPlus {
 	 *
 	 * @return void
 	 */
-	public function updraftplus_single_site_maintenance_init() {
+	private function updraftplus_single_site_maintenance_init() {
 		
 		if (!is_multisite()) return;
 		
@@ -749,9 +759,6 @@ class UpdraftPlus {
 	 * Runs upon the WP action plugins_loaded
 	 */
 	public function plugins_loaded() {
-
-		// Tell WordPress where to find the translations
-		load_plugin_textdomain('updraftplus', false, basename(dirname(__FILE__)).'/languages/');
 		
 		// The Google Analyticator plugin does something horrible: loads an old version of the Google SDK on init, always - which breaks us
 		if ((defined('DOING_CRON') && DOING_CRON) || (defined('DOING_AJAX') && DOING_AJAX && isset($_REQUEST['subaction']) && 'backupnow' == $_REQUEST['subaction']) || (isset($_GET['page']) && 'updraftplus' == $_GET['page'] )) {
@@ -2676,7 +2683,14 @@ class UpdraftPlus {
 		}
 
 		$total_size = 0;
-		
+
+		$service = $this->just_one($this->jobdata_get('service'));
+		if (empty($service)) {
+			$message = 'This file has already been successfully processed';
+		} else {
+			$message = 'This file has already been successfully uploaded';
+		}
+
 		// Queue files for upload
 		foreach ($our_files as $key => $files) {
 			// Only continue if the stored info was about a dump
@@ -2697,7 +2711,7 @@ class UpdraftPlus {
 				}
 				
 				if ($this->is_uploaded($file)) {
-					$this->log("$file: $key: This file has already been successfully uploaded");
+					$this->log("$file: $key: $message");
 				} elseif (is_file($updraft_dir.'/'.$file)) {
 					if (!in_array($file, $undone_files)) {
 						$this->log("$file: $key: This file has not yet been successfully uploaded: will queue");

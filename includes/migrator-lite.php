@@ -234,15 +234,16 @@ class UpdraftPlus_Migrator_Lite {
 		));
 	
 		if (!empty($options['show_heading'])) echo '<h2>'.esc_html__('Search / replace database', 'updraftplus').'</h2>';
-		echo '<strong>'.esc_html__('Search for', 'updraftplus').':</strong> '.htmlspecialchars($_POST['search'])."<br>";
-		echo '<strong>'.__('Replace with', 'updraftplus').':</strong> '.htmlspecialchars($_POST['replace'])."<br>";
+		echo '<strong>'.esc_html__('Search for', 'updraftplus').':</strong> '.esc_html(stripslashes($_POST['search']))."<br>";
+		echo '<strong>'.esc_html__('Replace with', 'updraftplus').':</strong> '.esc_html(stripslashes($_POST['replace']))."<br>";
 		$this->page_size = (empty($_POST['pagesize']) || !is_numeric($_POST['pagesize'])) ? 5000 : (int) $_POST['pagesize'];
 		$this->which_tables = empty($_POST['whichtables']) ? '' : explode(',', (stripslashes($_POST['whichtables'])));
 		if (empty($_POST['search'])) {
+			// trnaslators: "search term"
 			echo sprintf(esc_html__("Failure: No %s was given.", 'updraftplus'), esc_html__('search term', 'updraftplus'))."<br>";
 			
 			if (!empty($options['show_return_link'])) {
-				echo '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus">'.esc_html__('Return to UpdraftPlus Configuration', 'updraftplus').'</a>';
+				echo '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus">'.esc_html__('Return to UpdraftPlus configuration', 'updraftplus').'</a>';
 			}
 			
 			return;
@@ -257,7 +258,7 @@ class UpdraftPlus_Migrator_Lite {
 		}
 		$this->updraftplus_restore_db_pre();
 		$this->tables_replaced = array();
-		$this->updraftplus_restored_db_dosearchreplace($_POST['search'], $_POST['replace'], $this->base_prefix, false);
+		$this->updraftplus_restored_db_dosearchreplace(stripslashes($_POST['search']), stripslashes($_POST['replace']), $this->base_prefix, false);
 		if (!empty($options['show_return_link'])) echo '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus">'.esc_html__('Return to UpdraftPlus Configuration', 'updraftplus').'</a>';
 	}
 
