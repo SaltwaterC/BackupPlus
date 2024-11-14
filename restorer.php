@@ -1303,8 +1303,10 @@ class Updraft_Restorer {
 			}
 			
 			// Handle various hard-wired and backwards-compatibility cases
+			$special_case = $this->carry_out_restore_special_cases($type, $file, $working_dir, $wpfs);
+			if (!empty($special_case['filename'])) $file = $special_case['filename'];
 			// The "do not overwrite" check is a sanity check, as these things ought to be excluded at backup time
-			if ($this->carry_out_restore_special_cases($type, $file, $working_dir, $wpfs) || in_array($file, $do_not_overwrite)) continue;
+			if (!empty($special_case['result']) || in_array($file, $do_not_overwrite)) continue;
 
 			// Skip plugins which the user specified to be skipped. This may include deleting them from the source directory so that it is clean at the end.
 			if ('plugins' == $type && in_array($file, $this->plugins_to_skip)) {
@@ -1451,12 +1453,18 @@ class Updraft_Restorer {
 	 * @param String $working_dir - a WP_Filesystem path
 	 * @param Object $wpfs		  - a WP_Filesystem object to use
 	 *
-	 * @return Boolean - the only meaning of this is that if true, then the caller should carry out no further processing on the file (i.e. this method has done everything necessary)
+	 * @return Array {
+	 * Array of information about the the special case that took place while moving out a file to its new location
+	 * @type Boolean $result   - the only meaning of this is that if true, then the caller should carry out no further processing on the file (i.e. this method has done everything necessary)
+	 * @type String  $filename - Base URL and subdirectory or absolute URL to upload directory.
+	 * }
 	 */
 	private function carry_out_restore_special_cases($type, $file, $working_dir, $wpfs) {
 		
 		global $updraftplus;
-		$wpcore_config_moved = false;
+		static $wpcore_config_moved = false;
+
+		$ret = array();
 		
 		// Correctly restore files in 'others' in no directory that were wrongly backed up in versions 1.4.0 - 1.4.48
 		if (('others' == $type || 'wpcore' == $type) && preg_match('/^([\-_A-Za-z0-9]+\.php)$/i', $file, $matches) && $wpfs->exists($working_dir . "/$file/$file")) {
@@ -1486,14 +1494,14 @@ class Updraft_Restorer {
 				if (!$wpfs->move($working_dir . "/$file", $working_dir . "/wp-config-pre-ud-restore-backup.php", true)) {
 					$this->restore_log_permission_failure_message($working_dir, 'Move '.$working_dir . "/$file -> ".$working_dir . "/wp-config-pre-ud-restore-backup.php", 'Destination');
 				}
-				$file = 'wp-config-pre-ud-restore-backup.php';
 				$wpcore_config_moved = true;
+				$ret['filename'] = 'wp-config-pre-ud-restore-backup.php';
 			} else {
 				$updraftplus->log_e("wp-config.php from backup: restoring (as per user's request)", 'updraftplus');
 			}
 		} elseif ('wpcore' == $type && 'wp-config-pre-ud-restore-backup.php' == $file && $wpcore_config_moved) {
 			// The file is already gone; nothing to do
-			return true;
+			$ret['result'] = true;
 		}
 		
 		if (('object-cache.php' == $file || 'advanced-cache.php' == $file) && 'others' == $type) {
@@ -1508,10 +1516,11 @@ class Updraft_Restorer {
 			if (!$wpfs->delete($working_dir."/".$file)) {
 				$this->restore_log_permission_failure_message($working_dir, 'Delete '.$working_dir."/".$file);
 			}
-			return true;
+			$ret['result'] = true;
 		}
 		
-		return false;
+		$ret['result'] = false;
+		return $ret;
 	}
 	
 	/**

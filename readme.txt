@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.24.8
+Stable tag: 1.24.9
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,11 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.24.9 - 15/Nov/2024 =
+
+* FIX: A regression in 1.24.8 when handling restoration of wp-config.php
+* TWEAK: The changes in handling of loading text domains in 1.24.8 did not cover most cases
 
 = 1.24.8 - 14/Nov/2024 =
 
@@ -1972,4 +1977,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.8: Improvements and various small tweaks. The loading of translations has been adjusted to meet the best practices recommended by WordPress. A recommended update for all.
+* 1.24.9: Fix two regressions in 1.24.8. A recommended update for all.

@@ -268,8 +268,6 @@ class UpdraftPlus_Host extends UpdraftCentral_Host {
 				updraft_try_include_file('includes/class-filesystem-functions.php', 'require_once');
 			}
 		}
-
-		$this->load_updraftplus_translations();
 	}
 
 	/**

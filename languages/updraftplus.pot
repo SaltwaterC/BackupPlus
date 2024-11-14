@@ -8,7 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language-Team: Team Updraft <mail@example.com>\n"
 "Last-Translator: Team Updraft <mail@example.com>\n"
-"POT-Creation-Date: 2024-11-13 19:06+0000\n"
+"POT-Creation-Date: 2024-11-14 15:57+0000\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/updraftplus\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -17,7 +17,7 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/admin.php:104, src/admin.php:951, src/restorer.php:597, src/restorer.php:625, src/restorer.php:2336, src/restorer.php:4378, src/addons/backblaze.php:247, src/addons/backblaze.php:272, src/addons/cloudfiles-enhanced.php:123, src/addons/s3-enhanced.php:236, src/addons/s3-enhanced.php:241, src/addons/s3-enhanced.php:243, src/addons/sftp.php:1040, src/addons/webdav.php:434, src/includes/class-remote-send.php:359, src/includes/class-remote-send.php:411, src/includes/class-remote-send.php:405, src/includes/class-remote-send.php:480, src/includes/class-remote-send.php:538, src/includes/class-remote-send.php:565, src/includes/class-remote-send.php:620, src/includes/class-remote-send.php:608, src/includes/class-remote-send.php:603, src/includes/class-remote-send.php:593, src/includes/class-search-replace.php:333, src/includes/class-search-replace.php:519, src/includes/migrator-lite.php:615, src/includes/migrator-lite.php:925, src/includes/migrator-lite.php:1003, src/methods/remotesend.php:80, src/methods/remotesend.php:258, src/methods/updraftvault.php:722
+#: src/admin.php:104, src/admin.php:951, src/restorer.php:597, src/restorer.php:625, src/restorer.php:2345, src/restorer.php:4387, src/addons/backblaze.php:247, src/addons/backblaze.php:272, src/addons/cloudfiles-enhanced.php:123, src/addons/s3-enhanced.php:236, src/addons/s3-enhanced.php:241, src/addons/s3-enhanced.php:243, src/addons/sftp.php:1040, src/addons/webdav.php:434, src/includes/class-remote-send.php:359, src/includes/class-remote-send.php:411, src/includes/class-remote-send.php:405, src/includes/class-remote-send.php:480, src/includes/class-remote-send.php:538, src/includes/class-remote-send.php:565, src/includes/class-remote-send.php:620, src/includes/class-remote-send.php:608, src/includes/class-remote-send.php:603, src/includes/class-remote-send.php:593, src/includes/class-search-replace.php:333, src/includes/class-search-replace.php:519, src/includes/migrator-lite.php:615, src/includes/migrator-lite.php:925, src/includes/migrator-lite.php:1003, src/methods/remotesend.php:80, src/methods/remotesend.php:258, src/methods/updraftvault.php:722
 msgid "Error:"
 msgstr ""
 
@@ -213,7 +213,7 @@ msgstr ""
 msgid "Error data:"
 msgstr ""
 
-#: src/admin.php:952, src/class-updraftplus.php:1577, src/class-updraftplus.php:1621, src/restorer.php:4335, src/restorer.php:4191, src/restorer.php:4216, src/updraftplus.php:226, src/addons/webdav.php:743, src/addons/wp-cli.php:503, src/includes/class-filesystem-functions.php:440, src/includes/class-storage-methods-interface.php:338, src/methods/addon-base-v2.php:100, src/methods/addon-base-v2.php:105, src/methods/addon-base-v2.php:239, src/methods/addon-base-v2.php:259, src/methods/googledrive.php:1416, src/udaddons/options.php:250
+#: src/admin.php:952, src/class-updraftplus.php:1577, src/class-updraftplus.php:1621, src/restorer.php:4344, src/restorer.php:4200, src/restorer.php:4225, src/updraftplus.php:226, src/addons/webdav.php:743, src/addons/wp-cli.php:503, src/includes/class-filesystem-functions.php:440, src/includes/class-storage-methods-interface.php:338, src/methods/addon-base-v2.php:100, src/methods/addon-base-v2.php:105, src/methods/addon-base-v2.php:239, src/methods/addon-base-v2.php:259, src/methods/googledrive.php:1416, src/udaddons/options.php:250
 msgid "Error"
 msgstr ""
 
@@ -882,7 +882,7 @@ msgstr ""
 msgid "Restore error:"
 msgstr ""
 
-#: src/admin.php:1124, src/admin.php:3005, src/class-updraftplus.php:5254, src/restorer.php:3828
+#: src/admin.php:1124, src/admin.php:3005, src/class-updraftplus.php:5254, src/restorer.php:3837
 msgid "Warning:"
 msgstr ""
 
@@ -1558,7 +1558,7 @@ msgstr ""
 msgid "Old folders successfully removed."
 msgstr ""
 
-#: src/admin.php:3947, src/admin.php:3958, src/admin.php:3999, src/admin.php:3995, src/restorer.php:595, src/restorer.php:4338, src/restorer.php:4195, src/includes/class-remote-send.php:441, src/includes/class-storage-methods-interface.php:329
+#: src/admin.php:3947, src/admin.php:3958, src/admin.php:3999, src/admin.php:3995, src/restorer.php:595, src/restorer.php:4347, src/restorer.php:4204, src/includes/class-remote-send.php:441, src/includes/class-storage-methods-interface.php:329
 msgid "OK"
 msgstr ""
 
@@ -1727,7 +1727,7 @@ msgstr ""
 msgid "Database (created by %s)"
 msgstr ""
 
-#: src/admin.php:4596, src/restorer.php:2777, src/includes/class-wpadmin-commands.php:159
+#: src/admin.php:4596, src/restorer.php:2786, src/includes/class-wpadmin-commands.php:159
 msgid "Backup created by unknown source (%s) - cannot be restored."
 msgstr ""
 
@@ -2497,7 +2497,7 @@ msgstr ""
 msgid "You must upgrade MySQL to be able to use this database."
 msgstr ""
 
-#: src/class-updraftplus.php:5261, src/restorer.php:3088
+#: src/class-updraftplus.php:5261, src/restorer.php:3097
 msgid "Site information:"
 msgstr ""
 
@@ -2525,7 +2525,7 @@ msgstr ""
 msgid "Please read this link for important information on this process."
 msgstr ""
 
-#: src/class-updraftplus.php:5250, src/restorer.php:3082
+#: src/class-updraftplus.php:5250, src/restorer.php:3091
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr ""
 
@@ -2589,11 +2589,11 @@ msgstr ""
 msgid "This backup set is of this site, but at the time of the backup you were using %s, whereas the site now uses %s."
 msgstr ""
 
-#: src/class-updraftplus.php:5196, src/restorer.php:1890
+#: src/class-updraftplus.php:5196, src/restorer.php:1899
 msgid "You are using the %s webserver, but do not seem to have the %s module loaded."
 msgstr ""
 
-#: src/class-updraftplus.php:5196, src/restorer.php:1890
+#: src/class-updraftplus.php:5196, src/restorer.php:1899
 msgid "You should enable %s to make any pretty permalinks (e.g. %s) work"
 msgstr ""
 
@@ -2877,222 +2877,222 @@ msgstr ""
 msgid "The directory does not exist, and the attempt to create it failed"
 msgstr ""
 
-#: src/restorer.php:1553, src/restorer.php:1561
+#: src/restorer.php:1562, src/restorer.php:1570
 msgid "UpdraftPlus needed to create a %s in your content directory, but failed - please check your file permissions and enable the access (%s)"
 msgstr ""
 
-#: src/restorer.php:1553, src/addons/onedrive.php:1341
+#: src/restorer.php:1562, src/addons/onedrive.php:1341
 msgid "folder"
 msgstr ""
 
-#: src/restorer.php:1561
+#: src/restorer.php:1570
 msgid "file"
 msgstr ""
 
-#: src/restorer.php:1577
+#: src/restorer.php:1586
 msgid "Existing unremoved folders from a previous restore exist (please use the \"Delete old folders\" button to delete them before trying again): %s"
 msgstr ""
 
-#: src/restorer.php:1585
+#: src/restorer.php:1594
 msgid "This version of UpdraftPlus does not know how to handle this type of foreign backup"
 msgstr ""
 
-#: src/restorer.php:1751, src/restorer.php:1702
+#: src/restorer.php:1760, src/restorer.php:1711
 msgid "The WordPress content folder (wp-content) was not found in this zip file."
 msgstr ""
 
-#: src/restorer.php:1843
+#: src/restorer.php:1852
 msgid "Files found:"
 msgstr ""
 
-#: src/restorer.php:2331
+#: src/restorer.php:2340
 msgid "Please supply the requested information, and then continue."
 msgstr ""
 
-#: src/restorer.php:2401
+#: src/restorer.php:2410
 msgid "An error occurred while attempting to retrieve the MySQL global log_bin_trust_function_creators variable %s"
 msgstr ""
 
-#: src/restorer.php:2408
+#: src/restorer.php:2417
 msgid "An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s"
 msgstr ""
 
-#: src/restorer.php:2444, src/restorer.php:3071, src/restorer.php:3251
+#: src/restorer.php:2453, src/restorer.php:3080, src/restorer.php:3260
 msgid "Old table prefix:"
 msgstr ""
 
-#: src/restorer.php:2536
+#: src/restorer.php:2545
 msgid "Requested table engine (%s) is not present - changing to MyISAM."
 msgstr ""
 
-#: src/restorer.php:2550
+#: src/restorer.php:2559
 msgid "Requested table character set (%s) is not present - changing to %s."
 msgstr ""
 
-#: src/restorer.php:2565
+#: src/restorer.php:2574
 msgid "Found and replaced existing table foreign key constraints as the table prefix has changed."
 msgstr ""
 
-#: src/restorer.php:2609
+#: src/restorer.php:2618
 msgid "Requested table collation (%1$s) is not present - changing to %2$s."
 msgid_plural "Requested table collations (%1$s) are not present - changing to %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/restorer.php:2611
+#: src/restorer.php:2620
 msgid "Processing table (%s)"
 msgstr ""
 
-#: src/restorer.php:2615
+#: src/restorer.php:2624
 msgid "will restore as:"
 msgstr ""
 
-#: src/restorer.php:2770
+#: src/restorer.php:2779
 msgid "Warning: PHP safe_mode is active on your server."
 msgstr ""
 
-#: src/restorer.php:2770
+#: src/restorer.php:2779
 msgid "Timeouts are much more likely."
 msgstr ""
 
-#: src/restorer.php:2770
+#: src/restorer.php:2779
 msgid "If these happen, then you will need to manually restore the file via phpMyAdmin or another method."
 msgstr ""
 
-#: src/restorer.php:2793
+#: src/restorer.php:2802
 msgid "Failed to find database file"
 msgstr ""
 
-#: src/restorer.php:2808, src/includes/class-filesystem-functions.php:305
+#: src/restorer.php:2817, src/includes/class-filesystem-functions.php:305
 msgid "restoration"
 msgstr ""
 
-#: src/restorer.php:2814
+#: src/restorer.php:2823
 msgid "Failed to open database file"
 msgstr ""
 
-#: src/restorer.php:2966, src/restorer.php:2915
+#: src/restorer.php:2975, src/restorer.php:2924
 msgid "Your database user does not have permission to drop tables"
 msgstr ""
 
-#: src/restorer.php:2971
+#: src/restorer.php:2980
 msgid "Your database user does not have permission to drop tables."
 msgstr ""
 
-#: src/restorer.php:2971
+#: src/restorer.php:2980
 msgid "We will attempt to restore by simply emptying the tables; this should work as long as you are restoring from a WordPress version with the same database structure (%s)"
 msgstr ""
 
-#: src/restorer.php:2918
+#: src/restorer.php:2927
 msgid "Your database user does not have permission to create tables."
 msgstr ""
 
-#: src/restorer.php:2918
+#: src/restorer.php:2927
 msgid "We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
 msgstr ""
 
-#: src/restorer.php:3108
+#: src/restorer.php:3117
 msgid "UpdraftPlus plugin slug:"
 msgstr ""
 
-#: src/restorer.php:3102
+#: src/restorer.php:3111
 msgid "Old ABSPATH:"
 msgstr ""
 
-#: src/restorer.php:3074
+#: src/restorer.php:3083
 msgid "Skipped tables:"
 msgstr ""
 
-#: src/restorer.php:3064
+#: src/restorer.php:3073
 msgid "Uploads URL:"
 msgstr ""
 
-#: src/restorer.php:3059
+#: src/restorer.php:3068
 msgid "Content URL:"
 msgstr ""
 
-#: src/restorer.php:3053
+#: src/restorer.php:3062
 msgid "Site home:"
 msgstr ""
 
-#: src/restorer.php:3048
+#: src/restorer.php:3057
 msgid "Backup created by:"
 msgstr ""
 
-#: src/restorer.php:3041
+#: src/restorer.php:3050
 msgid "Backup of: %s"
 msgstr ""
 
-#: src/restorer.php:3190
+#: src/restorer.php:3199
 msgid "Split line to avoid exceeding maximum packet size"
 msgstr ""
 
-#: src/restorer.php:3221, src/restorer.php:3954, src/restorer.php:4044, src/restorer.php:4027
+#: src/restorer.php:3230, src/restorer.php:3963, src/restorer.php:4053, src/restorer.php:4036
 msgid "An error occurred on the first %s command - aborting run"
 msgstr ""
 
-#: src/restorer.php:3357
+#: src/restorer.php:3366
 msgid "Found SET NAMES %s, but changing to %s as suggested by WPDB::determine_charset()."
 msgstr ""
 
-#: src/restorer.php:3363
+#: src/restorer.php:3372
 msgid "Requested character set (%s) is not present - changing to %s."
 msgstr ""
 
-#: src/restorer.php:3668
+#: src/restorer.php:3677
 msgid "Skipping table %s: already restored on a prior run; next table to restore: %s"
 msgstr ""
 
-#: src/restorer.php:3665
+#: src/restorer.php:3674
 msgid "Skipping table %s: user has chosen not to restore this table"
 msgstr ""
 
-#: src/restorer.php:3828
+#: src/restorer.php:3837
 msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
 msgstr ""
 
-#: src/restorer.php:3997
+#: src/restorer.php:4006
 msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
 msgid "An error (%s) occurred:"
 msgstr ""
 
-#: src/restorer.php:3997, src/includes/class-search-replace.php:519
+#: src/restorer.php:4006, src/includes/class-search-replace.php:519
 msgid "the database query being run was:"
 msgstr ""
 
-#: src/restorer.php:4015
+#: src/restorer.php:4024
 msgid "The Database connection has been closed and cannot be reopened."
 msgstr ""
 
-#: src/restorer.php:4042
+#: src/restorer.php:4051
 msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
 msgstr ""
 
-#: src/restorer.php:4042
+#: src/restorer.php:4051
 msgid "This database needs to be deployed on MySQL version %s or later."
 msgstr ""
 
-#: src/restorer.php:4044
+#: src/restorer.php:4053
 msgid "To use this backup, your database server needs to support the %s character set."
 msgstr ""
 
-#: src/restorer.php:4056
+#: src/restorer.php:4065
 msgid "Too many database errors have occurred - aborting"
 msgstr ""
 
-#: src/restorer.php:4302, src/restorer.php:4189
+#: src/restorer.php:4311, src/restorer.php:4198
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr ""
 
-#: src/restorer.php:4391, src/includes/migrator-lite.php:630, src/includes/migrator-lite.php:1019
+#: src/restorer.php:4400, src/includes/migrator-lite.php:630, src/includes/migrator-lite.php:1019
 msgid "Failed: we did not understand the result returned by the %s operation."
 msgstr ""
 
-#: src/restorer.php:4391, src/restorer.php:4389, src/includes/migrator-lite.php:630, src/includes/migrator-lite.php:628
+#: src/restorer.php:4400, src/restorer.php:4398, src/includes/migrator-lite.php:630, src/includes/migrator-lite.php:628
 msgid "search and replace"
 msgstr ""
 
-#: src/restorer.php:4389, src/includes/migrator-lite.php:628, src/includes/migrator-lite.php:1017
+#: src/restorer.php:4398, src/includes/migrator-lite.php:628, src/includes/migrator-lite.php:1017
 msgid "Failed: the %s operation was not able to start."
 msgstr ""
 

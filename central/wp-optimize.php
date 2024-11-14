@@ -37,7 +37,6 @@ class WP_Optimize_Host extends UpdraftCentral_Host {
 	 */
 	public function __construct() {
 		parent::__construct();
-		$this->load_updraftplus_translations();
 		add_action('updraftplus_load_translations_for_udcentral', array($this, 'load_updraftplus_translations'));
 	}
 
