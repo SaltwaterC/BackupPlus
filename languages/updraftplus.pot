@@ -8,7 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language-Team: Team Updraft <mail@example.com>\n"
 "Last-Translator: Team Updraft <mail@example.com>\n"
-"POT-Creation-Date: 2024-11-14 15:57+0000\n"
+"POT-Creation-Date: 2024-11-15 17:06+0000\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/updraftplus\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -213,7 +213,7 @@ msgstr ""
 msgid "Error data:"
 msgstr ""
 
-#: src/admin.php:952, src/class-updraftplus.php:1577, src/class-updraftplus.php:1621, src/restorer.php:4344, src/restorer.php:4200, src/restorer.php:4225, src/updraftplus.php:226, src/addons/webdav.php:743, src/addons/wp-cli.php:503, src/includes/class-filesystem-functions.php:440, src/includes/class-storage-methods-interface.php:338, src/methods/addon-base-v2.php:100, src/methods/addon-base-v2.php:105, src/methods/addon-base-v2.php:239, src/methods/addon-base-v2.php:259, src/methods/googledrive.php:1416, src/udaddons/options.php:250
+#: src/admin.php:952, src/class-updraftplus.php:1577, src/class-updraftplus.php:1621, src/restorer.php:4344, src/restorer.php:4200, src/restorer.php:4225, src/updraftplus.php:226, src/addons/webdav.php:743, src/addons/wp-cli.php:503, src/includes/class-filesystem-functions.php:440, src/includes/class-storage-methods-interface.php:338, src/methods/addon-base-v2.php:100, src/methods/addon-base-v2.php:105, src/methods/addon-base-v2.php:239, src/methods/addon-base-v2.php:259, src/methods/googledrive.php:1417, src/udaddons/options.php:250
 msgid "Error"
 msgstr ""
 
@@ -1246,7 +1246,7 @@ msgstr ""
 msgid "You will find more information about this in the Settings section."
 msgstr ""
 
-#: src/admin.php:2737, src/admin.php:2766, src/admin.php:2758, src/class-updraftplus.php:1237, src/class-updraftplus.php:1243, src/class-updraftplus.php:5069, src/class-updraftplus.php:5067, src/class-updraftplus.php:5327, src/class-updraftplus.php:5250, src/addons/googlecloud.php:512, src/addons/migrator.php:390, src/methods/googledrive.php:592, src/methods/s3.php:370
+#: src/admin.php:2737, src/admin.php:2766, src/admin.php:2758, src/class-updraftplus.php:1237, src/class-updraftplus.php:1243, src/class-updraftplus.php:5069, src/class-updraftplus.php:5067, src/class-updraftplus.php:5327, src/class-updraftplus.php:5250, src/addons/googlecloud.php:512, src/addons/migrator.php:390, src/methods/googledrive.php:593, src/methods/s3.php:370
 msgid "Error: %s"
 msgstr ""
 
@@ -2461,7 +2461,7 @@ msgstr ""
 msgid "Backup probably failed."
 msgstr ""
 
-#: src/class-updraftplus.php:4854, src/addons/azure.php:301, src/methods/googledrive.php:1416, src/methods/s3.php:370
+#: src/class-updraftplus.php:4854, src/addons/azure.php:301, src/methods/googledrive.php:1417, src/methods/s3.php:370
 msgid "File not found"
 msgstr ""
 
@@ -3600,11 +3600,11 @@ msgstr ""
 msgid "In %s, path names are case sensitive."
 msgstr ""
 
-#: src/addons/google-enhanced.php:126, src/methods/googledrive.php:324, src/methods/googledrive.php:322, src/methods/googledrive.php:674, src/methods/googledrive.php:717, src/methods/googledrive.php:760, src/methods/googledrive.php:767, src/methods/googledrive.php:779, src/methods/googledrive.php:797, src/methods/googledrive.php:795, src/methods/googledrive.php:1488, src/methods/googledrive.php:1489, src/methods/googledrive.php:1491, src/methods/googledrive.php:1493, src/methods/googledrive.php:1515, src/methods/googledrive.php:1515
+#: src/addons/google-enhanced.php:126, src/methods/googledrive.php:324, src/methods/googledrive.php:322, src/methods/googledrive.php:675, src/methods/googledrive.php:718, src/methods/googledrive.php:761, src/methods/googledrive.php:768, src/methods/googledrive.php:780, src/methods/googledrive.php:798, src/methods/googledrive.php:796, src/methods/googledrive.php:1489, src/methods/googledrive.php:1490, src/methods/googledrive.php:1492, src/methods/googledrive.php:1494, src/methods/googledrive.php:1516, src/methods/googledrive.php:1516
 msgid "Google Drive"
 msgstr ""
 
-#: src/addons/google-enhanced.php:126, src/methods/googledrive.php:1493
+#: src/addons/google-enhanced.php:126, src/methods/googledrive.php:1494
 msgid "Folder"
 msgstr ""
 
@@ -3716,7 +3716,7 @@ msgstr ""
 msgid "Failure: No bucket details were given."
 msgstr ""
 
-#: src/addons/googlecloud.php:223, src/addons/googlecloud.php:228, src/methods/cloudfiles.php:140, src/methods/googledrive.php:1287, src/methods/googledrive.php:1293
+#: src/addons/googlecloud.php:223, src/addons/googlecloud.php:228, src/methods/cloudfiles.php:140, src/methods/googledrive.php:1288, src/methods/googledrive.php:1294
 msgid "Error: Failed to open local file"
 msgstr ""
 
@@ -3732,7 +3732,7 @@ msgstr ""
 msgid "You do not have access to this bucket."
 msgstr ""
 
-#: src/addons/googlecloud.php:346, src/methods/googledrive.php:1459
+#: src/addons/googlecloud.php:346, src/methods/googledrive.php:1460
 msgid "download: failed: file not found"
 msgstr ""
 
@@ -3748,15 +3748,15 @@ msgstr ""
 msgid "Authentication could not go ahead, because something else on your site is breaking it."
 msgstr ""
 
-#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:490, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
+#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:491, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
 msgid "Try disabling your other plugins and switching to a default theme."
 msgstr ""
 
-#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:490, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
+#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:491, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
 msgid "Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins."
 msgstr ""
 
-#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:490
+#: src/addons/googlecloud.php:464, src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:491
 msgid "Turning off any debugging settings may also help)."
 msgstr ""
 
@@ -3764,19 +3764,19 @@ msgstr ""
 msgid "%s suthorization failed"
 msgstr ""
 
-#: src/addons/googlecloud.php:510, src/methods/googledrive.php:590
+#: src/addons/googlecloud.php:510, src/methods/googledrive.php:591
 msgid "No refresh token was received from Google."
 msgstr ""
 
-#: src/addons/googlecloud.php:510, src/methods/googledrive.php:590
+#: src/addons/googlecloud.php:510, src/methods/googledrive.php:591
 msgid "This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it."
 msgstr ""
 
-#: src/addons/googlecloud.php:510, src/methods/googledrive.php:590
+#: src/addons/googlecloud.php:510, src/methods/googledrive.php:591
 msgid "Re-check it, then follow the link to authenticate again."
 msgstr ""
 
-#: src/addons/googlecloud.php:510, src/methods/googledrive.php:590
+#: src/addons/googlecloud.php:510, src/methods/googledrive.php:591
 msgid "Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again."
 msgstr ""
 
@@ -3784,7 +3784,7 @@ msgstr ""
 msgid "Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Cloud."
 msgstr ""
 
-#: src/addons/googlecloud.php:590, src/addons/googlecloud.php:591, src/addons/googlecloud.php:1062, src/addons/googlecloud.php:1060, src/methods/googledrive.php:832, src/methods/googledrive.php:833, src/methods/googledrive.php:821, src/methods/googledrive.php:822
+#: src/addons/googlecloud.php:590, src/addons/googlecloud.php:591, src/addons/googlecloud.php:1062, src/addons/googlecloud.php:1060, src/methods/googledrive.php:833, src/methods/googledrive.php:834, src/methods/googledrive.php:822, src/methods/googledrive.php:823
 msgid "Account is not authorized."
 msgstr ""
 
@@ -3808,19 +3808,19 @@ msgstr ""
 msgid "Please complete all fields in %s settings and save the settings."
 msgstr ""
 
-#: src/addons/googlecloud.php:884, src/addons/onedrive.php:1001, src/addons/onedrive.php:1012, src/methods/googledrive.php:638, src/methods/googledrive.php:651
+#: src/addons/googlecloud.php:884, src/addons/onedrive.php:1001, src/addons/onedrive.php:1012, src/methods/googledrive.php:639, src/methods/googledrive.php:652
 msgid "However, subsequent access attempts failed:"
 msgstr ""
 
-#: src/addons/googlecloud.php:904, src/addons/googlecloud.php:1030, src/addons/onedrive.php:1033, src/addons/sftp.php:711, src/addons/sftp.php:707, src/addons/wp-cli.php:500, src/methods/addon-base-v2.php:358, src/methods/cloudfiles.php:590, src/methods/googledrive.php:674, src/methods/openstack-base.php:535, src/methods/s3.php:1451
+#: src/addons/googlecloud.php:904, src/addons/googlecloud.php:1030, src/addons/onedrive.php:1033, src/addons/sftp.php:711, src/addons/sftp.php:707, src/addons/wp-cli.php:500, src/methods/addon-base-v2.php:358, src/methods/cloudfiles.php:590, src/methods/googledrive.php:675, src/methods/openstack-base.php:535, src/methods/s3.php:1451
 msgid "Success"
 msgstr ""
 
-#: src/addons/googlecloud.php:904, src/addons/onedrive.php:1033, src/methods/googledrive.php:674
+#: src/addons/googlecloud.php:904, src/addons/onedrive.php:1033, src/methods/googledrive.php:675
 msgid "you have authenticated your %s account."
 msgstr ""
 
-#: src/addons/googlecloud.php:904, src/methods/googledrive.php:674
+#: src/addons/googlecloud.php:904, src/methods/googledrive.php:675
 msgid "Name: %s."
 msgstr ""
 
@@ -3848,11 +3848,11 @@ msgstr ""
 msgid "The specified bucket was not found."
 msgstr ""
 
-#: src/addons/googlecloud.php:1288, src/includes/class-remote-send.php:429, src/methods/googledrive.php:1494
+#: src/addons/googlecloud.php:1288, src/includes/class-remote-send.php:429, src/methods/googledrive.php:1495
 msgid "For longer help, including screenshots, follow this link."
 msgstr ""
 
-#: src/addons/googlecloud.php:1288, src/methods/googledrive.php:1494
+#: src/addons/googlecloud.php:1288, src/methods/googledrive.php:1495
 msgid "The description below is sufficient for more expert users."
 msgstr ""
 
@@ -3860,7 +3860,7 @@ msgstr ""
 msgid "Follow this link to your Google API Console, and there activate the Storage API and create a Client ID in the API Access section."
 msgstr ""
 
-#: src/addons/googlecloud.php:1289, src/methods/googledrive.php:1497
+#: src/addons/googlecloud.php:1289, src/methods/googledrive.php:1498
 msgid "Select 'Web Application' as the application type."
 msgstr ""
 
@@ -3872,7 +3872,7 @@ msgstr ""
 msgid "%s does not allow authorization of sites hosted on direct IP addresses."
 msgstr ""
 
-#: src/addons/googlecloud.php:1284, src/methods/googledrive.php:1515
+#: src/addons/googlecloud.php:1284, src/methods/googledrive.php:1516
 msgid "You will need to change your site's address (%s) before you can use %s for storage."
 msgstr ""
 
@@ -3884,15 +3884,15 @@ msgstr ""
 msgid "Do not confuse %s with %s - they are separate things."
 msgstr ""
 
-#: src/addons/googlecloud.php:1298, src/addons/onedrive.php:1337, src/methods/googledrive.php:1489
+#: src/addons/googlecloud.php:1298, src/addons/onedrive.php:1337, src/methods/googledrive.php:1490
 msgid "Client ID"
 msgstr ""
 
-#: src/addons/googlecloud.php:1299, src/methods/googledrive.php:1490
+#: src/addons/googlecloud.php:1299, src/methods/googledrive.php:1491
 msgid "If Google later shows you the message \"invalid_client\", then you did not enter a valid client ID here."
 msgstr ""
 
-#: src/addons/googlecloud.php:1300, src/addons/onedrive.php:1339, src/methods/googledrive.php:1491
+#: src/addons/googlecloud.php:1300, src/addons/onedrive.php:1339, src/methods/googledrive.php:1492
 msgid "Client Secret"
 msgstr ""
 
@@ -3960,15 +3960,15 @@ msgstr ""
 msgid "Read more about bucket locations"
 msgstr ""
 
-#: src/addons/googlecloud.php:1317, src/methods/googledrive.php:1505
+#: src/addons/googlecloud.php:1317, src/methods/googledrive.php:1506
 msgid "Authenticate with Google"
 msgstr ""
 
-#: src/addons/googlecloud.php:1318, src/addons/onedrive.php:1353, src/methods/googledrive.php:1506
+#: src/addons/googlecloud.php:1318, src/addons/onedrive.php:1353, src/methods/googledrive.php:1507
 msgid "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here once and follow this link to complete authentication with %s."
 msgstr ""
 
-#: src/addons/googlecloud.php:1319, src/addons/googlecloud.php:1372, src/methods/googledrive.php:1507, src/methods/googledrive.php:1684
+#: src/addons/googlecloud.php:1319, src/addons/googlecloud.php:1372, src/methods/googledrive.php:1508, src/methods/googledrive.php:1685
 msgid "Sign in with %s"
 msgstr ""
 
@@ -3976,7 +3976,7 @@ msgstr ""
 msgid "<strong>(You are already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
 msgstr ""
 
-#: src/addons/googlecloud.php:1321, src/addons/onedrive.php:1350, src/addons/pcloud.php:551, src/methods/backup-module.php:700, src/methods/dropbox.php:608, src/methods/googledrive.php:1510
+#: src/addons/googlecloud.php:1321, src/addons/onedrive.php:1350, src/addons/pcloud.php:551, src/methods/backup-module.php:700, src/methods/dropbox.php:608, src/methods/googledrive.php:1511
 msgid "Follow this link to remove these settings for %s."
 msgstr ""
 
@@ -4704,7 +4704,7 @@ msgstr ""
 msgid "Authentication"
 msgstr ""
 
-#: src/addons/onedrive.php:987, src/addons/pcloud.php:722, src/methods/dropbox.php:964, src/methods/dropbox.php:955, src/methods/googledrive.php:635
+#: src/addons/onedrive.php:987, src/addons/pcloud.php:722, src/methods/dropbox.php:964, src/methods/dropbox.php:955, src/methods/googledrive.php:636
 msgid "Your %s quota usage: %s %% used, %s available"
 msgstr ""
 
@@ -4716,7 +4716,7 @@ msgstr ""
 msgid "OneDrive"
 msgstr ""
 
-#: src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:490, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
+#: src/addons/onedrive.php:1141, src/addons/pcloud.php:653, src/methods/googledrive.php:491, src/includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:129
 msgid "The %s authentication could not go ahead, because something else on your site is breaking it."
 msgstr ""
 
@@ -4724,11 +4724,11 @@ msgstr ""
 msgid "authorization failed:"
 msgstr ""
 
-#: src/addons/onedrive.php:1332, src/addons/pcloud.php:548, src/methods/dropbox.php:601, src/methods/googledrive.php:1503
+#: src/addons/onedrive.php:1332, src/addons/pcloud.php:548, src/methods/dropbox.php:601, src/methods/googledrive.php:1504
 msgid "Please read %s for use of our %s authorization app (none of your backup data is sent to us)."
 msgstr ""
 
-#: src/addons/onedrive.php:1332, src/addons/pcloud.php:548, src/methods/dropbox.php:601, src/methods/googledrive.php:1503
+#: src/addons/onedrive.php:1332, src/addons/pcloud.php:548, src/methods/dropbox.php:601, src/methods/googledrive.php:1504
 msgid "this privacy policy"
 msgstr ""
 
@@ -5361,7 +5361,7 @@ msgstr ""
 msgid "Failed: We were not able to place a file in that directory - please check your credentials."
 msgstr ""
 
-#: src/addons/webdav.php:743, src/methods/googledrive.php:717, src/methods/googledrive.php:779, src/methods/googledrive.php:797, src/methods/googledrive.php:795
+#: src/addons/webdav.php:743, src/methods/googledrive.php:718, src/methods/googledrive.php:780, src/methods/googledrive.php:798, src/methods/googledrive.php:796
 msgid "Failed to upload to %s"
 msgstr ""
 
@@ -7388,67 +7388,67 @@ msgstr ""
 msgid "Please create a new Google Drive project and reconnect with UpdraftPlus."
 msgstr ""
 
-#: src/methods/googledrive.php:598
+#: src/methods/googledrive.php:599
 msgid "%s authorization failed"
 msgstr ""
 
-#: src/methods/googledrive.php:717
+#: src/methods/googledrive.php:718
 msgid "failed to access parent folder"
 msgstr ""
 
-#: src/methods/googledrive.php:760
+#: src/methods/googledrive.php:761
 msgid "Account full: your %s account has only %d bytes left, but the file to be uploaded is %d bytes"
 msgstr ""
 
-#: src/methods/googledrive.php:767
+#: src/methods/googledrive.php:768
 msgid "Upload expected to fail: the %s limit for any single file is %s, whereas this file is %s GB (%d bytes)"
 msgstr ""
 
-#: src/methods/googledrive.php:859
+#: src/methods/googledrive.php:860
 msgid "%s for %s"
 msgstr ""
 
-#: src/methods/googledrive.php:868, src/methods/googledrive.php:904
+#: src/methods/googledrive.php:869, src/methods/googledrive.php:905
 msgid "Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Drive."
 msgstr ""
 
-#: src/methods/googledrive.php:1496
+#: src/methods/googledrive.php:1497
 msgid "Follow this link to your Google API Console, and there activate the Drive API and create a Client ID in the API Access section."
 msgstr ""
 
-#: src/methods/googledrive.php:1498
+#: src/methods/googledrive.php:1499
 msgid "You must add the following as the authorised redirect URI (under \"More Options\") when asked"
 msgstr ""
 
-#: src/methods/googledrive.php:1500
+#: src/methods/googledrive.php:1501
 msgid "N.B. If you install UpdraftPlus on several WordPress sites, then you cannot re-use your project; you must create a new one from your Google API console for each site."
 msgstr ""
 
-#: src/methods/googledrive.php:1501
+#: src/methods/googledrive.php:1502
 msgid "<strong>This is NOT a folder name</strong>."
 msgstr ""
 
-#: src/methods/googledrive.php:1501
+#: src/methods/googledrive.php:1502
 msgid "It is an ID number internal to Google Drive"
 msgstr ""
 
-#: src/methods/googledrive.php:1502
+#: src/methods/googledrive.php:1503
 msgid "To be able to set a custom folder name, use UpdraftPlus Premium."
 msgstr ""
 
-#: src/methods/googledrive.php:1508
+#: src/methods/googledrive.php:1509
 msgid "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
 msgstr ""
 
-#: src/methods/googledrive.php:1511
+#: src/methods/googledrive.php:1512
 msgid "To de-authorize UpdraftPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings."
 msgstr ""
 
-#: src/methods/googledrive.php:1512
+#: src/methods/googledrive.php:1513
 msgid "Account holder's name"
 msgstr ""
 
-#: src/methods/googledrive.php:1515
+#: src/methods/googledrive.php:1516
 msgid "%s does not allow authorisation of sites hosted on direct IP addresses."
 msgstr ""
 
