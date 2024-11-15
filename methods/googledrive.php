@@ -482,7 +482,8 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			'state' => $token,
 			'access_type' => 'offline',
 			// 'approval_prompt' => 'force', // legacy and has been deprected. It can lead to conflicts when specified along with "prompt" param
-			'include_granted_scopes' => 'true',
+			// Nov 2024 - changed from `true` for the same reason as a few lines earlier
+			'include_granted_scopes' => 'false',
 			'enable_granular_consent' => 'true',
 			'prompt' => 'select_account consent', // new option param as the replacement to 'approval_prompt'
 		);

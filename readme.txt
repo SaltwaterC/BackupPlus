@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.24.10
+Stable tag: 1.24.11
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,7 +179,7 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
-= 1.24.10 - 15/Nov/2024 =
+= 1.24.11 - 15/Nov/2024 =
 
 * TWEAK: Do not request drive.readonly scope on Google Drive connections, due to Google's app permissions review (unannounced and requires us to create a Youtube video for their review process) - this means that (until the review completes) new connections to Google Drive can only access backups created by UpdraftPlus directly, and not backups which you manually upload to Google Drive. This restores the ability to make new connections to Google Drive.
 * TWEAK: Adjustment of the UpdraftPlus_S3_Compat class to preserve compatibility with the external UpdraftPlus AWS SDK plugin (https://github.com/DavidAnderson684/updraftplus-aws-sdk).
@@ -1982,4 +1982,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.10: Restore ability to connect new sites to Google Drive. A recommended update for all.
+* 1.24.11: Restore ability to connect new sites to Google Drive. A recommended update for all.
