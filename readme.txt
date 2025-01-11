@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.24.12
+Stable tag: 1.25.1
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,14 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.25.1 - 11/Jan/2025
+
+* SECURITY: Fix a non-persistent reflected XSS vulnerability due to a missing nonce combined with missing sanitisation. This could allow an attacker, who persuaded you to click a personally-crafted link to your site's dashboard whilst you were logged in, to once run JavaScript code in your dashboard. Thanks to Asaf Mozes for finding and responsibly disclosing this issue.
+* FIX: Prevent the restoration from failing when there is a 'sync-xhr=()' permission policy on the response header.
+* FIX: Improve the approach of acquiring a suggested region for Amazon AWS S3 if a failure arises during the getBucketLocation() call, particularly when the XML response fails to provide a field for the suggested region - this resolves issues with regions (e.g. us-east-2) which recently changed their response behaviour
+* TWEAK: Broaden the support to incorporate the "ap-southeast-4" region of Amazon AWS S3 and additional recently updated regions
+* TWEAK: A regression in the paid version update checker to version 4.13.2, resulting in non-appearance of notices concerning subscription status or WP version compatibility.
 
 = 1.24.12 - 23/Dec/2024 =
 
@@ -1996,4 +2004,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.24.12: Various fixes and small tweaks - see the changelog for details. A recommended update for all.
+* 1.25.1: Fixes a non-persistent XSS vulnerability (details in changelog); mitigation strategies for addressing region mismatches in Amazon AWS S3 caused by recent AWS changes. Various fixes and small tweaks - see the changelog for details. A recommended update for all.

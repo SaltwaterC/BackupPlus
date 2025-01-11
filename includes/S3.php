@@ -1943,7 +1943,11 @@ final class UpdraftPlus_S3Request extends UpdraftPlus_AWSRequest {
 				// Useful for debugging
 				// $this->response->error['body_xml'] = $this->response->body->asXML();
 				
-				if (isset($this->response->body->Region)) $this->response->error['region'] = $this->response->body->Region;
+				if (isset($this->response->body->Region)) {
+					$this->response->error['region'] = $this->response->body->Region;
+				} elseif (false !== stripos($this->response->body->Code, 'AuthorizationHeaderMalformed') && !empty($this->response->body->Message) && preg_match("#the region '[^']+' is wrong; expecting '([^']+)'#i", $this->response->body->Message, $matches)) {
+					$this->response->error['region'] = $matches[1];
+				}
 				$this->response->error['message'] = isset($this->response->body->Message) ? $this->response->body->Message : '';
 				if (isset($this->response->body->Resource))
 					$this->response->error['resource'] = (string)$this->response->body->Resource;

@@ -643,6 +643,11 @@ class UpdraftPlus_Admin {
 			return;
 		}
 
+		if (isset($_REQUEST['udaction']) && 'initiate_restore' === $_REQUEST['udaction']) {
+			// capability, backup_timestamp and nonce validations
+			if (!UpdraftPlus_Options::user_can_manage() || (!empty($_REQUEST['backup_timestamp']) && !preg_match('#^[0-9]+$#i', $_REQUEST['backup_timestamp'])) || !isset($_REQUEST['restore_initiation_nonce']) || !wp_verify_nonce($_REQUEST['restore_initiation_nonce'], 'updraftplus_udcentral_initiate_restore')) wp_die(esc_html__('Sorry, you are not allowed to access this page.', 'updraftplus'));
+		}
+
 		// Next, the actions that only come on the UpdraftPlus page
 		$this->setup_all_admin_notices_udonly($service);
 

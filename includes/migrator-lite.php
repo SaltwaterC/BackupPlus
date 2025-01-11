@@ -251,7 +251,7 @@ class UpdraftPlus_Migrator_Lite {
 			echo sprintf(esc_html__("Failure: No %s was given.", 'updraftplus'), esc_html__('search term', 'updraftplus'))."<br>";
 			
 			if (!empty($options['show_return_link'])) {
-				echo '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus">'.esc_html__('Return to UpdraftPlus configuration', 'updraftplus').'</a>';
+				echo '<a href="'.esc_url(UpdraftPlus_Options::admin_page_url()).'?page=updraftplus">'.esc_html__('Return to UpdraftPlus configuration', 'updraftplus').'</a>';
 			}
 			
 			return;
@@ -267,7 +267,7 @@ class UpdraftPlus_Migrator_Lite {
 		$this->updraftplus_restore_db_pre();
 		$this->tables_replaced = array();
 		$this->updraftplus_restored_db_dosearchreplace(stripslashes($_POST['search']), stripslashes($_POST['replace']), $this->base_prefix, false);
-		if (!empty($options['show_return_link'])) echo '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus">'.esc_html__('Return to UpdraftPlus Configuration', 'updraftplus').'</a>';
+		if (!empty($options['show_return_link'])) echo '<a href="'.esc_url(UpdraftPlus_Options::admin_page_url()).'?page=updraftplus">'.esc_html__('Return to UpdraftPlus Configuration', 'updraftplus').'</a>';
 	}
 
 	/**
@@ -302,9 +302,9 @@ class UpdraftPlus_Migrator_Lite {
 					$updraftplus_admin->settings_debugrow('<label for="search">'.esc_html__('Search for', 'updraftplus').'</label>:', '<input id="search" type="text" name="search" value="" style="width:380px;">');
 					$updraftplus_admin->settings_debugrow('<label for="replace">'.esc_html__('Replace with', 'updraftplus').'</label>:', '<input id="replace" type="text" name="replace" value="" style="width:380px;">');
 					$updraftplus_admin->settings_debugrow('<label for="pagesize">'.esc_html__('Rows per batch', 'updraftplus').'</label>:', '<input id="pagesize" type="number" min="1" step="1" name="pagesize" value="5000" style="width:380px;">');
-					$updraftplus_admin->settings_debugrow('<label for="whichtables">'.esc_html__('These tables only', 'updraftplus').'</label>:', '<input id="whichtables" type="text" name="whichtables" title="'.esc_attr(__('Enter a comma-separated list; otherwise, leave blank for all tables.', 'updraftplus')).'" value="" style="width:380px;">');
+					$updraftplus_admin->settings_debugrow('<label for="whichtables">'.esc_html__('These tables only', 'updraftplus').'</label>:', '<input id="whichtables" type="text" name="whichtables" title="'.esc_attr__('Enter a comma-separated list; otherwise, leave blank for all tables.', 'updraftplus').'" value="" style="width:380px;">');
+					$updraftplus_admin->settings_debugrow('', '<input class="button-primary search_and_replace" type="submit" value="'.esc_attr__('Go', 'updraftplus').'">');
 				?>
-				<?php $updraftplus_admin->settings_debugrow('', '<input class="button-primary search_and_replace" type="submit" value="'.esc_attr(__('Go', 'updraftplus')).'">'); ?>
 				</table>
 			</form>
 			<?php } ?>
@@ -699,7 +699,7 @@ class UpdraftPlus_Migrator_Lite {
 				?>
 				<div class="notice error updraftplus-migration-notice is-dismissible" >					<p>
 						<?php
-						printf('<strong>'.__('Warning', 'updraftplus').':</strong> '._n('Your .htaccess has an old site reference on line number %s. You should remove it manually.', 'Your .htaccess has an old site references on line numbers %s. You should remove them manually.', $count_old_site_references, 'updraftplus'), implode(', ', $htaccess_file_reference_line_num_arr));
+						printf('<strong>'.esc_html__('Warning', 'updraftplus').':</strong> '.esc_html(_n('Your .htaccess has an old site reference on line number %s. You should remove it manually.', 'Your .htaccess has an old site references on line numbers %s. You should remove them manually.', $count_old_site_references, 'updraftplus')), esc_html(implode(', ', $htaccess_file_reference_line_num_arr)));
 						?>
 					</p>
 				</div>
@@ -1090,7 +1090,7 @@ class UpdraftPlus_Migrator_Lite {
 			$GLOBALS['updraftplus_admin']->admin_enqueue_scripts();
 			?>
 			<script>
-			var updraft_credentialtest_nonce='<?php echo wp_create_nonce('updraftplus-credentialtest-nonce');?>';
+			var updraft_credentialtest_nonce='<?php echo esc_js(wp_create_nonce('updraftplus-credentialtest-nonce'));?>';
 			</script>		
 		<?php
 		}
