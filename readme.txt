@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.25.1
+Stable tag: 1.25.2
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,7 +179,19 @@ The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the b
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
-= 1.25.1 - 11/Jan/2025
+= 1.25.2 - 26/Feb/2025 =
+
+* FEATURE: Added a "Cron events" tab in the Advanced Tools section to check for the presence of the UpdraftPlus cron job.
+* FIX: Resolve the issue of uploads to pCloud failing after a folder name change by resetting the "folderid" whenever the folder name is updated.
+* TWEAK: Add site information for WooCommerce and HPOS support to the database backup header.
+* TWEAK: Create a log entry when a bot verification page appears during the file upload in the migration procedure.
+* TWEAK: Improve error message clarity for failed connection tests in migration.
+* TWEAK: Include details in the backup log file about the status and availability of the proxy configured in the system.
+* TWEAK: Update the Google library to support the WP_PROXY_HOST and WP_PROXY_PORT constants.
+* TWEAK: TWEAK Update the link for Onedrive and Azure app creation
+* COMPATIBILITY: Got rid of PHP 8.4 deprecation messages caused by the E_STRICT constant usage
+
+= 1.25.1 - 11/Jan/2025 =
 
 * SECURITY: Fix a non-persistent reflected XSS vulnerability due to a missing nonce combined with missing sanitisation. This could allow an attacker, who persuaded you to click a personally-crafted link to your site's dashboard whilst you were logged in, to once run JavaScript code in your dashboard. Thanks to Asaf Mozes for finding and responsibly disclosing this issue.
 * FIX: Prevent the restoration from failing when there is a 'sync-xhr=()' permission policy on the response header.
@@ -2004,4 +2016,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.25.1: Fixes a non-persistent XSS vulnerability (details in changelog); mitigation strategies for addressing region mismatches in Amazon AWS S3 caused by recent AWS changes. Various fixes and small tweaks - see the changelog for details. A recommended update for all.
+* 1.25.2: New Cron Events tool for checking all UpdraftPlus-related cron events; identification of WooCommerce and HPOS support; error message clarity when bot verification occurs prior to or during the direct site to site migration. Various fixes and small tweaks - see the changelog for details. A recommended update for all.

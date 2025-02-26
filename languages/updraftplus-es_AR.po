@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the UpdraftPlus package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-12-16 16:22:35+0000\n"
+"PO-Revision-Date: 2025-02-22 05:07:17+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2104,15 +2104,15 @@ msgstr "La instalación de PHP/Curl de su servidor web no soporta accesos https.
 
 #: src/admin.php:4429
 msgid "If you see any errors to do with encryption, then look in the 'Expert Settings' for more help."
-msgstr ""
+msgstr "Si ves algún error relacionado con el cifrado, buscá en “Ajustes expertos” para obtener más ayuda."
 
 #: src/admin.php:4429
 msgid "Good news: Your site's communications with %s can be encrypted."
-msgstr ""
+msgstr "Buenas noticias: la comunicación del sitio con %s se puede cifrar."
 
 #: src/admin.php:4333, src/addons/morefiles.php:371
 msgid "For entities at the top level, you can use a * at the start or end of the entry as a wildcard."
-msgstr ""
+msgstr "Para las entidades del nivel superior podés usar un * al inicio o al final de la entrada, como comodín."
 
 #: src/admin.php:4364
 msgid "none present"
@@ -2120,11 +2120,11 @@ msgstr "ninguno presente"
 
 #: src/admin.php:4043
 msgid "You should check with your hosting provider that this will not cause any problems"
-msgstr ""
+msgstr "Deberías consultar con tu proveedor de hosting si esto no causará ningún problema."
 
 #: src/admin.php:4043
 msgid "The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it."
-msgstr ""
+msgstr "Se creó la carpeta pero tuvimos que cambiar sus permisos de archivo a 777 (escritura global) para poder escribir en ella."
 
 #: src/admin.php:3891
 msgid "Old folders successfully removed."
@@ -2144,11 +2144,11 @@ msgstr "Eliminar carpetas viejas"
 
 #: src/admin.php:3878
 msgid "Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal."
-msgstr ""
+msgstr "No detengas un respaldo solo porque parece no avanzar durante un rato: eso es normal."
 
 #: src/admin.php:3878
 msgid "Note: the progress bar below is based on stages, NOT time."
-msgstr ""
+msgstr "Nota: la barra de progreso más abajo está basada en etapas, NO en tiempo."
 
 #: src/admin.php:3602
 msgid "Delete old folders"
@@ -2156,23 +2156,23 @@ msgstr "Borrar carpetas viejas"
 
 #: src/admin.php:3596
 msgid "You should press this button to delete them as soon as you have verified that the restoration worked."
-msgstr ""
+msgstr "Deberás apretar este botón para borrarlos tan pronto como hayas verificado que la restauración funcionó."
 
 #: src/admin.php:3596
 msgid "Your WordPress install has old folders from its state before you restored/migrated (technical information: these are suffixed with -old)."
-msgstr ""
+msgstr "La instalación de WordPress tiene carpetas antiguas de su estado anterior a la restauración/migración (información técnica: estas tienen el sufijo -old)."
 
 #: src/admin.php:3050
 msgid "This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary)."
-msgstr ""
+msgstr "Este plugin puede tener problemas con un límite de memoria menor a 64 Mb, especialmente si hay archivos muy grandes cargados (aunque, por otro lado, muchos sitios tendrán éxito con un límite de 32 Mb; la experiencia puede variar)."
 
 #: src/admin.php:3050
 msgid "UpdraftPlus attempted to raise it but was unsuccessful."
-msgstr ""
+msgstr "UpdraftPlus intentó aumentarlo pero no tuvo éxito."
 
 #: src/admin.php:3050
 msgid "Your PHP memory limit (set by your web hosting company) is very low."
-msgstr ""
+msgstr "El límite de memoria para PHP (establecido por tu proveedor de hosting) es demasiado bajo."
 
 #: src/admin.php:2993
 msgid "You should rename the directory to wp-content/plugins/updraftplus to fix this problem."
@@ -2359,7 +2359,7 @@ msgstr ""
 
 #: src/admin.php:1087
 msgid "HTML was detected in the response."
-msgstr ""
+msgstr "Se detectó HTML en la respuesta."
 
 #: src/admin.php:1072
 msgid "Once the clone has finished deploying it, you will receive an email."
@@ -2379,55 +2379,55 @@ msgstr ""
 
 #: src/admin.php:1056
 msgid "Adding site to UpdraftCentral Cloud."
-msgstr ""
+msgstr "Agregando sitio a UpdraftCentral Cloud."
 
 #: src/admin.php:1056
 msgid "Key created."
-msgstr ""
+msgstr "Clave creada."
 
 #: src/admin.php:1055
 msgid "Requesting UpdraftCentral Key."
-msgstr ""
+msgstr "Solicitando clave de UpdraftCentral."
 
 #: src/admin.php:1055
 msgid "Connected."
-msgstr ""
+msgstr "Conectado."
 
 #: src/admin.php:1037
 msgid "It would be best to download the zip to your computer."
-msgstr ""
+msgstr "Sería mejor que bajaras el zip en tu computadora."
 
 #: src/admin.php:1037
 msgid "This could be caused by a timeout."
-msgstr ""
+msgstr "Esto puede haber sido causado por exceder el tiempo de espera."
 
 #: src/admin.php:1037
 msgid "Unable to download file."
-msgstr ""
+msgstr "No se puede bajar el archivo."
 
 #: src/admin.php:1033
 msgid "Please check the following:"
-msgstr ""
+msgstr "Chequeá lo siguiente:"
 
 #: src/admin.php:1033
 msgid "The file failed to upload."
-msgstr ""
+msgstr "El archivo no se pudo subir."
 
 #: src/admin.php:1020
 msgid "Please choose a valid UpdraftPlus export file."
-msgstr ""
+msgstr "Elegí un archivo de exportación de UpdraftPlus válido."
 
 #: src/admin.php:1020
 msgid "Error: The chosen file is corrupt."
-msgstr ""
+msgstr "Error: el archivo seleccionado está corrupto."
 
 #: src/admin.php:967
 msgid "Please select at least one, and then try again."
-msgstr ""
+msgstr "Seleccioná por lo menos uno y después intentá de nuevo."
 
 #: src/admin.php:967
 msgid "You did not select any components to restore."
-msgstr ""
+msgstr "No seleccionaste ningún componente para restaurar."
 
 #: src/admin.php:950, src/admin.php:951
 msgid "This file is not an UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
@@ -2439,11 +2439,11 @@ msgstr "Tamaño de archivo"
 
 #: src/admin.php:921
 msgid "Do not close your browser until it reports itself as having finished."
-msgstr ""
+msgstr "No cerrés el navegador hasta que haya notificado que terminó."
 
 #: src/admin.php:921
 msgid "The restore operation has begun."
-msgstr ""
+msgstr "La operación de restauración ha comenzado."
 
 #: src/admin.php:3742
 msgid "file %d of %d"
@@ -8903,7 +8903,7 @@ msgstr "Se encontró un archivo muy grande: %s (tamaño: %s MB)"
 
 #: src/includes/class-wpadmin-commands.php:586
 msgid "Failed to open directory: %s."
-msgstr ""
+msgstr "Error al abrir el directorio: %s."
 
 #: src/backup.php:3217
 msgid "%s: unreadable file - could not be backed up"

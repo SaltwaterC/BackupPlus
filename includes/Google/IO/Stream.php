@@ -112,7 +112,10 @@ if (empty($this->options['disable_verify_peer'])) {
 	$requestSslContext['allow_self_signed'] = true;
 }
 if (!empty($this->options['cafile'])) $requestSslContext['cafile'] = $this->options['cafile'];
-
+if (!empty($this->options['proxy'])) {
+  $requestHttpContext['proxy'] = $this->options['proxy'];
+  $requestHttpContext['request_fulluri'] = true;
+}
     $options = array(
         "http" => array_merge(
             self::$DEFAULT_HTTP_CONTEXT,

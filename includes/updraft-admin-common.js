@@ -4654,6 +4654,32 @@ jQuery(function($) {
 		jQuery('#updraft_restore_continue_action').val('updraft_restore_abort');
 		jQuery(this).parent('form').trigger('submit');
 	});
+
+	jQuery('#cron_events.advanced_tools_button').on('click', function(e) {
+		e.preventDefault();
+
+		var $table_body = jQuery('.advanced_settings_content .advanced_tools.cron_events tbody');
+		$table_body.html('');
+
+		updraft_send_command('get_cron_events', 1, function (response) {
+			$.each(response, function(index, item) {
+				var first_column = '<td>';
+				if (item.overdue) first_column = '<td style="border-left:4px solid #DB6A03;">';
+
+				$table_body.append($('<tr>').append(
+					$(first_column).text(item.hook),
+					$('<td>').text(item.name)
+				));
+				if (item.overdue) {
+					$table_body.find('tr:last').append('<td><span></span><br><span class="dashicons dashicons-warning" aria-hidden="true" style="color:#DB6A03"></span> <span></span></td>');
+				} else {
+					$table_body.find('tr:last').append('<td><span></span><br><span></span></td>');
+				}
+				$table_body.find('tr:last td:last span').not('.dashicons').first().text(item.time);
+				$table_body.find('tr:last td:last span').last().text(item.interval);
+			});
+		});
+	});
 });
 
 // UpdraftVault

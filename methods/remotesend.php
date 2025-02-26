@@ -69,7 +69,18 @@ class UpdraftPlus_BackupModule_remotesend extends UpdraftPlus_RemoteStorage_Addo
 		$get_remote_size = $this->send_message('get_file_status', $file, 30);
 		
 		if (is_wp_error($get_remote_size)) {
-			throw new Exception($get_remote_size->get_error_message().' (get_file_status: '.$get_remote_size->get_error_code().')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+			$err_msg = $get_remote_size->get_error_message();
+			$err_data = $get_remote_size->get_error_data();
+			$err_code = $get_remote_size->get_error_code();
+
+			if (!is_numeric($err_code) && isset($err_data['response']['code'])) {
+				$err_code = $err_data['response']['code'];
+				$err_msg = UpdraftPlus_HTTP_Error_Descriptions::get_http_status_code_description($err_code);
+			} elseif (is_string($err_data) && preg_match('/captcha|verify.*human|turnstile/i', $err_data)) {
+				$err_msg = __('We are unable to proceed with the process due to a bot verification requirement', 'updraftplus');
+			}
+
+			throw new Exception($err_msg.' (get_file_status: '.$err_code.')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
 		}
 
 		if (!is_array($get_remote_size) || empty($get_remote_size['response'])) throw new Exception(__('Unexpected response:', 'updraftplus').' '.serialize($get_remote_size)); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
