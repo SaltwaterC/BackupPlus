@@ -2,8 +2,8 @@
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
-Tested up to: 6.7
-Stable tag: 1.25.3
+Tested up to: 6.8
+Stable tag: 1.25.5
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,20 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.25.5 - 17/Apr/2025 =
+
+* FIX: A bug that prevented the Rackspace "Create new API user and container" dialog from opening.
+* TWEAK: An HTTP header intended to terminate the browser's connection was incorrectly assigned a value that the header does not support.
+* TWEAK: Ability to automatically choose the proper checkout page when the user is about to buy TeamUpdraft products from within the plugin
+* TWEAK: Clear Divi theme CSS cache at the end of the restoration process
+* TWEAK: Resolve PHP warning in pCloud addon when upgrading from free to premium version.
+* TWEAK: Update error messages when the user fails to connect to their TeamUpdraft account on the 'Premium/Extensions' tab.
+
+= 1.25.4 - 24/Mar/2025 =
+
+* FIX: Regression in 1.25.3 - missing database encryption input field due to the use of the "wp_kses_post" function that doesn't allow "<input>" tag to be rendered
+* TWEAK: Add new fields to UpdraftCentral handler
 
 = 1.25.3 - 21/Mar/2025 =
 
@@ -2032,4 +2046,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.25.3: Various fixes and small tweaks - see the changelog for details. A recommended update for all.
+* 1.25.5: Various fixes and small tweaks - see the changelog for details. A recommended update for all.

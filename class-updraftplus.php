@@ -397,7 +397,7 @@ class UpdraftPlus {
 		// Close browser connection so that it can resume AJAX polling
 		header('Content-Length: '.(empty($txt) ? '0' : 4+strlen($txt)));
 		header('Connection: close');
-		header('Content-Encoding: application/json'); // Used to be 'none', but all inputs to this method are JSON-encoded
+		header('Content-Type: application/json'); // Used to be 'none', but all inputs to this method are JSON-encoded
 		if (function_exists('session_id') && session_id()) session_write_close();
 		echo "\r\n\r\n";
 		echo $txt; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- All inputs to this method are already JSON-encoded, and the output context is not HTML
@@ -5909,22 +5909,22 @@ class UpdraftPlus {
 				return apply_filters('updraftplus_com_mothership', 'https://updraftplus.com/plugin-info');
 				break;
 			case 'shop_premium':
-				return apply_filters('updraftplus_com_shop_premium', 'https://teamupdraft.com/updraftplus/pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-premium&utm_creative_format=text');
+				return apply_filters('updraftplus_com_shop_premium', 'https://teamupdraft.com/updraftplus/pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-premium&utm_creative_format=text#pricing-block');
 				break;
 			case 'shop_vault_5':
-				return apply_filters('updraftplus_com_shop_vault_5', 'https://teamupdraft.com/cart/?add-to-cart=1431&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=$1-trial&utm_creative_format=button');
+				return apply_filters('updraftplus_com_shop_vault_5', 'https://teamupdraft.com/cart/?add-to-cart=1431&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-vault-storage-$1-trial&utm_creative_format=button');
 				break;
 			case 'shop_vault_15':
-				return apply_filters('updraftplus_com_shop_vault_15', 'https://teamupdraft.com/updraftplus/updraftvault/#updraftvault-pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=15GB&utm_creative_format=button');
+				return apply_filters('updraftplus_com_shop_vault_15', 'https://teamupdraft.com/cart/?add-to-cart=1434&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-vault-storage-15-gb&utm_creative_format=button');
 				break;
 			case 'shop_vault_50':
-				return apply_filters('updraftplus_com_shop_vault_50', 'https://teamupdraft.com/updraftplus/updraftvault/#updraftvault-pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=50GB&utm_creative_format=button');
+				return apply_filters('updraftplus_com_shop_vault_50', 'https://teamupdraft.com/cart/?add-to-cart=1440&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-vault-storage-50-gb&utm_creative_format=button');
 				break;
 			case 'shop_vault_250':
-				return apply_filters('updraftplus_com_shop_vault_250', 'https://teamupdraft.com/updraftplus/updraftvault/#updraftvault-pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=250GB&utm_creative_format=button');
+				return apply_filters('updraftplus_com_shop_vault_250', 'https://teamupdraft.com/cart/?add-to-cart=1437&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-vault-storage-250-gb&utm_creative_format=button');
 				break;
 			case 'anon_backups':
-				return apply_filters('updraftplus_com_anon_backups', 'https://updraftplus.com/upcoming-updraftplus-feature-clone-data-anonymisation/');
+				return apply_filters('updraftplus_com_anon_backups', 'https://teamupdraft.com/blog/upcoming-updraftplus-feature-anonymise-data-before-cloning-your-site/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=unknown&utm_creative_format=unknown');
 				break;
 			case 'clone_packages':
 				return apply_filters('updraftplus_com_clone_packages', 'https://updraftplus.com/faqs/what-is-the-largest-site-that-i-can-clone-with-updraftclone/');
@@ -5958,6 +5958,9 @@ class UpdraftPlus {
 				break;
 			case 'premium_email':
 				return apply_filters('updraftplus_premium_email', 'https://teamupdraft.com/updraftplus/features/advanced-wordpress-backup-reports?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=for-more-email-options&utm_creative_format=notice');
+				break;
+			case 'buy_clone_tokens':
+				return apply_filters('updraftplus_buy_clone_tokens', 'https://teamupdraft.com/updraftplus/updraftclone/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=to-clone-your-site&utm_creative_format=text#pricing-block');
 				break;
 			default:
 				return 'URL not found ('.$which_page.')';
