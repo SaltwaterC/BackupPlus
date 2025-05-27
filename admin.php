@@ -383,6 +383,8 @@ class UpdraftPlus_Admin {
 				foreach ($settings['settings'] as $storage_options) {
 					if ('objects-us-west-1.dream.io' == $storage_options['endpoint']) {
 						add_action('all_admin_notices', array($this, 'show_admin_warning_dreamobjects'));
+					} elseif (!UpdraftPlus_BackupModule_dreamobjects::is_valid_endpoint($storage_options['endpoint'])) {
+						add_action('all_admin_notices', array($this, 'show_admin_error_dreamobjects_invalid_custom_endpoint'));
 					}
 				}
 			}
@@ -900,9 +902,7 @@ class UpdraftPlus_Admin {
 
 		$jqueryui_dialog_extended_version = $updraftplus->use_unminified_scripts() ? '1.0.4'.'.'.time() : '1.0.4';
 		wp_enqueue_script('jquery-ui.dialog.extended', UPDRAFTPLUS_URL.'/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended'.$updraft_min_or_not.'.js', array('jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog'), $jqueryui_dialog_extended_version);
-		
-		do_action('updraftplus_admin_enqueue_scripts');
-		
+
 		$day_selector = '';
 		for ($day_index = 0; $day_index <= 6; $day_index++) {
 			// $selected = ($opt == $day_index) ? 'selected="selected"' : '';
@@ -918,6 +918,7 @@ class UpdraftPlus_Admin {
 		}
 		$backup_methods = $updraftplus->backup_methods;
 		$remote_storage_options_and_templates = UpdraftPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
+		do_action('updraftplus_admin_enqueue_scripts');
 		$main_tabs = $this->get_main_tabs_array();
 
 		$checkout_embed_5gb_trial_attribute = '';
@@ -1184,6 +1185,8 @@ class UpdraftPlus_Admin {
 			'reload_page'  => __('Therefore, please reload the page.', 'updraftplus'),
 			'save_changes'  => __('Save Changes', 'updraftplus'),
 			'close' => __('Close', 'updraftplus'),
+			'dreamobject_endpoints' => array_keys(UpdraftPlus_BackupModule_dreamobjects::get_endpoints()),
+			'dreamobject_endpoint_regex' => UpdraftPlus_BackupModule_dreamobjects::ENDPOINT_REGEX,
 		));
 	}
 	
@@ -1502,6 +1505,22 @@ class UpdraftPlus_Admin {
 	 */
 	public function show_admin_warning_dreamobjects() {
 		$this->show_admin_warning('<strong>'.__('UpdraftPlus notice:', 'updraftplus').'</strong> '.sprintf(__('The %s endpoint is scheduled to shut down on the 1st October 2018.', 'updraftplus'), 'objects-us-west-1.dream.io').' '.__('You will need to switch to a different end-point and migrate your data before that date.', 'updraftplus').' '.sprintf(__('%sPlease see this article for more information%s'), '<a href="https://help.dreamhost.com/hc/en-us/articles/360002135871-Cluster-migration-procedure" target="_blank">', '</a>'), 'updated');
+	}
+
+	/**
+	 * Show DreamObjects invalid custom endpoint error.
+	 *
+	 * @return void
+	 */
+	public function show_admin_error_dreamobjects_invalid_custom_endpoint() {
+		$this->show_admin_warning(
+			'<strong>'.__('Error:', 'updraftplus').'</strong> '.
+				/* translators: %s: Non-translated string 'DreamObjects'. */
+				sprintf(__('Invalid custom %s endpoint.', 'updraftplus'), '<em>DreamObjects</em>').' '.
+				/* translators: %s: Desired endpoint format. */
+				sprintf(__('Please enter the endpoint in the format "%s".', 'updraftplus'), '<em>s3.&lt;region&gt;.dream.io</em>'),
+			'error'
+		);
 	}
 	
 	/**
@@ -6562,6 +6581,7 @@ class UpdraftPlus_Admin {
 	public function kses_allow_tags() {
 		return array(
 			'div' => array(
+				'id' => true,
 				'class' => true,
 				'style' => true,
 			),
@@ -6569,8 +6589,9 @@ class UpdraftPlus_Admin {
 				'style' => true,
 			),
 			'input' => array(
-				'type' => true,
 				'id' => true,
+				'class' => true,
+				'type' => true,
 				'name' => true,
 				'value' => true,
 				'checked' => true,
@@ -6580,6 +6601,7 @@ class UpdraftPlus_Admin {
 			),
 			'select' => array(
 				'id' => true,
+				'class' => true,
 				'name' => true,
 				'value' => true,
 				'style' => true,
@@ -6589,11 +6611,17 @@ class UpdraftPlus_Admin {
 				'selected' => true,
 			),
 			'label' => array(
+				'id' => true,
+				'class' => true,
+				'style' => true,
 				'for' => true,
 			),
 			'br' => array(),
 			'em' => array(),
 			'a' => array(
+				'id' => true,
+				'class' => true,
+				'style' => true,
 				'href' => true,
 				'target' => true,
 				'onclick' => true,
@@ -6601,13 +6629,23 @@ class UpdraftPlus_Admin {
 			),
 			'span' => array(
 				'id' => true,
+				'class' => true,
+				'style' => true,
 			),
 			'img' => array(
+				'id' => true,
+				'class' => true,
+				'style' => true,
 				'src' => true,
 				'width' => true,
 				'height' => true,
 				'alt' => true,
-			)
+			),
+			'p' => array(
+				'id' => true,
+				'class' => true,
+				'style' => true,
+			),
 		);
 	}
 
