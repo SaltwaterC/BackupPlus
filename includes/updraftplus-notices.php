@@ -203,7 +203,11 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_2 {
 				'text' => $sale_description,
 				'text2' => __('at checkout.', 'updraftplus').' <b>'.__('Hurry, offer ends 2 December.', 'updraftplus').'</b>',
 				'image' => 'notices/sale_20_25.png',
-				'button_text' => sprintf(__('Save 20%% with code %s', 'updraftplus'), 'blackfridaysale2025'),
+				'button_text' => sprintf(
+					/* translators: %s: Discount code */
+					__('Save 20%% with code %s', 'updraftplus'),
+					'blackfridaysale2025'
+				),
 				'button_link' => 'https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=bf25-udp-plugin-banner&utm_content=bf-sale&utm_creative_format=advert',
 				'campaign' => 'blackfriday',
 				'button_meta' => 'inline',

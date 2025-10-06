@@ -1748,7 +1748,7 @@ body.admin-color-midnight .button.button-remove:focus {
 .updraft-more-plugins .udp-box {
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
-	width: 24%;
+	width: 19%;
 }
 
 .updraft-more-plugins .udp-box p:last-child {
@@ -4297,4 +4297,8 @@ div#updraft-restore-modal .udp-notice, .udp-notice.updraft-restore-option {
 	height: 1rem;
 	background-size: contain;
 	background-repeat: no-repeat;
+}
+
+#updraft-navtab-addons-content .updraft-account-connection {
+	margin-bottom: 100px;
 }

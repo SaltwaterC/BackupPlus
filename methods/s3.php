@@ -274,6 +274,9 @@ class UpdraftPlus_BackupModule_s3 extends UpdraftPlus_BackupModule {
 			case 'il-central-1':
 			case 'me-central-1':
 			case 'us-gov-east-1':
+			case 'mx-central-1':
+			case 'ap-southeast-6':
+			case 'ap-east-2':
 			$endpoint = 's3.'.$region.'.amazonaws.com';
 				break;
 			case 'cn-north-1':

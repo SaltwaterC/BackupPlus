@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 6.8
-Stable tag: 1.25.7
+Stable tag: 1.25.8
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,24 @@ This problem is probably caused by your account being starved of resources by yo
 The <a href="https://updraftplus.com/news/">UpdraftPlus backup blog</a> is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.25.8 - 07/Oct/2025 =
+
+* FIX: A fatal error in UpdraftCentral when trying to manage posts when no posts exist.
+* FIX: During a failure in the file copy process while restoring, a directory was created with the same name as the file, and the restoration process persisted when it ought to have been stopped
+* FIX: PHP fatal error in WP CLI commands for listing or scanning existing backups on PHP 8.0+ after a rescan
+* TWEAK: Add UpdraftCentral support to import_settings function with return values
+* TWEAK: Add support for new Amazon AWS S3 regions
+* TWEAK: Added Burst Statistics to the family plugin list
+* TWEAK: Adjust the backup logic to recognize invisible columns, and when that occurs, use a query that explicitly specifies the required columns instead of relying on "SELECT *".
+* TWEAK: Ensure the restore process terminates with an error when file copying/moving fails
+* TWEAK: Improve the backup email report to better reflect the backup types and status.
+* TWEAK: New endpoint for getting locked settings data for UpdraftCentral
+* TWEAK: Perform a search and replace on __PHP_Incomplete_Class to make it work with unserialize() when object deserialization is not allowed.
+* TWEAK: Refactoring site info section to deduplicate and read from single source
+* TWEAK: Resolved a PHP warning triggered when uploading the plugin via the WP Plugins page — caused by translation functions (e.g. __()) being called too early.
+* TWEAK: Some text was left out of the translation POT file, which meant that certain translator plugins and libraries could not find the text, making it impossible to translate. 
+* TWEAK: Update the db_size function to allow returning either data or html, depending on the argument that is passed in.
 
 = 1.25.7 - 07/Aug/2025 =
 
@@ -2078,4 +2096,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.25.7: Various fixes and small tweaks - see the changelog for details. A recommended update for all.
+* 1.25.8: Support for new Amazon AWS S3 regions (New Zealand, Taipei and Mexico), better statuses in the backup email report, search and replace improvement for the __PHP_Incomplete_Class. Various fixes and small tweaks - see the changelog for details. A recommended update for all.

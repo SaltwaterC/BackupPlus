@@ -3544,6 +3544,8 @@ class UpdraftPlus {
 		if ($one_shot) update_site_option('updraft_oneshotnonce', $this->nonce);
 
 		if ($this->file_nonce && $this->file_nonce != $this->nonce) array_push($initial_jobdata, 'file_nonce', $this->file_nonce);
+
+		if ($is_scheduled_backup) array_push($initial_jobdata, 'is_scheduled_backup', true);
 		
 		// 'autobackup' == $options['extradata'] might be set from another plugin so keeping here to keep support
 		if (!empty($options['extradata']) && (!empty($options['extradata']['autobackup']) || 'autobackup' === $options['extradata'])) array_push($initial_jobdata, 'is_autobackup', true);
@@ -3792,12 +3794,14 @@ class UpdraftPlus {
 		if (is_array($backup_db)) $backup_db = $backup_db['status'];
 
 		$backup_type = ('backup' == $jobdata['job_type']) ? __('Full backup', 'updraftplus') : __('Incremental', 'updraftplus');
+		$backup_status = __('Successful', 'updraftplus');
 
 		$was_aborted = !empty($jobdata['aborted']);
 		
 		if ($was_aborted) {
 			$backup_contains = __('The backup was aborted by the user', 'updraftplus');
-		} elseif ('finished' == $backup_files && ('finished' == $backup_db || 'encrypted' == $backup_db)) {
+			$backup_status = __('Aborted', 'updraftplus');
+		} elseif ('finished' == $backup_files && ('finished' == $backup_db || 'encrypted' == $backup_db) && 'incremental' !== $jobdata['job_type']) {
 			$backup_contains = __('Files and database', 'updraftplus')." ($backup_type)";
 		} elseif ('finished' == $backup_files) {
 			$backup_contains = ('begun' == $backup_db) ? __("Files (database backup has not completed)", 'updraftplus') : __('Files only (database was not part of this particular schedule)', 'updraftplus');
@@ -3806,9 +3810,11 @@ class UpdraftPlus {
 			$backup_contains = ('begun' == $backup_files) ? __("Database (files backup has not completed)", 'updraftplus') : __('Database only (files were not part of this particular schedule)', 'updraftplus');
 		} elseif ('begun' == $backup_db || 'begun' == $backup_files) {
 			$backup_contains = __('Incomplete', 'updraftplus');
+			$backup_status = __('Incomplete', 'updraftplus');
 		} else {
 			$this->log('Unknown/unexpected status: '.serialize($backup_files).'/'.serialize($backup_db));
 			$backup_contains = __("Unknown/unexpected error - please raise a support request", 'updraftplus');
+			$backup_status = __('Unsuccessful', 'updraftplus');
 		}
 
 		$append_log = '';
@@ -3832,6 +3838,7 @@ class UpdraftPlus {
 				$error_count++;
 			}
 			$append_log .="\r\n";
+			$backup_status = __('Unsuccessful due to number of errors', 'updraftplus');
 		}
 		$warnings = (isset($jobdata['warnings'])) ? $jobdata['warnings'] : array();
 		if (is_array($warnings) && count($warnings) >0) {
@@ -3845,6 +3852,7 @@ class UpdraftPlus {
 				$append_log .= "* ".rtrim($err)."\r\n";
 			}
 			$append_log .="\r\n";
+			if (0 == $this->error_count()) $backup_status = __('Successful with warnings', 'updraftplus');
 		}
 
 		if ($debug_mode && '' != $this->logfile_name && !in_array($this->logfile_name, $attachments)) {
@@ -3854,7 +3862,7 @@ class UpdraftPlus {
 
 		// We have to use the action in order to set the MIME type on the attachment - by default, WordPress just puts application/octet-stream
 
-		$subject = apply_filters('updraft_report_subject', sprintf(__('Backed up: %s', 'updraftplus'), wp_specialchars_decode(get_option('blogname'), ENT_QUOTES)).' (UpdraftPlus '.$this->version.') '.get_date_from_gmt(gmdate('Y-m-d H:i:s', time()), 'Y-m-d H:i'), $error_count, count($warnings));
+		$subject = apply_filters('updraft_report_subject', sprintf(__('Backed up: %s', 'updraftplus'), wp_specialchars_decode(get_option('blogname'), ENT_QUOTES)).' (UpdraftPlus '.$this->version.') '.get_date_from_gmt(gmdate('Y-m-d H:i:s', time()), 'Y-m-d H:i').' - '.esc_html($backup_status), $error_count, count($warnings));
 
 		// The class_exists() check here is a micro-optimization to prevent a possible HTTP call whose results may be disregarded by the filter
 		$feed = '';
@@ -5920,7 +5928,10 @@ class UpdraftPlus {
 				return apply_filters('updraftplus_com_mothership', 'https://updraftplus.com/plugin-info');
 				break;
 			case 'shop_premium':
-				return apply_filters('updraftplus_com_shop_premium', 'https://teamupdraft.com/updraftplus/pricing?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-premium&utm_creative_format=text#pricing-block');
+				return apply_filters('updraftplus_com_shop_premium', 'https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text#pricing-block');
+				break;
+			case 'upgrade_premium':
+				return apply_filters('updraftplus_com_shop_premium', 'https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=upgrade-now&utm_creative_format=text');
 				break;
 			case 'shop_vault_5':
 				return apply_filters('updraftplus_com_shop_vault_5', 'https://teamupdraft.com/cart/?add-to-cart=1431&variation_id=1441?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftplus-vault-storage-$1-trial&utm_creative_format=button');

@@ -46,7 +46,9 @@ class UpdraftCentral_Main {
 			'posts' => 'UpdraftCentral_Posts_Commands',
 			'media' => 'UpdraftCentral_Media_Commands',
 			'pages' => 'UpdraftCentral_Pages_Commands',
-			'backups' => 'UpdraftCentral_Backups_Commands'
+			'backups' => 'UpdraftCentral_Backups_Commands',
+			'rest' => 'UpdraftCentral_REST_API_Access_Commands',
+			'reporting' => 'UpdraftCentral_Reporting_Commands'
 		));
 	
 		// N.B. This "updraftplus_remotecontrol_command_classes" filter has been marked as deprecated and will be remove after May 2021.

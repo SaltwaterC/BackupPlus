@@ -28,7 +28,11 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 		$this->callback_url = defined('UPDRAFTPLUS_GOOGLEDRIVE_CALLBACK_URL') ? UPDRAFTPLUS_GOOGLEDRIVE_CALLBACK_URL : 'https://auth.updraftplus.com/auth/googledrive';
 
 		if (class_exists('UpdraftPlus_Addon_Google_Enhanced')) {
-			add_action('updraftplus_admin_enqueue_scripts', array($this, 'admin_footer_jstree'));
+			if (function_exists('wp_add_inline_script')) {
+				add_action('updraftplus_admin_enqueue_scripts', array($this, 'admin_footer_jstree'));
+			} else {
+				add_action('admin_footer-settings_page_updraftplus', array($this, 'admin_footer_jstree'));
+			}
 		}
 	}
 

@@ -39,6 +39,7 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 	 */
 	private function getFTP($server, $user, $pass, $disable_ssl = false, $disable_verify = true, $use_server_certs = false, $passive = true) {
 
+		/* translators: %s: Storage method name */
 		if ('' == trim($server) || '' == trim($user) || '' == trim($pass)) return new WP_Error('no_settings', sprintf(__('No %s settings were found', 'updraftplus'), 'FTP'));
 
 		if (!class_exists('UpdraftPlus_ftp_wrapper')) updraft_try_include_file('includes/ftp.class.php', 'include_once');
@@ -113,7 +114,19 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 				'ftpsslexplicit' => __('encrypted FTP (explicit encryption)', 'updraftplus')
 			);
 			foreach ($possible as $type => $missing) {
-				$ftp_not_possible[] = wp_kses('<strong>'.__('Warning', 'updraftplus').':</strong> '. sprintf(__("Your web server's PHP installation has these functions disabled: %s.", 'updraftplus'), implode(', ', $missing)).' '.sprintf(__('Your hosting company must enable these functions before %s can work.', 'updraftplus'), $trans[$type]), $this->allowed_html_for_content_sanitisation());
+				$ftp_not_possible[] = wp_kses(
+					'<strong>'.__('Warning', 'updraftplus').':</strong> '.sprintf(
+						/* translators: %s: Disabled PHP functions */
+						__("Your web server's PHP installation has these functions disabled: %s.", 'updraftplus'),
+						implode(', ', $missing)
+					).' '.
+					sprintf(
+						/* translators: %s: Storage method name requiring enabled functions */
+						__('Your hosting company must enable these functions before %s can work.', 'updraftplus'),
+						$trans[$type]
+					),
+					$this->allowed_html_for_content_sanitisation()
+				);
 			}
 		}
 		$properties = array(
@@ -127,6 +140,7 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 			'input_path_title' => __('Needs to already exist', 'updraftplus'),
 			'input_passive_label' => __('Passive mode', 'updraftplus'),
 			'input_passive_title' => __('Almost all FTP servers will want passive mode; but if you need active mode, then uncheck this.', 'updraftplus'),
+			/* translators: %s: Backup method name */
 			'input_test_label' => sprintf(__('Test %s Settings', 'updraftplus'), $updraftplus->backup_methods[$this->get_id()])
 		);
 		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
@@ -205,6 +219,7 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 
 		if (is_wp_error($ftp)) return $ftp;
 
+		/* translators: %s: Storage method name */
 		if (!$ftp->connect()) return new WP_Error('ftp_login_failed', sprintf(__("%s login failure", 'updraftplus'), 'FTP'));
 
 		$ftp_remote_path = $opts['path'];
@@ -435,10 +450,12 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 			return;
 		}
 		if (empty($login)) {
+			/* translators: %s: Missing credential type (e.g., login) */
 			echo esc_html(sprintf(__('Failure: No %s was given.', 'updraftplus'), __('login', 'updraftplus')));
 			return;
 		}
 		if (empty($pass)) {
+			/* translators: %s: Missing credential type (e.g., password) */
 			echo esc_html(sprintf(__('Failure: No %s was given.', 'updraftplus'), __('password', 'updraftplus')));
 			return;
 		}

@@ -416,7 +416,9 @@ abstract class UpdraftPlus_RemoteSend {
 				}
 			} elseif (!is_array($response) || empty($response['response']) || 'pong' != $response['response']) {
 
-				$err_msg = __('Error:', 'updraftplus').' '.sprintf(__('You should check that the remote site is online, not firewalled, bot verification setting is disabled, does not have security modules that may be blocking access, has UpdraftPlus version %s or later active and that the keys have been entered correctly.', 'updraftplus'), '2.10.3');
+				$err_msg = __('Error:', 'updraftplus').' '.
+					/* translators: %s: Required UpdraftPlus version. */
+					sprintf(__('You should check that the remote site is online, not firewalled, bot verification setting is disabled, does not have security modules that may be blocking access, has UpdraftPlus version %s or later active and that the keys have been entered correctly.', 'updraftplus'), '2.10.3');
 				$err_data = $response;
 				$err_code = 'no_pong';
 
@@ -430,7 +432,12 @@ abstract class UpdraftPlus_RemoteSend {
 				$res = array('e' => 1, 'r' => $err_msg);
 
 				if ($this->url_looks_internal($url)) {
-					$res['moreinfo'] = '<p>'.sprintf(__('The site URL you are sending to (%s) looks like a local development website.', 'updraftplus'), htmlspecialchars($url)).' '.__('If you are sending from an external network, it is likely that a firewall will be blocking this.', 'updraftplus').'</p>';
+					$res['moreinfo'] = '<p>'.sprintf(
+						/* translators: %s: The URL of the site that appears to be a local development website. */
+						__('The site URL you are sending to (%s) looks like a local development website.', 'updraftplus'),
+						htmlspecialchars($url)
+					).' '.
+					__('If you are sending from an external network, it is likely that a firewall will be blocking this.', 'updraftplus').'</p>';
 				}
 
 				// We got several support requests from people who didn't seem to be aware of other methods
@@ -570,7 +577,18 @@ abstract class UpdraftPlus_RemoteSend {
 		if (extension_loaded('mbstring')) {
 			// phpcs:ignore  PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated -- Commented out as this flags as not compatible with PHP 5.2
 			if (ini_get('mbstring.func_overload') & 2) {
-				echo json_encode(array('e' => 1, 'r' => __('Error:', 'updraftplus').' '.sprintf(__('The setting %s is turned on in your PHP settings.', 'updraftplus'), 'mbstring.func_overload').' '.__('It is deprecated, causes encryption to malfunction, and should be turned off.', 'updraftplus')));
+				echo json_encode(
+					array(
+						'e' => 1,
+						'r' => __('Error:', 'updraftplus').' '.
+							sprintf(
+								/* translators: %s: PHP setting causing an issue. */
+								__('The setting %s is turned on in your PHP settings.', 'updraftplus'),
+								'mbstring.func_overload'
+							).' '.
+							__('It is deprecated, causes encryption to malfunction, and should be turned off.', 'updraftplus')
+					)
+				);
 				die;
 			}
 		}
@@ -585,6 +603,7 @@ abstract class UpdraftPlus_RemoteSend {
 		$ret = array();
 
 		if (empty($data['key'])) {
+			/* translators: %s: Key. */
 			$ret['e'] = sprintf(__("Failure: No %s was given.", 'updraftplus'), __('key', 'updraftplus'));
 		} else {
 		
@@ -694,7 +713,7 @@ abstract class UpdraftPlus_RemoteSend {
 		<div class="text-link-menu">
 			<a href="#" class="updraft_migrate_add_site--trigger"><span class="dashicons dashicons-plus"></span><?php esc_html_e('Add a site', 'updraftplus');?></a>
 			<a href="#" class="updraft_migrate_clear_sites" <?php empty($remotesites) ? 'style="display: none"' : '';?>
-				onclick="event.preventDefault();updraft_migrate_delete_existingsites('<?php echo esc_js(__('You are about to permanently delete the list of existing sites.', 'updraftplus').' '.__('This action cannot be undone.', 'updraftplus').' '.__('\'Cancel\' to stop, \'OK\' to delete.'));?>');">
+				onclick="event.preventDefault();updraft_migrate_delete_existingsites('<?php echo esc_js(__('You are about to permanently delete the list of existing sites.', 'updraftplus').' '.__('This action cannot be undone.', 'updraftplus').' '.__('\'Cancel\' to stop, \'OK\' to delete.', 'updraftplus'));?>');">
 				<span class="dashicons dashicons-trash"></span>
 				<?php esc_html_e('Clear list of existing sites', 'updraftplus');?>
 			</a>
