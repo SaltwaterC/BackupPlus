@@ -27,6 +27,10 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_2 {
 
 		$sale_description = sprintf(__('%s, %s and %s with %s.', 'updraftplus'), '<b>'.__('Backup', 'updraftplus').'</b>', '<b>'.__('migrate', 'updraftplus').'</b>', '<b>'.__('restore', 'updraftplus').'</b>', '<b>'.__('Premium', 'updraftplus').'</b>');
 		$sale_description .= ' '.sprintf(__('Backup incremental changes, instead of full backups (saving server resources), %s, get more remote storage locations, %s and more.', 'updraftplus'), '<b>'.__('clone or migrate your site with ease', 'updraftplus').'</b>', '<b>'.__('premium support', 'updraftplus').'</b>');
+
+		// Splitting the sale description into sentences.
+		// The regex considers a sentence to be any sequence of text that ends with a period (.), exclamation mark (!), or question mark (?), followed by one or more spaces.
+		$sale_description = implode("\n", array_map('trim', preg_split('/(?<=[.!?])\s+/', $sale_description))) . "\n";
 		
 		// Not used in 2024
 		// $checkout_html = '<a class="updraft_notice_link" href="https://updraftplus.com/shop/updraftplus-premium/">'.__('checkout', 'updraftplus').'</a>';
@@ -208,7 +212,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_2 {
 					__('Save 20%% with code %s', 'updraftplus'),
 					'blackfridaysale2025'
 				),
-				'button_link' => 'https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=bf25-udp-plugin-banner&utm_content=bf-sale&utm_creative_format=advert',
+				'button_link' => 'https://teamupdraft.com/plugin-black-friday/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=bf25-udp-plugin-banner&utm_content=bf-sale&utm_creative_format=advert',
 				'campaign' => 'blackfriday',
 				'button_meta' => 'inline',
 				'dismiss_time' => 'dismiss_season',

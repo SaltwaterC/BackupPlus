@@ -166,7 +166,7 @@ foreach ($default_options as $k => $v) {
 
 		<td>
 		<?php
-			echo apply_filters('updraft_database_encryption_config', sprintf(__('%s with UpdraftPlus Premium.', 'updraftplus'), '<a href="https://teamupdraft.com/updraftplus/features/database-encryption/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=encrypt-the-datbase&utm_creative_format=text" target="_blank">'.__('Encrypt the database', 'updraftplus').'</a>').' '.sprintf(__('You can also %s.', 'updraftplus'), '<a href="https://teamupdraft.com/updraftplus/features/more-database-options/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=back-up-non-wp-tables&utm_creative_format=text" target="_blank">'.__('back up non-WP tables and external databases', 'updraftplus').'</a>'));
+			echo apply_filters('updraft_database_encryption_config', sprintf(__('%s with UpdraftPlus Premium.', 'updraftplus'), '<a href="https://teamupdraft.com/updraftplus/features/database-encryption/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=encrypt-the-datbase&utm_creative_format=text" target="_blank">'.__('Encrypt the database', 'updraftplus').'</a>').' '.sprintf(__('You can also %s.', 'updraftplus'), '<a href="https://teamupdraft.com/updraftplus/features/more-database-backup-options-wordpress/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=back-up-non-wp-tables&utm_creative_format=text" target="_blank">'.__('back up non-WP tables and external databases', 'updraftplus').'</a>'));
 		?>
 		</td>
 	</tr>

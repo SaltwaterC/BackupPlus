@@ -417,9 +417,9 @@ class UpdraftCentral_Main {
 			$created['keys_guide'] = '<h2 class="updraftcentral_wizard_success">'. $updraftcentral_host_plugin->retrieve_show_message('updraftcentral_key_created') .'</h2>';
 
 			if ('__updraftpluscom' != $where_send) {
-				$created['keys_guide'] .= '<div class="updraftcentral_wizard_success"><p>'.sprintf($updraftcentral_host_plugin->retrieve_show_message('need_to_copy_key'), '<a href="'.$where_send.'" target="_blank">UpdraftCentral dashboard</a>').'</p><p>'.$updraftcentral_host_plugin->retrieve_show_message('press_add_site_button').'</p><p>'.sprintf($updraftcentral_host_plugin->retrieve_show_message('detailed_instructions'), '<a target="_blank" href="https://updraftplus.com/updraftcentral-how-to-add-a-site/">UpdraftPlus.com</a>').'</p></div>';
+				$created['keys_guide'] .= '<div class="updraftcentral_wizard_success"><p>'.sprintf($updraftcentral_host_plugin->retrieve_show_message('need_to_copy_key'), '<a href="'.$where_send.'" target="_blank">UpdraftCentral dashboard</a>').'</p><p>'.$updraftcentral_host_plugin->retrieve_show_message('press_add_site_button').'</p><p>'.sprintf($updraftcentral_host_plugin->retrieve_show_message('detailed_instructions'), '<a target="_blank" href="https://teamupdraft.com/documentation/updraftcentral/getting-started/how-to-add-a-site-to-updraftcentral/">teamupdraft.com</a>').'</p></div>';
 			} else {
-				$created['keys_guide'] .= '<div class="updraftcentral_wizard_success"><p>'. sprintf($updraftcentral_host_plugin->retrieve_show_message('control_this_site'), '<a target="_blank" href="https://updraftplus.com/my-account/updraftcentral-remote-control/">UpdraftPlus.com</a>').'</p></div>';
+				$created['keys_guide'] .= '<div class="updraftcentral_wizard_success"><p>'. sprintf($updraftcentral_host_plugin->retrieve_show_message('control_this_site'), '<a target="_blank" href="https://teamupdraft.com/my-account/updraftcentral/">teamupdraft.com</a>').'</p></div>';
 			}
 		}
 		
@@ -598,6 +598,56 @@ class UpdraftCentral_Main {
 	}
 	
 	/**
+	 * Retrieves and processes UpdraftCentral connection keys data for display
+	 *
+	 * @return array Formatted connection keys data with user info and metadata
+	 */
+	public function get_connection_keys_data() {
+		if (!current_user_can('manage_options')) {
+			return array();
+		}
+
+		$our_keys = $this->get_central_localkeys();
+		if (!is_array($our_keys)) $our_keys = array();
+		
+		$keys_data = array();
+		
+		foreach ($our_keys as $key_id => $key_data) {
+			if (empty($key_data['extra_info'])) continue;
+			
+			$user_id = isset($key_data['extra_info']['user_id']) ? $key_data['extra_info']['user_id'] : 0;
+			$user = get_user_by('id', $user_id);
+
+			$reconstructed_url = '';
+			if (!empty($key_data['extra_info']['mothership'])) {
+				$mothership_url = $key_data['extra_info']['mothership'];
+				if ('__updraftpluscom' == $mothership_url) {
+					$reconstructed_url = 'https://updraftplus.com';
+				} else {
+					$purl = parse_url($mothership_url);
+					$path = empty($purl['path']) ? '' : $purl['path'];
+					$reconstructed_url = $purl['scheme'].'://'.$purl['host'].
+						(!empty($purl['port']) ? ':'.$purl['port'] : '').$path;
+				}
+			}
+			
+			$keys_data[$key_id] = array(
+				'name' => isset($key_data['name']) ? $key_data['name'] : '',
+				'user_login' => $user ? $user->user_login : '',
+				'user_email' => $user ? $user->user_email : '',
+				'user_display' => $user ? $user->user_login.' ('.$user->user_email.')' : 'Unknown',
+				'created' => isset($key_data['created']) ? $key_data['created'] : '',
+				'created_formatted' => isset($key_data['created']) ? date_i18n(get_option('date_format').' '.get_option('time_format'), $key_data['created']) : '',
+				'reconstructed_url' => $reconstructed_url,
+				'key_size' => isset($key_data['extra_info']['key_size']) ? $key_data['extra_info']['key_size'] : '',
+				'key_id' => $key_id
+			);
+		}
+		
+		return $keys_data;
+	}
+
+	/**
 	 * Get the HTML for the keys table
 	 *
 	 * @param Boolean $echo_instead_of_return Whether the result should be echoed or returned
@@ -611,11 +661,10 @@ class UpdraftCentral_Main {
 		global $updraftcentral_host_plugin;
 
 		if (!$echo_instead_of_return) ob_start();
-			
-		$our_keys = $this->get_central_localkeys();
-		if (!is_array($our_keys)) $our_keys = array();
+		
+		$keys_data = $this->get_connection_keys_data();
 
-		if (empty($our_keys)) {
+		if (empty($keys_data)) {
 			?>
 			<tr><td colspan="2"><em><?php $updraftcentral_host_plugin->retrieve_show_message('no_updraftcentral_dashboards', true); ?></em></td></tr>
 			<?php
@@ -623,8 +672,8 @@ class UpdraftCentral_Main {
 		
 		?>
 		<div id="updraftcentral_keys_content" style="margin: 10px 0;">
-			<?php if (!empty($our_keys)) { ?>
-				<a href="<?php echo esc_url($this->get_current_clean_url()); ?>" class="updraftcentral_keys_show hidden-in-updraftcentral"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('manage_keys'), count($our_keys))); ?></a>
+			<?php if (!empty($keys_data)) { ?>
+				<a href="<?php echo esc_url($this->get_current_clean_url()); ?>" class="updraftcentral_keys_show hidden-in-updraftcentral"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('manage_keys'), count($keys_data))); ?></a>
 			<?php } ?>
 			<table id="updraftcentral_keys_table">
 				<thead>
@@ -636,48 +685,25 @@ class UpdraftCentral_Main {
 				<tbody>
 					<?php
 					
-					foreach ($our_keys as $i => $key) {
-		
-						if (empty($key['extra_info'])) continue;
-						
-						$user_id = $key['extra_info']['user_id'];
-						
-						if (!empty($key['extra_info']['mothership'])) {
-						
-							$mothership_url = $key['extra_info']['mothership'];
-							
-							if ('__updraftpluscom' == $mothership_url) {
-								$reconstructed_url = 'https://updraftplus.com';
-							} else {
-								$purl = parse_url($mothership_url);
-								$path = empty($purl['path']) ? '' : $purl['path'];
-								
-								$reconstructed_url = $purl['scheme'].'://'.$purl['host'].(!empty($purl['port']) ? ':'.$purl['port'] : '').$path;
-							}
-							
-						} else {
-							$reconstructed_url = $updraftcentral_host_plugin->retrieve_show_message('unknown');
-						}
-					
-						$name = $key['name'];
-						
-						$user = get_user_by('id', $user_id);
-						
-						$user_display = is_a($user, 'WP_User') ? $user->user_login.' ('.$user->user_email.')' : $updraftcentral_host_plugin->retrieve_show_message('unknown');
+					foreach ($keys_data as $key_id => $key) {
+						$user_display = 'Unknown' !== $key['user_display'] ? $key['user_display'] : $updraftcentral_host_plugin->retrieve_show_message('unknown');
+						$reconstructed_url = !empty($key['reconstructed_url']) ? $key['reconstructed_url'] : $updraftcentral_host_plugin->retrieve_show_message('unknown');
+						$reconstructed_url_display = 'https://updraftplus.com' == $reconstructed_url ? 'https://teamupdraft.com' : $reconstructed_url;
+						$key_name_display = 'updraftplus.com' == $key['name'] ? 'teamupdraft.com' : $key['name'];
 						?>
-						<tr class="updraft_debugrow"><td style="vertical-align:top;"><?php echo esc_html($name.' ('.$i.')'); ?></td><td><?php $updraftcentral_host_plugin->retrieve_show_message('access_as_user', true); ?> <?php echo esc_html($user_display); ?> <br> <?php $updraftcentral_host_plugin->retrieve_show_message('public_key_sent', true); ?> <?php echo esc_html($reconstructed_url); ?><br>
+						<tr class="updraft_debugrow"><td style="vertical-align:top;"><?php echo esc_html($key_name_display.' ('.$key_id.')'); ?></td><td><?php $updraftcentral_host_plugin->retrieve_show_message('access_as_user', true); ?> <?php echo esc_html($user_display); ?> <br> <?php $updraftcentral_host_plugin->retrieve_show_message('public_key_sent', true); ?> <?php echo esc_html($reconstructed_url_display); ?><br>
 						<?php
 						if (!empty($key['created'])) {
-							echo esc_html($updraftcentral_host_plugin->retrieve_show_message('created').' '.date_i18n(get_option('date_format').' '.get_option('time_format'), $key['created'])).'.';
-							if (!empty($key['extra_info']['key_size'])) {
-								echo ' '.esc_html(sprintf($updraftcentral_host_plugin->retrieve_show_message('key_size'), $key['extra_info']['key_size'])).'.';
+							echo esc_html($updraftcentral_host_plugin->retrieve_show_message('created').' '.$key['created_formatted']).'.';
+							if (!empty($key['key_size'])) {
+								echo ' '.esc_html(sprintf($updraftcentral_host_plugin->retrieve_show_message('key_size'), $key['key_size'])).'.';
 							}
 							?>
 							<br>
 							<?php
 						}
 						?>
-						<a href="<?php echo esc_url($this->get_current_clean_url()); ?>" data-key_id="<?php echo esc_attr($i); ?>" class="updraftcentral_key_delete"><?php $updraftcentral_host_plugin->retrieve_show_message('delete', true); ?></a></td></tr>
+						<a href="<?php echo esc_url($this->get_current_clean_url()); ?>" data-key_id="<?php echo esc_attr($key_id); ?>" class="updraftcentral_key_delete"><?php $updraftcentral_host_plugin->retrieve_show_message('delete', true); ?></a></td></tr>
 						<?php
 					}
 					?>

@@ -1364,4 +1364,67 @@ class UpdraftPlus_Commands {
 			'message' => __('Site information updated successfully', 'updraftplus')
 		);
 	}
+
+	/**
+	 * Get advanced tools data in a structured format
+	 *
+	 * @return array|WP_Error Structured data or error
+	 */
+	public function get_structured_data() {
+		if (false === ($updraftplus_admin = $this->_load_ud_admin())) return new WP_Error('no_updraftplus');
+
+		// Site Info
+		$site_info = $updraftplus_admin->get_site_info_data();
+		$site_info['site_title'] = get_bloginfo('name');
+		$site_info['tagline'] = get_bloginfo('description');
+		$site_info['admin_email'] = get_bloginfo('admin_email');
+
+		// Lock Settings
+		$lock_settings = $this->get_lock_settings_data();
+		if (is_wp_error($lock_settings)) {
+			$lock_settings = array('has_premium' => false);
+		}
+
+		// Directory Sizes
+		$site_size = array();
+		if (false !== ($updraftplus = $this->_load_ud())) {
+			$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
+			foreach ($backupable_entities as $entity => $info) {
+				$size = UpdraftPlus_Filesystem_Functions::get_disk_space_used($entity, 'numeric');
+				$size = is_numeric($size) ? $size : 0;
+				$site_size[$entity] = array(
+					'size' => $size,
+					'size_formatted' => size_format($size)
+				);
+			}
+		}
+
+		// Connection Keys
+		updraft_try_include_file('central/bootstrap.php', 'include_once');
+		$keys = array();
+		global $updraftcentral_main;
+		if (is_a($updraftcentral_main, 'UpdraftCentral_Main') && method_exists($updraftcentral_main, 'get_connection_keys_data')) {
+			$keys = $updraftcentral_main->get_connection_keys_data();
+		}
+
+		// Database Size Information
+		updraft_try_include_file('includes/class-wpadmin-commands.php', 'include_once');
+		
+		$db_size = array('size' => '0 B');
+		if (class_exists('UpdraftPlus_WPAdmin_Commands')) {
+			$wpadmin_commands = new UpdraftPlus_WPAdmin_Commands($this->_uc_helper);
+			$db_size_result = $wpadmin_commands->db_size(true);
+			if (!is_wp_error($db_size_result)) {
+				$db_size = $db_size_result;
+			}
+		}
+
+		return array(
+			'site_info' => $site_info,
+			'site_size' => $site_size,
+			'lock_settings' => $lock_settings,
+			'keys' => $keys,
+			'db_size' => $db_size
+		);
+	}
 }

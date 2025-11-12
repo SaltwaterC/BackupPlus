@@ -3897,7 +3897,7 @@ class UpdraftPlus {
 		$extra_msg = '';
 		if (is_array($extra_messages)) {
 			foreach ($extra_messages as $msg) {
-				$extra_msg .= '<strong>'.$msg['key'].'</strong>: '.$msg['val']."\r\n";
+				$extra_msg .= $msg['key'].': '.$msg['val']."\r\n";
 			}
 		}
 
@@ -3911,7 +3911,7 @@ class UpdraftPlus {
 		if (!class_exists('UpdraftPlus_Notices')) updraft_try_include_file('includes/updraftplus-notices.php', 'include_once');
 		global $updraftplus_notices;
 		$ws_notice = $updraftplus_notices->do_notice(false, 'report-plain', true);
-		
+
 		$body = apply_filters('updraft_report_body',
 			__('Backup of:', 'updraftplus').' '.site_url()."\r\n".
 			"UpdraftPlus ".__('WordPress backup is complete', 'updraftplus').".\r\n".
@@ -5337,7 +5337,7 @@ class UpdraftPlus {
 					}
 				}
 				if (!empty($db_supported_character_sets)) {
-					if (preg_match('/ CHARSET=([^\s;]+)/i', $buffer, $charset_match)) {
+					if (preg_match('/\b(?:CHARSET|CHARACTER SET)\b\s*=?\s*([^\s;,]+)/i', $buffer, $charset_match)) {
 						$db_charsets_found[] = $charset_match[1];
 						if ($db_supported_charset_related_to_unsupported_collation && !in_array($charset_match[1], $db_supported_charsets_related_to_unsupported_collations)) {
 							$db_supported_charsets_related_to_unsupported_collations[] = $charset_match[1];

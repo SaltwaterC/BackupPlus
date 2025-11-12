@@ -259,7 +259,7 @@ class UpdraftCentral_Core_Commands extends UpdraftCentral_Commands {
 					if (class_exists($command_php_class)) {
 						$instance = new $command_php_class($this->rc);
 
-						if (method_exists($instance, $action)) {
+						if (method_exists($instance, $action) || is_a($instance, 'UpdraftCentral_UpdraftPlus_Commands') || is_a($instance, 'UpdraftCentral_WP_Optimize_Commands')) {
 							$params = empty($params) ? array() : $params;
 							$call_result = call_user_func(array($instance, $action), $params);
 

@@ -49,14 +49,64 @@ class UpdraftCentral_Reporting_Commands extends UpdraftCentral_Commands {
 	}
 
 	/**
+	 * Update existing sent reports.
+	 *
+	 * @param array $sent_reports Sent reports data which will be saved.
+	 *
+	 * @return void
+	 */
+	private function _update_existing_sent_reports($sent_reports) {
+		update_option('updraftcentral_reporting_sent_reports', $sent_reports);
+	}
+
+	/**
+	 * Get existing sent reports.
+	 *
+	 * @return array List of all sent reports.
+	 */
+	private function _get_existing_sent_reports() {
+		return (array) get_option('updraftcentral_reporting_sent_reports', array());
+	}
+
+	/**
 	 * Get all the reports (scheduled or not scheduled).
 	 *
-	 * @return array An array of all reports.
+	 * @param array $data Data array containing report IDs to fetch.
+	 *
+	 * @return array An array of reports.
 	 */
-	public function get_reports() {
-		return $this->_response(array(
-			'reports' => $this->_get_existing_reports(),
-		));
+	public function get_reports($data) {
+		$all_reports = $this->_get_existing_reports();
+
+		$sent_reports = array_reverse($this->_get_existing_sent_reports());
+
+		foreach ($sent_reports as $key => $sent_report) {
+			$sent_report['download_url'] = '';
+
+			if (!empty($sent_report['pdf_attachment_id'])) {
+				$sent_report['download_url'] = wp_get_attachment_url(absint($sent_report['pdf_attachment_id']));
+			}
+
+			$sent_reports[$key] = $sent_report;
+		}
+
+		if (empty($data['report_ids']) || !is_array($data['report_ids'])) {
+			return $this->_response(array(
+				'reports' => $all_reports,
+				'sent_reports' => $sent_reports,
+			));
+		}
+
+		$report_ids = array();
+
+		foreach ($data['report_ids'] as $report_id) {
+			$report_ids[] = sanitize_key(strval($report_id));
+		}
+
+		return $this->_response((array(
+			'reports' => array_intersect_key($all_reports, array_flip($report_ids)),
+			'sent_reports' => $sent_reports,
+		)));
 	}
 
 	/**
@@ -138,7 +188,7 @@ class UpdraftCentral_Reporting_Commands extends UpdraftCentral_Commands {
 			return $this->_response($result);
 		}
 
-		$template_id = empty($data['template_id']) ? 0 : absint($data['template_id']);
+		$template_id = empty($data['template_id']) ? '' : sanitize_key($data['template_id']);
 
 		if (empty($template_id)) {
 			$result = array("error" => true, "message" => "template_id_invalid");
@@ -237,6 +287,103 @@ class UpdraftCentral_Reporting_Commands extends UpdraftCentral_Commands {
 			"values" => array(
 				'report' => $report,
 			)
+		);
+
+		return $this->_response($result);
+	}
+
+	/**
+	 * Add a sent report.
+	 *
+	 * @param array $data Report information to add
+	 *
+	 * @return array An array containing the result of the current process
+	 */
+	public function add_sent_reports($data) {
+		// Permission check.
+		if (!current_user_can('manage_options')) {
+			$result = array("error" => true, "message" => "not_allowed");
+			return $this->_response($result);
+		}
+
+		// Return early if valid report structure is not present.
+		if (!is_array($data) || empty($data['sent_reports_data'])) {
+			$result = array("error" => true, "message" => "invalid_sent_report_data");
+			return $this->_response($result);
+		}
+
+		$reports = $this->_get_existing_reports();
+		$sent_reports = $this->_get_existing_sent_reports();
+
+		$return_data = array();
+
+		// Loop through all the sent reports.
+		foreach ($data['sent_reports_data'] as $report_data) {
+			$report_id = sanitize_key(strval($report_data['report_id']));
+
+			// Skip if no report of this ID exists.
+			if (empty($reports[$report_id])) {
+				continue;
+			}
+
+			$report_sent_at_timestamp = time();
+			$report_sent_at_formatted_date = date("j M, g:i a", $report_sent_at_timestamp);
+
+			// Change the last report time of the report.
+			$reports[$report_id]['last_report_timestamp'] = $report_sent_at_timestamp;
+			$reports[$report_id]['last_report_formatted_date'] = $report_sent_at_formatted_date;
+
+			// Save the PDF as attachment.
+			$pdf_attachment_id = 0;
+			$uploads_dir = wp_upload_dir();
+			$custom_upload_directory = trailingslashit($uploads_dir['basedir']) . 'updraftcentral-white-label-reporting-pdfs/';
+			$custom_upload_url = trailingslashit($uploads_dir['baseurl']) . 'updraftcentral-white-label-reporting-pdfs/';
+			$filename = sanitize_text_field($reports[$report_id]['name']) . '-' . $report_sent_at_timestamp . '-' . UpdraftPlus_Manipulation_Functions::generate_random_string(5) .  '.pdf';
+			$full_path = $custom_upload_directory . basename($filename);
+
+			// Sanity check to test directory exists.
+			wp_mkdir_p(dirname($full_path));
+
+			file_put_contents($full_path, base64_decode($report_data['pdf_content']));
+
+			$wp_filetype = wp_check_filetype($filename, null);
+			$attachment = array(
+				'guid'           => $custom_upload_url . basename($filename),
+				'post_mime_type' => $wp_filetype['type'],
+				'post_title'     => sanitize_file_name(pathinfo($filename, PATHINFO_FILENAME)),
+				'post_content'   => '',
+				'post_status'    => 'inherit',
+			);
+
+			$pdf_attachment_id = wp_insert_attachment($attachment, $full_path);
+
+			require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+			$attach_data = wp_generate_attachment_metadata($pdf_attachment_id, $full_path);
+			wp_update_attachment_metadata($pdf_attachment_id, $attach_data);
+
+			$new_sent_report = array(
+				'report' => $reports[$report_id]['name'],
+				'sent' => (bool) $report_data['sent'],
+				'template_id_used' => sanitize_key($report_data['template_id']),
+				'template_name_used' => sanitize_text_field($report_data['template_name']),
+				'services' => array_map('sanitize_text_field', $report_data['services']),
+				'sent_at' => $report_sent_at_formatted_date,
+				'number_of_recipients' => absint($report_data['number_of_recipients']),
+				'pdf_attachment_id' => $pdf_attachment_id,
+			);
+
+			$sent_reports[] = $new_sent_report;
+			$return_data[] = $new_sent_report;
+		}
+
+		$this->_update_existing_reports($reports);
+		$this->_update_existing_sent_reports($sent_reports);
+
+		$result = array(
+			"error" => false,
+			"message" => "sent_reports_updated",
+			"data" => $return_data,
 		);
 
 		return $this->_response($result);
