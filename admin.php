@@ -542,6 +542,7 @@ class UpdraftPlus_Admin {
 
 		add_action('admin_head', array($this, 'admin_head'));
 		add_filter((is_multisite() ? 'network_admin_' : '').'plugin_action_links', array($this, 'plugin_action_links'), 10, 2);
+		add_filter('plugin_row_meta', array($this, 'change_plugin_author_link'), 10, 3);
 		add_action('wp_ajax_updraft_download_backup', array($this, 'updraft_download_backup'));
 		add_action('wp_ajax_updraft_ajax', array($this, 'updraft_ajax_handler'));
 		add_action('wp_ajax_updraft_ajaxrestore', array($this, 'updraft_ajaxrestore'));
@@ -1346,13 +1347,31 @@ class UpdraftPlus_Admin {
 	 * @return Array filtered results
 	 */
 	public function plugin_action_links($links, $file) {
+		global $updraftplus;
 		if (is_array($links) && 'updraftplus/updraftplus.php' == $file) {
-			$settings_link = '<a href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus" class="js-updraftplus-settings">'.__("Settings", "updraftplus").'</a>';
+			$settings_link = '<a href="'.esc_url(UpdraftPlus_Options::admin_page_url()).'?page=updraftplus" class="js-updraftplus-settings">'.__("Settings", "updraftplus").'</a>';
 			array_unshift($links, $settings_link);
-			$settings_link = '<a href="'.apply_filters('updraftplus_com_link', "https://updraftplus.com/").'" target="_blank">'.__("Premium / Pro Support", "updraftplus").'</a>';
+			$settings_link = '<a href="'.esc_url($updraftplus->get_url('plugin_page')).'" target="_blank">'.__("Premium / Pro Support", "updraftplus").'</a>';
 			array_unshift($links, $settings_link);
 		}
 		return $links;
+	}
+
+	/**
+	 * Change the author link under the plugin's description on the plugin screen.
+	 *
+	 * @param  array  $plugin_meta - An array of the plugin's metadata
+	 * @param  string $plugin_file - Path to the plugin file relative to the plugins directory
+	 * @param  array  $plugin_data - An array of plugin data
+	 * @return array - filtered plugin's metadata
+	 */
+	public function change_plugin_author_link($plugin_meta, $plugin_file, $plugin_data) {
+		global $updraftplus;
+		if ('updraftplus/updraftplus.php' === $plugin_file) {
+			/* translators: %s: The UpdraftPlus plugin page link.*/
+			$plugin_meta[1] = sprintf(__('By %s', 'updraftplus'), '<a href="'.esc_url($updraftplus->get_url('plugin_page')).'">'.$plugin_data['Author'].'</a>');
+		}
+		return $plugin_meta;
 	}
 
 	public function admin_action_upgrade_pluginortheme() {
@@ -1445,7 +1464,7 @@ class UpdraftPlus_Admin {
 			/* translators: %s: Free disk space */
 			sprintf(__('You have less than %s of free disk space on the disk which UpdraftPlus is configured to use to create backups.', 'updraftplus'), '35 MB').' '.
 			__('UpdraftPlus could well run out of space.', 'updraftplus').' '.
-			__('Contact your the operator of your server (e.g. your web hosting company) to resolve this issue.', 'updraftplus')
+			__('Contact the operator of your server (e.g. your web hosting company) to resolve this issue.', 'updraftplus')
 		);
 	}
 
@@ -3500,6 +3519,14 @@ class UpdraftPlus_Admin {
 				'under_username_link' => $updraftplus->get_url('my-account')
 			));
 		}
+
+		$product_key = get_site_option('updraftplus_product_key');
+		if (!empty($product_key) && 'updraftplus-addons' === $option_page) {
+			$further_options = wp_parse_args($further_options, array(
+				'under_username' => __("Not yet got an account? Register your purchase to get one!", 'updraftplus'),
+				'under_username_link' => $updraftplus->get_url('register-product').'?product_key='.urlencode($product_key).'&from=plugin'
+			));
+		}
 		
 		if ($include_form_container) {
 			UpdraftPlus_Options::options_form_begin('', false, array(), 'updraftplus_com_login'); // no need to echo as it's already echoed
@@ -4599,6 +4626,7 @@ class UpdraftPlus_Admin {
 				$last_backup_text = "<span style=\"color:".(($updraft_last_backup['success']) ? 'green' : 'black').";\">".$print_time.'</span>';
 			} else {
 				$inc_time = get_date_from_gmt(gmdate('Y-m-d H:i:s', $updraft_last_backup['backup_time_incremental']), 'D, F j, Y H:i');
+				/* translators: %s: Time of backup. */
 				$last_backup_text = "<span style=\"color:".(($updraft_last_backup['success']) ? 'green' : 'black').";\">$inc_time</span> (".sprintf(__('incremental backup; base backup: %s', 'updraftplus'), $print_time).')';
 			}
 
@@ -4611,6 +4639,7 @@ class UpdraftPlus_Admin {
 					$message = (is_array($err)) ? $err['message'] : $err;
 					$last_backup_text .= ('warning' == $level) ? "<span style=\"color:orange;\">" : "<span style=\"color:red;\">";
 					if ('warning' == $level) {
+						/* translators: %s: Warning message. */
 						$message = sprintf(__("Warning: %s", 'updraftplus'), make_clickable(htmlspecialchars($message)));
 					} else {
 						$message = htmlspecialchars($message);
@@ -4670,9 +4699,9 @@ class UpdraftPlus_Admin {
 		} else {
 			$dir_info = '<span style="color:red;">';
 			if (!is_dir($updraft_dir)) {
-				$dir_info .= __('Backup directory specified does <b>not</b> exist.', 'updraftplus');
+				$dir_info .= __('Backup directory specified does not exist.', 'updraftplus');
 			} else {
-				$dir_info .= __('Backup directory specified exists, but is <b>not</b> writable.', 'updraftplus');
+				$dir_info .= __('Backup directory specified exists, but is not writable.', 'updraftplus');
 			}
 			$dir_info .= '<span class="updraft-directory-not-writable-blurb"><span class="directory-permissions"><a class="updraft_create_backup_dir" href="'.UpdraftPlus_Options::admin_page_url().'?page=updraftplus&action=updraft_create_backup_dir&nonce='.wp_create_nonce('create_backup_dir').'">'.__('Follow this link to attempt to create the directory and set the permissions', 'updraftplus').'</a></span>, '.__('or, to reset this option', 'updraftplus').' <a href="'.esc_url(UpdraftPlus::get_current_clean_url()).'" class="updraft_backup_dir_reset">'.__('press here', 'updraftplus').'</a>. '.__('If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process.', 'updraftplus').'</span>';
 		}
@@ -4758,7 +4787,10 @@ class UpdraftPlus_Admin {
 
 				$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="'.$key.'"' : '';
 			
-				$ret .= '<label '.(('others' == $key) ? 'title="'.sprintf(__('Your wp-content directory server path: %s', 'updraftplus'), WP_CONTENT_DIR).'" ' : '').' for="'.$prefix.'updraft_include_'.$key.'" class="updraft_checkbox"><input class="updraft_include_entity" id="'.$prefix.'updraft_include_'.$key.'" '.$data_toggle_exclude_field.' type="checkbox" name="updraft_include_'.$key.'" value="1" '.$included.'> '.(('others' == $key) ? __('Any other directories found inside wp-content', 'updraftplus') : htmlspecialchars($info['description'])).'</label>';
+				/* translators: %s: Server path. */
+				$ret .= '<label '.(('others' == $key) ? 'title="'.sprintf(__('Your wp-content directory server path: %s', 'updraftplus'), WP_CONTENT_DIR).'" ' : '').' for="'.$prefix.'updraft_include_'.$key.'" class="updraft_checkbox"><input class="updraft_include_entity" id="'.$prefix.'updraft_include_'.$key.'" '.$data_toggle_exclude_field.' type="checkbox" name="updraft_include_'.$key.'" value="1" '.$included.'> '.
+							(('others' == $key) ? __('Any other directories found inside wp-content', 'updraftplus') : htmlspecialchars($info['description'])).
+						'</label>';
 				
 				if ($show_exclusion_options) {
 					$include_exclude = UpdraftPlus_Options::get_updraft_option('updraft_include_'.$key.'_exclude', ('others' == $key) ? UPDRAFT_DEFAULT_OTHERS_EXCLUDE : UPDRAFT_DEFAULT_UPLOADS_EXCLUDE);
@@ -4855,20 +4887,41 @@ class UpdraftPlus_Admin {
 
 		// Check requirements
 		if (!function_exists("curl_init") || !function_exists('curl_exec')) {
-		
-			$ret .= $this->show_double_warning('<strong>'.__('Warning', 'updraftplus').':</strong> '.sprintf(__("Your web server's PHP installation does not included a <strong>required</strong> (for %s) module (%s).", 'updraftplus'), $service, 'Curl').' '.__("Please contact your web hosting provider's support and ask for them to enable it.", 'updraftplus').' ', $extraclass, false);
-
+			$ret .= $this->show_double_warning(
+				'<strong>'.__('Warning', 'updraftplus').':</strong> '.
+				/* translators: 1: Service name, 2: Required module. */
+				sprintf(__('Your web server\'s PHP installation does not included a <strong>required</strong> (for %1$s) module (%2$s).', 'updraftplus'), $service, 'Curl').' '.
+				__("Please contact your web hosting provider's support and ask for them to enable it.", 'updraftplus').' ',
+				$extraclass,
+				false
+			);
 		} else {
 			$curl_version = curl_version();
 			$curl_ssl_supported= ($curl_version['features'] & CURL_VERSION_SSL);
 			if (!$curl_ssl_supported) {
 				if ($has_fallback) {
-					$ret .= '<p><strong>'.__('Warning', 'updraftplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'updraftplus').' '.sprintf(__("Communications with %s will be unencrypted.", 'updraftplus'), $service).' '.__("Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on).", 'updraftplus').'</p>';
+					$ret .= '<p><strong>'.__('Warning', 'updraftplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'updraftplus').' '.
+							/* translators: %s: Service Name. */
+							sprintf(__("Communications with %s will be unencrypted.", 'updraftplus'), $service)
+							.' '.__("Ask your web host to install Curl/SSL in order to gain the ability for encryption (via an add-on).", 'updraftplus').'</p>';
 				} else {
-					$ret .= $this->show_double_warning('<p><strong>'.__('Warning', 'updraftplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'updraftplus').' '.sprintf(__("We cannot access %s without this support.", 'updraftplus'), $service).' '.__("Please contact your web hosting provider's support.", 'updraftplus').' '.sprintf(__("%s <strong>requires</strong> Curl+https.", 'updraftplus'), $service).' '.__("Please do not file any support requests; there is no alternative.", 'updraftplus').'</p>', $extraclass, false);
+					$ret .= $this->show_double_warning('<p><strong>'.__('Warning', 'updraftplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'updraftplus').' '
+								/* translators: %s: Service Name. */
+								.sprintf(__("We cannot access %s without this support.", 'updraftplus'), $service)
+								.' '.__("Please contact your web hosting provider's support.", 'updraftplus').' '
+								/* translators: %s: Service Name. */
+								.sprintf(__('%s requires Curl+https.', 'updraftplus'), $service)
+								.' '.__("Please do not file any support requests; there is no alternative.", 'updraftplus').'</p>',
+						$extraclass,
+						false
+					);
 				}
 			} else {
-				$ret .= '<p><em>'.sprintf(__("Good news: Your site's communications with %s can be encrypted.", 'updraftplus'), $service).' '.__("If you see any errors to do with encryption, then look in the 'Expert Settings' for more help.", 'updraftplus').'</em></p>';
+				$ret .= '<p><em>'
+							/* translators: %s: Service Name. */
+							.sprintf(__("Good news: Your site's communications with %s can be encrypted.", 'updraftplus'), $service)
+							.' '.__("If you see any errors to do with encryption, then look in the 'Expert Settings' for more help.", 'updraftplus')
+						.'</em></p>';
 			}
 		}
 		if ($echo_instead_of_return) {
@@ -4985,7 +5038,12 @@ class UpdraftPlus_Admin {
 		}
 
 		if ('db' == $bkey) {
-			$dbt = empty($backup['meta_foreign']) ? esc_attr(__('Database', 'updraftplus')) : esc_attr(sprintf(__('Database (created by %s)', 'updraftplus'), $desc_source));
+			if (empty($backup['meta_foreign'])) {
+				$dbt = esc_attr(__('Database', 'updraftplus'));
+			} else {
+				/* translators: %s: Database Source. */
+				$dbt = esc_attr(sprintf(__('Database (created by %s)', 'updraftplus'), $desc_source));
+			}
 		} else {
 			$dbt = __('External database', 'updraftplus').' ('.substr($bkey, 2).')';
 		}
@@ -5022,12 +5080,15 @@ class UpdraftPlus_Admin {
 
 				if (isset($accept[$backup['meta_foreign']])) {
 					$desc_source = $accept[$backup['meta_foreign']]['desc'];
+					/* translators: %s: Backup Source. */
 					$ide .= sprintf(__('Backup created by: %s.', 'updraftplus'), $accept[$backup['meta_foreign']]['desc']).' ';
 				} else {
 					$desc_source = __('unknown source', 'updraftplus');
+					/* translators: %s: Unknown Source. */
 					$ide .= __('Backup created by unknown source (%s) - cannot be restored.', 'updraftplus').' ';
 				}
 
+				/* translators: %s: Backup Source. */
 				$sdescrip = (empty($accept[$backup['meta_foreign']]['separatedb'])) ? sprintf(__('Files and database WordPress backup (created by %s)', 'updraftplus'), $desc_source) : sprintf(__('Files backup (created by %s)', 'updraftplus'), $desc_source);
 			}
 			if (isset($backup[$type])) {
@@ -5051,7 +5112,8 @@ class UpdraftPlus_Admin {
 				}
 
 				$ide .= __('Press here to download or browse', 'updraftplus').' '.strtolower($info['description']);
-				$ide .= ' '.sprintf(__('(%d archive(s) in set, total %s).', 'updraftplus'), $howmanyinset, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
+				/* translators: 1: Archive count, 2: Total size.*/
+				$ide .= ' '.sprintf(__('(%1$d archive(s) in set, total %2$s).', 'updraftplus'), $howmanyinset, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
 				if ($index_missing) $ide .= ' '.__('You are missing one or more archives from this multi-archive set.', 'updraftplus');
 
 				$entities .= $set_contents.'/';

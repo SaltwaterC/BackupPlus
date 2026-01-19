@@ -572,7 +572,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 			'go_back_link_label' => sprintf(__('Back to other %s options', 'updraftplus'), 'Vault'),
 			'current_clean_url' => UpdraftPlus::get_current_clean_url(),
 			'subscription_payment_details_label' => wp_kses(__("<strong>About the '1 month $1 trial':</strong> Pay just $1 for the first month of an annual subscription.", 'updraftplus').' '.__('Cancel at any time.', 'updraftplus').' '.__('After 1 month, your subscription will renew at a cost of $35 and every 12 months thereafter until you cancel.', 'updraftplus').' <a href="https://teamupdraft.com/updraftplus/updraftvault/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=about-updraftvault&utm_creative_format=text" target="_blank">'.__('More about UpdraftVault', 'updraftplus').'</a>', $this->allowed_html_for_content_sanitisation()),
-			'connect_to_updraftplus_label' => __('Enter your UpdraftPlus.Com email / password here to connect:', 'updraftplus'),
+			'connect_to_updraftplus_label' => __('Enter your Teamupdraft.com email / password here to connect:', 'updraftplus'),
 			/* translators: %s: Website name */
 			'input_email_title' => sprintf(__('Please enter your %s email address', 'updraftplus'), 'UpdraftPlus.com'),
 			'input_email_placeholder' => __('Email', 'updraftplus'),

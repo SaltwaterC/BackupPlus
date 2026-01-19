@@ -141,7 +141,7 @@ class UpdraftPlus_Tour {
 					.'<div class="ud-notice">'
 					.'<h3>'.__('Try UpdraftVault!', 'updraftplus').'</h3>'
 					.__("UpdraftVault is our remote storage which works seamlessly with UpdraftPlus.", 'updraftplus')
-					.' <a href="'.apply_filters('updraftplus_com_link', 'https://updraftplus.com/updraftvault/').'" target="_blank">'.__('Find out more here.', 'updraftplus').'</a>'
+					.' <a href="'.apply_filters('updraftplus_com_link', 'https://teamupdraft.com/updraftplus/updraftvault/').'" target="_blank">'.__('Find out more here.', 'updraftplus').'</a>'
 					.'<p><a href="'.apply_filters('updraftplus_com_link', $updraftplus->get_url('shop_vault_5')).'" target="_blank" '.$checkout_embed_5gb_attribute.' class="button button-primary">'.__('Try UpdraftVault for 1 month for only $1!', 'updraftplus').'</a></p>'
 					.'</div>'
 			),
@@ -193,7 +193,7 @@ class UpdraftPlus_Tour {
 					.'<div class="ud-notice">'
 					.'<h3>'.__('Try UpdraftVault!', 'updraftplus').'</h3>'
 					.__("UpdraftVault is our remote storage which works seamlessly with UpdraftPlus.", 'updraftplus')
-					.' <a href="'.apply_filters('updraftplus_com_link', 'https://updraftplus.com/updraftvault/').'" target="_blank">'.__('Find out more here.', 'updraftplus').'</a>'
+					.' <a href="'.apply_filters('updraftplus_com_link', 'https://teamupdraft.com/updraftplus/updraftvault/').'" target="_blank">'.__('Find out more here.', 'updraftplus').'</a>'
 					.'<br>'
 					.__("If you have a valid Premium license, you get 1GB of storage included.", 'updraftplus')
 					.' <a href="'.apply_filters('updraftplus_com_link', $updraftplus->get_url('shop_vault_5')).'" target="_blank" '.$checkout_embed_5gb_attribute.'>'.__('Otherwise, you can try UpdraftVault for 1 month for only $1!', 'updraftplus').'</a>'

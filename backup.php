@@ -1751,7 +1751,7 @@ class UpdraftPlus_Backup {
 					continue;
 				}
 
-				add_filter('updraftplus_backup_table_sql_where', array($this, 'backup_exclude_jobdata'), 3, 10);
+				add_filter('updraftplus_backup_table_sql_where', array($this, 'backup_exclude_jobdata'), 10, 3);
 
 				$updraftplus->jobdata_set('dbcreating_substatus', array('t' => $table, 'i' => $total_tables, 'a' => $how_many_tables));
 

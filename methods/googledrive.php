@@ -1396,8 +1396,6 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 		$this->log('ERROR: upload exception ('.get_class($e).'): '.$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
 		$this->client->setDefer(false);
 		fclose($handle);
-		$transkey = $transkey = 'resume_'.md5($file);
-		$this->jobdata_delete($transkey, 'gd'.$transkey);
 		if (false == $try_again) throw $e;
 		// Reset this counter to prevent the something_useful_happened condition's possibility being sent into the far future and potentially missed
 		global $updraftplus;

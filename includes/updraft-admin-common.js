@@ -5921,6 +5921,7 @@ jQuery(function($) {
 
 			updraft_html_modal(form_template.html(), updraftlion.updraftcentral_cloud, 520, 400);
 
+			var modal = jQuery('#updraft-iframe-modal');
 			var consent_container = modal.find('.updraftcentral-data-consent');
 			var name = consent_container.find('input').attr('name');
 
