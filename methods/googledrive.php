@@ -1,8 +1,7 @@
 <?php
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, PHPCompatibility.ParameterValues.NewIconvMbstringCharsetDefault.NotSet -- Using the default PHP fopen() function instead of the WP Filesystem API, using the default encoding for the mb_strpos() function.
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- using the native PHP fclose() function instead of the WP Filesystem API
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
@@ -39,21 +38,26 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 	}
 
 	public function action_auth() {
-		if (isset($_GET['state'])) {
+		$state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'state');
+		$updraftplus_googledriveauth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_googledriveauth');
+		if (isset($state)) {
 
-			$parts = explode(':', $_GET['state']);
+			$parts = explode(':', $state);
 			$state = $parts[0];
 
 			if ('success' == $state) {
-
-				if (isset($_GET['user_id']) && isset($_GET['access_token'])) {
+				$user_id = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'user_id');
+				$access_token = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'access_token');
+				
+				if (isset($user_id) && isset($access_token)) {
 					$code = array(
-						'user_id' => $_GET['user_id'],
-						'access_token' => $_GET['access_token']
+						'user_id' => $user_id,
+						'access_token' => $access_token
 					);
 					
-					if (isset($_GET['scope'])) {
-						$scope = $_GET['scope'];
+					$scope = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'scope');
+					if (isset($scope)) {
+						$scope = $scope;
 						$code['scope'] = explode(' ', $scope);
 					}
 				} else {
@@ -67,10 +71,10 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			} elseif ('revoke' == $state) {
 				$this->gdrive_auth_revoke();
 			}
-		} elseif (isset($_GET['updraftplus_googledriveauth'])) {
-			if ('doit' == $_GET['updraftplus_googledriveauth']) {
+		} elseif (isset($updraftplus_googledriveauth)) {
+			if ('doit' == $updraftplus_googledriveauth) {
 				$this->action_authenticate_storage();
-			} elseif ('deauth' == $_GET['updraftplus_googledriveauth']) {
+			} elseif ('deauth' == $updraftplus_googledriveauth) {
 				$this->action_deauthenticate_storage();
 			}
 		}
@@ -582,9 +586,10 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 	 */
 	public function gdrive_auth_token() {
 		$opts = $this->get_options();
-		if (isset($_GET['code'])) {
+		$code = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'code');
+		if (isset($code)) {
 			$post_vars = array(
-				'code' => $_GET['code'],
+				'code' => $code,
 				'client_id' => $opts['clientid'],
 				'client_secret' => $opts['secret'],
 				'redirect_uri' => UpdraftPlus_Options::admin_page_url().'?action=updraftmethod-googledrive-auth',
@@ -1601,7 +1606,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			'input_secret_type' => apply_filters('updraftplus_admin_secret_field_type', 'password'),
 			'input_folder_label' => __('Google Drive', 'updraftplus').' '.__('Folder', 'updraftplus'),
 			'clientid_and_secret_instruction_label1' => __('For longer help, including screenshots, follow this link.', 'updraftplus').' '.__('The description below is sufficient for more expert users.', 'updraftplus'),
-			'updraftplus_com_link' => apply_filters('updraftplus_com_link', 'https://updraftplus.com/support/configuring-google-drive-api-access-in-updraftplus/'),
+			'updraftplus_com_link' => apply_filters('updraftplus_com_link', 'https://teamupdraft.com/documentation/updraftplus/topics/cloud-storage/google-drive/faqs/how-do-i-use-the-updraftplus-google-drive-app/'),
 			'clientid_and_secret_instruction_label2' => __('Follow this link to your Google API Console, and there activate the Drive API and create a Client ID in the API Access section.', 'updraftplus'),
 			'clientid_and_secret_instruction_label3' => __("Select 'Web Application' as the application type.", 'updraftplus'),
 			'clientid_and_secret_instruction_label4' => __('You must add the following as the authorised redirect URI (under "More Options") when asked', 'updraftplus'),
@@ -1612,7 +1617,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			'privacy_policy_label' => wp_kses(sprintf(
 				/* translators: 1: Privacy policy link, 2: Storage provider name */
 				__('Please read %1$s for use of our %2$s authorization app (none of your backup data is sent to us).', 'updraftplus'),
-				'<a target="_blank" href="https://updraftplus.com/faqs/privacy-policy-use-google-drive-app/">'.__('this privacy policy', 'updraftplus').'</a>',
+				'<a target="_blank" href="https://teamupdraft.com/privacy/">'.__('this privacy policy', 'updraftplus').'</a>',
 				'Google Drive'
 			), $this->allowed_html_for_content_sanitisation()),
 			'updraftplus_premium_url' => $updraftplus->get_url('premium'),

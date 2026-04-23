@@ -2,8 +2,8 @@
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
-Tested up to: 6.9
-Stable tag: 1.26.2
+Tested up to: 7.0
+Stable tag: 1.26.3
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,24 @@ This problem is probably caused by your account being starved of resources by yo
 The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.26.3 - 23/Apr/2026 =
+
+* FEATURE: Implemented enhanced streaming extraction for large files during restoration to handle cases where the file size exceeds the PHP memory limit.
+* FIX: Fixed backup failures on tables with invisible columns and large data volumes.
+* FIX: Unable to uncheck all categories on post in UDC dashboard
+* TWEAK: Added a new internal command to get given plugins' installation info.
+* TWEAK: Ensure autobackup notice is always a string to prevent PHP 8.1+ deprecation in wp_kses()
+* TWEAK: Fix the JS errors that occur when deleting the last generated UDC keys.
+* TWEAK: Implemented adjustments for UI misalignment issues caused by the WordPress 7 visual design refresh across the admin dashboard. The plugin's interface now aligns correctly with the updated design standards.
+* TWEAK: Prevent broken settings pages in other plugins in multisite when UpdraftPlus is active due to modified menu URLs.
+* TWEAK: Update all links in the addons folder to use teamupdraft.com instead of updraftplus.com.
+* TWEAK: Replaced esc_html_e() with esc_html__() where string concatenation was silently discarding the colon separator in SFTP connection failure message and noscript JavaScript warning notice
+* TWEAK: Switched to native phpseclib API/function for Dropbox token decryption, replacing deprecated mcrypt_decrypt since PHP 7.1 and removed in PHP 7.2.
+* TWEAK: Clear out PHP "Undefined offset" notice that occurred while restoring a backup of single site to multisite. It happened during the search-replace operation due to the absence of the users and usermeta tables.
+* TWEAK: Enhance the unzip file function to handle more folder inclusion/exclusion
+* TWEAK: Update all links in the methods folder to use teamupdraft.com instead of updraftplus.com.
+* TWEAK: Add post status and date fields to get_posts API response for UDC
 
 = 1.26.2 - 03/Mar/2026 =
 
@@ -2131,4 +2149,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.2: PHP 8.5 support for UpdraftClone, various fixes and small tweaks for PHP 8.0+ - see the changelog for details. A recommended update for all.
+* 1.26.3: Streamed large files during restore to handle PHP memory limits. Various fixes and small tweaks for PHP 8.0+ - see the changelog for details. A recommended update for all.

@@ -1,7 +1,6 @@
 <?php
 
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 updraft_try_include_file('methods/s3.php', 'require_once');
 
@@ -69,7 +68,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 	 * @return String
 	 */
 	private function get_url($which_page = false) {
-		$base = defined('UPDRAFTPLUS_VAULT_SHOP_BASE') ? UPDRAFTPLUS_VAULT_SHOP_BASE : 'https://updraftplus.com/shop/';
+		$base = defined('UPDRAFTPLUS_VAULT_SHOP_BASE') ? UPDRAFTPLUS_VAULT_SHOP_BASE : 'https://teamupdraft.com/updraftplus/add-ons/';
 		switch ($which_page) {
 			case 'get_more_quota':
 				return apply_filters('updraftplus_com_link', $base.'product-category/updraftplus-vault/');
@@ -81,7 +80,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 				return apply_filters('updraftplus_com_link', 'https://teamupdraft.com/updraftplus/updraftvault?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=updraftvault&utm_creative_format=text');
 				break;
 			case 'vault_forgotten_credentials_links':
-				return apply_filters('updraftplus_com_link', 'https://updraftplus.com/my-account/lost-password/');
+				return apply_filters('updraftplus_com_link', 'https://teamupdraft.com/my-account/lost-password/');
 				break;
 			default:
 				return apply_filters('updraftplus_com_link', $base);
@@ -925,7 +924,8 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 		}
 
 		// If $_POST['reset_hash'] is set, then we were alerted by updraftplus.com - no need to notify back
-		if (is_array($vault_settings) && isset($vault_settings['email']) && empty($_POST['reset_hash'])) {
+		$reset_hash = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'reset_hash');
+		if (is_array($vault_settings) && isset($vault_settings['email']) && empty($reset_hash)) {
 		
 			$post_body = array(
 				'e' => (string) $vault_settings['email'],
@@ -1020,7 +1020,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 
 			if (preg_match('/has banned your IP address \(([\.:0-9a-f]+)\)/', $result['body'], $matches)) {
 				/* translators: %s: Blocked IP address */
-				return new WP_Error('banned_ip', sprintf(__("UpdraftPlus.com has responded with 'Access Denied'.", 'updraftplus').'<br>'.__("It appears that your web server's IP Address (%s) is blocked.", 'updraftplus').' '.__('This most likely means that you share a webserver with a hacked website that has been used in previous attacks.', 'updraftplus').'<br> <a href="'.apply_filters("updraftplus_com_link", "https://updraftplus.com/unblock-ip-address/").'" target="_blank">'.__('To remove the block, please go here.', 'updraftplus').'</a> ', $matches[1]));
+				return new WP_Error('banned_ip', sprintf(__("UpdraftPlus.com has responded with 'Access Denied'.", 'updraftplus').'<br>'.__("It appears that your web server's IP Address (%s) is blocked.", 'updraftplus').' '.__('This most likely means that you share a webserver with a hacked website that has been used in previous attacks.', 'updraftplus').'<br> <a href="'.apply_filters("updraftplus_com_link", "https://teamupdraft.com/documentation/updraftplus/topics/general/troubleshooting/updraftplus-ip-unblock-how-to-regain-access-if-your-ip-is-blocked/").'" target="_blank">'.__('To remove the block, please go here.', 'updraftplus').'</a> ', $matches[1]));
 			} else {
 				/* translators: %s: API response data */
 				return new WP_Error('unknown_response', sprintf(__('UpdraftPlus.Com returned a response which we could not understand (data: %s)', 'updraftplus'), wp_remote_retrieve_body($result)));

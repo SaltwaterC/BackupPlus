@@ -1,7 +1,6 @@
 <?php
 
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
@@ -1219,6 +1218,7 @@ Check your permissions and credentials.','updraftplus'), 'error');
 			'simplexmlelement_existence_label' => $simplexmlelement_existence_label,
 			'curl_existence_label' => wp_kses($updraftplus_admin->curl_check($updraftplus->backup_methods[$this->get_id()], true, $this->get_id().' hide-in-udc', false), $this->allowed_html_for_content_sanitisation()),
 			'ssl_certificates_errors_link_text' => wp_kses('<a href="'.apply_filters("updraftplus_com_link", "https://teamupdraft.com/documentation/updraftplus/topics/backing-up/troubleshooting/i-get-ssl-certificate-errors-when-backing-up-and-or-restoring/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=errors-about-ssl-certificates&utm_creative_format=text").'" target="_blank">'.__('If you see errors about SSL certificates, then please go here for help.', 'updraftplus').'</a>', $this->allowed_html_for_content_sanitisation()),
+			/* translators: %s: Remote storage name */
 			'faqs' => wp_kses('<a href="'.apply_filters("updraftplus_com_link", "https://teamupdraft.com/documentation/updraftplus/topics/cloud-storage/amazon-s3/faqs?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=amazon-s3-faqs&utm_creative_format=text").'" target="_blank">'.sprintf(__('Other %s FAQs.', 'updraftplus'), $updraftplus->backup_methods[$this->get_id()]).'</a>', $this->allowed_html_for_content_sanitisation()),
 			/* translators: %s: Access key type */
 			'input_access_key_label' => sprintf(__('%s access key', 'updraftplus'), $updraftplus->backup_methods[$this->get_id()]),

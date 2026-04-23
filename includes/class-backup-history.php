@@ -1,7 +1,7 @@
 <?php
-
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct $wpdb query is required for this operation.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 /**
  * A class to deal with management of backup history.
@@ -78,8 +78,9 @@ class UpdraftPlus_Backup_History {
 				$columns_sql .= "'updraft_jobdata_".esc_sql($nonce)."'";
 			}
 			
-			$sql = 'SELECT '.$key_column.', '.$value_column.' FROM '.$table.' WHERE '.$key_column.' IN ('.$columns_sql.')';
-			$all_jobdata = $wpdb->get_results($sql);
+			$escaped_table = UpdraftPlus_Database_Utility::escape_table_name($table);
+			$sql = 'SELECT '.$key_column.', '.$value_column.' FROM '.$escaped_table.' WHERE '.$key_column.' IN ('.$columns_sql.')'; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is from $wpdb->options/$wpdb->sitemeta (safe), column names are hardcoded, nonces are escaped via esc_sql().
+			$all_jobdata = $wpdb->get_results($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed above.
 
 			foreach ($all_jobdata as $values) {
 				// The 16 here is the length of 'updraft_jobdata_'

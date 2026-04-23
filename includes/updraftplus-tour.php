@@ -40,18 +40,19 @@ class UpdraftPlus_Tour {
 		add_filter('plugin_action_links', array($this, 'plugin_action_links'), 10, 2);
 
 		// only init and load assets if the tour hasn't been canceled
-		if (isset($_REQUEST['updraftplus_tour']) && 0 === (int) $_REQUEST['updraftplus_tour']) {
+		$updraftplus_tour = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'updraftplus_tour');
+		if (isset($updraftplus_tour) && 0 === (int) $updraftplus_tour) {
 			$this->set_tour_status(array('current_step' => 'start'));
 			return;
 		}
 		
 		// if backups already exist and
-		if ($this->updraftplus_was_already_installed() && !isset($_REQUEST['updraftplus_tour'])) {
+		if ($this->updraftplus_was_already_installed() && !isset($updraftplus_tour)) {
 			return;
 		}
 
 		// if 'Take tour' link was used, reset tour
-		if (isset($_REQUEST['updraftplus_tour']) && 1 === (int) $_REQUEST['updraftplus_tour']) {
+		if (isset($updraftplus_tour) && 1 === (int) $updraftplus_tour) {
 			$this->reset_tour_status();
 		}
 
@@ -179,9 +180,9 @@ class UpdraftPlus_Tour {
 				'text' => _x('To get started with UpdraftVault, select one of the options below:', 'Translators: UpdraftVault is a product name and should not be translated.', 'updraftplus')
 			)
 		);
-
-		if (isset($_REQUEST['tab'])) {
-			$tour_data['show_tab_on_load'] = '#updraft-navtab-'.esc_attr(sanitize_text_field($_REQUEST['tab']));
+		$tab = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'tab');
+		if (isset($tab)) {
+			$tour_data['show_tab_on_load'] = '#updraft-navtab-'.esc_attr(sanitize_text_field($tab));
 		}
 
 		// Change the data for premium users

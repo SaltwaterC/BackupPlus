@@ -5591,12 +5591,12 @@ jQuery(function($) {
 
 	jQuery('#updraft-restore-modal').on('click', '.updraft-select-all-tables', function(e) {
 		e.preventDefault();
-		jQuery('.updraft_restore_tables_options').prop('checked', true);
+		jQuery('.updraft_restore_tables_options:not(:disabled)').prop('checked', true);
 	});
 
 	jQuery('#updraft-restore-modal').on('click', '.updraft-deselect-all-tables', function(e) {
 		e.preventDefault();
-		jQuery('.updraft_restore_tables_options').prop('checked', false);
+		jQuery('.updraft_restore_tables_options:not(:disabled)').prop('checked', false);
 	});
 
 	var last_checked = null;
@@ -6393,3 +6393,99 @@ function validate_dreamobjects_endpoint(select_element) {
 		select_element.classList.add('updraft-input--invalid');
 	}
 }
+
+/**
+ * Reference to the authentication popup window.
+ *
+ * @type {Window|null}
+ */
+var updraft_popup_ref = null;
+
+/**
+ * Interval ID used to check if the popup window has been closed.
+ *
+ * @type {number|null}
+ */
+var updraft_popup_check_interval = null;
+
+/**
+ * Opens (or focuses) an authentication popup window and monitors when it closes.
+ *
+ * When the popup is closed, a `CustomEvent` named `updraftAuthPopupClosed` is dispatched
+ * on the `window` object, containing the opened URL in the event detail.
+ *
+ * @param {string} url - The URL to open in the popup window.
+ * @fires window#updraftAuthPopupClosed
+ */
+function updraft_open_authentication_popup(url) {
+	const width = 1000;
+	const height = 800;
+	const left = (window.screen.width / 2) - (width / 2);
+	const top = (window.screen.height / 2) - (height / 2);
+
+	// Open (or focus existing) popup
+	if (!updraft_popup_ref || updraft_popup_ref.closed) {
+		updraft_popup_ref = window.open(
+			url,
+			'updraft_auth_popup',
+			'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left + ',scrollbars=yes,resizable=yes'
+		);
+	} else {
+		updraft_popup_ref.focus();
+	}
+
+	// Clear any previous interval
+	if (updraft_popup_check_interval) clearInterval(updraft_popup_check_interval);
+
+	// Check every 500ms if popup closed
+	updraft_popup_check_interval = setInterval(function() {
+		if (!updraft_popup_ref || updraft_popup_ref.closed) {
+			clearInterval(updraft_popup_check_interval);
+			updraft_popup_check_interval = null;
+
+			/**
+			 * Fired when the authentication popup window is closed.
+			 *
+			 * @event window#updraftAuthPopupClosed
+			 * @type {CustomEvent}
+			 * @property {Object} detail - Additional event details.
+			 * @property {string} detail.url - The URL that was opened in the popup.
+			 */
+			window.dispatchEvent(new CustomEvent('updraftAuthPopupClosed', {
+				detail: { url: url }
+			}));
+		}
+	}, 500);
+}
+
+window.addEventListener('message', function (event) {
+	if (!event.data || event.data.type !== 'auth_success' || jQuery('#teamupdraft-onboarding').length === 1) {
+		return;
+	}
+
+	window.location.reload();
+});
+
+/**
+ * Handles click events on authentication and deauthentication links.
+ * Prevents default navigation and opens the popup using {@link updraft_open_authentication_popup}.
+ *
+ * @param {MouseEvent} e - The click event.
+ * @returns {boolean|void} Returns false if the click should not open a popup.
+ */
+jQuery(document).on('click', 'a.updraft_authlink', function(e, data) {
+	e.preventDefault();
+
+	// Prevent middle-click or Ctrl/Cmd + click from opening new tab
+	if (e.button === 1 || e.ctrlKey || e.metaKey) {
+		return false;
+	}
+
+	if (!data) data = {};
+
+	if (data && data.is_requesting_popup_auth) {
+		updraft_open_authentication_popup(this.href);
+	} else {
+		window.location.href = this.href;
+	}
+});

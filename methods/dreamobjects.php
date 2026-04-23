@@ -1,7 +1,6 @@
 <?php
 
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 updraft_try_include_file('methods/s3.php', 'require_once');
 

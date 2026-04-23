@@ -1,7 +1,6 @@
 <?php
-
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- we use the set_error_handler() function to provide a flexible way of handling PHP errors according to our needs; we centralises error handling in one place and customises certain errors based on their severity and context.
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 /**
  * This class is the basic glue between the lower-level Remote Communications (RPC) class in UpdraftCentral, and the host plugin. It does not contain actual commands themselves; the class names to use for actual commands are passed in as a parameter to the constructor.
@@ -71,12 +70,14 @@ class UpdraftCentral_Listener {
 		}
 		
 		// If we ever need to expand beyond a single GET action, this can/should be generalised and put into the commands class
-		if (!empty($_GET['udcentral_action']) && 'login' == $_GET['udcentral_action']) {
+		$udcentral_action = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'udcentral_action');
+		if (!empty($udcentral_action) && 'login' == $udcentral_action) {
 			// auth_redirect() does not return, according to the documentation; but the code shows that it can
 			// auth_redirect();
-
-			if (!empty($_GET['login_id']) && is_numeric($_GET['login_id']) && !empty($_GET['login_key'])) {
-				$login_user = get_user_by('id', $_GET['login_id']);
+			$login_id = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'login_id', 0, false, 'integer', 'intval');
+			$get_login_key = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'login_key');
+			if (!empty($login_id) && !empty($get_login_key)) {
+				$login_user = get_user_by('id', $login_id);
 				
 				// THis is included so we can get $wp_version
 				include_once(ABSPATH.WPINC.'/version.php');
@@ -86,7 +87,7 @@ class UpdraftCentral_Listener {
 					$allow_autologin = apply_filters('updraftcentral_allow_autologin', true, $login_user);
 					if ($allow_autologin) {
 						$login_key = get_user_meta($login_user->ID, 'updraftcentral_login_key', true);
-						if (is_array($login_key) && !empty($login_key['created']) && $login_key['created'] > time() - 60 && !empty($login_key['key']) && $login_key['key'] == $_GET['login_key']) {
+						if (is_array($login_key) && !empty($login_key['created']) && $login_key['created'] > time() - 60 && !empty($login_key['key']) && $login_key['key'] == $get_login_key) {
 							$autologin = empty($login_key['redirect_url']) ? network_admin_url() : $login_key['redirect_url'];
 						}
 					}
@@ -304,8 +305,7 @@ class UpdraftCentral_Listener {
 			error_log($log_message);
 
 			return $this->return_rpc_message(array('response' => 'rpcerror', 'data' => array('code' => 'rpc_fatal_error', 'data' => array('command' => $command, 'message' => $log_message))));
-		// @codingStandardsIgnoreLine
-		} catch (Error $e) {
+		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during UpdraftCentral command execution. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 			error_log($log_message);
 

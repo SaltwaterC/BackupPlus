@@ -195,7 +195,7 @@ class UpdraftCentral_Core_Commands extends UpdraftCentral_Commands {
 			$network_sites = get_sites();
 		} else {
 			if (function_exists('wp_get_sites')) {
-				$network_sites = wp_get_sites();
+				$network_sites = wp_get_sites();// phpcs:ignore WordPress.WP.DeprecatedFunctions.wp_get_sitesFound -- This function was only intended for backward compatibility with versions below 4.6.
 			}
 		}
 
@@ -542,9 +542,9 @@ class UpdraftCentral_Core_Commands extends UpdraftCentral_Commands {
 	 * @return Array
 	 */
 	public function _get_autologin_key($user_id) {
-		$secure_auth_key = defined('SECURE_AUTH_KEY') ? SECURE_AUTH_KEY : hash('sha256', DB_PASSWORD).'_'.rand(0, 999999999);
+		$secure_auth_key = defined('SECURE_AUTH_KEY') ? SECURE_AUTH_KEY : hash('sha256', DB_PASSWORD).'_'.wp_rand(0, 999999999);
 		if (!defined('SECURE_AUTH_KEY')) return false;
-		$hash_it = $user_id.'_'.microtime(true).'_'.rand(0, 999999999).'_'.$secure_auth_key;
+		$hash_it = $user_id.'_'.microtime(true).'_'.wp_rand(0, 999999999).'_'.$secure_auth_key;
 		$hash = hash('sha256', $hash_it);
 		return $hash;
 	}
@@ -617,7 +617,7 @@ class UpdraftCentral_Core_Commands extends UpdraftCentral_Commands {
 	private function _get_phpinfo_array() {
 		if (!function_exists('phpinfo')) return null;
 		ob_start();
-		phpinfo(INFO_GENERAL|INFO_CREDITS|INFO_MODULES);
+		phpinfo(INFO_GENERAL|INFO_CREDITS|INFO_MODULES); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_phpinfo -- we call the phpinfo() function to display PHP information in the advanced tools.
 		$phpinfo = array('phpinfo' => array());
 
 		if (preg_match_all('#(?:<h2>(?:<a name=".*?">)?(.*?)(?:</a>)?</h2>)|(?:<tr(?: class=".*?")?><t[hd](?: class=".*?")?>(.*?)\s*</t[hd]>(?:<t[hd](?: class=".*?")?>(.*?)\s*</t[hd]>(?:<t[hd](?: class=".*?")?>(.*?)\s*</t[hd]>)?)?</tr>)#s', ob_get_clean(), $matches, PREG_SET_ORDER)) {

@@ -172,7 +172,7 @@ class UpdraftCentral_Comments_Commands extends UpdraftCentral_Commands {
 			$network_sites = get_sites();
 		} else {
 			if (function_exists('wp_get_sites')) {
-				$network_sites = wp_get_sites();
+				$network_sites = wp_get_sites();// phpcs:ignore WordPress.WP.DeprecatedFunctions.wp_get_sitesFound -- This function was only intended for backward compatibility with versions below 4.6.
 			}
 		}
 		

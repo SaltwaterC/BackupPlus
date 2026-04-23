@@ -257,7 +257,8 @@ class UpdraftPlus_Options {
 		register_setting('updraft-options-group', 'updraft_startday_db', array('UpdraftPlus_Options', 'week_or_month_day'));
 
 		global $pagenow;
-		if ('options-general.php' == $pagenow && isset($_REQUEST['page']) && 'updraftplus' == substr($_REQUEST['page'], 0, 11)) {
+		$page = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'page', '');
+		if ('options-general.php' == $pagenow && 'updraftplus' == substr($page, 0, 11)) {
 			if (!defined('UPDRAFTPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY') || !UPDRAFTPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY) add_filter('parent_file', array('UpdraftPlus', 'parent_file'), 99);
 			if (is_multisite()) add_action('all_admin_notices', array('UpdraftPlus_Options', 'show_admin_warning_multisite'));
 		}

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged -- some functions, like set_time_limit() and ini_set(), are used to temporarily change PHP configuration values based on the script's needs (e.g., processing large datasets or performing long operations).
 if (!defined('UPDRAFTPLUS_DIR')) die('No access.');
 
 /**
@@ -144,7 +144,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 					
 						// Try to recover by getting a default set of options for display
 						if (is_callable(array($remote_storage, 'get_default_options'))) {
-							$uuid = 's-'.md5(rand().uniqid().microtime(true));
+							$uuid = 's-'.md5(wp_rand().uniqid().microtime(true));
 							$settings['settings'] = array($uuid => $remote_storage->get_default_options());
 						}
 						
@@ -379,8 +379,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 				$message = sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage());
 				$updraftplus->log($message, 'error');
 				return false;
-			// @codingStandardsIgnoreLine
-			} catch (Error $e) {
+			} catch (Error $e) { //phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 				error_log($log_message);
 				// @codingStandardsIgnoreLine
@@ -434,6 +433,6 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 */
 	private static function generate_instance_id() {
 		// Cryptographic randomness not required. The prefix helps avoid potential for type-juggling issues.
-		return 's-'.md5(rand().uniqid().microtime(true));
+		return 's-'.md5(wp_rand().uniqid().microtime(true));
 	}
 }

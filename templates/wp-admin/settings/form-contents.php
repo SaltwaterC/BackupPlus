@@ -1,7 +1,6 @@
 <?php
 
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 $updraft_dir = $updraftplus->backups_dir_location();
 $really_is_writable = UpdraftPlus_Filesystem_Functions::really_is_writable($updraft_dir);
@@ -172,7 +171,23 @@ foreach ($default_options as $k => $v) {
 
 		<td>
 		<?php
-			echo wp_kses(apply_filters('updraft_database_encryption_config', sprintf(__('%s with UpdraftPlus Premium.', 'updraftplus'), '<a href="'.esc_url($updraftplus->get_url('premium_database_encryption')).'" target="_blank">'.__('Encrypt the database', 'updraftplus').'</a>').' '.sprintf(__('You can also %s.', 'updraftplus'), '<a href="'.esc_url($updraftplus->get_url('premium_more_database')).'" target="_blank">'.__('back up non-WP tables and external databases', 'updraftplus').'</a>')), $updraftplus_admin->kses_allow_tags());
+			echo wp_kses(
+				apply_filters(
+					'updraft_database_encryption_config',
+					sprintf(
+						/* translators: %s Url for database encryption feature */
+						__('%s with UpdraftPlus Premium.', 'updraftplus'),
+						'<a href="'.esc_url($updraftplus->get_url('premium_database_encryption')).'" target="_blank">'.
+						__('Encrypt the database', 'updraftplus').'</a>'
+					).' '.sprintf(
+						/* translators: %s Url for more database feature */
+						__('You can also %s.', 'updraftplus'),
+						'<a href="'.esc_url($updraftplus->get_url('premium_more_database')).'" target="_blank">'.
+						__('back up non-WP tables and external databases', 'updraftplus').'</a>'
+					)
+				),
+				$updraftplus_admin->kses_allow_tags()
+			);
 		?>
 		</td>
 	</tr>

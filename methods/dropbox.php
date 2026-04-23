@@ -1,10 +1,10 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 /**
  * https://www.dropbox.com/developers/apply?cont=/developers/apps
  */
 
-if (!defined('ABSPATH')) exit;
-if (!defined('UPDRAFTPLUS_DIR')) die('No direct access allowed');
+if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
@@ -620,10 +620,11 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 			'sub_folders_instruction_label2' => sprintf(__('Backups are saved in %s.', 'updraftplus'), 'apps/UpdraftPlus'),
 			/* translators: 1: Opening link tag, 2: Closing link tag */
 			'sub_folders_instruction_label3' => wp_kses(sprintf(__('If you backup several sites into the same Dropbox and want to organize with sub-folders, then %1$scheck out Premium%2$s', 'updraftplus'), '<a href="'.esc_url($updraftplus->get_url('premium_dropbox')).'" target="_blank">', '</a>'), $this->allowed_html_for_content_sanitisation()),
-			/* translators: %s: Service name */
 			'input_authenticate_with_label' => sprintf(
+				/* translators: %s: Service name */
 				__('Authenticate with %s', 'updraftplus'),
-			__('Dropbox', 'updraftplus')),
+				__('Dropbox', 'updraftplus')
+			),
 			'already_authenticated_label' => __('(You are already authenticated).', 'updraftplus'),
 			/* translators: %s: Service name */
 			'authentication_link_text' => wp_kses(sprintf(__("<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'updraftplus'), $updraftplus->backup_methods[$this->get_id()]), $this->allowed_html_for_content_sanitisation()),
@@ -813,22 +814,24 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 	 * @return null
 	 */
 	public function action_auth() {
-		if (isset($_GET['updraftplus_dropboxauth'])) {
-			if ('doit' == $_GET['updraftplus_dropboxauth']) {
+		$updraftplus_dropboxauth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_dropboxauth');
+		$request_state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'state');
+		if (isset($updraftplus_dropboxauth)) {
+			if ('doit' == $updraftplus_dropboxauth) {
 				$this->action_authenticate_storage();
 				return;
-			} elseif ('deauth' == $_GET['updraftplus_dropboxauth']) {
+			} elseif ('deauth' == $updraftplus_dropboxauth) {
 				$this->action_deauthenticate_storage();
 				return;
 			}
-		} elseif (isset($_REQUEST['state'])) {
+		} elseif (isset($request_state)) {
 			if (isset($_SERVER['REQUEST_METHOD']) && 'POST' == $_SERVER['REQUEST_METHOD']) {
-				$auth_state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'state', false, null, null, '');
+				$auth_state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'state', '');
 				$raw_state = urldecode($auth_state);
-				$raw_code = urldecode(UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'code', false, null, null, ''));
+				$raw_code = urldecode(UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'code', ''));
 			} else {
-				$raw_state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'state', false, null, null, '');
-				$raw_code = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'code', false, null, null, '');
+				$raw_state = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'state', '');
+				$raw_code = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'code', '');
 			}
 
 			if (!empty($raw_code)) $this->do_complete_authentication($raw_state, $raw_code);

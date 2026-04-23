@@ -1,5 +1,6 @@
 <?php
-
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r -- print_r is intentionally used to convert an array into a readable string or for controlled logging purposes..
+// phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged -- some functions, like set_time_limit() and ini_set(), are used to temporarily change PHP configuration values based on the script's needs (e.g., processing large datasets or performing long operations).
 if (!defined('ABSPATH')) die('No direct access.');
 
 global $updraftcentral_host_plugin;
@@ -56,7 +57,11 @@ class UpdraftCentral_Main {
 		$command_classes = apply_filters('updraftplus_remotecontrol_command_classes', $command_classes);
 	
 		// If nothing was sent, then there is no incoming message, so no need to set up a listener (or CORS request, etc.). This avoids a DB SELECT query on the option below in the case where it didn't get autoloaded, which is the case when there are no keys.
-		if (!empty($_SERVER['REQUEST_METHOD']) && ('GET' == $_SERVER['REQUEST_METHOD'] || 'POST' == $_SERVER['REQUEST_METHOD']) && (empty($_REQUEST['action']) || 'updraft_central' !== $_REQUEST['action']) && empty($_REQUEST['udcentral_action']) && empty($_REQUEST['udrpc_message'])) return;
+		$request_action = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'action');
+		$udcentral_action = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'udcentral_action');
+		$udrpc_message = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'udrpc_message');
+		$request_method = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'REQUEST_METHOD');
+		if (!empty($request_method) && ('GET' == $request_method || 'POST' == $request_method) && (empty($request_action) || 'updraft_central' !== $request_action) && empty($udcentral_action) && empty($udrpc_message)) return;
 		
 		// Remote control keys
 		// These are different from the remote send keys, which are set up in the Migrator add-on
@@ -180,7 +185,10 @@ class UpdraftCentral_Main {
 		global $updraftcentral_host_plugin;
 	
 		// The actual nonce check is done in the method below
-		if (empty($_GET['_wpnonce']) || empty($_GET['public_key']) || !isset($_GET['updraft_key_index'])) die;
+		$global_wp_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', '_wpnonce');
+		$public_key = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'public_key');
+		$updraft_key_index = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraft_key_index');
+		if (empty($global_wp_nonce) || empty($public_key) || !isset($updraft_key_index)) die;
 		
 		$result = $this->receive_public_key();
 		if (!is_array($result) || empty($result['responsetype'])) die;
@@ -395,7 +403,7 @@ class UpdraftCentral_Main {
 
 		// ENT_HTML5 exists only on PHP 5.4+
 		// @codingStandardsIgnoreLine
-		$flags = defined('ENT_HTML5') ? ENT_QUOTES | ENT_HTML5 : ENT_QUOTES;
+		$flags = defined('ENT_HTML5') ? ENT_QUOTES | ENT_HTML5 : ENT_QUOTES;// phpcs:ignore PHPCompatibility.Constants.NewConstants.ent_html5Found -- ENT_HTML5 is used intentionally with proper check.
 		
 		$extra_info = array(
 			'user_id' => $user->ID,
@@ -676,7 +684,7 @@ class UpdraftCentral_Main {
 
 		if (empty($keys_data)) {
 			?>
-			<tr><td colspan="2"><em><?php $updraftcentral_host_plugin->retrieve_show_message('no_updraftcentral_dashboards', true); ?></em></td></tr>
+			<em><?php $updraftcentral_host_plugin->retrieve_show_message('no_updraftcentral_dashboards', true); ?></em>
 			<?php
 		}
 		
@@ -694,7 +702,6 @@ class UpdraftCentral_Main {
 				</thead>
 				<tbody>
 					<?php
-					
 					foreach ($keys_data as $key_id => $key) {
 						$user_display = 'Unknown' !== $key['user_display'] ? $key['user_display'] : $updraftcentral_host_plugin->retrieve_show_message('unknown');
 						$reconstructed_url = !empty($key['reconstructed_url']) ? $key['reconstructed_url'] : $updraftcentral_host_plugin->retrieve_show_message('unknown');

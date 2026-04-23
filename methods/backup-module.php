@@ -668,8 +668,12 @@ abstract class UpdraftPlus_BackupModule {
 	 * Check the authentication is valid before proceeding to call the authentication method
 	 */
 	public function action_authenticate_storage() {
-		if (isset($_GET['updraftplus_'.$this->get_id().'auth']) && 'doit' == $_GET['updraftplus_'.$this->get_id().'auth'] && !empty($_GET['updraftplus_instance']) && preg_match('/^[-A-Z0-9]+$/i', $_GET['updraftplus_instance']) && isset($_GET['nonce']) && wp_verify_nonce($_GET['nonce'], 'storage_auth_nonce')) {
-			$this->authenticate_storage((string) $_GET['updraftplus_instance']);
+		$updraftplus_auth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_'.$this->get_id().'auth');
+		$updraftplus_instance = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_instance');
+		$nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
+		
+		if (isset($updraftplus_auth) && 'doit' == $updraftplus_auth && !empty($updraftplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $updraftplus_instance) && isset($nonce) && wp_verify_nonce($nonce, 'storage_auth_nonce')) {
+			$this->authenticate_storage((string) $updraftplus_instance);
 		}
 	}
 	
@@ -712,8 +716,12 @@ abstract class UpdraftPlus_BackupModule {
 	 * Check the deauthentication is valid before proceeding to call the deauthentication method
 	 */
 	public function action_deauthenticate_storage() {
-		if (isset($_GET['updraftplus_'.$this->get_id().'auth']) && 'deauth' == $_GET['updraftplus_'.$this->get_id().'auth'] && !empty($_GET['nonce']) && !empty($_GET['updraftplus_instance']) && preg_match('/^[-A-Z0-9]+$/i', $_GET['updraftplus_instance']) && wp_verify_nonce($_GET['nonce'], $this->get_id().'_deauth_nonce')) {
-			$this->deauthenticate_storage($_GET['updraftplus_instance']);
+		$updraftplus_auth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_'.$this->get_id().'auth');
+		$updraftplus_instance = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_instance');
+		$nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
+
+		if (isset($updraftplus_auth) && 'deauth' == $updraftplus_auth && !empty($nonce) && !empty($updraftplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $updraftplus_instance) && wp_verify_nonce($nonce, $this->get_id().'_deauth_nonce')) {
+			$this->deauthenticate_storage($updraftplus_instance);
 		}
 	}
 	
