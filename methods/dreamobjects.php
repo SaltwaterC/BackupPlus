@@ -48,8 +48,7 @@ class UpdraftPlus_BackupModule_dreamobjects extends UpdraftPlus_BackupModule_s3 
 		return array(
 			// Endpoint, then the label
 			's3.us-east-005.dream.io'    => 's3.us-east-005.dream.io',
-			'objects-us-east-1.dream.io' => 'objects-us-east-1.dream.io',
-			'objects-us-west-1.dream.io' => 'objects-us-west-1.dream.io ('.__('Closing 1st October 2018', 'updraftplus').')',
+			'objects-us-east-1.dream.io' => 'objects-us-east-1.dream.io ('.__('Permanently unavailable on Nov 12th, 2025', 'updraftplus').')',
 		);
 	}
 	
@@ -70,9 +69,9 @@ class UpdraftPlus_BackupModule_dreamobjects extends UpdraftPlus_BackupModule_s3 
 		if ($updraftplus->backup_time) {
 			$updraftplus->log("Set endpoint (".get_class($obj)."): $endpoint");
 		
-			// Warning for objects-us-west-1 shutdown in Oct 2018
-			if ('objects-us-west-1.dream.io' == $endpoint) {
-				$updraftplus->log("The objects-us-west-1.dream.io endpoint shut down on the 1st October 2018. The upload is expected to fail. Please see the following article for more information https://help.dreamhost.com/hc/en-us/articles/360002135871-Cluster-migration-procedure", 'warning', 'dreamobjects_west_shutdown');
+			// Warning for objects-us-east-1 shutdown in Nov 2025
+			if ('objects-us-east-1.dream.io' == $endpoint) {
+				$updraftplus->log("The objects-us-east-1.dream.io endpoint is permanently unavailable since Nov. 12th, 2025. Please switch to a new endpoint as suggested in: https://help.dreamhost.com/hc/en-us/articles/360001370846-What-DreamObjects-hostname-should-I-use-to-connect", 'warning', 'dreamobjects_east_shutdown');
 			}
 		}
 		

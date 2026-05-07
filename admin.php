@@ -107,7 +107,7 @@ class UpdraftPlus_Admin {
 		do_action('updraftplus_before_template', $path, $template_file, $return_instead_of_echo, $extract_these);
 
 		if (!file_exists($template_file)) {
-			error_log("UpdraftPlus: template not found: $template_file");
+			UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus: template not found: $template_file");
 			echo esc_html(__('Error:', 'updraftplus').' '.__('template not found', 'updraftplus').' ('.$path.')');
 		} else {
 			extract($extract_these);
@@ -363,7 +363,8 @@ class UpdraftPlus_Admin {
 		}
 
 		// LiteSpeed has a generic problem with terminating cron jobs
-		if (false == UpdraftPlus_Options::get_updraft_option('updraft_dismiss_admin_warning_litespeed') && isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'LiteSpeed') !== false) {
+		$server_software = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'SERVER_SOFTWARE', '', false, 'string', null);
+		if (false == UpdraftPlus_Options::get_updraft_option('updraft_dismiss_admin_warning_litespeed') && isset($server_software) && strpos($server_software, 'LiteSpeed') !== false) {
 			if (!is_file(ABSPATH.'.htaccess') || !preg_match('/noabort/i', file_get_contents(ABSPATH.'.htaccess'))) {
 				add_action('all_admin_notices', array($this, 'show_admin_warning_litespeed'));
 			}
@@ -388,7 +389,7 @@ class UpdraftPlus_Admin {
 				$updraftplus->log_wp_error($settings, true, true);
 			} elseif (!empty($settings['settings'])) {
 				foreach ($settings['settings'] as $storage_options) {
-					if ('objects-us-west-1.dream.io' == $storage_options['endpoint']) {
+					if ('objects-us-east-1.dream.io' == $storage_options['endpoint']) {
 						add_action('all_admin_notices', array($this, 'show_admin_warning_dreamobjects'));
 					} elseif (!UpdraftPlus_BackupModule_dreamobjects::is_valid_endpoint($storage_options['endpoint'])) {
 						add_action('all_admin_notices', array($this, 'show_admin_error_dreamobjects_invalid_custom_endpoint'));
@@ -655,7 +656,9 @@ class UpdraftPlus_Admin {
 
 		if (isset($_REQUEST['udaction']) && 'initiate_restore' === $_REQUEST['udaction']) {
 			// capability, backup_timestamp and nonce validations
-			if (!UpdraftPlus_Options::user_can_manage() || (!empty($_REQUEST['backup_timestamp']) && !preg_match('#^[0-9]+$#i', $_REQUEST['backup_timestamp'])) || !isset($_REQUEST['restore_initiation_nonce']) || !wp_verify_nonce($_REQUEST['restore_initiation_nonce'], 'updraftplus_udcentral_initiate_restore')) wp_die(esc_html__('Sorry, you are not allowed to access this page.', 'updraftplus'));
+			$backup_timestamp = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'backup_timestamp', '', false, 'string', null);
+			$request_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'restore_initiation_nonce');
+			if (!UpdraftPlus_Options::user_can_manage() || (!empty($backup_timestamp) && !preg_match('#^[0-9]+$#i', $backup_timestamp)) || !isset($request_nonce) || !wp_verify_nonce($request_nonce, 'updraftplus_udcentral_initiate_restore')) wp_die(esc_html__('Sorry, you are not allowed to access this page.', 'updraftplus'));
 		}
 
 		// Next, the actions that only come on the UpdraftPlus page
@@ -664,9 +667,9 @@ class UpdraftPlus_Admin {
 		UpdraftPlus::load_checkout_embed();
 
 		add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'), 99999);
-
-		if (isset($_POST['action']) && 'updraft_wipesettings' === $_POST['action'] && isset($_POST['nonce']) && UpdraftPlus_Options::user_can_manage()) {
-			if (wp_verify_nonce($_POST['nonce'], 'updraftplus-wipe-setting-nonce')) $this->wipe_settings();
+		$post_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
+		if (isset($_POST['action']) && 'updraft_wipesettings' === $_POST['action'] && isset($post_nonce) && UpdraftPlus_Options::user_can_manage()) {
+			if (wp_verify_nonce($post_nonce, 'updraftplus-wipe-setting-nonce')) $this->wipe_settings();
 		}
 	}
 
@@ -938,9 +941,9 @@ class UpdraftPlus_Admin {
 		}
 
 		$hosting_company = $updraftplus->get_hosting_info();
-
+		$tab = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'tab', '', false, 'string', null);
 		wp_localize_script('updraft-admin-common', 'updraftlion', array(
-			'tab' => (empty($_GET['tab']) || !preg_match('/^[a-z]+$/', $_GET['tab'])) ? 'backups' : $_GET['tab'],
+			'tab' => (empty($tab) || !preg_match('/^[a-z]+$/', $tab)) ? 'backups' : $tab,
 			'sendonlyonwarnings' => __('Send a report only when there are warnings/errors', 'updraftplus'),
 			'wholebackup' => __('When email storage method is enabled, and an email address is entered, also send the backup', 'updraftplus'),
 			/* translators: %s: Typical mail server size limit in megabytes */
@@ -1221,6 +1224,21 @@ class UpdraftPlus_Admin {
 			'close' => __('Close', 'updraftplus'),
 			'dreamobject_endpoints' => array_keys(UpdraftPlus_BackupModule_dreamobjects::get_endpoints()),
 			'dreamobject_endpoint_regex' => UpdraftPlus_BackupModule_dreamobjects::ENDPOINT_REGEX,
+			'migration_type_required' => __('Please select a migration type to proceed.', 'updraftplus'),
+			'migration_site_url_required' => __('Please enter the site URL to proceed.', 'updraftplus'),
+			'migration_site_url_invalid' => __('The site URL you have entered is not valid.', 'updraftplus') . ' '. __('Please enter a valid URL to proceed.', 'updraftplus'),
+			'migration_email_required' => __('Please enter the email to proceed.', 'updraftplus'),
+			'migration_password_required' => __('Please enter the password to proceed.', 'updraftplus'),
+			'migration_terms_and_conditions_required' => __('You must accept the terms and conditions.', 'updraftplus'),
+			'migration_status' => __('Last Log Message:', 'updraftplus'),
+			'migration_confirm_import_message' => __('This action will completely replace your current site with the data from the source site.', 'updraftplus') . ' ' . __('All existing content, settings, plugins, and themes on this site will be overwritten.', 'updraftplus') . "\n\n" . __('Do you want to continue?', 'updraftplus'),
+			'migration_confirm_export_message' => __('This action will send a full copy of your current site to the destination site.', 'updraftplus') . ' ' . __('The destination site may be overwritten.', 'updraftplus') . "\n\n" . __('Are you sure you want to continue?', 'updraftplus'),
+			'migration_success_import_message' => __('Backup completed, Restoration is now in progress.', 'updraftplus') . ' ' . __('Your site may be temporarily unavailable.', 'updraftplus') . "\n\n" . __('You will need to log in again once the restore finishes.', 'updraftplus'),
+			'migration_success_export_message' => __('Your migration has completed successfully!', 'updraftplus') . ' ' . __('The destination site is now a copy of this site.', 'updraftplus') . "\n\n" . __('Log in to the destination site using the same administrator credentials as this site.', 'updraftplus'),
+			'migration_status_error_message' => __('Please start the migration again.', 'updraftplus'),
+			'migration_running_message' => __('Please do not refresh or close this page while migration is running.', 'updraftplus'),
+			'is_extendify_migration_active' => isset($_GET['source']) && 'extendify' === $_GET['source'] ? true : false,
+			'is_updraft_migration_completed' => isset($_GET['updraft_migration_completed']) ? true : false,
 		));
 	}
 	
@@ -1591,10 +1609,11 @@ class UpdraftPlus_Admin {
 		$this->show_admin_warning(
 			'<strong>'.__('UpdraftPlus notice:', 'updraftplus').'</strong> '.
 			/* translators: %s: Storage endpoint name */
-			sprintf(__('The %s endpoint is scheduled to shut down on the 1st October 2018.', 'updraftplus'), 'objects-us-west-1.dream.io').' '.
-			__('You will need to switch to a different end-point and migrate your data before that date.', 'updraftplus').' '.
+			sprintf(__('As of Nov 12th, 2025, objects-us-east-1.dream.io has been permanently shut down.', 'updraftplus'), 'objects-us-east-1.dream.io').' '.
+			__('For most DreamObjects customers, this involves updating the endpoint and region to s3.us-east-005.dream.io (us-east-005).', 'updraftplus').' '.
+			__('If you need assistance migrating your data, please reach out to the DreamObjects support team.', 'updraftplus').' '.
 			/* translators: 1: Opening anchor tag, 2: Closing anchor tag */
-			sprintf(__('%1$sPlease see this article for more information%2$s', 'updraftplus'), '<a href="https://help.dreamhost.com/hc/en-us/articles/360002135871-Cluster-migration-procedure" target="_blank">', '</a>'),
+			sprintf(__('%1$sPlease see this article for more information%2$s', 'updraftplus'), '<a href="https://help.dreamhost.com/hc/en-us/articles/360001370846-What-DreamObjects-hostname-should-I-use-to-connect" target="_blank">', '</a>'),
 			'updated'
 		);
 	}
@@ -1685,29 +1704,31 @@ class UpdraftPlus_Admin {
 		if (!UpdraftPlus_Options::user_can_manage()) die('Unauthorised.');
 		
 		try {
-			if (empty($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'updraftplus_download')) die('Unauthorised.');
+			$global_wp_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', '_wpnonce');
+			if (empty($global_wp_nonce) || !wp_verify_nonce($global_wp_nonce, 'updraftplus_download')) die('Unauthorised.');
 	
 			if (empty($_REQUEST['timestamp']) || !is_numeric($_REQUEST['timestamp']) || empty($_REQUEST['type'])) die;
-	
-			$findexes = empty($_REQUEST['findex']) ? array(0) : $_REQUEST['findex'];
-			$stage = empty($_REQUEST['stage']) ? '' : sanitize_text_field($_REQUEST['stage']);
-			$file_path = empty($_REQUEST['filepath']) ? '' : $_REQUEST['filepath'];
-	
+			$findex = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'findex');
+			$findexes = empty($findex) ? array(0) : $findex;
+			$stage = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'stage', '', false, 'string', 'sanitize_text_field');
+			$file_path = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'filepath', '', false, 'string', null);
+			
+			$type = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'type', '', false, 'string', null);
 			// This call may not actually return, depending upon what mode it is called in
-			$result = $this->do_updraft_download_backup($findexes, (string) $_REQUEST['type'], (int) $_REQUEST['timestamp'], $stage, false, $file_path);
+			$result = $this->do_updraft_download_backup($findexes, $type, (int) $_REQUEST['timestamp'], $stage, false, $file_path);
 			
 			// In theory, if a response was already sent, then Connection: close has been issued, and a Content-Length. However, in https://updraftplus.com/forums/topic/pclzip_err_bad_format-10-invalid-archive-structure/ a browser ignores both of these, and then picks up the second output and complains.
 			if (empty($result['already_closed'])) echo json_encode($result);
 		} catch (Exception $e) {
 			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during download backup. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
 			));
 		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download backup. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
@@ -1776,7 +1797,7 @@ class UpdraftPlus_Admin {
 			if (is_array($file)) $file = $file[$findex];
 
 			if (false !== strpos($file_path, '..')) {
-				error_log("UpdraftPlus_Admin::do_updraft_download_backup : invalid file_path: $file_path");
+				UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus_Admin::do_updraft_download_backup : invalid file_path: $file_path");
 				return array('result' => __('Error: invalid path', 'updraftplus'));
 			}
 
@@ -1786,7 +1807,7 @@ class UpdraftPlus_Admin {
 			$fullpath = $updraftplus->backups_dir_location().'/'.$file;
 
 			if (!empty($file_path) && strpos(realpath($fullpath), realpath($updraftplus->backups_dir_location())) === false) {
-				error_log("UpdraftPlus_Admin::do_updraft_download_backup : invalid fullpath: $fullpath");
+				UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus_Admin::do_updraft_download_backup : invalid fullpath: $fullpath");
 				return array('result' => __('Error: invalid path', 'updraftplus'));
 			}
 
@@ -1952,7 +1973,7 @@ class UpdraftPlus_Admin {
 				$results = call_user_func(array($commands, $subaction), $data);
 			} catch (Exception $e) {
 				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during '.$subaction.' subaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -1960,7 +1981,7 @@ class UpdraftPlus_Admin {
 				die;
 			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during '.$subaction.' subaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -1994,14 +2015,14 @@ class UpdraftPlus_Admin {
 				echo json_encode($this->get_activejobs_list(UpdraftPlus_Manipulation_Functions::wp_unslash($_GET)));
 			} catch (Exception $e) {
 				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
 				));
 			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -2016,14 +2037,14 @@ class UpdraftPlus_Admin {
 				echo $this->http_get(UpdraftPlus_Manipulation_Functions::wp_unslash($request_uri), $curl); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- It's not HTML content; the output is in JSON format which can't be escaped
 			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during http get. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
 				));
 			} catch (Exception $e) {
 				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during http get. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -2037,7 +2058,7 @@ class UpdraftPlus_Admin {
 				do_action(UpdraftPlus_Manipulation_Functions::wp_unslash($subsubaction), $_REQUEST);
 			} catch (Exception $e) {
 				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during doaction subaction with '.$subsubaction.' subsubaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -2045,7 +2066,7 @@ class UpdraftPlus_Admin {
 				die;
 			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during doaction subaction with '.$subsubaction.' subsubaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				error_log($log_message);
+				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				echo json_encode(array(
 					'fatal_error' => true,
 					'fatal_error_message' => $log_message
@@ -2087,6 +2108,14 @@ class UpdraftPlus_Admin {
 			if ($return_instead_of_echo) ob_start();
 			$data = $obj->credentials_test($test_settings);
 			if ($return_instead_of_echo) $ret .= ob_get_clean();
+		}
+
+		if ($obj->is_connection_successful()) {
+			if (is_array($data)) {
+				$data['success'] = true;
+			} else {
+				$data = array('success' => true);
+			}
 		}
 		
 		if (count($this->logged) >0) {
@@ -4815,7 +4844,7 @@ class UpdraftPlus_Admin {
 
 					$exclude_input_type = $for_updraftcentral ? "text" : "hidden";
 					$exclude_input_extra_attr = $for_updraftcentral ? 'title="'.__('If entering multiple files/directories, then separate them with commas.', 'updraftplus').' '.__('For entities at the top level, you can use a * at the start or end of the entry as a wildcard.', 'updraftplus').'" size="54"' : '';
-					echo '<input type="'.esc_attr($exclude_input_type).'" id="'.esc_attr($prefix.'updraft_include_'.$key.'_exclude').'" name="'.esc_attr('updraft_include_'.$key.'_exclude" '.$exclude_input_extra_attr).' value="'.esc_attr($include_exclude).'" />';
+					echo '<input type="'.esc_attr($exclude_input_type).'" id="'.esc_attr($prefix.'updraft_include_'.$key.'_exclude').'" name="'.esc_attr('updraft_include_'.$key.'_exclude').'" '.wp_kses($exclude_input_extra_attr, array()).' value="'.esc_attr($include_exclude).'" />';
 					
 					if (!$for_updraftcentral) {
 						global $updraftplus;
@@ -4850,7 +4879,7 @@ class UpdraftPlus_Admin {
 						$info['description'] .= ' ('.__('none present', 'updraftplus').')';
 					}
 				
-					echo '<label for="'.esc_attr($prefix.'updraft_include_'.$key).'" '.((isset($info['htmltitle'])) ? ' title="'.esc_attr($info['htmltitle']).'"' : '').' class="updraft_checkbox"><input class="updraft_include_entity"'.wp_kses($data_toggle_exclude_field, array()).' id="'.esc_attr($prefix.'updraft_include_'.$key).'" type="checkbox" name="'.esc_attr('updraft_include_'.$key).'" value="1" '.wp_kses($included.' '.$force_disabled, array()).'>'.esc_html($info['description']);
+					echo '<label for="'.esc_attr($prefix.'updraft_include_'.$key).'" '.((isset($info['htmltitle'])) ? ' title="'.esc_attr($info['htmltitle']).'"' : '').' class="updraft_checkbox"><input class="updraft_include_entity" '.wp_kses($data_toggle_exclude_field, array()).' id="'.esc_attr($prefix.'updraft_include_'.$key).'" type="checkbox" name="'.esc_attr('updraft_include_'.$key).'" value="1" '.wp_kses($included.' '.$force_disabled, array()).'>'.esc_html($info['description']);
 
 					echo '</label>';
 					echo apply_filters("updraftplus_config_option_include_$key", '', $prefix, $for_updraftcentral); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
@@ -6124,14 +6153,14 @@ class UpdraftPlus_Admin {
 			echo json_encode($this->save_settings($posted_settings));
 		} catch (Exception $e) {
 			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during save settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
 			));
 		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during save settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
@@ -6149,14 +6178,14 @@ class UpdraftPlus_Admin {
 			$this->import_settings($_POST);
 		} catch (Exception $e) {
 			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during import settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
 			));
 		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during import settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			echo json_encode(array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
@@ -7182,14 +7211,14 @@ class UpdraftPlus_Admin {
 			$response['updraftplus'] = $this->get_activejobs_list(UpdraftPlus_Manipulation_Functions::wp_unslash($data['updraftplus']));
 		} catch (Exception $e) {
 			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			$response['updraftplus'] = array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message
 			);
 		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			error_log($log_message);
+			UpdraftPlus_Manipulation_Functions::error_log($log_message);
 			$response['updraftplus'] = array(
 				'fatal_error' => true,
 				'fatal_error_message' => $log_message

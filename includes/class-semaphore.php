@@ -88,12 +88,16 @@ class UpdraftPlus_Semaphore {
 	public static function ensure_semaphore_exists($semaphore) {
 		// Make sure the options for semaphores exist
 		global $wpdb, $updraftplus;
-		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name ($wpdb->options) and variable option names cannot be parameterized
-		$results = $wpdb->get_results("
-			SELECT option_id
-				FROM $wpdb->options
-				WHERE option_name IN ('updraftplus_locked_$semaphore', 'updraftplus_unlocked_$semaphore', 'updraftplus_last_lock_time_$semaphore', 'updraftplus_semaphore_$semaphore')
-		");
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT option_id FROM $wpdb->options WHERE option_name IN (%s, %s, %s, %s)",
+				"updraftplus_locked_$semaphore",
+				"updraftplus_unlocked_$semaphore",
+				"updraftplus_last_lock_time_$semaphore",
+				"updraftplus_semaphore_$semaphore"
+			)
+		);
 
 		if (!is_array($results) || count($results) < 3) {
 		
@@ -103,20 +107,30 @@ class UpdraftPlus_Semaphore {
 				$updraftplus->log("Semaphore ($semaphore, ".$wpdb->options.") being initialised");
 			}
 			
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name ($wpdb->options) and variable option names cannot be parameterized
-			$wpdb->query("
-				DELETE FROM $wpdb->options
-				WHERE option_name IN ('updraftplus_locked_$semaphore', 'updraftplus_unlocked_$semaphore', 'updraftplus_last_lock_time_$semaphore', 'updraftplus_semaphore_$semaphore')
-			");
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM $wpdb->options WHERE option_name IN (%s, %s, %s, %s)",
+					'updraftplus_locked_'.$semaphore,
+					'updraftplus_unlocked_'.$semaphore,
+					'updraftplus_last_lock_time_'.$semaphore,
+					'updraftplus_semaphore_'.$semaphore
+				)
+			);
 			
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic table name ($wpdb->options) and variable option names cannot be parameterized
-			$wpdb->query($wpdb->prepare("
-				INSERT INTO $wpdb->options (option_name, option_value, autoload)
-				VALUES
-				('updraftplus_unlocked_$semaphore', '1', 'no'),
-				('updraftplus_last_lock_time_$semaphore', %s, 'no'),
-				('updraftplus_semaphore_$semaphore', '0', 'no')
-			", current_time('mysql', 1)));
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO $wpdb->options (option_name, option_value, autoload) VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)",
+					'updraftplus_unlocked_'.$semaphore,
+					'1',
+					'no',
+					'updraftplus_last_lock_time_'.$semaphore,
+					current_time('mysql', 1),
+					'no',
+					'updraftplus_semaphore_'.$semaphore,
+					'0',
+					'no'
+				)
+			);
 		}
 	}
 	

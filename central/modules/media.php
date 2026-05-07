@@ -212,7 +212,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 			$media->parent_post_title = get_the_title($media->post_parent);
 			$media->author = get_the_author_meta('display_name', $media->post_author);
 			$media->filename = basename($media->url);
-			$media->date = date('Y/m/d', strtotime($media->post_date));
+			$media->date = date('Y/m/d', strtotime($media->post_date)); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would produce incorrect values.
 			$media->upload_date = mysql2date(get_option('date_format'), $media->post_date);
 
 			$media->filesize = 0;
@@ -361,7 +361,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 			$media_id = wp_insert_post($args, true);
 		} else {
 			$args['ID'] = $params['id'];
-			$args['post_modified'] = date('Y-m-d H:i:s');
+			$args['post_modified'] = date('Y-m-d H:i:s'); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_modified is stored in WP local timezone; gmdate() would produce incorrect values.
 			$args['post_modified_gmt'] = gmdate('Y-m-d H:i:s');
 
 			$media_id = wp_update_post($args, true);
@@ -456,7 +456,7 @@ class UpdraftCentral_Media_Commands extends UpdraftCentral_Commands {
 		if (!empty($date_options)) {
 			foreach ($date_options as $monthyear) {
 				$timestr = strtotime($monthyear);
-				$options[] = array('label' => date('F Y', $timestr), 'value' => date('n:Y', $timestr));
+				$options[] = array('label' => date('F Y', $timestr), 'value' => date('n:Y', $timestr)); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- Post dates are stored in WP local timezone; gmdate() would produce incorrect month/year values.
 			}
 		}
 

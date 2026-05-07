@@ -266,7 +266,7 @@ class UpdraftPlus_Options {
 
 	public static function hourminute($pot) {
 		if (preg_match("/^([0-2]?[0-9]):([0-5][0-9])$/", $pot, $matches)) return sprintf("%02d:%s", $matches[1], $matches[2]);
-		if ('' == $pot) return date('H:i', time()+300);
+		if ('' == $pot) return gmdate('H:i', time()+300);
 		return '00:00';
 	}
 

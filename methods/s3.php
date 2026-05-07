@@ -1604,6 +1604,7 @@ Check your permissions and credentials.','updraftplus'), 'error');
 				if (!$storage->putObjectString($try_file, $bucket, $path.$try_file)) {
 					echo esc_html(__('Failure', 'updraftplus').": {$bucket_verb}".__('We successfully accessed the bucket, but the attempt to create a file in it failed.', 'updraftplus'));
 				} else {
+					$this->set_connection_status(true);
 					echo esc_html(__('Success', 'updraftplus').": {$bucket_verb}".__('We accessed the bucket, and were able to create files within it.', 'updraftplus')).' ';
 					$comm_with = ('' !== $endpoint) ? $endpoint : $config['whoweare_long'];
 					if ($storage->getuseSSL()) {

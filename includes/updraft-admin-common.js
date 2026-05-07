@@ -2044,6 +2044,17 @@ jQuery(function($) {
 					   return ui_dialog_interaction.apply(this, arguments);
 		};
 	}
+
+	// Check SFTP and FTP host as user edits
+	$('#updraft-navtab-settings-content #remote-storage-holder').on('input', '.updraft_sftp_host_settings, .updraft_ftp_host_settings', function() {
+		var notice_selector = $(this).closest('tr').find('[class^="updraft_"][class$="_host_error"]');
+
+		notice_selector.hide();
+		if (/\/|^https?:/.test($(this).val())) {
+			$(this).val($(this).val().replace(/^https?:|\/+/g, ''));
+			notice_selector.show();
+		}
+	});
 	
 	// Update WebDAV URL as user edits
 	$('#updraft-navtab-settings-content #remote-storage-holder').on('change keyup paste', '.updraft_webdav_settings', function() {

@@ -312,7 +312,7 @@ class UpdraftCentral_Comments_Commands extends UpdraftCentral_Commands {
 				// We're formatting the comment_date to be exactly the same
 				// with that of WP Comments table (e.g. 2016/12/21 at 10:30 PM)
 				
-				$comment['comment_date'] = date('Y/m/d \a\t g:i a', strtotime($comment['comment_date']));
+				$comment['comment_date'] = date('Y/m/d \a\t g:i a', strtotime($comment['comment_date'])); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- comment_date is stored in WP local timezone; gmdate() would produce incorrect values.
 				
 				$status = wp_get_comment_status($comment['comment_ID']);
 				if ($status) {
@@ -772,7 +772,7 @@ class UpdraftCentral_Comments_Commands extends UpdraftCentral_Commands {
 			// We're formatting the comment_date to be exactly the same
 			// with that of WP Comments table (e.g. 2016/12/21 at 10:30 PM)
 
-			$comment->comment_date = date('Y/m/d \a\t g:i a', strtotime($comment->comment_date));
+			$comment->comment_date = date('Y/m/d \a\t g:i a', strtotime($comment->comment_date)); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- comment_date is stored in WP local timezone; gmdate() would produce incorrect values.
 
 			$status = wp_get_comment_status($comment->comment_ID);
 			if ($status) {

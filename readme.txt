@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 7.0
-Stable tag: 1.26.3
+Stable tag: 1.26.4
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,9 +179,17 @@ The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place t
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
+= 1.26.4 - 07/May/2026 =
+
+* FIX: In version 1.26.2, a regression prevented the backup schedule, including the day name or number, as well as backup entity exclusion rules, from being saved.
+* TWEAK: Alert users who wrongly enter URLs instead of an actual hostname for SFTP and FTP remote storage.
+* TWEAK: Updated DreamObjects endpoints by removing the deprecated objects-us-west-1, marking objects-us-east-1.dream.io as unavailable (Nov. 12th, 2025), and adding admin notices to inform users of this change.
+* TWEAK: get_structured_data() now accepts params to avoid timeouts.
+
 = 1.26.3 - 23/Apr/2026 =
 
 * FEATURE: Implemented enhanced streaming extraction for large files during restoration to handle cases where the file size exceeds the PHP memory limit.
+* FIX: Fix users role filter empty state shows generic “Failed to Fetch Data” error.
 * FIX: Fixed backup failures on tables with invisible columns and large data volumes.
 * FIX: Unable to uncheck all categories on post in UDC dashboard
 * TWEAK: Added a new internal command to get given plugins' installation info.
@@ -2149,4 +2157,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.3: Streamed large files during restore to handle PHP memory limits. Various fixes and small tweaks for PHP 8.0+ - see the changelog for details. A recommended update for all.
+* 1.26.4: Regression in 1.26.2 stopped saving rules and schedule. Various fixes and small tweaks - see the changelog for details. A recommended update for all.

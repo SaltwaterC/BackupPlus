@@ -142,7 +142,7 @@ abstract class UDP_Google_IO_Abstract
     }
 
     if (!isset($responseHeaders['Date']) && !isset($responseHeaders['date'])) {
-      $responseHeaders['date'] = date("r");
+      $responseHeaders['date'] = gmdate("r");
     }
 
     $request->setResponseHttpCode($respHttpCode);

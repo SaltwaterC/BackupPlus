@@ -9,6 +9,13 @@ abstract class UpdraftPlus_BackupModule {
 	private $_instance_id;
 
 	private $_storage;
+
+	/**
+	 * Indicates whether the connection test was successful.
+	 *
+	 * @var bool
+	 */
+	protected $is_connection_successful = false;
 	
 	/**
 	 * Store options (within this class) for this remote storage module. There is also a parameter for saving to the permanent storage (i.e. database).
@@ -89,6 +96,7 @@ abstract class UpdraftPlus_BackupModule {
 			'input_select_folder_label' => __('Select existing folder', 'updraftplus'),
 			'input_confirm_label' => __('Confirm', 'updraftplus'),
 			'input_cancel_label' => __('Cancel', 'updraftplus'),
+			'hostname_error_label' => __('Error:', 'updraftplus').' '.__('A host name cannot be an URL or contain a slash.', 'updraftplus'),
 		);
 	}
 
@@ -887,5 +895,28 @@ abstract class UpdraftPlus_BackupModule {
 		}
 		// Mark the script as output for this ID.
 		$script_output[$id] = true;
+	}
+
+	/**
+	 * Set the connection status.
+	 *
+	 * This method is intended to be used internally or by subclasses
+	 * to update the connection result in a controlled way.
+	 *
+	 * @param bool $status True if connection is successful, false otherwise.
+	 *
+	 * @return void
+	 */
+	protected function set_connection_status($status) {
+		$this->is_connection_successful = (bool) $status;
+	}
+
+	/**
+	 * Check if the connection was successful.
+	 *
+	 * @return bool True if connected successfully, false otherwise.
+	 */
+	public function is_connection_successful() {
+		return $this->is_connection_successful;
 	}
 }

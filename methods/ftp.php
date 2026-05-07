@@ -398,7 +398,10 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 		?>
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_host_label}}:</th>
-			<td><input class="updraft_input--wide" type="text" size="40" data-updraft_settings_test="server" id="{{get_template_input_attribute_value "id" "host"}}" name="{{get_template_input_attribute_value "name" "host"}}" value="{{host}}" /></td>
+			<td><input class="updraft_ftp_host_settings updraft_input--wide" type="text" size="40" data-updraft_settings_test="server" id="{{get_template_input_attribute_value "id" "host"}}" name="{{get_template_input_attribute_value "name" "host"}}" value="{{host}}" />
+			<br>
+			<em class="updraft_ftp_host_error" style="display: none;">{{hostname_error_label}}</em>
+			</td>
 		</tr>
 		
 		<tr class="{{get_template_css_classes true}}">
@@ -484,6 +487,7 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 			}
 		}
 
+		$this->set_connection_status(true);
 	}
 
 	/**
