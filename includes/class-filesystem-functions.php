@@ -172,7 +172,7 @@ class UpdraftPlus_Filesystem_Functions {
 				}
 				if (isset($val['temp_import_table_prefix']) && '' != $val['temp_import_table_prefix'] && $wpdb->prefix != $val['temp_import_table_prefix']) {
 					$tables_to_remove = array();
-					$prefix = $wpdb->esc_like($val['temp_import_table_prefix'])."%";
+					$prefix = UpdraftPlus_Database_Utility::esc_like($val['temp_import_table_prefix'])."%";
 					$sql = $wpdb->prepare("SHOW TABLES LIKE %s", $prefix);
 					
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built using $wpdb->prepare() on the line above.

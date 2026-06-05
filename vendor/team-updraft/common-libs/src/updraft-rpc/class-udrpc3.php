@@ -55,11 +55,11 @@ if ($ud_rpc->get_key_local()) {
 
 */
 // @codingStandardsIgnoreEnd
-if (!class_exists('UpdraftPlus_Remote_Communications')) :
-class UpdraftPlus_Remote_Communications {
+if (!class_exists('UpdraftPlus_Remote_Communications_V3')) :
+class UpdraftPlus_Remote_Communications_V3 {
 
 	// Version numbers relate to versions of this PHP library only (i.e. it's not a protocol support number, and version numbers of other compatible libraries (e.g. JavaScript) are not comparable)
-	public $version = '1.4.24';
+	public $version = '3.1';
 
 	private $key_name_indicator;
 
@@ -95,7 +95,7 @@ class UpdraftPlus_Remote_Communications {
 	private $http_transport = null;
 
 	// Default protocol version - this can be over-ridden with set_message_format
-	// Protocol version 1 (which uses only one RSA key-pair, instead of two) is legacy/deprecated
+	// Protocol version 1 (which uses only one RSA key-pair, instead of two) has been removed
 	private $format = 2;
 
 	private $http_credentials = array();
@@ -106,14 +106,29 @@ class UpdraftPlus_Remote_Communications {
 	
 	private $require_message_to_be_understood = false;
 
+	/**
+	 * Constructor
+	 *
+	 * @param string $key_name_indicator
+	 */
 	public function __construct($key_name_indicator = 'default') {
 		$this->set_key_name_indicator($key_name_indicator);
 	}
 
+	/**
+	 * Set the key name indicator
+	 *
+	 * @param string $key_name_indicator
+	 */
 	public function set_key_name_indicator($key_name_indicator) {
 		$this->key_name_indicator = $key_name_indicator;
 	}
 
+	/**
+	 * Set whether generating a new key-pair is allowed
+	 *
+	 * @param boolean $can_generate
+	 */
 	public function set_can_generate($can_generate = true) {
 		$this->can_generate = $can_generate;
 	}
@@ -164,43 +179,6 @@ class UpdraftPlus_Remote_Communications {
 		$this->sequence_protection_table = (string) $table;
 		$this->sequence_protection_column = (string) $column;
 		$this->sequence_protection_where_sql = (string) $where_sql;
-	}
-
-	private function ensure_crypto_loaded() {
-		if (!class_exists('Crypt_Rijndael') || !class_exists('Crypt_RSA') || !class_exists('Crypt_Hash')) {
-			global $updraftplus, $updraftcentral_host_plugin;
-
-			$base_dir = '';
-			if (is_a($updraftcentral_host_plugin, 'UpdraftCentral_Host') && is_callable(array($updraftcentral_host_plugin, 'get_host_dir'))) {
-				$base_dir = trailingslashit($updraftcentral_host_plugin->get_host_dir());
-			}
-
-			// phpseclib 1.x uses deprecated PHP4-style constructors
-			$this->no_deprecation_warnings_on_php7();
-			if (is_a($updraftplus, 'UpdraftPlus')) {
-				// Since May 2019, the second parameter is unused; but, since we don't know the version, we send it.
-				$ensure_phpseclib = $updraftplus->ensure_phpseclib(array('Crypt_Rijndael', 'Crypt_RSA', 'Crypt_Hash'), array('Crypt/Rijndael', 'Crypt/RSA', 'Crypt/Hash'));
-				if (is_wp_error($ensure_phpseclib)) return $ensure_phpseclib;
-			} elseif (defined('UPDRAFTPLUS_DIR') && file_exists(UPDRAFTPLUS_DIR.'/vendor/phpseclib/phpseclib/phpseclib')) {
-				$pdir = UPDRAFTPLUS_DIR.'/vendor/phpseclib/phpseclib/phpseclib';
-				if (false === strpos(get_include_path(), $pdir)) set_include_path($pdir.PATH_SEPARATOR.get_include_path());
-				if (!class_exists('Crypt_Rijndael')) include_once 'Crypt/Rijndael.php';
-				if (!class_exists('Crypt_RSA')) include_once 'Crypt/RSA.php';
-				if (!class_exists('Crypt_Hash')) include_once 'Crypt/Hash.php';
-			} elseif (file_exists(dirname(dirname(__FILE__)).'/vendor/phpseclib/phpseclib/phpseclib')) {
-				$pdir = dirname(dirname(__FILE__)).'/vendor/phpseclib/phpseclib/phpseclib';
-				if (false === strpos(get_include_path(), $pdir)) set_include_path($pdir.PATH_SEPARATOR.get_include_path());
-				if (!class_exists('Crypt_Rijndael')) include_once 'Crypt/Rijndael.php';
-				if (!class_exists('Crypt_RSA')) include_once 'Crypt/RSA.php';
-				if (!class_exists('Crypt_Hash')) include_once 'Crypt/Hash.php';
-			} elseif ('' !== $base_dir && file_exists($base_dir.'vendor/phpseclib/phpseclib/phpseclib')) {
-				$phpseclib_dir = $base_dir.'vendor/phpseclib/phpseclib/phpseclib';
-				if (false === strpos(get_include_path(), $phpseclib_dir)) set_include_path($phpseclib_dir.PATH_SEPARATOR.get_include_path());
-				if (!class_exists('Crypt_Rijndael')) include_once 'Crypt/Rijndael.php';
-				if (!class_exists('Crypt_RSA')) include_once 'Crypt/RSA.php';
-				if (!class_exists('Crypt_Hash')) include_once 'Crypt/Hash.php';
-			}
-		}
 	}
 
 	/**
@@ -357,20 +335,20 @@ class UpdraftPlus_Remote_Communications {
 
 	public function generate_new_keypair($key_size = 2048) {
 
-		$this->ensure_crypto_loaded();
-
-		$rsa = new Crypt_RSA();
+		$rsa = new phpseclib_Crypt_RSA();
 		$keys = $rsa->createKey($key_size);
 
-		if (empty($keys['privatekey'])) {
+		if (empty($keys['privatekey']) || (class_exists('phpseclib3_Crypt_RSA_PrivateKey') && !is_a($keys['privatekey'], 'phpseclib3_Crypt_RSA_PrivateKey'))) {
 			$this->set_key_local(false);
 		} else {
+			if (is_a($keys['privatekey'], 'phpseclib3_Crypt_RSA_PrivateKey')) $keys['privatekey']  = $keys['privatekey']->toString('PKCS1');
 			$this->set_key_local($keys['privatekey']);
 		}
 
-		if (empty($keys['publickey'])) {
+		if (empty($keys['publickey']) || (class_exists('phpseclib3_Crypt_RSA_PublicKey') && !is_a($keys['publickey'], 'phpseclib3_Crypt_RSA_PublicKey'))) {
 			$this->set_key_remote(false);
 		} else {
+			if (is_a($keys['publickey'], 'phpseclib3_Crypt_RSA_PublicKey')) $keys['publickey']  = $keys['publickey']->toString('PKCS1');
 			$this->set_key_remote($keys['publickey']);
 		}
 
@@ -394,12 +372,10 @@ class UpdraftPlus_Remote_Communications {
 			$use_key = $this->key_local;
 		}
 
-		$this->ensure_crypto_loaded();
-
-		$rsa = new Crypt_RSA();
+		$rsa = new phpseclib_Crypt_RSA();
 		$rsa->loadKey($use_key);
 		// This is the older signature mode; phpseclib's default is the preferred CRYPT_RSA_SIGNATURE_PSS; however, Forge JS doesn't yet support this. More info: https://en.wikipedia.org/wiki/PKCS_1
-		$rsa->setSignatureMode(CRYPT_RSA_SIGNATURE_PKCS1);
+		$rsa->setSignatureMode(phpseclib_Crypt_RSA::SIGNATURE_PKCS1);
 
 		// Don't do this: Crypt_RSA::sign() already calculates the digest of the hash
 		// $hash = new Crypt_Hash($hash_algorithm);
@@ -411,7 +387,7 @@ class UpdraftPlus_Remote_Communications {
 		$rsa->setHash($hash_algorithm);
 		$encrypted = $rsa->sign($message);
 
-		if ($this->debug) $this->log('Signed hash (mode='.CRYPT_RSA_SIGNATURE_PKCS1.') (hex): '.bin2hex($encrypted));
+		if ($this->debug) $this->log('Signed hash (mode='.phpseclib_Crypt_RSA::SIGNATURE_PKCS1.') (hex): '.bin2hex($encrypted));
 
 		$signature = base64_encode($encrypted);
 
@@ -452,16 +428,14 @@ class UpdraftPlus_Remote_Communications {
 			}
 		}
 
-		$this->ensure_crypto_loaded();
-
-		$rsa = new Crypt_RSA();
+		$rsa = new phpseclib_Crypt_RSA();
 
 		if (defined('UDRPC_PHPSECLIB_ENCRYPTION_MODE')) $rsa->setEncryptionMode(UDRPC_PHPSECLIB_ENCRYPTION_MODE);
 
-		$rij = new Crypt_Rijndael();
+		$rij = new phpseclib_Crypt_Rijndael();
 
 		// Generate Random Symmetric Key
-		$sym_key = crypt_random_string($key_length);
+		$sym_key = phpseclib_Crypt_Random::string($key_length);
 
 		if ($this->debug) $this->log('Unencrypted symmetric key (hex): '.bin2hex($sym_key));
 
@@ -498,18 +472,16 @@ class UpdraftPlus_Remote_Communications {
 	 * Decrypt the message, using the local key (which needs to exist)
 	 *
 	 * @param  string $message
-	 * @return array
+	 * @return string|boolean
 	 */
 	public function decrypt_message($message) {
 
 		if (!$this->key_local) throw new Exception('No decryption key has been set');
 
-		$this->ensure_crypto_loaded();
-
-		$rsa = new Crypt_RSA();
+		$rsa = new phpseclib_Crypt_RSA();
 		if (defined('UDRPC_PHPSECLIB_ENCRYPTION_MODE')) $rsa->setEncryptionMode(UDRPC_PHPSECLIB_ENCRYPTION_MODE);
 		// Defaults to CRYPT_AES_MODE_CBC
-		$rij = new Crypt_Rijndael();
+		$rij = new phpseclib_Crypt_Rijndael();
 
 		// Extract the Symmetric Key
 		$len = substr($message, 0, 3);
@@ -528,6 +500,10 @@ class UpdraftPlus_Remote_Communications {
 		$sym_key = base64_decode($sym_key);
 		$sym_key = $rsa->decrypt($sym_key);
 
+		if (false === $sym_key || !is_string($sym_key) || strlen($sym_key) < 16) {
+			return false;
+		}
+		
 		// Decrypt the message
 		$rij->setKey($sym_key);
 
@@ -580,10 +556,8 @@ class UpdraftPlus_Remote_Communications {
 			'udrpc_message' => $send_data,
 		);
 
-		if ($this->format >= 2) {
-			$signature = $this->signature_for_message($send_data, $use_key_local);
-			$message['signature'] = $signature;
-		}
+		$signature = $this->signature_for_message($send_data, $use_key_local);
+		$message['signature'] = $signature;
 
 		return $message;
 
@@ -774,24 +748,27 @@ class UpdraftPlus_Remote_Communications {
 
 		if (!is_array($decoded) || empty($decoded['udrpc_message'])) return new WP_Error('response_not_understood', 'Response from remote site was not in the expected format ('.$post['body'].')', $decoded);
 
-		if ($this->format >= 2) {
+		$format = $decoded['format'];
+		
+		// Don't allow the remote side to downgrade
+		if ($format > 1 || $this->format > 1) {
 			if (empty($decoded['signature'])) {
-				$this->log('No message signature found');
+				$this->log('Decoding response: no message signature found');
 				die;
 			}
 			if (!$this->key_remote) {
-				$this->log('No signature verification key has been set');
+				$this->log('Decoding response: no signature verification key has been set');
 				die;
 			}
 			if (!$this->verify_signature($decoded['udrpc_message'], $decoded['signature'], $this->key_remote)) {
-				$this->log('Signature verification failed; discarding');
+				$this->log('Decoding response: signature verification failed; discarding');
 				die;
 			}
 		}
 
 		$decoded = $this->decrypt_message($decoded['udrpc_message']);
 
-		if (!is_string($decoded)) return new WP_Error('not_decrypted', 'Response from remote site was not successfully decrypted', $decoded['udrpc_message']);
+		if (!is_string($decoded)) return new WP_Error('not_decrypted', 'Response from remote site was not successfully decrypted');
 
 		$json_decoded = json_decode($decoded, true);
 
@@ -885,7 +862,7 @@ class UpdraftPlus_Remote_Communications {
 		$format = $_POST['format'];
 
 		/*
-		In format 1 (legacy/obsolete), the one encrypts (the shared AES key) using one half of the key-pair, and decrypts with the other; whereas the other side of the conversation does the reverse when replying (and uses a different shared AES key). Though this is possible in RSA, this is the wrong thing to do - see https://crypto.stackexchange.com/questions/2123/rsa-encryption-with-private-key-and-decryption-with-a-public-key
+		In format 1 (obsolete/deprecated), the one encrypts (the shared AES key) using one half of the key-pair, and decrypts with the other; whereas the other side of the conversation does the reverse when replying (and uses a different shared AES key). Though this is possible in RSA, this is the wrong thing to do - see https://crypto.stackexchange.com/questions/2123/rsa-encryption-with-private-key-and-decryption-with-a-public-key
 		In format 2, both sides have their own private and public key. The sender encrypts using the other side's public key, and decrypts using its own private key. Messages are signed (the message digest is SHA-256).
 		*/
 
@@ -901,13 +878,8 @@ class UpdraftPlus_Remote_Communications {
 		$udrpc_message = (string) $_POST['udrpc_message'];
 
 		// Check this now, rather than allow the decrypt method to thrown an Exception
-		
-		if (empty($this->key_local)) {
-			$this->log('no local key (format 1): cannot decrypt', 'error');
-			die;
-		}
 
-		if ($format >= 2) {
+		if ($format > 1) {
 			if (empty($_POST['signature'])) {
 				$this->log('No message signature found', 'error');
 				die;
@@ -929,6 +901,11 @@ class UpdraftPlus_Remote_Communications {
 			die;
 		}
 
+		if (!is_string($udrpc_message)) {
+			$this->log('Could not decrypt incoming message', 'error');
+			die;
+		}
+		
 		$udrpc_message = json_decode($udrpc_message, true);
 
 		if (empty($udrpc_message) || !is_array($udrpc_message) || empty($udrpc_message['command']) || !is_string($udrpc_message['command'])) {
@@ -1033,9 +1010,15 @@ class UpdraftPlus_Remote_Communications {
 			header("Access-Control-Allow-Origin: $http_origin");
 			header('Access-Control-Allow-Credentials: true');
 		}
+		
+		// Restrict use of format 1
+		if ($format < 2 && (!in_array($command, array('ping', 'get_file_status', 'send_chunk', 'upload_complete')) || !preg_match('/^([a-f0-9]+)\.migrator.updraftplus.com$/', $this->key_name_indicator))) {
+			$this->log("Obsolete format used - dropping (command: $command)", 'error');
+			die;
+		}
 
 		$this->log('Command received: '.$command, 'info');
-
+		
 		if ('ping' == $command) {
 			$response = array('response' => 'pong', 'data' => null);
 		} else {
@@ -1078,11 +1061,10 @@ class UpdraftPlus_Remote_Communications {
 	 * @return boolean
 	 */
 	public function verify_signature($message, $signature, $key, $hash_algorithm = 'sha256') {
-		$this->ensure_crypto_loaded();
-		$rsa = new Crypt_RSA();
+		$rsa = new phpseclib_Crypt_RSA();
 		$rsa->setHash(strtolower($hash_algorithm));
 		// This is not the default, but is what we use
-		$rsa->setSignatureMode(CRYPT_RSA_SIGNATURE_PKCS1);
+		$rsa->setSignatureMode(phpseclib_Crypt_RSA::SIGNATURE_PKCS1);
 		$rsa->loadKey($key);
 
 		// Don't hash it - Crypt_RSA::verify() already does that

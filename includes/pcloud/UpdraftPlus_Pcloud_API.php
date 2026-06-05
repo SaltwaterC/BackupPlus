@@ -479,6 +479,7 @@ class UpdraftPlus_Pcloud_API {
 			'blocking'    => true,
 			'headers'     => array(),
 			'body'        => $content,
+			'timeout'     => 60,
 		);
 
 		$response = $this->make_request('upload_write', $params, $args);

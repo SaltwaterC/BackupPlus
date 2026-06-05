@@ -651,6 +651,7 @@ class UpdraftPlus_Admin {
 		if (UpdraftPlus_Options::admin_page() != $pagenow || empty($_REQUEST['page']) || 'updraftplus' != $_REQUEST['page']) {
 			// autobackup addon may enqueue admin-common.js and load the same script, so for the javascript we just need to make sure we call stopImmediatePropagation() to prevent other listeners of the same event from being called
 			if (UpdraftPlus_Options::user_can_manage()) add_action('admin_print_footer_scripts', array($this, 'print_phpseclib_notice_scripts'));
+			if (((defined('DOING_AJAX') && DOING_AJAX) || 'admin-ajax.php' === $pagenow) && isset($_REQUEST['action']) && 'updraftplus_onboarding_rest_api_fallback' === $_REQUEST['action'] && UpdraftPlus_Options::user_can_manage()) do_action('updraftplus_onboarding_init');
 			return;
 		}
 
@@ -665,6 +666,8 @@ class UpdraftPlus_Admin {
 		$this->setup_all_admin_notices_udonly($service);
 
 		UpdraftPlus::load_checkout_embed();
+
+		do_action('updraftplus_onboarding_init');
 
 		add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'), 99999);
 		$post_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
@@ -1938,12 +1941,13 @@ class UpdraftPlus_Admin {
 	}
 	
 	public function updraft_ajax_handler() {
+		$request_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
+		$subaction = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'subaction');
 
-		$nonce = empty($_REQUEST['nonce']) ? '' : $_REQUEST['nonce'];
+		$nonce = empty($request_nonce) ? '' : $request_nonce;
 
-		if (!wp_verify_nonce($nonce, 'updraftplus-credentialtest-nonce') || empty($_REQUEST['subaction'])) die('Security check');
+		if (!wp_verify_nonce($nonce, 'updraftplus-credentialtest-nonce') || empty($subaction)) die('Security check');
 
-		$subaction = $_REQUEST['subaction'];
 		// Mitigation in case the nonce leaked to an unauthorised user
 		if ('dismissautobackup' == $subaction) {
 			if (!current_user_can('update_plugins') && !current_user_can('update_themes')) return;
@@ -2007,7 +2011,7 @@ class UpdraftPlus_Admin {
 		}
 		
 		// Below are all the commands not ported over into class-commands.php or class-wpadmin-commands.php
-
+		$request_subsubaction = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'subsubaction');
 		if ('activejobs_list' == $subaction) {
 			try {
 				// N.B. Also called from autobackup.php
@@ -2051,8 +2055,8 @@ class UpdraftPlus_Admin {
 				));
 			}
 			 
-		} elseif ('doaction' == $subaction && !empty($_REQUEST['subsubaction']) && 'updraft_' == substr($_REQUEST['subsubaction'], 0, 8)) {
-			$subsubaction = $_REQUEST['subsubaction'];
+		} elseif ('doaction' == $subaction && !empty($request_subsubaction) && 'updraft_' == substr($request_subsubaction, 0, 8)) {
+			$subsubaction = $request_subsubaction;
 			try {
 					// These generally echo and die - they will need further work to port to one of the command classes. Some may already have equivalents in UpdraftPlus_Commands, if they are used from UpdraftCentral.
 				do_action(UpdraftPlus_Manipulation_Functions::wp_unslash($subsubaction), $_REQUEST);
@@ -2911,11 +2915,12 @@ class UpdraftPlus_Admin {
 		}
 
 		// If this was the chunk, then we should instead be concatenating onto the final file
-		if (isset($_POST['chunks']) && isset($_POST['chunk']) && preg_match('/^[0-9]+$/', $_POST['chunk'])) {
+		$chunk = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'chunk');
+		if (isset($_POST['chunks']) && isset($chunk) && preg_match('/^[0-9]+$/', $chunk)) {
 			$post_name = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'name');
 			$final_file = basename($post_name);
 			
-			if (!rename($status['file'], $updraft_dir.'/'.$final_file.'.'.$_POST['chunk'].'.zip.tmp')) {
+			if (!rename($status['file'], $updraft_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp')) {
 				@unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 				echo json_encode(
 					array(
@@ -2929,12 +2934,12 @@ class UpdraftPlus_Admin {
 				exit;
 			}
 			
-			$status['file'] = $updraft_dir.'/'.$final_file.'.'.$_POST['chunk'].'.zip.tmp';
+			$status['file'] = $updraft_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp';
 
 		}
 
 		$response = array();
-		if (!isset($_POST['chunks']) || (isset($_POST['chunk']) && preg_match('/^[0-9]+$/', $_POST['chunk']) && $_POST['chunk'] == $_POST['chunks']-1) && isset($final_file)) {
+		if (!isset($_POST['chunks']) || (isset($chunk) && preg_match('/^[0-9]+$/', $chunk) && $chunk == $_POST['chunks']-1) && isset($final_file)) {
 			if (!preg_match('/^log\.[a-f0-9]{12}\.txt/i', $final_file) && !preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|gz|gz\.crypt))?$/i', $final_file, $matches)) {
 				$accept = apply_filters('updraftplus_accept_archivename', array());
 				if (is_array($accept)) {
@@ -3066,14 +3071,15 @@ class UpdraftPlus_Admin {
 		if (isset($status['error'])) die('ERROR: '.wp_kses_post($status['error']));
 
 		// If this was the chunk, then we should instead be concatenating onto the final file
-		if (isset($_POST['chunks']) && isset($_POST['chunk']) && preg_match('/^[0-9]+$/', $_POST['chunk'])) {
+		$chunk = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'chunk');
+		if (isset($_POST['chunks']) && isset($chunk) && preg_match('/^[0-9]+$/', $chunk)) {
 			$post_name = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'name');
 			$final_file = basename($post_name);
-			rename($status['file'], $updraft_dir.'/'.$final_file.'.'.$_POST['chunk'].'.zip.tmp');
-			$status['file'] = $updraft_dir.'/'.$final_file.'.'.$_POST['chunk'].'.zip.tmp';
+			rename($status['file'], $updraft_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp');
+			$status['file'] = $updraft_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp';
 		}
 
-		if (!isset($_POST['chunks']) || (isset($_POST['chunk']) && $_POST['chunk'] == $_POST['chunks']-1)) {
+		if (!isset($_POST['chunks']) || (isset($chunk) && $chunk == $_POST['chunks']-1)) {
 			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-db([0-9]+)?\.(gz\.crypt)$/i', $final_file)) {
 
 				@unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
@@ -3082,7 +3088,7 @@ class UpdraftPlus_Admin {
 			}
 			
 			// Final chunk? If so, then stich it all back together
-			if (isset($_POST['chunk']) && $_POST['chunk'] == $_POST['chunks']-1 && isset($final_file)) {
+			if (isset($chunk) && $chunk == $_POST['chunks']-1 && isset($final_file)) {
 				if ($wh = fopen($updraft_dir.'/'.$final_file, 'wb')) {
 					for ($i=0; $i<$_POST['chunks']; $i++) {
 						$rf = $updraft_dir.'/'.$final_file.'.'.$i.'.zip.tmp';
@@ -3160,31 +3166,34 @@ class UpdraftPlus_Admin {
 		}
 
 		if (isset($_REQUEST['action']) && 'updraft_delete_old_dirs' == $_REQUEST['action']) {
-			$nonce = empty($_REQUEST['updraft_delete_old_dirs_nonce']) ? '' : $_REQUEST['updraft_delete_old_dirs_nonce'];
+			$delete_old_dirs_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'updraft_delete_old_dirs_nonce');
+			$nonce = empty($delete_old_dirs_nonce) ? '' : $delete_old_dirs_nonce;
 			if (!wp_verify_nonce($nonce, 'updraftplus-credentialtest-nonce')) die('Security check');
 			$this->delete_old_dirs_go();
 			return;
 		}
-
-		if (!empty($_REQUEST['action']) && 'updraftplus_broadcastaction' == $_REQUEST['action'] && !empty($_REQUEST['subaction'])) {
-			$nonce = (empty($_REQUEST['nonce'])) ? "" : $_REQUEST['nonce'];
+		$request_subaction = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'subaction');
+		if (!empty($_REQUEST['action']) && 'updraftplus_broadcastaction' == $_REQUEST['action'] && !empty($request_subaction)) {
+			$request_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
+			$nonce = (empty($request_nonce)) ? "" : $request_nonce;
 			if (!wp_verify_nonce($nonce, 'updraftplus-credentialtest-nonce')) die('Security check');
-			do_action($_REQUEST['subaction']);
+			do_action($request_subaction);
 			return;
 		}
-
-		if (isset($_GET['error'])) {
+		$error = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'error');
+		$error_description = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'error_description');
+		if (isset($error)) {
 			// This is used by Microsoft OneDrive authorisation failures (May 15). I am not sure what may have been using the 'error' GET parameter otherwise - but it is harmless. June 2024: also now used for insufficient Google Drive permissions upon return from auth.updraftplus.com.
-			if (!empty($_GET['error_description'])) {
-				$this->show_admin_warning(htmlspecialchars($_GET['error_description']).' ('.htmlspecialchars($_GET['error']).')', 'error');
+			if (!empty($error_description)) {
+				$this->show_admin_warning(htmlspecialchars($error_description).' ('.htmlspecialchars($error).')', 'error');
 			} else {
-				$this->show_admin_warning(htmlspecialchars($_GET['error']), 'error');
+				$this->show_admin_warning(htmlspecialchars($error), 'error');
 			}
 		}
-
-		if (isset($_GET['message'])) $this->show_admin_warning(htmlspecialchars($_GET['message']));
-
-		if (isset($_GET['action']) && 'updraft_create_backup_dir' == $_GET['action'] && isset($_GET['nonce']) && wp_verify_nonce($_GET['nonce'], 'create_backup_dir')) {
+		$message = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'message');
+		if (isset($message)) $this->show_admin_warning(htmlspecialchars($message));
+		$global_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
+		if (isset($_GET['action']) && 'updraft_create_backup_dir' == $_GET['action'] && isset($global_nonce) && wp_verify_nonce($global_nonce, 'create_backup_dir')) {
 			$created = $this->create_backup_dir();
 			if (is_wp_error($created)) {
 				echo '<p>'.esc_html__('Backup directory could not be created', 'updraftplus').'...<br>';
@@ -3293,9 +3302,9 @@ class UpdraftPlus_Admin {
 
 			$tabflag = 'backups';
 			$main_tabs = $this->get_main_tabs_array();
-			
-			if (isset($_REQUEST['tab'])) {
-				$request_tab = sanitize_text_field($_REQUEST['tab']);
+			$tab = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'tab');
+			if (isset($tab)) {
+				$request_tab = sanitize_text_field($tab);
 				$valid_tabflags = array_keys($main_tabs);
 				if (in_array($request_tab, $valid_tabflags)) {
 					$tabflag = $request_tab;
@@ -5658,9 +5667,9 @@ class UpdraftPlus_Admin {
 	public function prepare_restore() {
 
 		global $updraftplus;
-
+		$request_job_id = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'job_id');
 		// on restore start job_id is empty but if we needed file system permissions or this is a resumption then we have already started a job so reuse it
-		$restore_job_id = empty($_REQUEST['job_id']) ? false : stripslashes($_REQUEST['job_id']);
+		$restore_job_id = empty($request_job_id) ? false : stripslashes($request_job_id);
 		
 		if (false !== $restore_job_id && !preg_match('/^[0-9a-f]+$/', $restore_job_id)) die('Invalid request (restore_job_id).');
 
@@ -6142,13 +6151,15 @@ class UpdraftPlus_Admin {
 	 */
 	public function updraft_ajax_savesettings() {
 		try {
-			if (empty($_POST) || empty($_POST['subaction']) || 'savesettings' != $_POST['subaction'] || !isset($_POST['nonce']) || !is_user_logged_in() || !UpdraftPlus_Options::user_can_manage() || !wp_verify_nonce($_POST['nonce'], 'updraftplus-settings-nonce')) die('Security check');
+			$post_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
+			if (empty($_POST) || empty($_POST['subaction']) || 'savesettings' != $_POST['subaction'] || !isset($post_nonce) || !is_user_logged_in() || !UpdraftPlus_Options::user_can_manage() || !wp_verify_nonce($post_nonce, 'updraftplus-settings-nonce')) die('Security check');
+			$post_settings = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'settings');
+			if (empty($post_settings) || !is_string($post_settings)) die('Invalid data');
 	
-			if (empty($_POST['settings']) || !is_string($_POST['settings'])) die('Invalid data');
-	
-			parse_str(stripslashes($_POST['settings']), $posted_settings);
+			parse_str(stripslashes($post_settings), $posted_settings);
 			// We now have $posted_settings as an array
-			if (!empty($_POST['updraftplus_version'])) $posted_settings['updraftplus_version'] = $_POST['updraftplus_version'];
+			$updraftplus_version = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'updraftplus_version');
+			if (!empty($updraftplus_version)) $posted_settings['updraftplus_version'] = $updraftplus_version;
 			
 			echo json_encode($this->save_settings($posted_settings));
 		} catch (Exception $e) {
@@ -6171,7 +6182,8 @@ class UpdraftPlus_Admin {
 	
 	public function updraft_ajax_importsettings() {
 		try {
-			if (empty($_POST) || empty($_POST['subaction']) || 'importsettings' != $_POST['subaction'] || !isset($_POST['nonce']) || !is_user_logged_in() || !UpdraftPlus_Options::user_can_manage() || !wp_verify_nonce($_POST['nonce'], 'updraftplus-settings-nonce')) die('Security check');
+			$post_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
+			if (empty($_POST) || empty($_POST['subaction']) || 'importsettings' != $_POST['subaction'] || !isset($post_nonce) || !is_user_logged_in() || !UpdraftPlus_Options::user_can_manage() || !wp_verify_nonce($post_nonce, 'updraftplus-settings-nonce')) die('Security check');
 			 
 			if (empty($_POST['settings']) || !is_string($_POST['settings'])) die('Invalid data');
 	
@@ -7260,10 +7272,14 @@ class UpdraftPlus_Admin {
 	public function maybe_download_backup_from_email() {
 		global $pagenow;
 		if (UpdraftPlus_Options::user_can_manage() && (!defined('DOING_AJAX') || !DOING_AJAX) && UpdraftPlus_Options::admin_page() === $pagenow && isset($_REQUEST['page']) && 'updraftplus' === $_REQUEST['page'] && isset($_REQUEST['action']) && 'updraft_download_backup' === $_REQUEST['action']) {
-			$findexes = empty($_REQUEST['findex']) ? array(0) : $_REQUEST['findex'];
-			$timestamp = empty($_REQUEST['timestamp']) ? '' : $_REQUEST['timestamp'];
-			$nonce = empty($_REQUEST['nonce']) ? '' : $_REQUEST['nonce'];
-			$type = empty($_REQUEST['type']) ? '' : $_REQUEST['type'];
+			$findex = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'findex');
+			$findexes = empty($findex) ? array(0) : $findex;
+			$request_timestamp = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'timestamp');
+			$timestamp = empty($request_timestamp) ? '' : $request_timestamp;
+			$request_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
+			$nonce = empty($request_nonce) ? '' : $request_nonce;
+			$request_type = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'type');
+			$type = empty($request_type) ? '' : $request_type;
 			if (empty($timestamp) || empty($nonce) || empty($type)) wp_die(esc_html__('The download link is broken, you may have clicked the link from untrusted source', 'updraftplus'), '', array('back_link' => true));
 			$backup_history = UpdraftPlus_Backup_History::get_history();
 			if (!isset($backup_history[$timestamp]['nonce']) || $backup_history[$timestamp]['nonce'] !== $nonce) wp_die(esc_html__("The download link is broken or the backup file is no longer available", 'updraftplus'), '', array('back_link' => true));

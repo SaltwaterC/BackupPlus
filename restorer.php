@@ -4630,7 +4630,7 @@ class Updraft_Restorer {
 		while (true) {
 			$random_string = UpdraftPlus_Manipulation_Functions::generate_random_string(2). '_';
 			if ($string != $random_string) {
-				if (0 === $wpdb->query("SHOW TABLES LIKE '".esc_sql($wpdb->esc_like($random_string))."%'")) return $random_string; // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $random_string is properly escaped via esc_sql($wpdb->esc_like()).
+				if (0 === $wpdb->query("SHOW TABLES LIKE '".esc_sql(UpdraftPlus_Database_Utility::esc_like($random_string))."%'")) return $random_string; // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $random_string is properly escaped via esc_sql($wpdb->esc_like()).
 			}
 		}
 	}
