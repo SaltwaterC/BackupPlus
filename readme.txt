@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
 Tested up to: 7.0
-Stable tag: 1.26.5
+Stable tag: 1.26.6
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,15 @@ This problem is probably caused by your account being starved of resources by yo
 The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.26.6 - 23/Jul/2026 =
+
+* FEATURE: Upon plugin deactivation, a popup will appear with data removal options, enabling users to opt-in to deleting saved data.
+* FIX: "Unattached" media filter lists attached images when no unattached items exist
+* TWEAK: Added Burst Statistics to TeamUpdraft family admin notices.
+* TWEAK: Create a better UX for free users around premium remote storage locations
+* TWEAK: Prefer http_get_last_response_headers() (PHP 8.4+) to avoid PHP 8.5 deprecation warnings for $http_response_header.
+* TWEAK: Replace the calls to the native PHP 'unserialize()' function in the Google Drive and HTTP_Request2 libraries.
 
 = 1.26.5 - 05/Jun/2026 =
 
@@ -2166,4 +2175,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.5: Important security fix, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.6: Data removal prompt on deactivate, improve free user storage experience, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.

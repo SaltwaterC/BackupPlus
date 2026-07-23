@@ -64,6 +64,7 @@ if (!class_exists('Updraft_Deinstall_Dialog_v1')) {
 				'template_file' => plugin_dir_path(__FILE__).'templates/dialog.php',
 				'show_on_network_admin' => true,
 				'show_on_subsites' => true,
+				'custom_css' => false,
 			);
 
 			$this->options = array_merge($defaults, $options);
@@ -107,6 +108,7 @@ if (!class_exists('Updraft_Deinstall_Dialog_v1')) {
 				'dialog_title' => $this->options['dialog_title'],
 				'deactivate_label' => $this->options['deactivate_label'],
 				'cancel_label' => $this->options['cancel_label'],
+				'custom_css' => $this->options['custom_css'],
 			);
 
 			wp_localize_script(

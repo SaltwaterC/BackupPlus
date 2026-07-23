@@ -377,7 +377,7 @@ class UpdraftPlus_Commands {
 
 		$vault = $updraftplus_admin->get_updraftvault($instance_id);
 
-		$return_data_only = isset($_REQUEST['return_data_only']) ? true : false;
+		$return_data_only = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'return_data_only', false);
 
 		return $vault->ajax_vault_recountquota(false, $return_data_only);
 	}

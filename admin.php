@@ -1,7 +1,7 @@
 <?php
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- we try to reduce overhead by bypassing WP APIs and other extra layers; Some custom complex queries tailored specifically to our needs, giving us full control over the SQL commands and data manipulation
 // phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- rename() usage is intentional and safe within this context
-// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r -- print_r is intentionally used to convert an array into a readable string for controlled logging/debug purposes
 // phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_setopt_array, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_multi_init, WordPress.WP.AlternativeFunctions.curl_curl_multi_add_handle, WordPress.WP.AlternativeFunctions.curl_curl_multi_exec, WordPress.WP.AlternativeFunctions.curl_curl_multi_select, WordPress.WP.AlternativeFunctions.curl_curl_multi_getcontent, WordPress.WP.AlternativeFunctions.curl_curl_multi_remove_handle, WordPress.WP.AlternativeFunctions.curl_curl_multi_close, WordPress.WP.AlternativeFunctions.curl_curl_error, WordPress.WP.AlternativeFunctions.curl_curl_close -- Direct cURL usage is intentional to leverage specific low-level options not available via the WordPress HTTP API.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
@@ -130,7 +130,40 @@ class UpdraftPlus_Admin {
 		
 		global $updraftplus;
 
-		if ('googledrive' === $services || (is_array($services) && in_array('googledrive', $services))) {
+		$all_services = UpdraftPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($updraftplus->get_canonical_service_list());
+		$available_services = (array) $updraftplus->just_one($updraftplus->get_canonical_service_list());
+		
+		$this->storage_service_without_settings = array();
+		$this->storage_service_with_partial_settings = array();
+		$this->storage_service_without_addons_settings = array();
+		
+		foreach ($all_services as $method => $sinfo) {
+			
+			if (empty($sinfo['object']) || empty($sinfo['instance_settings']) || !is_callable(array($sinfo['object'], 'options_exist'))) continue;
+			foreach ($sinfo['instance_settings'] as $opt) {
+				if (!$sinfo['object']->options_exist($opt)) {
+					if (isset($opt['auth_in_progress'])) {
+						if (!is_a($sinfo['object'], 'UpdraftPlus_BackupModule_AddonNotYetPresent') && in_array($method, $available_services)) {
+							$this->storage_service_with_partial_settings[$method] = $updraftplus->backup_methods[$method];
+						} else {
+							$this->storage_service_without_addons_settings[$method] = $updraftplus->backup_methods[$method];
+						}
+					} else {
+						if (is_a($sinfo['object'], 'UpdraftPlus_BackupModule_AddonNotYetPresent')) {
+							$this->storage_service_without_addons_settings[$method] = $updraftplus->backup_methods[$method];
+						} elseif (in_array($method, $available_services)) {
+							$this->storage_service_without_settings[] = $updraftplus->backup_methods[$method];
+						}
+					}
+				}
+			}
+		}
+
+		if (!empty($this->storage_service_without_addons_settings)) {
+			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_without_addons'));
+		}
+
+		if ('googledrive' === $services || (is_array($services) && in_array('googledrive', $services)) && in_array('googledrive', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('googledrive');
 			
 			if (is_wp_error($settings)) {
@@ -160,7 +193,7 @@ class UpdraftPlus_Admin {
 				}
 			}
 		}
-		if ('googlecloud' === $services || (is_array($services) && in_array('googlecloud', $services))) {
+		if ('googlecloud' === $services || (is_array($services) && in_array('googlecloud', $services)) && in_array('googlecloud', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('googlecloud');
 			
 			if (is_wp_error($settings)) {
@@ -176,19 +209,19 @@ class UpdraftPlus_Admin {
 
 						if (!empty($clientid) && empty($token)) {
 							if (!in_array($instance_id, $this->auth_instance_ids['googlecloud'])) $this->auth_instance_ids['googlecloud'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'))) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
+							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud')) && !isset($this->storage_service_without_addons_settings['googlecloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
 						}
 					} else {
 						if (empty($storage_options['user_id'])) {
 							if (!in_array($instance_id, $this->auth_instance_ids['googlecloud'])) $this->auth_instance_ids['googlecloud'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'))) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
+							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud')) && !isset($this->storage_service_without_addons_settings['googlecloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
 						}
 					}
 				}
 			}
 		}
 		
-		if ('dropbox' === $services || (is_array($services) && in_array('dropbox', $services))) {
+		if ('dropbox' === $services || (is_array($services) && in_array('dropbox', $services)) && in_array('dropbox', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('dropbox');
 			
 			if (is_wp_error($settings)) {
@@ -206,7 +239,7 @@ class UpdraftPlus_Admin {
 			}
 		}
 
-		if ('pcloud' === $services || (is_array($services) && in_array('pcloud', $services))) {
+		if ('pcloud' === $services || (is_array($services) && in_array('pcloud', $services)) && in_array('pcloud', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('pcloud');
 			
 			if (is_wp_error($settings)) {
@@ -218,13 +251,13 @@ class UpdraftPlus_Admin {
 				foreach ($settings['settings'] as $instance_id => $storage_options) {
 					if (empty($storage_options['pclauth'])) {
 						if (!in_array($instance_id, $this->auth_instance_ids['pcloud'])) $this->auth_instance_ids['pcloud'][] = $instance_id;
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_pcloud'))) add_action('all_admin_notices', array($this, 'show_admin_warning_pcloud'));
+						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_pcloud')) && !isset($this->storage_service_without_addons_settings['pcloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_pcloud'));
 					}
 				}
 			}
 		}
 		
-		if ('onedrive' === $services || (is_array($services) && in_array('onedrive', $services))) {
+		if ('onedrive' === $services || (is_array($services) && in_array('onedrive', $services)) && in_array('onedrive', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('onedrive');
 			
 			if (is_wp_error($settings)) {
@@ -237,26 +270,26 @@ class UpdraftPlus_Admin {
 					if ((defined('UPDRAFTPLUS_CUSTOM_ONEDRIVE_APP') && UPDRAFTPLUS_CUSTOM_ONEDRIVE_APP)) {
 						if (!empty($storage_options['clientid']) && !empty($storage_options['secret']) && empty($storage_options['refresh_token'])) {
 								if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-								if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'))) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
+								if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
 						} elseif (empty($storage_options['refresh_token'])) {
 							if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'))) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
+							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
 						}
 					} else {
 						if (empty($storage_options['refresh_token'])) {
 							if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'))) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
+							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
 						}
 					}
 					
 					if (isset($storage_options['endpoint_tld']) && 'de' === $storage_options['endpoint_tld']) {
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany'))) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany'));
+						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany'));
 					}
 				}
 			}
 		}
 		
-		if ('azure' === $services || (is_array($services) && in_array('azure', $services))) {
+		if ('azure' === $services || (is_array($services) && in_array('azure', $services)) && in_array('azure', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('azure');
 			
 			if (is_wp_error($settings)) {
@@ -273,7 +306,7 @@ class UpdraftPlus_Admin {
 			}
 		}
 
-		if ('updraftvault' === $services || (is_array($services) && in_array('updraftvault', $services))) {
+		if ('updraftvault' === $services || (is_array($services) && in_array('updraftvault', $services)) && in_array('updraftvault', $available_services)) {
 			$settings = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format('updraftvault');
 			
 			if (is_wp_error($settings)) {
@@ -292,40 +325,12 @@ class UpdraftPlus_Admin {
 
 		if ($this->disk_space_check(1048576*35) === false) add_action('all_admin_notices', array($this, 'show_admin_warning_diskspace'));
 
-		$all_services = UpdraftPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($updraftplus->get_canonical_service_list());
-		
-		$this->storage_service_without_settings = array();
-		$this->storage_service_with_partial_settings = array();
-		$this->storage_service_without_addons_settings = array();
-		
-		foreach ($all_services as $method => $sinfo) {
-			
-			if (empty($sinfo['object']) || empty($sinfo['instance_settings']) || !is_callable(array($sinfo['object'], 'options_exist'))) continue;
-			foreach ($sinfo['instance_settings'] as $opt) {
-				if (!$sinfo['object']->options_exist($opt)) {
-					if (isset($opt['auth_in_progress'])) {
-						$this->storage_service_with_partial_settings[$method] = $updraftplus->backup_methods[$method];
-					} else {
-						if (is_a($sinfo['object'], 'UpdraftPlus_BackupModule_AddonNotYetPresent')) {
-							$this->storage_service_without_addons_settings[] = $updraftplus->backup_methods[$method];
-						} else {
-							$this->storage_service_without_settings[] = $updraftplus->backup_methods[$method];
-						}
-					}
-				}
-			}
-		}
-		
 		if (!empty($this->storage_service_with_partial_settings)) {
 			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_with_partial_settings'));
 		}
 
 		if (!empty($this->storage_service_without_settings)) {
 			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_setting_are_empty'));
-		}
-
-		if (!empty($this->storage_service_without_addons_settings)) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_without_addons'));
 		}
 
 		if ($updraftplus->is_restricted_hosting('only_one_backup_per_month')) {
@@ -4891,7 +4896,9 @@ class UpdraftPlus_Admin {
 					echo '<label for="'.esc_attr($prefix.'updraft_include_'.$key).'" '.((isset($info['htmltitle'])) ? ' title="'.esc_attr($info['htmltitle']).'"' : '').' class="updraft_checkbox"><input class="updraft_include_entity" '.wp_kses($data_toggle_exclude_field, array()).' id="'.esc_attr($prefix.'updraft_include_'.$key).'" type="checkbox" name="'.esc_attr('updraft_include_'.$key).'" value="1" '.wp_kses($included.' '.$force_disabled, array()).'>'.esc_html($info['description']);
 
 					echo '</label>';
-					echo apply_filters("updraftplus_config_option_include_$key", '', $prefix, $for_updraftcentral); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
+					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
+					echo apply_filters("updraftplus_config_option_include_$key", '', $prefix, $for_updraftcentral);
+					// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 				}
 			}
 		}
@@ -5273,12 +5280,15 @@ class UpdraftPlus_Admin {
 
 					if (isset($accept[$backup['meta_foreign']])) {
 						$desc_source = $accept[$backup['meta_foreign']]['desc'];
+						/* translators: %s: Backup Source. */
 						$ide .= sprintf(__('Backup created by: %s.', 'updraftplus'), $accept[$backup['meta_foreign']]['desc']).' ';
 					} else {
 						$desc_source = __('unknown source', 'updraftplus');
+						/* translators: %s: Unknown Source. */
 						$ide .= __('Backup created by unknown source (%s) - cannot be restored.', 'updraftplus').' ';
 					}
 
+					/* translators: %s: Backup Source. */
 					$sdescrip = (empty($accept[$backup['meta_foreign']]['separatedb'])) ? sprintf(__('Files and database WordPress backup (created by %s)', 'updraftplus'), $desc_source) : sprintf(__('Files backup (created by %s)', 'updraftplus'), $desc_source);
 				}
 				if (isset($backup[$type])) {
@@ -5302,7 +5312,8 @@ class UpdraftPlus_Admin {
 					}
 
 					$ide .= __('Press here to download or browse', 'updraftplus').' '.strtolower($info['description']);
-					$ide .= ' '.sprintf(__('(%d archive(s) in set, total %s).', 'updraftplus'), $howmanyinset, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
+					/* translators: 1: Archive count, 2: Total size.*/
+					$ide .= ' '.sprintf(__('(%1$d archive(s) in set, total %2$s).', 'updraftplus'), $howmanyinset, UpdraftPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
 					if ($index_missing) $ide .= ' '.__('You are missing one or more archives from this multi-archive set.', 'updraftplus');
 
 					$entities .= $set_contents.'/';
@@ -6686,7 +6697,6 @@ class UpdraftPlus_Admin {
 				return json_encode(array('e' => 'No Curl installed'));
 				die;
 			}
-			// phpcs:disable
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $uri);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -6702,7 +6712,6 @@ class UpdraftPlus_Admin {
 			} else {
 				unset($ch); // On PHP 8+, curl_close() is a no-op (deprecated in 8.5); unset the handle instead.
 			}
-			// phpcs:enable
 			rewind($output);
 			$verb = stream_get_contents($output);
 
@@ -6939,8 +6948,8 @@ class UpdraftPlus_Admin {
 			return false;
 		} else {
 			$corrupted_files_count = count($corrupted_files);
-			/* translators: %s: List of corrupted files */
 			return '<strong>'.__('Warning', 'updraftplus').':</strong> '.
+			/* translators: %s: List of corrupted files */
 			sprintf(_n('The file %s has a "byte order mark" (BOM) at its beginning.', 'The files %s have a "byte order mark" (BOM) at their beginning.', $corrupted_files_count, 'updraftplus'), '<strong>'.implode('</strong>, <strong>', $corrupted_files).'</strong>').
 			' <a href="'.apply_filters('updraftplus_com_link', "https://teamupdraft.com/documentation/updraftplus/topics/general/troubleshooting/problems-with-extra-white-space/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=unknown&utm_creative_format=unknown").'" target="_blank">'.__('Follow this link for more information', 'updraftplus').'</a>';
 		}
@@ -7187,19 +7196,46 @@ class UpdraftPlus_Admin {
 	 * Show remote storage warning when one or more cloud storage options are selected but the add-ons are not installed
 	 */
 	public function show_admin_warning_if_remote_storage_without_addons() {
-		global $updraftplus;
-		
-		$storage_service_without_addons = implode(', ', $this->storage_service_without_addons_settings);
+		$storage_service_without_addons = $this->storage_service_without_addons_settings;
+		$total_storage = count($storage_service_without_addons);
+		end($storage_service_without_addons);
+		if ($total_storage > 1) $storage_service_without_addons[key($storage_service_without_addons)] = __('and', 'updraftplus').' '.$storage_service_without_addons[key($storage_service_without_addons)];
+		$storage_service_without_addons = implode(', ', $storage_service_without_addons);
+
+		$notice_label1 = __('Some of your storage settings need UpdraftPlus Premium.', 'updraftplus');
+
+		$notice_label1 .= ' '.__('This usually happens when your subscription has lapsed or was cancelled.', 'updraftplus');
+
+		$notice_label1 .= ' '._n('Your setup includes a storage location that isn\'t available in the free version, so backups to it won\'t run until you upgrade.', 'Your setup includes storage locations that aren\'t available in the free version, so backups to them won\'t run until you upgrade.', $total_storage, 'updraftplus');
+
+		$notice_label2 = sprintf(
+			/* translators: %s: premium storage service names */
+			__('This affects: %s.', 'updraftplus'),
+			$storage_service_without_addons
+		);
+
+		$notice_label2 .= ' '.sprintf(
+			_n('To use it, upgrade to %s.', 'To use them, upgrade to %s.', $total_storage, 'updraftplus'),
+			'UpdraftPlus Premium'
+		);
+
+		$notice_label2 .= ' '.sprintf(
+			/* translators: 1: the opening <a> tag 2: the closing </a> tag */
+			__('If you already have Premium, download it from your %1$saccount dashboard.%2$s', 'updraftplus'),
+			'<a href="'.esc_url('https://teamupdraft.com/my-account/downloads/').'" target="_blank">',
+			'</a>'
+		);
+
+		$notice_label3 = __('See where your backups are stored.', 'updraftplus');
+
 		/* translators: %s: UpdraftPlus */
-		$notice_label1 = sprintf(__('You have selected storage options which are not part of your version of %s.', 'updraftplus'), 'UpdraftPlus');
-		/* translators: 1: Storage service name, 2: Link to UpdraftPlus Premium upgrade */
-		$notice_label2 = sprintf(__('To backup to %1$s, please upgrade to %2$s.', 'updraftplus'), $storage_service_without_addons, '<a target="_blank" href="'.esc_url($updraftplus->get_url('premium')).'">UpdraftPlus Premium</a>');
-		/* translators: %s: UpdraftPlus */
-		$notice_label3 = sprintf(__('Where are my %s backups stored?', 'updraftplus'), 'UpdraftPlus');
-		/* translators: %s: UpdraftPlus */
-		$notice_label4 = '<a href="'.esc_url(UpdraftPlus_Options::admin_page_url()).'?page=updraftplus&tab=settings">'.sprintf(__('Return to %s configuration', 'updraftplus'), 'UpdraftPlus').'</a>';
-		/* translators: %s: Link to storage comparison */
-		$notice_label5 = sprintf(__('To see which remote storage locations are included in free and premium, please see here: %s', 'updraftplus'), '<a target="_blank" href="'.esc_url('https://updraftplus.com/freevspremium/').'">'.$notice_label3.'</a>');
+		$notice_label4 = '<br><a href="'.esc_url(UpdraftPlus_Options::admin_page_url()).'?page=updraftplus&tab=settings">'.sprintf(__('Return to %s configuration', 'updraftplus'), 'UpdraftPlus').'</a>';
+
+		$notice_label5 = sprintf(
+			/* translators: %s: Link to storage comparison */
+			__('Not sure which locations come with free and Premium? %s', 'updraftplus'),
+			'<a target="_blank" href="'.esc_url('https://teamupdraft.com/updraftplus/free-vs-premium/').'">'.$notice_label3.'</a>'
+		);
 		if ((isset($_REQUEST['page']) && 'updraftplus' == $_REQUEST['page']) || (defined('DOING_AJAX') && DOING_AJAX)) {
 			$this->show_admin_warning($notice_label1.' '.$notice_label2.' '.$notice_label5, 'error');
 		} else {
