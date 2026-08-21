@@ -64,7 +64,7 @@ class UpdraftPlus_Filesystem_Functions {
 	
 		global $wp_filesystem, $updraftplus;
 
-		$build_url = UpdraftPlus_Options::admin_page().'?page=updraftplus&action=updraft_restore';
+		$build_url = UpdraftPlus_Options::admin_page().'?page=updraftplus&action=updraft_restore&nonce='.wp_create_nonce('updraftplus-credentialtest-nonce');
 		
 		foreach ($url_parameters as $k => $v) {
 			$build_url .= '&'.$k.'='.$v;

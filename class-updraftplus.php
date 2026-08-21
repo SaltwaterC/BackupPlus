@@ -4759,6 +4759,9 @@ class UpdraftPlus {
 			// if (count($scheduled) < 2) {
 			// return $event;
 			// }
+
+			// Override the timestamp of the scheduled backup event based on the user's predefined schedule setting if there is a fixtime add-on.
+			$event = apply_filters('updraftplus_override_scheduled_backup_event', $event);
 		
 			$backup_scheduled_for = ('updraft_backup' == $event->hook) ? $event->timestamp : wp_next_scheduled('updraft_backup');
 			$db_scheduled_for = ('updraft_backup_database' == $event->hook) ? $event->timestamp : wp_next_scheduled('updraft_backup_database');

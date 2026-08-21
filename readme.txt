@@ -2,8 +2,8 @@
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.2
-Tested up to: 7.0
-Stable tag: 1.26.6
+Tested up to: 7.1
+Stable tag: 1.26.7
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,12 @@ This problem is probably caused by your account being starved of resources by yo
 The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.26.7 - 21/Aug/2026 =
+
+* SECURITY: Restoration now requires provision of a nonce, and not only the epoch-second timestamp of a backup. This prevents an insider threat in which a previous administrator who has been removed from a site could seek to persuade a logged-in current administrator to follow a link to restore a backup which he had previous knowledge of. Thanks to Jashid Sany for raising this issue (via WPScan).
+* TWEAK: In UpdraftPlus Premium, for scheduled monthly backups, change the behaviour to backup on the chosen day every month (better matching user expectation).
+* TWEAK: UpdraftClone no longer supports clones launched with PHP 5.4 or 5.5.
 
 = 1.26.6 - 23/Jul/2026 =
 
@@ -2175,4 +2181,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.6: Data removal prompt on deactivate, improve free user storage experience, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.7: Hardened backup restoration against misuse, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
