@@ -306,4 +306,4 @@ class UpdraftPlus_Tour {
 	}
 }
 
-add_action('admin_init', array(UpdraftPlus_Tour::get_instance(), 'init'));
+// add_action('admin_init', array(UpdraftPlus_Tour::get_instance(), 'init'));

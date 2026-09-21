@@ -579,7 +579,7 @@ class UpdraftPlus_BackupModule_cloudfiles_oldsdk extends UpdraftPlus_BackupModul
 			return;
 		}
 
-		$try_file = md5(rand()).'.txt';
+		$try_file = md5(wp_rand()).'.txt';
 
 		try {
 			$object = $container_object->create_object($try_file);

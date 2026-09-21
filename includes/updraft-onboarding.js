@@ -103,7 +103,6 @@ window.pluginOnboardingActions.createTestConnectionCallbacks = function({groupId
 			});
 			if (setValue) {
 				setValue(`${groupId}_completed`, true);
-				console.log(`[${methodLabel}] Calling setValue for ${groupId}_completed to true`);
 			}
 		} else {
 			response.output = response.output.replaceAll('&quot;', '"');
@@ -115,7 +114,6 @@ window.pluginOnboardingActions.createTestConnectionCallbacks = function({groupId
 			});
 			if (setValue) {
 				setValue(`${groupId}_completed`, false);
-				console.log(`[${methodLabel}] Calling setValue for ${groupId}_completed to false (failure)`);
 			}
 		}
 	};
@@ -130,7 +128,6 @@ window.pluginOnboardingActions.createTestConnectionCallbacks = function({groupId
 			errorMessage = response.output.replaceAll('&quot;', '"');
 		} else {
 			errorMessage = `updraft_send_command: error: ${status} (${error_code})`;
-			console.log(errorMessage);
 		}
 		setAlertState(groupId, {
 			responseMessage: errorMessage,
@@ -140,7 +137,6 @@ window.pluginOnboardingActions.createTestConnectionCallbacks = function({groupId
 		});
 		if (setValue) {
 			setValue(`${groupId}_completed`, false);
-			console.log(`[${methodLabel}] Calling setValue for ${groupId}_completed to false (error)`);
 		}
 	};
 
@@ -163,8 +159,6 @@ window.pluginOnboardingActions.testRemoteStorageConnection = async function(
 	dataPayload,
 	setValue
 ) {
-	console.log(`[${methodLabel}] Initiating remote storage connection test...`);
-
 	// Use field.group_id if available, otherwise fallback to field.id
 	const groupId = field.group_id || field.id;
 	const message = wp.i18n.sprintf(updraftplus_onboarding.testing_remote_storage, updraftplus_onboarding.remote_storages[methodLabel]);
@@ -192,54 +186,6 @@ window.pluginOnboardingActions.testRemoteStorageConnection = async function(
 };
 
 /**
- * Function to transform data for Backblaze connection.
- * Splits the full backup path into bucket name and backup path.
- *
- * @param {object} data The raw form data for Backblaze.
- * @returns {object} The transformed data.
- */
-function updraftDataForBackblaze(data) {
-	const fullPathValue = data.bucket_name || ''; // Ensure it's a string to prevent indexOf error
-
-	let bucketName = '';
-	let backupPath = '';
-
-	const firstSlashIndex = fullPathValue.indexOf('/');
-	if (firstSlashIndex !== -1) {
-		bucketName = fullPathValue.substring(0, firstSlashIndex);
-		backupPath = fullPathValue.substring(firstSlashIndex + 1);
-	} else {
-		bucketName = fullPathValue;
-		backupPath = '';
-	}
-
-	data.bucket_name = bucketName;
-	data.backup_path = backupPath;
-
-	return data;
-}
-
-// Register dataForBackblaze as a filter
-window.pluginOnboardingActions.addFilter('dataForBackblaze', updraftDataForBackblaze);
-
-/**
- * Function to transform data for FTP connection.
- * Converts the boolean 'passive' value to an integer (1 or 0).
- *
- * @param {object} data The raw form data for FTP.
- * @returns {object} The transformed data.
- */
-function updraftDataForFtp(data) {
-	if (typeof data.passive === 'boolean') {
-		data.passive = data.passive ? 1 : 0;
-	}
-	return data;
-}
-
-// Register dataForFtp as a filter
-window.pluginOnboardingActions.addFilter('dataForFtp', updraftDataForFtp);
-
-/**
  * Function to transform data for WebDAV connection.
  * Combines individual fields into a single 'url' parameter.
  *
@@ -247,14 +193,13 @@ window.pluginOnboardingActions.addFilter('dataForFtp', updraftDataForFtp);
  * @returns {object} The transformed data with a single 'url' field.
  */
 function updraftDataForWebdav(data) {
-	const protocol = data.protocol || 'webdav://';
+	const protocol = data.webdav || 'webdav://';
 	const user = data.user || '';
 	const pass = data.pass || '';
 	const host = data.host || '';
 	const port = data.port; // Can be 0, empty string, or a number
 	const path = data.path || '';
 	data.enable_chunk = data.enable_chunk ? 1 : 0;
-	data.webdav = protocol;
 
 	let credentials = '';
 	if (user && pass) {
@@ -340,184 +285,34 @@ window.pluginOnboardingActions.testConnection = async function(
  * @param {Array<object>} settings The entire form settings array from Zustand.
  * @param {function} setAlertState Function to update connection status in Zustand store.
  * @param {function} setValue Function to update a field's value in Zustand.
+ * @param {function} updateStepSettings Function to update step in Zustand.
  */
 window.pluginOnboardingActions.oauth = async function(
 	field,
 	settings,
 	setAlertState,
-	setValue
+	setValue,
+	updateStepSettings
 ) {
 	// Use field.group_id if available, otherwise fallback to field.id
 	const groupId = field.group_id || field.id;
 	const methodLabel = field.method_label || groupId;
-	let message = wp.i18n.sprintf(updraftplus_onboarding.oauth_pre_connection, updraftplus_onboarding.remote_storages[methodLabel]);
+	let message = wp.i18n.sprintf(
+		updraftplus_onboarding.oauth_pre_connection,
+		updraftplus_onboarding.remote_storages[methodLabel]
+	);
 
 	setAlertState(groupId, {
 		isUpdating: true,
-		responseSuccess: true, // Optimistic, will be updated
+		responseSuccess: true,
 		responseCode: 'loading',
 		responseMessage: message,
 	});
 
-	let authSuccessReceived = false;
+	await updateStepSettings(settings);
 
-	// Promise to wait for the 'auth_success' message from the popup
-	const waitForAuthSuccess = new Promise(function(resolve, reject) {
-		const messageHandler = function(event) {
-			if (event.origin !== window.location.origin && !event.origin.includes('updraftplus.com')) {
-				return;
-			}
-
-			if (event.data && event.data.type === 'auth_success') {
-				authSuccessReceived = true;
-				window.removeEventListener('message', messageHandler);
-				resolve();
-			}
-		};
-		window.addEventListener('message', messageHandler);
-
-		// Also handle popup closure as a potential failure if auth_success isn't received
-		const popupClosedHandler = function() {
-			window.removeEventListener('updraftAuthPopupClosed', popupClosedHandler);
-			if (!authSuccessReceived) {
-				window.removeEventListener('message', messageHandler); // Clean up message listener too
-				reject(new Error('OAuth popup closed without successful authentication.'));
-			}
-		};
-		window.addEventListener('updraftAuthPopupClosed', popupClosedHandler);
-	});
-
-	// Trigger a click on the authentication button for the specific destination
-	jQuery(`.updraftplusmethod.${groupId} .updraft_authlink[data-remote_method="${groupId}"]`)?.trigger('click', {
-		is_requesting_popup_auth: true
-	});
-
-	try {
-		await waitForAuthSuccess; // Wait for the auth_success message
-
-		// If we reach here, auth_success was received
-		setAlertState(groupId, {
-			isUpdating: false,
-			responseSuccess: true,
-			responseCode: 'success',
-			responseMessage: wp.i18n.sprintf(updraftplus_onboarding.connected, updraftplus_onboarding.remote_storages[methodLabel]),
-		});
-		setValue(`${groupId}_completed`, true);
-	} catch (error) {
-		// If we reach here, the popup was closed without auth_success
-		console.error(`OAuth failed for ${methodLabel}:`, error.message);
-		setAlertState(groupId, {
-			isUpdating: false,
-			responseSuccess: false,
-			responseCode: 'danger',
-			responseMessage: wp.i18n.sprintf(updraftplus_onboarding.remote_storage_not_connected, updraftplus_onboarding.remote_storages[methodLabel]),
-		});
-		setValue(`${groupId}_completed`, false);
-	}
-};
-
-/**
- * Handles the 'Save and continue' action for remote storage settings.
- * This function will iterate through selected groups and trigger their connection tests.
- *
- * @param {object} currentStep The current step object.
- * @param {Array<object>} settings The entire form settings array from Zustand.
- * @param {function} setAlertState Function to update connection status in Zustand store.
- * @param {function} setValue Function to update a field's value in Zustand for completion status.
- * @returns {Promise<{success: boolean, message: string}>} Result of the operation.
- */
-window.pluginOnboardingActions.saveAndContinueRemoteStorage = async function(
-	currentStep,
-	settings,
-	setAlertState,
-	setValue
-) {
-	const completedGroups = {};
-	let foundCompletedGroup = false;
-
-	// Get selected destinations from settings
-	let selectedDestinations = updraftGetSettingValue(settings, 'selected_destinations', []);
-
-	// If selected_destinations is empty, try to get from single_group
-	if (!Array.isArray(selectedDestinations)) {
-		selectedDestinations = [selectedDestinations];
-	}
-
-	if (selectedDestinations.length === 0) {
-		console.error('No selected remote storage group found. Returning error.');
-		return { success: false };
-	}
-
-	for (const groupId of selectedDestinations) {
-		const completionFieldId = `${groupId}_completed`;
-		const isCompleted = updraftGetSettingValue(settings, completionFieldId, false);
-
-		if (isCompleted) {
-			foundCompletedGroup = true;
-			let groupSettings = {};
-			settings.forEach(function(setting) {
-				if (setting.id.indexOf(groupId + '_') === 0 && setting.id !== completionFieldId) {
-					const key = setting.id.substring((groupId + '_').length);
-					groupSettings[key] = (setting && typeof setting.value !== 'undefined') ? setting.value : '';
-				}
-			});
-
-
-			// Apply specific data transformations based on groupId using filters
-			const filterTag = `dataFor${groupId.charAt(0).toUpperCase() + groupId.slice(1)}`;
-			groupSettings = window.pluginOnboardingActions.applyFilters(filterTag, groupSettings);
-			console.log(`Collected settings for ${groupId} after filter ${filterTag}:`, groupSettings);
-
-			completedGroups[groupId] = groupSettings;
-		}
-	}
-
-	if (!foundCompletedGroup) {
-		console.error('No completed remote storage group found. Returning error.');
-		return { success: false };
-	}
-
-	window.updraft_send_command(
-		'update_backup_and_storage_settings',
-		{ current_step: currentStep.id, remote_storages: completedGroups },
-		null
-	);
-
-	return { success: true };
-};
-
-/**
- * Handles the 'Save and continue' action for backup settings.
- *
- * @param {object} currentStep The current step object.
- * @param {Array<object>} settings The entire form settings array from Zustand.
- * @param {function} setAlertState Function to update connection status in Zustand store.
- * @param {function} setValue Function to update a field's value in Zustand for completion status.
- * @returns {Promise<{success: boolean, message: string}>} Result of the operation.
- */
-window.pluginOnboardingActions.saveAndContinueBackupSettings = async function(
-	currentStep,
-	settings,
-	setAlertState,
-	setValue
-) {
-	const backupFrequency = updraftGetSettingValue(settings, 'backup_frequency');
-	const keepLastBackups = updraftGetSettingValue(settings, 'keep_last_backups');
-
-	const backupSettings = {
-		backup_frequency: backupFrequency,
-		keep_last_backups: keepLastBackups,
-	};
-
-	console.log('Backup Settings:', backupSettings);
-
-	window.updraft_send_command(
-		'update_backup_and_storage_settings',
-		{ current_step: currentStep.id, backup_settings: backupSettings },
-		null
-	);
-
-	return { success: true };
+	// Redirect to OAuth page
+	window.location.href = jQuery(`.updraftplusmethod.${groupId} .updraft_authlink[data-remote_method="${groupId}"]`)?.attr('href');
 };
 
 /**
@@ -553,6 +348,34 @@ const updraftSendCommandWithPromise = async function(command, payload) {
 		);
 	});
 }
+
+/**
+ * Promise-based wrapper for window.updraft_send_command with timeout.
+ * Prevents the promise from hanging forever if the AJAX callback is never invoked.
+ *
+ * @param {string} command - The command name sent to Updraft.
+ * @param {Object} payload - The payload data sent with the command.
+ * @param {number} timeoutMs - Timeout in milliseconds (default 15000).
+ * @returns {Promise<{
+ *   success: boolean,
+ *   response?: Object,
+ *   status?: string,
+ *   error_code?: string
+ * }>} The command execution result.
+ */
+const updraftSendCommandWithTimeout = async function(command, payload, timeoutMs) {
+	if (typeof timeoutMs === 'undefined') {
+		timeoutMs = 15000;
+	}
+
+	const timeoutPromise = new Promise(function (_, reject) {
+		setTimeout(function () {
+			reject(new Error('updraft_send_command timed out after ' + timeoutMs + 'ms'));
+		}, timeoutMs);
+	});
+
+	return Promise.race([updraftSendCommandWithPromise(command, payload), timeoutPromise]);
+};
 
 /**
  * Handles UpdraftVault connection or quota refresh,
@@ -591,9 +414,32 @@ async function handleUpdraftVaultConnection(
 		});
 	}
 
-	const result = await updraftSendCommandWithPromise(command, payload);
+	let result;
+	try {
+		result = await updraftSendCommandWithTimeout(command, payload);
+	} catch (error) {
+		// Timeout or network failure - ensure spinner is cleared
+		const errorMessage = wp.i18n.sprintf(
+			updraftplus_onboarding.connection_error || __('Error connecting to %s.', 'updraftplus'),
+			'UpdraftVault'
+		);
+		if (typeof setAlertState === 'function') {
+			setAlertState(groupId, {
+				isUpdating: false,
+				responseSuccess: false,
+				responseCode: 'danger',
+				responseMessage: errorMessage,
+			});
+		}
+		return { success: false, message: errorMessage };
+	}
 
-	if (result.success && result.response && result.response.connected) {
+	// For disconnect: the server returns connected:false after successful
+	// disconnect, which is the desired outcome. Don't treat it as failure.
+	const isDisconnect = 'vault_disconnect' === command;
+	const isConnected = result.success && result.response && result.response.connected;
+
+	if ((isDisconnect && result.success) || isConnected) {
 		const response = result.response;
 		let emailDisplay = '';
 		let quotaDisplay = '';
@@ -629,7 +475,7 @@ async function handleUpdraftVaultConnection(
 
 	if (result.success) {
 		if (isConnect) {
-			message = updraftplus_onboarding.remote_storage_not_connected;
+			message = updraftplus_onboarding.not_connected;
 		} else {
 			message = updraftplus_onboarding.cannot_refresh_updraftvault;
 		}
@@ -668,13 +514,15 @@ async function handleUpdraftVaultConnection(
  * @param {Array<object>} settings The entire form settings array from Zustand.
  * @param {function} setAlertState Function to update connection status in Zustand store.
  * @param {function} setValue Function to update a field's value in Zustand for completion status.
+ * @param {function} updateStepSettings Function to update step in Zustand.
  * @returns {Promise<{success: boolean, message: string}>} Result of the operation.
  */
 window.pluginOnboardingActions.connectUpdraftVault = async function(
 	field,
 	settings,
 	setAlertState,
-	setValue
+	setValue,
+	updateStepSettings
 ) {
 	const groupId = field.group_id || field.id || 'updraftvault';
 	const methodLabel = field.method_label || 'UpdraftVault';
@@ -704,7 +552,7 @@ window.pluginOnboardingActions.connectUpdraftVault = async function(
 		return { success: false };
 	}
 
-	return handleUpdraftVaultConnection(
+	const result = handleUpdraftVaultConnection(
 		'vault_connect',
 		{
 			email: email,
@@ -717,6 +565,10 @@ window.pluginOnboardingActions.connectUpdraftVault = async function(
 		setValue,
 		true
 	);
+
+	await updateStepSettings(settings);
+
+	return result;
 };
 
 /**
@@ -759,7 +611,7 @@ window.pluginOnboardingActions.recountQuotaUpdraftVault = async function(
  * @param {function} setValue Function to update a field's value in Zustand for completion status.
  * @returns {Promise<{success: boolean, message: string}>} Result of the operation.
  */
-window.pluginOnboardingActions.disconnectUpdraftVault = function(
+window.pluginOnboardingActions.disconnectUpdraftVault = async function(
 	field,
 	settings,
 	setAlertState,
@@ -769,8 +621,7 @@ window.pluginOnboardingActions.disconnectUpdraftVault = function(
 	const methodLabel = field.method_label || 'UpdraftVault';
 
 	try {
-		setValue('updraftvault_completed', false);
-		return handleUpdraftVaultConnection(
+		const result = await handleUpdraftVaultConnection(
 			'vault_disconnect',
 			{
 				return_data_only: true
@@ -781,8 +632,42 @@ window.pluginOnboardingActions.disconnectUpdraftVault = function(
 			setValue,
 			false
 		);
+
+		// Mark as disconnected AFTER the server confirms success.
+		// On failure (e.g. timeout), still set to false so the user
+		// can retry from the login form. handleUpdraftVaultConnection
+		// has already cleared the spinner in all code paths.
+		setValue('updraftvault_completed', false);
+
+		return result;
 	} catch (e) {
+		// If handleUpdraftVaultConnection throws (should not happen after
+		// the try/catch added there), ensure spinner is cleared and user
+		// can retry.
 		console.error('Error in disconnectUpdraftVault:', e);
+		setValue('updraftvault_completed', false);
 		return { success: false };
 	}
 };
+
+/**
+ * Clean up the URL after an UpdraftPlus remote storage authentication flow.
+ *
+ * Only runs when the `action` query parameter starts with
+ * `updraftmethod-`, indicating that the page was reached from a
+ * remote storage authentication callback.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+	const url = new URL(window.location.href);
+	const action = url.searchParams.get('action');
+
+	if (!action || !action.startsWith('updraftmethod-')) {
+		return;
+	}
+
+	window.history.replaceState(
+		{},
+		document.title,
+		url.pathname + '?page=updraftplus'
+	);
+});

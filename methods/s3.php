@@ -1618,8 +1618,8 @@ Check your permissions and credentials.','updraftplus'), 'error');
 			if ('s3' == $config['key'] && 'AK' != substr($key, 0, 2)) echo "\n\n".esc_html(sprintf(__('The AWS access key looks to be wrong (valid %s access keys begin with "AK")', 'updraftplus'), $whoweare));
 		
 		} else {
-		
-			$try_file = md5(rand());
+
+			$try_file = md5(wp_rand());
 
 			$storage->setExceptions(true);
 			try {

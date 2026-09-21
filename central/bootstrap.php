@@ -57,11 +57,8 @@ class UpdraftCentral_Main {
 		$command_classes = apply_filters('updraftplus_remotecontrol_command_classes', $command_classes);
 	
 		// If nothing was sent, then there is no incoming message, so no need to set up a listener (or CORS request, etc.). This avoids a DB SELECT query on the option below in the case where it didn't get autoloaded, which is the case when there are no keys.
-		$request_action = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'action');
-		$udcentral_action = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'udcentral_action');
-		$udrpc_message = UpdraftPlus_Manipulation_Functions::fetch_superglobal('request', 'udrpc_message');
-		$request_method = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'REQUEST_METHOD');
-		if (!empty($request_method) && ('GET' == $request_method || 'POST' == $request_method) && (empty($request_action) || 'updraft_central' !== $request_action) && empty($udcentral_action) && empty($udrpc_message)) return;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reads superglobals to check if there is an incoming message, no nonce needed since nothing is processed here yet.
+		if (!empty($_SERVER['REQUEST_METHOD']) && ('GET' == $_SERVER['REQUEST_METHOD'] || 'POST' == $_SERVER['REQUEST_METHOD']) && (empty($_REQUEST['action']) || 'updraft_central' !== $_REQUEST['action']) && empty($_REQUEST['udcentral_action']) && empty($_REQUEST['udrpc_message'])) return;
 		
 		// Remote control keys
 		// These are different from the remote send keys, which are set up in the Migrator add-on
@@ -119,20 +116,17 @@ class UpdraftCentral_Main {
 		// Within an UpdraftCentral context, there should be no prefix on the anchor link
 		if (defined('UPDRAFTCENTRAL_COMMAND') && UPDRAFTCENTRAL_COMMAND || defined('WP_CLI') && WP_CLI) return '';
 		
-		$server_http_referer = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'HTTP_REFERER');
-		if (defined('DOING_AJAX') && DOING_AJAX && !empty($server_http_referer)) {
-			$current_url = $server_http_referer;
+		if (defined('DOING_AJAX') && DOING_AJAX && !empty($_SERVER['HTTP_REFERER'])) {
+			$current_url = $_SERVER['HTTP_REFERER']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
 		} else {
 			$url_prefix = is_ssl() ? 'https' : 'http';
-			$server_http_host = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'HTTP_HOST');
-			$host = empty($server_http_host) ? parse_url(network_site_url(),  PHP_URL_HOST) : $server_http_host;
-			$server_request_uri = UpdraftPlus_Manipulation_Functions::wp_unslash(UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'REQUEST_URI'));
-			$current_url = $url_prefix."://".$host.$server_request_uri;
+			$host = empty($_SERVER['HTTP_HOST']) ? parse_url(network_site_url(),  PHP_URL_HOST) : $_SERVER['HTTP_HOST']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
+			$request_uri = empty($_SERVER['REQUEST_URI']) ? '' : $_SERVER['REQUEST_URI']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
+			$current_url = $url_prefix."://".$host.$request_uri;
 		}
 		$remove_query_args = array('state', 'action', 'oauth_verifier', 'nonce', 'updraftplus_instance', 'access_token', 'user_id', 'updraftplus_googledriveauth');
 
-		$query_string = remove_query_arg($remove_query_args, $current_url);
-		return UpdraftPlus_Manipulation_Functions::wp_unslash($query_string);
+		return wp_unslash(remove_query_arg($remove_query_args, $current_url));
 	}
 	
 	/**
@@ -184,11 +178,8 @@ class UpdraftCentral_Main {
 	public function wp_ajax_updraftcentral_receivepublickey() {
 		global $updraftcentral_host_plugin;
 	
-		// The actual nonce check is done in the method below
-		$global_wp_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', '_wpnonce');
-		$public_key = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'public_key');
-		$updraft_key_index = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraft_key_index');
-		if (empty($global_wp_nonce) || empty($public_key) || !isset($updraft_key_index)) die;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The actual nonce check is done in the method below
+		if (empty($_GET['_wpnonce']) || empty($_GET['public_key']) || !isset($_GET['updraft_key_index'])) die;
 		
 		$result = $this->receive_public_key();
 		if (!is_array($result) || empty($result['responsetype'])) die;
@@ -255,25 +246,24 @@ class UpdraftCentral_Main {
 			return array('responsetype' => 'error', 'code' => 'not_logged_in');
 		}
 
-		$global_get_wp_nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', '_wpnonce');
-		if (empty($global_get_wp_nonce) || !wp_verify_nonce($global_get_wp_nonce, 'updraftcentral_receivepublickey')) return array('responsetype' => 'error', 'code' => 'nonce_failure');
+		$nonce = !empty($_GET['_wpnonce']) ? $_GET['_wpnonce'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage, nonce verification is done late
+		if (!wp_verify_nonce($nonce, 'updraftcentral_receivepublickey')) return array('responsetype' => 'error', 'code' => 'nonce_failure');
 		
-		$updraft_key_index = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraft_key_index');
+		$updraft_key_index = !empty($_GET['updraft_key_index']) ? $_GET['updraft_key_index'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
 		$our_keys = $this->get_central_localkeys();
 
 		if (!is_array($our_keys)) $our_keys = array();
 		
-		if ('' === $updraft_key_index || is_null($updraft_key_index) || !isset($our_keys[$updraft_key_index])) {
+		if (!isset($our_keys[$updraft_key_index])) {
 			return array('responsetype' => 'error', 'code' => 'unknown_key');
 		}
 
 		if (!empty($our_keys[$updraft_key_index]['publickey_remote'])) {
 			return array('responsetype' => 'error', 'code' => 'already_have');
 		}
-
-		$public_key = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'public_key');
 		
-		$our_keys[$updraft_key_index]['publickey_remote'] = base64_decode(UpdraftPlus_Manipulation_Functions::wp_unslash($public_key));
+		$public_key = !empty($_GET['public_key']) ? $_GET['public_key'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
+		$our_keys[$updraft_key_index]['publickey_remote'] = base64_decode(stripslashes($public_key));
 		$this->update_central_localkeys($our_keys, true, 'no');
 		
 		return array('responsetype' => 'ok', 'code' => 'ok');
@@ -298,18 +288,14 @@ class UpdraftCentral_Main {
 			'key_name_indicator' => $key_name_indicator
 		);
 
-		$server_remote_addr = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'REMOTE_ADDR');
-		$server_http_user_agent = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'HTTP_USER_AGENT');
-		$server_http_x_secondary_user_agent = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'HTTP_X_SECONDARY_USER_AGENT');
-		
-		if (!empty($server_remote_addr)) {
-			$new_item['remote_ip'] = $server_remote_addr;
+		if (!empty($_SERVER['REMOTE_ADDR'])) {
+			$new_item['remote_ip'] = $_SERVER['REMOTE_ADDR']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
 		}
-		if (!empty($server_http_user_agent)) {
-			$new_item['http_user_agent'] = $server_http_user_agent;
+		if (!empty($_SERVER['HTTP_USER_AGENT'])) {
+			$new_item['http_user_agent'] = $_SERVER['HTTP_USER_AGENT']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
 		}
-		if (!empty($server_http_x_secondary_user_agent)) {
-			$new_item['http_secondary_user_agent'] = $server_http_x_secondary_user_agent;
+		if (!empty($_SERVER['HTTP_X_SECONDARY_USER_AGENT'])) {
+			$new_item['http_secondary_user_agent'] = $_SERVER['HTTP_X_SECONDARY_USER_AGENT']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslash late, sanitization can be safely skipped as it's a non-interactive data storage
 		}
 		
 		$udrpc_log[] = $new_item;

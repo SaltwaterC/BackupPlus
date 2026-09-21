@@ -6,7 +6,7 @@ Plugin Name: UpdraftPlus - Backup/Restore
 Plugin URI: https://updraftplus.com
 Description: Backup and restore: take backups locally, or backup to Amazon S3, Dropbox, Google Drive, Rackspace, (S)FTP, WebDAV & email, on automatic schedules.
 Author: TeamUpdraft, DavidAnderson
-Version: 1.26.7
+Version: 1.26.8
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
 Text Domain: updraftplus
@@ -44,6 +44,8 @@ define('UPDRAFTPLUS_URL', plugins_url('', __FILE__));
 define('UPDRAFTPLUS_PLUGIN_SLUG', plugin_basename(__FILE__));
 define('UPDRAFT_DEFAULT_OTHERS_EXCLUDE', 'upgrade,cache,updraft,backup*,*backups,mysql.sql,debug.log');
 define('UPDRAFT_DEFAULT_UPLOADS_EXCLUDE', 'backup*,*backups,backwpup*,wp-clone,snapshots,wp-staging');
+// The minimum PHP version that phpseclib requires for the encryption-related features. Deliberately not overridable: it reflects a library requirement, not a user preference.
+define('UPDRAFTPLUS_PHPSECLIB_MIN_PHP_VERSION', '5.6.1');
 
 // The following can go in your wp-config.php
 // Tables whose data can be skipped without significant loss, if (and only if) the attempt to back them up fails (e.g. bwps_log, from WordPress Better Security, is log data; but individual entries can be huge and cause out-of-memory fatal errors on low-resource environments). Comma-separate the table names (without the WordPress table prefix).
@@ -305,6 +307,8 @@ function updraftplus_build_mysqldump_list() {
 		return "/usr/bin/mysqldump,/bin/mysqldump,/usr/local/bin/mysqldump,/usr/sfw/bin/mysqldump,/usr/xdg4/bin/mysqldump,/opt/bin/mysqldump";
 	}
 }
+
+register_activation_hook(__FILE__, array($updraftplus, 'maybe_set_onboarding_flag'));
 
 // Do this even if the missing files detection above fired, as the "missing files" detection above has a greater chance of showing the user useful info
 if (!class_exists('UpdraftPlus_Options')) updraft_try_include_file('options.php', 'require_once');

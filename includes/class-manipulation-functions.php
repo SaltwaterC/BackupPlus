@@ -606,4 +606,21 @@ class UpdraftPlus_Manipulation_Functions {
 			error_log($message); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- error_log() is intentionally used to log the error when debug mode is enabled.
 		}
 	}
+
+	/**
+	 * Check if the given URL string is URL-encoded and determines the encoding type.
+	 *
+	 * @param string $url The URL string to check.
+	 * @return int Returns:
+	 *             0 if the URL is not encoded,
+	 *             1 if the URL is RFC 3986 percent-encoded (e.g., '%20'),
+	 *             2 if the URL appears to be encoded with a different encoding.
+	 */
+	public static function is_url_encoded($url) {
+		if (empty($url)) return 0;
+		$is_rfc3986_encoding = false !== strpos($url, '%20');
+		if ($is_rfc3986_encoding && rawurldecode($url) !== $url) return 1;
+		if ((urldecode($url) !== $url)) return 2;
+		return 0;
+	}
 }

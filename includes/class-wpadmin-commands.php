@@ -355,12 +355,13 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 	}
 
 	/**
-	 * Update and set dismiss_phpseclib_notice option name to true
+	 * Update and set dismiss_phpseclib_notice option name to the minimum recommended PHP version
 	 *
 	 * @return array - an associative array containing a key named 'success' with 1 value which indicates the successful of updating the option
 	 */
 	public function dismiss_phpseclib_notice() {
-		UpdraftPlus_Options::update_updraft_option('updraft_dismiss_phpseclib_notice', true);
+		// Store the minimum recommended PHP version dismissed for (previously was boolean `true`), so a later version bump re-shows the notice.
+		UpdraftPlus_Options::update_updraft_option('updraft_dismiss_phpseclib_notice', UPDRAFTPLUS_PHPSECLIB_MIN_PHP_VERSION);
 		return array('success' => 1);
 	}
 
@@ -388,6 +389,19 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 	public function dismissdashnotice() {
 		UpdraftPlus_Options::update_updraft_option('updraftplus_dismisseddashnotice', time() + 366*86400);
 		return array();
+	}
+
+	/**
+	 * Dismiss the Azure Legacy Storage notice.
+	 *
+	 * This function updates the option to indicate that the user has dismissed
+	 * the Azure legacy storage notice, preventing it from being shown again.
+	 *
+	 * @return array Associative array with a 'success' key indicating the operation status.
+	 */
+	public function dismiss_azure_legacy_storage_notice() {
+		UpdraftPlus_Options::update_updraft_option('updraftplus_dismiss_azure_legacy_storage_notice', 1);
+		return array('success' => 1);
 	}
 	
 	public function rawbackuphistory() {

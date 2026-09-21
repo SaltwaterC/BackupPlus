@@ -382,7 +382,7 @@ abstract class UpdraftPlus_RemoteStorage_Addons_Base_v2 extends UpdraftPlus_Back
 			return;
 		}
 
-		$testfile = md5(time().rand()).'.txt';
+		$testfile = md5(time().wp_rand()).'.txt';
 		
 		$test_results = $this->do_credentials_test($testfile, $posted_settings);
 		

@@ -889,6 +889,7 @@ class UpdraftPlus_BackupModule_dropbox extends UpdraftPlus_BackupModule {
 				// remove our flag so we know this authentication is complete
 				if (isset($opts['auth_in_progress'])) unset($opts['auth_in_progress']);
 				$this->set_options($opts, true);
+				$this->set_connection_status(true);
 				$auth_result = $this->auth_token($return_instead_of_echo);
 				if ($return_instead_of_echo) return $auth_result;
 			}

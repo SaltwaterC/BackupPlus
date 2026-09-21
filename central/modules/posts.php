@@ -1058,16 +1058,14 @@ class UpdraftCentral_Posts_Commands extends UpdraftCentral_Commands {
 				}
 			}
 
-			// phpcs:disable WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
 			$published_date = array(
-				'jj' => date('d', strtotime($post->post_date)),
-				'mm' => date('m', strtotime($post->post_date)),
-				'aa' => date('Y', strtotime($post->post_date)),
-				'hh' => date('H', strtotime($post->post_date)),
-				'mn' => date('i', strtotime($post->post_date)),
-				'ss' => date('s', strtotime($post->post_date))
+				'jj' => date('d', strtotime($post->post_date)),// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
+				'mm' => date('m', strtotime($post->post_date)),// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
+				'aa' => date('Y', strtotime($post->post_date)),// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
+				'hh' => date('H', strtotime($post->post_date)),// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
+				'mn' => date('i', strtotime($post->post_date)),// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
+				'ss' => date('s', strtotime($post->post_date))// phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- post_date is stored in WP local timezone; gmdate() would return incorrect UTC values
 			);
-			// phpcs:enable WordPress.DateTime.RestrictedFunctions.date_date
 
 			$sample_permalink = get_sample_permalink($post->ID, $post->post_title, '');
 			$permalink = get_permalink($post->ID);

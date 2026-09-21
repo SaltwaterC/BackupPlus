@@ -9,6 +9,13 @@ if (!class_exists('UpdraftPlus_BackupModule')) updraft_try_include_file('methods
 class UpdraftPlus_BackupModule_email extends UpdraftPlus_BackupModule {
 
 	/**
+	 * Constructor
+	 */
+	public function __construct() {
+		add_filter('updraftplus_remote_storage_input_field', array($this, 'set_input_value_from_admin_email'), 10, 2);
+	}
+
+	/**
 	 * Input and option field mappings with default values and supported contexts.
 	 *
 	 * @var array
@@ -146,6 +153,16 @@ class UpdraftPlus_BackupModule_email extends UpdraftPlus_BackupModule {
 	}
 
 	/**
+	 * Modifies handlebar template options
+	 *
+	 * @param array $opts Stored/saved configuration settings
+	 * @return array - Modified handlebar template options
+	 */
+	public function transform_options_for_template($opts) {
+		if (isset($opts[0])) return $opts = array('email_address' => $opts[0]);
+	}
+
+	/**
 	 * Retrieve a list of template properties by taking all the persistent variables and methods of the parent class and combining them with the ones that are unique to this module, also the necessary HTML element attributes and texts which are also unique only to this backup module
 	 * NOTE: Please sanitise all strings that are required to be shown as HTML content on the frontend side (i.e. wp_kses()), or any other technique to prevent XSS attacks that could come via WP hooks
 	 *
@@ -153,11 +170,29 @@ class UpdraftPlus_BackupModule_email extends UpdraftPlus_BackupModule {
 	 */
 	public function get_template_properties() {
 		$properties = array(
-			'input_email_address_type' => 'email',
 			'input_email_address_label' => __('Email address', 'updraftplus'),
-			'input_email_address_placeholder' => __('Enter your email address', 'updraftplus')
+			'input_email_address_placeholder' => __('Enter your email address', 'updraftplus'),
 		);
+		if (class_exists('UpdraftPlus_Addon_Reporting')) {
+			$properties['input_email_address_type'] = 'email';
+		} else {
+			$properties['input_email_address_tooltip'] = __('This email address can\'t be customized in the free version.', 'updraftplus').' '.__('It\'s based on the site admin email address.', 'updraftplus').' '.__('To change it, update the site admin email.', 'updraftplus');
+		}
 		
 		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
+	}
+
+	/**
+	 * Set the field value to the site's admin email address when applicable
+	 *
+	 * @param array  $field  The field configuration array
+	 * @param string $method The remote storage identifier
+	 *
+	 * @return array The field configuration with its value set to the admin email
+	 */
+	public function set_input_value_from_admin_email($field, $method) {
+		if ($this->get_id() !== $method || class_exists('UpdraftPlus_Addon_Reporting')) return $field;
+		$field['value'] = get_bloginfo('admin_email');
+		return $field;
 	}
 }

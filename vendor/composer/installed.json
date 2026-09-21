@@ -1495,6 +1495,37 @@
             "install-path": "../team-updraft/common-libs"
         },
         {
+            "name": "team-updraft/lib-onboarding-wizard",
+            "version": "2.0.0",
+            "version_normalized": "2.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "ssh://git@source.updraftplus.com:20022/team-updraft/lib-onboarding-wizard.git",
+                "reference": "2493ea2243ef3a6d5286081348b88a85430542cc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://source.updraftplus.com/api/v4/projects/140/packages/composer/archives/team-updraft/lib-onboarding-wizard.zip?sha=2493ea2243ef3a6d5286081348b88a85430542cc",
+                "reference": "2493ea2243ef3a6d5286081348b88a85430542cc",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^2.0"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "LibOnboardingWizard"
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "classmap": [
+                    "composer-plugin-extras"
+                ]
+            },
+            "description": "onboarding wizard",
+            "install-path": "../team-updraft/lib-onboarding-wizard"
+        },
+        {
             "name": "vakata/jstree",
             "version": "3.3.17",
             "version_normalized": "3.3.17.0",

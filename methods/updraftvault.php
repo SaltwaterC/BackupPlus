@@ -1026,6 +1026,7 @@ class UpdraftPlus_BackupModule_updraftvault extends UpdraftPlus_BackupModule_s3 
 	
 		$connect = $this->vault_connect($use_credentials['email'], $use_credentials['pass']);
 		if (true === $connect) {
+			$this->set_connection_status(true);
 			if ($return_data_only) {
 				$response = array('connected' => true, 'quota' => $this->connected_data(false));
 			} else {

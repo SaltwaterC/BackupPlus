@@ -721,6 +721,9 @@ class UpdraftPlus_Migrator_Lite {
 	 * Displays admin notice if .htaccess have any old migrated site reference.
 	 */
 	public function migration_admin_notices() {
+		
+		if (!UpdraftPlus_Options::user_can_manage()) return;
+		
 		$updraftplus_migrated_site_domain = get_site_option('updraftplus_migrated_site_domain', false);
 		if ($updraftplus_migrated_site_domain) {
 			$htaccess_file_path = ABSPATH.'.htaccess';

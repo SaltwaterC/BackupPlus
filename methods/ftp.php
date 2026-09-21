@@ -497,7 +497,7 @@ class UpdraftPlus_BackupModule_ftp extends UpdraftPlus_BackupModule {
 		}
 		// $ftp->make_dir(); we may need to recursively create dirs? TODO
 
-		$file = md5(rand(0, 99999999)).'.tmp';
+		$file = md5(wp_rand(0, 99999999)).'.tmp';
 		$fullpath = trailingslashit($path).$file;
 		
 		if ($ftp->put(ABSPATH.WPINC.'/version.php', $fullpath, FTP_BINARY, false, true)) {

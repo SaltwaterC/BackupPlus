@@ -1,9 +1,9 @@
 === UpdraftPlus: WP Backup & Migration Plugin ===
 Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, aporter, bcrodua
 Tags: backup, database backup, wordpress backup, cloud backup, migration
-Requires at least: 3.2
+Requires at least: 3.9
 Tested up to: 7.1
-Stable tag: 1.26.7
+Stable tag: 1.26.8
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,21 @@ This problem is probably caused by your account being starved of resources by yo
 The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.26.8 - 17/Sep/2026
+
+* SECURITY: On a site which has been migrated (i.e. moved to a new address using UpdraftPlus's migration  feature), and is using an .htaccess file, and the .htaccess file has not been updated with the new site reference, and where the site owner does not respond to the notice to do so, and where the site has non-admin users who can login to the WP dashboard, and where the site had saved storage login credentials in the UpdraftPlus settings, such a logged-in user could access some of those credentials (e.g. could access FTP, but not Dropbox). Thanks to Jakub Herman for notifying us of this issue (via WPScan).
+* FEATURE: Implemented an onboarding wizard to assist first-time users with plugin configuration (requires WordPress 6.2+ and PHP 7.4+).
+* FIX: Error caused by the FTP wrapper referencing the STDIN constant when configuring the cURL CURLOPT_INFILE option. Since STDIN is only defined under the PHP CLI SAPI, this caused failures in PHP-FPM environments.
+* FIX: WebDAV backup failures caused by a deprecated regular expression escape since PCRE2 version 10.45.
+* TWEAK: The "Tour" functionality has been removed from the UI and deactivated. Its underlying code remains temporarily and will be fully removed in a future release.
+* TWEAK: Remove bundled translations which are now complete and automatically downloaded from wordpress.org
+* TWEAK: Added an admin notice to inform users about the upcoming retirement of legacy Azure Blob Storage accounts.
+* TWEAK: Warn sites running PHP older than 5.6.1 that phpseclib-dependent features (Dropbox, SFTP/SCP, Database Encryption, UpdraftCentral, Migrator) will require a newer PHP version in future releases; the dashboard notice is also shown again to users who dismissed the previous version of this notice.
+* TWEAK: Update all text labels to use teamupdraft.com instead of updraftplus.com.
+* TWEAK: Fixed the 'Bad filename format' error when uploading small backup files via the UpdraftPlus dashboard on older WordPress versions.
+* TWEAK: Clarifying WebDAV settings test popup when server does not support chunked uploads.
+* TWEAK: Addressed several issues identified during Plugin Check (PCP) validation and improved overall plugin compatibility and code quality.
 
 = 1.26.7 - 21/Aug/2026 =
 
@@ -2181,4 +2196,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.7: Hardened backup restoration against misuse, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.8: Onboarding Wizard, Azure legacy blob storage retirement, PHP < 5.6.1 feature deprecation warning, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.

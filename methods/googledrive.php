@@ -563,6 +563,7 @@ class UpdraftPlus_BackupModule_googledrive extends UpdraftPlus_BackupModule {
 			// remove our flag so we know this authentication is complete
 			if (isset($opts['auth_in_progress'])) unset($opts['auth_in_progress']);
 			$this->set_options($opts, true);
+			$this->set_connection_status(true);
 		}
 
 		if ($return_instead_of_echo) {

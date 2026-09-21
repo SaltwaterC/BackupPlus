@@ -40,10 +40,6 @@
 				</div>
 			</div>
 			<div class="updraft_time_now_wrapper">
-				<?php
-				// wp_date() is WP 5.3+, but performs translation into the site locale
-				$current_time = function_exists('wp_date') ? wp_date('D, F j, Y H:i') : get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'D, F j, Y H:i');
-				?>
 				<span class="updraft_time_now_label"><?php echo esc_html__('Time now', 'updraftplus').': ';?></span>
 				<span class="updraft_time_now"><?php echo esc_html($current_time);?></span>
 			</div>
@@ -58,9 +54,6 @@
 			?>
 		</div>
 		<div id="updraft_activejobs_table">
-			<?php
-			$active_jobs = $this->print_active_jobs();
-			?>
 			<div id="updraft_activejobsrow">
 				<?php
 					echo $active_jobs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- it's ignored because the value of the variable contains HTML elements

@@ -696,6 +696,7 @@ abstract class UpdraftPlus_BackupModule {
 		$nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
 		
 		if (isset($updraftplus_auth) && 'doit' == $updraftplus_auth && !empty($updraftplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $updraftplus_instance) && isset($nonce) && wp_verify_nonce($nonce, 'storage_auth_nonce')) {
+			$this->set_connection_status(false);
 			$this->authenticate_storage((string) $updraftplus_instance);
 		}
 	}
@@ -913,17 +914,15 @@ abstract class UpdraftPlus_BackupModule {
 	}
 
 	/**
-	 * Set the connection status.
-	 *
-	 * This method is intended to be used internally or by subclasses
-	 * to update the connection result in a controlled way.
+	 * Set the remote storage connection status.
 	 *
 	 * @param bool $status True if connection is successful, false otherwise.
 	 *
 	 * @return void
 	 */
-	protected function set_connection_status($status) {
+	public function set_connection_status($status) {
 		$this->is_connection_successful = (bool) $status;
+		do_action('updraftplus_remote_storage_connection_status_changed', $status, $this);
 	}
 
 	/**

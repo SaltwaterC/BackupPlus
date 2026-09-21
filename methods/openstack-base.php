@@ -541,7 +541,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			return;
 		}
 
-		$try_file = md5(rand()).'.txt';
+		$try_file = md5(wp_rand()).'.txt';
 
 		try {
 			$object = $container_object->uploadObject($try_file, 'UpdraftPlus test file', array('content-type' => 'text/plain'));
