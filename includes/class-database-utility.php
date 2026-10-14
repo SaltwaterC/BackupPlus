@@ -182,6 +182,137 @@ class UpdraftPlus_Database_Utility {
 	}
 
 	/**
+	 * Whether the SQL is well-formed and complete in relation to balanced quotes, brackets, backticks and comments. This is *not* a complete SQL parser; its aim is to detect and fail unfinished SQL statements. It does not look at delimiters.
+	 *
+	 * @param String $sql - the SQL to  check
+	 *
+	 * @return Boolean
+	 */
+	public static function sql_statement_is_finished($sql) {
+		
+		$bracket_open_levels = 0;
+		
+		$open = false;
+		
+		$comment_open = false;
+		
+		$is_backslash_active = false;
+		
+		$rest_of_line_is_comment = false;
+		
+		$sequence = '';
+		
+		$sql_length = strlen($sql);
+		
+		for ($i = 0; $i < $sql_length; $i++) {
+			
+			// if ($i > 0) echo "$char($i) : open=$open, sequence=$sequence, bracket_open_levels=$bracket_open_levels, is_backslash_active=$is_backslash_active,  comment_open=$comment_open, rest_of_line_is_comment=$rest_of_line_is_comment\n";
+			
+			$char = $sql[$i];
+			$char_before = $i > 0 ? $sql[$i-1] : false;
+			$char_after = $i < $sql_length-1 ? $sql[$i+1] : false;
+			
+			if ($rest_of_line_is_comment) {
+				if ("\n" === $char || "\r" === $char) $rest_of_line_is_comment = false;
+				continue;
+			}
+			
+			if ($is_backslash_active) {
+				// Previous character was a backslash; thus, this character is to be treated literally
+				$is_backslash_active = false;
+				continue;
+			}
+			
+			if ('\\' == $char) {
+				$is_backslash_active = true;
+				continue;
+			}
+			
+			// N.B. Nested comments are not allowed in future MySQL - https://dev.mysql.com/doc/refman/8.4/en/comments.html
+			// Note that given the assumptions of this function, comment handling should not be necessary (only an admin attack could introduce comment-based confusion, where $open is false).
+			if (false === $open && $comment_open && (('*' === $char && '/' === $char_after) || ('*' === $char_before && '/' === $char))) {
+				$comment_open = false;
+				continue;
+			}
+			
+			if ($comment_open) continue;
+			
+			if (false === $open && (('/' === $char && '*' === $char_after) || ('/' === $char_before && '*' === $char))) {
+				$comment_open = true;
+				continue;
+			}
+			
+			// All further parsing of the line ends
+			if (false === $open && ('#' == $char || ('-' === $char && '-' === $char_after))) {
+				if ('#'  == $char || ($i < strlen($sql) - 2 && (' ' == $sql[$i+2] || ord($sql[$i+2]) < 32))) {
+					$rest_of_line_is_comment = true;
+					continue;
+				}
+			}
+			
+			if ('(' === $char && false === $open) {
+				$bracket_open_levels++;
+				continue;
+			}
+			
+			if (')' === $char && false === $open) {
+				// Immediate abort: a bracket that was never open has been closed
+				if ($bracket_open_levels < 1) return false;
+				$bracket_open_levels--;
+				continue;
+			}
+			
+			// Single quote, double quote or backtick. Inside this, the same character doubled means a literal. Otherwise, it closes the opened entity.
+			if (in_array($char, array("'", '"', '`'))) {
+				
+				// Something other than the current entity is open; in this context, the entity has no special meaning
+				if ($char !== $open && false !== $open) {
+					continue;
+				}
+				
+				// Nothing is open
+				if (false === $open) {
+					$open = $char;
+					$sequence = '';
+					continue;
+				}
+				
+				// A doubled entity
+				if ($char === $open) {
+					if ($char === $char_after && '' === $sequence) {
+						// Another of the same entity is coming after: it's a literal
+						$sequence = $char;
+					} elseif ($char === $sequence) {
+						// Here is the entity "after"
+						$sequence = '';
+					} else {
+						// The entity is being closed
+						$open = false;
+					}
+				}
+				continue;
+			}
+			
+		}
+		
+		// echo "$char : open=$open, sequence=$sequence, bracket_open_levels=$bracket_open_levels, is_backslash_active=$is_backslash_active, comment_open=$comment_open, rest_of_line_is_comment=$rest_of_line_is_comment (END)\n";
+		
+		if ($is_backslash_active) return false;
+		
+		if (false !== $open) return false;
+		
+		if (0 !== $bracket_open_levels) return false;
+		
+		if ($comment_open) return false;
+		
+		// This condition should not be possible, as it is only set if we know that the next character will fulfil the condition to reset it to empty. However, the check is harmless.
+		if ('' !== $sequence) return false;
+		
+		return true;
+		
+	}
+	
+	/**
 	 *
 	 * This function is adapted from the set_sql_mode() method in WordPress wpdb class but with few modifications applied, this can be used to switch between different sets of SQL modes.
 	 *
@@ -216,6 +347,7 @@ class UpdraftPlus_Database_Utility {
 			'NO_ZERO_DATE',
 			'ONLY_FULL_GROUP_BY',
 			'TRADITIONAL',
+			'NO_BACKSLASH_ESCAPE',
 		), $strict_modes));
 
 		$class = __CLASS__;

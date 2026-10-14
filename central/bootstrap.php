@@ -409,7 +409,7 @@ class UpdraftCentral_Main {
 			$extra_info['name'] = (string) $params['key_description'];
 		}
 
-		$key_size = (empty($params['key_size']) || !is_numeric($params['key_size']) || $params['key_size'] < 512) ? 2048 : (int) $params['key_size'];
+		$key_size = (empty($params['key_size']) || !is_numeric($params['key_size']) || $params['key_size'] < 2048) ? 2048 : (int) $params['key_size'];
 		
 		$extra_info['key_size'] = $key_size;
 		
@@ -495,7 +495,7 @@ class UpdraftCentral_Main {
 		
 		if (function_exists('set_time_limit')) @set_time_limit(UPDRAFTCENTRAL_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		
-		$key_size = (empty($extra_info['key_size']) || !is_numeric($extra_info['key_size']) || $extra_info['key_size'] < 512) ? 2048 : (int) $extra_info['key_size'];
+		$key_size = (empty($extra_info['key_size']) || !is_numeric($extra_info['key_size']) || $extra_info['key_size'] < 2048) ? 2048 : (int) $extra_info['key_size'];
 
 		if (is_object($ud_rpc) && $ud_rpc->generate_new_keypair($key_size)) {
 		
@@ -771,8 +771,6 @@ class UpdraftCentral_Main {
 						<td>
 							<?php $updraftcentral_host_plugin->retrieve_show_message('encryption_key_size', true); ?>
 							<select style="" id="updraftcentral_keycreate_keysize">
-								<option value="512"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('bits').' - '.$updraftcentral_host_plugin->retrieve_show_message('easy_to_break'), '512')); ?></option>
-								<option value="1024"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('bits').' - '.$updraftcentral_host_plugin->retrieve_show_message('faster'), '1024')); ?></option>
 								<option value="2048" selected="selected"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('bytes').' - '.$updraftcentral_host_plugin->retrieve_show_message('recommended'), '2048')); ?></option>
 								<option value="4096"><?php echo wp_kses_post(sprintf($updraftcentral_host_plugin->retrieve_show_message('bits').' - '.$updraftcentral_host_plugin->retrieve_show_message('slower'), '4096')); ?></option>
 							</select>

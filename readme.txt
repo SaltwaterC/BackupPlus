@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.9
 Tested up to: 7.1
-Stable tag: 1.26.8
+Stable tag: 1.26.9
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,7 +179,13 @@ The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place t
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
-= 1.26.8 - 17/Sep/2026
+= 1.26.9 - 14/Oct/2026 =
+
+* SECURITY: On a site where an attacker who is not an admin has the ability to insert a database cell over 1MB with his own chosen content, if the site owner backs up and restores the site, then upon restoring, arbitrary SQL from the attacker may be run. Thanks to Wordfence for the responsible disclosure.
+* TWEAK: Drop support for generating RSA keys less than 2048 bits
+* TWEAK: If set, unset the SQL compatibility mode NO_BACKSLASH_ESCAPE
+
+= 1.26.8 - 17/Sep/2026 =
 
 * SECURITY: On a site which has been migrated (i.e. moved to a new address using UpdraftPlus's migration  feature), and is using an .htaccess file, and the .htaccess file has not been updated with the new site reference, and where the site owner does not respond to the notice to do so, and where the site has non-admin users who can login to the WP dashboard, and where the site had saved storage login credentials in the UpdraftPlus settings, such a logged-in user could access some of those credentials (e.g. could access FTP, but not Dropbox). Thanks to Jakub Herman for notifying us of this issue (via WPScan).
 * FEATURE: Implemented an onboarding wizard to assist first-time users with plugin configuration (requires WordPress 6.2+ and PHP 7.4+).
@@ -2175,7 +2181,7 @@ Older changes are found <a href="https://plugins.svn.wordpress.org/updraftplus/t
 
 == License ==
 
-    Copyright 2011-24 David Anderson
+    Copyright 2011-26 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -2196,4 +2202,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.8: Onboarding Wizard, Azure legacy blob storage retirement, PHP < 5.6.1 feature deprecation warning, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.9: Important security update, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.

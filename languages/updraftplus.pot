@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: UpdraftPlus - Backup/Restore 1.26.8\n"
+"Project-Id-Version: UpdraftPlus - Backup/Restore 1.26.9\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/updraftplus\n"
 "Last-Translator: Team Updraft <mail@example.com>\n"
 "Language-Team: Team Updraft <mail@example.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T13:24:21+00:00\n"
+"POT-Creation-Date: 2026-10-14T15:14:46+00:00\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: updraftplus\n"
 
@@ -130,7 +130,7 @@ msgstr ""
 #: addons/autobackup.php:379
 #: addons/autobackup.php:471
 #: admin.php:970
-#: central/translations-central.php:108
+#: central/translations-central.php:106
 #: methods/remotesend.php:86
 #: methods/remotesend.php:94
 #: methods/remotesend.php:256
@@ -510,10 +510,10 @@ msgstr ""
 #: includes/class-remote-send.php:497
 #: includes/class-remote-send.php:555
 #: includes/class-remote-send.php:585
-#: includes/class-remote-send.php:622
-#: includes/class-remote-send.php:632
-#: includes/class-remote-send.php:637
-#: includes/class-remote-send.php:649
+#: includes/class-remote-send.php:629
+#: includes/class-remote-send.php:639
+#: includes/class-remote-send.php:644
+#: includes/class-remote-send.php:656
 #: includes/class-search-replace.php:341
 #: includes/class-search-replace.php:482
 #: includes/migrator-lite.php:683
@@ -526,7 +526,7 @@ msgstr ""
 #: restorer.php:602
 #: restorer.php:630
 #: restorer.php:2400
-#: restorer.php:4534
+#: restorer.php:4558
 msgid "Error:"
 msgstr ""
 
@@ -1982,45 +1982,38 @@ msgstr ""
 msgid "Encryption key size:"
 msgstr ""
 
-#. translators: %s: Number of Bits "1024".
-#. translators: %s: Number of Bits "4096".
-#. translators: %s: Number of bits
-#: addons/migrator.php:626
-#: addons/migrator.php:640
-#: central/translations-central.php:62
-#, php-format
-msgid "%s bits"
-msgstr ""
-
-#: addons/migrator.php:627
-#: central/translations-central.php:66
-msgid "faster (possibility for slow PHP installs)"
-msgstr ""
-
 #. translators: %s: Number of Bytes "2048".
 #. translators: %s: Number of bytes
-#: addons/migrator.php:633
+#: addons/migrator.php:626
 #: central/translations-central.php:64
 #, php-format
 msgid "%s bytes"
 msgstr ""
 
-#: addons/migrator.php:634
-#: central/translations-central.php:67
+#: addons/migrator.php:627
+#: central/translations-central.php:65
 msgid "recommended"
 msgstr ""
 
-#: addons/migrator.php:641
-#: central/translations-central.php:68
+#. translators: %s: Number of Bits "4096".
+#. translators: %s: Number of bits
+#: addons/migrator.php:633
+#: central/translations-central.php:62
+#, php-format
+msgid "%s bits"
+msgstr ""
+
+#: addons/migrator.php:634
+#: central/translations-central.php:66
 msgid "slower, strongest"
 msgstr ""
 
-#: addons/migrator.php:646
-#: central/translations-central.php:122
+#: addons/migrator.php:639
+#: central/translations-central.php:120
 msgid "Create key"
 msgstr ""
 
-#: addons/migrator.php:651
+#: addons/migrator.php:644
 msgid "Your new key:"
 msgstr ""
 
@@ -2051,7 +2044,7 @@ msgstr ""
 #: addons/sftp.php:726
 #: addons/webdav.php:524
 #: admin.php:1042
-#: includes/class-remote-send.php:609
+#: includes/class-remote-send.php:616
 #: includes/migrator-lite.php:265
 #: methods/addon-base-v2.php:370
 #: methods/cloudfiles-new.php:209
@@ -3566,9 +3559,9 @@ msgstr ""
 #: methods/addon-base-v2.php:254
 #: methods/addon-base-v2.php:285
 #: methods/googledrive.php:1545
-#: restorer.php:4334
-#: restorer.php:4361
-#: restorer.php:4491
+#: restorer.php:4358
+#: restorer.php:4385
+#: restorer.php:4515
 #: udaddons/options.php:253
 #: updraftplus.php:251
 msgid "Error"
@@ -3994,7 +3987,7 @@ msgid "Trying..."
 msgstr ""
 
 #: admin.php:974
-#: central/translations-central.php:104
+#: central/translations-central.php:102
 msgid "Fetching..."
 msgstr ""
 
@@ -4156,14 +4149,14 @@ msgstr ""
 #: admin.php:4488
 #: admin.php:4520
 #: admin.php:5535
-#: includes/class-remote-send.php:756
+#: includes/class-remote-send.php:763
 #: templates/wp-admin/settings/existing-backups-table.php:171
 #: templates/wp-admin/settings/file-backup-exclude.php:11
 msgid "Delete"
 msgstr ""
 
 #: admin.php:1013
-#: central/translations-central.php:72
+#: central/translations-central.php:70
 msgid "Create"
 msgstr ""
 
@@ -4246,17 +4239,17 @@ msgid "Adding..."
 msgstr ""
 
 #: admin.php:1034
-#: central/translations-central.php:107
+#: central/translations-central.php:105
 msgid "Creating..."
 msgstr ""
 
 #: admin.php:1034
-#: central/translations-central.php:107
+#: central/translations-central.php:105
 msgid "your PHP install lacks the openssl module; as a result, this can take minutes; if nothing has happened by then, then you should either try a smaller key size, or ask your web hosting company how to enable this PHP module on your setup."
 msgstr ""
 
 #: admin.php:1035
-#: includes/class-remote-send.php:698
+#: includes/class-remote-send.php:705
 msgid "Send to site:"
 msgstr ""
 
@@ -4275,13 +4268,13 @@ msgid "key name"
 msgstr ""
 
 #: admin.php:1045
-#: central/translations-central.php:105
+#: central/translations-central.php:103
 #: templates/wp-admin/settings/existing-backups-table.php:177
 msgid "Deleting..."
 msgstr ""
 
 #: admin.php:1046
-#: central/translations-central.php:106
+#: central/translations-central.php:104
 msgid "Please enter a valid URL"
 msgstr ""
 
@@ -4297,7 +4290,7 @@ msgstr ""
 #: admin.php:1049
 #: includes/class-commands.php:1020
 #: includes/class-remote-send.php:493
-#: includes/class-remote-send.php:709
+#: includes/class-remote-send.php:716
 msgid "Send"
 msgstr ""
 
@@ -4467,12 +4460,12 @@ msgid "Loading log file"
 msgstr ""
 
 #: admin.php:1096
-#: central/translations-central.php:109
+#: central/translations-central.php:107
 msgid "Please enter the URL where your UpdraftCentral dashboard is hosted."
 msgstr ""
 
 #: admin.php:1097
-#: central/translations-central.php:110
+#: central/translations-central.php:108
 msgid "Please enter a valid URL e.g http://example.com"
 msgstr ""
 
@@ -4747,7 +4740,7 @@ msgstr ""
 #: admin.php:1174
 #: admin.php:3240
 #: class-updraftplus.php:5433
-#: restorer.php:3949
+#: restorer.php:3973
 msgid "Warning:"
 msgstr ""
 
@@ -5752,8 +5745,8 @@ msgstr ""
 #: includes/class-remote-send.php:458
 #: includes/class-storage-methods-interface.php:329
 #: restorer.php:600
-#: restorer.php:4338
-#: restorer.php:4494
+#: restorer.php:4362
+#: restorer.php:4518
 msgid "OK"
 msgstr ""
 
@@ -6495,16 +6488,16 @@ msgstr ""
 msgid "check your log for more details."
 msgstr ""
 
-#: central/bootstrap.php:805
-#: central/translations-central.php:112
+#: central/bootstrap.php:803
+#: central/translations-central.php:110
 msgid "Copy to clipboard"
 msgstr ""
 
-#: central/bootstrap.php:807
+#: central/bootstrap.php:805
 msgid "Your web browser prevented the copy operation."
 msgstr ""
 
-#: central/bootstrap.php:807
+#: central/bootstrap.php:805
 msgid "Follow this link to read about how to set browser permission"
 msgstr ""
 
@@ -6820,169 +6813,165 @@ msgstr ""
 msgid "Enter any description"
 msgstr ""
 
-#: central/translations-central.php:65
-msgid "easy to break, fastest"
-msgstr ""
-
-#: central/translations-central.php:69
+#: central/translations-central.php:67
 msgid "Use the alternative method for making a connection with the dashboard."
 msgstr ""
 
-#: central/translations-central.php:70
+#: central/translations-central.php:68
 msgid "More information..."
 msgstr ""
 
-#: central/translations-central.php:71
+#: central/translations-central.php:69
 msgid "This is useful if the dashboard webserver cannot be contacted with incoming traffic by this website (for example, this is the case if this website is hosted on the public Internet, but the UpdraftCentral dashboard is on localhost, or on an Intranet, or if this website has an outgoing firewall), or if the dashboard website does not have a SSL certificate."
 msgstr ""
 
-#: central/translations-central.php:73
+#: central/translations-central.php:71
 #: methods/updraftvault.php:609
 #: templates/wp-admin/settings/exclude-settings-modal/exclude-panel-heading.php:6
 msgid "Back..."
 msgstr ""
 
-#: central/translations-central.php:74
+#: central/translations-central.php:72
 msgid "View recent UpdraftCentral log events"
 msgstr ""
 
-#: central/translations-central.php:75
+#: central/translations-central.php:73
 msgid "UpdraftCentral (Remote Control)"
 msgstr ""
 
 #. translators: %s: Location where WordPress sites can be controlled from
-#: central/translations-central.php:77
+#: central/translations-central.php:75
 #, php-format
 msgid "UpdraftCentral enables control of your WordPress sites %s from a central dashboard."
 msgstr ""
 
-#: central/translations-central.php:79
+#: central/translations-central.php:77
 msgid "(including management of WP-Optimize)"
 msgstr ""
 
-#: central/translations-central.php:80
+#: central/translations-central.php:78
 msgid "(including management of backups and updates)"
 msgstr ""
 
-#: central/translations-central.php:82
+#: central/translations-central.php:80
 msgid "Read more about it here."
 msgstr ""
 
-#: central/translations-central.php:83
+#: central/translations-central.php:81
 msgid "Create another key"
 msgstr ""
 
-#: central/translations-central.php:84
+#: central/translations-central.php:82
 msgid "Unable to connect to the filesystem"
 msgstr ""
 
 #. translators: %s: Service name
-#: central/translations-central.php:86
+#: central/translations-central.php:84
 #, php-format
 msgid "Unable to activate %s successfully."
 msgstr ""
 
 #. translators: %s: Service name
-#: central/translations-central.php:88
+#: central/translations-central.php:86
 #, php-format
 msgid "Make sure that this %s is compatible with your remote WordPress version."
 msgstr ""
 
 #. translators: %s: Installed WordPress version
-#: central/translations-central.php:90
+#: central/translations-central.php:88
 #, php-format
 msgid "WordPress version currently installed in your remote website is %s."
 msgstr ""
 
 #. translators: %s: Service name
-#: central/translations-central.php:92
+#: central/translations-central.php:90
 #, php-format
 msgid "Unable to install %s."
 msgstr ""
 
 #. translators: %s: Expected file type
-#: central/translations-central.php:94
+#: central/translations-central.php:92
 #, php-format
 msgid "Make sure you upload the correct file and that the zip file is a valid %s file (not corrupted) and try uploading the file again."
 msgstr ""
 
-#: central/translations-central.php:95
+#: central/translations-central.php:93
 msgid "Failed to attach media."
 msgstr ""
 
-#: central/translations-central.php:96
+#: central/translations-central.php:94
 msgid "Media has been attached to post."
 msgstr ""
 
-#: central/translations-central.php:97
+#: central/translations-central.php:95
 msgid "Failed to detach media."
 msgstr ""
 
-#: central/translations-central.php:98
+#: central/translations-central.php:96
 msgid "Media has been detached from post."
 msgstr ""
 
-#: central/translations-central.php:99
+#: central/translations-central.php:97
 msgid "Failed to delete selected media."
 msgstr ""
 
-#: central/translations-central.php:100
+#: central/translations-central.php:98
 msgid "Selected media has been deleted successfully."
 msgstr ""
 
-#: central/translations-central.php:101
+#: central/translations-central.php:99
 msgid "Unattached"
 msgstr ""
 
-#: central/translations-central.php:102
+#: central/translations-central.php:100
 msgid "Default template"
 msgstr ""
 
-#: central/translations-central.php:103
+#: central/translations-central.php:101
 msgid "Expected parameter(s) missing."
 msgstr ""
 
-#: central/translations-central.php:111
+#: central/translations-central.php:109
 msgid "Sorry, you do not have enough privilege to execute the requested action."
 msgstr ""
 
-#: central/translations-central.php:113
+#: central/translations-central.php:111
 msgid "The key was copied to the clipboard."
 msgstr ""
 
-#: central/translations-central.php:114
+#: central/translations-central.php:112
 msgid "The attempt to copy to the clipboard failed."
 msgstr ""
 
-#: central/translations-central.php:115
+#: central/translations-central.php:113
 msgid "WP_Optimize is not installed or active."
 msgstr ""
 
-#: central/translations-central.php:116
+#: central/translations-central.php:114
 msgid "Log file does not exist or could not be read."
 msgstr ""
 
-#: central/translations-central.php:117
+#: central/translations-central.php:115
 msgid "Security check failed; try refreshing the page."
 msgstr ""
 
-#: central/translations-central.php:117
+#: central/translations-central.php:115
 msgid "If refreshing the page does not help then perhaps you do not have sufficient privilege to manage WP-Optimize."
 msgstr ""
 
-#: central/translations-central.php:118
+#: central/translations-central.php:116
 msgid "No such command found."
 msgstr ""
 
-#: central/translations-central.php:119
+#: central/translations-central.php:117
 msgid "You are not allowed to run this command."
 msgstr ""
 
-#: central/translations-central.php:120
+#: central/translations-central.php:118
 msgid "The command is either not found or not allowed."
 msgstr ""
 
-#: central/translations-central.php:121
+#: central/translations-central.php:119
 msgid "The command can only be executed by a network admin."
 msgstr ""
 
@@ -7443,7 +7432,7 @@ msgstr ""
 #. translators: %s: UpdraftPlus Premium
 #. translators: %s: String 'UpdraftPlus Premium'
 #: class-updraftplus.php:5428
-#: restorer.php:3186
+#: restorer.php:3205
 #, php-format
 msgid "To import an ordinary WordPress site into a multisite installation requires %s."
 msgstr ""
@@ -7461,7 +7450,7 @@ msgid "If you want to restore a multisite backup, you should first set up your W
 msgstr ""
 
 #: class-updraftplus.php:5440
-#: restorer.php:3192
+#: restorer.php:3211
 msgid "Site information:"
 msgstr ""
 
@@ -7717,32 +7706,32 @@ msgid "Invalid tool type"
 msgstr ""
 
 #. translators: 1: Last database error, 2: SQL create function statement.
-#: includes/class-database-utility.php:600
+#: includes/class-database-utility.php:732
 #, php-format
 msgid "An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)"
 msgstr ""
 
 #. translators: 1: Last database error, 2: Additional error details.
-#: includes/class-database-utility.php:669
+#: includes/class-database-utility.php:801
 #, php-format
 msgid "An error occurred while attempting to retrieve routine status (%1$s %2$s)"
 msgstr ""
 
 #. translators: 1: Last database error, 2: Last executed SQL query.
-#: includes/class-database-utility.php:682
+#: includes/class-database-utility.php:814
 #, php-format
 msgid "An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)"
 msgstr ""
 
-#: includes/class-database-utility.php:729
+#: includes/class-database-utility.php:861
 msgid "WP-Optimize is installed but currently inactive."
 msgstr ""
 
-#: includes/class-database-utility.php:729
+#: includes/class-database-utility.php:861
 msgid "Follow this link to activate the WP-Optimize plugin."
 msgstr ""
 
-#: includes/class-database-utility.php:733
+#: includes/class-database-utility.php:865
 msgid "Follow this link to install the WP-Optimize plugin."
 msgstr ""
 
@@ -8599,69 +8588,69 @@ msgid "It is deprecated, causes encryption to malfunction, and should be turned 
 msgstr ""
 
 #. translators: %s: Key.
-#: includes/class-remote-send.php:609
+#: includes/class-remote-send.php:616
 msgid "key"
 msgstr ""
 
-#: includes/class-remote-send.php:624
+#: includes/class-remote-send.php:631
 msgid "The entered key was the wrong length - please try again."
 msgstr ""
 
-#: includes/class-remote-send.php:626
-#: includes/class-remote-send.php:628
-#: includes/class-remote-send.php:632
+#: includes/class-remote-send.php:633
+#: includes/class-remote-send.php:635
+#: includes/class-remote-send.php:639
 msgid "The entered key was corrupt - please try again."
 msgstr ""
 
-#: includes/class-remote-send.php:637
+#: includes/class-remote-send.php:644
 msgid "The entered key does not belong to a remote site (it belongs to this one)."
 msgstr ""
 
-#: includes/class-remote-send.php:661
+#: includes/class-remote-send.php:668
 msgid "The key was successfully added."
 msgstr ""
 
-#: includes/class-remote-send.php:661
+#: includes/class-remote-send.php:668
 msgid "It is for sending backups to the following site: "
 msgstr ""
 
-#: includes/class-remote-send.php:692
+#: includes/class-remote-send.php:699
 msgid "No receiving sites have yet been added."
 msgstr ""
 
-#: includes/class-remote-send.php:716
+#: includes/class-remote-send.php:723
 msgid "Add a site"
 msgstr ""
 
-#: includes/class-remote-send.php:718
+#: includes/class-remote-send.php:725
 msgid "You are about to permanently delete the list of existing sites."
 msgstr ""
 
-#: includes/class-remote-send.php:718
+#: includes/class-remote-send.php:725
 msgid "This action cannot be undone."
 msgstr ""
 
-#: includes/class-remote-send.php:718
+#: includes/class-remote-send.php:725
 msgid "'Cancel' to stop, 'OK' to delete."
 msgstr ""
 
-#: includes/class-remote-send.php:720
+#: includes/class-remote-send.php:727
 msgid "Clear list of existing sites"
 msgstr ""
 
-#: includes/class-remote-send.php:742
+#: includes/class-remote-send.php:749
 msgid "No keys to allow remote sites to send backup data here have yet been created."
 msgstr ""
 
-#: includes/class-remote-send.php:751
+#: includes/class-remote-send.php:758
 msgid "Existing keys"
 msgstr ""
 
-#: includes/class-remote-send.php:785
+#: includes/class-remote-send.php:792
 msgid "There was an error while trying to remove the list of existing sites."
 msgstr ""
 
-#: includes/class-remote-send.php:789
+#: includes/class-remote-send.php:796
 msgid "The list of existing sites has been removed"
 msgstr ""
 
@@ -8684,7 +8673,7 @@ msgid "\"%1$s\" has no primary key, manual change needed on row %2$s."
 msgstr ""
 
 #: includes/class-search-replace.php:482
-#: restorer.php:4128
+#: restorer.php:4152
 msgid "the database query being run was:"
 msgstr ""
 
@@ -9025,15 +9014,15 @@ msgstr ""
 #. translators: %s: String 'search and replace'
 #: includes/migrator-lite.php:698
 #: includes/migrator-lite.php:1116
-#: restorer.php:4547
+#: restorer.php:4571
 #, php-format
 msgid "Failed: the %s operation was not able to start."
 msgstr ""
 
 #: includes/migrator-lite.php:699
 #: includes/migrator-lite.php:705
-#: restorer.php:4548
-#: restorer.php:4554
+#: restorer.php:4572
+#: restorer.php:4578
 msgid "search and replace"
 msgstr ""
 
@@ -9041,7 +9030,7 @@ msgstr ""
 #. translators: %s: String 'search and replace'
 #: includes/migrator-lite.php:704
 #: includes/migrator-lite.php:1119
-#: restorer.php:4553
+#: restorer.php:4577
 #, php-format
 msgid "Failed: we did not understand the result returned by the %s operation."
 msgstr ""
@@ -11340,8 +11329,8 @@ msgid "An error occurred while attempting to set a new value to the MySQL global
 msgstr ""
 
 #: restorer.php:2510
-#: restorer.php:3174
-#: restorer.php:3356
+#: restorer.php:3193
+#: restorer.php:3380
 msgid "Old table prefix:"
 msgstr ""
 
@@ -11354,7 +11343,7 @@ msgstr ""
 #. translators: 1: Requested character set, 2: Fallback character set.
 #. translators: 1: Requested charset, 2: Fallback charset
 #: restorer.php:2655
-#: restorer.php:3476
+#: restorer.php:3500
 #, php-format
 msgid "Requested character set (%1$s) is not present - changing to %2$s."
 msgstr ""
@@ -11401,64 +11390,64 @@ msgstr ""
 msgid "Failed to open database file"
 msgstr ""
 
-#: restorer.php:3014
-#: restorer.php:3063
+#: restorer.php:3033
+#: restorer.php:3082
 msgid "Your database user does not have permission to drop tables"
 msgstr ""
 
-#: restorer.php:3017
+#: restorer.php:3036
 msgid "Your database user does not have permission to create tables."
 msgstr ""
 
-#: restorer.php:3017
+#: restorer.php:3036
 msgid "We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
 msgstr ""
 
-#: restorer.php:3069
+#: restorer.php:3088
 msgid "Your database user does not have permission to drop tables."
 msgstr ""
 
 #. translators: %s: Error message
-#: restorer.php:3071
+#: restorer.php:3090
 #, php-format
 msgid "We will attempt to restore by simply emptying the tables; this should work as long as you are restoring from a WordPress version with the same database structure (%s)"
 msgstr ""
 
 #. translators: %s: Old site
-#: restorer.php:3144
+#: restorer.php:3163
 #, php-format
 msgid "Backup of: %s"
 msgstr ""
 
-#: restorer.php:3151
+#: restorer.php:3170
 msgid "Backup created by:"
 msgstr ""
 
-#: restorer.php:3156
+#: restorer.php:3175
 msgid "Site home:"
 msgstr ""
 
-#: restorer.php:3162
+#: restorer.php:3181
 msgid "Content URL:"
 msgstr ""
 
-#: restorer.php:3167
+#: restorer.php:3186
 msgid "Uploads URL:"
 msgstr ""
 
-#: restorer.php:3177
+#: restorer.php:3196
 msgid "Skipped tables:"
 msgstr ""
 
-#: restorer.php:3206
+#: restorer.php:3225
 msgid "Old ABSPATH:"
 msgstr ""
 
-#: restorer.php:3212
+#: restorer.php:3231
 msgid "UpdraftPlus plugin slug:"
 msgstr ""
 
-#: restorer.php:3294
+#: restorer.php:3313
 msgid "Split line to avoid exceeding maximum packet size"
 msgstr ""
 
@@ -11466,79 +11455,79 @@ msgstr ""
 #. translators: %s: String 'INSERT (options)'
 #. translators: %s: String 'CREATE TABLE'
 #. translators: %s: String 'SET NAMES'
-#: restorer.php:3326
-#: restorer.php:4082
-#: restorer.php:4159
-#: restorer.php:4181
+#: restorer.php:3350
+#: restorer.php:4106
+#: restorer.php:4183
+#: restorer.php:4205
 #, php-format
 msgid "An error occurred on the first %s command - aborting run"
 msgstr ""
 
 #. translators: 1: Charset found, 2: Changed charset to
-#: restorer.php:3469
+#: restorer.php:3493
 #, php-format
 msgid "Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset()."
 msgstr ""
 
 #. translators: %s: Table name to be excluded (could be users or usermeta)
-#: restorer.php:3781
+#: restorer.php:3805
 #, php-format
 msgid "Skipping table %s: this table will not be restored"
 msgstr ""
 
 #. translators: %s: Table name to be excluded (user's chosen)
-#: restorer.php:3784
+#: restorer.php:3808
 #, php-format
 msgid "Skipping table %s: user has chosen not to restore this table"
 msgstr ""
 
 #. translators: 1: Table name, 2: Last table name
-#: restorer.php:3790
+#: restorer.php:3814
 #, php-format
 msgid "Skipping table %1$s: already restored on a prior run; next table to restore: %2$s"
 msgstr ""
 
 #. translators: %s: SQL line
-#: restorer.php:3952
+#: restorer.php:3976
 #, php-format
 msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
 msgstr ""
 
 #. translators: %s: Error message
-#: restorer.php:4126
+#: restorer.php:4150
 #, php-format
 msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
 msgid "An error (%s) occurred:"
 msgstr ""
 
-#: restorer.php:4146
+#: restorer.php:4170
 msgid "The Database connection has been closed and cannot be reopened."
 msgstr ""
 
-#: restorer.php:4174
+#: restorer.php:4198
 msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
 msgstr ""
 
 #. translators: %s: String '5.5'
-#: restorer.php:4176
+#: restorer.php:4200
 #, php-format
 msgid "This database needs to be deployed on MySQL version %s or later."
 msgstr ""
 
 #. translators: %s: The character set
-#: restorer.php:4183
+#: restorer.php:4207
 #, php-format
 msgid "To use this backup, your database server needs to support the %s character set."
 msgstr ""
 
-#: restorer.php:4196
+#: restorer.php:4220
 msgid "Too many database errors have occurred - aborting"
 msgstr ""
 
 #. translators: %s: String 'option' for table
 #. translators: %s: String 'usermeta' for table
-#: restorer.php:4331
-#: restorer.php:4455
+#: restorer.php:4355
+#: restorer.php:4479
 #, php-format
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr ""
