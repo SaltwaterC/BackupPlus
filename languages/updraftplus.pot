@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: UpdraftPlus - Backup/Restore 1.26.9\n"
+"Project-Id-Version: UpdraftPlus - Backup/Restore 1.26.10\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/updraftplus\n"
 "Last-Translator: Team Updraft <mail@example.com>\n"
 "Language-Team: Team Updraft <mail@example.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-14T15:14:46+00:00\n"
+"POT-Creation-Date: 2026-10-15T14:53:27+00:00\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: updraftplus\n"
 
@@ -526,7 +526,7 @@ msgstr ""
 #: restorer.php:602
 #: restorer.php:630
 #: restorer.php:2400
-#: restorer.php:4558
+#: restorer.php:4560
 msgid "Error:"
 msgstr ""
 
@@ -3559,9 +3559,9 @@ msgstr ""
 #: methods/addon-base-v2.php:254
 #: methods/addon-base-v2.php:285
 #: methods/googledrive.php:1545
-#: restorer.php:4358
-#: restorer.php:4385
-#: restorer.php:4515
+#: restorer.php:4360
+#: restorer.php:4387
+#: restorer.php:4517
 #: udaddons/options.php:253
 #: updraftplus.php:251
 msgid "Error"
@@ -4740,7 +4740,7 @@ msgstr ""
 #: admin.php:1174
 #: admin.php:3240
 #: class-updraftplus.php:5433
-#: restorer.php:3973
+#: restorer.php:3975
 msgid "Warning:"
 msgstr ""
 
@@ -5745,8 +5745,8 @@ msgstr ""
 #: includes/class-remote-send.php:458
 #: includes/class-storage-methods-interface.php:329
 #: restorer.php:600
-#: restorer.php:4362
-#: restorer.php:4518
+#: restorer.php:4364
+#: restorer.php:4520
 msgid "OK"
 msgstr ""
 
@@ -8673,7 +8673,7 @@ msgid "\"%1$s\" has no primary key, manual change needed on row %2$s."
 msgstr ""
 
 #: includes/class-search-replace.php:482
-#: restorer.php:4152
+#: restorer.php:4154
 msgid "the database query being run was:"
 msgstr ""
 
@@ -9014,15 +9014,15 @@ msgstr ""
 #. translators: %s: String 'search and replace'
 #: includes/migrator-lite.php:698
 #: includes/migrator-lite.php:1116
-#: restorer.php:4571
+#: restorer.php:4573
 #, php-format
 msgid "Failed: the %s operation was not able to start."
 msgstr ""
 
 #: includes/migrator-lite.php:699
 #: includes/migrator-lite.php:705
-#: restorer.php:4572
-#: restorer.php:4578
+#: restorer.php:4574
+#: restorer.php:4580
 msgid "search and replace"
 msgstr ""
 
@@ -9030,7 +9030,7 @@ msgstr ""
 #. translators: %s: String 'search and replace'
 #: includes/migrator-lite.php:704
 #: includes/migrator-lite.php:1119
-#: restorer.php:4577
+#: restorer.php:4579
 #, php-format
 msgid "Failed: we did not understand the result returned by the %s operation."
 msgstr ""
@@ -11330,7 +11330,7 @@ msgstr ""
 
 #: restorer.php:2510
 #: restorer.php:3193
-#: restorer.php:3380
+#: restorer.php:3382
 msgid "Old table prefix:"
 msgstr ""
 
@@ -11343,7 +11343,7 @@ msgstr ""
 #. translators: 1: Requested character set, 2: Fallback character set.
 #. translators: 1: Requested charset, 2: Fallback charset
 #: restorer.php:2655
-#: restorer.php:3500
+#: restorer.php:3502
 #, php-format
 msgid "Requested character set (%1$s) is not present - changing to %2$s."
 msgstr ""
@@ -11447,7 +11447,7 @@ msgstr ""
 msgid "UpdraftPlus plugin slug:"
 msgstr ""
 
-#: restorer.php:3313
+#: restorer.php:3315
 msgid "Split line to avoid exceeding maximum packet size"
 msgstr ""
 
@@ -11455,79 +11455,79 @@ msgstr ""
 #. translators: %s: String 'INSERT (options)'
 #. translators: %s: String 'CREATE TABLE'
 #. translators: %s: String 'SET NAMES'
-#: restorer.php:3350
-#: restorer.php:4106
-#: restorer.php:4183
-#: restorer.php:4205
+#: restorer.php:3352
+#: restorer.php:4108
+#: restorer.php:4185
+#: restorer.php:4207
 #, php-format
 msgid "An error occurred on the first %s command - aborting run"
 msgstr ""
 
 #. translators: 1: Charset found, 2: Changed charset to
-#: restorer.php:3493
+#: restorer.php:3495
 #, php-format
 msgid "Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset()."
 msgstr ""
 
 #. translators: %s: Table name to be excluded (could be users or usermeta)
-#: restorer.php:3805
+#: restorer.php:3807
 #, php-format
 msgid "Skipping table %s: this table will not be restored"
 msgstr ""
 
 #. translators: %s: Table name to be excluded (user's chosen)
-#: restorer.php:3808
+#: restorer.php:3810
 #, php-format
 msgid "Skipping table %s: user has chosen not to restore this table"
 msgstr ""
 
 #. translators: 1: Table name, 2: Last table name
-#: restorer.php:3814
+#: restorer.php:3816
 #, php-format
 msgid "Skipping table %1$s: already restored on a prior run; next table to restore: %2$s"
 msgstr ""
 
 #. translators: %s: SQL line
-#: restorer.php:3976
+#: restorer.php:3978
 #, php-format
 msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
 msgstr ""
 
 #. translators: %s: Error message
-#: restorer.php:4150
+#: restorer.php:4152
 #, php-format
 msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
 msgid "An error (%s) occurred:"
 msgstr ""
 
-#: restorer.php:4170
+#: restorer.php:4172
 msgid "The Database connection has been closed and cannot be reopened."
 msgstr ""
 
-#: restorer.php:4198
+#: restorer.php:4200
 msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
 msgstr ""
 
 #. translators: %s: String '5.5'
-#: restorer.php:4200
+#: restorer.php:4202
 #, php-format
 msgid "This database needs to be deployed on MySQL version %s or later."
 msgstr ""
 
 #. translators: %s: The character set
-#: restorer.php:4207
+#: restorer.php:4209
 #, php-format
 msgid "To use this backup, your database server needs to support the %s character set."
 msgstr ""
 
-#: restorer.php:4220
+#: restorer.php:4222
 msgid "Too many database errors have occurred - aborting"
 msgstr ""
 
 #. translators: %s: String 'option' for table
 #. translators: %s: String 'usermeta' for table
-#: restorer.php:4355
-#: restorer.php:4479
+#: restorer.php:4357
+#: restorer.php:4481
 #, php-format
 msgid "Table prefix has changed: changing %s table field(s) accordingly:"
 msgstr ""

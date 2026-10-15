@@ -3292,6 +3292,8 @@ class Updraft_Restorer {
 			// Allow a 100-byte margin for error (including searching/replacing table prefix)
 			if (3 == $sql_type && $sql_line && strlen($sql_line.$buffer) > ($this->max_allowed_packet - 100) && preg_match('/,\s*$/', $sql_line) && preg_match('/^\s*\(/', $buffer)) {
 				
+				if (!UpdraftPlus_Database_Utility::sql_statement_is_finished($sql_line)) continue;
+				
 				if ($this->table_should_be_skipped($this->table_name)) {
 					// Reset - we need the insert prefix so following lines get detected correctly
 					$sql_line = $insert_prefix." ";
