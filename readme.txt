@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.9
 Tested up to: 7.1
-Stable tag: 1.26.10
+Stable tag: 1.26.11
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -178,6 +178,13 @@ This problem is probably caused by your account being starved of resources by yo
 The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place to learn in more detail about any important changes.
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
+
+= 1.26.11 - 16/Oct/2026 =
+
+* SECURITY: The fix in 1.26.9 did not correctly handle NO_BACKSLASH_ESCAPES (a rare SQL server mode which is no longer supported by WordPress from WordPress 7.2 and causes various problems if set). Though your website almost   certainly does not use it, it is still best to update.
+* FIX: When an near-over-sized (beyond the maximum packet size) line with a specific (unlikely) construction was rejected, it could be silently dropped in 1.26.10
+* TWEAK: Re-factor set_sql_mode() to allow indicating the success of the attempt
+* TWEAK: If a backup file is invalid with trailing content which cannot be executed, then log this
 
 = 1.26.10 - 15/Oct/2026 =
 
@@ -2206,4 +2213,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.10: Important security updates (.10 closing an instance related to that in .9), plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.11: Important security updates (.9 to .11), plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.

@@ -313,8 +313,35 @@ class UpdraftPlus_Database_Utility {
 	}
 	
 	/**
+	 * Get a list of current SQL modes set, in upper case
 	 *
-	 * This function is adapted from the set_sql_mode() method in WordPress wpdb class but with few modifications applied, this can be used to switch between different sets of SQL modes.
+	 * @param Resource|Object|NULL $db_handle - Optional. If specified, it should either the valid database link identifier(resource) given by mysql(i) or null to instead use the global WPDB object, or a WPDB-compatible object.
+	 *
+	 * @uses $GLOBALS['wpdb']
+	 *
+	 * @return Array|Boolean
+	 */
+	public static function get_sql_modes($db_handle = null) {
+
+		if (is_null($db_handle)) {
+			$modes = $GLOBALS['wpdb']->get_var('SELECT @@SESSION.sql_mode');
+		} elseif (is_a($db_handle, 'WPDB')) {
+			$modes = $db_handle->get_var('SELECT @@SESSION.sql_mode');
+		} else {
+			$modes = call_user_func_array(array(__CLASS__, 'get_system_variable'), array('sql_mode', $db_handle));
+		}
+		
+		if (is_scalar($modes) && !is_bool($modes)) {
+			return array_map('strtoupper', explode(',', $modes));
+		}
+		
+		return false;
+		
+	}
+	
+	/**
+	 *
+	 * This function is adapted from the set_sql_mode() method in WordPress wpdb class but with a few modifications applied, this can be used to switch between different sets of SQL modes.
 	 *
 	 * @see https://developer.wordpress.org/reference/classes/wpdb/set_sql_mode/
 	 * @see https://dev.mysql.com/doc/refman/5.6/en/sql-mode.html
@@ -329,6 +356,8 @@ class UpdraftPlus_Database_Utility {
 	 * @param Array				   $modes		 - Optional. A list of SQL modes to set.
 	 * @param Array				   $remove_modes - modes to remove if they are currently active
 	 * @param Resource|Object|NULL $db_handle	 - Optional. If specified, it should either the valid database link identifier(resource) given by mysql(i) or null to instead use the global WPDB object, or a WPDB-compatible object.
+	 *
+	 * @return Boolean|Null - true if no unwanted modes remain, false if some do, null if indeterminate.
 	 */
 	public static function set_sql_mode($modes = array(), $remove_modes = array(), $db_handle = null) {
 
@@ -337,37 +366,25 @@ class UpdraftPlus_Database_Utility {
 		$wpdb_handle_if_used = (null !== $db_handle && is_a($db_handle, 'WPDB')) ? $db_handle : $wpdb;
 		
 		// If any of these are set, they will be unset
-		$strict_modes = array(
-			// according to mariadb and mysql docs, strict mode can be one of these or both
-			'STRICT_TRANS_TABLES',
-			'STRICT_ALL_TABLES',
-		);
-
-		$incompatible_modes = array_unique(array_merge(array(
+		$unwanted_modes = array_merge(array_map('strtoupper', $remove_modes), array(
 			'NO_ZERO_DATE',
 			'ONLY_FULL_GROUP_BY',
 			'TRADITIONAL',
-			'NO_BACKSLASH_ESCAPE',
-		), $strict_modes));
+			'NO_BACKSLASH_ESCAPES',
+			// according to mariadb and mysql docs, strict mode can be one of these or both
+			'STRICT_TRANS_TABLES',
+			'STRICT_ALL_TABLES',
+		));
 
-		$class = __CLASS__;
-
-		if (is_null($db_handle) || is_a($db_handle, 'WPDB')) {
-			$initial_modes_str = $wpdb_handle_if_used->get_var('SELECT @@SESSION.sql_mode');
-		} else {
-			$initial_modes_str = call_user_func_array(array($class, 'get_system_variable'), array('sql_mode', $db_handle));
-		}
-		if (is_scalar($initial_modes_str) && !is_bool($initial_modes_str)) {
-			$modes = array_unique(array_merge($modes, array_change_key_case(explode(',', $initial_modes_str), CASE_UPPER)));
-		} else {
-			$updraftplus->log("Couldn't get the sql_mode value (".serialize($initial_modes_str)."); will not attempt any adjustment");
-			return;
-		}
-
-		$modes = array_change_key_case($modes, CASE_UPPER);
-
-		$unwanted_modes = array_merge($incompatible_modes, $remove_modes);
+		$initial_modes = self::get_sql_modes();
 		
+		if (!is_array($initial_modes)) {
+			$updraftplus->log("Couldn't get the sql_mode value (".serialize($initial_modes)."); will not attempt any adjustment");
+			return null;
+		}
+
+		$modes = array_unique(array_merge($initial_modes, array_map('strtoupper', $modes)));
+
 		foreach ($modes as $i => $mode) {
 			if (in_array($mode, $unwanted_modes)) {
 				unset($modes[$i]);
@@ -376,17 +393,27 @@ class UpdraftPlus_Database_Utility {
 
 		$modes_str = implode(',', $modes);
 
+		// We don't examine the return code, because we re-check status afterwards
 		if (is_null($db_handle) || is_a($db_handle, 'WPDB')) {
-			$res = $wpdb_handle_if_used->query($wpdb_handle_if_used->prepare("SET SESSION sql_mode = %s", $modes_str));
+			$wpdb_handle_if_used->query($wpdb_handle_if_used->prepare("SET SESSION sql_mode = %s", $modes_str));
 		} else {
-			$res = call_user_func_array(array($class, 'set_system_variable'), array('sql_mode', $modes_str, $db_handle));
+			call_user_func_array(array(__CLASS__, 'set_system_variable'), array('sql_mode', $modes_str, $db_handle));
 		}
 
-		if (isset($initial_modes_str) && false == array_diff(explode(',', $initial_modes_str), $modes)) {
-			$updraftplus->log("SQL compatibility mode is: $modes_str");
-		} else {
-			$updraftplus->log("SQL compatibility mode".((false === $res) ? " not" : "")." successfully changed".(isset($initial_modes_str) ? " from $initial_modes_str" : "")." to $modes_str");
+		$after_modes = self::get_sql_modes();
+		
+		if (is_array($after_modes)) {
+			$remaining_unwanted_modes = array_intersect($after_modes, $unwanted_modes);
+			if (empty($remaining_unwanted_modes)) {
+				$updraftplus->log("SQL compatibility mode is now: ".implode(',', $after_modes));
+				return true;
+			}
+			
+			$updraftplus->log("SQL compatibility mode has unwanted modes remaining: ".implode(', ', $unwanted_modes)." members present in: ".implode(', ', $after_modes));
+			return false;
 		}
+		
+		return null;
 	}
 
 	/**
