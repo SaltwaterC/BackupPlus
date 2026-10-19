@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.9
 Tested up to: 7.1
-Stable tag: 1.26.12
+Stable tag: 1.26.13
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -179,9 +179,13 @@ The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place t
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
+= 1.26.13 - 19/Oct/2026 =
+
+* FIX: Properly apply the revocation in 1.26.12
+
 = 1.26.12 - 19/Oct/2026 =
 
-* SECURITY: Revokes UpdraftCentral Cloud keys created before the incident described at https://teamupdraft.com/blog/security-incident-october-2026/
+* SECURITY: Revokes UpdraftCentral Cloud keys created before the incident described at https://teamupdraft.com/blog/security-incident-october-2026/ .
 
 = 1.26.11 - 16/Oct/2026 =
 
@@ -2217,4 +2221,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.12: Important security updates (.9 to .12) - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.13: Important security updates (.9 to .13) - see the changelog for details. A recommended update for all; please update immediately.

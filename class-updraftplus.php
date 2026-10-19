@@ -168,7 +168,7 @@ class UpdraftPlus {
 		add_filter('schedule_event', array($this, 'schedule_event'));
 		
 		add_action('plugins_loaded', array($this, 'plugins_loaded'));
-		add_action('plugins_loaded', array($this, 'udcentral_keys_revocation'), 9);
+		add_action('plugins_loaded', array($this, 'udcentral_keys_revocation_plugins_loaded'), 9);
 
 		// Since the WordPress version 5.5, we are no longer forcing an auto update by hooking the auto_update_plugin filter because WordPress does something different to its auto-update interface
 		if (version_compare($this->get_wordpress_version(), '5.5', '<')) {
@@ -6944,30 +6944,35 @@ class UpdraftPlus {
 	}
 
 	/**
+	 * Called upon the WP action plugins_loaded
+	 */
+	public function udcentral_keys_revocation_plugins_loaded() {
+		$this->udcentral_keys_revocation(1792325220);
+	}
+	
+	/**
 	 * Revoke all UpdraftCentral keys created before the specified timestamp, which defaults to 17 October 2026 at 6:00 PM UTC, following the security incident that occurred on 18 October 2026.
 	 *
 	 * @param Integer $timestamp The cutoff datetime.
-	 * @param Boolean $force     Whether to consult the current UD version or not
+	 *
 	 * @return void
 	 */
-	public function udcentral_keys_revocation($timestamp = 1792325220, $force = false) {
-		static $revoked_already = false;
-		if ($revoked_already) return;
-		if (!$force) {
-			$udp_saved_version = UpdraftPlus_Options::get_updraft_option('updraftplus_version');
-			if (!is_string($udp_saved_version) || !is_string($this->version) || version_compare($this->version, $udp_saved_version, '<=')) return;
-		}
+	public function udcentral_keys_revocation($timestamp) {
+
 		$updraft_central_localkeys = UpdraftPlus_Options::get_updraft_option('updraft_central_localkeys', array());
-		if (!is_array($updraft_central_localkeys)) return;
-		$ori_updraft_central_localkeys = $updraft_central_localkeys;
+		
+		if (!is_array($updraft_central_localkeys) || empty($updraft_central_localkeys)) return;
+		
+		$changed = false;
+		
 		foreach ($updraft_central_localkeys as $index => $key) {
 			if (!isset($key['created'], $key['extra_info'], $key['extra_info']['mothership']) || !is_int($key['created']) || !is_string($key['extra_info']['mothership']) || '__updraftpluscom' != $key['extra_info']['mothership']) continue;
 			if ($key['created'] < $timestamp) {
 				unset($updraft_central_localkeys[$index]);
+				$changed = true;
 			}
 		}
-		$updraft_central_localkeys = array_values($updraft_central_localkeys);
-		if ($ori_updraft_central_localkeys != $updraft_central_localkeys) UpdraftPlus_Options::update_updraft_option('updraft_central_localkeys', $updraft_central_localkeys);
-		$revoked_already = true;
+
+		if ($changed) UpdraftPlus_Options::update_updraft_option('updraft_central_localkeys', array_values($updraft_central_localkeys));
 	}
 }
