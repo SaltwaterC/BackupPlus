@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 <strong><?php
 	if (!empty($prefix)) echo esc_html($prefix).' ';
 	echo esc_html($title);
-?></strong>: 
+?>
 <?php
 	echo wp_kses_post($text);
 
@@ -13,9 +13,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 	
 	if (!empty($button_link) && (!empty($button_meta) || !empty($button_text))) {
 ?>
-<a class="updraft_notice_link" href="<?php echo esc_attr(apply_filters('updraftplus_com_link', $button_link));?>"><?php
-global $updraftplus_admin;
-$updraftplus_admin->include_template(
+<a class="backupplus_notice_link" href="<?php echo esc_attr(apply_filters('backupplus_com_link', $button_link));?>"><?php
+global $backupplus_admin;
+$backupplus_admin->include_template(
 	'wp-admin/notices/button-label.php',
 	false,
 	array(
@@ -23,7 +23,7 @@ $updraftplus_admin->include_template(
 		'button_text' => isset($button_text) ? $button_text : ''
 	)
 );
-?></a><br><br>
+?>
 	<?php }
 ?>
 </div>

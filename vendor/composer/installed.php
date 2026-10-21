@@ -361,15 +361,6 @@
             'reference' => '8942fafb45af64263c163fbb63d7b9e93dda741f',
             'dev_requirement' => false,
         ),
-        'team-updraft/lib-onboarding-wizard' => array(
-            'pretty_version' => '2.0.0',
-            'version' => '2.0.0.0',
-            'type' => 'composer-plugin',
-            'install_path' => __DIR__ . '/../team-updraft/lib-onboarding-wizard',
-            'aliases' => array(),
-            'reference' => '2493ea2243ef3a6d5286081348b88a85430542cc',
-            'dev_requirement' => false,
-        ),
         'updraftplus/updraftplus' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',

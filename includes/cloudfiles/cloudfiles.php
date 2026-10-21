@@ -75,8 +75,8 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 /**
  */
-require_once(UPDRAFTPLUS_DIR."/includes/cloudfiles/cloudfiles_exceptions.php");
-require_once(UPDRAFTPLUS_DIR."/includes/cloudfiles/cloudfiles_http.php");
+require_once(BACKUPPLUS_DIR."/includes/cloudfiles/cloudfiles_exceptions.php");
+require_once(BACKUPPLUS_DIR."/includes/cloudfiles/cloudfiles_http.php");
 @define("DEFAULT_CF_API_VERSION", 1);
 @define("MAX_CONTAINER_NAME_LEN", 256);
 @define("MAX_OBJECT_NAME_LEN", 1024);
@@ -115,7 +115,7 @@ require_once(UPDRAFTPLUS_DIR."/includes/cloudfiles/cloudfiles_http.php");
  *
  * @package php-cloudfiles
  */
-class UpdraftPlus_CF_Authentication
+class BackupPlus_CF_Authentication
 {
     public $dbug;
     public $username;
@@ -151,7 +151,7 @@ class UpdraftPlus_CF_Authentication
         $this->cdnm_url = NULL;
         $this->auth_token = NULL;
 
-        $this->cfs_http = new UpdraftPlus_CF_Http(DEFAULT_CF_API_VERSION);
+        $this->cfs_http = new BackupPlus_CF_Http(DEFAULT_CF_API_VERSION);
     }
 
     /**
@@ -342,7 +342,7 @@ class UpdraftPlus_CF_Authentication
  *
  * @package php-cloudfiles
  */
-class UpdraftPlus_CF_Connection
+class BackupPlus_CF_Connection
 {
     public $dbug;
     public $cfs_http;
@@ -385,7 +385,7 @@ class UpdraftPlus_CF_Connection
     {
         if (isset($_ENV['RACKSPACE_SERVICENET']))
             $servicenet=True;
-        $this->cfs_http = new UpdraftPlus_CF_Http(DEFAULT_CF_API_VERSION);
+        $this->cfs_http = new BackupPlus_CF_Http(DEFAULT_CF_API_VERSION);
         $this->cfs_auth = $cfs_auth;
         if (!$this->cfs_auth->authenticated()) {
             $e = "Need to pass in a previously authenticated ";
@@ -511,7 +511,7 @@ class UpdraftPlus_CF_Connection
                 "Invalid response (".$return_code."): "
                     . $this->cfs_http->get_error());
         }
-        return new UpdraftPlus_CF_Container($this->cfs_auth, $this->cfs_http, $container_name);
+        return new BackupPlus_CF_Container($this->cfs_auth, $this->cfs_http, $container_name);
     }
 
     /**
@@ -541,7 +541,7 @@ class UpdraftPlus_CF_Connection
         $container_name = NULL;
 
         if (is_object($container)) {
-            if (get_class($container) == "UpdraftPlus_CF_Container") {
+            if (get_class($container) == "BackupPlus_CF_Container") {
                 $container_name = $container->name;
             }
         }
@@ -612,7 +612,7 @@ class UpdraftPlus_CF_Connection
             throw new InvalidResponseException(
                 "Invalid response: ".$this->cfs_http->get_error());
         }
-        return new UpdraftPlus_3CF_Container($this->cfs_auth, $this->cfs_http,
+        return new BackupPlus_CF_Container($this->cfs_auth, $this->cfs_http,
             $container_name, $count, $bytes);
     }
 
@@ -653,7 +653,7 @@ class UpdraftPlus_CF_Connection
         }
         $containers = array();
         foreach ($container_info as $name => $info) {
-            $containers[] = new UpdraftPlus_CF_Container($this->cfs_auth, $this->cfs_http,
+            $containers[] = new BackupPlus_CF_Container($this->cfs_auth, $this->cfs_http,
                 $info['name'], $info["count"], $info["bytes"], False);
         }
         return $containers;
@@ -918,7 +918,7 @@ class UpdraftPlus_CF_Connection
  *
  * @package php-cloudfiles
  */
-class UpdraftPlus_CF_Container
+class BackupPlus_CF_Container
 {
     public $cfs_auth;
     public $cfs_http;
@@ -1341,7 +1341,7 @@ class UpdraftPlus_CF_Container
      */
     function create_object($obj_name=NULL)
     {
-        return new UpdraftPlus_CF_Object($this, $obj_name);
+        return new BackupPlus_CF_Object($this, $obj_name);
     }
 
     /**
@@ -1370,7 +1370,7 @@ class UpdraftPlus_CF_Container
      */
     function get_object($obj_name=NULL)
     {
-        return new UpdraftPlus_CF_Object($this, $obj_name, True);
+        return new BackupPlus_CF_Object($this, $obj_name, True);
     }
 
     /**
@@ -1491,7 +1491,7 @@ class UpdraftPlus_CF_Container
         $objects = array();
         foreach ($obj_array as $obj) {
           if(!isset($obj['subdir'])) {
-            $tmp = new UpdraftPlus_CF_Object($this, $obj["name"], False, False);
+            $tmp = new BackupPlus_CF_Object($this, $obj["name"], False, False);
             $tmp->content_type = $obj["content_type"];
             $tmp->content_length = (float) $obj["bytes"];
             $tmp->set_etag($obj["hash"]);
@@ -1535,7 +1535,7 @@ class UpdraftPlus_CF_Container
     {
         $obj_name = NULL;
         if (is_object($obj)) {
-            if (get_class($obj) == "UpdraftPlus_CF_Object") {
+            if (get_class($obj) == "BackupPlus_CF_Object") {
                 $obj_name = $obj->name;
             }
         }
@@ -1552,7 +1552,7 @@ class UpdraftPlus_CF_Container
 
         $container_name_target = NULL;
         if (is_object($container_target)) {
-            if (get_class($container_target) == "UpdraftPlus_CF_Container") {
+            if (get_class($container_target) == "BackupPlus_CF_Container") {
                 $container_name_target = $container_target->name;
             }
         }
@@ -1609,7 +1609,7 @@ class UpdraftPlus_CF_Container
     {
         $obj_name = NULL;
         if (is_object($obj)) {
-            if (get_class($obj) == "UpdraftPlus_CF_Object") {
+            if (get_class($obj) == "BackupPlus_CF_Object") {
                 $obj_name = $obj->name;
             }
         }
@@ -1626,7 +1626,7 @@ class UpdraftPlus_CF_Container
 
         $container_name_source = NULL;
         if (is_object($container_source)) {
-            if (get_class($container_source) == "UpdraftPlus_CF_Container") {
+            if (get_class($container_source) == "BackupPlus_CF_Container") {
                 $container_name_source = $container_source->name;
             }
         }
@@ -1761,7 +1761,7 @@ class UpdraftPlus_CF_Container
     {
         $obj_name = NULL;
         if (is_object($obj)) {
-            if (get_class($obj) == "UpdraftPlus_CF_Object") {
+            if (get_class($obj) == "BackupPlus_CF_Object") {
                 $obj_name = $obj->name;
             }
         }
@@ -1779,7 +1779,7 @@ class UpdraftPlus_CF_Container
         }
         else {
 	        if (is_object($container)) {
-	            if (get_class($container) == "UpdraftPlus_CF_Container") {
+	            if (get_class($container) == "BackupPlus_CF_Container") {
 	                $container_name = $container->name;
 	            }
 	        }
@@ -1830,7 +1830,7 @@ class UpdraftPlus_CF_Container
             } else {
                 $build_path .= "/" . $val;
             }
-            $obj = new UpdraftPlus_CF_Object($this, $build_path);
+            $obj = new BackupPlus_CF_Object($this, $build_path);
             $obj->content_type = "application/directory";
             $obj->write(".", 1);
         }
@@ -1887,7 +1887,7 @@ class UpdraftPlus_CF_Container
  *
  * @package php-cloudfiles
  */
-class UpdraftPlus_CF_Object
+class BackupPlus_CF_Object
 {
     public $container;
     public $name;

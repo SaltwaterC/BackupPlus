@@ -6,21 +6,21 @@
 			splash screen on activation
 		*/
 
-		$('.updraftplus-welcome .close').on('click', function(e) {
+		$('.backupplus-welcome .close').on('click', function(e) {
 			e.preventDefault();
-			$(this).closest('.updraftplus-welcome').remove();
+			$(this).closest('.backupplus-welcome').remove();
 		});
 
 		/*
-			Updraftplus page tour
+			BackupPlus page tour
 		*/
 
 		// if Shepherd is undefined, exit.
 		if (!window.Shepherd) return;
 
 		var button_classes = 'button button-primary';
-		var plugins_page_tour = window.updraft_plugins_page_tour = new Shepherd.Tour();
-		var main_tour = window.updraft_main_tour = new Shepherd.Tour();
+		var plugins_page_tour = window.backupplus_plugins_page_tour = new Shepherd.Tour();
+		var main_tour = window.backupplus_main_tour = new Shepherd.Tour();
 
 		// Set up the defaults for each step
 		main_tour.options.defaults = plugins_page_tour.options.defaults = {
@@ -43,15 +43,15 @@
 		*/
 
 		plugins_page_tour.addStep('intro', {
-			title: updraftplus_tour_i18n.plugins_page.title,
-			text: updraftplus_tour_i18n.plugins_page.text,
-			attachTo: '.js-updraftplus-settings top',
+			title: backupplus_tour_i18n.plugins_page.title,
+			text: backupplus_tour_i18n.plugins_page.text,
+			attachTo: '.js-backupplus-settings top',
 			buttons: [
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.plugins_page.button.text,
+					text: backupplus_tour_i18n.plugins_page.button.text,
 					action: function() {
-						window.location = updraftplus_tour_i18n.plugins_page.button.url;
+						window.location = backupplus_tour_i18n.plugins_page.button.url;
 					}
 				}
 			],
@@ -88,20 +88,20 @@
 
 		// 1. Your first backup
 		main_tour.addStep('backup_now', {
-			title: updraftplus_tour_i18n.backup_now.title,
-			text: updraftplus_tour_i18n.backup_now.text,
-			attachTo: '#updraft-backupnow-button bottom',
+			title: backupplus_tour_i18n.backup_now.title,
+			text: backupplus_tour_i18n.backup_now.text,
+			attachTo: '#backupplus-backupnow-button bottom',
 			buttons: [
 				{
 					classes: 'udp-tour-end',
-					text: updraftplus_tour_i18n.end_tour,
+					text: backupplus_tour_i18n.end_tour,
 					action: main_tour.cancel
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
+					text: backupplus_tour_i18n.next,
 					action: function() {
-						$('#updraft-navtab-settings').trigger('click');
+						$('#backupplus-navtab-settings').trigger('click');
 					}
 				}
 			]
@@ -109,8 +109,8 @@
 
 		// Manual backup options
 		main_tour.addStep('backup_options', {
-			title: updraftplus_tour_i18n.backup_options.title,
-			text: updraftplus_tour_i18n.backup_options.text,
+			title: backupplus_tour_i18n.backup_options.title,
+			text: backupplus_tour_i18n.backup_options.text,
 			classes: 'shepherd-theme-arrows-plain-buttons shepherd-main-tour super-index',
 			attachTo: '#backupnow_includedb left',
 			tetherOptions: {
@@ -119,14 +119,14 @@
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
-						$('#updraft-backupnow-modal').dialog('close');
+						$('#backupplus-backupnow-modal').dialog('close');
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
+					text: backupplus_tour_i18n.next,
 					action: main_tour.next
 				}
 			]
@@ -134,24 +134,24 @@
 
 		// Backup Now button
 		main_tour.addStep('backup_now_btn', {
-			title: updraftplus_tour_i18n.backup_now_btn.title,
-			text: updraftplus_tour_i18n.backup_now_btn.text,
+			title: backupplus_tour_i18n.backup_now_btn.title,
+			text: backupplus_tour_i18n.backup_now_btn.text,
 			classes: 'shepherd-theme-arrows-plain-buttons shepherd-main-tour super-index',
 			attachTo: '.js-tour-backup-now-button top',
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.back();
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.backup_now_btn.btn_text,
+					text: backupplus_tour_i18n.backup_now_btn.btn_text,
 					action: function() {
-						$('#updraft-backupnow-modal').dialog('close');
-						$('#updraft-navtab-settings').trigger('click');
+						$('#backupplus-backupnow-modal').dialog('close');
+						$('#backupplus-navtab-settings').trigger('click');
 					}
 				}
 			]
@@ -159,23 +159,23 @@
 
 		// Congratulations - Shows when a user clicks "backup now" in the modal
 		main_tour.addStep('backup_now_btn_success', {
-			title: updraftplus_tour_i18n.backup_now_btn_success.title,
-			text: updraftplus_tour_i18n.backup_now_btn_success.text,
-			attachTo: '#updraft_activejobs_table top',
+			title: backupplus_tour_i18n.backup_now_btn_success.title,
+			text: backupplus_tour_i18n.backup_now_btn_success.text,
+			attachTo: '#backupplus_activejobs_table top',
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
-						$('#updraft-backupnow-button').trigger('click');
+						$('#backupplus-backupnow-button').trigger('click');
 						main_tour.show('backup_now_btn');
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.backup_now_btn_success.btn_text,
+					text: backupplus_tour_i18n.backup_now_btn_success.btn_text,
 					action: function() {
-						$('#updraft-navtab-settings').trigger('click');
+						$('#backupplus-navtab-settings').trigger('click');
 					}
 				}
 			],
@@ -191,20 +191,20 @@
 
 		// Settings - timing
 		main_tour.addStep('settings_timing', {
-			title: updraftplus_tour_i18n.settings_timing.title,
-			text: updraftplus_tour_i18n.settings_timing.text,
+			title: backupplus_tour_i18n.settings_timing.title,
+			text: backupplus_tour_i18n.settings_timing.text,
 			attachTo: '.retain-files right',
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
-						$('#updraft-navtab-backups').trigger('click');
+						$('#backupplus-navtab-backups').trigger('click');
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
+					text: backupplus_tour_i18n.next,
 					action: main_tour.next
 				}
 			],
@@ -218,63 +218,50 @@
 			}
 		});
 
-		// Settings - Remote storage + vault
+		// Settings - remote storage.
 		main_tour.addStep('settings_remote_storage', {
-			title: updraftplus_tour_i18n.settings_remote_storage.title,
-			text: updraftplus_tour_i18n.settings_remote_storage.text,
-			attachTo: {
-				element: 'label[for=updraft_servicecheckbox_updraftvault]',
-				on: 'top'
-			},
+			title: backupplus_tour_i18n.settings_remote_storage.title,
+			text: backupplus_tour_i18n.settings_remote_storage.text,
+			attachTo: '#remote-storage-holder top',
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.back();
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
-					action: function() {
-						if ($('#updraft_servicecheckbox_updraftvault').is(':checked')) {
-							main_tour.show('vault_selected')
-						} else {
-							main_tour.next();
-						}
-					}
+					text: backupplus_tour_i18n.next,
+					action: main_tour.next
 				}
 			],
 			when: {
-				show: function(p) {
-					$('label[for=updraft_servicecheckbox_updraftvault]').addClass('emphasize');
+				show: function() {
 					scroll_to_popup();
-				},
-				hide: function(p) {
-					$('label[for=updraft_servicecheckbox_updraftvault]').removeClass('emphasize');
 				}
 			}
 		});
 
-		// Settings - more + updraftcentral
+		// Settings - additional options
 		main_tour.addStep('settings_more', {
-			title: updraftplus_tour_i18n.settings_more.title,
-			text: updraftplus_tour_i18n.settings_more.text,
+			title: backupplus_tour_i18n.settings_more.title,
+			text: backupplus_tour_i18n.settings_more.text,
 			attachTo: '.js-tour-settings-more top',
 			scrollTo: false,
 			tetherOptions: {},
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.back();
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
+					text: backupplus_tour_i18n.next,
 					action: main_tour.next
 				}
 			],
@@ -287,31 +274,31 @@
 
 		// Auto backup.
 		main_tour.addStep('auto_backup', {
-			title: updraftplus_tour_i18n.auto_backup.title,
-			text: updraftplus_tour_i18n.auto_backup.text,
-			attachTo: '#updraft_autobackup_default top',
+			title: backupplus_tour_i18n.auto_backup.title,
+			text: backupplus_tour_i18n.auto_backup.text,
+			attachTo: '#backupplus_autobackup_default top',
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.back();
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
+					text: backupplus_tour_i18n.next,
 					action: main_tour.next
 				}
 			],
 			showOn: function() {
-				if (updraftplus_tour_i18n.auto_backup.enabled) return true;
+				if (backupplus_tour_i18n.auto_backup.enabled) return true;
 				return false;
 			},
 			when: {
 				'before-show': function() {
 					$('.enableexpertmode').trigger('click');
-					$('#updraft_autobackup_default').focus();
+					$('#backupplus_autobackup_default').focus();
 				},
 				show: function() {
 					scroll_to_popup();
@@ -319,30 +306,24 @@
 			}
 		});
 
-		// Save settings
+		// Save settings.
 		main_tour.addStep('settings_save', {
-			title: updraftplus_tour_i18n.settings_save.title,
-			text: updraftplus_tour_i18n.settings_save.text,
-			attachTo: '#updraftplus-settings-save top',
+			title: backupplus_tour_i18n.settings_save.title,
+			text: backupplus_tour_i18n.settings_save.text,
+			attachTo: '#backupplus-settings-save top',
 			scrollTo: false,
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.back();
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
-					action: function() {
-						if ($('#updraftcentral_cloud_connect_container').length) {
-							main_tour.show('updraft_central');
-						} else {
-							$('#updraft-navtab-addons').trigger('click');
-						}
-					}
+					text: backupplus_tour_i18n.next,
+					action: main_tour.next
 				}
 			],
 			when: {
@@ -352,125 +333,24 @@
 			}
 		});
 
-		// UDCentral
-		main_tour.addStep('updraft_central', {
-			title: updraftplus_tour_i18n.updraft_central.title,
-			text: updraftplus_tour_i18n.updraft_central.text,
-			attachTo: '#updraftcentral_cloud_connect_container  top',
-			scrollTo: false,
-			buttons: [
-				{
-					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
-					action: function() {
-						main_tour.back();
-					}
-				},
-				{
-					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
-					action: function() {
-						$('#updraft-navtab-addons').trigger('click');
-					}
-				}
-			],
-			when: {
-				show: function() {
-					scroll_to_popup();
-				}
-			}
-		});
-
-		// Premium + addons
-		main_tour.addStep('premium', {
-			title: updraftplus_tour_i18n.premium.title,
-			text: updraftplus_tour_i18n.premium.text,
-			attachTo: updraftplus_tour_i18n.premium.attach_to,
-			scrollTo: false,
-			buttons: [
-				{
-					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
-					action: function() {
-						main_tour.going_somewhere = true;
-						$('#updraft-navtab-settings').trigger('click');
-						if ($('#updraftcentral_cloud_connect_container').length) {
-							main_tour.show('updraft_central');
-						} else {
-							main_tour.show('settings_save');
-						}
-						scroll_to_popup();
-						
-					}
-				},
-				{
-					classes: button_classes,
-					text: updraftplus_tour_i18n.premium.button,
-					action: main_tour.cancel
-				}
-			],
-			when: {
-				show: function() {
-					window.scroll(0, 0)
-				}
-			}
-		});
-
-		// EXTRA STEPS
-
-		// Premium + addons
-		main_tour.addStep('vault_selected', {
-			title: updraftplus_tour_i18n.vault_selected.title,
-			text: updraftplus_tour_i18n.vault_selected.text,
-			attachTo: '#updraftvault_settings_cell top',
-			scrollTo: false,
-			buttons: [
-				{
-					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
-					action: function() {
-						main_tour.show('settings_remote_storage');
-					}
-				},
-				{
-					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
-					action: function() {
-						main_tour.show('settings_more');
-					}
-				}
-			],
-			when: {
-				show: function(p) {
-					scroll_to_popup();
-				}
-			}
-		});
-
-		// Saved settings
+		// Saved settings.
 		main_tour.addStep('settings_saved', {
-			title: updraftplus_tour_i18n.settings_saved.title,
-			text: updraftplus_tour_i18n.settings_saved.text,
-			attachTo: '#updraftplus-settings-save top',
+			title: backupplus_tour_i18n.settings_saved.title,
+			text: backupplus_tour_i18n.settings_saved.text,
+			attachTo: '#backupplus-settings-save top',
 			scrollTo: false,
 			buttons: [
 				{
 					classes: 'udp-tour-back',
-					text: updraftplus_tour_i18n.back,
+					text: backupplus_tour_i18n.back,
 					action: function() {
 						main_tour.show('settings_more');
 					}
 				},
 				{
 					classes: button_classes,
-					text: updraftplus_tour_i18n.next,
-					action: function() {
-						if ($('#updraftcentral_cloud_connect_container').length) {
-							main_tour.show('updraft_central');
-						} else {
-							$('#updraft-navtab-addons').trigger('click');
-						}
-					}
+					text: backupplus_tour_i18n.end_tour,
+					action: main_tour.cancel
 				}
 			],
 			when: {
@@ -484,12 +364,12 @@
 			step.once('show', function() {
 				// Adds a Close label near the (x)
 				var close_btn = $(this.el).find('header .shepherd-cancel-link');
-				close_btn.attr('data-btntext', updraftplus_tour_i18n.close);
+				close_btn.attr('data-btntext', backupplus_tour_i18n.close);
 
 				// opens the settings tab
 				$(this.el).find('.js--go-to-settings').on('click', function(e) {
 					e.preventDefault();
-					$('#updraft-navtab-settings').trigger('click');
+					$('#backupplus-navtab-settings').trigger('click');
 				});
 			})
 		});
@@ -508,8 +388,8 @@
 				current_step: this.getCurrentStep().id
 			};
 
-			if ('function' === typeof updraft_send_command) {
-				updraft_send_command(
+			if ('function' === typeof backupplus_send_command) {
+				backupplus_send_command(
 					'set_tour_status',
 					data,
 					function(response) {
@@ -522,9 +402,9 @@
 					url: ajaxurl,
 					type: 'POST',
 					data: {
-						action: 'updraft_ajax',
+						action: 'backupplus_ajax',
 						subaction: 'set_tour_status',
-						nonce: updraftplus_tour_i18n.nonce,
+						nonce: backupplus_tour_i18n.nonce,
 						current_step: this.getCurrentStep().id
 					}
 				});
@@ -551,36 +431,28 @@
 			
 		}
 
-		// If $('#updraft-backupnow-button'), start tour
-		if ($('#updraft-backupnow-button').length) {
+		// If $('#backupplus-backupnow-button'), start tour
+		if ($('#backupplus-backupnow-button').length) {
 			/*
 				Setup other events
 			*/
 
 			// Backup now
-			$('#updraft-backupnow-button').on('click', function(e) {
+			$('#backupplus-backupnow-button').on('click', function(e) {
 				if (!main_tour.canceled) {
 					main_tour.show('backup_options');
 				}
 			});
 
 			// Click on status tab
-			$('#updraft-navtab-backups').on('click', function(e) {
+			$('#backupplus-navtab-backups').on('click', function(e) {
 				if (!main_tour.canceled) {
 					main_tour.show('backup_now');
 				}
 			});
 
-			$(document).on('click', 'label[for=updraft_servicecheckbox_updraftvault]', function(e) {
-				if (!main_tour.canceled && !$('#updraft_servicecheckbox_updraftvault').is(':checked')) {
-					setTimeout(function() {
-						main_tour.show('vault_selected');
-					}, 200);
-				}
-			});
-
 			// close backup backupnow modal
-			$('#updraft-backupnow-modal').on("dialogclose", function(event, ui) {
+			$('#backupplus-backupnow-modal').on("dialogclose", function(event, ui) {
 				if (!main_tour.canceled) {
 					main_tour.show('backup_now');
 				}
@@ -594,21 +466,14 @@
 			})
 
 			// settings tab
-			$('#updraft-navtab-settings').on('click', function(e) {
+			$('#backupplus-navtab-settings').on('click', function(e) {
 				if (!main_tour.canceled && !main_tour.going_somewhere) {
 					main_tour.show('settings_timing');
 				}
 			});
 
-			// addons tab
-			$('#updraft-navtab-addons').on('click', function(e) {
-				if (!main_tour.canceled) {
-					main_tour.show('premium');
-				}
-			});
-
 			// Tabs without guide
-			$('#updraft-navtab-migrate, #updraft-navtab-expert').on('click', function(e) {
+			$('#backupplus-navtab-expert').on('click', function(e) {
 				if (!main_tour.canceled) {
 					main_tour.hide();
 				}
@@ -617,16 +482,16 @@
 			main_tour.start();
 
 			// go back to first tab
-			if (updraftplus_tour_i18n.show_tab_on_load) {
-				$(updraftplus_tour_i18n.show_tab_on_load).trigger('click');
+			if (backupplus_tour_i18n.show_tab_on_load) {
+				$(backupplus_tour_i18n.show_tab_on_load).trigger('click');
 			} else {
-				$('#updraft-navtab-backups').trigger('click');
+				$('#backupplus-navtab-backups').trigger('click');
 			}
 
 		}
 
 		// start plugins page tour
-		if ($('.js-updraftplus-settings').length) {
+		if ($('.js-backupplus-settings').length) {
 			plugins_page_tour.start();
 		}
 		

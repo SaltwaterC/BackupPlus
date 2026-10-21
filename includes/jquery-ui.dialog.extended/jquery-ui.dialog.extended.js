@@ -15,8 +15,8 @@
  *	jquery.ui.dialog.js
  *
  * Changes:
- *  Add "updraft-dialog" class for every jQuery UI dialog created by UpdraftPlus plugin.
- *  Wrap all "updraft-dialog" class with "updraft-container" class
+ *  Add "backupplus-dialog" class for every jQuery UI dialog created by BackupPlus plugin.
+ *  Wrap all "backupplus-dialog" class with "backupplus-container" class
  *   to prevent CSS conflict with other plugins that use jQuery UI too.
  */
 (function( $ ) {
@@ -35,7 +35,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 		height: 200, // auto is not allowed when using animation
 
 		closeModalOnClick: true,
-		dialogClass: 'updraft-dialog',
+		dialogClass: 'backupplus-dialog',
 
 		// viewport settings
 		forceFullscreen: false,
@@ -283,7 +283,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 		this._on(window, this._windowResizeEvents);
 
 		// add wrapper to dialog
-		$('.updraft-dialog').not('.updraft-container > .updraft-dialog').wrap('<div class="updraft-container" />');
+		$('.backupplus-dialog').not('.backupplus-container > .backupplus-dialog').wrap('<div class="backupplus-container" />');
 	},
 
 	_windowResizeEvents: {

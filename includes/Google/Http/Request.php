@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('UDP_Google_Client')) {
@@ -45,7 +47,7 @@ class UDP_Google_Http_Request
   protected $baseComponent = null;
   protected $path;
   protected $postBody;
-  // UpdraftPlus tweak: added default value to prevent type notices
+  // BackupPlus tweak: added default value to prevent type notices
   protected $userAgent = '';
   protected $canGzip = null;
 

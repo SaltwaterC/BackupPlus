@@ -17,7 +17,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
  * limitations under the License.
  */
 
-function google_api_php_client_autoload_updraftplus($className) {
+// Modified by the BackupPlus project in 2026.
+
+function google_api_php_client_autoload_backupplus($className) {
 
   $className = str_replace('UDP_', '', $className);
   $classPath = explode('_', $className);
@@ -36,7 +38,7 @@ function google_api_php_client_autoload_updraftplus($className) {
 
 if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
 	// Use the 'prepend' parameter; if other tools have registered autoloaders for incompatible versions of the Google SDK, ours should still get loaded first (since we only register our autoloader late, immediately before using it).
-	spl_autoload_register('google_api_php_client_autoload_updraftplus', true, true);
+	spl_autoload_register('google_api_php_client_autoload_backupplus', true, true);
 } else {
-	spl_autoload_register('google_api_php_client_autoload_updraftplus');
+	spl_autoload_register('google_api_php_client_autoload_backupplus');
 }

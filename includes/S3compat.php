@@ -1,6 +1,6 @@
 <?php
 // @codingStandardsIgnoreStart
-// This is a compatibility library, using Amazon's official PHP SDK (PHP 5.3.3+), but providing the methods of Donovan Schönknecht's S3.php library (which we used to always use) - but we've only cared about making code-paths in UpdraftPlus work, so be careful if re-deploying this in another project. And, we have a few bits of UpdraftPlus-specific code below, for logging.
+// This is a compatibility library, using Amazon's official PHP SDK (PHP 5.3.3+), but providing the methods of Donovan Schönknecht's S3.php library (which we used to always use) - but we've only cared about making code-paths in BackupPlus work, so be careful if re-deploying this in another project. And, we have a few bits of BackupPlus-specific code below, for logging.
 
 /**
  *
@@ -40,10 +40,10 @@ use Aws\Credentials\Credentials;
 use Aws\S3\Exception\NoSuchBucketException;
 use Aws\S3\S3MultiRegionClient;
 
-global $updraftplus;
-$updraftplus->potentially_remove_composer_autoloaders(array('GuzzleHttp\\', 'Aws\\'));
-updraft_try_include_file('vendor/autoload.php', 'include');
-$updraftplus->mitigate_guzzle_autoloader_conflicts();
+global $backupplus;
+$backupplus->potentially_remove_composer_autoloaders(array('GuzzleHttp\\', 'Aws\\'));
+backupplus_try_include_file('vendor/autoload.php', 'include');
+$backupplus->mitigate_guzzle_autoloader_conflicts();
 
 /**
  * Amazon S3 PHP class
@@ -51,7 +51,7 @@ $updraftplus->mitigate_guzzle_autoloader_conflicts();
  *
  * @version Release: 0.5.0-dev
  */
-class UpdraftPlus_S3_Compat {
+class BackupPlus_S3_Compat {
 
 	// ACL flags
 	const ACL_PRIVATE = 'private';
@@ -112,14 +112,14 @@ class UpdraftPlus_S3_Compat {
 	 * @param string|boolean $ssl_ca_cert   Certificate authority (true = bundled Guzzle version; false = no verify, 'system' = system version; otherwise, path)
 	 * @param Null|String    $endpoint      Endpoint (if omitted, it will be set by the SDK using the region)
 	 * @param Null|String    $session_token The session token returned by AWS for temporary credentials access
-	 * @param Null|String    $region        Region. Currently unused, but harmonised with UpdraftPlus_S3 class
+	 * @param Null|String    $region        Region. Currently unused, but harmonised with BackupPlus_S3 class
 	 * @return void
 	 */
 	public function __construct($access_key = null, $secret_key = null, $use_ssl = true, $ssl_ca_cert = true, $endpoint = null, $session_token = null, $region = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $region is unused
-		do_action('updraftplus_load_aws_sdk');
+		do_action('backupplus_load_aws_sdk');
 		
-		global $updraftplus;
-		$updraftplus->mitigate_guzzle_autoloader_conflicts();
+		global $backupplus;
+		$backupplus->mitigate_guzzle_autoloader_conflicts();
 		
 		if (null !== $access_key && null !== $secret_key)
 			$this->setAuth($access_key, $secret_key, $session_token);
@@ -133,7 +133,7 @@ class UpdraftPlus_S3_Compat {
 			$credentials = new Credentials($access_key, $secret_key);
 		}
 
-		global $updraftplus;
+		global $backupplus;
 
 		// AWS SDK V3 requires we specify a version. String 'latest' can be used but not recommended, a full list of versions for each API found here: https://docs.aws.amazon.com/aws-sdk-php/v3/api/index.html
 		// latest S3Client version as of 16/09/21 is version 2006-03-01
@@ -141,7 +141,7 @@ class UpdraftPlus_S3_Compat {
 			'credentials' => $credentials,
 			'version' => '2006-03-01',
 			'scheme' => ($use_ssl) ? 'https' : 'http',
-			'ua_append' => 'UpdraftPlus/'.$updraftplus->version,
+			'ua_append' => 'BackupPlus/'.$backupplus->version,
 			// Using signature v4 requires a region (but see the note below)
 			// 'signature_version' => 'v4',
 			// 'region' => $this->region
@@ -242,7 +242,7 @@ class UpdraftPlus_S3_Compat {
 
 	/**
 	 * Set SSL on or off
-	 * This code relies upon the particular pattern of SSL options-setting in s3.php in UpdraftPlus
+	 * This code relies upon the particular pattern of SSL options-setting in s3.php in BackupPlus
 	 *
 	 * @param boolean $enabled  SSL enabled
 	 * @param boolean $validate SSL certificate validation
@@ -318,10 +318,10 @@ class UpdraftPlus_S3_Compat {
 		$wp_proxy = new WP_HTTP_Proxy();
 		if ($wp_proxy->send_through_proxy('https://s3.amazonaws.com')) {
 
-			global $updraftplus;
-			$updraftplus->log("setProxy: host=$host, user=$user, port=$port");
+			global $backupplus;
+			$backupplus->log("setProxy: host=$host, user=$user, port=$port");
 
-			// N.B. Currently (02-Feb-15), only support for HTTP proxies has ever been requested for S3 in UpdraftPlus
+			// N.B. Currently (02-Feb-15), only support for HTTP proxies has ever been requested for S3 in BackupPlus
 			$proxy_url = 'http://';
 			if ($user) {
 				$proxy_url .= $user;
@@ -366,7 +366,7 @@ class UpdraftPlus_S3_Compat {
 	/**
 	 * Get contents for a bucket
 	 * If max_keys is null this method will loop through truncated result sets
-	 * N.B. UpdraftPlus does not use the $delimiter or $return_common_prefixes parameters (nor set $prefix or $marker to anything other than null)
+	 * N.B. BackupPlus does not use the $delimiter or $return_common_prefixes parameters (nor set $prefix or $marker to anything other than null)
 	 * $return_common_prefixes is not implemented below
 	 *
 	 * @param  string  $bucket                 Bucket name
@@ -398,7 +398,7 @@ class UpdraftPlus_S3_Compat {
 			$results = array();
 			$next_marker = null;
 			// http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingObjectKeysUsingPHP.html
-			// UpdraftPlus does not use the 'hash' result
+			// BackupPlus does not use the 'hash' result
 			if (empty($result['Contents'])) $result['Contents'] = array();
 			foreach ($result['Contents'] as $c) {
 				$results[(string) $c['Key']] = array(
@@ -495,7 +495,7 @@ class UpdraftPlus_S3_Compat {
 			'@region' => $this->region
 		);
 		// http://docs.aws.amazon.com/aws-sdk-php/latest/class-Aws.S3.S3Client.html#_createBucket
-		$location_constraint = apply_filters('updraftplus_s3_putbucket_defaultlocation', $location);
+		$location_constraint = apply_filters('backupplus_s3_putbucket_defaultlocation', $location);
 		if ('us-east-1' != $location_constraint) $bucket_vars['LocationConstraint'] = $location_constraint;
 		try {
 			$result = $this->client->createBucket($bucket_vars);
@@ -530,7 +530,7 @@ class UpdraftPlus_S3_Compat {
 	 * @param constant $storage_class   Storage class constant
 	 * @return string | false
 	 */
-	public function initiateMultipartUpload($bucket, $uri, $acl = self::ACL_PRIVATE, $meta_headers = array(), $request_headers = array(), $storage_class = self::STORAGE_CLASS_STANDARD) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from UpdraftPlus_BackupModule_s3 class uses 6 arguments.
+	public function initiateMultipartUpload($bucket, $uri, $acl = self::ACL_PRIVATE, $meta_headers = array(), $request_headers = array(), $storage_class = self::STORAGE_CLASS_STANDARD) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from BackupPlus_BackupModule_s3 class uses 6 arguments.
 		$vars = array(
 			'ACL' => $acl,
 			'Bucket' => $bucket,
@@ -699,7 +699,7 @@ class UpdraftPlus_S3_Compat {
 
 	/**
 	 * Put an object from a string (legacy function)
-	 * Only the first 3 parameters vary in UpdraftPlus
+	 * Only the first 3 parameters vary in BackupPlus
 	 *
 	 * @param string   $string       Input data
 	 * @param string   $bucket       Bucket name

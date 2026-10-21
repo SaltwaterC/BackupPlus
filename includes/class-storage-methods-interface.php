@@ -6,14 +6,14 @@ if (!defined('ABSPATH')) die('No access.');
  * A class for interfacing with storage methods.
  * N.B. This class began life Sep 2018; it is not guaranteed that there are not many places that bypass it that could be ported over to use it.
  */
-class UpdraftPlus_Storage_Methods_Interface {
+class BackupPlus_Storage_Methods_Interface {
 
 	/**
 	 * Instantiate a remote storage object. If one of the same type has previously been fetched, then it will be returned.
 	 *
 	 * @param String $method - the storage method (e.g. 'dropbox', 's3', etc.)
 	 *
-	 * @return Object|WP_Error - an instance of UpdraftPlus_BackupModule, or an error
+	 * @return Object|WP_Error - an instance of BackupPlus_BackupModule, or an error
 	 */
 	public static function get_storage_object($method) {
 	
@@ -23,9 +23,9 @@ class UpdraftPlus_Storage_Methods_Interface {
 	
 		if (!empty($objects[$method])) return $objects[$method];
 	
-		$method_class = 'UpdraftPlus_BackupModule_'.$method;
+		$method_class = 'BackupPlus_BackupModule_'.$method;
 		
-		if (!class_exists($method_class)) updraft_try_include_file('methods/'.$method.'.php', 'include_once');
+		if (!class_exists($method_class)) backupplus_try_include_file('methods/'.$method.'.php', 'include_once');
 		
 		if (!class_exists($method_class)) return new WP_Error('no_such_storage_class', "The specified storage method ($method) was not found");
 		
@@ -41,9 +41,9 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 */
 	public static function get_remote_storage_options_and_templates() {
 
-		global $updraftplus;
+		global $backupplus;
 	
-		$storage_objects_and_ids = self::get_storage_objects_and_ids(array_keys($updraftplus->backup_methods));
+		$storage_objects_and_ids = self::get_storage_objects_and_ids(array_keys($backupplus->backup_methods));
 		$options = array();
 		$templates = $partial_templates = array();
 
@@ -53,8 +53,8 @@ class UpdraftPlus_Storage_Methods_Interface {
 
 			if (!$object->supports_feature('multi_options')) {
 				ob_start();
-				do_action('updraftplus_config_print_before_storage', $method, null);
-				do_action('updraftplus_config_print_add_conditional_logic', $method, $object);
+				do_action('backupplus_config_print_before_storage', $method, null);
+				do_action('backupplus_config_print_add_conditional_logic', $method, $object);
 				$object->config_print();
 				$templates[$method] = ob_get_clean();
 			} else {
@@ -103,7 +103,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 *
 	 * @uses self::get_storage_object()
 	 *
-	 * @return Array - returns an array, with a key equal to each member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an UpdraftPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated instance IDs, with the values being the associated settings for the instance ID.
+	 * @return Array - returns an array, with a key equal to each member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an BackupPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated instance IDs, with the values being the associated settings for the instance ID.
 	 */
 	public static function get_storage_objects_and_ids($services) {
 	
@@ -121,7 +121,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 		
 			$remote_storage = self::get_storage_object($method);
 		
-			if (is_a($remote_storage, 'UpdraftPlus_BackupModule')) {
+			if (is_a($remote_storage, 'BackupPlus_BackupModule')) {
 			
 				if (empty($storage_objects_and_ids[$method])) $storage_objects_and_ids[$method] = array();
 				
@@ -129,14 +129,14 @@ class UpdraftPlus_Storage_Methods_Interface {
 				
 				if ($remote_storage->supports_feature('multi_options')) {
 				
-					$settings_from_db = UpdraftPlus_Options::get_updraft_option('updraft_'.$method);
+					$settings_from_db = BackupPlus_Options::get_backupplus_option('backupplus_'.$method);
 					
 					$settings = is_array($settings_from_db) ? $settings_from_db : array();
 				
 					if (!isset($settings['version'])) $settings = self::update_remote_storage_options_format($method);
 					
 					if (is_wp_error($settings)) {
-						if (!empty($settings_from_db)) UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus: failed to convert storage options format: $method");
+						if (!empty($settings_from_db)) BackupPlus_Manipulation_Functions::error_log("BackupPlus: failed to convert storage options format: $method");
 						$settings = array('settings' => array());
 					}
 
@@ -151,7 +151,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 						// See: https://wordpress.org/support/topic/cannot-setup-connectionauthenticate-with-dropbox/
 						if (empty($settings['settings'])) {
 							// This can get sent to the browser, and break the page, if the user has configured that. However, it should now (1.13.6+) be impossible for this condition to occur, now that we only log it after getting some default options.
-							UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus: Warning: settings for $method are empty. A dummy field is usually needed so that something is saved.");
+							BackupPlus_Manipulation_Functions::error_log("BackupPlus: Warning: settings for $method are empty. A dummy field is usually needed so that something is saved.");
 						}
 						
 					}
@@ -169,7 +169,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 				}
 
 			} else {
-				UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus: storage method not found: $method");
+				BackupPlus_Manipulation_Functions::error_log("BackupPlus: storage method not found: $method");
 			}
 		}
 
@@ -196,24 +196,24 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 */
 	public static function update_remote_storage_options_format($method) {
 	
-		global $updraftplus;
+		global $backupplus;
 	
 		// Prevent recursion
 		static $already_active = false;
 		
 		if ($already_active) return new WP_Error('recursion', 'self::update_remote_storage_options_format() was called in a loop. This is usually caused by an options filter failing to correctly process a "recursion" error code');
 	
-		if (!file_exists(UPDRAFTPLUS_DIR.'/methods/'.$method.'.php')) return new WP_Error('no_such_method', 'Remote storage method not found', $method);
+		if (!file_exists(BACKUPPLUS_DIR.'/methods/'.$method.'.php')) return new WP_Error('no_such_method', 'Remote storage method not found', $method);
 		
 		// Sanity/inconsistency check
-		$settings_keys = $updraftplus->get_settings_keys();
+		$settings_keys = $backupplus->get_settings_keys();
 		
-		$method_key = 'updraft_'.$method;
+		$method_key = 'backupplus_'.$method;
 		
 		if (!in_array($method_key, $settings_keys)) return new WP_Error('no_such_setting', 'Setting not found for this method', $method);
 	
-		$current_setting = UpdraftPlus_Options::get_updraft_option($method_key, array());
-		if ('' == $current_setting) $current_setting = array();
+		$current_setting = BackupPlus_Options::get_backupplus_option($method_key, null);
+		if (null === $current_setting || '' == $current_setting) $current_setting = array();
 		
 		if (!is_array($current_setting) && false !== $current_setting) return new WP_Error('format_unrecognised', 'Settings format not recognised', array('method' => $method, 'current_setting' => $current_setting));
 
@@ -226,7 +226,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 		$new_setting = self::wrap_remote_storage_options($current_setting);
 		
 		$already_active = true;
-		$updated = UpdraftPlus_Options::update_updraft_option($method_key, $new_setting);
+		$updated = BackupPlus_Options::update_backupplus_option($method_key, $new_setting);
 		$already_active = false;
 		
 		if ($updated) {
@@ -245,7 +245,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 *
 	 * @uses self::get_storage_objects_and_ids()
 	 *
-	 * @return Array					- returns an array, with a key equal to only enabled service member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an UpdraftPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated enabled instance IDs, with the values being the associated settings for the enabled instance ID.
+	 * @return Array					- returns an array, with a key equal to only enabled service member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an BackupPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated enabled instance IDs, with the values being the associated settings for the enabled instance ID.
 	 */
 	public static function get_enabled_storage_objects_and_ids($services, $remote_storage_instances = array()) {
 		
@@ -280,31 +280,31 @@ class UpdraftPlus_Storage_Methods_Interface {
 	 */
 	public static function get_remote_file($services, $file, $timestamp, $restore = false) {
 		
-		global $updraftplus;
+		global $backupplus;
 
-		$backup_history = UpdraftPlus_Backup_History::get_history();
+		$backup_history = BackupPlus_Backup_History::get_history();
 		
-		$fullpath = $updraftplus->backups_dir_location().'/'.$file;
+		$fullpath = $backupplus->backups_dir_location().'/'.$file;
 
 		$storage_objects_and_ids = self::get_storage_objects_and_ids($services);
 
 		$is_downloaded = false;
 
-		$updraftplus->register_wp_http_option_hooks();
+		$backupplus->register_wp_http_option_hooks();
 
 		foreach ($services as $service) {
 
 			if (empty($service) || 'none' == $service || $is_downloaded) continue;
 
 			if ($restore) {
-				$service_description = empty($updraftplus->backup_methods[$service]) ? $service : $updraftplus->backup_methods[$service];
-				$updraftplus->log(__("File is not locally present - needs retrieving from remote storage", 'updraftplus')." ($service_description)", 'notice-restore');
+				$service_description = empty($backupplus->backup_methods[$service]) ? $service : $backupplus->backup_methods[$service];
+				$backupplus->log(__("File is not locally present - needs retrieving from remote storage", 'backupplus')." ($service_description)", 'notice-restore');
 			}
 
 			$object = $storage_objects_and_ids[$service]['object'];
 
 			if (!$object->supports_feature('multi_options')) {
-				UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus_Storage_Methods_Interface::get_remote_file(): Multi-options not supported by: ".$service);
+				BackupPlus_Manipulation_Functions::error_log("BackupPlus_Storage_Methods_Interface::get_remote_file(): Multi-options not supported by: ".$service);
 				continue;
 			}
 			
@@ -316,7 +316,7 @@ class UpdraftPlus_Storage_Methods_Interface {
 				if (isset($instance_ids[$instance_id])) {
 					$options = $instance_ids[$instance_id];
 				} else {
-					// If we didn't find a instance id match, it could be a new UpdraftPlus upgrade or a wipe settings with the same details entered so try the default options saved.
+					// If we didn't find a instance id match, it could be a new BackupPlus upgrade or a wipe settings with the same details entered so try the default options saved.
 					$options = $object->get_options();
 				}
 
@@ -326,44 +326,44 @@ class UpdraftPlus_Storage_Methods_Interface {
 
 				if (is_readable($fullpath) && false !== $download) {
 					if ($restore) {
-						$updraftplus->log(__('OK', 'updraftplus'), 'notice-restore');
+						$backupplus->log(__('OK', 'backupplus'), 'notice-restore');
 					} else {
 						clearstatcache();
-						$updraftplus->log('Remote fetch was successful (file size: '.round(filesize($fullpath)/1024, 1).' KB)');
+						$backupplus->log('Remote fetch was successful (file size: '.round(filesize($fullpath)/1024, 1).' KB)');
 						$is_downloaded = true;
 					}
 					break 2;
 				} else {
 					if ($restore) {
-						$updraftplus->log(__('Error', 'updraftplus'), 'notice-restore');
+						$backupplus->log(__('Error', 'backupplus'), 'notice-restore');
 					} else {
 						clearstatcache();
 						if (0 === @filesize($fullpath)) @unlink($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-						$updraftplus->log('Remote fetch failed');
+						$backupplus->log('Remote fetch failed');
 					}
 				}
 			}
 		}
-		$updraftplus->register_wp_http_option_hooks(false);
+		$backupplus->register_wp_http_option_hooks(false);
 	}
 	
 	/**
 	 * Downloads a specified file into UD's directory
 	 *
 	 * @param String				   $file		   The basename of the file
-	 * @param UpdraftPlus_BackupModule $service_object The object of the service to use to download with.
+	 * @param BackupPlus_BackupModule $service_object The object of the service to use to download with.
 	 *
 	 * @return Boolean - Whether the operation succeeded. Inherited from the storage module's download() method. N.B. At the time of writing it looks like not all modules necessarily return true upon success; but false can be relied upon for detecting failure.
 	 */
 	private static function download_file($file, $service_object) {
 
-		global $updraftplus;
+		global $backupplus;
 	
-		if (function_exists('set_time_limit')) @set_time_limit(UPDRAFTPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 		$service = $service_object->get_id();
 		
-		$updraftplus->log("Requested file from remote service: $service: $file");
+		$backupplus->log("Requested file from remote service: $service: $file");
 
 		if (method_exists($service_object, 'download')) {
 		
@@ -371,32 +371,32 @@ class UpdraftPlus_Storage_Methods_Interface {
 				return $service_object->download($file);
 			} catch (Exception $e) {
 				$log_message = 'Exception ('.get_class($e).') occurred during download: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				UpdraftPlus_Manipulation_Functions::error_log($log_message);
+				BackupPlus_Manipulation_Functions::error_log($log_message);
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$updraftplus->log($log_message);
+				$backupplus->log($log_message);
 				/* translators: 1: Exception class, 2: Exception message. */
-				$message = sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage());
-				$updraftplus->log($message, 'error');
+				$message = sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage());
+				$backupplus->log($message, 'error');
 				return false;
 			} catch (Error $e) { //phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
 				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				UpdraftPlus_Manipulation_Functions::error_log($log_message);
+				BackupPlus_Manipulation_Functions::error_log($log_message);
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$updraftplus->log($log_message);
+				$backupplus->log($log_message);
 				/* translators: 1: Fatal error class, 2: Error message. */
-				$message = sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage());
-				$updraftplus->log($message, 'error');
+				$message = sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage());
+				$backupplus->log($message, 'error');
 				return false;
 			}
 		} else {
-			$updraftplus->log("Automatic backup restoration is not available with the method: $service.");
-			$message = "$file: ".__('The backup archive for this file could not be found.', 'updraftplus').' ';
+			$backupplus->log("Automatic backup restoration is not available with the method: $service.");
+			$message = "$file: ".__('The backup archive for this file could not be found.', 'backupplus').' ';
 			/* translators: %s: Remote storage service name. */
-			$message .= sprintf(__('The remote storage method in use (%s) does not allow us to retrieve files.', 'updraftplus'), $service).' ';
-			$message .= __("To perform any restoration using UpdraftPlus, you will need to obtain a copy of this file and place it inside UpdraftPlus's working folder", 'updraftplus')." (".UpdraftPlus_Manipulation_Functions::prune_updraft_dir_prefix($updraftplus->backups_dir_location()).")";
-			$updraftplus->log($message, 'error');
+			$message .= sprintf(__('The remote storage method in use (%s) does not allow us to retrieve files.', 'backupplus'), $service).' ';
+			$message .= __("To perform any restoration using BackupPlus, you will need to obtain a copy of this file and place it inside BackupPlus's working folder", 'backupplus')." (".BackupPlus_Manipulation_Functions::prune_backupplus_dir_prefix($backupplus->backups_dir_location()).")";
+			$backupplus->log($message, 'error');
 			return false;
 		}
 

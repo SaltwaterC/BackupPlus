@@ -83,7 +83,7 @@ require_once("cloudfiles_exceptions.php");
  *
  * @package php-cloudfiles-http
  */
-class UpdraftPlus_CF_Http
+class BackupPlus_CF_Http
 {
     private $error_str;
     private $dbug;
@@ -201,7 +201,7 @@ class UpdraftPlus_CF_Http
             "win","dar"
         ); 
 
-//	We don't want this happening automatically - since the UpdraftPlus default is to use our own certificate already
+//	We don't want this happening automatically - since the BackupPlus default is to use our own certificate already
 //         if (in_array((strtolower (substr(PHP_OS, 0,3))), $OS_CAFILE_NONUPDATED))
 //             $this->ssl_use_cabundle();
         
@@ -212,7 +212,7 @@ class UpdraftPlus_CF_Http
         if ($path) {
             $this->cabundle_path = $path;
         } else {
-            $this->cabundle_path = UPDRAFTPLUS_DIR.'/includes/cacert.pem';
+            $this->cabundle_path = BACKUPPLUS_DIR.'/includes/cacert.pem';
         }
         if (!file_exists($this->cabundle_path)) {
             throw new IOException("Could not use CA bundle: "
@@ -248,9 +248,9 @@ class UpdraftPlus_CF_Http
         if (!is_null($this->cabundle_path)) {
             curl_setopt($curl_ch, CURLOPT_CAINFO, $this->cabundle_path);
         }
-        if (defined('UPDRAFTPLUS_SSL_DISABLEVERIFY')) {
-            curl_setopt($curl_ch, CURLOPT_SSL_VERIFYPEER, UPDRAFTPLUS_SSL_DISABLEVERIFY);
-        } elseif (UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify')) {
+        if (defined('BACKUPPLUS_SSL_DISABLEVERIFY')) {
+            curl_setopt($curl_ch, CURLOPT_SSL_VERIFYPEER, BACKUPPLUS_SSL_DISABLEVERIFY);
+        } elseif (BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify')) {
             curl_setopt($curl_ch, CURLOPT_SSL_VERIFYPEER, false);
         } else {
             curl_setopt($curl_ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -773,7 +773,7 @@ class UpdraftPlus_CF_Http
     #
     function get_object_to_string(&$obj, $hdrs=array())
     {
-        if (!is_object($obj) || get_class($obj) != "UpdraftPlus_CF_Object") {
+        if (!is_object($obj) || get_class($obj) != "BackupPlus_CF_Object") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Object.");
         }
@@ -804,7 +804,7 @@ class UpdraftPlus_CF_Http
     #
     function get_object_to_stream(&$obj, &$resource=NULL, $hdrs=array())
     {
-        if (!is_object($obj) || get_class($obj) != "UpdraftPlus_CF_Object") {
+        if (!is_object($obj) || get_class($obj) != "BackupPlus_CF_Object") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Object.");
         }
@@ -840,7 +840,7 @@ class UpdraftPlus_CF_Http
     #
     function put_object(&$obj, &$fp)
     {
-        if (!is_object($obj) || get_class($obj) != "UpdraftPlus_CF_Object") {
+        if (!is_object($obj) || get_class($obj) != "BackupPlus_CF_Object") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Object.");
         }
@@ -899,7 +899,7 @@ class UpdraftPlus_CF_Http
     }
     function post_account(&$conn)
     {
-        if (!is_object($conn) || get_class($conn) != "UpdraftPlus_CF_Connection") {
+        if (!is_object($conn) || get_class($conn) != "BackupPlus_CF_Connection") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Connection object.");
         }
@@ -926,7 +926,7 @@ class UpdraftPlus_CF_Http
     }
     function post_container(&$cont)
     {
-        if (!is_object($cont) || get_class($cont) != "UpdraftPlus_CF_Container") {
+        if (!is_object($cont) || get_class($cont) != "BackupPlus_CF_Container") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Container object.");
         }
@@ -956,7 +956,7 @@ class UpdraftPlus_CF_Http
     #
     function update_object(&$obj)
     {
-        if (!is_object($obj) || get_class($obj) != "UpdraftPlus_CF_Object") {
+        if (!is_object($obj) || get_class($obj) != "BackupPlus_CF_Object") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Object.");
         }
@@ -992,7 +992,7 @@ class UpdraftPlus_CF_Http
     #
     function head_object(&$obj)
     {
-        if (!is_object($obj) || get_class($obj) != "UpdraftPlus_CF_Object") {
+        if (!is_object($obj) || get_class($obj) != "BackupPlus_CF_Object") {
             throw new SyntaxException(
                 "Method argument is not a valid CF_Object.");
         }
@@ -1365,7 +1365,7 @@ class UpdraftPlus_CF_Http
         if (!is_null($this->cabundle_path)) {
             curl_setopt($ch, CURLOPT_CAINFO, $this->cabundle_path);
         }
-        if (UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify')) {
+        if (BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify')) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		} else {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);

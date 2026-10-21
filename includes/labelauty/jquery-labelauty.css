@@ -225,10 +225,6 @@ input.labelauty.s3 + label > span.labelauty-unchecked-image {
 	background-image: url( ../../images/icons/s3.png );
 }
 
-input.labelauty.updraftvault + label > span.labelauty-checked-image,
-input.labelauty.updraftvault + label > span.labelauty-unchecked-image {
-	background-image: url( ../../images/icons/updraftvault.png );
-}
 
 input.labelauty.webdav + label > span.labelauty-checked-image,
 input.labelauty.webdav + label > span.labelauty-unchecked-image {

@@ -1,0 +1,16 @@
+FROM ubuntu:26.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends mariadb-server \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /run/mysqld \
+    && chown mysql:mysql /run/mysqld
+
+COPY entrypoint.sh /usr/local/bin/backupplus-mariadb-entrypoint
+RUN chmod 0755 /usr/local/bin/backupplus-mariadb-entrypoint
+
+VOLUME ["/var/lib/mysql"]
+EXPOSE 3306
+ENTRYPOINT ["/usr/local/bin/backupplus-mariadb-entrypoint"]

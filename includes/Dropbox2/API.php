@@ -9,7 +9,7 @@
  * @link https://status.dropbox.com Dropbox status
  * @package Dropbox
  */
-class UpdraftPlus_Dropbox_API {
+class BackupPlus_Dropbox_API {
     // API Endpoints
     const API_URL_V2  = 'https://api.dropboxapi.com/';
     const CONTENT_URL_V2 = 'https://content.dropboxapi.com/2/';

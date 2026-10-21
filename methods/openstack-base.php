@@ -2,9 +2,9 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-if (!class_exists('UpdraftPlus_BackupModule')) updraft_try_include_file('methods/backup-module.php', 'require_once');
+if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
-class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
+class BackupPlus_BackupModule_openstack_base extends BackupPlus_BackupModule {
 
 	protected $chunk_size;
 
@@ -27,36 +27,36 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 
 	public function backup($backup_array) {
 
-		global $updraftplus;
+		global $backupplus;
 
-		$default_chunk_size = (defined('UPDRAFTPLUS_UPLOAD_CHUNKSIZE') && UPDRAFTPLUS_UPLOAD_CHUNKSIZE > 0) ? max(UPDRAFTPLUS_UPLOAD_CHUNKSIZE, 1048576) : 5242880;
+		$default_chunk_size = (defined('BACKUPPLUS_UPLOAD_CHUNKSIZE') && BACKUPPLUS_UPLOAD_CHUNKSIZE > 0) ? max(BACKUPPLUS_UPLOAD_CHUNKSIZE, 1048576) : 5242880;
 
-		$this->chunk_size = $updraftplus->jobdata_get('openstack_chunk_size', $default_chunk_size);
+		$this->chunk_size = $backupplus->jobdata_get('openstack_chunk_size', $default_chunk_size);
 		
 		$opts = $this->get_options();
 
 		$this->container = $opts['path'];
 
 		try {
-			$storage = $this->get_openstack_service($opts, UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'), UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'));
+			$storage = $this->get_openstack_service($opts, BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'), BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
 		} catch (AuthenticationError $e) {
-			$updraftplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
+			$backupplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 			return false;
 		} catch (Exception $e) {
-			$updraftplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
+			$backupplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('%s error - failed to access the container', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('%s error - failed to access the container', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 			return false;
 		}
 		// Get the container
 		try {
 			$this->container_object = $storage->getContainer($this->container);
 		} catch (Exception $e) {
-			$updraftplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
+			$backupplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('Could not access %s container', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('Could not access %s container', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
 			return false;
 		}
 
@@ -70,24 +70,24 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			$uploaded_size = $this->get_remote_size($file);
 
 			try {
-				if (1 === $updraftplus->chunked_upload($this, $file, $this->method."://".$this->container."/$file", $this->desc, $this->chunk_size, $uploaded_size)) {
+				if (1 === $backupplus->chunked_upload($this, $file, $this->method."://".$this->container."/$file", $this->desc, $this->chunk_size, $uploaded_size)) {
 					try {
-						if (false !== ($data = fopen($updraftplus->backups_dir_location().'/'.$file, 'r+'))) {
+						if (false !== ($data = fopen($backupplus->backups_dir_location().'/'.$file, 'r+'))) {
 							$this->container_object->uploadObject($file, $data);
-							$updraftplus->log($this->desc." regular upload: success");
-							$updraftplus->uploaded_file($file);
+							$backupplus->log($this->desc." regular upload: success");
+							$backupplus->uploaded_file($file);
 						} else {
 							throw new Exception('uploadObject failed: fopen failed');
 						}
 					} catch (Exception $e) {
 						$this->log("regular upload: failed ($file) (".$e->getMessage().")");
-						$this->log("$file: ".sprintf(__('Error: Failed to upload', 'updraftplus')), 'error');
+						$this->log("$file: ".sprintf(__('Error: Failed to upload', 'backupplus')), 'error');
 					}
 				}
 			} catch (Exception $e) {
-				$updraftplus->log($this->desc.' error - failed to upload file'.' ('.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
+				$backupplus->log($this->desc.' error - failed to upload file'.' ('.$e->getMessage().') (line: '.$e->getLine().', file: '.$e->getFile().')');
 				/* translators: %s: Remote storage method */
-				$updraftplus->log(sprintf(__('%s error - failed to upload file', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+				$backupplus->log(sprintf(__('%s error - failed to upload file', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 				return false;
 			}
 		}
@@ -118,13 +118,13 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		$opts = $this->get_options();
 		$container = $opts['path'];
 
-		if (empty($opts['user']) || (empty($opts['apikey']) && empty($opts['password']))) return new WP_Error('no_settings', __('No settings were found', 'updraftplus'));
+		if (empty($opts['user']) || (empty($opts['apikey']) && empty($opts['password']))) return new WP_Error('no_settings', __('No settings were found', 'backupplus'));
 
 		try {
-			$storage = $this->get_openstack_service($opts, UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'), UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'));
+			$storage = $this->get_openstack_service($opts, BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'), BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
 		} catch (Exception $e) {
 			/* translators: %s: Remote storage method */
-			return new WP_Error('no_access', sprintf(__('%s error - failed to access the container', 'updraftplus'), $this->desc).' ('.$e->getMessage().')');
+			return new WP_Error('no_access', sprintf(__('%s error - failed to access the container', 'backupplus'), $this->desc).' ('.$e->getMessage().')');
 		}
 
 		// Get the container
@@ -132,7 +132,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			$this->container_object = $storage->getContainer($container);
 		} catch (Exception $e) {
 			/* translators: %s: Remote storage method */
-			return new WP_Error('no_access', sprintf(__('%s error - failed to access the container', 'updraftplus'), $this->desc).' ('.$e->getMessage().')');
+			return new WP_Error('no_access', sprintf(__('%s error - failed to access the container', 'backupplus'), $this->desc).' ('.$e->getMessage().')');
 		}
 
 		$results = array();
@@ -206,8 +206,8 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			return true;
 
 		} catch (Exception $e) {
-			global $updraftplus;
-			$updraftplus->log("Error when sending manifest (".get_class($e)."): ".$e->getMessage());
+			global $backupplus;
+			$backupplus->log("Error when sending manifest (".get_class($e)."): ".$e->getMessage());
 			return false;
 		}
 	}
@@ -227,7 +227,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 	 */
 	public function chunked_upload($file, $fp, $chunk_index, $upload_size, $upload_start, $upload_end, $total_file_size) {
 
-		global $updraftplus;
+		global $backupplus;
 
 		$file_key = 'status_'.md5($file);
 		$file_status = $this->jobdata_get($file_key, null, 'openstack_'.$file_key);
@@ -266,7 +266,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		
 		// Shouldn't be able to happen
 		if ($chunk_index <= $last_uploaded_chunk_index) {
-			$updraftplus->log($this->desc.": Chunk sequence error; chunk_index=$chunk_index, last_uploaded_chunk_index=$last_uploaded_chunk_index, upload_start=$upload_start, upload_end=$upload_end, file_status=".json_encode($file_status));
+			$backupplus->log($this->desc.": Chunk sequence error; chunk_index=$chunk_index, last_uploaded_chunk_index=$last_uploaded_chunk_index, upload_start=$upload_start, upload_end=$upload_end, file_status=".json_encode($file_status));
 		}
 		
 		// Used to use $chunk_index here, before switching to variable chunk sizes
@@ -279,9 +279,9 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		// $chunk_object->headers = array('Expect' => '');
 
 		if ($remote_size >= $upload_size) {
-			$updraftplus->log($this->desc.": Chunk ($upload_start - $upload_end, $chunk_index): already uploaded");
+			$backupplus->log($this->desc.": Chunk ($upload_start - $upload_end, $chunk_index): already uploaded");
 		} else {
-			$updraftplus->log($this->desc.": Chunk ($upload_start - $upload_end, $chunk_index): begin upload");
+			$backupplus->log($this->desc.": Chunk ($upload_start - $upload_end, $chunk_index): begin upload");
 			// Upload the chunk
 			try {
 				$data = fread($fp, $upload_size);
@@ -290,35 +290,35 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 				$time_now = microtime(true);
 				$time_taken = $time_now - $time_start;
 				if ($next_chunk_size < 52428800 && $total_file_size > 0 && $upload_end + 1 < $total_file_size) {
-					$job_run_time = $time_now - $updraftplus->job_time_ms;
+					$job_run_time = $time_now - $backupplus->job_time_ms;
 					if ($time_taken < 10) {
 						$upload_rate = $upload_size / max($time_taken, 0.0001);
 						$upload_secs = min(floor($job_run_time), 10);
 						if ($job_run_time < 15) $upload_secs = max(6, $job_run_time*0.6);
 						
 						// In megabytes
-						$memory_limit_mb = $updraftplus->memory_check_current();
+						$memory_limit_mb = $backupplus->memory_check_current();
 						$bytes_used = memory_get_usage();
 						$bytes_free = $memory_limit_mb * 1048576 - $bytes_used;
 						
 						$new_chunk = max(min($upload_secs * $upload_rate * 0.9, 52428800, $bytes_free), 5242880);
 						$new_chunk = $new_chunk - ($new_chunk % 5242880);
 						$next_chunk_size = (int) $new_chunk;
-						$updraftplus->jobdata_set('openstack_chunk_size', $next_chunk_size);
+						$backupplus->jobdata_set('openstack_chunk_size', $next_chunk_size);
 					}
 				}
 				
 			} catch (Exception $e) {
-				$updraftplus->log($this->desc." chunk upload: error: ($file / $chunk_index) (".$e->getMessage().") (line: ".$e->getLine().', file: '.$e->getFile().')');
+				$backupplus->log($this->desc." chunk upload: error: ($file / $chunk_index) (".$e->getMessage().") (line: ".$e->getLine().', file: '.$e->getFile().')');
 				// Experience shows that Curl sometimes returns a select/poll error (curl error 55) even when everything succeeded. Google seems to indicate that this is a known bug.
 				
 				$remote_size = $this->get_remote_size($upload_remotepath);
 
 				if ($remote_size >= $upload_size) {
-					$updraftplus->log("$file: Chunk now exists; ignoring error (presuming it was an apparently known curl bug)");
+					$backupplus->log("$file: Chunk now exists; ignoring error (presuming it was an apparently known curl bug)");
 				} else {
 					/* translators: %s: Remote storage method */
-					$updraftplus->log("$file: ".sprintf(__('%s Error: Failed to upload', 'updraftplus'), $this->desc), 'error');
+					$backupplus->log("$file: ".sprintf(__('%s Error: Failed to upload', 'backupplus'), $this->desc), 'error');
 					return false;
 				}
 			}
@@ -348,7 +348,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 	 */
 	public function delete($files, $data = false, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $sizeinfo unused
 
-		global $updraftplus;
+		global $backupplus;
 		if (is_string($files)) $files = array($files);
 
 		if (is_array($data)) {
@@ -358,25 +358,25 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			$opts = $this->get_options();
 			$container = $opts['path'];
 			try {
-				$storage = $this->get_openstack_service($opts, UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'), UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'));
+				$storage = $this->get_openstack_service($opts, BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'), BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
 			} catch (AuthenticationError $e) {
-				$updraftplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
+				$backupplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
 				/* translators: %s: Remote storage method */
-				$updraftplus->log(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+				$backupplus->log(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 				return 'authentication_fail';
 			} catch (Exception $e) {
-				$updraftplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().')');
+				$backupplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().')');
 				/* translators: %s: Remote storage method */
-				$updraftplus->log(sprintf(__('%s error - failed to access the container', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+				$backupplus->log(sprintf(__('%s error - failed to access the container', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 				return 'service_unavailable';
 			}
 			// Get the container
 			try {
 				$container_object = $storage->getContainer($container);
 			} catch (Exception $e) {
-				$updraftplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().')');
+				$backupplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().')');
 				/* translators: %s: Remote storage method */
-				$updraftplus->log(sprintf(__('Could not access %s container', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
+				$backupplus->log(sprintf(__('Could not access %s container', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
 				return 'container_access_error';
 			}
 
@@ -385,7 +385,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		$ret = true;
 		foreach ($files as $file) {
 
-			$updraftplus->log($this->desc.": Delete remote: container=$container, path=$file");
+			$backupplus->log($this->desc.": Delete remote: container=$container, path=$file");
 
 			// We need to search for chunks
 			$chunk_path = "chunk-do-not-delete-".$file;
@@ -397,22 +397,22 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 					try {
 						$name = $chunk->name;
 						$container_object->dataObject()->setName($name)->delete();
-						$updraftplus->log($this->desc.': Chunk deleted: '.$name);
+						$backupplus->log($this->desc.': Chunk deleted: '.$name);
 					} catch (Exception $e) {
-						$updraftplus->log($this->desc." chunk delete failed: $name: ".$e->getMessage());
+						$backupplus->log($this->desc." chunk delete failed: $name: ".$e->getMessage());
 					}
 					$index++;
 				}
 			} catch (Exception $e) {
-				$updraftplus->log($this->desc.' chunk delete failed: '.$e->getMessage());
+				$backupplus->log($this->desc.' chunk delete failed: '.$e->getMessage());
 			}
 
 			// Finally, delete the object itself
 			try {
 				$container_object->dataObject()->setName($file)->delete();
-				$updraftplus->log($this->desc.': Deleted: '.$file);
+				$backupplus->log($this->desc.': Deleted: '.$file);
 			} catch (Exception $e) {
-				$updraftplus->log($this->desc.' delete failed: '.$e->getMessage());
+				$backupplus->log($this->desc.' delete failed: '.$e->getMessage());
 				$ret = 'file_delete_error';
 			}
 		}
@@ -421,47 +421,47 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 
 	public function download($file) {
 
-		global $updraftplus;
+		global $backupplus;
 
 		$opts = $this->get_options();
 
 		try {
-			$storage = $this->get_openstack_service($opts, UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts'), UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify'));
+			$storage = $this->get_openstack_service($opts, BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'), BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
 		} catch (AuthenticationError $e) {
-			$updraftplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
+			$backupplus->log($this->desc.' authentication failed ('.$e->getMessage().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 			return false;
 		} catch (Exception $e) {
-			$updraftplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().')');
+			$backupplus->log($this->desc.' error - failed to access the container ('.$e->getMessage().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('%s error - failed to access the container', 'updraftplus'), $this->desc).' ('.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('%s error - failed to access the container', 'backupplus'), $this->desc).' ('.$e->getMessage().')', 'error');
 			return false;
 		}
 
 		$container = untrailingslashit($opts['path']);
-		$updraftplus->log($this->desc." download: ".$this->method."://$container/$file");
+		$backupplus->log($this->desc." download: ".$this->method."://$container/$file");
 
 		// Get the container
 		try {
 			$this->container_object = $storage->getContainer($container);
 		} catch (Exception $e) {
-			$updraftplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().')');
+			$backupplus->log('Could not access '.$this->desc.' container ('.get_class($e).', '.$e->getMessage().')');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('Could not access %s container', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
+			$backupplus->log(sprintf(__('Could not access %s container', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')', 'error');
 			return false;
 		}
 
 		// Get information about the object within the container
 		$remote_size = $this->get_remote_size($file);
 		if (false === $remote_size) {
-			$updraftplus->log('Could not access '.$this->desc.' object');
+			$backupplus->log('Could not access '.$this->desc.' object');
 			/* translators: %s: Remote storage method */
-			$updraftplus->log(sprintf(__('The %s object was not found', 'updraftplus'), $this->desc), 'error');
+			$backupplus->log(sprintf(__('The %s object was not found', 'backupplus'), $this->desc), 'error');
 			return false;
 		}
 
-		return (!is_bool($remote_size)) ? $updraftplus->chunked_download($file, $this, $remote_size, true, $this->container_object) : false;
+		return (!is_bool($remote_size)) ? $backupplus->chunked_download($file, $this, $remote_size, true, $this->container_object) : false;
 
 	}
 
@@ -469,10 +469,10 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		try {
 			$dl = $container_object->getObject($file, $headers);
 		} catch (Exception $e) {
-			global $updraftplus;
-			$updraftplus->log("$file: Failed to download (".$e->getMessage().")");
+			global $backupplus;
+			$backupplus->log("$file: Failed to download (".$e->getMessage().")");
 			/* translators: %s: Remote storage method */
-			$updraftplus->log("$file: ".sprintf(__("%s Error", 'updraftplus'), $this->desc).": ".__('Error downloading remote file: Failed to download', 'updraftplus').' ('.$e->getMessage().")", 'error');
+			$backupplus->log("$file: ".sprintf(__("%s Error", 'backupplus'), $this->desc).": ".__('Error downloading remote file: Failed to download', 'backupplus').' ('.$e->getMessage().")", 'error');
 			return false;
 		}
 		return $dl->getContent();
@@ -489,7 +489,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 		}
 
 		if (empty($container)) {
-			esc_html_e('Failure: No container details were given.', 'updraftplus');
+			esc_html_e('Failure: No container details were given.', 'backupplus');
 			return;
 		}
 
@@ -501,18 +501,18 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			$code = $response->getStatusCode();
 			$reason = $response->getReasonPhrase();
 			if (401 == $code && 'Unauthorized' == $reason) {
-				esc_html_e('Authorisation failed (check your credentials)', 'updraftplus');
+				esc_html_e('Authorisation failed (check your credentials)', 'backupplus');
 			} else {
-				echo esc_html(__('Authorisation failed (check your credentials)', 'updraftplus')." ($code:$reason)");
+				echo esc_html(__('Authorisation failed (check your credentials)', 'backupplus')." ($code:$reason)");
 			}
 			return;
 		} catch (AuthenticationError $e) {
 			/* translators: %s: Remote storage method */
-			echo esc_html(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.$e->getMessage().')');
+			echo esc_html(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.$e->getMessage().')');
 			return;
 		} catch (Exception $e) {
 			/* translators: %s: Remote storage method */
-			echo esc_html(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
+			echo esc_html(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
 			return;
 		}
 
@@ -526,37 +526,37 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 			if (404 == $code) {
 				$container_object = $storage->createContainer($container);
 			} else {
-				echo esc_html(__('Authorisation failed (check your credentials)', 'updraftplus')." ($code:$reason)");
+				echo esc_html(__('Authorisation failed (check your credentials)', 'backupplus')." ($code:$reason)");
 				return;
 			}
 		} catch (Exception $e) {
 			/* translators: %s: Remote storage method */
-			echo esc_html(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
+			echo esc_html(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
 			return;
 		}
 
 		if (!is_a($container_object, 'OpenCloud\ObjectStore\Resource\Container') && !is_a($container_object, 'Container')) {
 			/* translators: %s: Remote storage method */
-			echo esc_html(sprintf(__('%s authentication failed', 'updraftplus'), $this->desc).' ('.get_class($container_object).')');
+			echo esc_html(sprintf(__('%s authentication failed', 'backupplus'), $this->desc).' ('.get_class($container_object).')');
 			return;
 		}
 
 		$try_file = md5(wp_rand()).'.txt';
 
 		try {
-			$object = $container_object->uploadObject($try_file, 'UpdraftPlus test file', array('content-type' => 'text/plain'));
+			$object = $container_object->uploadObject($try_file, 'BackupPlus test file', array('content-type' => 'text/plain'));
 		} catch (Exception $e) {
 			/* translators: %s: Remote storage method */
-			echo esc_html(sprintf(__('%s error - we accessed the container, but failed to create a file within it', 'updraftplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
+			echo esc_html(sprintf(__('%s error - we accessed the container, but failed to create a file within it', 'backupplus'), $this->desc).' ('.get_class($e).', '.$e->getMessage().')');
 			/* translators: %s: Region name */
-			if (!empty($this->region)) echo ' '.esc_html(sprintf(__('Region: %s', 'updraftplus'), $this->region));
+			if (!empty($this->region)) echo ' '.esc_html(sprintf(__('Region: %s', 'backupplus'), $this->region));
 			return;
 		}
 
 		$this->set_connection_status(true);
-		echo esc_html(__('Success', 'updraftplus').": ".__('We accessed the container, and were able to create files within it.', 'updraftplus'));
+		echo esc_html(__('Success', 'backupplus').": ".__('We accessed the container, and were able to create files within it.', 'backupplus'));
 		/* translators: %s: Region name */
-		if (!empty($this->region)) echo ' '.esc_html(sprintf(__('Region: %s', 'updraftplus'), $this->region));
+		if (!empty($this->region)) echo ' '.esc_html(sprintf(__('Region: %s', 'backupplus'), $this->region));
 
 		try {
 			if (!empty($object)) {
@@ -578,7 +578,7 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 	 */
 	public function get_pre_configuration_template() {
 
-		global $updraftplus_admin;
+		global $backupplus_admin;
 
 		$classes = $this->get_css_classes(false);
 		
@@ -588,27 +588,27 @@ class UpdraftPlus_BackupModule_openstack_base extends UpdraftPlus_BackupModule {
 				<?php
 					if (!empty($this->img_url)) {
 					?>
-						<img alt="<?php echo esc_attr($this->long_desc); ?>" src="<?php echo esc_url(UPDRAFTPLUS_URL.$this->img_url); ?>">
+						<img alt="<?php echo esc_attr($this->long_desc); ?>" src="<?php echo esc_url(BACKUPPLUS_URL.$this->img_url); ?>">
 					<?php
 					}
 					?>
 				<br>
 			<?php
 			// Check requirements.
-			global $updraftplus_admin;
+			global $backupplus_admin;
 			if (!function_exists('mb_substr')) {
-				$updraftplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'updraftplus').':</strong> '.
+				$backupplus_admin->show_double_warning(
+					'<strong>'.__('Warning', 'backupplus').':</strong> '.
 					/* translators: %s: Required module name */
-					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'updraftplus'), 'mbstring').' '.
-					__('Please contact your web hosting provider\'s support.', 'updraftplus').' '.
+					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'mbstring').' '.
+					__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
 					/* translators: 1: Remote storage method, 2: Required module name */
-					sprintf(__('UpdraftPlus\'s %1$s module <strong>requires</strong> %2$s.', 'updraftplus'), $this->desc, 'mbstring').' '.
-					__('Please do not file any support requests; there is no alternative.', 'updraftplus'),
+					sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $this->desc, 'mbstring').' '.
+					__('Please do not file any support requests; there is no alternative.', 'backupplus'),
 					$this->method
 				);
 			}
-			$updraftplus_admin->curl_check($this->long_desc, false, $this->method);
+			$backupplus_admin->curl_check($this->long_desc, false, $this->method);
 			echo '<br>';
 			$this->get_pre_configuration_middlesection_template();
 			?>

@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) die('No direct access.');
 /**
  * Here live manipulation functions that just transform input into output and do not perform any other activities
  */
-class UpdraftPlus_Manipulation_Functions {
+class BackupPlus_Manipulation_Functions {
 
 	/**
 	 * Replace last occurrence
@@ -239,19 +239,19 @@ class UpdraftPlus_Manipulation_Functions {
 	}
 	
 	/**
-	 * This options filter removes ABSPATH off the front of updraft_dir, if it is given absolutely and contained within it
+	 * This options filter removes ABSPATH off the front of backupplus_dir, if it is given absolutely and contained within it
 	 *
-	 * @param  String $updraft_dir Directory
+	 * @param  String $backupplus_dir Directory
 	 * @return String
 	 */
-	public static function prune_updraft_dir_prefix($updraft_dir) {
-		if ('/' == substr($updraft_dir, 0, 1) || "\\" == substr($updraft_dir, 0, 1) || preg_match('/^[a-zA-Z]:/', $updraft_dir)) {
+	public static function prune_backupplus_dir_prefix($backupplus_dir) {
+		if ('/' == substr($backupplus_dir, 0, 1) || "\\" == substr($backupplus_dir, 0, 1) || preg_match('/^[a-zA-Z]:/', $backupplus_dir)) {
 			$wcd = trailingslashit(WP_CONTENT_DIR);
-			if (strpos($updraft_dir, $wcd) === 0) {
-				$updraft_dir = substr($updraft_dir, strlen($wcd));
+			if (strpos($backupplus_dir, $wcd) === 0) {
+				$backupplus_dir = substr($backupplus_dir, strlen($wcd));
 			}
 		}
-		return $updraft_dir;
+		return $backupplus_dir;
 	}
 	
 	public static function get_mime_type_from_filename($filename, $allow_gzip = true) {
@@ -581,11 +581,11 @@ class UpdraftPlus_Manipulation_Functions {
 				break;
 			case 'text':
 				/* translators: Deleted text. */
-				$anonymous = __('[deleted]', 'updraftplus');
+				$anonymous = __('[deleted]', 'backupplus');
 				break;
 			case 'longtext':
 				/* translators: Deleted long text. */
-				$anonymous = __('This content was deleted in order to anonymize it.', 'updraftplus');
+				$anonymous = __('This content was deleted in order to anonymize it.', 'backupplus');
 				break;
 			default:
 				$anonymous = '';
@@ -595,14 +595,14 @@ class UpdraftPlus_Manipulation_Functions {
 	}
 
 	/**
-	 * Send the error message to the PHP system logger if the 'WP_DEBUG' constant is 'true' or the 'updraft_debug_mode' is activated.
+	 * Send the error message to the PHP system logger if the 'WP_DEBUG' constant is 'true' or the 'backupplus_debug_mode' is activated.
 	 *
 	 * @param string $message - the error message
 	 *
 	 * @return void
 	 */
 	public static function error_log($message) {
-		if ((defined('WP_DEBUG') && WP_DEBUG) || (class_exists('UpdraftPlus_Options') && UpdraftPlus_Options::get_updraft_option('updraft_debug_mode'))) {
+		if ((defined('WP_DEBUG') && WP_DEBUG) || (class_exists('BackupPlus_Options') && BackupPlus_Options::get_backupplus_option('backupplus_debug_mode'))) {
 			error_log($message); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- error_log() is intentionally used to log the error when debug mode is enabled.
 		}
 	}

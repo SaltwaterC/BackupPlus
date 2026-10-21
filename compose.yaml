@@ -1,0 +1,55 @@
+services:
+  database:
+    build:
+      context: ./dev/mariadb
+      dockerfile: Containerfile
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-backupplus}
+      MARIADB_USER: ${DB_USER:-backupplus}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-backupplus_dev}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-backupplus_root}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mariadb --protocol=tcp --host=127.0.0.1 --user="$$MARIADB_USER" --password="$$MARIADB_PASSWORD" "$$MARIADB_DATABASE" --execute="SELECT 1" >/dev/null
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  wordpress:
+    build:
+      context: ./dev/wordpress
+      dockerfile: Containerfile
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DB_HOST: database
+      DB_NAME: ${DB_NAME:-backupplus}
+      DB_USER: ${DB_USER:-backupplus}
+      DB_PASSWORD: ${DB_PASSWORD:-backupplus_dev}
+      WP_URL: ${WP_URL:-http://localhost:${WP_PORT:-8080}}
+      WP_SITE_TITLE: ${WP_SITE_TITLE:-BackupPlus Development}
+      WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
+      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-backupplus_dev}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-admin@example.test}
+      DEV_LOGIN_TOKEN: ${DEV_LOGIN_TOKEN:-backupplus-local-dev-login}
+    ports:
+      - "127.0.0.1:${WP_PORT:-8080}:8080"
+    volumes:
+      - wordpress_data:/var/www/html
+      - .:/workspace/backupplus:ro,z
+      - ${HOST_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}:/etc/ssl/certs/host-ca-certificates.crt:ro
+    healthcheck:
+      test: [CMD, php, -r, "exit(@file_get_contents('http://127.0.0.1:8080/wp-login.php') === false ? 1 : 0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  mariadb_data:
+  wordpress_data:

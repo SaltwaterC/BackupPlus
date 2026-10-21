@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('UDP_Google_Client')) {
@@ -75,7 +77,7 @@ class Google_Cache_File extends Google_Cache_Abstract
     if ($this->acquireReadLock($storageFile)) {
       if (filesize($storageFile) > 0) {
         $data = fread($this->fh, filesize($storageFile));
-        $data = UpdraftPlus::unserialize($data, array('UDP_Google_Http_Request'));
+        $data = BackupPlus::unserialize($data, array('UDP_Google_Http_Request'));
       } else {
         $this->client->getLogger()->debug(
             'Cache file was empty',

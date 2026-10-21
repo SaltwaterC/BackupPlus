@@ -3,10 +3,9 @@
 /**
  * OAuth storage handler using WordPress options
  * This can only be used if you have a WordPress environment loaded, such that the (get|update|delete)_option functions are available
- * See an example usage in http://wordpress.org/plugins/updraftplus
+ * See an example usage in http://wordpress.org/plugins/backupplus
  *
  * @author David Anderson
- * @link https://teamupdraft.com
  * @package Dropbox\Oauth
  * @subpackage Storage
  */
@@ -47,7 +46,7 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 			$this->encrypter = $encrypter;
 		}
 
-		if ($backup_module_object instanceof UpdraftPlus_BackupModule) {
+		if ($backup_module_object instanceof BackupPlus_BackupModule) {
 			$this->backup_module_object = $backup_module_object;
 		}
 
@@ -191,6 +190,6 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 		}
 		
 		// Return the unserialized token
-		return UpdraftPlus::unserialize($token, array('stdClass'));
+		return BackupPlus::unserialize($token, array('stdClass'));
 	}
 }

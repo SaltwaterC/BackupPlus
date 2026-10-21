@@ -9,7 +9,7 @@
  * @subpackage Storage
  */
 
-/* UpdraftPlus notes
+/* BackupPlus notes
 Using this was fairly pointless (it encrypts storage credentials at rest). But, it's implemented now, so needs supporting.
 Investigation shows that mcrypt and phpseclib native encryption using different padding schemes.
 As a result, that which is encrypted by phpseclib native can be decrypted by mcrypt, but not vice-versa. Each can (as you'd expect) decrypt the results of their own encryption.
@@ -57,16 +57,16 @@ class Dropbox_Encrypter
     {
 
         // Encryption: we always use phpseclib for this
-        global $updraftplus;
-        $ensure_phpseclib = $updraftplus->ensure_phpseclib();
+        global $backupplus;
+        $ensure_phpseclib = $backupplus->ensure_phpseclib();
         
         if (is_wp_error($ensure_phpseclib)) {
-            $updraftplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message());
-            $updraftplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message(), 'error');
+            $backupplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message());
+            $backupplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message(), 'error');
             return false;
         }
         
-        $updraftplus->ensure_phpseclib();
+        $backupplus->ensure_phpseclib();
         
         $iv = phpseclib_Crypt_Random::string(self::IV_SIZE);
         
@@ -93,12 +93,12 @@ class Dropbox_Encrypter
 		// Note: mcrypt_decrypt() is deprecated since PHP 7.1 and removed in 7.2.
 		// Switched to phpseclib exclusively for decryption.
 		
-		global $updraftplus;
+		global $backupplus;
         $cipherText = base64_decode($cipherText);
         $iv = substr($cipherText, 0, self::IV_SIZE);
         $cipherText = substr($cipherText, self::IV_SIZE);
             
-		$updraftplus->ensure_phpseclib();
+		$backupplus->ensure_phpseclib();
 
 		$rijndael = new phpseclib_Crypt_Rijndael();
 		$rijndael->setKey($this->key);

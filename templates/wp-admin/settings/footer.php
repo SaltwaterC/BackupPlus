@@ -1,6 +1,6 @@
 <?php
 if (!defined('ABSPATH')) die('No direct access allowed');
 ?>
-<footer class="updraftplus-settings-footer">
+<footer class="backupplus-settings-footer">
 </footer>
-</div><!-- end #updraft-wrap -->
+</div><!-- end #backupplus-wrap -->

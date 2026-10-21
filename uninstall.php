@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall UpdraftPlus Plugin
+ * Uninstall BackupPlus Plugin
  *
  * Executed when the plugin is uninstalled.
  * Removes all plugin-related options, schedules, and temporary data.
@@ -9,7 +9,7 @@
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
 if (!defined('WP_UNINSTALL_PLUGIN')) exit;
 
-$deinstall_option = get_site_option('updraftplus_deinstall_option', 'no');
+$deinstall_option = get_site_option('backupplus_deinstall_option', 'no');
 
 /**
  * Respect user preference (if set to "no", keep data)
@@ -18,17 +18,17 @@ if ('no' === $deinstall_option) {
 	return;
 }
 
-$class_updraftplus_file_path = plugin_dir_path(__FILE__).'class-updraftplus.php';
+$class_backupplus_file_path = plugin_dir_path(__FILE__).'class-backupplus.php';
 
-if (!is_file($class_updraftplus_file_path)) return;
+if (!is_file($class_backupplus_file_path)) return;
 	
-require_once($class_updraftplus_file_path);
+require_once($class_backupplus_file_path);
 
-if (!function_exists('updraftplus_uninstall_clear_options_transients')) {
+if (!function_exists('backupplus_uninstall_clear_options_transients')) {
 	/**
 	 * Clear options and transients from the option table
 	 */
-	function updraftplus_uninstall_clear_options_transients() {
+	function backupplus_uninstall_clear_options_transients() {
 		global $udp_settings_keys, $wpdb;
 		$options_list = implode(',', array_fill(0, count(array_merge($udp_settings_keys['options'], $udp_settings_keys['meta'])), '%s'));
 		$sql = $wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name IN ($options_list)", array_merge($udp_settings_keys['options'], $udp_settings_keys['meta'])); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for IN clause are prepared; interpolation is required for variable number of keys.
@@ -51,9 +51,9 @@ if (!function_exists('updraftplus_uninstall_clear_options_transients')) {
 
 global $wpdb, $udp_settings_keys;
 
-$udp_settings_keys = UpdraftPlus::get_system_identifiers_list();
+$udp_settings_keys = BackupPlus::get_system_identifiers_list();
 
-updraftplus_uninstall_clear_options_transients();
+backupplus_uninstall_clear_options_transients();
 
 /**
  * If multisite: delete site-wide (network) options and subsite-specific ones
@@ -63,7 +63,7 @@ if (is_multisite()) {
 	// Delete options stored in wp_sitemeta
 	array_walk($udp_settings_keys['meta'], 'delete_site_option');
 
-	// remove any data in the sitemeta table that has meta_key prefixed with "updraftplus_" (e.g. updraftplus_options, updraftplus_product_key, updraftplus_product_keymeta, etc.)
+	// remove any data in the sitemeta table that has meta_key prefixed with "backupplus_" (e.g. backupplus_options, backupplus_product_key, backupplus_product_keymeta, etc.)
 	foreach ($udp_settings_keys['prefixed_options'] as $pattern) {
 		$wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s", $pattern));
 	}
@@ -93,7 +93,7 @@ if (is_multisite()) {
 	foreach ($subsites as $blog_id) {
 		switch_to_blog($blog_id);
 
-		updraftplus_uninstall_clear_options_transients();
+		backupplus_uninstall_clear_options_transients();
 
 		restore_current_blog();
 	}
@@ -107,4 +107,4 @@ foreach ($udp_settings_keys['crons'] as $hook) {
 	wp_clear_scheduled_hook($hook);
 }
 
-delete_site_option('updraftplus_deinstall_option');
+delete_site_option('backupplus_deinstall_option');

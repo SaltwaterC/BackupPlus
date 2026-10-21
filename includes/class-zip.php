@@ -4,9 +4,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (class_exists('ZipArchive')) :
 /**
- * We just add a last_error variable for comaptibility with our UpdraftPlus_PclZip object
+ * We just add a last_error variable for comaptibility with our BackupPlus_PclZip object
  */
-class UpdraftPlus_ZipArchive extends ZipArchive {
+class BackupPlus_ZipArchive extends ZipArchive {
 
 		public $last_error = 'Unknown: ZipArchive does not return error messages';
 }
@@ -15,7 +15,7 @@ endif;
 /**
  * A ZipArchive compatibility layer, with behaviour sufficient for our usage of ZipArchive
  */
-class UpdraftPlus_PclZip {
+class BackupPlus_PclZip {
 
 	protected $pclzip;
 
@@ -38,8 +38,8 @@ class UpdraftPlus_PclZip {
 		$this->addfiles = array();
 		$this->adddirs = array();
 		// Put this in a non-backed-up, writeable location, to make sure that huge temporary files aren't created and then added to the backup - and that we have somewhere writable
-		global $updraftplus;
-		if (!defined('PCLZIP_TEMPORARY_DIR')) define('PCLZIP_TEMPORARY_DIR', trailingslashit($updraftplus->backups_dir_location()));
+		global $backupplus;
+		if (!defined('PCLZIP_TEMPORARY_DIR')) define('PCLZIP_TEMPORARY_DIR', trailingslashit($backupplus->backups_dir_location()));
 	}
 
 	/**
@@ -151,7 +151,7 @@ class UpdraftPlus_PclZip {
 	 *
 	 * @return Boolean|Array - Returns a keyed list (keys matching $indexes) of contents of the entry on success or FALSE on failure.
 	 */
-	public function updraftplus_getFromIndexBulk($indexes) {
+	public function backupplus_getFromIndexBulk($indexes) {
 	
 		$results = array();
 	
@@ -204,7 +204,7 @@ class UpdraftPlus_PclZip {
 		
 		// This also prevents CI complaining about an unused parameter
 		if ($flags) {
-			UpdraftPlus_Manipulation_Functions::error_log("A call to UpdraftPlus_PclZip::getFromIndex() set flags=$flags, but this is not implemented");
+			BackupPlus_Manipulation_Functions::error_log("A call to BackupPlus_PclZip::getFromIndex() set flags=$flags, but this is not implemented");
 		}
 		
 		if (!is_array($contents)) {
@@ -254,10 +254,10 @@ class UpdraftPlus_PclZip {
 		}
 
 		// Make the empty directory we need to implement add_empty_dir()
-		global $updraftplus;
-		$updraft_dir = $updraftplus->backups_dir_location();
-		if (!is_dir($updraft_dir.'/emptydir') && !mkdir($updraft_dir.'/emptydir')) {
-			$this->last_error = "Could not create empty directory ($updraft_dir/emptydir)";
+		global $backupplus;
+		$backupplus_dir = $backupplus->backups_dir_location();
+		if (!is_dir($backupplus_dir.'/emptydir') && !mkdir($backupplus_dir.'/emptydir')) {
+			$this->last_error = "Could not create empty directory ($backupplus_dir/emptydir)";
 			return false;
 		}
 
@@ -279,14 +279,14 @@ class UpdraftPlus_PclZip {
 			return false;
 		}
 
-		global $updraftplus;
-		$updraft_dir = $updraftplus->backups_dir_location();
+		global $backupplus;
+		$backupplus_dir = $backupplus->backups_dir_location();
 
 		$activity = false;
 
 		// Add the empty directories
 		foreach ($this->adddirs as $dir) {
-			if (false == $this->pclzip->add($updraft_dir.'/emptydir', PCLZIP_OPT_REMOVE_PATH, $updraft_dir.'/emptydir', PCLZIP_OPT_ADD_PATH, $dir)) {
+			if (false == $this->pclzip->add($backupplus_dir.'/emptydir', PCLZIP_OPT_REMOVE_PATH, $backupplus_dir.'/emptydir', PCLZIP_OPT_ADD_PATH, $dir)) {
 				$this->last_error = $this->pclzip->errorInfo(true);
 				return false;
 			}
@@ -355,7 +355,7 @@ class UpdraftPlus_PclZip {
 	}
 }
 
-class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
+class BackupPlus_BinZip extends BackupPlus_PclZip {
 
 	private $binzip;
 	
@@ -365,8 +365,8 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 	 * Class constructor
 	 */
 	public function __construct() {
-		global $updraftplus_backup;
-		$this->binzip = $updraftplus_backup->binzip;
+		global $backupplus_backup;
+		$this->binzip = $backupplus_backup->binzip;
 		if (!is_string($this->binzip)) {
 			$this->last_error = "No binary zip was found";
 			return false;
@@ -391,23 +391,23 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 	 */
 	public function addFile($file, $add_as) {
 
-		global $updraftplus;
+		global $backupplus;
 		
 		// If $file was reached through a symlink and has been dereferenced, then see if we can do anything about that.
 		foreach ($this->symlink_reversals as $target => $link) {
 			if (0 === strpos($file, $target)) {
 				// Get the "within WP" path back so that we can eventually run "zip -@" from a directory where $add_as actually exists with its given path
-				$file = UpdraftPlus_Manipulation_Functions::str_replace_once($target, $link, $file);
+				$file = BackupPlus_Manipulation_Functions::str_replace_once($target, $link, $file);
 			}
 		}
 		
 		// Get the directory that $add_as is relative to
-		$base = UpdraftPlus_Manipulation_Functions::str_lreplace($add_as, '', $file);
+		$base = BackupPlus_Manipulation_Functions::str_lreplace($add_as, '', $file);
 		
 		// If the replacement operation has done nothing, i.e. if $file did not begin with $add_as
 		if ($file == $base) {
 			// Shouldn't happen; but see: https://bugs.php.net/bug.php?id=62119
-			$updraftplus->log("File skipped due to unexpected name mismatch (locale: ".setlocale(LC_CTYPE, "0")."): file=$file add_as=$add_as", 'notice', false, true);
+			$backupplus->log("File skipped due to unexpected name mismatch (locale: ".setlocale(LC_CTYPE, "0")."): file=$file add_as=$add_as", 'notice', false, true);
 		} else {
 			$rdirname = untrailingslashit($base);
 			// Note: $file equals $rdirname/$add_as
@@ -429,7 +429,7 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 			return false;
 		}
 
-		global $updraftplus, $updraftplus_backup;
+		global $backupplus, $backupplus_backup;
 
 		// BinZip does not like zero-sized zip files
 		if (file_exists($this->path) && 0 == filesize($this->path)) @unlink($this->path);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
@@ -440,11 +440,11 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 			2 => array('pipe', 'w')
 		);
 		$exec = $this->binzip;
-		if (defined('UPDRAFTPLUS_BINZIP_OPTS') && UPDRAFTPLUS_BINZIP_OPTS) $exec .= ' '.UPDRAFTPLUS_BINZIP_OPTS;
+		if (defined('BACKUPPLUS_BINZIP_OPTS') && BACKUPPLUS_BINZIP_OPTS) $exec .= ' '.BACKUPPLUS_BINZIP_OPTS;
 		$exec .= " -v -@ ".escapeshellarg($this->path);
 
 		$last_recorded_alive = time();
-		$something_useful_happened = $updraftplus->something_useful_happened;
+		$something_useful_happened = $backupplus->something_useful_happened;
 		$orig_size = file_exists($this->path) ? filesize($this->path) : 0;
 		$last_size = $orig_size;
 		clearstatcache();
@@ -453,7 +453,7 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 
 		// If there are no files to add, but there are empty directories, then we need to make sure the directories actually get added
 		if (0 == count($this->addfiles) && 0 < count($this->adddirs)) {
-			$dir = realpath($updraftplus_backup->make_zipfile_source);
+			$dir = realpath($backupplus_backup->make_zipfile_source);
 			$this->addfiles[$dir] = '././.';
 		}
 		// Loop over each destination directory name
@@ -462,7 +462,7 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 			$process = function_exists('proc_open') ? proc_open($exec, $descriptorspec, $pipes, $rdirname) : false;// phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- This function is intentionally used and reviewed for safety.
 
 			if (!is_resource($process)) {
-				$updraftplus->log('BinZip error: proc_open failed');
+				$backupplus->log('BinZip error: proc_open failed');
 				$this->last_error = 'BinZip error: proc_open failed';
 				return false;
 			}
@@ -497,21 +497,21 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 				if (is_array($read) && in_array($pipes[1], $read)) {
 					$w = fgets($pipes[1]);
 					// Logging all this really slows things down; use debug to mitigate
-					if ($w && $updraftplus_backup->debug) $updraftplus->log("Output from zip: ".trim($w), 'debug');
+					if ($w && $backupplus_backup->debug) $backupplus->log("Output from zip: ".trim($w), 'debug');
 					if (time() > $last_recorded_alive + 5) {
-						UpdraftPlus_Job_Scheduler::record_still_alive();
+						BackupPlus_Job_Scheduler::record_still_alive();
 						$last_recorded_alive = time();
 					}
 					if (file_exists($this->path)) {
 						$new_size = @filesize($this->path);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 						if (!$something_useful_happened && $new_size > $orig_size + 20) {
-							UpdraftPlus_Job_Scheduler::something_useful_happened();
+							BackupPlus_Job_Scheduler::something_useful_happened();
 							$something_useful_happened = true;
 						}
 						clearstatcache();
 						// Log when 20% bigger or at least every 50MB
 						if ($new_size > $last_size*1.2 || $new_size > $last_size + 52428800) {
-							$updraftplus->log(basename($this->path).sprintf(": size is now: %.2f MB", round($new_size/1048576, 1)));
+							$backupplus->log(basename($this->path).sprintf(": size is now: %.2f MB", round($new_size/1048576, 1)));
 							$last_size = $new_size;
 						}
 					}
@@ -536,11 +536,11 @@ class UpdraftPlus_BinZip extends UpdraftPlus_PclZip {
 
 			if (0 != $ret && 12 != $ret) {
 				if ($ret < 128) {
-					$updraftplus->log("Binary zip: error (code: $ret - look it up in the Diagnostics section of the zip manual at http://infozip.sourceforge.net/FAQ.html#error-codes for interpretation... and also check that your hosting account quota is not full)");
+					$backupplus->log("Binary zip: error (code: $ret - look it up in the Diagnostics section of the zip manual at http://infozip.sourceforge.net/FAQ.html#error-codes for interpretation... and also check that your hosting account quota is not full)");
 				} else {
-					$updraftplus->log("Binary zip: error (code: $ret - a code above 127 normally means that the zip process was deliberately killed ... and also check that your hosting account quota is not full)");
+					$backupplus->log("Binary zip: error (code: $ret - a code above 127 normally means that the zip process was deliberately killed ... and also check that your hosting account quota is not full)");
 				}
-				if (!empty($w) && !$updraftplus_backup->debug) $updraftplus->log("Last output from zip: ".trim($w), 'debug');
+				if (!empty($w) && !$backupplus_backup->debug) $backupplus->log("Last output from zip: ".trim($w), 'debug');
 				return false;
 			}
 

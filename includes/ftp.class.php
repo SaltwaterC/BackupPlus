@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 /**
  * Adapted from http://www.solutionbot.com/2009/01/02/php-ftp-class/
  */
-class UpdraftPlus_ftp_wrapper {
+class BackupPlus_ftp_wrapper {
 
 	private $conn_id;
 
@@ -55,21 +55,21 @@ class UpdraftPlus_ftp_wrapper {
 		}
 
 		if (time() - $time_start > 19) {
-			global $updraftplus_admin;
-			if (isset($updraftplus_admin->logged) && is_array($updraftplus_admin->logged)) {
+			global $backupplus_admin;
+			if (isset($backupplus_admin->logged) && is_array($backupplus_admin->logged)) {
 				/* translators: %s: Connection type (e.g., FTP) */
-				$updraftplus_admin->logged[] = sprintf(__('The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company.', 'updraftplus'), 'FTP');
+				$backupplus_admin->logged[] = sprintf(__('The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company.', 'backupplus'), 'FTP');
 			} else {
-				global $updraftplus;
+				global $backupplus;
 				/* translators: %s: Connection type (e.g., FTP) */
-				$updraftplus->log(sprintf(__('The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company.', 'updraftplus'), 'FTP'), 'error');
+				$backupplus->log(sprintf(__('The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company.', 'backupplus'), 'FTP'), 'error');
 			}
 		}
 
 		return false;
 	}
  
-	public function put($local_file_path, $remote_file_path, $mode = FTP_BINARY, $resume = false, $updraftplus = false) {
+	public function put($local_file_path, $remote_file_path, $mode = FTP_BINARY, $resume = false, $backupplus = false) {
 
 		$file_size = filesize($local_file_path);
 
@@ -80,9 +80,9 @@ class UpdraftPlus_ftp_wrapper {
 				$resume = false;
 				$existing_size = 0;
 			} else {
-				if (is_a($updraftplus, 'UpdraftPlus')) $updraftplus->log("File already exists at remote site: size $existing_size. Will attempt resumption.");
+				if (is_a($backupplus, 'BackupPlus')) $backupplus->log("File already exists at remote site: size $existing_size. Will attempt resumption.");
 				if ($existing_size >= $file_size) {
-					if (is_a($updraftplus, 'UpdraftPlus')) $updraftplus->log("File is apparently already completely uploaded");
+					if (is_a($backupplus, 'BackupPlus')) $backupplus->log("File is apparently already completely uploaded");
 					return true;
 				}
 			}
@@ -99,7 +99,7 @@ class UpdraftPlus_ftp_wrapper {
 		// $existing_size can now be re-purposed
 
 		while (FTP_MOREDATA == $ret) {
-			if (is_a($updraftplus, 'UpdraftPlus')) {
+			if (is_a($backupplus, 'BackupPlus')) {
 				$new_size = ftell($fh);
 				$record_after = 524288;
 				if ($existing_size > 2097152) {
@@ -108,7 +108,7 @@ class UpdraftPlus_ftp_wrapper {
 				if ($new_size - $existing_size > $record_after) {
 					$existing_size = $new_size;
 					$percent = round(100*$new_size/$file_size, 1);
-					$updraftplus->record_uploaded_chunk($percent, '', $local_file_path);
+					$backupplus->record_uploaded_chunk($percent, '', $local_file_path);
 				}
 			}
 			// Continue upload
@@ -118,7 +118,7 @@ class UpdraftPlus_ftp_wrapper {
 		fclose($fh);
 
 		if (FTP_FINISHED != $ret) {
-			if (is_a($updraftplus, 'UpdraftPlus')) $updraftplus->log("FTP upload: error ($ret)");
+			if (is_a($backupplus, 'BackupPlus')) $backupplus->log("FTP upload: error ($ret)");
 			return false;
 		}
 
@@ -126,7 +126,7 @@ class UpdraftPlus_ftp_wrapper {
 
 	}
  
-	public function get($local_file_path, $remote_file_path, $mode = FTP_BINARY, $resume = false, $updraftplus = false) {
+	public function get($local_file_path, $remote_file_path, $mode = FTP_BINARY, $resume = false, $backupplus = false) {
 
 		$file_last_size = 0;
 
@@ -144,10 +144,10 @@ class UpdraftPlus_ftp_wrapper {
 
 		while (FTP_MOREDATA == $ret) {
 
-			if ($updraftplus) {
+			if ($backupplus) {
 				$file_now_size = filesize($local_file_path);
 				if ($file_now_size - $file_last_size > 524288) {
-					$updraftplus->log("FTP fetch: file size is now: ".sprintf("%0.2f", filesize($local_file_path)/1048576)." Mb");
+					$backupplus->log("FTP fetch: file size is now: ".sprintf("%0.2f", filesize($local_file_path)/1048576)." Mb");
 					$file_last_size = $file_now_size;
 				}
 				clearstatcache($local_file_path);// phpcs:ignore PHPCompatibility.FunctionUse.NewFunctionParameters.clearstatcache_clear_realpath_cacheFound -- The function clearstatcache() does not have a parameter "clear_realpath_cache" in PHP version 5.2 or earlier
@@ -159,10 +159,10 @@ class UpdraftPlus_ftp_wrapper {
 		fclose($fh);
 
 		if (FTP_FINISHED == $ret) {
-			if ($updraftplus) $updraftplus->log("FTP fetch: fetch complete");
+			if ($backupplus) $backupplus->log("FTP fetch: fetch complete");
 			return true;
 		} else {
-			if ($updraftplus) $updraftplus->log("FTP fetch: fetch failed");
+			if ($backupplus) $backupplus->log("FTP fetch: fetch failed");
 			return false;
 		}
 

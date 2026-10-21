@@ -2,7 +2,7 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-abstract class UpdraftPlus_BackupModule {
+abstract class BackupPlus_BackupModule {
 
 	private $_options;
 
@@ -61,7 +61,7 @@ abstract class UpdraftPlus_BackupModule {
 			throw new Exception('save_options() requires an instance ID, but was called without setting one (either directly or via set_instance_id())');
 		}
 		
-		$current_db_options = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format($this->get_id());
+		$current_db_options = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format($this->get_id());
 
 		if (is_wp_error($current_db_options)) {
 			throw new Exception('save_options(): options fetch/update failed ('.$current_db_options->get_error_code().': '.$current_db_options->get_error_message().')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
@@ -69,7 +69,8 @@ abstract class UpdraftPlus_BackupModule {
 
 		$current_db_options['settings'][$this->_instance_id] = $this->_options;
 
-		return UpdraftPlus_Options::update_updraft_option('updraft_'.$this->get_id(), $current_db_options);
+		$updated = BackupPlus_Options::update_backupplus_option('backupplus_'.$this->get_id(), $current_db_options);
+		return $updated || BackupPlus_Options::get_backupplus_option('backupplus_'.$this->get_id()) === $current_db_options;
 	
 	}
 	
@@ -96,22 +97,22 @@ abstract class UpdraftPlus_BackupModule {
 	 * @return Array an associative array keyed by names of the corresponding variables/methods, the keys might not exactly be the same with the name of the variables/methods
 	 */
 	protected function get_persistent_variables_and_methods() {
-		global $updraftplus;
+		global $backupplus;
 		return array(
-			'css_class' => 'updraftplusmethod',
+			'css_class' => 'backupplusmethod',
 			'is_multi_options_feature_supported' => $this->supports_feature('multi_options'),
 			'is_config_templates_feature_supported' => $this->supports_feature('config_templates'),
 			'is_conditional_logic_feature_supported' => $this->supports_feature('conditional_logic'),
 			'is_multi_servers_feature_supported' => $this->supports_feature('multi_servers'),
 			'method_id' => $this->get_id(),
 			'_instance_id' => $this->_instance_id,
-			'method_display_name' => $updraftplus->backup_methods[$this->get_id()],
-			'admin_page_url' => UpdraftPlus_Options::admin_page_url(),
+			'method_display_name' => $backupplus->backup_methods[$this->get_id()],
+			'admin_page_url' => BackupPlus_Options::admin_page_url(),
 			'storage_auth_nonce' =>wp_create_nonce('storage_auth_nonce'),
-			'input_select_folder_label' => __('Select existing folder', 'updraftplus'),
-			'input_confirm_label' => __('Confirm', 'updraftplus'),
-			'input_cancel_label' => __('Cancel', 'updraftplus'),
-			'hostname_error_label' => __('Error:', 'updraftplus').' '.__('A host name cannot be an URL or contain a slash.', 'updraftplus'),
+			'input_select_folder_label' => __('Select existing folder', 'backupplus'),
+			'input_confirm_label' => __('Confirm', 'backupplus'),
+			'input_cancel_label' => __('Cancel', 'backupplus'),
+			'hostname_error_label' => __('Error:', 'backupplus').' '.__('A host name cannot be an URL or contain a slash.', 'backupplus'),
 		);
 	}
 
@@ -244,7 +245,7 @@ abstract class UpdraftPlus_BackupModule {
 	/**
 	 * Outputs id and name fields, as if currently within an input tag
 	 *
-	 * This assumes standardised options handling (i.e. that the options array is updraft_(method-id))
+	 * This assumes standardised options handling (i.e. that the options array is backupplus_(method-id))
 	 *
 	 * @param Array|String $field                  - the field identifiers
 	 * @param Boolean      $return_instead_of_echo - tells the method if it should return the output or echo it to page
@@ -264,11 +265,11 @@ abstract class UpdraftPlus_BackupModule {
 				$name .= '['.$value.']';
 			}
 		} else {
-			$id = '_'.$field;
+			$id .= '_'.$field;
 			$name = '['.$field.']';
 		}
 		
-		$output = "id=\"updraft_{$method_id}{$id}_{$instance_id}\" name=\"updraft_{$method_id}[settings][{$instance_id}]{$name}\" ";
+		$output = "id=\"backupplus_{$method_id}{$id}_{$instance_id}\" name=\"backupplus_{$method_id}[settings][{$instance_id}]{$name}\" ";
 
 		if ($return_instead_of_echo) {
 			return $output;
@@ -287,7 +288,7 @@ abstract class UpdraftPlus_BackupModule {
 	public function get_css_id($field) {
 		$method_id = $this->get_id();
 		$instance_id = $this->supports_feature('config_templates') ? '{{instance_id}}' : $this->_instance_id;
-		return "updraft_{$method_id}_{$field}_{$instance_id}";
+		return "backupplus_{$method_id}_{$field}_{$instance_id}";
 	}
 	
 	/**
@@ -303,7 +304,7 @@ abstract class UpdraftPlus_BackupModule {
 		ob_start();
 		// Allow methods to not use this hidden field, if they do not output any settings (to prevent their saved settings being over-written by just this hidden field)
 		if ($this->print_shared_settings_fields()) {
-			?><tr class="<?php echo esc_attr($this->get_css_classes()); ?>"><input type="hidden" name="updraft_<?php echo esc_attr($this->get_id());?>[version]" value="1"></tr><?php
+			?>
 		}
 		
 		if ($this->supports_feature('config_templates')) {
@@ -314,29 +315,24 @@ abstract class UpdraftPlus_BackupModule {
 				$this->get_pre_configuration_template();
 				
 				if ($this->supports_feature('multi_storage')) {
-				do_action('updraftplus_config_print_add_multi_storage', $this->get_id(), $this);
+				do_action('backupplus_config_print_add_multi_storage', $this->get_id(), $this);
 				}
 				
 			?>
 			{{/if}}
 			<?php
-			do_action('updraftplus_config_print_before_storage', $this->get_id(), $this);
-			if ('updraftvault' !== $this->get_id()) do_action('updraftplus_config_print_add_conditional_logic', $this->get_id(), $this);
+			do_action('backupplus_config_print_before_storage', $this->get_id(), $this);
+			do_action('backupplus_config_print_add_conditional_logic', $this->get_id(), $this);
 			if ($this->supports_feature('multi_storage')) {
-				do_action('updraftplus_config_print_add_instance_label', $this->get_id(), $this);
+				do_action('backupplus_config_print_add_instance_label', $this->get_id(), $this);
 			}
 
 			$template = ob_get_clean();
 			$template .= $this->get_configuration_template();
-			if ('updraftvault' === $this->get_id()) {
-				ob_start();
-				do_action('updraftplus_config_print_add_conditional_logic', $this->get_id(), $this);
-				$template .= ob_get_clean();
-			}
 		} else {
-			do_action('updraftplus_config_print_before_storage', $this->get_id(), $this);
-			do_action('updraftplus_config_print_add_conditional_logic', $this->get_id(), $this);
-			// N.B. These are mutually exclusive: config_print() is not used if config_templates is supported. So, even during transition, the UpdraftPlus_BackupModule instance only needs to support one of the two, not both.
+			do_action('backupplus_config_print_before_storage', $this->get_id(), $this);
+			do_action('backupplus_config_print_add_conditional_logic', $this->get_id(), $this);
+			// N.B. These are mutually exclusive: config_print() is not used if config_templates is supported. So, even during transition, the BackupPlus_BackupModule instance only needs to support one of the two, not both.
 			$this->config_print();
 			$template = ob_get_clean();
 		}
@@ -385,8 +381,8 @@ abstract class UpdraftPlus_BackupModule {
 	 * @return Array
 	 */
 	public function get_credentials() {
-		$keys = array('updraft_ssl_disableverify', 'updraft_ssl_nossl', 'updraft_ssl_useservercerts');
-		if (!$this->supports_feature('multi_servers')) $keys[] = 'updraft_'.$this->get_id();
+		$keys = array('backupplus_ssl_disableverify', 'backupplus_ssl_nossl', 'backupplus_ssl_useservercerts');
+		if (!$this->supports_feature('multi_servers')) $keys[] = 'backupplus_'.$this->get_id();
 		return $keys;
 	}
 	
@@ -398,7 +394,7 @@ abstract class UpdraftPlus_BackupModule {
 	 * @returns String - the list of CSS classes
 	 */
 	public function get_css_classes($include_instance = true) {
-		$classes = 'updraftplusmethod '.$this->get_id();
+		$classes = 'backupplusmethod '.$this->get_id();
 		if (!$include_instance) return $classes;
 		if ($this->supports_feature('multi_options')) {
 			if ($this->supports_feature('config_templates')) {
@@ -425,7 +421,7 @@ abstract class UpdraftPlus_BackupModule {
 		<tr class="<?php echo esc_attr($this->get_css_classes()); ?>">
 			<th></th>
 			<?php /* translators: %s: Remote storage method */ ?>
-			<td><p><button id="updraft-<?php echo esc_attr($this->get_id());?>-test-<?php echo esc_attr($instance_id);?>" type="button" class="button-primary updraft-test-button updraft-<?php echo esc_attr($this->get_id());?>-test" data-instance_id="<?php echo esc_attr($instance_id);?>" data-method="<?php echo esc_attr($this->get_id());?>" data-method_label="<?php echo esc_attr($title);?>"><?php echo esc_html(sprintf(__('Test %s Settings', 'updraftplus'), $title));?></button></p></td>
+			<td><p><button id="backupplus-<?php echo esc_attr($this->get_id());?>-test-<?php echo esc_attr($instance_id);?>" type="button" class="button-primary backupplus-test-button backupplus-<?php echo esc_attr($this->get_id());?>-test" data-instance_id="<?php echo esc_attr($instance_id);?>" data-method="<?php echo esc_attr($this->get_id());?>" data-method_label="<?php echo esc_attr($title);?>"><?php echo esc_html(sprintf(__('Test %s Settings', 'backupplus'), $title));?></button></p></td>
 		</tr>
 		<?php
 		return ob_get_clean();
@@ -438,8 +434,7 @@ abstract class UpdraftPlus_BackupModule {
 	 */
 	public function get_id() {
 		$class = get_class($this);
-		// UpdraftPlus_BackupModule_
-		return substr($class, 25);
+		return substr($class, strlen(__CLASS__) + 1);
 	}
 	
 	/**
@@ -448,9 +443,9 @@ abstract class UpdraftPlus_BackupModule {
 	 * @return String - the identifier
 	 */
 	public function get_description() {
-		global $updraftplus;
+		global $backupplus;
 
-		$methods = $updraftplus->backup_methods;
+		$methods = $backupplus->backup_methods;
 
 		$id = $this->get_id();
 
@@ -496,7 +491,7 @@ abstract class UpdraftPlus_BackupModule {
 	 */
 	public function get_options() {
 	
-		global $updraftplus;
+		global $backupplus;
 	
 		$supports_multi_options = $this->supports_feature('multi_options');
 
@@ -518,16 +513,16 @@ abstract class UpdraftPlus_BackupModule {
 
 			// Next, look for job options (which in turn, falls back to saved settings if no job options were set)
 	
-			$options = $updraftplus->get_job_option('updraft_'.$this->get_id());
+			$options = $backupplus->get_job_option('backupplus_'.$this->get_id());
 			if (!is_array($options)) $options = array();
 
 			if ($supports_multi_options) {
 
 				if (!isset($options['version'])) {
-					$options_full = UpdraftPlus_Storage_Methods_Interface::update_remote_storage_options_format($this->get_id());
+					$options_full = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format($this->get_id());
 					
 					if (is_wp_error($options_full)) {
-						$updraftplus->log("Options retrieval failure: ".$options_full->get_error_code().": ".$options_full->get_error_message()." (".json_encode($options_full->get_error_data()).")");
+						$backupplus->log("Options retrieval failure: ".$options_full->get_error_code().": ".$options_full->get_error_message()." (".json_encode($options_full->get_error_data()).")");
 						return array();
 					}
 					
@@ -535,11 +530,11 @@ abstract class UpdraftPlus_BackupModule {
 					$options_full = $options;
 				}
 				
-				// UpdraftPlus_BackupModule::get_options() is for getting the current instance's options. So, this branch (going via the job option) is a legacy route, and hence we just give back the first one. The non-legacy route is to call the set_options() method externally.
+				// BackupPlus_BackupModule::get_options() is for getting the current instance's options. So, this branch (going via the job option) is a legacy route, and hence we just give back the first one. The non-legacy route is to call the set_options() method externally.
 				$options = (isset($options_full['settings']) && is_array($options_full['settings'])) ? reset($options_full['settings']) : false;
 
 				if (false === $options) {
-					$updraftplus->log("Options retrieval failure (no options set)");
+					$backupplus->log("Options retrieval failure (no options set)");
 					return array();
 				}
 				$instance_id = key($options_full['settings']);
@@ -550,7 +545,7 @@ abstract class UpdraftPlus_BackupModule {
 		}
 
 		$options = apply_filters(
-			'updraftplus_backupmodule_get_options',
+			'backupplus_backupmodule_get_options',
 			wp_parse_args($options, $this->get_default_options()),
 			$this
 		);
@@ -563,7 +558,7 @@ abstract class UpdraftPlus_BackupModule {
 	 * Set job data that is local to this storage instance
 	 * (i.e. the key does not need to be unique across instances)
 	 *
-	 * @uses UpdraftPlus::jobdata_set()
+	 * @uses BackupPlus::jobdata_set()
 	 *
 	 * @param String $key	- the key for the job data
 	 * @param Mixed  $value - the data to be stored
@@ -572,15 +567,15 @@ abstract class UpdraftPlus_BackupModule {
 	
 		$instance_key = $this->get_id().'-'.($this->_instance_id ? $this->_instance_id : 'no_instance');
 		
-		global $updraftplus;
+		global $backupplus;
 		
-		$instance_data = $updraftplus->jobdata_get($instance_key);
+		$instance_data = $backupplus->jobdata_get($instance_key);
 		
 		if (!is_array($instance_data)) $instance_data = array();
 		
 		$instance_data[$key] = $value;
 		
-		$updraftplus->jobdata_set($instance_key, $instance_data);
+		$backupplus->jobdata_set($instance_key, $instance_data);
 		
 	}
 
@@ -588,7 +583,7 @@ abstract class UpdraftPlus_BackupModule {
 	 * Get job data that is local to this storage instance
 	 * (i.e. the key does not need to be unique across instances)
 	 *
-	 * @uses UpdraftPlus::jobdata_get()
+	 * @uses BackupPlus::jobdata_get()
 	 *
 	 * @param String	  $key		  - the key for the job data
 	 * @param Mixed		  $default	  - the default to return if nothing was set
@@ -598,13 +593,13 @@ abstract class UpdraftPlus_BackupModule {
 	
 		$instance_key = $this->get_id().'-'.($this->_instance_id ? $this->_instance_id : 'no_instance');
 		
-		global $updraftplus;
+		global $backupplus;
 		
-		$instance_data = $updraftplus->jobdata_get($instance_key);
+		$instance_data = $backupplus->jobdata_get($instance_key);
 		
 		if (is_array($instance_data) && isset($instance_data[$key])) return $instance_data[$key];
 		
-		return is_string($legacy_key) ? $updraftplus->jobdata_get($legacy_key, $default) : $default;
+		return is_string($legacy_key) ? $backupplus->jobdata_get($legacy_key, $default) : $default;
 		
 	}
 	
@@ -612,7 +607,7 @@ abstract class UpdraftPlus_BackupModule {
 	 * Delete job data that is local to this storage instance
 	 * (i.e. the key does not need to be unique across instances)
 	 *
-	 * @uses UpdraftPlus::jobdata_set()
+	 * @uses BackupPlus::jobdata_set()
 	 *
 	 * @param String	  $key		  - the key for the job data
 	 * @param String|Null $legacy_key - the previous name of the key, prior to instance-specific job data (so that upgrades across versions whilst a backup is in progress can still find its data)
@@ -621,16 +616,16 @@ abstract class UpdraftPlus_BackupModule {
 	
 		$instance_key = $this->get_id().'-'.($this->_instance_id ? $this->_instance_id : 'no_instance');
 		
-		global $updraftplus;
+		global $backupplus;
 		
-		$instance_data = $updraftplus->jobdata_get($instance_key);
+		$instance_data = $backupplus->jobdata_get($instance_key);
 		
 		if (is_array($instance_data) && isset($instance_data[$key])) {
 			unset($instance_data[$key]);
-			$updraftplus->jobdata_set($instance_key, $instance_data);
+			$backupplus->jobdata_set($instance_key, $instance_data);
 		}
 		
-		if (is_string($legacy_key)) $updraftplus->jobdata_delete($legacy_key);
+		if (is_string($legacy_key)) $backupplus->jobdata_delete($legacy_key);
 		
 	}
 
@@ -650,17 +645,17 @@ abstract class UpdraftPlus_BackupModule {
 		$description = $this->get_description();
 
 		if ($this->output_account_warning()) {
-			$account_warning = __('Ensure you are logged into the correct account before continuing.', 'updraftplus');
+			$account_warning = __('Ensure you are logged into the correct account before continuing.', 'backupplus');
 		}
 
 		if ($template_instead_of_notice) {
 			$instance_id = "{{instance_id}}";
 			/* translators: %s: Description */
-			$text = sprintf(__("<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'updraftplus'), $description);
+			$text = sprintf(__("<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'backupplus'), $description);
 		} else {
 			$instance_id = $this->get_instance_id();
 			/* translators: 1: Description or remote storage name (e.g. Google Drive, OneDrive, etc.), 2: Description or remote storage name */
-			$text = sprintf(__('Follow this link to authorize access to your %1$s account (you will not be able to backup to %2$s without it).', 'updraftplus'), $description, $description);
+			$text = sprintf(__('Follow this link to authorize access to your %1$s account (you will not be able to backup to %2$s without it).', 'backupplus'), $description, $description);
 		}
 
 		echo esc_html($account_warning) . ' ' . wp_kses_post($this->build_authentication_link($instance_id, $text));
@@ -684,20 +679,20 @@ abstract class UpdraftPlus_BackupModule {
 		
 		if (!preg_match('/^[-A-Z0-9]+$/i', $instance_id)) return '';
 		
-		return '<a class="updraft_authlink" href="'.UpdraftPlus_Options::admin_page_url().'?&action=updraftmethod-'.$id.'-auth&page=updraftplus&updraftplus_'.$id.'auth=doit&nonce='.wp_create_nonce('storage_auth_nonce').'&updraftplus_instance='.$instance_id.'" data-instance_id="'.$instance_id.'" data-remote_method="'.$id.'">'.$text.'</a>';
+		return '<a class="backupplus_authlink" href="'.BackupPlus_Options::admin_page_url().'?&action=backupplusmethod-'.$id.'-auth&page=backupplus&backupplus_'.$id.'auth=doit&nonce='.wp_create_nonce('storage_auth_nonce').'&backupplus_instance='.$instance_id.'" data-instance_id="'.$instance_id.'" data-remote_method="'.$id.'">'.$text.'</a>';
 	}
 	
 	/**
 	 * Check the authentication is valid before proceeding to call the authentication method
 	 */
 	public function action_authenticate_storage() {
-		$updraftplus_auth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_'.$this->get_id().'auth');
-		$updraftplus_instance = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_instance');
-		$nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
+		$backupplus_auth = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'BackupPlus_'.$this->get_id().'auth');
+		$backupplus_instance = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'backupplus_instance');
+		$nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
 		
-		if (isset($updraftplus_auth) && 'doit' == $updraftplus_auth && !empty($updraftplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $updraftplus_instance) && isset($nonce) && wp_verify_nonce($nonce, 'storage_auth_nonce')) {
+		if (isset($backupplus_auth) && 'doit' == $backupplus_auth && !empty($backupplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $backupplus_instance) && isset($nonce) && wp_verify_nonce($nonce, 'storage_auth_nonce')) {
 			$this->set_connection_status(false);
-			$this->authenticate_storage((string) $updraftplus_instance);
+			$this->authenticate_storage((string) $backupplus_instance);
 		}
 	}
 	
@@ -710,7 +705,7 @@ abstract class UpdraftPlus_BackupModule {
 		if (method_exists($this, 'do_authenticate_storage')) {
 			$this->do_authenticate_storage($instance_id);
 		} else {
-			UpdraftPlus_Manipulation_Functions::error_log($this->get_id().": module does not have an authenticate storage method (coding bug)");
+			BackupPlus_Manipulation_Functions::error_log($this->get_id().": module does not have an authenticate storage method (coding bug)");
 		}
 	}
 	
@@ -729,7 +724,7 @@ abstract class UpdraftPlus_BackupModule {
 		$description = $this->get_description();
 
 		/* translators: %s: Description */
-		echo ' <a class="updraft_deauthlink" href="'.esc_url(UpdraftPlus_Options::admin_page_url().'?action=updraftmethod-'.$id.'-auth&page=updraftplus&updraftplus_'.$id.'auth=deauth&nonce='.wp_create_nonce($id.'_deauth_nonce').'&updraftplus_instance={{instance_id}}').'" data-instance_id="{{instance_id}}" data-remote_method="'.esc_attr($id).'">'.esc_html(sprintf(__("Follow this link to remove these settings for %s.", 'updraftplus'), $description)).'</a>';
+		echo ' <a class="backupplus_deauthlink" href="'.esc_url(BackupPlus_Options::admin_page_url().'?action=backupplusmethod-'.$id.'-auth&page=backupplus&backupplus_'.$id.'auth=deauth&nonce='.wp_create_nonce($id.'_deauth_nonce').'&backupplus_instance={{instance_id}}').'" data-instance_id="{{instance_id}}" data-remote_method="'.esc_attr($id).'">'.esc_html(sprintf(__("Follow this link to remove these settings for %s.", 'backupplus'), $description)).'</a>';
 
 		if (!$echo_instead_of_return) {
 			return ob_get_clean();
@@ -740,12 +735,12 @@ abstract class UpdraftPlus_BackupModule {
 	 * Check the deauthentication is valid before proceeding to call the deauthentication method
 	 */
 	public function action_deauthenticate_storage() {
-		$updraftplus_auth = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_'.$this->get_id().'auth');
-		$updraftplus_instance = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'updraftplus_instance');
-		$nonce = UpdraftPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
+		$backupplus_auth = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'BackupPlus_'.$this->get_id().'auth');
+		$backupplus_instance = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'backupplus_instance');
+		$nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
 
-		if (isset($updraftplus_auth) && 'deauth' == $updraftplus_auth && !empty($nonce) && !empty($updraftplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $updraftplus_instance) && wp_verify_nonce($nonce, $this->get_id().'_deauth_nonce')) {
-			$this->deauthenticate_storage($updraftplus_instance);
+		if (isset($backupplus_auth) && 'deauth' == $backupplus_auth && !empty($nonce) && !empty($backupplus_instance) && preg_match('/^[-A-Z0-9]+$/i', $backupplus_instance) && wp_verify_nonce($nonce, $this->get_id().'_deauth_nonce')) {
+			$this->deauthenticate_storage($backupplus_instance);
 		}
 	}
 	
@@ -772,17 +767,17 @@ abstract class UpdraftPlus_BackupModule {
 		$id = $this->get_id();
 		$description = $this->get_description();
 
-		$template = "<div id='updraftplus_manual_authorisation_template_{$id}'>";
+		$template = "<div id='backupplus_manual_authorisation_template_{$id}'>";
 		/* translators: %s: Description */
-		$template .= "<strong>".sprintf(__('%s authentication:', 'updraftplus'), $description)."</strong>";
+		$template .= "<strong>".sprintf(__('%s authentication:', 'backupplus'), $description)."</strong>";
 		/* translators: %s: Description */
-		$template .= "<p>".sprintf(__('If you are having problems authenticating with %s you can manually authorize here.', 'updraftplus'), $description)."</p>";
-		$template .= "<p>".__('To complete manual authentication, at the orange UpdraftPlus authentication screen select the "Having problems authenticating?" link, then copy and paste the code given here.', 'updraftplus')."</p>";
+		$template .= "<p>".sprintf(__('If you are having problems authenticating with %s you can manually authorize here.', 'backupplus'), $description)."</p>";
+		$template .= "<p>".__('To complete manual authentication, at the orange BackupPlus authentication screen select the "Having problems authenticating?" link, then copy and paste the code given here.', 'backupplus')."</p>";
 		/* translators: %s: Description */
-		$template .= "<label for='updraftplus_manual_authentication_data_{$id}'>".sprintf(__('%s authentication code:', 'updraftplus'), $description)."</label> <input type='text' id='updraftplus_manual_authentication_data_{$id}' name='updraftplus_manual_authentication_data_{$id}'>";
-		$template .= "<p id='updraftplus_manual_authentication_error_{$id}'></p>";
-		$template .= "<button type='button' data-method='{$id}' class='button button-primary' id='updraftplus_manual_authorisation_submit_{$id}'>".__('Complete manual authentication', 'updraftplus')."</button>";
-		$template .= '<span class="updraftplus_spinner spinner">' . __('Processing', 'updraftplus') . '...</span>';
+		$template .= "<label for='backupplus_manual_authentication_data_{$id}'>".sprintf(__('%s authentication code:', 'backupplus'), $description)."</label> <input type='text' id='backupplus_manual_authentication_data_{$id}' name='backupplus_manual_authentication_data_{$id}'>";
+		$template .= "<p id='backupplus_manual_authentication_error_{$id}'></p>";
+		$template .= "<button type='button' data-method='{$id}' class='button button-primary' id='backupplus_manual_authorisation_submit_{$id}'>".__('Complete manual authentication', 'backupplus')."</button>";
+		$template .= '<span class="backupplus_spinner spinner">' . __('Processing', 'backupplus') . '...</span>';
 		$template .= "</div>";
 
 		return $template;
@@ -801,7 +796,7 @@ abstract class UpdraftPlus_BackupModule {
 			return $this->do_complete_authentication($state, $code, true);
 		} else {
 			$message = $this->get_id().": module does not have an complete authentication method (coding bug)";
-			UpdraftPlus_Manipulation_Functions::error_log($message);
+			BackupPlus_Manipulation_Functions::error_log($message);
 			return $message;
 		}
 	}
@@ -816,7 +811,7 @@ abstract class UpdraftPlus_BackupModule {
 	}
 
 	/**
-	 * This function is a wrapper and will call $updraftplus->log(), the backup modules should use this so we can add information to the log lines to do with the remote storage and instance settings.
+	 * This function is a wrapper and will call $backupplus->log(), the backup modules should use this so we can add information to the log lines to do with the remote storage and instance settings.
 	 *
 	 * @param string  $line       - the log line
 	 * @param string  $level      - the log level: notice, warning, error. If suffixed with a hyphen and a destination, then the default destination is changed too.
@@ -826,11 +821,11 @@ abstract class UpdraftPlus_BackupModule {
 	 * @return void
 	 */
 	public function log($line, $level = 'notice', $uniq_id = false, $skip_dblog = false) {
-		global $updraftplus;
+		global $backupplus;
 
 		$prefix = $this->get_storage_label();
 
-		$updraftplus->log("$prefix: $line", $level, $uniq_id, $skip_dblog);
+		$backupplus->log("$prefix: $line", $level, $uniq_id, $skip_dblog);
 	}
 
 	/**
@@ -842,24 +837,24 @@ abstract class UpdraftPlus_BackupModule {
 	 * @return Boolean - true if no errors were found, otherwise false
 	 */
 	protected function process_multi_delete_responses($files, $responses) {
-		global $updraftplus;
+		global $backupplus;
 		$ret = true;
 		if (is_array($responses)) {
 			foreach ($responses as $key => $response) {
 				if ('success' == $response) {
-					$updraftplus->log("$files[$key]: Delete succeeded");
+					$backupplus->log("$files[$key]: Delete succeeded");
 				} elseif (is_array($response)) {
 					$ret = false;
 					if (isset($response['error']) && isset($response['error']['code']) && isset($response['error']['message'])) {
-						$updraftplus->log("Delete failed for file: $files[$key] with error code: ".$response['error']['code']." message: ".$response['error']['message']);
+						$backupplus->log("Delete failed for file: $files[$key] with error code: ".$response['error']['code']." message: ".$response['error']['message']);
 					} else {
-						$updraftplus->log("Delete failed for file: $files[$key]");
+						$backupplus->log("Delete failed for file: $files[$key]");
 					}
 				}
 			}
 		} elseif (!$responses) {
 			$ret = false;
-			$updraftplus->log("Delete failed for files: ".implode($files));
+			$backupplus->log("Delete failed for files: ".implode($files));
 		}
 		return $ret;
 	}
@@ -900,11 +895,11 @@ abstract class UpdraftPlus_BackupModule {
 
 		// wp_add_inline_script() is available on WP 4.5+
 		if (function_exists('wp_add_inline_script')) {
-			wp_add_inline_script('updraft-admin-common', "var js_tree_".esc_js($id)." = new updraft_js_tree('".esc_js($id)."'); js_tree_".esc_js($id).".init();", 'after');
-		} elseif (wp_script_is('updraft-admin-common', 'done')) {
-		?>
+			wp_add_inline_script('backupplus-admin-common', "var js_tree_".esc_js($id)." = new backupplus_js_tree('".esc_js($id)."'); js_tree_".esc_js($id).".init();", 'after');
+		} elseif (wp_script_is('backupplus-admin-common', 'done')) {
+		"'''"?>
 			<script>
-				var js_tree_<?php echo esc_js($id); ?> = new updraft_js_tree('<?php echo esc_js($id); ?>');
+				var js_tree_<?php echo esc_js($id); ?> = new backupplus_js_tree('<?php echo esc_js($id); ?>');
 				js_tree_<?php echo esc_js($id); ?>.init();
 			</script>
 		<?php
@@ -922,7 +917,7 @@ abstract class UpdraftPlus_BackupModule {
 	 */
 	public function set_connection_status($status) {
 		$this->is_connection_successful = (bool) $status;
-		do_action('updraftplus_remote_storage_connection_status_changed', $status, $this);
+		do_action('backupplus_remote_storage_connection_status_changed', $status, $this);
 	}
 
 	/**

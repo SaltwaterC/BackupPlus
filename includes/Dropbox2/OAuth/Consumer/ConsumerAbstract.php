@@ -53,14 +53,14 @@ abstract class Dropbox_ConsumerAbstract
      */
     protected function authenticate()
     {
-        global $updraftplus;
+        global $backupplus;
         
         $access_token = $this->storage->get('access_token');
         //Check if the new token type is set if not they need to be upgraded to OAuth2
         if (!empty($access_token) && isset($access_token->oauth_token) && !isset($access_token->token_type)) {
-            $updraftplus->log('OAuth v1 token found: upgrading to v2');
+            $backupplus->log('OAuth v1 token found: upgrading to v2');
             $this->upgradeOAuth();
-            $updraftplus->log('OAuth token upgrade successful');
+            $backupplus->log('OAuth token upgrade successful');
         }
 
         if (!empty($access_token) && isset($access_token->refresh_token) && isset($access_token->expires_in)) {
@@ -74,8 +74,8 @@ abstract class Dropbox_ConsumerAbstract
                 $excep_class = get_class($e);
                 // 04-Sep-2015 - Dropbox started throwing a 400, which caused a Dropbox_BadRequestException which previously wasn't being caught
                 if ('Dropbox_BadRequestException' == $excep_class || 'Dropbox_Exception' == $excep_class) {
-                    global $updraftplus;
-                    $updraftplus->log($e->getMessage().' - need to reauthenticate this site with Dropbox (if this fails, then you can also try wiping your settings from the Expert Settings section)');
+                    global $backupplus;
+                    $backupplus->log($e->getMessage().' - need to reauthenticate this site with Dropbox (if this fails, then you can also try wiping your settings from the Expert Settings section)');
                     //$this->getRequestToken();
                     $this->authorise();
                 } else {
@@ -127,17 +127,16 @@ abstract class Dropbox_ConsumerAbstract
                 exit;
             } else {
                 /* translators: %s: Authentication service name (e.g., Dropbox) */
-                throw new Dropbox_Exception(sprintf(__('The %s authentication could not go ahead, because something else on your site is breaking it.', 'updraftplus'), 'Dropbox').' '.__('Try disabling your other plugins and switching to a default theme.', 'updraftplus').' ('.__('Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins.', 'updraftplus').' '.__('Turning off any debugging settings may also help.', 'updraftplus').')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
+                throw new Dropbox_Exception(sprintf(__('The %s authentication could not go ahead, because something else on your site is breaking it.', 'backupplus'), 'Dropbox').' '.__('Try disabling your other plugins and switching to a default theme.', 'backupplus').' ('.__('Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins.', 'backupplus').' '.__('Turning off any debugging settings may also help.', 'backupplus').')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
             }
-            ?><?php
             return false;
         }
-        global $updraftplus;
-        $updraftplus->log('Dropbox reauthorisation needed; but we are running from cron, AJAX or the CLI, so this is not possible');
+        global $backupplus;
+        $backupplus->log('Dropbox reauthorisation needed; but we are running from cron, AJAX or the CLI, so this is not possible');
         $this->storage->do_unset('access_token');
         /* translators: %s: Authentication service name (e.g., Dropbox) */
-        throw new Dropbox_Exception(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'updraftplus'), 'Dropbox')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
-        #$updraftplus->log(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'updraftplus'), 'Dropbox'), 'error');
+        throw new Dropbox_Exception(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'backupplus'), 'Dropbox')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
+        #$backupplus->log(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'backupplus'), 'Dropbox'), 'error');
         return false;
     }
     
@@ -152,8 +151,8 @@ abstract class Dropbox_ConsumerAbstract
 		    Uses OpenSSL or Mcrypt or defaults to pure PHP implementaion if neither are available.
 		*/
 	    
-		global $updraftplus;
-        $updraftplus->ensure_phpseclib();
+		global $backupplus;
+        $backupplus->ensure_phpseclib();
 
 		$CSRF = base64_encode(phpseclib_Crypt_Random::string(16));
         $this->storage->set($CSRF,'CSRF');
@@ -164,7 +163,7 @@ abstract class Dropbox_ConsumerAbstract
             This will use the default one unless the user is using their own Dropbox App
             
             For users that use their own Dropbox App there is also no need to provide the callbackhome as
-            part of the CSRF as there is no need to go to auth.updraftplus.com also the redirect uri can
+            part of the CSRF as there is no need to go to auth.backupplusplus.com also the redirect uri can
             then be set to the home as default
             
             Check if the key has dropbox: if so then remove it to stop the request from being invalid
@@ -196,7 +195,7 @@ abstract class Dropbox_ConsumerAbstract
     
     protected function deauthenticate()
     {
-	    $url = UpdraftPlus_Dropbox_API::API_URL_V2 . self::DEAUTHORISE_METHOD;
+	    $url = BackupPlus_Dropbox_API::API_URL_V2 . self::DEAUTHORISE_METHOD;
 	    $response = $this->fetch('POST', $url, '', array('api_v2' => true));
         $this->storage->delete();
     }
@@ -220,7 +219,7 @@ abstract class Dropbox_ConsumerAbstract
             $appkey = $this->storage->get('appkey');
             if (!empty($appkey)){
                 // Get the signed request URL
-                $url = UpdraftPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
+                $url = BackupPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
                 $params = array(
                     'code' => $code,
                     'grant_type' => 'authorization_code',
@@ -268,12 +267,12 @@ abstract class Dropbox_ConsumerAbstract
      * @return void
      */
     public function refreshAccessToken() {
-        global $updraftplus;
+        global $backupplus;
 
         $access_token = $this->storage->get('access_token');
         
         if ($this->callback == $this->callbackhome) {
-            $url = UpdraftPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
+            $url = BackupPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
 
             $params = array(
                 'grant_type' => 'refresh_token',
@@ -287,19 +286,19 @@ abstract class Dropbox_ConsumerAbstract
             $params = array(
                 'code' => 'ud_dropbox_code',
                 'refresh_token' => $access_token->refresh_token,
-                'headers' => apply_filters('updraftplus_auth_headers', ''),
+                'headers' => apply_filters('backupplus_auth_headers', ''),
             );
         }
 
         $response = $this->fetch('POST', $url, '' , $params);
         
         if ("200" != $response['code']) {
-            $updraftplus->log('Failed to refresh access token error code: '.$response['code']);
+            $backupplus->log('Failed to refresh access token error code: '.$response['code']);
             return;
         }
 
         if (empty($response['body'])) {
-            $updraftplus->log('Failed to refresh access token empty response body');
+            $backupplus->log('Failed to refresh access token empty response body');
             return;
         }
 
@@ -311,9 +310,9 @@ abstract class Dropbox_ConsumerAbstract
             $access_token->oauth_token = $body->access_token;
             $access_token->expires_in = time() + $body->expires_in - 30;
             $this->storage->set($access_token, 'access_token');
-            $updraftplus->log('Successfully updated and refreshed the access token');
+            $backupplus->log('Successfully updated and refreshed the access token');
         } else {
-            $updraftplus->log('Failed to refresh access token missing token and expiry: '.json_encode($body));
+            $backupplus->log('Failed to refresh access token missing token and expiry: '.json_encode($body));
             return;
         }
     }

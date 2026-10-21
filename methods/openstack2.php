@@ -6,9 +6,9 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 // @codingStandardsIgnoreLine
 use OpenCloud\OpenStack;
 
-updraft_try_include_file('methods/openstack-base.php', 'require_once');
+backupplus_try_include_file('methods/openstack-base.php', 'require_once');
 
-class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openstack_base {
+class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstack_base {
 
 	/**
 	 * Input and option field mappings with default values and supported contexts.
@@ -46,7 +46,7 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 	);
 
 	public function __construct() {
-		// 4th parameter is a relative (to UPDRAFTPLUS_DIR) logo URL, which should begin with /, should we get approved for use of the OpenStack logo in future (have requested info)
+		// 4th parameter is a relative (to BACKUPPLUS_DIR) logo URL, which should begin with /, should we get approved for use of the OpenStack logo in future (have requested info)
 		parent::__construct('openstack', 'OpenStack', 'OpenStack (Swift)', '');
 	}
 
@@ -63,15 +63,15 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 		// 'tenant', 'user', 'password', 'authurl', 'path', (optional) 'region'
 		extract($opts);
 
-		if (null === $disablesslverify) $disablesslverify = UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify');
+		if (null === $disablesslverify) $disablesslverify = BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify');
 
 		if (empty($user) || empty($password) || empty($authurl)) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user, $password and $authurl being extracted in extract() line 29
-			throw new Exception(__('Authorisation failed (check your credentials)', 'updraftplus')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+			throw new Exception(__('Authorisation failed (check your credentials)', 'backupplus')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
 		}
 
-		updraft_try_include_file('vendor/autoload.php', 'include_once');
-		global $updraftplus;
-		$updraftplus->log("OpenStack authentication URL: ".$authurl);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
+		backupplus_try_include_file('vendor/autoload.php', 'include_once');
+		global $backupplus;
+		$backupplus->log("OpenStack authentication URL: ".$authurl);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
 
 		$client = new OpenStack($authurl, array(// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
 			'username' => $user,// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user being extracted in extract() line 29
@@ -86,7 +86,7 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 			if ($useservercerts) {
 				$client->setConfig(array($client::SSL_CERT_AUTHORITY => false));
 			} else {
-				$client->setSslVerification(UPDRAFTPLUS_DIR.'/includes/cacert.pem', true, 2);
+				$client->setSslVerification(BACKUPPLUS_DIR.'/includes/cacert.pem', true, 2);
 			}
 		}
 
@@ -134,25 +134,25 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 
 		if (empty($posted_settings['user'])) {
 			/* translators: %s: Username */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'updraftplus'), __('username', 'updraftplus')));
+			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('username', 'backupplus')));
 			return;
 		}
 
 		if (empty($posted_settings['password'])) {
 			/* translators: %s: Password */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'updraftplus'), __('password', 'updraftplus')));
+			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('password', 'backupplus')));
 			return;
 		}
 
 		if (empty($posted_settings['tenant'])) {
 			/* translators: %s: Tenant (used in OpenStack storage) */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'updraftplus'), _x('tenant', '"tenant" is a term used with OpenStack storage - Google for "OpenStack tenant" to get more help on its meaning', 'updraftplus')));
+			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), _x('tenant', '"tenant" is a term used with OpenStack storage - Google for "OpenStack tenant" to get more help on its meaning', 'backupplus')));
 			return;
 		}
 
 		if (empty($posted_settings['authurl'])) {
 			/* translators: %s: Authentication URI */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'updraftplus'), __('authentication URI', 'updraftplus')));
+			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('authentication URI', 'backupplus')));
 			return;
 		}
 
@@ -195,7 +195,7 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 				{{{mb_substr_existence_label}}}
 				{{{curl_existence_label}}}
 				<br>
-				<p>{{openstack_text_description}} <a href="{{{faq_link_url}}}" target="_blank">{{faq_link_text}}</a></p>
+				<p>{{openstack_text_description}}</p>
 			</td>
 		</tr>
 
@@ -212,7 +212,7 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 		?>
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_authentication_uri_label}}:</th>
-			<td><input title="{{input_authentication_uri_title}}" data-updraft_settings_test="authurl" type="text" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "authurl"}}" name="{{get_template_input_attribute_value "name" "authurl"}}" value="{{authurl}}" />
+			<td><input title="{{input_authentication_uri_title}}" data-backupplus_settings_test="authurl" type="text" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "authurl"}}" name="{{get_template_input_attribute_value "name" "authurl"}}" value="{{authurl}}" />
 			<br>
 			<em>{{input_authentication_uri_title}}</em>
 			</td>
@@ -220,13 +220,13 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 
 		<tr class="{{get_template_css_classes true}}">
 			<th><a href="{{input_tenant_link_url}}" title="{{input_tenant_link_title}}" target="_blank">{{input_tenant_label}}</a>:</th>
-			<td><input data-updraft_settings_test="tenant" type="text" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "tenant"}}" name="{{get_template_input_attribute_value "name" "tenant"}}" value="{{tenant}}" />
+			<td><input data-backupplus_settings_test="tenant" type="text" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "tenant"}}" name="{{get_template_input_attribute_value "name" "tenant"}}" value="{{tenant}}" />
 			</td>
 		</tr>
 
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_region_label}}:</th>
-			<td><input title="{{input_region_title}}" data-updraft_settings_test="region" type="text" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "region"}}" name="{{get_template_input_attribute_value "name" "region"}}" value="{{region}}" />
+			<td><input title="{{input_region_title}}" data-backupplus_settings_test="region" type="text" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "region"}}" name="{{get_template_input_attribute_value "name" "region"}}" value="{{region}}" />
 			<br>
 			<em>{{input_region_title}}</em>
 			</td>
@@ -234,19 +234,19 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_username_label}}:</th>
-			<td><input data-updraft_settings_test="user" type="text" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "user"}}" name="{{get_template_input_attribute_value "name" "user"}}" value="{{user}}" />
+			<td><input data-backupplus_settings_test="user" type="text" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "user"}}" name="{{get_template_input_attribute_value "name" "user"}}" value="{{user}}" />
 			</td>
 		</tr>
 
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_password_label}}:</th>
-			<td><input data-updraft_settings_test="password" type="{{input_password_type}}" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "password"}}" name="{{get_template_input_attribute_value "name" "password"}}" value="{{password}}" />
+			<td><input data-backupplus_settings_test="password" type="{{input_password_type}}" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "password"}}" name="{{get_template_input_attribute_value "name" "password"}}" value="{{password}}" />
 			</td>
 		</tr>
 
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_container_label}}:</th>
-			<td><input data-updraft_settings_test="path" type="text" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "path"}}" name="{{get_template_input_attribute_value "name" "path"}}" value="{{path}}" /></td>
+			<td><input data-backupplus_settings_test="path" type="text" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "path"}}" name="{{get_template_input_attribute_value "name" "path"}}" value="{{path}}" /></td>
 		</tr>
 		{{{get_template_test_button_html "OpenStack (Swift)"}}}
 		<?php
@@ -260,49 +260,47 @@ class UpdraftPlus_BackupModule_openstack extends UpdraftPlus_BackupModule_openst
 	 * @return Array an associative array keyed by names that describe themselves as they are
 	 */
 	public function get_template_properties() {
-		global $updraftplus, $updraftplus_admin;
+		global $backupplus, $backupplus_admin;
 
 		$mb_substr_existence_label = '';
-		if (!apply_filters('updraftplus_openstack_mbsubstr_exists', function_exists('mb_substr'))) {
-			$mb_substr_existence_label = wp_kses($updraftplus_admin->show_double_warning(
-				'<strong>'.__('Warning', 'updraftplus').':</strong> '.
+		if (!apply_filters('backupplus_openstack_mbsubstr_exists', function_exists('mb_substr'))) {
+			$mb_substr_existence_label = wp_kses($backupplus_admin->show_double_warning(
+				'<strong>'.__('Warning', 'backupplus').':</strong> '.
 				/* translators: %s: Required module name */
-				sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'updraftplus'), 'mbstring').' '.
-				__('Please contact your web hosting provider\'s support.', 'updraftplus').' '.
+				sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'mbstring').' '.
+				__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
 				/* translators: 1: Module name, 2: Required module name */
-				sprintf(__('UpdraftPlus\'s %1$s module <strong>requires</strong> %2$s.', 'updraftplus'), $this->desc, 'mbstring').' '.
-				__('Please do not file any support requests; there is no alternative.', 'updraftplus'),
+				sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $this->desc, 'mbstring').' '.
+				__('Please do not file any support requests; there is no alternative.', 'backupplus'),
 				$this->method,
 				false
 			), $this->allowed_html_for_content_sanitisation());
 		}
 
 		$properties = array(
-			'storage_image_url' => !empty($this->img_url) ? UPDRAFTPLUS_URL.$this->img_url : '',
+			'storage_image_url' => !empty($this->img_url) ? BACKUPPLUS_URL.$this->img_url : '',
 			'storage_long_description' => $this->long_desc,
 			'mb_substr_existence_label' => $mb_substr_existence_label,
-			'curl_existence_label' => wp_kses($updraftplus_admin->curl_check($this->long_desc, false, $this->method.' hidden-in-updraftcentral', false), $this->allowed_html_for_content_sanitisation()),
-			'openstack_text_description' => __('Get your access credentials from your OpenStack Swift provider, and then pick a container name to use for storage.', 'updraftplus').' '.__('This container will be created for you if it does not already exist.', 'updraftplus'),
-			'faq_link_text' => __('Also, you should read this important FAQ.', 'updraftplus'),
-			'faq_link_url' => wp_kses(apply_filters("updraftplus_com_link", "https://teamupdraft.com/documentation/updraftplus/topics/cloud-storage/rackspace/there-are-extra-files-in-my-rackspace-cloud-files-container/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=openstack-important-faq&utm_creative_format=tex"), array(), array('http', 'https')),
-			'input_authentication_uri_label' => __('Authentication URI', 'updraftplus'),
-			'input_authentication_uri_title' => _x('This needs to be a v2 (Keystone) authentication URI; v1 (Swauth) is not supported.', 'Keystone and swauth are technical terms which cannot be translated', 'updraftplus'),
-			'input_authentication_uri_placeholder' => __('Example: https://keystone.example.com/v2.0', 'updraftplus'),
-			'input_tenant_label' => __('Tenant', 'updraftplus'),
+			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($this->long_desc, false, $this->method.'', false), $this->allowed_html_for_content_sanitisation()),
+			'openstack_text_description' => __('Get your access credentials from your OpenStack Swift provider, and then pick a container name to use for storage.', 'backupplus').' '.__('This container will be created for you if it does not already exist.', 'backupplus'),
+			'input_authentication_uri_label' => __('Authentication URI', 'backupplus'),
+			'input_authentication_uri_title' => _x('This needs to be a v2 (Keystone) authentication URI; v1 (Swauth) is not supported.', 'Keystone and swauth are technical terms which cannot be translated', 'backupplus'),
+			'input_authentication_uri_placeholder' => __('Example: https://keystone.example.com/v2.0', 'backupplus'),
+			'input_tenant_label' => __('Tenant', 'backupplus'),
 			'input_tenant_link_url' => 'https://docs.openstack.org/openstack-ops/content/projects_users.html',
-			'input_tenant_link_title' => __('Follow this link for more information', 'updraftplus'),
-			'input_tenant_placeholder' => __('Example: my-project', 'updraftplus'),
-			'input_region_label' => __('Region', 'updraftplus'),
-			'input_region_title' => __('Leave this blank, and a default will be chosen.', 'updraftplus'),
-			'input_region_placeholder' => __('Enter a region', 'updraftplus'),
-			'input_username_label' => __('Username', 'updraftplus'),
-			'input_username_placeholder' => __('Enter your username', 'updraftplus'),
-			'input_password_label' => __('Password', 'updraftplus'),
-			'input_password_type' => apply_filters('updraftplus_admin_secret_field_type', 'password'),
-			'input_container_label' => __('Container', 'updraftplus'),
-			'input_container_placeholder' => __('Example: backups', 'updraftplus'),
+			'input_tenant_link_title' => __('Follow this link for more information', 'backupplus'),
+			'input_tenant_placeholder' => __('Example: my-project', 'backupplus'),
+			'input_region_label' => __('Region', 'backupplus'),
+			'input_region_title' => __('Leave this blank, and a default will be chosen.', 'backupplus'),
+			'input_region_placeholder' => __('Enter a region', 'backupplus'),
+			'input_username_label' => __('Username', 'backupplus'),
+			'input_username_placeholder' => __('Enter your username', 'backupplus'),
+			'input_password_label' => __('Password', 'backupplus'),
+			'input_password_type' => apply_filters('backupplus_admin_secret_field_type', 'password'),
+			'input_container_label' => __('Container', 'backupplus'),
+			'input_container_placeholder' => __('Example: backups', 'backupplus'),
 			/* translators: %s: Remote storage method */
-			'input_test_label' => sprintf(__('Test %s Settings', 'updraftplus'), $updraftplus->backup_methods[$this->get_id()]),
+			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
 		);
 		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
 	}

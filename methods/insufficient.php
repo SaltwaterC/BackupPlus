@@ -2,9 +2,9 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-if (!class_exists('UpdraftPlus_BackupModule')) updraft_try_include_file('methods/backup-module.php', 'require_once');
+if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
-class UpdraftPlus_BackupModule_insufficientphp extends UpdraftPlus_BackupModule {
+class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 
 	private $required_php;
 
@@ -25,13 +25,13 @@ class UpdraftPlus_BackupModule_insufficientphp extends UpdraftPlus_BackupModule 
 		$this->image = $image;
 		$this->error_msg = 'This remote storage method ('.$this->desc.') requires PHP '.$this->required_php.' or later';
 		/* translators: 1: remote storage method, 2: required PHP version */
-		$this->error_msg_trans = sprintf(__('This remote storage method (%1$s) requires PHP %2$s or later.', 'updraftplus'), $this->desc, $this->required_php);
+		$this->error_msg_trans = sprintf(__('This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus'), $this->desc, $this->required_php);
 	}
 
 	private function log_error() {
-		global $updraftplus;
-		$updraftplus->log($this->error_msg);
-		$updraftplus->log($this->error_msg_trans, 'error', 'insufficientphp');
+		global $backupplus;
+		$backupplus->log($this->error_msg);
+		$backupplus->log($this->error_msg_trans, 'error', 'insufficientphp');
 		return false;
 	}
 
@@ -96,8 +96,8 @@ class UpdraftPlus_BackupModule_insufficientphp extends UpdraftPlus_BackupModule 
 	}
 
 	/**
-	 * download method: takes a file name (base name), and brings it back from the cloud storage into Updraft's directory
-	 * You can register errors with $updraftplus->log("my error message", 'error')
+	 * download method: takes a file name (base name), and brings it back from cloud storage into BackupPlus's directory
+	 * You can register errors with $backupplus->log("my error message", 'error')
 	 *
 	 * @param  String $file List of files
 	 * @return Array
@@ -118,16 +118,16 @@ class UpdraftPlus_BackupModule_insufficientphp extends UpdraftPlus_BackupModule 
 		ob_start();
 		$this->extra_config();
 		?>
-		<tr class="updraftplusmethod <?php echo esc_attr($this->method);?>">
+		<tr class="backupplusmethod <?php echo esc_attr($this->method);?>">
 			<th><?php echo esc_html($this->desc);?>:</th>
 			<td>
 				<em>
 					<?php
-					echo (!empty($this->image)) ? '<p><img src="'.esc_url(UPDRAFTPLUS_URL.'/images/'.$this->image).'"></p>' : '';
+					echo (!empty($this->image)) ? '<p><img src="'.esc_url(BACKUPPLUS_URL.'/images/'.$this->image).'"></p>' : '';
 					echo esc_html($this->error_msg_trans);
-					esc_html_e('You will need to ask your web hosting company to upgrade.', 'updraftplus');
+					esc_html_e('You will need to ask your web hosting company to upgrade.', 'backupplus');
 					/* translators: 1: plugin name, 2: version number */
-					echo esc_html(sprintf(__('Your %1$s version: %2$s.', 'updraftplus'), 'PHP', phpversion()));
+					echo esc_html(sprintf(__('Your %1$s version: %2$s.', 'backupplus'), 'PHP', phpversion()));
 					?>
 				</em>
 			</td>

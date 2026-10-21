@@ -2,105 +2,105 @@
 if (!defined('ABSPATH')) die('No direct access allowed');
 ?>
 
-<div id="updraft-message-modal" title="UpdraftPlus">
-	<div id="updraft-message-modal-innards">
+<div id="backupplus-message-modal" title="BackupPlus">
+	<div id="backupplus-message-modal-innards">
 	</div>
 </div>
 
-<div id="updraft-delete-modal" title="<?php esc_html_e('Delete backup set', 'updraftplus');?>"> 
-	<form id="updraft_delete_form" method="post">
-		<p id="updraft_delete_question_singular">
+<div id="backupplus-delete-modal" title="<?php esc_html_e('Delete backup set', 'backupplus');?>">
+	<form id="backupplus_delete_form" method="post">
+		<p id="backupplus_delete_question_singular">
 			<?php
 			/* translators: %s: Item to be removed */
-			printf(esc_html__('Are you sure that you wish to remove %s from UpdraftPlus?', 'updraftplus'), esc_html__('this backup set', 'updraftplus'));
-			?> 
+			printf(esc_html__('Are you sure that you wish to remove %s from BackupPlus?', 'backupplus'), esc_html__('this backup set', 'backupplus'));
+			?>
 		</p>
-		<p id="updraft_delete_question_plural" class="updraft-hidden" style="display:none;">
+		<p id="backupplus_delete_question_plural" class="backupplus-hidden" style="display:none;">
 			<?php
 			/* translators: %s: Item to be removed */
-			printf(esc_html__('Are you sure that you wish to remove %s from UpdraftPlus?', 'updraftplus'), esc_html__('these backup sets', 'updraftplus'));
-			?> 
+			printf(esc_html__('Are you sure that you wish to remove %s from BackupPlus?', 'backupplus'), esc_html__('these backup sets', 'backupplus'));
+			?>
 		</p>
 		<fieldset>
-			<input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('updraftplus-credentialtest-nonce'));?>"> 
-			<input type="hidden" name="action" value="updraft_ajax">
+			<input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('backupplus-credentialtest-nonce'));?>">
+			<input type="hidden" name="action" value="backupplus_ajax">
 			<input type="hidden" name="subaction" value="deleteset">
-			<input type="hidden" name="backup_timestamp" value="0" id="updraft_delete_timestamp">
-			<input type="hidden" name="backup_nonce" value="0" id="updraft_delete_nonce">
-			<div id="updraft-delete-remote-section">
-				<input checked="checked" type="checkbox" name="delete_remote" id="updraft_delete_remote" value="1"> <label for="updraft_delete_remote"><?php esc_html_e('Also delete from remote storage', 'updraftplus');?></label><br> 
+			<input type="hidden" name="backup_timestamp" value="0" id="backupplus_delete_timestamp">
+			<input type="hidden" name="backup_nonce" value="0" id="backupplus_delete_nonce">
+			<div id="backupplus-delete-remote-section">
+				<input checked="checked" type="checkbox" name="delete_remote" id="backupplus_delete_remote" value="1"> <label for="backupplus_delete_remote"><?php esc_html_e('Also delete from remote storage', 'backupplus');?></label><br>
 			</div>
 		</fieldset>
 	</form>
 </div>
 
-<div class="updraft_restore_container" style="display: none;">
-	<div class="updraft_restore_main--header"><?php esc_html_e('UpdraftPlus Restoration', 'updraftplus'); ?> — <strong><?php esc_html_e('Restore files from', 'updraftplus');?>:</strong> <span class="updraft_restore_date"></span></div> 
-	<div class="updraft_restore_main">
-		<div id="updraft-restore-modal" title="UpdraftPlus - <?php esc_html_e('Restore backup', 'updraftplus');?>"> 
+<div class="backupplus_restore_container" style="display: none;">
+	<div class="backupplus_restore_main--header"><?php esc_html_e('BackupPlus Restoration', 'backupplus'); ?> — <strong><?php esc_html_e('Restore files from', 'backupplus');?>:</strong> <span class="backupplus_restore_date"></span></div>
+	<div class="backupplus_restore_main">
+		<div id="backupplus-restore-modal" title="BackupPlus - <?php esc_html_e('Restore backup', 'backupplus');?>">
 
-			<div class="updraft-restore-modal--stage updraft--flex" id="updraft-restore-modal-stage2">
-				<div class="updraft--two-halves">
-					<p><strong><?php esc_html_e('Retrieving (if necessary) and preparing backup files...', 'updraftplus');?></strong></p> 
-					<div id="updraft-restore-modal-stage2a"></div>
+			<div class="backupplus-restore-modal--stage backupplus--flex" id="backupplus-restore-modal-stage2">
+				<div class="backupplus--two-halves">
+					<p><strong><?php esc_html_e('Retrieving (if necessary) and preparing backup files...', 'backupplus');?></strong></p>
+					<div id="backupplus-restore-modal-stage2a"></div>
 					<div id="ud_downloadstatus2"></div>
 				</div>
 			</div>
 
-			<div class="updraft-restore-modal--stage updraft--flex" id="updraft-restore-modal-stage1">
-				<div class="updraft--one-half updraft-color--very-light-grey">
-					<p><?php echo esc_html(__("Restoring will replace this site's themes, plugins, uploads, database and/or other content directories (according to what is contained in the backup set, and your selection).", 'updraftplus').' '.__('Choose the components to restore', 'updraftplus')); ?>:</p> 
-					<p><em><a href="<?php echo esc_url(apply_filters('updraftplus_com_link', "https://teamupdraft.com/blog/preparation-tips-for-restoring-your-wordpress-site/"));?>" target="_blank"><?php esc_html_e('Do read this helpful article of useful things to know before restoring.', 'updraftplus');?></a></em></p> 
+			<div class="backupplus-restore-modal--stage backupplus--flex" id="backupplus-restore-modal-stage1">
+				<div class="backupplus--one-half backupplus-color--very-light-grey">
+					<p><?php echo esc_html(__("Restoring will replace this site's themes, plugins, uploads, database and/or other content directories (according to what is contained in the backup set, and your selection).", 'backupplus').' '.__('Choose the components to restore', 'backupplus')); ?>:</p>
+					<p><em><?php esc_html_e('Before restoring, confirm that you have a current backup and enough disk space for the restored files.', 'backupplus');?></em></p>
 				</div>
-				<div class="updraft--one-half">
-					<form id="updraft_restore_form" method="post">
+				<div class="backupplus--one-half">
+					<form id="backupplus_restore_form" method="post">
 						<fieldset>
-							<input type="hidden" name="action" value="updraft_restore">
-							<input type="hidden" name="updraftplus_ajax_restore" value="start_ajax_restore">
-							<input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('updraftplus-credentialtest-nonce'));?>">
-							<input type="hidden" name="backup_timestamp" value="0" id="updraft_restore_timestamp">
-							<input type="hidden" name="meta_foreign" value="0" id="updraft_restore_meta_foreign">
-							<input type="hidden" name="updraft_restorer_backup_info" value="" id="updraft_restorer_backup_info">
-							<input type="hidden" name="updraft_restorer_restore_options" value="" id="updraft_restorer_restore_options">
+							<input type="hidden" name="action" value="backupplus_restore">
+							<input type="hidden" name="backupplus_ajax_restore" value="start_ajax_restore">
+							<input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('backupplus-credentialtest-nonce'));?>">
+							<input type="hidden" name="backup_timestamp" value="0" id="backupplus_restore_timestamp">
+							<input type="hidden" name="meta_foreign" value="0" id="backupplus_restore_meta_foreign">
+							<input type="hidden" name="backupplus_restorer_backup_info" value="" id="backupplus_restorer_backup_info">
+							<input type="hidden" name="backupplus_restorer_restore_options" value="" id="backupplus_restorer_restore_options">
 							<?php
 
 								// The 'off' check is for badly configured setups - http://wordpress.org/support/topic/plugin-wp-super-cache-warning-php-safe-mode-enabled-but-safe-mode-is-off
-								if ($updraftplus->detect_safe_mode()) {
-									echo wp_kses_post("<p><em>".__("Your web server has PHP's so-called safe_mode active.", 'updraftplus').' '.__('This makes time-outs much more likely.', 'updraftplus').' '.__('You are recommended to turn safe_mode off, or to restore only one entity at a time', 'updraftplus').' <a href="'.esc_url(apply_filters('updraftplus_com_link', "https://teamupdraft.com/documentation/updraftplus/topics/restoration/troubleshooting/i-cant-restore-from-wp-admin-console-can-i-restore-manually/")).'" target="_blank">'.__('or to restore manually', 'updraftplus').'.</a></em></p>');
+								if ($backupplus->detect_safe_mode()) {
+									echo wp_kses_post("<p><em>".__("Your web server has PHP's so-called safe_mode active.", 'backupplus').' '.__('This makes time-outs much more likely. Turn it off if possible, or restore only one entity at a time.', 'backupplus').'</em></p>');
 								}
 							?>
-							<p><strong><?php esc_html_e('Choose the components to restore:', 'updraftplus'); ?></strong></p> 
+							<p><strong><?php esc_html_e('Choose the components to restore:', 'backupplus'); ?></strong></p>
 							<?php
-								$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
+								$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
 
 								foreach ($backupable_entities as $type => $info) {
 									if (!isset($info['restorable']) || true == $info['restorable']) {
 										$sdescrip = isset($info['shortdescription']) ? $info['shortdescription'] : $info['description'];
-										echo '<div class="updraft-restore-item"><input id="updraft_restore_'.esc_attr($type).'" type="checkbox" name="updraft_restore[]" value="'.esc_attr($type).'"> <label id="updraft_restore_label_'.esc_attr($type).'" for="updraft_restore_'.esc_attr($type).'">'.esc_html($sdescrip).'</label><br>';
-										do_action("updraftplus_restore_form_$type");
+										echo '<div class="backupplus-restore-item"><input id="backupplus_restore_"'.esc_attr($type).' type="checkbox" name="backupplus_restore[]" value="'.esc_attr($type).'"> <label id="backupplus_restore_label_"'.esc_attr($type).' for="backupplus_restore_"'.esc_attr($type).'>'.esc_html($sdescrip).'</label><br>';
+										do_action("backupplus_restore_form_$type");
 										echo '</div>';
 									} else {
 										$sdescrip = isset($info['shortdescription']) ? $info['shortdescription'] : $info['description'];
-										echo "<div class=\"updraft-restore-item cannot-restore\"><em>".
+										echo "<div class=\"backupplus-restore-item cannot-restore\"><em>".
 										/* translators: %s: Entity that cannot be restored */
-										esc_html(sprintf(__('The following entity cannot be restored automatically: "%s".', 'updraftplus'), $sdescrip))." ".
-										esc_html__('You will need to restore it manually.', 'updraftplus')."</em><br>".'<input id="updraft_restore_'.esc_attr($type).'" type="hidden" name="updraft_restore[]" value="'.esc_attr($type).'">';
+										esc_html(sprintf(__('The following entity cannot be restored automatically: "%s".', 'backupplus'), $sdescrip))." ".
+										esc_html__('You will need to restore it manually.', 'backupplus')."</em><br>".'<input id="backupplus_restore_"'.esc_attr($type).' type="hidden" name="backupplus_restore[]" value="'.esc_attr($type).'">';
 										echo '</div>';
 									}
 								}
 							?>
-							<div class="updraft-restore-item">
-								<input id="updraft_restore_db" type="checkbox" name="updraft_restore[]" value="db"> <label for="updraft_restore_db"><?php esc_html_e('Database', 'updraftplus'); ?></label> 
-								<div id="updraft_restorer_dboptions" class="udp-notice below-h2 updraft-restore-option updraft-hidden"><h4>
+							<div class="backupplus-restore-item">
+								<input id="backupplus_restore_db" type="checkbox" name="backupplus_restore[]" value="db"> <label for="backupplus_restore_db"><?php esc_html_e('Database', 'backupplus'); ?></label>
+								<div id="backupplus_restorer_dboptions" class="udp-notice below-h2 backupplus-restore-option backupplus-hidden"><h4>
 									<?php
 									echo sprintf(
 										/* translators: %s: Restoration type */
-										esc_html__('%s restoration options:', 'updraftplus'),
-										esc_html__('Database', 'updraftplus')
+										esc_html__('%s restoration options:', 'backupplus'),
+										esc_html__('Database', 'backupplus')
 									);
 									?>
 								</h4> 
-								<?php do_action("updraftplus_restore_form_db"); ?>
+								<?php do_action("backupplus_restore_form_db"); ?>
 								</div>
 							</div>
 						</fieldset>
@@ -108,14 +108,14 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 				</div>
 			</div>
 
-			<div class="updraft-restore--footer">
-				<button type="button" class="button updraft-restore--cancel"><?php esc_html_e('Cancel', 'updraftplus'); ?></button> 
-				<ul class="updraft-restore--stages">
-					<li class="active"><span>1. <?php esc_html_e('Component selection', 'updraftplus'); ?></span></li> 
-					<li><span>2. <?php esc_html_e('Verifications', 'updraftplus'); ?></span></li> 
-					<li><span>3. <?php esc_html_e('Restoration', 'updraftplus'); ?></span></li> 
+			<div class="backupplus-restore--footer">
+				<button type="button" class="button backupplus-restore--cancel"><?php esc_html_e('Cancel', 'backupplus'); ?></button>
+				<ul class="backupplus-restore--stages">
+					<li class="active"><span>1. <?php esc_html_e('Component selection', 'backupplus'); ?></span></li>
+					<li><span>2. <?php esc_html_e('Verifications', 'backupplus'); ?></span></li>
+					<li><span>3. <?php esc_html_e('Restoration', 'backupplus'); ?></span></li>
 				</ul>
-				<button type="button" class="button button-primary updraft-restore--next-step"><?php esc_html_e('Next', 'updraftplus'); ?></button>
+				<button type="button" class="button button-primary backupplus-restore--next-step"><?php esc_html_e('Next', 'backupplus'); ?></button>
 			</div>
 
 		</div>

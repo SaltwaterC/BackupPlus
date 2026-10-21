@@ -2,22 +2,22 @@
 if (!defined('ABSPATH')) die('No direct access allowed');
 ?>
 
-<div class="updraft-ad-container updated">
-	<div class="updraft_notice_container">
-		<div class="updraft_advert_content_left">
-			<img src="<?php echo esc_url(UPDRAFTPLUS_URL.'/images/'.$image);?>" width="60" height="60" alt="<?php esc_attr_e('notice image', 'updraftplus');?>" />
+<div class="backupplus-ad-container updated">
+	<div class="backupplus_notice_container">
+		<div class="backupplus_advert_content_left">
+			<img src="<?php echo esc_url(BACKUPPLUS_URL.'/images/'.$image);?>" width="60" height="60" alt="<?php esc_attr_e('notice image', 'backupplus');?>" />
 		</div>
-		<div class="updraft_advert_content_right">
-			<h3 class="updraft_advert_heading">
+		<div class="backupplus_advert_content_right">
+			<h3 class="backupplus_advert_heading">
 				<?php
 					if (!empty($prefix)) echo esc_html($prefix).' ';
 					echo esc_html($title);
 				?>
-				<div class="updraft-advert-dismiss">
+				<div class="backupplus-advert-dismiss">
 				<?php if (!empty($dismiss_time)) { ?>
-					<a href="#" onclick="jQuery('.updraft-ad-container').slideUp(); jQuery.post(ajaxurl, {action: 'updraft_ajax', subaction: '<?php echo esc_js($dismiss_time);?>', nonce: '<?php echo esc_js(wp_create_nonce('updraftplus-credentialtest-nonce'));?>' });"><?php esc_html_e('Dismiss', 'updraftplus'); ?></a>
+					<a href="#" onclick="jQuery('.backupplus-ad-container').slideUp(); jQuery.post(ajaxurl, {action: 'backupplus_ajax', subaction: '<?php echo esc_js($dismiss_time);?>', nonce: '<?php echo esc_js(wp_create_nonce('backupplus-credentialtest-nonce'));?>' });"><?php esc_html_e('Dismiss', 'backupplus'); ?></a>
 				<?php } else { ?>
-					<a href="#" onclick="jQuery('.updraft-ad-container').slideUp();"><?php esc_html_e('Dismiss', 'updraftplus'); ?></a>
+					<a href="#" onclick="jQuery('.backupplus-ad-container').slideUp();"><?php esc_html_e('Dismiss', 'backupplus'); ?></a>
 				<?php } ?>
 				</div>
 			</h3>
@@ -29,9 +29,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 					
 					if (!empty($button_link) && (!empty($button_meta) || !empty($button_text))) {
 				?>
-				<a class="updraft_notice_link" href="<?php echo esc_attr(apply_filters('updraftplus_com_link', $button_link));?>"><?php
-					global $updraftplus_admin;
-					$updraftplus_admin->include_template(
+				<a class="backupplus_notice_link" href="<?php echo esc_attr(apply_filters('backupplus_com_link', $button_link));?>"><?php
+					global $backupplus_admin;
+					$backupplus_admin->include_template(
 						'wp-admin/notices/button-label.php',
 						false,
 						array(
@@ -39,7 +39,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 							'button_text' => isset($button_text) ? $button_text : ''
 						)
 					);
-					?></a>
+					?>
 				<?php
 					}
 				?>

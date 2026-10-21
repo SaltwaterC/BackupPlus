@@ -2,9 +2,9 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (class_exists('UpdraftPlus_Addons_RemoteStorage_pcloud')) {
+if (class_exists('BackupPlus_Addons_RemoteStorage_pcloud')) {
 
-	class UpdraftPlus_BackupModule_pcloud extends UpdraftPlus_Addons_RemoteStorage_pcloud {
+	class BackupPlus_BackupModule_pcloud extends BackupPlus_Addons_RemoteStorage_pcloud {
 		public function __construct() {
 			parent::__construct('pcloud', 'pCloud', false, 'pcloud-logo.png');
 		}
@@ -12,11 +12,11 @@ if (class_exists('UpdraftPlus_Addons_RemoteStorage_pcloud')) {
 	
 } else {
 
-	updraft_try_include_file('methods/addon-not-yet-present.php', 'include_once');
+	backupplus_try_include_file('methods/addon-not-yet-present.php', 'include_once');
 	/**
-	 * N.B. UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModule
+	 * N.B. BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 	 */
-	class UpdraftPlus_BackupModule_pcloud extends UpdraftPlus_BackupModule_AddonNotYetPresent {
+	class BackupPlus_BackupModule_pcloud extends BackupPlus_BackupModule_AddonNotYetPresent {
 		public function __construct() {
 			parent::__construct('pcloud', 'pCloud', false, 'pcloud-logo.png');
 		}

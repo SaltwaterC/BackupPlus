@@ -1,9 +1,9 @@
 #!/usr/local/bin/perl
 
 use strict;
-use Env qw(UPDRAFTPLUSKEY);
+use Env qw(BACKUPPLUSKEY);
 
-if ($UPDRAFTPLUSKEY ne 'updraftplus') { die('Error'); }
+if ($BACKUPPLUSKEY ne 'backupplus') { die('Error'); }
 BEGIN { unshift @INC, '/usr/local/cpanel'; }
 
 use Cpanel::Quota ();

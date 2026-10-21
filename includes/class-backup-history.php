@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
  * A class to deal with management of backup history.
  * N.B. All database access should come through here. However, this class is not the only place with knowledge of the data structure.
  */
-class UpdraftPlus_Backup_History {
+class BackupPlus_Backup_History {
 
 	private static $backup_history_on_restore = null;
 
@@ -20,7 +20,7 @@ class UpdraftPlus_Backup_History {
 	 */
 	public static function get_history($timestamp = false) {
 
-		$backup_history = UpdraftPlus_Options::get_updraft_option('updraft_backup_history');
+		$backup_history = BackupPlus_Options::get_backupplus_option('backupplus_backup_history');
 		// N.B. Doing a direct wpdb->get_var() here actually *introduces* a race condition
 		
 		if (!is_array($backup_history)) $backup_history = array();
@@ -45,7 +45,7 @@ class UpdraftPlus_Backup_History {
 	 */
 	public static function add_jobdata($backup_history) {
 	
-		global $wpdb, $updraftplus;
+		global $wpdb, $backupplus;
 		$table = is_multisite() ? $wpdb->sitemeta : $wpdb->options;
 		$key_column = is_multisite() ? 'meta_key' : 'option_name';
 		$value_column = is_multisite() ? 'meta_value' : 'option_value';
@@ -75,18 +75,18 @@ class UpdraftPlus_Backup_History {
 			$columns_sql = '';
 			foreach ($columns as $nonce) {
 				if ($columns_sql) $columns_sql .= ',';
-				$columns_sql .= "'updraft_jobdata_".esc_sql($nonce)."'";
+				$columns_sql .= "'backupplus_jobdata_".esc_sql($nonce)."'";
 			}
 			
-			$escaped_table = UpdraftPlus_Database_Utility::escape_table_name($table);
+			$escaped_table = BackupPlus_Database_Utility::escape_table_name($table);
 			$sql = 'SELECT '.$key_column.', '.$value_column.' FROM '.$escaped_table.' WHERE '.$key_column.' IN ('.$columns_sql.')'; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is from $wpdb->options/$wpdb->sitemeta (safe), column names are hardcoded, nonces are escaped via esc_sql().
 			$all_jobdata = $wpdb->get_results($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed above.
 
 			foreach ($all_jobdata as $values) {
-				// The 16 here is the length of 'updraft_jobdata_'
+				// The 16 here is the length of 'backupplus_jobdata_'
 				$nonce = substr($values->$key_column, 16);
 				if (empty($nonces_map[$nonce]) || empty($values->$value_column)) continue;
-				$jobdata = $updraftplus->unserialize($values->$value_column);
+				$jobdata = $backupplus->unserialize($values->$value_column);
 				$backup_history[$nonces_map[$nonce]]['jobdata'] = empty($jobdata) ? array() : $jobdata;
 			}
 			foreach ($columns as $nonce) {
@@ -122,20 +122,20 @@ class UpdraftPlus_Backup_History {
 	 * @param Array|Boolean $backup_history - a list of backups to use, or false to get the current list from the database
 	 * @param Boolean       $backup_count   - the amount of backups currently displayed in the existing backups table
 	 *
-	 * @uses UpdraftPlus_Admin::include_template()
+	 * @uses BackupPlus_Admin::include_template()
 	 *
 	 * @return String - HTML for the table
 	 */
 	public static function existing_backup_table($backup_history = false, $backup_count = 0) {
 
-		global $updraftplus, $updraftplus_admin;
+		global $backupplus, $backupplus_admin;
 
 		if (false === $backup_history) $backup_history = self::get_history();
 		
-		if (!is_array($backup_history) || empty($backup_history)) return '<div class="postbox"><p class="updraft-no-backups-msg">'.__('You have not yet made any backups.', 'updraftplus').'</p> <p class="updraft-no-backups-msg">'.__('If you have an existing backup that you wish to upload and restore from, then please use the "Upload backup files" link above.', 'updraftplus').' '.__('Or, if they are in remote storage, you can connect that remote storage (in the "Settings" tab), save your settings, and use the "Rescan remote storage" link.', 'updraftplus').'</p></div>';
+		if (!is_array($backup_history) || empty($backup_history)) return '<div class="postbox"><p class="backupplus-no-backups-msg">'.__('You have not yet made any backups.', 'backupplus').'</p> <p class="backupplus-no-backups-msg">'.__('If you have an existing backup that you wish to upload and restore from, then please use the "Upload backup files" link above.', 'backupplus').' '.__('Or, if they are in remote storage, you can connect that remote storage (in the "Settings" tab), save your settings, and use the "Rescan remote storage" link.', 'backupplus').'</p></div>';
 
 		if (empty($backup_count)) {
-			$backup_count = defined('UPDRAFTPLUS_EXISTING_BACKUPS_LIMIT') ? UPDRAFTPLUS_EXISTING_BACKUPS_LIMIT : 100;
+			$backup_count = defined('BACKUPPLUS_EXISTING_BACKUPS_LIMIT') ? BACKUPPLUS_EXISTING_BACKUPS_LIMIT : 100;
 		}
 
 		// Reverse date sort - i.e. most recent first
@@ -143,13 +143,13 @@ class UpdraftPlus_Backup_History {
 		
 		$pass_values = array(
 			'backup_history' => self::add_jobdata($backup_history),
-			'updraft_dir' => $updraftplus->backups_dir_location(),
-			'backupable_entities' => $updraftplus->get_backupable_file_entities(true, true),
+			'backupplus_dir' => $backupplus->backups_dir_location(),
+			'backupable_entities' => $backupplus->get_backupable_file_entities(true, true),
 			'backup_count' => $backup_count,
 			'show_paging_actions' => false,
 		);
 		
-		return $updraftplus_admin->include_template('wp-admin/settings/existing-backups-table.php', true, $pass_values);
+		return $backupplus_admin->include_template('wp-admin/settings/existing-backups-table.php', true, $pass_values);
 	
 	}
 	
@@ -162,11 +162,11 @@ class UpdraftPlus_Backup_History {
 	 */
 	public static function build_incremental_sets($backup_history) {
 
-		global $updraftplus;
+		global $backupplus;
 
-		$backupable_entities = array_keys($updraftplus->get_backupable_file_entities(true, false));
+		$backupable_entities = array_keys($backupplus->get_backupable_file_entities(true, false));
 
-		$accept = apply_filters('updraftplus_accept_archivename', array());
+		$accept = apply_filters('backupplus_accept_archivename', array());
 
 		foreach ($backup_history as $btime => $bdata) {
 
@@ -194,7 +194,7 @@ class UpdraftPlus_Backup_History {
 							if (preg_match('/'.$acc['pattern'].'/i', $filename)) $accepted = $fkey;
 						}
 						
-						if (!empty($accepted) && (false != ($btime = apply_filters('updraftplus_foreign_gettime', false, $accepted, $filename))) && $btime > 0) {
+						if (!empty($accepted) && (false != ($btime = apply_filters('backupplus_foreign_gettime', false, $accepted, $filename))) && $btime > 0) {
 							
 							$timestamp = $btime;
 							
@@ -222,7 +222,7 @@ class UpdraftPlus_Backup_History {
 	 */
 	public static function save_history($backup_history, $use_cache = true) {
 		
-		global $updraftplus, $wpdb;
+		global $backupplus, $wpdb;
 
 		// This data is constructed at run-time from the other keys; we do not wish to save redundant data
 		foreach ($backup_history as $btime => $bdata) {
@@ -232,7 +232,7 @@ class UpdraftPlus_Backup_History {
 		$wpdb_previous_last_error = $wpdb->last_error;
 
 		// Explicitly set autoload to 'no', as the backup history can get quite big.
-		$changed = UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, $use_cache, 'no');
+		$changed = BackupPlus_Options::update_backupplus_option('backupplus_backup_history', $backup_history, $use_cache, 'no');
 
 		if (!$changed && '' !== $wpdb->last_error && $wpdb_previous_last_error != $wpdb->last_error) {
 			// if an error occurred, there is a possibility if this error is caused by invalid characters found in 'label'
@@ -254,24 +254,24 @@ class UpdraftPlus_Backup_History {
 			}
 
 			// try to save it again
-			$changed = UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, $use_cache, 'no');
+			$changed = BackupPlus_Options::update_backupplus_option('backupplus_backup_history', $backup_history, $use_cache, 'no');
 		}
 
 		if (!$changed) {
 		
-			$max_packet_size = $updraftplus->max_packet_size(false, false);
+			$max_packet_size = $backupplus->max_packet_size(false, false);
 			$serialization_size = strlen(addslashes(serialize($backup_history)));
 			
-			// Take off the *approximate* over-head of UPDATE wp_options SET option_value='' WHERE option_name='updraft_backup_history'; (no need to be exact)
+			// Take off the *approximate* over-head of UPDATE wp_options SET option_value='' WHERE option_name='backupplus_backup_history'; (no need to be exact)
 			if ($max_packet_size < ($serialization_size + 100)) {
 			
-				$max_packet_size = $updraftplus->max_packet_size();
+				$max_packet_size = $backupplus->max_packet_size();
 				
-				$changed = UpdraftPlus_Options::update_updraft_option('updraft_backup_history', $backup_history, $use_cache, 'no');
+				$changed = BackupPlus_Options::update_backupplus_option('backupplus_backup_history', $backup_history, $use_cache, 'no');
 				
 				if (!$changed) {
 		
-					$updraftplus->log('The attempt to write the backup history to the WP database returned a negative code and the max packet size looked small. However, WP does not distinguish between a failure and no change from a previous update, so, this code is not conclusive and if no other symptoms are observed then there is no reason to infer any problem. Info: The updated database packet size is '.$max_packet_size.'; the serialization size is '.$serialization_size);
+					$backupplus->log('The attempt to write the backup history to the WP database returned a negative code and the max packet size looked small. However, WP does not distinguish between a failure and no change from a previous update, so, this code is not conclusive and if no other symptoms are observed then there is no reason to infer any problem. Info: The updated database packet size is '.$max_packet_size.'; the serialization size is '.$serialization_size);
 			
 				}
 				
@@ -285,10 +285,10 @@ class UpdraftPlus_Backup_History {
 	 *
 	 * @return Mixed - the database option
 	 */
-	public static function filter_updraft_backup_history() {
-		global $wpdb, $updraftplus;
-		$row = $wpdb->get_row($wpdb->prepare("SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", 'updraft_backup_history'));
-		if (is_object($row) && !empty($row->option_value)) return $updraftplus->unserialize($row->option_value);
+	public static function filter_backupplus_backup_history() {
+		global $wpdb, $backupplus;
+		$row = $wpdb->get_row($wpdb->prepare("SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", 'backupplus_backup_history'));
+		if (is_object($row) && !empty($row->option_value)) return $backupplus->unserialize($row->option_value);
 		return false;
 	}
 	
@@ -296,11 +296,11 @@ class UpdraftPlus_Backup_History {
 	 * Make sure we get the value afresh from the db, instead of using the auto-loaded/cached value (which can be out of date, especially since backups are, by their nature, long-running)
 	 */
 	public static function always_get_from_db() {
-		add_filter('pre_option_updraft_backup_history', array('UpdraftPlus_Backup_History', 'filter_updraft_backup_history'));
+		add_filter('pre_option_backupplus_backup_history', array('BackupPlus_Backup_History', 'filter_backupplus_backup_history'));
 	}
 	
 	/**
-	 * This function examines inside the updraft directory to see if any new archives have been uploaded. If so, it adds them to the backup set. (Non-present items are also removed, only if the service is 'none').
+	 * This function examines the BackupPlus directory to see if any new archives have been uploaded. If so, it adds them to the backup set. (Non-present items are also removed, only if the service is 'none').
 	 *
 	 * N.B. The logic is a bit more subtle than it needs to be, because of backups being keyed by backup time, instead of backup nonce, and the subsequent introduction of the possibility of incremental backup sets taken at different times. This could be cleaned up to reduce the amount of code and make it simpler in places.
 	 *
@@ -312,7 +312,7 @@ class UpdraftPlus_Backup_History {
 	 */
 	public static function rebuild($remote_scan = false, $only_add_this_file = false, $debug = false) {
 
-		global $updraftplus;
+		global $backupplus;
 	
 		$messages = array();
 		$gmt_offset = get_option('gmt_offset');
@@ -324,14 +324,14 @@ class UpdraftPlus_Backup_History {
 		
 		$changes = false;
 
-		$backupable_entities = $updraftplus->get_backupable_file_entities(true, false);
+		$backupable_entities = $backupplus->get_backupable_file_entities(true, false);
 
 		$backup_history = self::get_history();
 
-		$updraft_dir = $updraftplus->backups_dir_location();
-		if (!is_dir($updraft_dir)) return array("Internal directory path does not indicate a directory ($updraft_dir)");
+		$backupplus_dir = $backupplus->backups_dir_location();
+		if (!is_dir($backupplus_dir)) return array("Internal directory path does not indicate a directory ($backupplus_dir)");
 
-		$accept = apply_filters('updraftplus_accept_archivename', array());
+		$accept = apply_filters('backupplus_accept_archivename', array());
 		
 		// First, process the database backup history to get a record of what is already known there. This means populating the arrays $backup_nonces_by_filename and $backup_times_by_nonce
 		foreach ($backup_history as $btime => $bdata) {
@@ -346,7 +346,7 @@ class UpdraftPlus_Backup_History {
 					if (!is_string($filename)) continue;
 					if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $filename, $matches)) {
 						$nonce = $matches[2];
-						if (isset($bdata['service']) && ('none' === $bdata['service'] || (is_array($bdata['service']) && (array('none') === $bdata['service'] || (1 == count($bdata['service']) && isset($bdata['service'][0]) && empty($bdata['service'][0]))))) && !is_file($updraft_dir.'/'.$filename)) {
+						if (isset($bdata['service']) && ('none' === $bdata['service'] || (is_array($bdata['service']) && (array('none') === $bdata['service'] || (1 == count($bdata['service']) && isset($bdata['service'][0]) && empty($bdata['service'][0]))))) && !is_file($backupplus_dir.'/'.$filename)) {
 							// File without remote storage is no longer locally present
 						} else {
 							$found_file = true;
@@ -362,7 +362,7 @@ class UpdraftPlus_Backup_History {
 						foreach ($accept as $fkey => $acc) {
 							if (preg_match('/'.$acc['pattern'].'/i', $filename)) $accepted = $fkey;
 						}
-						if (!empty($accepted) && (false != ($btime = apply_filters('updraftplus_foreign_gettime', false, $accepted, $filename))) && $btime > 0) {
+						if (!empty($accepted) && (false != ($btime = apply_filters('backupplus_foreign_gettime', false, $accepted, $filename))) && $btime > 0) {
 							$found_file = true;
 							// Generate a nonce; this needs to be deterministic and based on the filename only
 							$nonce = substr(md5($filename), 0, 12);
@@ -395,9 +395,9 @@ class UpdraftPlus_Backup_History {
 		
 		if ($remote_scan) {
 		
-			$updraftplus->register_wp_http_option_hooks(true);
+			$backupplus->register_wp_http_option_hooks(true);
 			
-			$storage_objects_and_ids = UpdraftPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array_keys($updraftplus->backup_methods));
+			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array_keys($backupplus->backup_methods));
 
 			foreach ($storage_objects_and_ids as $method => $method_information) {
 				
@@ -407,7 +407,7 @@ class UpdraftPlus_Backup_History {
 
 				// Support of multi_options is now required for storage methods that implement listfiles()
 				if (!$object->supports_feature('multi_options')) {
-					UpdraftPlus_Manipulation_Functions::error_log("UpdraftPlus: Multi-options not supported by: ".$method);
+					BackupPlus_Manipulation_Functions::error_log("BackupPlus: Multi-options not supported by: ".$method);
 					continue;
 				}
 
@@ -495,11 +495,11 @@ class UpdraftPlus_Backup_History {
 					}
 				}
 			}
-			$updraftplus->register_wp_http_option_hooks(false);
+			$backupplus->register_wp_http_option_hooks(false);
 		}
 
 		// Thirdly, see if there are any more files in the local directory than the ones already known about (possibly subject to a limitation specified via $only_add_this_file)
-		if (!$handle = opendir($updraft_dir)) return array("Failed to open the internal directory ($updraft_dir)");
+		if (!$handle = opendir($backupplus_dir)) return array("Failed to open the internal directory ($backupplus_dir)");
 
 		while (false !== ($entry = readdir($handle))) {
 
@@ -524,24 +524,24 @@ class UpdraftPlus_Backup_History {
 					$index = empty($matches[4]) ? '0' : max((int) $matches[4]-1, 0);
 				}
 				$itext = (0 == $index) ? '' : $index;
-			} elseif (false != ($accepted_foreign = apply_filters('updraftplus_accept_foreign', false, $entry)) && false !== ($btime = apply_filters('updraftplus_foreign_gettime', false, $accepted_foreign, $entry))) {
+			} elseif (false != ($accepted_foreign = apply_filters('backupplus_accept_foreign', false, $entry)) && false !== ($btime = apply_filters('backupplus_foreign_gettime', false, $accepted_foreign, $entry))) {
 				$nonce = substr(md5($entry), 0, 12);
 				$type = (preg_match('/\.sql(\.(bz2|gz))?$/i', $entry) || preg_match('/-database-([-0-9]+)\.zip$/i', $entry) || preg_match('/backup_db_/', $entry)) ? 'db' : 'wpcore';
-				$index = apply_filters('updraftplus_accepted_foreign_index', 0, $entry, $accepted_foreign);
+				$index = apply_filters('backupplus_accepted_foreign_index', 0, $entry, $accepted_foreign);
 				$itext = $index ? $index : '';
 				$potmessage = array(
 					'code' => 'foundforeign_'.md5($entry),
 					'desc' => $entry,
 					'method' => '',
 					// translators: %s: The description of the accepted foreign backup type.
-					'message' => sprintf(__('Backup created by: %s.', 'updraftplus'), $accept[$accepted_foreign]['desc'])
+					'message' => sprintf(__('Backup created by: %s.', 'backupplus'), $accept[$accepted_foreign]['desc'])
 				);
 			} elseif ('.zip' == strtolower(substr($entry, -4, 4)) || preg_match('/\.sql(\.(bz2|gz))?$/i', $entry)) {
 				$potmessage = array(
 					'code' => 'possibleforeign_'.md5($entry),
 					'desc' => $entry,
 					'method' => '',
-					'message' => __('This file does not appear to be an UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz)).', 'updraftplus').' <a href="'.$updraftplus->get_url('premium').'" target="_blank">'.__('If this is a backup created by a different backup plugin, then UpdraftPlus Premium may be able to help you.', 'updraftplus').'</a>'
+					'message' => __('This file does not appear to be a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz)).', 'backupplus')
 				);
 				$messages[$potmessage['code']] = $potmessage;
 				continue;
@@ -585,7 +585,7 @@ class UpdraftPlus_Backup_History {
 				$backup_times_by_nonce[$nonce] = $btime;
 			}
 			if ($btime <= 100) continue;
-			$file_size = @filesize($updraft_dir.'/'.$entry);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			$file_size = @filesize($backupplus_dir.'/'.$entry);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 			if (!isset($backup_nonces_by_filename[$entry])) {
 				$changes = true;
@@ -595,7 +595,7 @@ class UpdraftPlus_Backup_History {
 					$backup_history[$btime]['native'] = false;
 				} elseif ('db' == $type && !$accepted_foreign) {
 					// we now that multiple databases will add its index number after the 'db' (e.g. 'db1'), however, the $type == 'db' here has nothing to do with our multiple databases addon because this block of code inside the 'if (!isset($backup_nonces_by_filename[$entry]))' will never be executed if multiple databases is found to be in the backup history and that our backup file pattern matches with them, so this is not the place where we should check for our multiple databases backup file, this is instead the place for handling foreign databases (e.g. Backup Buddy and our other competitors). The $type were previously set to 'db' when its file was found to be a foreign database
-					list ($mess, $warn, $err, $info) = $updraftplus->analyse_db_file(false, array(), $updraft_dir.'/'.$entry, true);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
+					list ($mess, $warn, $err, $info) = $backupplus->analyse_db_file(false, array(), $backupplus_dir.'/'.$entry, true);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
 					if (!empty($info['label'])) {
 						$backup_history[$btime]['label'] = $info['label'];
 					}
@@ -729,7 +729,7 @@ class UpdraftPlus_Backup_History {
 				if (!empty($remote_sizes[$file])) $backup_history[$btime][$type.$itext.'-size'] = $remote_sizes[$file];
 				$backup_history[$btime]['native'] = false;
 				$messages['nonnative'] = array(
-					'message' => __('One or more backups has been added from scanning remote storage; note that these backups will not be automatically deleted through the "retain" settings; if/when you wish to delete them then you must do so manually.', 'updraftplus'),
+					'message' => __('One or more backups has been added from scanning remote storage; note that these backups will not be automatically deleted through the "retain" settings; if/when you wish to delete them then you must do so manually.', 'backupplus'),
 					'code' => 'nonnative',
 					'desc' => '',
 					'method' => ''
@@ -750,7 +750,7 @@ class UpdraftPlus_Backup_History {
 			}
 		}
 
-		$more_backup_history = apply_filters('updraftplus_more_rebuild', $backup_history);
+		$more_backup_history = apply_filters('backupplus_more_rebuild', $backup_history);
 		
 		if ($more_backup_history) {
 			$backup_history = $more_backup_history;
@@ -764,7 +764,7 @@ class UpdraftPlus_Backup_History {
 	}
 	
 	/**
-	 * This function will look through the backup history and return the nonce of the latest full backup that has everything that is set in the UpdraftPlus settings to be backed up (this will exclude full backups sent to another site, e.g. for a migration or clone)
+	 * This function will look through backup history and return the latest full backup with all configured entities.
 	 *
 	 * @return String - the backup nonce of a full backup or an empty string if none are found
 	 */
@@ -772,21 +772,18 @@ class UpdraftPlus_Backup_History {
 		
 		$backup_history = self::get_history();
 
-		global $updraftplus;
+		global $backupplus;
 		
-		$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
 
 		foreach ($backupable_entities as $key => $info) {
-			if (!UpdraftPlus_Options::get_updraft_option("updraft_include_$key", false)) {
+			if (!BackupPlus_Options::get_backupplus_option("backupplus_include_$key", false)) {
 				unset($backupable_entities[$key]);
 			}
 		}
 		
 		foreach ($backup_history as $key => $backup) {
-			
-			$remote_sent = !empty($backup['service']) && ((is_array($backup['service']) && in_array('remotesend', $backup['service'])) || 'remotesend' === $backup['service']);
-			if ($remote_sent) continue;
-			
+
 			foreach ($backupable_entities as $key => $info) {
 				if (!isset($backup[$key])) continue 2;
 			}
@@ -799,7 +796,7 @@ class UpdraftPlus_Backup_History {
 	}
 
 	/**
-	 * This function will look through the backup history and return the nonce of the latest backup that can be used for an incremental backup (this will exclude full backups sent to another site, e.g. for a migration or clone)
+	 * This function will look through backup history and return the latest backup usable for an incremental backup.
 	 *
 	 * @param array $entities - an array of file entities that are included in this job
 	 *
@@ -812,9 +809,6 @@ class UpdraftPlus_Backup_History {
 		$backup_history = self::get_history();
 
 		foreach ($backup_history as $backup) {
-
-			$remote_sent = !empty($backup['service']) && ((is_array($backup['service']) && in_array('remotesend', $backup['service'])) || 'remotesend' === $backup['service']);
-			if ($remote_sent) continue;
 
 			// We don't want to add an increment to a backup of another site
 			if (isset($backup['native']) && false == $backup['native']) continue;
@@ -839,16 +833,13 @@ class UpdraftPlus_Backup_History {
 
 		$backup_history = self::get_history();
 
-		global $updraftplus;
+		global $backupplus;
 
-		$backupable_entities = $updraftplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
 
 		$entities = array();
 
 		foreach ($backup_history as $key => $backup) {
-
-			$remote_sent = !empty($backup['service']) && ((is_array($backup['service']) && in_array('remotesend', $backup['service'])) || 'remotesend' === $backup['service']);
-			if ($remote_sent) continue;
 
 			foreach ($backupable_entities as $key => $info) {
 				if (isset($backup[$key])) $entities[] = $key;
@@ -867,7 +858,7 @@ class UpdraftPlus_Backup_History {
 	public static function save_backup($backup_time, $backup_array) {
 		$backup_history = self::get_history();
 
-		$backup_history[$backup_time] = isset($backup_history[$backup_time]) ? apply_filters('updraftplus_merge_backup_history', $backup_array, $backup_history[$backup_time]) : $backup_array;
+		$backup_history[$backup_time] = isset($backup_history[$backup_time]) ? apply_filters('backupplus_merge_backup_history', $backup_array, $backup_history[$backup_time]) : $backup_array;
 		
 		self::save_history($backup_history, false);
 	}
@@ -913,6 +904,6 @@ class UpdraftPlus_Backup_History {
 	 * @return Array - the array of backup histories.
 	 */
 	private static function get_backup_history_option() {
-		return UpdraftPlus_Options::get_updraft_option('updraft_backup_history');
+		return BackupPlus_Options::get_backupplus_option('backupplus_backup_history');
 	}
 }

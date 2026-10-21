@@ -1,0 +1,6946 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BackupPlus\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/backupplus\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-21T15:18:24+00:00\n"
+"PO-Revision-Date: +0000\n"
+"Language: th\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: GlotPress/4.1.0\n"
+
+#. Plugin Name of the plugin
+#: backupplus.php
+msgid "BackupPlus - Backup/Restore"
+msgstr ""
+
+#. Description of the plugin
+#: backupplus.php
+msgid "Backup and restore: take backups locally, or backup to Amazon S3, Dropbox, Google Drive, Rackspace, (S)FTP, WebDAV & email, on automatic schedules."
+msgstr ""
+
+#. Author of the plugin
+#: backupplus.php
+msgid "TeamUpdraft, DavidAnderson"
+msgstr ""
+
+#: admin.php:113
+#: admin.php:827
+#: admin.php:1334
+#: includes/class-restore-search-replace.php:660
+#: includes/class-restore-search-replace.php:984
+#: includes/class-restore-search-replace.php:1063
+#: includes/class-search-replace.php:341
+#: includes/class-search-replace.php:482
+#: methods/backup-module.php:115
+#: restorer.php:601
+#: restorer.php:629
+#: restorer.php:2399
+#: restorer.php:4544
+msgid "Error:"
+msgstr ""
+
+#: admin.php:113
+msgid "template not found"
+msgstr ""
+
+#: admin.php:412
+#: admin.php:433
+#: admin.php:440
+#: admin.php:483
+#: admin.php:514
+msgid "Nothing currently scheduled"
+msgstr ""
+
+#: admin.php:422
+msgid "At the same time as the files backup"
+msgstr ""
+
+#: admin.php:443
+#: admin.php:6095
+#: templates/wp-admin/settings/take-backup.php:24
+msgid "Files"
+msgstr ""
+
+#: admin.php:443
+#: class-backupplus.php:3558
+msgid "Files and database"
+msgstr ""
+
+#: admin.php:453
+#: admin.php:4377
+#: admin.php:4439
+#: admin.php:4565
+#: admin.php:4588
+#: admin.php:4598
+#: admin.php:5236
+#: includes/class-wpadmin-commands.php:136
+#: includes/class-wpadmin-commands.php:587
+#: restorer.php:716
+#: templates/wp-admin/settings/delete-and-restore-modals.php:93
+#: templates/wp-admin/settings/delete-and-restore-modals.php:99
+#: templates/wp-admin/settings/take-backup.php:34
+msgid "Database"
+msgstr ""
+
+#: admin.php:680
+#: admin.php:5218
+msgid "Backup"
+msgstr ""
+
+#: admin.php:680
+#: admin.php:863
+#: admin.php:4739
+msgid "Restore"
+msgstr ""
+
+#: admin.php:688
+#: admin.php:1129
+#: admin.php:3013
+msgid "Settings"
+msgstr ""
+
+#: admin.php:696
+#: admin.php:3014
+msgid "Advanced Tools"
+msgstr ""
+
+#: admin.php:800
+msgid "Send a report only when there are warnings/errors"
+msgstr ""
+
+#: admin.php:801
+msgid "When email storage method is enabled, and an email address is entered, also send the backup"
+msgstr ""
+
+#. translators: %s: Typical mail server size limit in megabytes
+#: admin.php:803
+#, php-format
+msgid "Be aware that mail servers tend to have size limits; typically around %s Mb; backups larger than any limits will likely not arrive."
+msgstr ""
+
+#: admin.php:804
+msgid "Rescanning (looking for backups that you have uploaded manually into the internal backup store)..."
+msgstr ""
+
+#: admin.php:805
+msgid "Only email the database backup"
+msgstr ""
+
+#: admin.php:806
+msgid "Rescanning remote and local storage for backup sets..."
+msgstr ""
+
+#: admin.php:807
+msgid "To send to more than one address, separate each address with a comma."
+msgstr ""
+
+#: admin.php:808
+msgid "If you exclude both the database and the files, then you have excluded everything!"
+msgstr ""
+
+#: admin.php:809
+msgid "You have chosen to backup files, but no file entities have been selected"
+msgstr ""
+
+#: admin.php:810
+msgid "You have chosen to backup a database, but no tables have been selected"
+msgstr ""
+
+#: admin.php:811
+msgid "You have chosen to send this backup to remote storage, but no remote storage locations have been selected"
+msgstr ""
+
+#: admin.php:812
+msgid "The restore operation has begun."
+msgstr ""
+
+#: admin.php:812
+msgid "Do not close your browser until it reports itself as having finished."
+msgstr ""
+
+#: admin.php:813
+msgid "Unexpected response:"
+msgstr ""
+
+#: admin.php:814
+msgid "The web server returned an error code (try again, or check your web server logs)"
+msgstr ""
+
+#: admin.php:815
+msgid "The new user's RackSpace console password is (this will not be shown again):"
+msgstr ""
+
+#: admin.php:816
+msgid "Trying..."
+msgstr ""
+
+#: admin.php:817
+msgid "Fetching..."
+msgstr ""
+
+#: admin.php:818
+msgid "calculating..."
+msgstr ""
+
+#: admin.php:819
+msgid "Begun looking for this entity"
+msgstr ""
+
+#: admin.php:820
+msgid "Some files are still downloading or being processed - please wait."
+msgstr ""
+
+#: admin.php:821
+msgid "Processing files - please wait..."
+msgstr ""
+
+#: admin.php:822
+msgid "Error: the server sent an empty response."
+msgstr ""
+
+#: admin.php:823
+msgid "Warnings:"
+msgstr ""
+
+#: admin.php:824
+#: includes/class-restore-search-replace.php:1099
+msgid "Errors:"
+msgstr ""
+
+#: admin.php:825
+msgid "Error: the server sent us a response which we did not understand."
+msgstr ""
+
+#: admin.php:826
+#: restorer.php:396
+msgid "Error data:"
+msgstr ""
+
+#: admin.php:828
+#: backupplus.php:253
+#: class-backupplus.php:1445
+#: class-backupplus.php:1489
+#: includes/class-filesystem-functions.php:469
+#: includes/class-storage-methods-interface.php:338
+#: methods/addon-base-v2.php:102
+#: methods/addon-base-v2.php:112
+#: methods/addon-base-v2.php:254
+#: methods/addon-base-v2.php:285
+#: methods/googledrive.php:1538
+#: restorer.php:4364
+#: restorer.php:4391
+#: restorer.php:4501
+msgid "Error"
+msgstr ""
+
+#: admin.php:829
+#: admin.php:2177
+#: templates/wp-admin/settings/downloading-and-restoring.php:21
+#: templates/wp-admin/settings/tab-backups.php:5
+#: templates/wp-admin/settings/tab-backups.php:28
+msgid "Existing backups"
+msgstr ""
+
+#: admin.php:830
+#: admin.php:2498
+msgid "File ready."
+msgstr ""
+
+#: admin.php:831
+msgid "File size"
+msgstr ""
+
+#: admin.php:832
+#: admin.php:2878
+#: admin.php:3762
+#: admin.php:5158
+#: admin.php:5170
+#: admin.php:5181
+#: templates/wp-admin/settings/existing-backups-table.php:22
+#: templates/wp-admin/settings/existing-backups-table.php:126
+msgid "Actions"
+msgstr ""
+
+#: admin.php:833
+msgid "Delete from your web server"
+msgstr ""
+
+#: admin.php:834
+msgid "Download to your computer"
+msgstr ""
+
+#: admin.php:835
+msgid "Browse contents"
+msgstr ""
+
+#: admin.php:836
+msgid "Download error: the server sent us a response which we did not understand."
+msgstr ""
+
+#: admin.php:837
+msgid "Requesting start of backup..."
+msgstr ""
+
+#: admin.php:838
+msgid "PHP information"
+msgstr ""
+
+#: admin.php:839
+msgid "Delete Old Directories"
+msgstr ""
+
+#: admin.php:840
+msgid "Raw backup history"
+msgstr ""
+
+#: admin.php:841
+#: admin.php:842
+msgid "This file is not a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
+msgstr ""
+
+#: admin.php:841
+msgid "However, BackupPlus and UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern."
+msgstr ""
+
+#: admin.php:843
+msgid "(make sure that you were trying to upload a zip file previously created by BackupPlus or UpdraftPlus)"
+msgstr ""
+
+#: admin.php:844
+msgid "Upload error:"
+msgstr ""
+
+#: admin.php:845
+msgid "This file is not a BackupPlus or UpdraftPlus encrypted database archive (such files are .gz.crypt files which have a name like: backup_(time)_(site name)_(code)_db.crypt.gz)."
+msgstr ""
+
+#: admin.php:846
+msgid "Upload error"
+msgstr ""
+
+#: admin.php:847
+msgid "Follow this link to attempt decryption and download the database file to your computer."
+msgstr ""
+
+#: admin.php:848
+msgid "This decryption key will be attempted:"
+msgstr ""
+
+#: admin.php:849
+msgid "Unknown server response:"
+msgstr ""
+
+#: admin.php:850
+msgid "Unknown server response status:"
+msgstr ""
+
+#: admin.php:851
+msgid "The file was uploaded."
+msgstr ""
+
+#: admin.php:853
+#: templates/wp-admin/settings/take-backup.php:48
+msgid "Backup Now"
+msgstr ""
+
+#: admin.php:854
+#: includes/class-backupplus-deactivation.php:99
+#: methods/backup-module.php:114
+#: templates/wp-admin/settings/delete-and-restore-modals.php:112
+msgid "Cancel"
+msgstr ""
+
+#: admin.php:855
+#: admin.php:3792
+#: admin.php:3807
+#: admin.php:3839
+#: admin.php:4835
+#: templates/wp-admin/settings/existing-backups-table.php:150
+#: templates/wp-admin/settings/file-backup-exclude.php:11
+msgid "Delete"
+msgstr ""
+
+#: admin.php:856
+msgid "Create"
+msgstr ""
+
+#: admin.php:857
+#: admin.php:4809
+msgid "Upload"
+msgstr ""
+
+#: admin.php:858
+msgid "You did not select any components to restore."
+msgstr ""
+
+#: admin.php:858
+msgid "Please select at least one, and then try again."
+msgstr ""
+
+#: admin.php:859
+#: admin.php:5249
+msgid "Full-screen"
+msgstr ""
+
+#: admin.php:860
+msgid "Exit full-screen"
+msgstr ""
+
+#: admin.php:861
+msgid "Proceed with update"
+msgstr ""
+
+#: admin.php:862
+#: admin.php:1020
+#: includes/backupplus-tour.php:93
+msgid "Close"
+msgstr ""
+
+#: admin.php:864
+#: admin.php:4059
+msgid "Download log file"
+msgstr ""
+
+#: admin.php:865
+msgid "Automatic backup before update"
+msgstr ""
+
+#: admin.php:866
+#: admin.php:877
+#: admin.php:878
+msgid "You have made changes to your settings, and not saved."
+msgstr ""
+
+#: admin.php:867
+msgid "Saving..."
+msgstr ""
+
+#: admin.php:868
+msgid "Connect"
+msgstr ""
+
+#: admin.php:869
+msgid "Connecting..."
+msgstr ""
+
+#: admin.php:870
+msgid "Disconnect"
+msgstr ""
+
+#: admin.php:871
+msgid "Disconnecting..."
+msgstr ""
+
+#: admin.php:872
+msgid "Counting..."
+msgstr ""
+
+#: admin.php:873
+msgid "Update quota count"
+msgstr ""
+
+#. translators: %s: Missing parameter name
+#. translators: %s: Description
+#. translators: %s: API key
+#. translators: %s: Username
+#. translators: %s: Missing credential type (e.g., login)
+#. translators: %s: Missing credential type (e.g., password)
+#. translators: %s: Password
+#. translators: %s: Tenant (used in OpenStack storage)
+#. translators: %s: Authentication URI
+#. translators: %s: Missing input type
+#: includes/class-restore-search-replace.php:260
+#: methods/addon-base-v2.php:370
+#: methods/cloudfiles-new.php:209
+#: methods/cloudfiles-new.php:218
+#: methods/cloudfiles.php:533
+#: methods/cloudfiles.php:541
+#: methods/ftp.php:480
+#: methods/ftp.php:485
+#: methods/openstack2.php:137
+#: methods/openstack2.php:143
+#: methods/openstack2.php:149
+#: methods/openstack2.php:155
+#: methods/s3.php:1519
+#: methods/s3.php:1527
+#, php-format
+msgid "Failure: No %s was given."
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:156
+msgid "Deleting..."
+msgstr ""
+
+#: admin.php:875
+msgctxt "(verb)"
+msgid "Download"
+msgstr ""
+
+#: admin.php:877
+msgid "You should save your changes to ensure that they are used for making your backup."
+msgstr ""
+
+#: admin.php:878
+msgid "Your export file will be of your displayed settings, not your saved ones."
+msgstr ""
+
+#: admin.php:881
+msgid "day"
+msgstr ""
+
+#: admin.php:882
+msgid "in the month"
+msgstr ""
+
+#: admin.php:883
+msgid "day(s)"
+msgstr ""
+
+#: admin.php:884
+msgid "hour(s)"
+msgstr ""
+
+#: admin.php:885
+msgid "week(s)"
+msgstr ""
+
+#: admin.php:886
+msgid "For backups older than"
+msgstr ""
+
+#: admin.php:888
+msgid "Processing..."
+msgstr ""
+
+#: admin.php:889
+msgid "Loading..."
+msgstr ""
+
+#: admin.php:890
+msgid "Please fill in the required information."
+msgstr ""
+
+#. translators: %s: Settings type
+#. translators: %s: Remote storage method
+#. translators: %s: Backup method
+#. translators: %s: service name
+#. translators: %s: Backup method name
+#. translators: %s: Test settings type
+#: admin.php:892
+#: methods/backup-module.php:424
+#: methods/cloudfiles-new.php:396
+#: methods/dreamobjects.php:284
+#: methods/ftp.php:167
+#: methods/openstack2.php:303
+#: methods/s3.php:1240
+#: methods/s3generic.php:278
+#, php-format
+msgid "Test %s Settings"
+msgstr ""
+
+#. translators: %s: Settings type
+#: admin.php:894
+#, php-format
+msgid "Testing %s Settings..."
+msgstr ""
+
+#. translators: %s: Settings type
+#: admin.php:896
+#, php-format
+msgid "%s settings test result:"
+msgstr ""
+
+#: admin.php:897
+msgid "Nothing yet logged"
+msgstr ""
+
+#: admin.php:898
+msgid "You have not yet selected a file to import."
+msgstr ""
+
+#: admin.php:899
+msgid "Error: The chosen file is corrupt."
+msgstr ""
+
+#: admin.php:899
+msgid "Please choose a valid BackupPlus or UpdraftPlus export file."
+msgstr ""
+
+#: admin.php:900
+msgid "These settings were skipped because this BackupPlus build does not support them:"
+msgstr ""
+
+#: admin.php:903
+msgid "Importing..."
+msgstr ""
+
+#: admin.php:904
+msgid "This will import data from:"
+msgstr ""
+
+#: admin.php:905
+msgid "Which was exported on:"
+msgstr ""
+
+#: admin.php:906
+msgid "Do you want to carry out the import?"
+msgstr ""
+
+#: admin.php:907
+msgid "Complete"
+msgstr ""
+
+#: admin.php:908
+#: admin.php:3531
+msgid "The backup has finished running"
+msgstr ""
+
+#: admin.php:909
+msgid "The backup was aborted"
+msgstr ""
+
+#: admin.php:911
+msgid "remote files deleted"
+msgstr ""
+
+#: admin.php:912
+msgid "HTTP code:"
+msgstr ""
+
+#: admin.php:913
+msgid "The file failed to upload."
+msgstr ""
+
+#: admin.php:913
+msgid "Please check the following:"
+msgstr ""
+
+#: admin.php:913
+msgid "Any settings in your .htaccess or web.config file that affects the maximum upload or post size."
+msgstr ""
+
+#: admin.php:913
+msgid "The available memory on the server."
+msgstr ""
+
+#: admin.php:913
+msgid "That you are attempting to upload a zip file previously created by BackupPlus or UpdraftPlus."
+msgstr ""
+
+#: admin.php:913
+msgid "Further information may be found in the browser JavaScript console, and the server PHP error logs."
+msgstr ""
+
+#: admin.php:914
+msgid "Browsing zip file"
+msgstr ""
+
+#: admin.php:915
+msgid "Select a file to view information about it"
+msgstr ""
+
+#: admin.php:916
+msgid "Search"
+msgstr ""
+
+#: admin.php:917
+msgid "Unable to download file."
+msgstr ""
+
+#: admin.php:917
+msgid "This could be caused by a timeout."
+msgstr ""
+
+#: admin.php:917
+msgid "It would be best to download the zip to your computer."
+msgstr ""
+
+#: admin.php:918
+msgid "Loading log file"
+msgstr ""
+
+#: admin.php:926
+msgid "Currently enabled"
+msgstr ""
+
+#: admin.php:927
+msgid "Currently disabled"
+msgstr ""
+
+#: admin.php:928
+msgid "Local backup upload has started; please check the log file to see the upload progress"
+msgstr ""
+
+#: admin.php:929
+msgid "You must select at least one remote storage destination to upload this backup set to."
+msgstr ""
+
+#: admin.php:930
+msgid "(already uploaded)"
+msgstr ""
+
+#: admin.php:931
+msgid "Please specify the Microsoft OneDrive folder name, not the URL."
+msgstr ""
+
+#: admin.php:934
+msgid "Are you sure you want to remove this exclusion rule?"
+msgstr ""
+
+#: admin.php:935
+msgid "Please select a file/folder which you would like to exclude"
+msgstr ""
+
+#: admin.php:936
+msgid "Please select a folder in which the files/directories you would like to exclude are located"
+msgstr ""
+
+#: admin.php:937
+msgid "Please enter a file extension, like zip"
+msgstr ""
+
+#: admin.php:938
+msgid "Please enter a valid file extension"
+msgstr ""
+
+#: admin.php:939
+msgid "Please enter characters that begin the filename which you would like to exclude"
+msgstr ""
+
+#: admin.php:940
+msgid "Please enter a valid file name prefix"
+msgstr ""
+
+#: admin.php:941
+msgid "Please enter part of the file name"
+msgstr ""
+
+#: admin.php:942
+msgid "The exclusion rule which you are trying to add already exists"
+msgstr ""
+
+#: admin.php:943
+#: templates/wp-admin/settings/backupnow-modal.php:39
+msgid "Include your files in the backup"
+msgstr ""
+
+#: admin.php:944
+msgid "File backup options"
+msgstr ""
+
+#: admin.php:945
+msgid "HTML was detected in the response."
+msgstr ""
+
+#: admin.php:945
+msgid "You may have a security module on your webserver blocking the restoration operation."
+msgstr ""
+
+#: admin.php:946
+msgid "You have not selected a restore path for your chosen backups"
+msgstr ""
+
+#: admin.php:947
+msgid "credentials"
+msgstr ""
+
+#: admin.php:948
+#: methods/cloudfiles-new.php:219
+#: methods/cloudfiles.php:542
+#: methods/openstack2.php:296
+msgid "Username"
+msgstr ""
+
+#: admin.php:949
+#: methods/openstack2.php:298
+msgid "Password"
+msgstr ""
+
+#. translators: %d: Seconds ago
+#: admin.php:951
+#, php-format
+msgid "last activity: %d seconds ago"
+msgstr ""
+
+#. translators: %d: Seconds until resumption
+#: admin.php:953
+#, php-format
+msgid "no recent activity; will offer resumption after: %d seconds"
+msgstr ""
+
+#. translators: 1: the total number of files already restored, 2: the total number of files to be restored
+#: admin.php:955
+#, php-format
+msgid "Restoring %1$s files out of %2$s"
+msgstr ""
+
+#. translators: %s: Database table name
+#: admin.php:957
+#, php-format
+msgid "Restoring table: %s"
+msgstr ""
+
+#. translators: %s: Stored routine name
+#: admin.php:959
+#, php-format
+msgid "Restoring stored routine: %s"
+msgstr ""
+
+#: admin.php:960
+#: admin.php:5243
+msgid "Finished"
+msgstr ""
+
+#: admin.php:961
+msgid "Begun"
+msgstr ""
+
+#: admin.php:962
+msgid "Downloading backup files if needed"
+msgstr ""
+
+#: admin.php:963
+msgid "Preparing backup files"
+msgstr ""
+
+#: admin.php:964
+msgid "Attempts by the browser to contact the website failed."
+msgstr ""
+
+#: admin.php:965
+msgid "Restore error:"
+msgstr ""
+
+#: admin.php:966
+#: admin.php:2890
+#: class-backupplus.php:5031
+#: restorer.php:3717
+#: restorer.php:3984
+msgid "Warning:"
+msgstr ""
+
+#: admin.php:966
+msgid "Attempts by the browser to access some pages have returned a \"not found (404)\" error."
+msgstr ""
+
+#: admin.php:966
+msgid "This could mean that your .htaccess file has incorrect contents, is missing, or that your webserver is missing an equivalent mechanism."
+msgstr ""
+
+#: admin.php:966
+msgid "Missing pages:"
+msgstr ""
+
+#: admin.php:967
+msgid "Please check the error log for more details"
+msgstr ""
+
+#: admin.php:969
+msgid "Warning: if you continue, you will add all backups stored in the configured remote storage directory (whichever site they were created by)."
+msgstr ""
+
+#: admin.php:970
+#: class-backupplus.php:3085
+msgid "You have reached the monthly limit for the number of backups you can create at this time."
+msgstr ""
+
+#: admin.php:971
+#: class-backupplus.php:3086
+msgid "Your hosting provider only allows you to take one backup per month."
+msgstr ""
+
+#. translators: %s: Hosting provider name
+#: admin.php:973
+#: admin.php:977
+#: class-backupplus.php:3079
+#: class-backupplus.php:3089
+#, php-format
+msgid "Please contact your hosting company (%s) if you require further support."
+msgstr ""
+
+#: admin.php:974
+#: class-backupplus.php:3075
+msgid "You have reached the daily limit for the number of incremental backups you can create at this time."
+msgstr ""
+
+#: admin.php:975
+msgid "Your hosting provider only allows you to take one incremental backup per day."
+msgstr ""
+
+#: admin.php:983
+msgid "on every backup"
+msgstr ""
+
+#: admin.php:987
+msgid "if any of the following conditions are matched:"
+msgstr ""
+
+#: admin.php:991
+msgid "if all of the following conditions are matched:"
+msgstr ""
+
+#: admin.php:997
+msgid "Day of the week"
+msgstr ""
+
+#: admin.php:1001
+msgid "Day of the month"
+msgstr ""
+
+#: admin.php:1007
+msgid "is"
+msgstr ""
+
+#: admin.php:1011
+msgid "is not"
+msgstr ""
+
+#: admin.php:1016
+msgid "The number of restore options that will be sent exceeds the configured maximum in your PHP configuration (max_input_vars)."
+msgstr ""
+
+#: admin.php:1016
+msgid "If you proceed with the restoration then some of the restore options will be lost and you may get unexpected results."
+msgstr ""
+
+#: admin.php:1016
+msgid "See the browser console log for more information."
+msgstr ""
+
+#: admin.php:1017
+msgid "This is usually caused by your dashboard page having been open a long time, and the included security tokens having since expired."
+msgstr ""
+
+#: admin.php:1018
+msgid "Therefore, please reload the page."
+msgstr ""
+
+#: admin.php:1019
+#: templates/wp-admin/settings/form-contents.php:377
+msgid "Save Changes"
+msgstr ""
+
+#. translators: %s: Original plugin authors.
+#: admin.php:1146
+#, php-format
+msgid "By %s"
+msgstr ""
+
+#: admin.php:1177
+msgid "An error occurred when fetching storage module options: "
+msgstr ""
+
+#: admin.php:1182
+#: includes/class-commands.php:453
+#: templates/wp-admin/settings/take-backup.php:13
+msgid "The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option)."
+msgstr ""
+
+#: admin.php:1187
+msgid "Welcome to BackupPlus!"
+msgstr ""
+
+#: admin.php:1187
+msgid "To make a backup, press the Backup Now button. To change what is backed up, configure schedules, or set up remote storage, go to the Settings tab."
+msgstr ""
+
+#: admin.php:1187
+msgid "Open Settings"
+msgstr ""
+
+#: admin.php:1192
+#: admin.php:1200
+#: admin.php:1207
+#: admin.php:1217
+#: admin.php:1226
+#: admin.php:1235
+#: admin.php:1254
+#: admin.php:1267
+#: admin.php:4292
+#: admin.php:4304
+#: admin.php:4309
+#: admin.php:6279
+#: admin.php:6403
+#: includes/class-restore-search-replace.php:725
+#: methods/cloudfiles-new.php:333
+#: methods/cloudfiles-new.php:350
+#: methods/cloudfiles.php:442
+#: methods/dreamobjects.php:222
+#: methods/dreamobjects.php:241
+#: methods/ftp.php:137
+#: methods/openstack-base.php:601
+#: methods/openstack2.php:268
+#: methods/s3.php:997
+#: methods/s3.php:1006
+#: methods/s3.php:1185
+#: methods/s3.php:1200
+#: methods/s3generic.php:216
+#: methods/s3generic.php:234
+#: templates/wp-admin/settings/downloading-and-restoring.php:27
+#: templates/wp-admin/settings/tab-backups.php:11
+msgid "Warning"
+msgstr ""
+
+#. translators: 1: Max execution time, 2: Recommended value
+#. translators: 1: Execution time in seconds, 2: Recommended execution time in seconds
+#: admin.php:1194
+#: class-backupplus.php:923
+#, php-format
+msgid "The amount of time allowed for WordPress plugins to run is very low (%1$s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %2$s seconds or more)"
+msgstr ""
+
+#: admin.php:1200
+msgid "The scheduler is disabled in your WordPress install, via the DISABLE_WP_CRON setting."
+msgstr ""
+
+#: admin.php:1200
+msgid "No backups can run (even &quot;Backup Now&quot;) unless either you have set up a facility to call the scheduler manually, or until it is enabled."
+msgstr ""
+
+#. translators: %s: Free disk space
+#: admin.php:1209
+#, php-format
+msgid "You have less than %s of free disk space on the disk which BackupPlus is configured to use to create backups."
+msgstr ""
+
+#: admin.php:1210
+msgid "BackupPlus could well run out of space."
+msgstr ""
+
+#: admin.php:1211
+msgid "Contact the operator of your server (e.g. your web hosting company) to resolve this issue."
+msgstr ""
+
+#. translators: %s: Minimum supported WordPress version
+#: admin.php:1219
+#, php-format
+msgid "BackupPlus does not officially support versions of WordPress before %s."
+msgstr ""
+
+#: admin.php:1220
+msgid "It may work for you, but if it does not, then please be aware that no support is available until you upgrade WordPress."
+msgstr ""
+
+#. translators: %s: Web server name
+#: admin.php:1228
+#, php-format
+msgid "Your website is hosted using the %s web server."
+msgstr ""
+
+#: admin.php:1229
+msgid "If backups fail, check the server error log and PHP execution limits."
+msgstr ""
+
+#: admin.php:1235
+msgid "Neither the PHP zip module nor a zip executable are available on your webserver."
+msgstr ""
+
+#: admin.php:1235
+msgid "Consequently, BackupPlus will use a built-in zip module (PclZip); this is significantly slower."
+msgstr ""
+
+#: admin.php:1235
+msgid "To get faster backups, ask your web hosting provider how to turn on the PHP zip module on your hosting."
+msgstr ""
+
+#: admin.php:1239
+msgid "Notice"
+msgstr ""
+
+#: admin.php:1239
+msgid "BackupPlus's debug mode is on."
+msgstr ""
+
+#: admin.php:1239
+msgid "You may see debugging notices on this page not just from BackupPlus, but from any other plugin installed."
+msgstr ""
+
+#: admin.php:1239
+msgid "Please try to make sure that the notice you are seeing is from BackupPlus before you raise a support request."
+msgstr ""
+
+#. translators: %d: Number of overdue scheduled tasks
+#: admin.php:1269
+#, php-format
+msgid "WordPress has a number (%d) of scheduled tasks which are overdue."
+msgstr ""
+
+#: admin.php:1270
+msgid "Unless this is a development site, this means that the scheduler in your WordPress install is not working properly."
+msgstr ""
+
+#: admin.php:1271
+msgid "Check that WordPress cron is enabled and that your server can run scheduled tasks."
+msgstr ""
+
+#: admin.php:1316
+#: admin.php:1387
+#: class-backupplus.php:640
+#: class-backupplus.php:697
+#: class-backupplus.php:702
+#: class-backupplus.php:707
+msgid "BackupPlus notice:"
+msgstr ""
+
+#. translators: %s: Storage endpoint name
+#: admin.php:1318
+msgid "As of Nov 12th, 2025, objects-us-east-1.dream.io has been permanently shut down."
+msgstr ""
+
+#: admin.php:1319
+msgid "For most DreamObjects customers, this involves updating the endpoint and region to s3.us-east-005.dream.io (us-east-005)."
+msgstr ""
+
+#: admin.php:1320
+msgid "If you need assistance migrating your data, please reach out to the DreamObjects support team."
+msgstr ""
+
+#. translators: 1: Opening anchor tag, 2: Closing anchor tag
+#: admin.php:1322
+#, php-format
+msgid "%1$sPlease see this article for more information%2$s"
+msgstr ""
+
+#. translators: %s: Non-translated string 'DreamObjects'.
+#: admin.php:1336
+#, php-format
+msgid "Invalid custom %s endpoint."
+msgstr ""
+
+#. translators: %s: Desired endpoint format.
+#: admin.php:1338
+#, php-format
+msgid "Please enter the endpoint in the format \"%s\"."
+msgstr ""
+
+#: admin.php:1348
+#: admin.php:1363
+msgid "BackupPlus notice"
+msgstr ""
+
+#. translators: 1: Endpoint name
+#: admin.php:1350
+#: admin.php:1365
+#, php-format
+msgid "Due to the shutdown of the %1$s endpoint, support for %1$s will be ending soon."
+msgstr ""
+
+#: admin.php:1351
+#: admin.php:1366
+msgid "You will need to migrate to the Global endpoint in your BackupPlus settings."
+msgstr ""
+
+#. translators: %s: Azure link
+#. translators: %s: OneDrive link
+#: admin.php:1353
+#: admin.php:1368
+#, php-format
+msgid "For more information, please see: %s"
+msgstr ""
+
+#: admin.php:1493
+#: admin.php:1503
+msgid "Error: invalid path"
+msgstr ""
+
+#: admin.php:1548
+msgid "The email protocol does not allow a remote backup to be retrieved from an email that has been sent."
+msgstr ""
+
+#: admin.php:1548
+msgid "Therefore, please download the attachment from the original backup email and upload it using the \"Upload backup files\" facility in the \"Existing Backups\" tab."
+msgstr ""
+
+#: admin.php:1816
+msgid "Messages:"
+msgstr ""
+
+#: admin.php:1883
+#: includes/class-wpadmin-commands.php:572
+msgid "Backup set not found"
+msgstr ""
+
+#: admin.php:2113
+msgid "Backup sets removed:"
+msgstr ""
+
+#: admin.php:2114
+msgid "Local files deleted:"
+msgstr ""
+
+#: admin.php:2115
+msgid "Remote files deleted:"
+msgstr ""
+
+#: admin.php:2217
+msgid "Job deleted"
+msgstr ""
+
+#: admin.php:2223
+msgid "Could not find that job - perhaps it has already finished?"
+msgstr ""
+
+#: admin.php:2339
+#: admin.php:2362
+#: includes/class-commands.php:702
+msgid "Start backup"
+msgstr ""
+
+#: admin.php:2339
+#: includes/class-commands.php:702
+msgid "OK."
+msgstr ""
+
+#: admin.php:2339
+#: includes/class-commands.php:702
+msgid "You should soon see activity in the \"Last log message\" field below."
+msgstr ""
+
+#: admin.php:2346
+msgid "No suitable backup set (that already contains a full backup of all the requested file component types) was found, to add increments to."
+msgstr ""
+
+#: admin.php:2346
+msgid "Aborting this backup."
+msgstr ""
+
+#: admin.php:2420
+msgid "Error: unexpected file read fail"
+msgstr ""
+
+#: admin.php:2428
+#: admin.php:2432
+#: class-backupplus.php:697
+msgid "The log file could not be read."
+msgstr ""
+
+#: admin.php:2479
+msgid "Download failed"
+msgstr ""
+
+#: admin.php:2509
+msgid "Download in progress"
+msgstr ""
+
+#: admin.php:2512
+msgid "No local copy present."
+msgstr ""
+
+#. translators: %s: Backup directory path
+#: admin.php:2570
+#: backup.php:1326
+#, php-format
+msgid "Backup directory (%s) is not writable, or does not exist."
+msgstr ""
+
+#: admin.php:2572
+msgid "You will find more information about this in the Settings section."
+msgstr ""
+
+#. translators: %s: Error message
+#: admin.php:2613
+#: admin.php:2643
+#: admin.php:2659
+#: class-backupplus.php:1098
+#: class-backupplus.php:1105
+#: class-backupplus.php:4815
+#: class-backupplus.php:5106
+#: methods/googledrive.php:636
+#: methods/s3.php:409
+#, php-format
+msgid "Error: %s"
+msgstr ""
+
+#: admin.php:2614
+msgid "This file could not be uploaded"
+msgstr ""
+
+#. translators: %s: Backup tool name
+#: admin.php:2633
+#, php-format
+msgid "This backup was created by %s, and can be imported."
+msgstr ""
+
+#: admin.php:2644
+msgid "Bad filename format - this does not look like a file created by BackupPlus or UpdraftPlus"
+msgstr ""
+
+#. translators: %s: Object type
+#: admin.php:2662
+#, php-format
+msgid "This looks like a file created by BackupPlus or UpdraftPlus, but this install does not know about this type of object: %s."
+msgstr ""
+
+#: admin.php:2665
+msgid "This backup component was created by an extension that is not installed here."
+msgstr ""
+
+#: admin.php:2770
+msgid "Bad filename format - this does not look like an encrypted database file created by BackupPlus or UpdraftPlus"
+msgstr ""
+
+#: admin.php:2869
+msgid "Backup directory could not be created"
+msgstr ""
+
+#: admin.php:2876
+msgid "Backup directory successfully created."
+msgstr ""
+
+#: admin.php:2878
+#: admin.php:3762
+#: admin.php:5158
+#: admin.php:5170
+#: admin.php:5181
+#: admin.php:5428
+#: admin.php:6304
+#: admin.php:6321
+#: includes/class-restore-search-replace.php:238
+#: includes/class-restore-search-replace.php:265
+msgid "Return to BackupPlus configuration"
+msgstr ""
+
+#: admin.php:2890
+msgid "If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
+msgstr ""
+
+#: admin.php:2893
+msgid "The BackupPlus directory in wp-content/plugins has white-space in it; WordPress does not like this."
+msgstr ""
+
+#: admin.php:2893
+msgid "You should rename the directory to wp-content/plugins/backupplus to fix this problem."
+msgstr ""
+
+#: admin.php:2895
+#: admin.php:5216
+msgid "Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts."
+msgstr ""
+
+#: admin.php:2908
+msgid "OptimizePress 2.0 encodes its contents, so search/replace does not work."
+msgstr ""
+
+#: admin.php:2908
+msgid "To fix this problem go here."
+msgstr ""
+
+#: admin.php:2910
+msgid "Your backup has been restored."
+msgstr ""
+
+#: admin.php:2927
+msgid "Your PHP memory limit (set by your web hosting company) is very low."
+msgstr ""
+
+#: admin.php:2927
+msgid "BackupPlus attempted to raise it but was unsuccessful."
+msgstr ""
+
+#: admin.php:2927
+msgid "This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary)."
+msgstr ""
+
+#: admin.php:2927
+msgid "Current limit is:"
+msgstr ""
+
+#: admin.php:2989
+msgid "Backup Contents And Schedule"
+msgstr ""
+
+#: admin.php:3012
+msgid "Backup / Restore"
+msgstr ""
+
+#. translators: 1: Minutes, 2: Seconds
+#: admin.php:3096
+#, php-format
+msgid "%1$s minutes, %2$s seconds"
+msgstr ""
+
+#: admin.php:3099
+msgid "Unfinished restoration"
+msgstr ""
+
+#. translators: %s: Time ago
+#: admin.php:3101
+#, php-format
+msgid "You have an unfinished restoration operation, begun %s ago."
+msgstr ""
+
+#: admin.php:3107
+msgid "Continue restoration"
+msgstr ""
+
+#: admin.php:3108
+#: templates/wp-admin/notices/autobackup-notice.php:18
+#: templates/wp-admin/notices/autobackup-notice.php:20
+#: templates/wp-admin/notices/horizontal-notice.php:50
+#: templates/wp-admin/notices/horizontal-notice.php:52
+msgid "Dismiss"
+msgstr ""
+
+#: admin.php:3156
+#: admin.php:3162
+#: templates/wp-admin/settings/take-backup.php:67
+msgid "Last log message"
+msgstr ""
+
+#: admin.php:3183
+msgid "Download most recently modified log file"
+msgstr ""
+
+#: admin.php:3255
+msgid "Web server:"
+msgstr ""
+
+#: admin.php:3273
+msgid "Table prefix:"
+msgstr ""
+
+#: admin.php:3279
+#: includes/class-filesystem-functions.php:129
+msgid "Web-server disk space in use by BackupPlus"
+msgstr ""
+
+#: admin.php:3280
+#: includes/class-filesystem-functions.php:108
+msgid "refresh"
+msgstr ""
+
+#: admin.php:3288
+msgid "Peak memory usage"
+msgstr ""
+
+#: admin.php:3292
+msgid "Current memory usage"
+msgstr ""
+
+#: admin.php:3296
+msgid "Memory limit"
+msgstr ""
+
+#. translators: %s: String 'PHP'
+#. translators: %s: String 'MySQL'
+#. translators: %s: String 'Curl'
+#. translators: %s: String 'OpenSSL'
+#: admin.php:3303
+#: admin.php:3315
+#: admin.php:3343
+#: admin.php:3350
+#, php-format
+msgid "%s version:"
+msgstr ""
+
+#: admin.php:3304
+msgid "show PHP information (phpinfo)"
+msgstr ""
+
+#: admin.php:3322
+msgid "Database maximum packet size:"
+msgstr ""
+
+#: admin.php:3330
+msgid "Current SQL mode:"
+msgstr ""
+
+#: admin.php:3339
+msgid "Not installed"
+msgstr ""
+
+#: admin.php:3339
+msgid "required for some remote storage providers"
+msgstr ""
+
+#: admin.php:3362
+#: admin.php:3365
+msgid "Yes"
+msgstr ""
+
+#: admin.php:3365
+msgid "No"
+msgstr ""
+
+#: admin.php:3375
+msgid "zip executable found:"
+msgstr ""
+
+#: admin.php:3384
+msgid "Free disk space in account:"
+msgstr ""
+
+#. translators: 1: String 'Free disk space MB', 2: Free disk space in percentage
+#: admin.php:3386
+#, php-format
+msgid "%1$s (%2$s used)"
+msgstr ""
+
+#: admin.php:3406
+msgid "Apache modules"
+msgstr ""
+
+#: admin.php:3414
+msgid "Install debugging plugins:"
+msgstr ""
+
+#: admin.php:3423
+msgid "Fetch"
+msgstr ""
+
+#: admin.php:3429
+msgid "Call WordPress action:"
+msgstr ""
+
+#: admin.php:3430
+msgid "Call"
+msgstr ""
+
+#: admin.php:3437
+msgid "Show raw backup and file list"
+msgstr ""
+
+#: admin.php:3437
+#: templates/wp-admin/settings/downloading-and-restoring.php:54
+#: templates/wp-admin/settings/tab-backups.php:44
+msgid "Rescan remote storage"
+msgstr ""
+
+#: admin.php:3437
+msgid "log results to console"
+msgstr ""
+
+#: admin.php:3463
+msgid "Your WordPress install has old folders from its state before you restored/migrated (technical information: these are suffixed with -old)."
+msgstr ""
+
+#: admin.php:3463
+msgid "You should press this button to delete them as soon as you have verified that the restoration worked."
+msgstr ""
+
+#: admin.php:3469
+msgid "Delete old folders"
+msgstr ""
+
+#: admin.php:3531
+#: admin.php:4856
+msgid "View Log"
+msgstr ""
+
+#: admin.php:3571
+msgid "Backup begun"
+msgstr ""
+
+#: admin.php:3576
+msgid "Creating file backup zips"
+msgstr ""
+
+#: admin.php:3589
+msgid "Created file backup zips"
+msgstr ""
+
+#: admin.php:3595
+msgid "Uploading files to remote storage"
+msgstr ""
+
+#. translators: 1: File number, 2: Total files
+#: admin.php:3603
+#, php-format
+msgid "file %1$d of %2$d"
+msgstr ""
+
+#: admin.php:3608
+msgid "Pruning old backup sets"
+msgstr ""
+
+#: admin.php:3612
+msgid "Waiting until scheduled time to retry because of errors"
+msgstr ""
+
+#: admin.php:3617
+msgid "Backup finished"
+msgstr ""
+
+#: admin.php:3630
+msgid "Created database backup"
+msgstr ""
+
+#: admin.php:3641
+msgid "Creating database backup"
+msgstr ""
+
+#. translators: %s: Table name
+#: admin.php:3644
+#, php-format
+msgid "table: %s"
+msgstr ""
+
+#: admin.php:3657
+msgid "Encrypting database"
+msgstr ""
+
+#: admin.php:3665
+msgid "Encrypted database"
+msgstr ""
+
+#: admin.php:3667
+msgid "Unknown"
+msgstr ""
+
+#. translators: %d: Resumption count
+#: admin.php:3688
+#, php-format
+msgid "next resumption: %d"
+msgstr ""
+
+#. translators: %s: Seconds until resumption
+#: admin.php:3690
+#, php-format
+msgid "(after %ss)"
+msgstr ""
+
+#. translators: %s: Last activity
+#: admin.php:3694
+#, php-format
+msgid "last activity: %ss ago"
+msgstr ""
+
+#. translators: %s: Job ID
+#: admin.php:3711
+#, php-format
+msgid "Job ID: %s"
+msgstr ""
+
+#. translators: %s: Warning message
+#. translators: %s: Warning message.
+#: admin.php:3724
+#: admin.php:4045
+#, php-format
+msgid "Warning: %s"
+msgstr ""
+
+#: admin.php:3744
+msgid "show log"
+msgstr ""
+
+#: admin.php:3745
+msgid "Note: the progress bar below is based on stages, NOT time."
+msgstr ""
+
+#: admin.php:3745
+msgid "Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal."
+msgstr ""
+
+#: admin.php:3745
+msgid "stop"
+msgstr ""
+
+#: admin.php:3755
+msgid "Remove old folders"
+msgstr ""
+
+#: admin.php:3755
+msgid "Remove old directories"
+msgstr ""
+
+#: admin.php:3758
+msgid "Old folders successfully removed."
+msgstr ""
+
+#: admin.php:3760
+msgid "Old folder removal failed for some reason."
+msgstr ""
+
+#: admin.php:3760
+msgid "You may want to do this manually."
+msgstr ""
+
+#: admin.php:3795
+#: admin.php:3813
+#: admin.php:3844
+#: admin.php:3854
+#: backup.php:2037
+#: methods/addon-base-v2.php:378
+msgid "Failed"
+msgstr ""
+
+#: admin.php:3799
+#: admin.php:3810
+#: admin.php:3847
+#: admin.php:3851
+#: includes/class-storage-methods-interface.php:329
+#: restorer.php:599
+#: restorer.php:4368
+#: restorer.php:4504
+msgid "OK"
+msgstr ""
+
+#: admin.php:3896
+msgid "The request to the filesystem to create the directory failed."
+msgstr ""
+
+#: admin.php:3910
+msgid "The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it."
+msgstr ""
+
+#: admin.php:3910
+msgid "You should check with your hosting provider that this will not cause any problems"
+msgstr ""
+
+#: admin.php:3915
+msgid "The folder exists, but your webserver does not have permission to write to it."
+msgstr ""
+
+#: admin.php:3915
+msgid "You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory."
+msgstr ""
+
+#. translators: %s: Time of backup.
+#: admin.php:4032
+#, php-format
+msgid "incremental backup; base backup: %s"
+msgstr ""
+
+#: admin.php:4063
+msgid "No backup has been completed"
+msgstr ""
+
+#: admin.php:4093
+msgctxt "i.e. Non-automatic"
+msgid "Manual"
+msgstr ""
+
+#: admin.php:4100
+msgid "Backup directory specified is writable, which is good."
+msgstr ""
+
+#: admin.php:4104
+msgid "Backup directory specified does not exist."
+msgstr ""
+
+#: admin.php:4106
+msgid "Backup directory specified exists, but is not writable."
+msgstr ""
+
+#: admin.php:4108
+msgid "Follow this link to attempt to create the directory and set the permissions"
+msgstr ""
+
+#: admin.php:4108
+msgid "or, to reset this option"
+msgstr ""
+
+#: admin.php:4108
+msgid "press here"
+msgstr ""
+
+#: admin.php:4108
+msgid "If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process."
+msgstr ""
+
+#. translators: %s: Server path.
+#: admin.php:4192
+#, php-format
+msgid "Your wp-content directory server path: %s"
+msgstr ""
+
+#: admin.php:4193
+msgid "Any other directories found inside wp-content"
+msgstr ""
+
+#: admin.php:4205
+msgid "Exclude these from"
+msgstr ""
+
+#: admin.php:4205
+msgid "(the asterisk character matches zero or more characters)"
+msgstr ""
+
+#: admin.php:4237
+msgid "none present"
+msgstr ""
+
+#. translators: 1: Service name, 2: Required module.
+#: admin.php:4294
+#, php-format
+msgid "Your web server's PHP installation does not included a <strong>required</strong> (for %1$s) module (%2$s)."
+msgstr ""
+
+#: admin.php:4295
+#: methods/dreamobjects.php:244
+#: methods/s3.php:1000
+#: methods/s3.php:1188
+#: methods/s3generic.php:237
+msgid "Please contact your web hosting provider's support and ask for them to enable it."
+msgstr ""
+
+#: admin.php:4304
+#: admin.php:4309
+msgid "Your web server's PHP/Curl installation does not support https access."
+msgstr ""
+
+#. translators: %s: Service Name.
+#: admin.php:4306
+#, php-format
+msgid "Communications with %s will be unencrypted."
+msgstr ""
+
+#: admin.php:4307
+msgid "Ask your web host to install cURL with SSL support to enable encrypted communications."
+msgstr ""
+
+#. translators: %s: Service Name.
+#: admin.php:4311
+#, php-format
+msgid "We cannot access %s without this support."
+msgstr ""
+
+#: admin.php:4312
+#: methods/cloudfiles-new.php:336
+#: methods/cloudfiles-new.php:353
+#: methods/cloudfiles.php:445
+#: methods/dreamobjects.php:225
+#: methods/openstack-base.php:604
+#: methods/openstack2.php:271
+#: methods/s3.php:1009
+#: methods/s3.php:1203
+#: methods/s3generic.php:219
+msgid "Please contact your web hosting provider's support."
+msgstr ""
+
+#. translators: %s: Service Name.
+#: admin.php:4314
+#, php-format
+msgid "%s requires Curl+https."
+msgstr ""
+
+#: admin.php:4315
+#: methods/cloudfiles-new.php:339
+#: methods/cloudfiles-new.php:356
+#: methods/cloudfiles.php:448
+#: methods/dreamobjects.php:228
+#: methods/openstack-base.php:607
+#: methods/openstack2.php:274
+#: methods/s3.php:1012
+#: methods/s3.php:1206
+#: methods/s3generic.php:222
+msgid "Please do not file any support requests; there is no alternative."
+msgstr ""
+
+#. translators: %s: Service Name.
+#: admin.php:4323
+#, php-format
+msgid "Good news: Your site's communications with %s can be encrypted."
+msgstr ""
+
+#: admin.php:4324
+msgid "If you see any errors to do with encryption, then look in the 'Expert Settings' for more help."
+msgstr ""
+
+#: admin.php:4360
+#: templates/wp-admin/settings/backupnow-modal.php:65
+#: templates/wp-admin/settings/existing-backups-table.php:71
+#: templates/wp-admin/settings/existing-backups-table.php:74
+msgid "Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit)."
+msgstr ""
+
+#: admin.php:4390
+msgid "Uploaded to:"
+msgstr ""
+
+#: admin.php:4402
+msgid "None"
+msgstr ""
+
+#: admin.php:4407
+msgid "Total backup size:"
+msgstr ""
+
+#: admin.php:4434
+#: admin.php:4483
+#: admin.php:4618
+msgid "unknown source"
+msgstr ""
+
+#. translators: %s: Database Source.
+#: admin.php:4442
+#, php-format
+msgid "Database (created by %s)"
+msgstr ""
+
+#: admin.php:4445
+#: admin.php:4577
+msgid "External database"
+msgstr ""
+
+#. translators: %s: Backup Source.
+#. translators: %s: The description of the accepted foreign backup type.
+#: admin.php:4481
+#: admin.php:4616
+#: includes/class-backup-history.php:537
+#, php-format
+msgid "Backup created by: %s."
+msgstr ""
+
+#. translators: %s: Unknown Source.
+#. translators: %s: Backup source information
+#. translators: %s: Source of the database backup file
+#: admin.php:4485
+#: admin.php:4620
+#: includes/class-wpadmin-commands.php:142
+#: restorer.php:2875
+#, php-format
+msgid "Backup created by unknown source (%s) - cannot be restored."
+msgstr ""
+
+#. translators: %s: Backup Source.
+#: admin.php:4489
+#: admin.php:4624
+#, php-format
+msgid "Files and database WordPress backup (created by %s)"
+msgstr ""
+
+#. translators: %s: Backup Source.
+#: admin.php:4489
+#: admin.php:4624
+#, php-format
+msgid "Files backup (created by %s)"
+msgstr ""
+
+#: admin.php:4511
+#: admin.php:4646
+msgid "Press here to download or browse"
+msgstr ""
+
+#. translators: 1: Archive count, 2: Total size.
+#: admin.php:4513
+#: admin.php:4648
+#, php-format
+msgid "(%1$d archive(s) in set, total %2$s)."
+msgstr ""
+
+#: admin.php:4514
+#: admin.php:4649
+msgid "You are missing one or more archives from this multi-archive set."
+msgstr ""
+
+#: admin.php:4687
+#: admin.php:4689
+msgid "(Not finished)"
+msgstr ""
+
+#: admin.php:4689
+msgid "If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes."
+msgstr ""
+
+#: admin.php:4735
+msgid "(backup set imported from remote location)"
+msgstr ""
+
+#: admin.php:4738
+msgid "After pressing this button, you will be given the option to choose which components you wish to restore"
+msgstr ""
+
+#: admin.php:4808
+msgid "After pressing this button, you can select where to upload your backup from a list of your currently saved remote storage locations"
+msgstr ""
+
+#: admin.php:4834
+msgid "Delete this backup set"
+msgstr ""
+
+#: admin.php:5110
+#: admin.php:5119
+msgid "Sufficient information about the in-progress restoration operation could not be found."
+msgstr ""
+
+#: admin.php:5215
+msgid "Warning: If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site."
+msgstr ""
+
+#: admin.php:5215
+msgid "This may prevent the restore procedure from being able to proceed."
+msgstr ""
+
+#: admin.php:5218
+#: templates/wp-admin/settings/delete-and-restore-modals.php:38
+msgid "BackupPlus Restoration"
+msgstr ""
+
+#. translators: %s: Operation nonce
+#: admin.php:5228
+#, php-format
+msgid "The restore operation has begun (%s)."
+msgstr ""
+
+#: admin.php:5229
+msgid "Do not close this page until it reports itself as having finished."
+msgstr ""
+
+#: admin.php:5230
+msgid "Restoration progress:"
+msgstr ""
+
+#: admin.php:5233
+msgid "Verifying"
+msgstr ""
+
+#: admin.php:5242
+msgid "Cleaning"
+msgstr ""
+
+#: admin.php:5246
+msgid "Follow this link to download the log file for this restoration (needed for any support requests)."
+msgstr ""
+
+#: admin.php:5249
+msgid "Activity log"
+msgstr ""
+
+#: admin.php:5255
+#: templates/wp-admin/settings/delete-and-restore-modals.php:114
+msgid "Component selection"
+msgstr ""
+
+#: admin.php:5256
+#: templates/wp-admin/settings/delete-and-restore-modals.php:115
+msgid "Verifications"
+msgstr ""
+
+#: admin.php:5257
+#: templates/wp-admin/settings/delete-and-restore-modals.php:116
+msgid "Restoration"
+msgstr ""
+
+#: admin.php:5338
+msgid "This backup does not exist in the backup history - restoration aborted."
+msgstr ""
+
+#: admin.php:5338
+msgid "Timestamp:"
+msgstr ""
+
+#: admin.php:5339
+msgid "Backup does not exist in the backup history"
+msgstr ""
+
+#: admin.php:5380
+msgid "ABORT: Could not find the information on which entities to restore."
+msgstr ""
+
+#: admin.php:5380
+msgid "If making a request for support, please include this information:"
+msgstr ""
+
+#: admin.php:5559
+msgid "The export did not contain any settings to import."
+msgstr ""
+
+#. translators: %s: "settings" which is the name of a tab on which remote storage settings are configured
+#: admin.php:5657
+#, php-format
+msgid "Backup won't be sent to any remote storage - none has been saved in the %s"
+msgstr ""
+
+#: admin.php:5658
+msgid "settings"
+msgstr ""
+
+#: admin.php:5662
+msgid "No remote storage locations with valid options found."
+msgstr ""
+
+#: admin.php:5665
+msgid "Send this backup to remote storage"
+msgstr ""
+
+#: admin.php:5665
+msgid "The following remote storage options are configured."
+msgstr ""
+
+#. translators: %s: BackupPlus version
+#: admin.php:5808
+#, php-format
+msgid "BackupPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded."
+msgstr ""
+
+#: admin.php:5810
+msgid "Please reload the settings page before trying to save settings."
+msgstr ""
+
+#: admin.php:5818
+#: templates/wp-admin/settings/take-backup.php:48
+msgid "This button is disabled because your backup directory is not writable (see the settings)."
+msgstr ""
+
+#: admin.php:5847
+msgid "Your settings have been saved."
+msgstr ""
+
+#: admin.php:5852
+msgid "Your settings failed to save."
+msgstr ""
+
+#: admin.php:5852
+msgid "Please refresh the settings page and try again"
+msgstr ""
+
+#: admin.php:5900
+msgid "authentication error"
+msgstr ""
+
+#: admin.php:5904
+msgid "Remote storage method and instance id are required for authentication."
+msgstr ""
+
+#: admin.php:5966
+msgid "Your settings have been wiped."
+msgstr ""
+
+#: admin.php:6088
+msgid "Known backups (raw)"
+msgstr ""
+
+#: admin.php:6123
+msgid "Options (raw)"
+msgstr ""
+
+#. translators: %s: List of corrupted files
+#: admin.php:6281
+#, php-format
+msgid "The file %s has a \"byte order mark\" (BOM) at its beginning."
+msgid_plural "The files %s have a \"byte order mark\" (BOM) at their beginning."
+msgstr[0] ""
+
+#: admin.php:6282
+msgid "Remove the extra output from the listed files; even a blank line before the PHP opening tag can cause it."
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: admin.php:6295
+#, php-format
+msgid "The following remote storage (%s) has only been partially configured, manual authorization is not supported with this remote storage, please try again and if the problem persists contact support."
+msgstr ""
+
+#. translators: %s: List of storage services
+#: admin.php:6303
+#, php-format
+msgid "The following remote storage (%s) has only been partially configured, if you are having problems you can try to manually authorise at the BackupPlus settings page."
+msgstr ""
+
+#. translators: %s: List of storage services
+#: admin.php:6316
+#: admin.php:6320
+#, php-format
+msgid "You have requested saving to remote storage (%s), but without entering any settings for that storage."
+msgstr ""
+
+#: admin.php:6334
+msgid "and"
+msgstr ""
+
+#. translators: 1: List of remote storage services, 2: Link to storage settings
+#: admin.php:6339
+#, php-format
+msgid "Some configured storage locations are unavailable in this installation, so backups to them will not run. This affects: %1$s. Review your destinations in the %2$s."
+msgstr ""
+
+#: admin.php:6341
+#: includes/backupplus-tour.php:95
+msgid "BackupPlus settings"
+msgstr ""
+
+#. translators: 1: Hosting company name, 2: Website link
+#: admin.php:6397
+#, php-format
+msgid "Your website is hosted with %1$s (%2$s)."
+msgstr ""
+
+#. translators: %s: Hosting company name
+#: admin.php:6399
+#, php-format
+msgid "%s permits BackupPlus to perform only one backup per month."
+msgstr ""
+
+#: admin.php:6400
+msgid "Thus, we recommend you choose a full backup when performing a manual backup and to use that option when creating a scheduled backup."
+msgstr ""
+
+#: admin.php:6401
+msgid "Due to the restriction, some settings can be automatically adjusted, disabled or not available."
+msgstr ""
+
+#: admin.php:6420
+msgid "The download link is broken, you may have clicked the link from untrusted source"
+msgstr ""
+
+#: admin.php:6422
+msgid "The download link is broken or the backup file is no longer available"
+msgstr ""
+
+#. translators: 1: Entity name, 2: Directory path
+#: backup.php:293
+#, php-format
+msgid "%1$s - could not back this entity up; the corresponding directory does not exist (%2$s)"
+msgstr ""
+
+#. translators: %s: Entity name
+#: backup.php:371
+#, php-format
+msgid "Could not create %s zip."
+msgstr ""
+
+#: backup.php:373
+msgid "Consult the log file for more information."
+msgstr ""
+
+#. translators: 1: Exception class, 2: Exception message
+#. translators: 1: Exception class, 2: Error message
+#. translators: 1: Exception class, 2: Exception message.
+#. translators: 1: Class name, 2: Exception message
+#: backup.php:621
+#: backup.php:2886
+#: class-backupplus.php:2452
+#: class-backupplus.php:2522
+#: includes/class-search-replace.php:299
+#: includes/class-storage-methods-interface.php:379
+#: restorer.php:741
+#, php-format
+msgid "A PHP exception (%1$s) has occurred: %2$s"
+msgstr ""
+
+#. translators: 1: Exception class, 2: Exception message
+#. translators: 1: Exception class, 2: Error message
+#. translators: 1: Fatal error class, 2: Error message.
+#. translators: 1: Class name, 2: Exception message
+#: backup.php:627
+#: backup.php:2895
+#: class-backupplus.php:2461
+#: class-backupplus.php:2529
+#: includes/class-search-replace.php:306
+#: includes/class-storage-methods-interface.php:389
+#: restorer.php:753
+#, php-format
+msgid "A PHP fatal error (%1$s) has occurred: %2$s"
+msgstr ""
+
+#: backup.php:1579
+msgid "database connection attempt failed."
+msgstr ""
+
+#: backup.php:1579
+msgid "Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled."
+msgstr ""
+
+#: backup.php:1629
+msgid "please wait for the rescheduled attempt"
+msgstr ""
+
+#: backup.php:1631
+msgid "No database tables found"
+msgstr ""
+
+#: backup.php:1643
+msgid "The backup directory is not writable (or disk space is full) - the database backup is expected to shortly fail."
+msgstr ""
+
+#: backup.php:1681
+msgid "Failed to open directory for reading:"
+msgstr ""
+
+#: backup.php:1836
+msgid "Failed to backup database table:"
+msgstr ""
+
+#: backup.php:1885
+#: backup.php:1887
+msgid "The database backup has failed"
+msgstr ""
+
+#: backup.php:1885
+msgid "no options or sitemeta table was found"
+msgstr ""
+
+#: backup.php:1887
+msgid "the options table was not found"
+msgstr ""
+
+#: backup.php:1958
+msgid "Failed to open database file for reading:"
+msgstr ""
+
+#: backup.php:2037
+msgid "Dumping routines: "
+msgstr ""
+
+#: backup.php:2037
+msgid "Your WordPress database user doesn't have sufficient privileges to read these stored routines."
+msgstr ""
+
+#: backup.php:2037
+msgid "To be able to backup the routines, you must be the user named as the routine DEFINER(s), have the SHOW_ROUTINE privilege (for MySQL 8.0.20+ users), have the SELECT privilege at the global level, or have the CREATE ROUTINE, ALTER ROUTINE, or EXECUTE privilege granted at a scope that includes the routines."
+msgstr ""
+
+#: backup.php:2052
+msgid "An error occurred whilst closing the final database file"
+msgstr ""
+
+#. translators: 1: Table name, 2: Row count
+#: backup.php:2102
+#, php-format
+msgid "Table %1$s has very many rows (%2$s) - we hope your web hosting company gives you enough resources to dump out that table in the backup."
+msgstr ""
+
+#: backup.php:2105
+msgid "If not, you will need to either remove data from this table, or contact your hosting company to request more resources."
+msgstr ""
+
+#: backup.php:2935
+msgid "Could not open the backup file for writing"
+msgstr ""
+
+#: backup.php:3105
+msgid "Infinite recursion: consult your log for more information"
+msgstr ""
+
+#. translators: %s: File path
+#: backup.php:3141
+#, php-format
+msgid "%s: unreadable file - could not be backed up (check the file permissions and ownership)"
+msgstr ""
+
+#. translators: %s: Directory path
+#: backup.php:3164
+#, php-format
+msgid "Failed to open directory (check the file permissions and ownership): %s"
+msgstr ""
+
+#. translators: 1: File path, 2: Readlink output
+#: backup.php:3180
+#, php-format
+msgid "%1$s: unfollowable link - could not be followed to back up (readlink=%2$s)."
+msgstr ""
+
+#: backup.php:3183
+msgid "Possible causes include that the link points to an invalid or inaccessible location."
+msgstr ""
+
+#. translators: %s: File path
+#: backup.php:3211
+#: backup.php:3241
+#, php-format
+msgid "%s: unreadable file - could not be backed up"
+msgstr ""
+
+#. translators: 1: Zip file path, 2: Error message
+#: backup.php:4021
+#: backup.php:4348
+#, php-format
+msgid "Failed to open the zip file (%1$s) - %2$s"
+msgstr ""
+
+#. translators: 1: File name, 2: File size in MB
+#: backup.php:4057
+#, php-format
+msgid "A very large file was encountered: %1$s (size: %2$s Mb)"
+msgstr ""
+
+#: backup.php:4063
+msgid "a second attempt is being made (upon further failure it will be skipped)"
+msgstr ""
+
+#: backup.php:4067
+msgid "two unsuccessful attempts were made to include it, and it will now be omitted from the backup"
+msgstr ""
+
+#. translators: %s: Remaining free space in MB
+#. translators: %s: Available disk space in MB
+#: backup.php:4396
+#: class-backupplus.php:937
+#, php-format
+msgid "Your free space in your hosting account is very low - only %s Mb remain"
+msgstr ""
+
+#. translators: %s: Error message
+#: backup.php:4406
+#, php-format
+msgid "The zip engine returned the message: %s."
+msgstr ""
+
+#: backup.php:4408
+msgid "Check the backup log for file size limits and verify that the destination has enough free space."
+msgstr ""
+
+#: backup.php:4412
+msgid "A zip error occurred"
+msgstr ""
+
+#: backup.php:4414
+msgid "Your web hosting account is full; free disk space before trying again."
+msgstr ""
+
+#: backup.php:4416
+msgid "check your log for more details."
+msgstr ""
+
+#. translators: %s: File along with full path.
+#: backupplus.php:104
+#, php-format
+msgid "The expected file %s is missing from your BackupPlus installation."
+msgstr ""
+
+#: backupplus.php:105
+msgid "Most likely, WordPress did not correctly unpack the plugin when installing it."
+msgstr ""
+
+#: backupplus.php:105
+msgid "You should de-install and then re-install the plugin (your settings and data will be retained)."
+msgstr ""
+
+#. translators: %s: Number of Hours.
+#: backupplus.php:142
+#, php-format
+msgid "Every %s hours"
+msgstr ""
+
+#: backupplus.php:143
+msgid "Every hour"
+msgstr ""
+
+#: backupplus.php:253
+msgid "You do not have BackupPlus completely installed - please de-install and install it again."
+msgstr ""
+
+#: backupplus.php:253
+msgid "Most likely, WordPress malfunctioned when copying the plugin files."
+msgstr ""
+
+#: class-backupplus.php:245
+msgid "A version of BackupPlus is already installed."
+msgstr ""
+
+#: class-backupplus.php:245
+msgid "WordPress will only allow you to install your new version after first de-installing the existing one."
+msgstr ""
+
+#: class-backupplus.php:245
+msgid "That is safe - all your settings and backups will be retained."
+msgstr ""
+
+#: class-backupplus.php:245
+msgid "So, go to the \"Plugins\" page, de-activate and de-install BackupPlus, and then try again."
+msgstr ""
+
+#. translators: 1: Method name, 2: Error message
+#. translators: 1: Service name, 2: Error message
+#. translators: 1: Service name, 2: Error message with exception details
+#: class-backupplus.php:593
+#: methods/dropbox.php:851
+#: methods/dropbox.php:917
+#: methods/dropbox.php:940
+#: methods/dropbox.php:966
+#: methods/dropbox.php:1142
+#, php-format
+msgid "%1$s error: %2$s"
+msgstr ""
+
+#: class-backupplus.php:640
+#: class-backupplus.php:707
+msgid "The given file was not found, or could not be read."
+msgstr ""
+
+#: class-backupplus.php:673
+msgid "Under Maintenance"
+msgstr ""
+
+#: class-backupplus.php:673
+msgid "Briefly unavailable for scheduled maintenance."
+msgstr ""
+
+#: class-backupplus.php:673
+msgid "Check back in a minute."
+msgstr ""
+
+#: class-backupplus.php:702
+msgid "No log files were found."
+msgstr ""
+
+#. translators: %s: Memory limit in MB
+#: class-backupplus.php:919
+#, php-format
+msgid "The amount of memory (RAM) allowed for PHP is very low (%s Mb) - you should increase it to avoid failures due to insufficient memory (consult your web hosting company for more help)"
+msgstr ""
+
+#. translators: %s: Available disk space in MB
+#: class-backupplus.php:951
+#, php-format
+msgid "Your free disk space is very low - only %s Mb remain"
+msgstr ""
+
+#. translators: %s: Log name
+#: class-backupplus.php:1286
+#, php-format
+msgid "%s Error: Failed to open local file"
+msgstr ""
+
+#. translators: %s: Log name
+#: class-backupplus.php:1402
+#, php-format
+msgid "%s error - failed to re-assemble chunks"
+msgstr ""
+
+#: class-backupplus.php:1445
+#: class-backupplus.php:1489
+#: methods/cloudfiles.php:384
+msgid "Error opening local file: Failed to download"
+msgstr ""
+
+#: class-backupplus.php:1513
+#: methods/cloudfiles.php:414
+msgid "Error - failed to download the file"
+msgstr ""
+
+#. translators: %s: Number of files
+#: class-backupplus.php:1861
+#: class-backupplus.php:1864
+#, php-format
+msgid "files: %s"
+msgstr ""
+
+#. translators: %s: Database connection details
+#: class-backupplus.php:1923
+#, php-format
+msgid "External database (%s)"
+msgstr ""
+
+#. translators: %s: Database size in MB
+#: class-backupplus.php:1927
+#, php-format
+msgid "Size: %s MB"
+msgstr ""
+
+#. translators: 1: Checksum type, 2: Checksum value
+#: class-backupplus.php:1933
+#: class-backupplus.php:1939
+#, php-format
+msgid "%1$s checksum: %2$s"
+msgstr ""
+
+#: class-backupplus.php:1937
+msgid "(when decrypted)"
+msgstr ""
+
+#: class-backupplus.php:1970
+msgid "Plugins"
+msgstr ""
+
+#: class-backupplus.php:1970
+msgid "Plugin"
+msgstr ""
+
+#: class-backupplus.php:1971
+msgid "Themes"
+msgstr ""
+
+#: class-backupplus.php:1971
+msgid "Theme"
+msgstr ""
+
+#: class-backupplus.php:1972
+msgid "Uploads"
+msgstr ""
+
+#: class-backupplus.php:1973
+msgid "Must-use plugins"
+msgstr ""
+
+#: class-backupplus.php:1989
+msgid "Others"
+msgstr ""
+
+#: class-backupplus.php:2283
+msgid "A scheduled backup is running late. Check that WordPress cron or your server scheduler is running reliably."
+msgstr ""
+
+#: class-backupplus.php:2396
+msgid "The backup is being aborted for a repeated failure to progress."
+msgstr ""
+
+#: class-backupplus.php:3076
+msgid " Your hosting provider only allows you to take one incremental backup per day."
+msgstr ""
+
+#: class-backupplus.php:3106
+msgid "Could not create files in the backup directory."
+msgstr ""
+
+#: class-backupplus.php:3106
+msgid "Backup aborted - check your BackupPlus settings."
+msgstr ""
+
+#: class-backupplus.php:3109
+msgid "BackupPlus is unable to perform backups as your backup directory is not writable or the disk space is full."
+msgstr ""
+
+#: class-backupplus.php:3109
+msgid "Please check the backup directory and ensure it is writable so that backups may continue."
+msgstr ""
+
+#: class-backupplus.php:3449
+#: class-backupplus.php:3555
+msgid "The backup was aborted by the user"
+msgstr ""
+
+#: class-backupplus.php:3453
+msgid "The backup succeeded and is now complete"
+msgstr ""
+
+#: class-backupplus.php:3459
+msgid "The backup succeeded (with warnings) and is now complete"
+msgstr ""
+
+#: class-backupplus.php:3473
+msgid "The backup attempt has finished, apparently unsuccessfully"
+msgstr ""
+
+#: class-backupplus.php:3476
+msgid "The backup has not finished; a resumption is scheduled"
+msgstr ""
+
+#: class-backupplus.php:3549
+msgid "Full backup"
+msgstr ""
+
+#: class-backupplus.php:3549
+msgid "Incremental"
+msgstr ""
+
+#: class-backupplus.php:3550
+msgid "Successful"
+msgstr ""
+
+#: class-backupplus.php:3556
+msgid "Aborted"
+msgstr ""
+
+#: class-backupplus.php:3560
+msgid "Files (database backup has not completed)"
+msgstr ""
+
+#: class-backupplus.php:3560
+msgid "Files only (database was not part of this particular schedule)"
+msgstr ""
+
+#: class-backupplus.php:3563
+msgid "Database (files backup has not completed)"
+msgstr ""
+
+#: class-backupplus.php:3563
+msgid "Database only (files were not part of this particular schedule)"
+msgstr ""
+
+#: class-backupplus.php:3565
+#: class-backupplus.php:3566
+msgid "Incomplete"
+msgstr ""
+
+#: class-backupplus.php:3569
+msgid "Unknown/unexpected error - please raise a support request"
+msgstr ""
+
+#: class-backupplus.php:3570
+msgid "Unsuccessful"
+msgstr ""
+
+#: class-backupplus.php:3579
+msgid "Errors encountered:"
+msgstr ""
+
+#: class-backupplus.php:3594
+msgid "Unsuccessful due to number of errors"
+msgstr ""
+
+#: class-backupplus.php:3599
+msgid "Warnings encountered (note: this is for information; the backup has completed successfully)"
+msgstr ""
+
+#: class-backupplus.php:3601
+msgid "Warnings encountered:"
+msgstr ""
+
+#: class-backupplus.php:3608
+msgid "Successful with warnings"
+msgstr ""
+
+#: class-backupplus.php:3612
+#: class-backupplus.php:3770
+msgid "The log file has been attached to this email."
+msgstr ""
+
+#. translators: %s: Blog name
+#: class-backupplus.php:3619
+#, php-format
+msgid "Backed up: %s"
+msgstr ""
+
+#: class-backupplus.php:3642
+#: class-backupplus.php:4906
+msgid "Backup of:"
+msgstr ""
+
+#: class-backupplus.php:3643
+msgid "WordPress backup is complete"
+msgstr ""
+
+#: class-backupplus.php:3644
+msgid "Backup contains:"
+msgstr ""
+
+#: class-backupplus.php:3645
+msgid "Latest status:"
+msgstr ""
+
+#. translators: %s: Site name
+#: class-backupplus.php:3757
+#, php-format
+msgid "BackupPlus on %s"
+msgstr ""
+
+#: class-backupplus.php:3798
+msgid "You can view the log by pressing the 'View log' button."
+msgstr ""
+
+#: class-backupplus.php:3804
+msgid "View log"
+msgstr ""
+
+#: class-backupplus.php:4309
+msgid "Could not read the directory"
+msgstr ""
+
+#: class-backupplus.php:4325
+msgid "Could not save backup history because we have no backup array."
+msgstr ""
+
+#: class-backupplus.php:4325
+msgid "Backup probably failed."
+msgstr ""
+
+#: class-backupplus.php:4613
+#: methods/googledrive.php:1538
+#: methods/s3.php:410
+msgid "File not found"
+msgstr ""
+
+#: class-backupplus.php:4816
+#: class-backupplus.php:4826
+#: includes/class-backupplus-encryption.php:338
+#: includes/class-backupplus-encryption.php:356
+#: restorer.php:1193
+#: restorer.php:1206
+msgid "Decryption failed."
+msgstr ""
+
+#: class-backupplus.php:4816
+msgid "The database file is encrypted, but no encryption key is configured."
+msgstr ""
+
+#: class-backupplus.php:4826
+#: includes/class-backupplus-encryption.php:356
+#: restorer.php:1206
+msgid "The most likely cause is that you used the wrong key."
+msgstr ""
+
+#. translators: %s: Database size in KB
+#: class-backupplus.php:4834
+#, php-format
+msgid "The database is too small to be a valid WordPress database (size: %s Kb)."
+msgstr ""
+
+#: class-backupplus.php:4848
+msgid "Failed to open database file."
+msgstr ""
+
+#. translators: %s: Old WP versions
+#: class-backupplus.php:4908
+#, php-format
+msgid "(version: %s)"
+msgstr ""
+
+#. translators: 1: Old site URL, 2: Current site URL
+#: class-backupplus.php:4922
+#, php-format
+msgid "The website address in the backup set (%1$s) is slightly different from that of the site now (%2$s)."
+msgstr ""
+
+#: class-backupplus.php:4923
+msgid "This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site."
+msgstr ""
+
+#. translators: 1: Old scheme, 2: Current scheme
+#: class-backupplus.php:4929
+#, php-format
+msgid "This backup set is of this site, but at the time of the backup you were using %1$s, whereas the site now uses %2$s."
+msgstr ""
+
+#. translators: %s: Old and current site URLs
+#. translators: %s: Old and current home URLs
+#: class-backupplus.php:4947
+#: class-backupplus.php:4975
+#, php-format
+msgid "This backup set is from a different site (%s). After restoring, check whether any site URLs need to be updated."
+msgstr ""
+
+#. translators: 1: Webserver type, 2: Missing module
+#. translators: 1: String 'Apache', 2: String 'mod_rewrite'
+#: class-backupplus.php:4958
+#: restorer.php:1932
+#, php-format
+msgid "You are using the %1$s webserver, but do not seem to have the %2$s module loaded."
+msgstr ""
+
+#. translators: 1: Module name, 2: Sample url
+#. translators: 1: String 'mod_rewrite', 2: String 'http://example.com/my-page/'
+#: class-backupplus.php:4960
+#: restorer.php:1934
+#, php-format
+msgid "You should enable %1$s to make any pretty permalinks (e.g. %2$s) work"
+msgstr ""
+
+#. translators: 1: Old WP version, 2: Current WP version
+#: class-backupplus.php:4989
+#, php-format
+msgid "You are importing from a newer version of WordPress (%1$s) into an older one (%2$s)."
+msgstr ""
+
+#: class-backupplus.php:4992
+msgid "There are no guarantees that WordPress can handle this."
+msgstr ""
+
+#. translators: 1: Old PHP version, 2: PHP
+#. translators: 1: PHP version, 2: PHP
+#: class-backupplus.php:4999
+#: class-backupplus.php:5008
+#, php-format
+msgid "The site in this backup was running on a webserver with version %1$s of %2$s."
+msgstr ""
+
+#. translators: %s: Current PHP version
+#: class-backupplus.php:5001
+#, php-format
+msgid "This is significantly newer than the server which you are now restoring onto (version %s)."
+msgstr ""
+
+#. translators: %s: PHP
+#: class-backupplus.php:5003
+#, php-format
+msgid "You should only proceed if you cannot update the current server and are confident (or willing to risk) that your plugins/themes/etc are compatible with the older %s version."
+msgstr ""
+
+#. translators: %s: PHP
+#: class-backupplus.php:5005
+#: class-backupplus.php:5014
+#, php-format
+msgid "Any support requests to do with %s should be raised with your web hosting company."
+msgstr ""
+
+#. translators: %s: Current PHP version
+#: class-backupplus.php:5010
+#, php-format
+msgid "This is older than the server which you are now restoring onto (version %s)."
+msgstr ""
+
+#. translators: %s: PHP
+#: class-backupplus.php:5012
+#, php-format
+msgid "You should only proceed if you have checked and are confident (or willing to risk) that your plugins/themes/etc are compatible with the new %s version."
+msgstr ""
+
+#: class-backupplus.php:5022
+msgid "Backup label:"
+msgstr ""
+
+#: restorer.php:899
+msgid "You are running on WordPress multisite - but your backup is not of a multisite site."
+msgstr ""
+
+#: class-backupplus.php:5031
+msgid "Your backup is of a WordPress multisite install; but this site is not."
+msgstr ""
+
+#: class-backupplus.php:5031
+msgid "Only the first site of the network will be accessible."
+msgstr ""
+
+#: class-backupplus.php:5031
+msgid "If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite."
+msgstr ""
+
+#: class-backupplus.php:5038
+#: restorer.php:3206
+msgid "Site information:"
+msgstr ""
+
+#. translators: %s: MySQL version
+#: class-backupplus.php:5108
+#, php-format
+msgid "The database backup uses MySQL features not available in the old MySQL version (%s) that this site is running on."
+msgstr ""
+
+#: class-backupplus.php:5109
+msgid "You must upgrade MySQL to be able to use this database."
+msgstr ""
+
+#. translators: %s: Character sets
+#: class-backupplus.php:5137
+#, php-format
+msgid "The database server that this WordPress site is running on doesn't support the character set (%s) which you are trying to import."
+msgid_plural "The database server that this WordPress site is running on doesn't support the character sets (%s) which you are trying to import."
+msgstr[0] ""
+
+#: class-backupplus.php:5140
+msgid "Choose a character set supported by the target database before continuing; changing it may alter how imported text is stored."
+msgstr ""
+
+#: class-backupplus.php:5150
+msgid "Your chosen character set to use instead:"
+msgstr ""
+
+#. translators: %s: Collations
+#: class-backupplus.php:5177
+#, php-format
+msgid "The database server that this WordPress site is running on doesn't support the collation (%s) used in the database which you are trying to import."
+msgid_plural "The database server that this WordPress site is running on doesn't support multiple collations (%s) used in the database which you are trying to import."
+msgstr[0] ""
+
+#: class-backupplus.php:5180
+msgid "You can choose another suitable collation instead and continue with the restoration (at your own risk)."
+msgstr ""
+
+#: class-backupplus.php:5203
+msgid "Your chosen replacement collation"
+msgstr ""
+
+#: class-backupplus.php:5226
+msgid "Choose a default for each table"
+msgstr ""
+
+#: class-backupplus.php:5267
+msgid "This backup is of a site with an empty table prefix, which WordPress does not officially support; the results may be unreliable."
+msgstr ""
+
+#. translators: %s: Missing WordPress tables
+#: class-backupplus.php:5285
+#, php-format
+msgid "This database backup is missing core WordPress tables: %s"
+msgstr ""
+
+#. translators: %s: Excluded database tables
+#: class-backupplus.php:5289
+#, php-format
+msgid "This database backup has the following non-core WordPress database tables excluded: %s"
+msgstr ""
+
+#: class-backupplus.php:5294
+msgid "BackupPlus was unable to find the table prefix when scanning the database backup."
+msgstr ""
+
+#. translators: %s: BackupPlus or UpdraftPlus version
+#: class-backupplus.php:5322
+#: class-backupplus.php:5329
+#, php-format
+msgid "This backup was created on a previous BackupPlus or UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes)."
+msgstr ""
+
+#: class-backupplus.php:5323
+msgid "Therefore it is advised that you take a fresh backup on the source site, using a later version."
+msgstr ""
+
+#: class-backupplus.php:5330
+msgid "Therefore, affected tables on the current site which already exist will not be replaced by default, to avoid corrupting them (you can review this in the list of tables below)."
+msgstr ""
+
+#: class-backupplus.php:5337
+msgid "You are restoring a single site backup into a multisite installation."
+msgstr ""
+
+#: class-backupplus.php:5337
+msgid "The users and usermeta tables will be excluded from the restore to prevent conflicts with the existing multisite user structure."
+msgstr ""
+
+#: class-backupplus.php:5341
+msgid "BackupPlus was unable to find any tables when scanning the database backup; it maybe corrupt."
+msgstr ""
+
+#: class-backupplus.php:5344
+msgid "If you do not want to restore all your database tables, then choose some to exclude here."
+msgstr ""
+
+#: class-backupplus.php:5348
+msgid "Select All"
+msgstr ""
+
+#: class-backupplus.php:5348
+msgid "Deselect All"
+msgstr ""
+
+#: class-backupplus.php:5352
+msgid "The database scan was taking too long and consequently the list of all tables in the database could not be completed."
+msgstr ""
+
+#: class-backupplus.php:5352
+#: class-backupplus.php:5353
+msgid "This option will ensure all tables not found will be backed up."
+msgstr ""
+
+#: class-backupplus.php:5353
+msgid "The amount of database tables scanned is near or over the php_max_input_vars value so some tables maybe truncated."
+msgstr ""
+
+#: class-backupplus.php:5355
+msgid "Include all tables not listed below"
+msgstr ""
+
+#. translators: %s: PHP version
+#: class-backupplus.php:6166
+#, php-format
+msgid "Your site is running PHP version %s."
+msgstr ""
+
+#: class-backupplus.php:6169
+msgid "Some functionality you have enabled is deprecated on this PHP version, and future releases of BackupPlus will require a newer version of PHP to keep it working."
+msgstr ""
+
+#. translators: %s: Affected feature list
+#: class-backupplus.php:6172
+#, php-format
+msgid "This affects: %s."
+msgstr ""
+
+#. translators: %s: Minimum recommended PHP version
+#: class-backupplus.php:6177
+#, php-format
+msgid "We recommend asking your web host about updating PHP to version %s or higher."
+msgstr ""
+
+#. translators: %s: Backup method
+#: class-backupplus.php:6219
+#, php-format
+msgid "Backup using %s?"
+msgstr ""
+
+#: includes/backupplus-tour.php:89
+#: templates/wp-admin/settings/delete-and-restore-modals.php:118
+msgid "Next"
+msgstr ""
+
+#: includes/backupplus-tour.php:90
+msgid "Back"
+msgstr ""
+
+#: includes/backupplus-tour.php:91
+msgid "Skip this step"
+msgstr ""
+
+#: includes/backupplus-tour.php:92
+msgid "End tour"
+msgstr ""
+
+#: includes/backupplus-tour.php:96
+msgid "Welcome to BackupPlus"
+msgstr ""
+
+#: includes/backupplus-tour.php:96
+msgid "the world’s most trusted backup plugin!"
+msgstr ""
+
+#: includes/backupplus-tour.php:99
+msgid "Press here to start!"
+msgstr ""
+
+#: includes/backupplus-tour.php:103
+msgid "Your first backup"
+msgstr ""
+
+#: includes/backupplus-tour.php:105
+msgid "To make a simple backup to your server, press this button."
+msgstr ""
+
+#. translators: 1: HTML <a> and <strong> opening tag 2: HTML </a> and </strong> closing tag
+#: includes/backupplus-tour.php:107
+#, php-format
+msgid "Or to setup regular backups and remote storage, go to %1$s settings %2$s"
+msgstr ""
+
+#: includes/backupplus-tour.php:113
+msgid "Manual backup options"
+msgstr ""
+
+#: includes/backupplus-tour.php:114
+msgid "Select what you want to backup"
+msgstr ""
+
+#: includes/backupplus-tour.php:117
+#: includes/backupplus-tour.php:124
+msgid "Creating your first backup"
+msgstr ""
+
+#: includes/backupplus-tour.php:118
+msgid "Press here to run a manual backup."
+msgstr ""
+
+#. translators: 1: Opening anchor tag, 2: Closing anchor tag
+#: includes/backupplus-tour.php:120
+#, php-format
+msgctxt "Backup warning with link"
+msgid "But to avoid server-wide threats backup regularly to remote cloud storage in %1$s settings %2$s"
+msgstr ""
+
+#: includes/backupplus-tour.php:121
+#: includes/backupplus-tour.php:128
+msgid "Go to settings"
+msgstr ""
+
+#: includes/backupplus-tour.php:125
+msgid "Congratulations! Your first backup is running."
+msgstr ""
+
+#. translators: 1: Opening strong tag, 2: Closing strong tag
+#: includes/backupplus-tour.php:127
+#, php-format
+msgctxt "Backup recommendation"
+msgid "But to avoid server-wide threats backup regularly to remote cloud storage in %1$s settings %2$s"
+msgstr ""
+
+#: includes/backupplus-tour.php:131
+msgid "Choose your backup schedule"
+msgstr ""
+
+#: includes/backupplus-tour.php:132
+msgid "Choose the schedule that you want your backups to run on."
+msgstr ""
+
+#: includes/backupplus-tour.php:135
+msgid "Remote storage"
+msgstr ""
+
+#: includes/backupplus-tour.php:136
+msgid "Now select a remote storage destination to protect against server-wide threats."
+msgstr ""
+
+#: includes/backupplus-tour.php:136
+msgid "If not, your backups remain on the same server as your site."
+msgstr ""
+
+#: includes/backupplus-tour.php:139
+msgid "More settings"
+msgstr ""
+
+#: includes/backupplus-tour.php:140
+msgid "Look through the other settings here, making any changes you’d like."
+msgstr ""
+
+#: includes/backupplus-tour.php:143
+msgid "Automatic backups before update"
+msgstr ""
+
+#: includes/backupplus-tour.php:144
+msgid "Check this box to enable automatic backups whenever a plugin, theme, or the WordPress core is updated."
+msgstr ""
+
+#: includes/backupplus-tour.php:148
+#: includes/backupplus-tour.php:152
+msgid "Save"
+msgstr ""
+
+#: includes/backupplus-tour.php:149
+msgid "Press here to save your settings."
+msgstr ""
+
+#: includes/backupplus-tour.php:153
+msgid "Congratulations, your settings have successfully been saved."
+msgstr ""
+
+#: includes/backupplus-tour.php:203
+msgid "Take Tour"
+msgstr ""
+
+#: includes/class-backup-history.php:135
+msgid "You have not yet made any backups."
+msgstr ""
+
+#: includes/class-backup-history.php:135
+msgid "If you have an existing backup that you wish to upload and restore from, then please use the \"Upload backup files\" link above."
+msgstr ""
+
+#: includes/class-backup-history.php:135
+msgid "Or, if they are in remote storage, you can connect that remote storage (in the \"Settings\" tab), save your settings, and use the \"Rescan remote storage\" link."
+msgstr ""
+
+#: includes/class-backup-history.php:544
+msgid "This file does not appear to be a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz))."
+msgstr ""
+
+#: includes/class-backup-history.php:732
+msgid "One or more backups has been added from scanning remote storage; note that these backups will not be automatically deleted through the \"retain\" settings; if/when you wish to delete them then you must do so manually."
+msgstr ""
+
+#: includes/class-backupplus-deactivation.php:76
+#: includes/class-backupplus-deactivation.php:98
+msgid "Deactivate"
+msgstr ""
+
+#: includes/class-backupplus-deactivation.php:77
+msgid "Remove and deactivate"
+msgstr ""
+
+#: includes/class-backupplus-deactivation.php:97
+msgid "Before you deactivate..."
+msgstr ""
+
+#. translators: %s: The name of the missing encryption module.
+#: includes/class-backupplus-encryption.php:150
+#, php-format
+msgid "Your web-server does not have the %s module installed."
+msgstr ""
+
+#. translators: %s: The name of the missing encryption module.
+#: includes/class-backupplus-encryption.php:150
+msgid "Without it, encryption will be a lot slower."
+msgstr ""
+
+#: includes/class-backupplus-encryption.php:338
+#: restorer.php:1193
+msgid "The database file is encrypted, but you have no encryption key entered."
+msgstr ""
+
+#: includes/class-backupplus-encryption.php:356
+msgid "The decryption key used:"
+msgstr ""
+
+#. translators: %s: The name of the missing add-on.
+#: includes/class-commands.php:392
+#, php-format
+msgid "%s add-on not found"
+msgstr ""
+
+#: includes/class-commands.php:629
+msgid "Manual authentication is not available for this remote storage method"
+msgstr ""
+
+#: includes/class-commands.php:658
+msgid "Missing authentication data:"
+msgstr ""
+
+#: includes/class-commands.php:669
+msgid "Missing instance id:"
+msgstr ""
+
+#: methods/backup-module.php:780
+msgid "Processing"
+msgstr ""
+
+#: includes/class-commands.php:828
+msgid "Invalid email address format"
+msgstr ""
+
+#: includes/class-commands.php:835
+msgid "Site information updated successfully"
+msgstr ""
+
+#: includes/class-commands.php:896
+msgid "Invalid tool type"
+msgstr ""
+
+#. translators: 1: Last database error, 2: SQL create function statement.
+#: includes/class-database-utility.php:759
+#, php-format
+msgid "An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)"
+msgstr ""
+
+#. translators: 1: Last database error, 2: Additional error details.
+#: includes/class-database-utility.php:828
+#, php-format
+msgid "An error occurred while attempting to retrieve routine status (%1$s %2$s)"
+msgstr ""
+
+#. translators: 1: Last database error, 2: Last executed SQL query.
+#: includes/class-database-utility.php:841
+#, php-format
+msgid "An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)"
+msgstr ""
+
+#: includes/class-database-utility.php:888
+msgid "WP-Optimize is installed but currently inactive."
+msgstr ""
+
+#: includes/class-database-utility.php:888
+msgid "Follow this link to activate the WP-Optimize plugin."
+msgstr ""
+
+#: includes/class-database-utility.php:892
+msgid "Follow this link to install the WP-Optimize plugin."
+msgstr ""
+
+#: includes/class-filesystem-functions.php:86
+msgid "WordPress is requesting filesystem credentials because it cannot write directly to the required files or directories."
+msgstr ""
+
+#: includes/class-filesystem-functions.php:115
+msgid "calculate"
+msgstr ""
+
+#. translators: %s: List of disabled PHP functions.
+#. translators: %s: Disabled PHP functions
+#: includes/class-filesystem-functions.php:329
+#: methods/ftp.php:139
+#, php-format
+msgid "Your web server's PHP installation has these functions disabled: %s."
+msgstr ""
+
+#. translators: %s: The process that requires the functions.
+#. translators: %s: Storage method name requiring enabled functions
+#: includes/class-filesystem-functions.php:332
+#: methods/ftp.php:144
+#, php-format
+msgid "Your hosting company must enable these functions before %s can work."
+msgstr ""
+
+#: includes/class-filesystem-functions.php:333
+#: restorer.php:2906
+msgid "restoration"
+msgstr ""
+
+#: includes/class-filesystem-functions.php:354
+msgid "The database file appears to have been compressed twice - probably the website you downloaded it from had a mis-configured webserver."
+msgstr ""
+
+#: includes/class-filesystem-functions.php:361
+#: includes/class-filesystem-functions.php:383
+msgid "The attempt to undo the double-compression failed."
+msgstr ""
+
+#: includes/class-filesystem-functions.php:385
+msgid "The attempt to undo the double-compression succeeded."
+msgstr ""
+
+#. translators: 1: Current file number, 2: Total number of files
+#: includes/class-filesystem-functions.php:594
+#, php-format
+msgid "Unzip progress: %1$d out of %2$d files"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:24
+msgid "Multiple Choices."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:24
+msgid "Indicates multiple options for the resource from which the client may choose (via agent-driven content negotiation)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:25
+msgid "Moved Permanently."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:25
+#: includes/class-http-error-descriptions.php:31
+msgid "This and all future requests should be directed to the given URI."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:26
+msgid "Found (Previously \"Moved temporarily\")."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:26
+msgid "Tells the client to look at (browse to) another URL."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:27
+msgid "See Other."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:27
+msgid "The response to the request can be found under another URI using the GET method."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:27
+msgid "When received in response to a POST (or PUT/DELETE), the client should presume that the server has received the data and should issue a new GET request to the given URI"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:28
+msgid "Not Modified."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:28
+msgid "Indicates that the resource has not been modified since the version specified by the request headers If-Modified-Since or If-None-Match."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:29
+msgid "Use Proxy."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:29
+msgid "The requested resource is available only through a proxy, the address for which is provided in the response."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:30
+msgid "Temporary Redirect."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:30
+msgid "In this case, the request should be repeated with another URI; however, future requests should still use the original URI."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:31
+msgid "Permanent Redirect."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:37
+msgid "Bad Request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:37
+msgid "The server cannot or will not process the request due to an apparent client error (e.g., malformed request syntax, size too large, invalid request message framing, or deceptive request routing)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:38
+msgid "Unauthorized."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:38
+msgid "Authentication is required and has failed or has not yet been provided."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:39
+msgid "Forbidden."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:39
+msgid "The request contained valid data and was understood by the server, but the server is refusing action."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:39
+msgid "This may be due to the user not having the necessary permissions for a resource or needing an account of some sort, or attempting a prohibited action (e.g. creating a duplicate record where only one is allowed)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:40
+msgid "Not Found."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:40
+msgid "The requested resource could not be found but may be available in the future"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:40
+msgid "Subsequent requests by the client are permissible."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:41
+msgid "Method Not Allowed"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:41
+msgid "A request method is not supported for the requested resource; for example, a GET request on a form that requires data to be presented via POST, or a PUT request on a read-only resource."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:42
+msgid "Not Acceptable"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:42
+msgid "The requested resource is capable of generating only content not acceptable according to the Accept headers sent in the request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:43
+msgid "Proxy Authentication Required"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:43
+msgid "The client must first authenticate itself with the proxy."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:44
+msgid "Request Timeout"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:44
+msgid "The server timed out waiting for the request"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:44
+msgid "The client MAY repeat the request without modifications at any later time."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:45
+msgid "Conflict"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:45
+msgid "Indicates that the request could not be processed because of conflict in the current state of the resource, such as an edit conflict between multiple simultaneous updates."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:46
+msgid "Gone"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:46
+msgid "Indicates that the resource requested is no longer available and will not be available again."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:47
+msgid "Length Required"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:47
+msgid "The request did not specify the length of its content, which is required by the requested resource."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:48
+msgid "Precondition Failed"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:48
+msgid "The server does not meet one of the preconditions that the requester put on the request header fields."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:49
+msgid "Payload Too Large"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:49
+msgid "The request is larger than the server is willing or able to process"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:49
+msgid "Previously called \"Request Entity Too Large\"."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:50
+msgid "URI Too Long"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:50
+msgid "The URI provided was too long for the server to process"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:50
+msgid "Often the result of too much data being encoded as a query-string of a GET request, in which it should be converted to a POST request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:51
+msgid "Unsupported Media Type"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:51
+msgid "The request entity has a media type which the server or resource does not support"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:51
+msgid "For example, the client uploads an image as image/svg+xml, but the server requires that images use a different format."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:52
+msgid "Range Not Satisfiable"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:52
+msgid "The client has asked for a portion of the file (byte serving), but the server cannot supply that portion"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:52
+msgid "For example, if the client asked for a part of the file that lies beyond the end of the file."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:53
+msgid "Expectation Failed"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:53
+msgid "The server cannot meet the requirements of the Expect request-header field."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:54
+msgid "Misdirected Request"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:54
+msgid "The request was directed at a server that is not able to produce a response (for example because of connection reuse)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:55
+msgid "Unprocessable Entity"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:55
+msgid "The request was well-formed but was unable to be followed due to semantic errors."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:56
+msgid "Locked"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:56
+msgid "The resource that is being accessed is locked."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:57
+msgid "Failed Dependency"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:57
+msgid "The request failed because it depended on another request and that request failed (e.g., a PROPPATCH)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:58
+msgid "Too Early"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:58
+msgid "Indicates that the server is unwilling to risk processing a request that might be replayed."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:59
+msgid "Upgrade Required"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:59
+msgid "The client should switch to a different protocol such as TLS/1.3, given in the Upgrade header field."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:60
+msgid "Precondition Required"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:60
+msgid "The origin server requires the request to be conditional"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:60
+msgid "Intended to prevent the 'lost update' problem, where a client GETs a resource's state, modifies it, and PUTs it back to the server, when meanwhile a third party has modified the state on the server, leading to a conflict."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:61
+msgid "Too Many Requests"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:61
+msgid "The user has sent too many requests in a given amount of time"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:61
+msgid "Intended for use with rate-limiting schemes."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:62
+msgid "Request Header Fields Too Large"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:62
+msgid "The server is unwilling to process the request because either an individual header field, or all the header fields collectively, are too large."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:63
+msgid "Unavailable For Legal Reasons"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:63
+msgid "A server operator has received a legal demand to deny access to a resource or to a set of resources that includes the requested resource."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:69
+msgid "Internal Server Error"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:69
+msgid "A generic error message, given when an unexpected condition was encountered and no more specific message is suitable."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:70
+msgid "Not Implemented"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:70
+msgid "The server either does not recognize the request method, or it lacks the ability to fulfil the request"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:70
+msgid "Usually this implies future availability (e.g., a new feature of a web-service API)."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:71
+msgid "Bad Gateway"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:71
+msgid "The server was acting as a gateway or proxy and received an invalid response from the upstream server."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:72
+msgid "Service Unavailable"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:72
+msgid "The server cannot handle the request (because it is overloaded or down for maintenance)"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:72
+msgid "Generally, this is a temporary state."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:73
+msgid "Gateway Timeout"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:73
+msgid "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:74
+msgid "HTTP Version Not Supported"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:74
+msgid "The server does not support the HTTP protocol version used in the request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:75
+msgid "Variant Also Negotiates"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:75
+msgid "Transparent content negotiation for the request results in a circular reference."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:76
+msgid "Insufficient Storage"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:76
+msgid "The server is unable to store the representation needed to complete the request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:77
+msgid "Loop Detected"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:77
+msgid "The server detected an infinite loop while processing the request."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:78
+msgid "Not Extended"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:78
+msgid "Further extensions to the request are required for the server to fulfil it."
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:79
+msgid "Network Authentication Required"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:79
+msgid "The client needs to authenticate to gain network access"
+msgstr ""
+
+#: includes/class-http-error-descriptions.php:79
+msgid "Intended for use by intercepting proxies used to control access to the network (e.g., \"captive portals\" used to require agreement to Terms of Service before granting full Internet access via a Wi-Fi hotspot)."
+msgstr ""
+
+#. translators: Deleted text.
+#: includes/class-manipulation-functions.php:584
+msgid "[deleted]"
+msgstr ""
+
+#. translators: Deleted long text.
+#: includes/class-manipulation-functions.php:588
+msgid "This content was deleted in order to anonymize it."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1006
+#: includes/class-restore-search-replace.php:1047
+#: includes/class-search-replace.php:98
+msgid "Search and replacing table:"
+msgstr ""
+
+#. translators: %d: Number of rows.
+#: includes/class-search-replace.php:145
+#, php-format
+msgid "rows: %d"
+msgstr ""
+
+#. translators: 1: Table name, 2: Row number requiring manual change.
+#: includes/class-search-replace.php:343
+#, php-format
+msgid "\"%1$s\" has no primary key, manual change needed on row %2$s."
+msgstr ""
+
+#: includes/class-search-replace.php:482
+#: restorer.php:4163
+msgid "the database query being run was:"
+msgstr ""
+
+#: includes/class-storage-methods-interface.php:301
+msgid "File is not locally present - needs retrieving from remote storage"
+msgstr ""
+
+#: includes/class-storage-methods-interface.php:395
+msgid "The backup archive for this file could not be found."
+msgstr ""
+
+#. translators: %s: Remote storage service name.
+#: includes/class-storage-methods-interface.php:397
+#, php-format
+msgid "The remote storage method in use (%s) does not allow us to retrieve files."
+msgstr ""
+
+#: includes/class-storage-methods-interface.php:398
+msgid "To perform any restoration using BackupPlus, you will need to obtain a copy of this file and place it inside BackupPlus's working folder"
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:90
+msgid "No such backup set exists"
+msgstr ""
+
+#. translators: %s: Maximum execution time in seconds
+#: includes/class-wpadmin-commands.php:111
+#, php-format
+msgid "The PHP setup on this webserver allows only %s seconds for PHP to run, and does not allow this limit to be raised."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:112
+msgid "If you have a lot of data to import, and if the restore operation times out, then you will need to ask your web hosting company for ways to raise this limit (or attempt the restoration piece-by-piece)."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:128
+msgid "Only the WordPress database can be restored; you will need to deal with the external database manually."
+msgstr ""
+
+#. translators: %s: File path
+#: includes/class-wpadmin-commands.php:167
+#, php-format
+msgid "File not found (you need to upload it): %s"
+msgstr ""
+
+#. translators: %s: File name
+#: includes/class-wpadmin-commands.php:170
+#, php-format
+msgid "File was found, but is zero-sized (you need to re-upload it): %s"
+msgstr ""
+
+#. translators: 1: File name, 2: Actual file size, 3: Expected file size
+#: includes/class-wpadmin-commands.php:176
+#, php-format
+msgid "File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt."
+msgstr ""
+
+#. translators: %s: List of missing archives with description
+#: includes/class-wpadmin-commands.php:192
+#, php-format
+msgid "This multi-archive backup set appears to have the following archives missing: %s"
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:204
+msgid "This backup set contains incremental backups of your files; please select the time you wish to restore your files to"
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:223
+#: includes/class-wpadmin-commands.php:248
+msgid "The backup archive files have been successfully processed."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:223
+msgid "Now press Restore to proceed."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:225
+#: includes/class-wpadmin-commands.php:250
+msgid "The backup archive files have been processed, but with some warnings."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:225
+msgid "If all is well, then press Restore to proceed."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:225
+#: includes/class-wpadmin-commands.php:250
+msgid "Otherwise, cancel and correct any problems first."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:227
+#: includes/class-wpadmin-commands.php:252
+msgid "The backup archive files have been processed, but with some errors."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:227
+#: includes/class-wpadmin-commands.php:252
+msgid "You will need to cancel and correct any problems before retrying."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:248
+msgid "Now press Restore again to proceed."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:250
+msgid "If all is well, then now press Restore again to proceed."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:380
+msgid "Constants"
+msgstr ""
+
+#. translators: %s: Directory path
+#: includes/class-wpadmin-commands.php:543
+#, php-format
+msgid "Failed to open directory: %s."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:544
+msgid "This is normally caused by file permissions."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:586
+msgid "Extra database"
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:589
+msgid "WordPress Core"
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:595
+msgid "archive"
+msgstr ""
+
+#. translators: 1: Number of hours, 2: Number of minutes
+#: includes/class-wpadmin-commands.php:904
+#, php-format
+msgid "%1$d hours and %2$d minutes ago"
+msgstr ""
+
+#. translators: 1: Number of hours, 2: Number of minutes
+#: includes/class-wpadmin-commands.php:907
+#, php-format
+msgid "%1$d hours and %2$d minutes"
+msgstr ""
+
+#. translators: %s: Authentication service name (e.g., Dropbox)
+#. translators: %s: Storage provider name
+#: includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:130
+#: methods/googledrive.php:524
+#, php-format
+msgid "The %s authentication could not go ahead, because something else on your site is breaking it."
+msgstr ""
+
+#. translators: %s: Authentication service name (e.g., Dropbox)
+#: includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:130
+#: methods/googledrive.php:527
+msgid "Try disabling your other plugins and switching to a default theme."
+msgstr ""
+
+#. translators: %s: Authentication service name (e.g., Dropbox)
+#: includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:130
+#: methods/googledrive.php:528
+msgid "Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins."
+msgstr ""
+
+#. translators: %s: Authentication service name (e.g., Dropbox)
+#: includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:130
+msgid "Turning off any debugging settings may also help."
+msgstr ""
+
+#. translators: %s: Authentication service name (e.g., Dropbox)
+#: includes/Dropbox2/OAuth/Consumer/ConsumerAbstract.php:138
+#, php-format
+msgid "You need to re-authenticate with %s, as your existing credentials are not working."
+msgstr ""
+
+#. translators: %s: Connection type (e.g., FTP)
+#: includes/ftp.class.php:61
+#: includes/ftp.class.php:65
+#, php-format
+msgid "The %s connection timed out; if you entered the server correctly, then this is usually caused by a firewall blocking the connection - you should check with your web hosting company."
+msgstr ""
+
+#. translators: %s: Plugin name or description
+#: includes/class-restore-search-replace.php:210
+#, php-format
+msgid "Disabled this plugin: %s: re-activate it manually when you are ready."
+msgstr ""
+
+#. translators: %s: PHP version
+#: includes/class-restore-search-replace.php:235
+#, php-format
+msgid "The search and replace feature isn't suitable for PHP %s users."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:236
+#: includes/class-restore-search-replace.php:309
+msgid "To take advantage of this feature, please upgrade your PHP version to at least 5.3."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:250
+#: includes/class-restore-search-replace.php:302
+#: templates/wp-admin/advanced/tools-menu.php:10
+msgid "Search / replace database"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:251
+#: includes/class-restore-search-replace.php:321
+msgid "Search for"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:252
+#: includes/class-restore-search-replace.php:322
+msgid "Replace with"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:261
+msgid "search term"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:281
+msgid "Return to BackupPlus Configuration"
+msgstr ""
+
+#. translators: %s: PHP version
+#: includes/class-restore-search-replace.php:308
+#, php-format
+msgid "This feature isn't suitable for PHP %s users."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:314
+msgid "This can easily destroy your site; so, use it with care!"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:315
+msgid "A search/replace cannot be undone - are you sure you want to do this?"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:323
+msgid "Rows per batch"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:324
+msgid "These tables only"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:324
+msgid "Enter a comma-separated list; otherwise, leave blank for all tables."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:325
+msgid "Go"
+msgstr ""
+
+#. translators: %s: Old site URL
+#: includes/class-restore-search-replace.php:345
+#, php-format
+msgid "This looks like a migration (the backup is from a site with a different address/URL, %s)."
+msgstr ""
+
+#. translators: %s: PHP version
+#: includes/class-restore-search-replace.php:348
+#, php-format
+msgid "However, the search and replace feature is not suitable for the PHP version (%s) your server is running on."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:349
+msgid "This restoration can search and replace your database if you upgrade your PHP version to at least 5.3."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:362
+msgid "This restoration will work if you still have an SSL certificate (i.e. can use https) to access the site."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:364
+msgid "Otherwise, you will want to upgrade your PHP version to at least 5.3 and take advantage of the search and replace feature."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:366
+msgid "Otherwise, you will want to use below search and replace to search/replace the site address so that the site can be visited without https."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:379
+msgid "As long as your web hosting allows http (i.e. non-SSL access) or will forward requests to https (which is almost always the case), this is no problem."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:381
+msgid "If that is not yet set up, then you should set it up, or upgrade your PHP version to at least 5.3 in order to access the search and replace feature, allowing for the automatic replacement of non-HTTPS links."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:383
+msgid "If that is not yet set up, then you should set it up, or use below search and replace so that the non-https links are automatically replaced."
+msgstr ""
+
+#. translators: %s: PHP version
+#: includes/class-restore-search-replace.php:398
+#, php-format
+msgid "This restoration can't use the search and replace feature as it's not suitable for the PHP version (%s) your server is running on."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:399
+msgid "To take advantage of the feature, please upgrade your PHP version to at least 5.3."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:407
+msgid "Processed plugin:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:428
+msgid "Database restoration options:"
+msgstr ""
+
+#. translators: %s: Current site URL
+#: includes/class-restore-search-replace.php:431
+#, php-format
+msgid "All references to the site location in the database will be replaced with your current site URL, which is: %s"
+msgstr ""
+
+#. translators: %s: Operation name
+#. translators: %s: String 'search and replace'
+#: includes/class-restore-search-replace.php:675
+#: includes/class-restore-search-replace.php:1078
+#: restorer.php:4557
+#, php-format
+msgid "Failed: the %s operation was not able to start."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:676
+#: includes/class-restore-search-replace.php:682
+#: restorer.php:4558
+#: restorer.php:4564
+msgid "search and replace"
+msgstr ""
+
+#. translators: %s: Operation name
+#. translators: %s: String 'search and replace'
+#: includes/class-restore-search-replace.php:681
+#: includes/class-restore-search-replace.php:1081
+#: restorer.php:4563
+#, php-format
+msgid "Failed: we did not understand the result returned by the %s operation."
+msgstr ""
+
+#. translators: %s: Line number(s) in .htaccess file
+#: includes/class-restore-search-replace.php:727
+#, php-format
+msgid "Your .htaccess has an old site reference on line number %s. You should remove it manually."
+msgid_plural "Your .htaccess has an old site references on line numbers %s. You should remove them manually."
+msgstr[0] ""
+
+#: includes/class-restore-search-replace.php:844
+msgid "Database: search and replace site URL"
+msgstr ""
+
+#. translators: 1: Parameter name, 2: Value
+#: includes/class-restore-search-replace.php:882
+#: includes/class-restore-search-replace.php:887
+#: includes/class-restore-search-replace.php:892
+#: includes/class-restore-search-replace.php:898
+#: includes/class-restore-search-replace.php:903
+#: includes/class-restore-search-replace.php:909
+#, php-format
+msgid "Error: unexpected empty parameter (%1$s, %2$s)"
+msgstr ""
+
+#. translators: %s: Site URL
+#: includes/class-restore-search-replace.php:916
+#, php-format
+msgid "Nothing to do: the site URL is already: %s"
+msgstr ""
+
+#. translators: 1: Actual database site URL, 2: Expected site URL
+#: includes/class-restore-search-replace.php:928
+#, php-format
+msgid "Warning: the database's site URL (%1$s) is different to what we expected (%2$s)"
+msgstr ""
+
+#. translators: 1: Actual database home URL, 2: Expected home URL
+#: includes/class-restore-search-replace.php:937
+#, php-format
+msgid "Warning: the database's home URL (%1$s) is different to what we expected (%2$s)"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:984
+msgid "Could not get list of tables"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1006
+msgid "skipped (not in list)"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1047
+msgid "already done"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1095
+msgid "Tables examined:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1096
+msgid "Rows examined:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1097
+msgid "Changes made:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1098
+msgid "SQL update commands run:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:1100
+msgid "Time taken (seconds):"
+msgstr ""
+
+#: includes/S3.php:1943
+msgid "Connecting to Amazon S3 failed."
+msgstr ""
+
+#: includes/S3.php:1943
+msgid "Your PHP installation failed a TLS v1.2 connection test, which is the minimum version required by Amazon."
+msgstr ""
+
+#: includes/S3.php:1943
+msgid "Please ask your webserver support how to upgrade your PHP and cURL library versions to use non-obsolete TLS versions."
+msgstr ""
+
+#. translators: %s: Description
+#. translators: %s: Storage method name
+#. translators: %s: Storage provider name
+#: methods/addon-base-v2.php:82
+#: methods/addon-base-v2.php:141
+#: methods/addon-base-v2.php:183
+#: methods/addon-base-v2.php:243
+#: methods/addon-base-v2.php:351
+#: methods/ftp.php:72
+#: methods/googledrive.php:342
+#: methods/googledrive.php:350
+#, php-format
+msgid "No %s settings were found"
+msgstr ""
+
+#. translators: %s: File name
+#: methods/addon-base-v2.php:105
+#: methods/addon-base-v2.php:115
+#, php-format
+msgid "Failed to upload %s"
+msgstr ""
+
+#: methods/addon-base-v2.php:150
+msgid "failed to list files"
+msgstr ""
+
+#: methods/addon-base-v2.php:235
+msgid "This storage method does not allow downloading"
+msgstr ""
+
+#. translators: %s: File name
+#: methods/addon-base-v2.php:257
+#: methods/addon-base-v2.php:289
+#, php-format
+msgid "Failed to download %s"
+msgstr ""
+
+#. translators: %s: Description
+#. translators: %s: Remote storage method
+#: methods/addon-base-v2.php:275
+#: methods/openstack-base.php:475
+#, php-format
+msgid "%s Error"
+msgstr ""
+
+#: methods/addon-base-v2.php:277
+msgid "Failed to download"
+msgstr ""
+
+#: methods/addon-base-v2.php:392
+#: methods/cloudfiles.php:594
+#: methods/googledrive.php:720
+#: methods/openstack-base.php:557
+#: methods/s3.php:1617
+msgid "Success"
+msgstr ""
+
+#: methods/addon-base-v2.php:395
+msgid "Failed: We were not able to place a file in that directory - please check your credentials."
+msgstr ""
+
+#. translators: 1: Description, 2: Required PHP version
+#. translators: 1: remote storage method, 2: required PHP version
+#: methods/addon-not-yet-present.php:28
+#: methods/insufficient.php:28
+#, php-format
+msgid "This remote storage method (%1$s) requires PHP %2$s or later."
+msgstr ""
+
+#. translators: 1: Description, 2: URL
+#: methods/addon-not-yet-present.php:33
+#: methods/addon-not-yet-present.php:73
+#: methods/addon-not-yet-present.php:82
+#, php-format
+msgid "BackupPlus %1$s support is not available because its required module is not installed."
+msgstr ""
+
+#: methods/addon-not-yet-present.php:121
+#, php-format
+msgid "Support for %s is not available in this installation."
+msgstr ""
+
+#. translators: %s: PHP version
+#: methods/addon-not-yet-present.php:123
+#, php-format
+msgid "Your PHP version: %s."
+msgstr ""
+
+#: methods/addon-not-yet-present.php:124
+#: methods/insufficient.php:128
+msgid "You will need to ask your web hosting company to upgrade."
+msgstr ""
+
+#: methods/backup-module.php:112
+msgid "Select existing folder"
+msgstr ""
+
+#: methods/backup-module.php:113
+msgid "Confirm"
+msgstr ""
+
+#: methods/backup-module.php:115
+msgid "A host name cannot be an URL or contain a slash."
+msgstr ""
+
+#: methods/backup-module.php:648
+#: methods/dropbox.php:637
+msgid "Ensure you are logged into the correct account before continuing."
+msgstr ""
+
+#. translators: %s: Description
+#. translators: %s: Service name
+#: methods/backup-module.php:654
+#: methods/dropbox.php:634
+#, php-format
+msgid "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s."
+msgstr ""
+
+#. translators: 1: Description or remote storage name (e.g. Google Drive, OneDrive, etc.), 2: Description or remote storage name
+#: methods/backup-module.php:658
+#, php-format
+msgid "Follow this link to authorize access to your %1$s account (you will not be able to backup to %2$s without it)."
+msgstr ""
+
+#. translators: %s: Description
+#. translators: %s: Service name
+#. translators: %s: Storage provider name
+#: methods/backup-module.php:727
+#: methods/dropbox.php:636
+#: methods/googledrive.php:1633
+#, php-format
+msgid "Follow this link to remove these settings for %s."
+msgstr ""
+
+#. translators: %s: Description
+#: methods/backup-module.php:772
+#, php-format
+msgid "%s authentication:"
+msgstr ""
+
+#. translators: %s: Description
+#: methods/backup-module.php:774
+#, php-format
+msgid "If you are having problems authenticating with %s you can manually authorize here."
+msgstr ""
+
+#: methods/backup-module.php:775
+msgid "To complete manual authentication, at the orange BackupPlus authentication screen select the \"Having problems authenticating?\" link, then copy and paste the code given here."
+msgstr ""
+
+#. translators: %s: Description
+#: methods/backup-module.php:777
+#, php-format
+msgid "%s authentication code:"
+msgstr ""
+
+#: methods/backup-module.php:779
+msgid "Complete manual authentication"
+msgstr ""
+
+#: methods/cloudfiles-new.php:57
+msgid "Dallas (DFW) (default)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:58
+msgid "Sydney (SYD)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:59
+msgid "Chicago (ORD)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:60
+msgid "Northern Virginia (IAD)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:61
+msgid "Hong Kong (HKG)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:62
+msgid "London (LON)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:84
+#: methods/openstack-base.php:504
+#: methods/openstack-base.php:506
+#: methods/openstack-base.php:529
+#: methods/openstack2.php:69
+msgid "Authorisation failed (check your credentials)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:144
+#: methods/cloudfiles-new.php:381
+msgid "Accounts created at rackspacecloud.com are US accounts; accounts created at rackspace.co.uk are UK accounts."
+msgstr ""
+
+#: methods/cloudfiles-new.php:144
+#: methods/cloudfiles-new.php:380
+msgid "US or UK-based Rackspace Account"
+msgstr ""
+
+#: methods/cloudfiles-new.php:146
+msgid "Accounts created at rackspacecloud.com are US-accounts; accounts created at rackspace.co.uk are UK-based"
+msgstr ""
+
+#: methods/cloudfiles-new.php:147
+#: methods/cloudfiles-new.php:383
+#: methods/cloudfiles.php:478
+msgid "US (default)"
+msgstr ""
+
+#: methods/cloudfiles-new.php:148
+#: methods/cloudfiles-new.php:384
+#: methods/cloudfiles.php:479
+msgid "UK"
+msgstr ""
+
+#: methods/cloudfiles-new.php:153
+#: methods/cloudfiles-new.php:386
+msgid "Cloud Files Storage Region"
+msgstr ""
+
+#: methods/cloudfiles-new.php:163
+#: methods/cloudfiles-new.php:388
+msgid "Cloud Files Username"
+msgstr ""
+
+#: methods/cloudfiles-new.php:171
+#: methods/cloudfiles-new.php:390
+#: methods/cloudfiles.php:499
+msgid "Cloud Files API Key"
+msgstr ""
+
+#: methods/cloudfiles-new.php:176
+#: methods/cloudfiles-new.php:393
+#: methods/cloudfiles.php:504
+msgid "Cloud Files Container"
+msgstr ""
+
+#: methods/cloudfiles-new.php:210
+#: methods/cloudfiles.php:534
+#: methods/s3.php:1520
+msgid "API key"
+msgstr ""
+
+#. translators: %s: Missing PHP module
+#. translators: %s: Module description
+#. translators: %s: missing PHP module
+#. translators: %s: Required module name
+#. translators: %s: Required PHP module
+#: methods/cloudfiles-new.php:335
+#: methods/cloudfiles-new.php:352
+#: methods/cloudfiles.php:444
+#: methods/dreamobjects.php:224
+#: methods/openstack-base.php:603
+#: methods/openstack2.php:270
+#: methods/s3.php:999
+#: methods/s3.php:1187
+#: methods/s3.php:1202
+#: methods/s3generic.php:218
+#: methods/s3generic.php:236
+#, php-format
+msgid "Your web server's PHP installation does not include a required module (%s)."
+msgstr ""
+
+#. translators: 1: Module description, 2: Required module
+#. translators: 1: module description, 2: required module
+#. translators: 1: Remote storage method, 2: Required module name
+#. translators: 1: Module name, 2: Required module name
+#: methods/cloudfiles-new.php:338
+#: methods/cloudfiles-new.php:355
+#: methods/cloudfiles.php:447
+#: methods/dreamobjects.php:227
+#: methods/openstack-base.php:606
+#: methods/openstack2.php:273
+#: methods/s3.php:1011
+#: methods/s3.php:1205
+#: methods/s3generic.php:221
+#, php-format
+msgid "BackupPlus's %1$s module <strong>requires</strong> %2$s."
+msgstr ""
+
+#. translators: 1: API key URL, 2: instructions URL
+#: methods/cloudfiles-new.php:374
+#, php-format
+msgid "Get your API key <a href=\"%1$s\" target=\"_blank\">from your Rackspace Cloud console</a> (<a href=\"%2$s\" target=\"_blank\">read instructions here</a>), then pick a container name to use for storage."
+msgstr ""
+
+#: methods/cloudfiles-new.php:377
+#: methods/cloudfiles.php:457
+#: methods/openstack2.php:285
+msgid "This container will be created for you if it does not already exist."
+msgstr ""
+
+#: methods/cloudfiles-new.php:389
+#: methods/ftp.php:157
+#: methods/openstack2.php:297
+msgid "Enter your username"
+msgstr ""
+
+#: methods/cloudfiles-new.php:392
+msgid "Paste your key here"
+msgstr ""
+
+#: methods/cloudfiles-new.php:394
+msgid "Enter your container name"
+msgstr ""
+
+#: methods/cloudfiles.php:90
+#: methods/cloudfiles.php:94
+#: methods/cloudfiles.php:288
+#: methods/cloudfiles.php:336
+#: methods/cloudfiles.php:340
+msgid "authentication failed"
+msgstr ""
+
+#: methods/cloudfiles.php:98
+#: methods/cloudfiles.php:344
+#: methods/cloudfiles.php:356
+msgid "error - failed to create and access the container"
+msgstr ""
+
+#: methods/cloudfiles.php:125
+#: methods/googledrive.php:1411
+#: methods/googledrive.php:1417
+msgid "Error: Failed to open local file"
+msgstr ""
+
+#: methods/cloudfiles.php:142
+#: methods/cloudfiles.php:184
+#: methods/openstack-base.php:84
+msgid "Error: Failed to upload"
+msgstr ""
+
+#: methods/cloudfiles.php:206
+msgid "error - failed to re-assemble chunks"
+msgstr ""
+
+#: methods/cloudfiles.php:213
+#: methods/cloudfiles.php:214
+msgid "error - failed to upload file"
+msgstr ""
+
+#: methods/cloudfiles.php:229
+#: methods/dropbox.php:403
+#: methods/openstack-base.php:121
+msgid "No settings were found"
+msgstr ""
+
+#. translators: %s: Authentication method
+#. translators: %s: Remote storage method
+#: methods/cloudfiles.php:236
+#: methods/openstack-base.php:45
+#: methods/openstack-base.php:365
+#: methods/openstack-base.php:433
+#: methods/openstack-base.php:511
+#: methods/openstack-base.php:515
+#: methods/openstack-base.php:534
+#: methods/openstack-base.php:540
+#, php-format
+msgid "%s authentication failed"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/cloudfiles.php:401
+#: methods/openstack-base.php:475
+msgid "Error downloading remote file: Failed to download"
+msgstr ""
+
+#: methods/cloudfiles.php:410
+msgid "Error - no such file exists."
+msgstr ""
+
+#: methods/cloudfiles.php:475
+msgid "US or UK Cloud"
+msgstr ""
+
+#: methods/cloudfiles.php:495
+msgid "Cloud Files username"
+msgstr ""
+
+#: methods/cloudfiles.php:507
+msgid "Cloud Files"
+msgstr ""
+
+#: methods/cloudfiles.php:562
+#: methods/openstack-base.php:492
+msgid "Failure: No container details were given."
+msgstr ""
+
+#: methods/cloudfiles.php:572
+#: methods/cloudfiles.php:575
+#: methods/cloudfiles.php:578
+msgid "Cloud Files authentication failed"
+msgstr ""
+
+#: methods/cloudfiles.php:589
+msgid "Cloud Files error - we accessed the container, but failed to create a file within it"
+msgstr ""
+
+#: methods/cloudfiles.php:594
+#: methods/openstack-base.php:557
+msgid "We accessed the container, and were able to create files within it."
+msgstr ""
+
+#: methods/dreamobjects.php:76
+msgid "Permanently unavailable on Nov 12th, 2025"
+msgstr ""
+
+#. translators: %s: missing PHP module
+#. translators: %s: Required module name
+#: methods/dreamobjects.php:243
+#: methods/s3.php:1008
+#, php-format
+msgid "Your web server's PHP installation does not included a required module (%s)."
+msgstr ""
+
+#. translators: 1: console URL, 2: service name, 3: service name
+#. translators: 1: Console URL, 2: Console description, 3: Service name
+#. translators: 1: Console URL, 2: Console name, 3: Service name
+#: methods/dreamobjects.php:261
+#: methods/s3.php:1025
+#: methods/s3.php:1218
+#, php-format
+msgid "Get your access key and secret key from your <a href=\"%1$s\">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage."
+msgstr ""
+
+#: methods/dreamobjects.php:265
+#: methods/s3.php:1027
+#: methods/s3.php:1219
+msgid "This bucket will be created for you if it does not already exist."
+msgstr ""
+
+#: methods/dreamobjects.php:266
+#: methods/s3.php:1031
+#: methods/s3.php:1225
+#: methods/s3generic.php:250
+msgid "If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle."
+msgstr ""
+
+#: methods/dreamobjects.php:267
+msgid "Create Azure credentials in your Azure developer console."
+msgstr ""
+
+#: methods/dreamobjects.php:268
+msgid "For more detailed instructions, follow this link."
+msgstr ""
+
+#. translators: %s: service name
+#. translators: %s: Access key type
+#. translators: %s: Cloud storage provider
+#: methods/dreamobjects.php:270
+#: methods/s3.php:1131
+#: methods/s3.php:1229
+#: methods/s3generic.php:252
+#, php-format
+msgid "%s access key"
+msgstr ""
+
+#: methods/dreamobjects.php:271
+#: methods/s3.php:1230
+#: methods/s3generic.php:253
+msgid "Paste your access key here"
+msgstr ""
+
+#. translators: %s: service name
+#. translators: %s: Secret key type
+#. translators: %s: Cloud storage provider
+#: methods/dreamobjects.php:273
+#: methods/s3.php:1140
+#: methods/s3.php:1232
+#: methods/s3generic.php:255
+#, php-format
+msgid "%s secret key"
+msgstr ""
+
+#: methods/dreamobjects.php:274
+#: methods/s3.php:1233
+#: methods/s3generic.php:256
+msgid "Paste your secret key here"
+msgstr ""
+
+#. translators: %s: service name
+#. translators: %s: Location type
+#. translators: %s: Cloud storage provider
+#: methods/dreamobjects.php:277
+#: methods/s3.php:1149
+#: methods/s3.php:1236
+#: methods/s3generic.php:259
+#, php-format
+msgid "%s location"
+msgstr ""
+
+#: methods/dreamobjects.php:279
+#: methods/s3.php:1152
+#: methods/s3.php:1237
+#: methods/s3generic.php:260
+msgid "Enter only a bucket name or a bucket and path."
+msgstr ""
+
+#: methods/dreamobjects.php:279
+#: methods/s3.php:1152
+#: methods/s3.php:1237
+#: methods/s3generic.php:260
+msgid "Examples: mybucket, mybucket/mypath"
+msgstr ""
+
+#. translators: %s: service name
+#. translators: %s: Cloud storage provider
+#: methods/dreamobjects.php:281
+#: methods/s3generic.php:263
+#, php-format
+msgid "%s end-point"
+msgstr ""
+
+#. translators: %s: Desired endpoint format.
+#: methods/dreamobjects.php:286
+#, php-format
+msgid "Custom endpoint should be in the following format \"%s\"."
+msgstr ""
+
+#. translators: 1: Invalid custom endpoint, 2: Expected endpoint format
+#: methods/dreamobjects.php:321
+#, php-format
+msgid "Failure: Custom endpoint \"%1$s\" is not in the desired format \"%2$s\"."
+msgstr ""
+
+#: methods/dropbox.php:205
+#: methods/dropbox.php:222
+msgid "You are not authenticated with Dropbox"
+msgstr ""
+
+#. translators: %s: Error message
+#: methods/dropbox.php:228
+#, php-format
+msgid "error: %s (see log file for more)"
+msgstr ""
+
+#. translators: %s: Destination path
+#: methods/dropbox.php:326
+#, php-format
+msgid "error: failed to upload file to %s (see log file for more)"
+msgstr ""
+
+#: methods/dropbox.php:329
+msgid "did not return the expected response - check your log file for more details"
+msgstr ""
+
+#. translators: %s: Destination path
+#: methods/dropbox.php:350
+#: methods/dropbox.php:366
+#, php-format
+msgid "failed to upload file to %s (see log file for more)"
+msgstr ""
+
+#. translators: 1: Service name, 2: HTTP response code
+#: methods/dropbox.php:422
+#, php-format
+msgid "%1$s returned an unexpected HTTP response: %2$s"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:499
+#, php-format
+msgid "You are not authenticated with %s (whilst deleting)"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:508
+#, php-format
+msgid "Failed to access %s when deleting (see log file for more)"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:547
+#, php-format
+msgid "You are not authenticated with %s"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:619
+#, php-format
+msgid "%s logo"
+msgstr ""
+
+#: methods/dropbox.php:621
+msgid "BackupPlus uses Dropbox authorization to store backups in the Dropbox account you select."
+msgstr ""
+
+#: methods/dropbox.php:622
+msgid "Need to use sub-folders?"
+msgstr ""
+
+#. translators: %s: Backup folder path
+#: methods/dropbox.php:624
+#, php-format
+msgid "Backups are saved in %s."
+msgstr ""
+
+#. translators: 1: Opening link tag, 2: Closing link tag
+#: methods/dropbox.php:626
+msgid "BackupPlus uses the configured Dropbox app folder for backups."
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:629
+#, php-format
+msgid "Authenticate with %s"
+msgstr ""
+
+#: methods/dropbox.php:630
+msgid "Dropbox"
+msgstr ""
+
+#: methods/dropbox.php:632
+msgid "(You are already authenticated)."
+msgstr ""
+
+#: methods/dropbox.php:638
+msgid "You must add the following as the authorised redirect URI in your Dropbox console (under \"API Settings\") when asked"
+msgstr ""
+
+#: methods/dropbox.php:639
+msgid "Your Dropbox App Key"
+msgstr ""
+
+#: methods/dropbox.php:640
+msgid "Your Dropbox App Secret"
+msgstr ""
+
+#: methods/dropbox.php:643
+msgid "Store at"
+msgstr ""
+
+#. translators: %s: Account holder's name with email
+#: methods/dropbox.php:780
+#, php-format
+msgid "Account holder's name: %s."
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:853
+#: methods/dropbox.php:919
+#, php-format
+msgid "%s authentication"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:942
+#, php-format
+msgid "%s de-authentication"
+msgstr ""
+
+#: methods/dropbox.php:969
+#: methods/dropbox.php:974
+msgid "Success:"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/dropbox.php:971
+#: methods/dropbox.php:976
+#, php-format
+msgid "you have authenticated your %s account"
+msgstr ""
+
+#: methods/dropbox.php:980
+#: methods/dropbox.php:1010
+msgid "though part of the returned information was not as expected - whether this indicates a real problem cannot be determined"
+msgstr ""
+
+#. translators: 1: Service name, 2: Account holder's name with email
+#: methods/dropbox.php:1000
+#, php-format
+msgid "Your %1$s account name: %2$s"
+msgstr ""
+
+#. translators: 1: Service name, 2: Percentage used, 3: Available space
+#. translators: 1: Storage provider name, 2: Percentage used, 3: Available quota in MB
+#: methods/dropbox.php:1022
+#: methods/googledrive.php:681
+#, php-format
+msgid "Your %1$s quota usage: %2$s %% used, %3$s available"
+msgstr ""
+
+#. translators: 1: Service name, 2: Percentage of quota used, 3: Available quota in MB
+#: methods/dropbox.php:1032
+#, php-format
+msgid "Your %1$s quota usage: %2$s%% used, %3$s available"
+msgstr ""
+
+#. translators: %s: Backup file size in MB
+#: methods/email.php:49
+#, php-format
+msgid "This backup archive is %s MB in size - the attempt to send this via email is likely to fail (few email servers allow attachments of this size)."
+msgstr ""
+
+#. translators: %s: Backup file size in MB
+#: methods/email.php:49
+msgid "If so, you should switch to using a different remote storage method."
+msgstr ""
+
+#: methods/email.php:65
+msgid "WordPress Backup"
+msgstr ""
+
+#. translators: %s: Site URL and description type
+#: methods/email.php:77
+#, php-format
+msgid "Backup is of: %s."
+msgstr ""
+
+#: methods/email.php:100
+msgid "The attempt to send the backup via email failed (probably the backup was too large for this method)"
+msgstr ""
+
+#: methods/email.php:126
+msgid "Email:"
+msgstr ""
+
+#. translators: %s: Admin email address
+#: methods/email.php:131
+#, php-format
+msgid "Your site's admin email address (%s) will be used."
+msgstr ""
+
+#. translators: %s: Admin email address
+#: methods/email.php:131
+msgid "configure it here"
+msgstr ""
+
+#. translators: %s: Approximate email size limit in MB
+#: methods/email.php:143
+#, php-format
+msgid "Be aware that mail servers tend to have size limits; typically around %s MB; backups larger than any limits will likely not arrive."
+msgstr ""
+
+#: methods/email.php:172
+msgid "Email address"
+msgstr ""
+
+#: methods/email.php:173
+msgid "Enter your email address"
+msgstr ""
+
+#: methods/ftp.php:131
+msgid "regular non-encrypted FTP"
+msgstr ""
+
+#: methods/ftp.php:132
+msgid "encrypted FTP (implicit encryption)"
+msgstr ""
+
+#: methods/ftp.php:133
+msgid "encrypted FTP (explicit encryption)"
+msgstr ""
+
+#: methods/ftp.php:152
+msgid "Only non-encrypted FTP is supported by BackupPlus."
+msgstr ""
+
+#: methods/ftp.php:154
+msgid "FTP server"
+msgstr ""
+
+#: methods/ftp.php:155
+msgid "Example: ftp.example.com"
+msgstr ""
+
+#: methods/ftp.php:156
+msgid "FTP login"
+msgstr ""
+
+#: methods/ftp.php:158
+msgid "FTP password"
+msgstr ""
+
+#: methods/ftp.php:160
+msgid "Remote path"
+msgstr ""
+
+#: methods/ftp.php:161
+msgid "Needs to already exist"
+msgstr ""
+
+#: methods/ftp.php:162
+msgid "Example: /public_html/backups"
+msgstr ""
+
+#: methods/ftp.php:163
+msgid "Passive mode"
+msgstr ""
+
+#: methods/ftp.php:164
+msgid "Almost all FTP servers will want passive mode; but if you need active mode, then uncheck this."
+msgstr ""
+
+#: methods/ftp.php:194
+#: methods/ftp.php:363
+msgid "login failure"
+msgstr ""
+
+#: methods/ftp.php:221
+msgid "upload failed"
+msgstr ""
+
+#. translators: %s: Storage method name
+#: methods/ftp.php:246
+#, php-format
+msgid "%s login failure"
+msgstr ""
+
+#: methods/ftp.php:475
+msgid "Failure: No server details were given."
+msgstr ""
+
+#. translators: %s: Missing credential type (e.g., login)
+#: methods/ftp.php:480
+msgid "login"
+msgstr ""
+
+#. translators: %s: Missing credential type (e.g., password)
+#. translators: %s: Password
+#: methods/ftp.php:485
+#: methods/openstack2.php:143
+msgid "password"
+msgstr ""
+
+#: methods/ftp.php:495
+msgid "Failure: we did not successfully log in with those credentials."
+msgstr ""
+
+#: methods/ftp.php:504
+msgid "Success: we successfully logged in, and confirmed our ability to create a file in the given directory (login type:"
+msgstr ""
+
+#: methods/ftp.php:508
+msgid "Failure: we successfully logged in, but were not able to create a file in the given directory."
+msgstr ""
+
+#: methods/ftp.php:510
+msgid "This is sometimes caused by a firewall - try turning off SSL in the expert settings, and testing again."
+msgstr ""
+
+#: methods/googledrive.php:343
+#: methods/googledrive.php:351
+#: methods/googledrive.php:724
+#: methods/googledrive.php:776
+#: methods/googledrive.php:823
+#: methods/googledrive.php:836
+#: methods/googledrive.php:855
+#: methods/googledrive.php:875
+#: methods/googledrive.php:881
+#: methods/googledrive.php:1610
+#: methods/googledrive.php:1611
+#: methods/googledrive.php:1613
+#: methods/googledrive.php:1615
+#: methods/googledrive.php:1647
+msgid "Google Drive"
+msgstr ""
+
+#: methods/googledrive.php:368
+msgid "Google Drive list files: failed to access parent folder"
+msgstr ""
+
+#: methods/googledrive.php:452
+msgid "The client has been deleted from the Google Drive API console."
+msgstr ""
+
+#: methods/googledrive.php:452
+msgid "Please create a new Google Drive project and reconnect with BackupPlus."
+msgstr ""
+
+#: methods/googledrive.php:529
+msgid "Turning off any debugging settings may also help)."
+msgstr ""
+
+#: methods/googledrive.php:633
+msgid "No refresh token was received from Google."
+msgstr ""
+
+#: methods/googledrive.php:633
+msgid "This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it."
+msgstr ""
+
+#: methods/googledrive.php:633
+msgid "Re-check it, then follow the link to authenticate again."
+msgstr ""
+
+#: methods/googledrive.php:633
+msgid "Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again."
+msgstr ""
+
+#. translators: %s: Storage provider name
+#: methods/googledrive.php:643
+#, php-format
+msgid "%s authorization failed"
+msgstr ""
+
+#: methods/googledrive.php:684
+#: methods/googledrive.php:697
+msgid "However, subsequent access attempts failed:"
+msgstr ""
+
+#. translators: %s: Storage provider name
+#: methods/googledrive.php:723
+#, php-format
+msgid "you have authenticated your %s account."
+msgstr ""
+
+#. translators: %s: Username
+#: methods/googledrive.php:728
+#, php-format
+msgid "Name: %s."
+msgstr ""
+
+#. translators: %s: Storage provider name
+#: methods/googledrive.php:775
+#: methods/googledrive.php:854
+#: methods/googledrive.php:874
+#: methods/googledrive.php:880
+#, php-format
+msgid "Failed to upload to %s"
+msgstr ""
+
+#: methods/googledrive.php:777
+msgid "failed to access parent folder"
+msgstr ""
+
+#. translators: 1: Storage provider name, 2: Available bytes, 3: File size
+#: methods/googledrive.php:822
+#, php-format
+msgid "Account full: your %1$s account has only %2$d bytes left, but the file to be uploaded is %3$d bytes"
+msgstr ""
+
+#. translators: 1: Storage provider name, 2: File size limit, 3: File size in GB, 4: File size in bytes
+#: methods/googledrive.php:835
+#, php-format
+msgid "Upload expected to fail: the %1$s limit for any single file is %2$s, whereas this file is %3$s GB (%4$d bytes)"
+msgstr ""
+
+#: methods/googledrive.php:907
+#: methods/googledrive.php:908
+#: methods/googledrive.php:918
+#: methods/googledrive.php:919
+msgid "Account is not authorized."
+msgstr ""
+
+#. translators: 1: Error message, 2: Callback URL
+#: methods/googledrive.php:950
+#, php-format
+msgid "%1$s for %2$s"
+msgstr ""
+
+#: methods/googledrive.php:963
+#: methods/googledrive.php:999
+msgid "Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Drive."
+msgstr ""
+
+#: methods/googledrive.php:1581
+msgid "download: failed: file not found"
+msgstr ""
+
+#: methods/googledrive.php:1611
+msgid "Client ID"
+msgstr ""
+
+#: methods/googledrive.php:1612
+msgid "If Google later shows you the message \"invalid_client\", then you did not enter a valid client ID here."
+msgstr ""
+
+#: methods/googledrive.php:1613
+msgid "Client Secret"
+msgstr ""
+
+#: methods/googledrive.php:1615
+msgid "Folder"
+msgstr ""
+
+#: methods/googledrive.php:1616
+msgid "Create a Google OAuth client and enable the Google Drive API. The steps below are for experienced users."
+msgstr ""
+
+#: methods/googledrive.php:1617
+msgid "Follow this link to your Google API Console, and there activate the Drive API and create a Client ID in the API Access section."
+msgstr ""
+
+#: methods/googledrive.php:1618
+msgid "Select 'Web Application' as the application type."
+msgstr ""
+
+#: methods/googledrive.php:1619
+msgid "You must add the following as the authorised redirect URI (under \"More Options\") when asked"
+msgstr ""
+
+#: methods/googledrive.php:1621
+msgid "N.B. If you install BackupPlus on several WordPress sites, then you cannot re-use your project; you must create a new one from your Google API console for each site."
+msgstr ""
+
+#: methods/googledrive.php:1622
+msgid "<strong>This is NOT a folder name</strong>."
+msgstr ""
+
+#: methods/googledrive.php:1622
+msgid "It is an ID number internal to Google Drive"
+msgstr ""
+
+#: methods/googledrive.php:1623
+msgid "BackupPlus uses the configured Google Drive folder for backups."
+msgstr ""
+
+#: methods/googledrive.php:1624
+msgid "BackupPlus transfers backup archives to the Google Drive account you authorize."
+msgstr ""
+
+#: methods/googledrive.php:1625
+msgid "Authenticate with Google"
+msgstr ""
+
+#. translators: %s: Storage provider name
+#: methods/googledrive.php:1627
+#, php-format
+msgid "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here once and follow this link to complete authentication with %s."
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/googledrive.php:1629
+#: methods/googledrive.php:1819
+#, php-format
+msgid "Sign in with %s"
+msgstr ""
+
+#: methods/googledrive.php:1630
+msgid "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem)."
+msgstr ""
+
+#: methods/googledrive.php:1634
+msgid "To de-authorize BackupPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings."
+msgstr ""
+
+#: methods/googledrive.php:1635
+msgid "Account holder's name"
+msgstr ""
+
+#: methods/googledrive.php:1636
+msgid "Enter your folder name"
+msgstr ""
+
+#: methods/googledrive.php:1637
+msgid "The folder in your Google Drive where the backups will be stored."
+msgstr ""
+
+#. translators: 1: Storage provider name
+#: methods/googledrive.php:1644
+#, php-format
+msgid "%1$s does not allow authorisation of sites hosted on direct IP addresses."
+msgstr ""
+
+#. translators: 1: Site address, 2: Storage provider name
+#: methods/googledrive.php:1646
+#, php-format
+msgid "You will need to change your site's address (%1$s) before you can use %2$s for storage."
+msgstr ""
+
+#. translators: 1: plugin name, 2: version number
+#: methods/insufficient.php:130
+#, php-format
+msgid "Your %1$s version: %2$s."
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/openstack-base.php:50
+#: methods/openstack-base.php:127
+#: methods/openstack-base.php:135
+#: methods/openstack-base.php:370
+#: methods/openstack-base.php:438
+#, php-format
+msgid "%s error - failed to access the container"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/openstack-base.php:59
+#: methods/openstack-base.php:379
+#: methods/openstack-base.php:451
+#, php-format
+msgid "Could not access %s container"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/openstack-base.php:90
+#, php-format
+msgid "%s error - failed to upload file"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#. translators: %s: Service name
+#: methods/openstack-base.php:321
+#: methods/s3.php:451
+#: methods/s3.php:464
+#: methods/s3.php:466
+#, php-format
+msgid "%s Error: Failed to upload"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/openstack-base.php:460
+#, php-format
+msgid "The %s object was not found"
+msgstr ""
+
+#. translators: %s: Remote storage method
+#: methods/openstack-base.php:550
+#, php-format
+msgid "%s error - we accessed the container, but failed to create a file within it"
+msgstr ""
+
+#. translators: %s: Region name
+#: methods/openstack-base.php:552
+#: methods/openstack-base.php:559
+#, php-format
+msgid "Region: %s"
+msgstr ""
+
+#. translators: %s: Username
+#: methods/openstack2.php:137
+msgid "username"
+msgstr ""
+
+#. translators: %s: Tenant (used in OpenStack storage)
+#: methods/openstack2.php:149
+msgctxt "\"tenant\" is a term used with OpenStack storage - Google for \"OpenStack tenant\" to get more help on its meaning"
+msgid "tenant"
+msgstr ""
+
+#. translators: %s: Authentication URI
+#: methods/openstack2.php:155
+msgid "authentication URI"
+msgstr ""
+
+#: methods/openstack2.php:285
+msgid "Get your access credentials from your OpenStack Swift provider, and then pick a container name to use for storage."
+msgstr ""
+
+#: methods/openstack2.php:286
+msgid "Authentication URI"
+msgstr ""
+
+#: methods/openstack2.php:287
+msgctxt "Keystone and swauth are technical terms which cannot be translated"
+msgid "This needs to be a v2 (Keystone) authentication URI; v1 (Swauth) is not supported."
+msgstr ""
+
+#: methods/openstack2.php:288
+msgid "Example: https://keystone.example.com/v2.0"
+msgstr ""
+
+#: methods/openstack2.php:289
+msgid "Tenant"
+msgstr ""
+
+#: methods/openstack2.php:291
+msgid "Follow this link for more information"
+msgstr ""
+
+#: methods/openstack2.php:292
+msgid "Example: my-project"
+msgstr ""
+
+#: methods/openstack2.php:293
+#: methods/s3.php:1589
+msgid "Region"
+msgstr ""
+
+#: methods/openstack2.php:294
+msgid "Leave this blank, and a default will be chosen."
+msgstr ""
+
+#: methods/openstack2.php:295
+msgid "Enter a region"
+msgstr ""
+
+#: methods/openstack2.php:300
+msgid "Container"
+msgstr ""
+
+#: methods/openstack2.php:301
+msgid "Example: backups"
+msgstr ""
+
+#: methods/s3.php:173
+msgid "No settings were found - please go to the Settings tab and check your settings"
+msgstr ""
+
+#: methods/s3.php:202
+#: methods/s3.php:203
+#: methods/s3.php:215
+#: methods/s3.php:216
+msgid "Error: Failed to initialise"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/s3.php:205
+#: methods/s3.php:218
+#, php-format
+msgid "%s Error: Failed to initialise"
+msgstr ""
+
+#. translators: %s: Required PHP module name
+#: methods/s3.php:372
+#, php-format
+msgid "The required %s PHP module is not installed - ask your web hosting company to enable it"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/s3.php:496
+#, php-format
+msgid "%s upload: getting uploadID for multipart upload failed - see log file for more details"
+msgstr ""
+
+#. translators: %s: File path
+#: methods/s3.php:519
+#, php-format
+msgid "error: file %s was shortened unexpectedly"
+msgstr ""
+
+#. translators: %s: Chunk number
+#: methods/s3.php:548
+#, php-format
+msgid "chunk %s: upload failed"
+msgstr ""
+
+#. translators: %s: Upload key
+#: methods/s3.php:565
+#, php-format
+msgid "upload (%s): re-assembly failed (see log for more details)"
+msgstr ""
+
+#. translators: 1: Service name, 2: Error message
+#: methods/s3.php:570
+#, php-format
+msgid "%1$s re-assembly error (%2$s): (see log file for more)"
+msgstr ""
+
+#. translators: %s: Bucket name
+#: methods/s3.php:594
+#: methods/s3.php:792
+#: methods/s3.php:910
+#, php-format
+msgid "Error: Failed to access bucket %s."
+msgstr ""
+
+#: methods/s3.php:595
+#: methods/s3.php:793
+#: methods/s3.php:887
+#: methods/s3.php:911
+#: methods/s3.php:940
+msgid "Check your permissions and credentials."
+msgstr ""
+
+#. translators: %s: File name
+#: methods/s3.php:886
+#: methods/s3.php:939
+#, php-format
+msgid "Error: Failed to download %s."
+msgstr ""
+
+#. translators: %s: FAQ category
+#: methods/s3.php:1036
+#, php-format
+msgid "Configure the %s endpoint and access style according to your storage provider."
+msgstr ""
+
+#. translators: %s: Remote storage name
+#: methods/s3.php:1227
+#, php-format
+msgid "Use the %s provider documentation to confirm the endpoint and access settings."
+msgstr ""
+
+#: methods/s3.php:1528
+msgid "API secret"
+msgstr ""
+
+#: methods/s3.php:1551
+msgid "Failure: No bucket details were given."
+msgstr ""
+
+#: methods/s3.php:1556
+msgid "Failure: No endpoint details were given."
+msgstr ""
+
+#: methods/s3.php:1596
+msgid "Failure: We could not successfully access or create such a bucket."
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/s3.php:1598
+#, php-format
+msgid "Please check your access credentials, and if those are correct then try another bucket name (as another %s user may already have taken your name)."
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/s3.php:1602
+#, php-format
+msgid "The error reported by %s was:"
+msgstr ""
+
+#. translators: %s: Service name
+#: methods/s3.php:1605
+#, php-format
+msgid "The AWS access key looks to be wrong (valid %s access keys begin with \"AK\")"
+msgstr ""
+
+#: methods/s3.php:1614
+#: methods/s3.php:1629
+msgid "Failure"
+msgstr ""
+
+#: methods/s3.php:1614
+#: methods/s3.php:1629
+msgid "We successfully accessed the bucket, but the attempt to create a file in it failed."
+msgstr ""
+
+#: methods/s3.php:1617
+msgid "We accessed the bucket, and were able to create files within it."
+msgstr ""
+
+#. translators: %s: Communication entity
+#: methods/s3.php:1621
+#, php-format
+msgid "The communication with %s was encrypted."
+msgstr ""
+
+#. translators: %s: Communication entity
+#: methods/s3.php:1624
+#, php-format
+msgid "The communication with %s was not encrypted."
+msgstr ""
+
+#: methods/s3.php:1629
+msgid "Please check your access credentials."
+msgstr ""
+
+#: methods/s3.php:1636
+msgid "Delete failed:"
+msgstr ""
+
+#: methods/s3generic.php:101
+msgid "S3 (Compatible)"
+msgstr ""
+
+#: methods/s3generic.php:246
+msgid "S3-compatible storage is offered by providers such as DigitalOcean Spaces, Linode Object Storage, Cloudian, and others."
+msgstr ""
+
+#: methods/s3generic.php:264
+msgid "Example: sgp1.digitaloceanspaces.com"
+msgstr ""
+
+#: methods/s3generic.php:265
+msgid "Bucket access style"
+msgstr ""
+
+#: methods/s3generic.php:266
+msgid "Path style puts the bucket in the URL path; virtual-host style uses it in the hostname."
+msgstr ""
+
+#: methods/s3generic.php:268
+msgid "Path style"
+msgstr ""
+
+#: methods/s3generic.php:269
+msgid "Virtual-host style"
+msgstr ""
+
+#: methods/s3generic.php:271
+msgid "Signature version"
+msgstr ""
+
+#: methods/s3generic.php:272
+msgid "Read more about signature version"
+msgstr ""
+
+#: methods/s3generic.php:272
+msgid "(Read more)"
+msgstr ""
+
+#: methods/s3generic.php:274
+msgid "SigV4"
+msgstr ""
+
+#: methods/s3generic.php:275
+msgid "SigV2"
+msgstr ""
+
+#: options.php:53
+msgid "(Nothing has been logged yet)"
+msgstr ""
+
+#: options.php:141
+msgid "BackupPlus Backups"
+msgstr ""
+
+#: options.php:283
+msgid "BackupPlus warning:"
+msgstr ""
+
+#: options.php:283
+msgid "This is a WordPress multi-site (a.k.a. network) installation."
+msgstr ""
+
+#: options.php:283
+msgid "Every blog admin who can modify plugin settings can back up and restore the entire network, including its data and passwords. Restrict access to these settings to trusted network administrators."
+msgstr ""
+
+#: restorer.php:390
+msgid "Your WordPress install has old directories from its state before you restored/migrated (technical information: these are suffixed with -old)."
+msgstr ""
+
+#: restorer.php:399
+#: restorer.php:401
+msgid "Check that the archive is complete and is a valid ZIP file, then try the restore again."
+msgstr ""
+
+#: restorer.php:567
+msgid "Skipping restoration of WordPress core when importing a single site into a multisite installation."
+msgstr ""
+
+#: restorer.php:567
+msgid "If you had anything necessary in your WordPress directory then you will need to re-add it manually from the zip file."
+msgstr ""
+
+#. translators: 1: Entity type, 2: File name
+#: restorer.php:579
+#, php-format
+msgid "Looking for %1$s archive: file name: %2$s"
+msgstr ""
+
+#: restorer.php:582
+msgid "Skipping: this archive was already restored."
+msgstr ""
+
+#: restorer.php:596
+msgid "Archive is expected to be size:"
+msgstr ""
+
+#: restorer.php:601
+msgid "file is size:"
+msgstr ""
+
+#: restorer.php:604
+msgid "The backup records do not contain information about the proper size of this file."
+msgstr ""
+
+#: restorer.php:607
+#: restorer.php:608
+msgid "Could not read one of the files for restoration"
+msgstr ""
+
+#: restorer.php:674
+msgid "Final checks"
+msgstr ""
+
+#: restorer.php:765
+msgid "Error message"
+msgstr ""
+
+#: restorer.php:884
+msgid "BackupPlus is not able to directly restore this kind of entity."
+msgstr ""
+
+#: restorer.php:884
+msgid "It must be restored manually."
+msgstr ""
+
+#: restorer.php:885
+msgid "Backup file not available."
+msgstr ""
+
+#: restorer.php:886
+msgid "Copying this entity failed."
+msgstr ""
+
+#: restorer.php:887
+msgid "Unpacking backup..."
+msgstr ""
+
+#: restorer.php:888
+msgid "Decrypting database (can take a while)..."
+msgstr ""
+
+#: restorer.php:889
+msgid "Database successfully decrypted."
+msgstr ""
+
+#: restorer.php:890
+msgid "Moving old data out of the way..."
+msgstr ""
+
+#: restorer.php:891
+msgid "Moving unpacked backup into place..."
+msgstr ""
+
+#: restorer.php:892
+msgid "Restoring the database (on a large site this can take a long time - if it times out (which can happen if your web hosting company has configured your hosting to limit resources) then you should use a different method, such as phpMyAdmin)..."
+msgstr ""
+
+#: restorer.php:893
+msgid "Cleaning up rubbish..."
+msgstr ""
+
+#: restorer.php:894
+msgid "Could not move old files out of the way."
+msgstr ""
+
+#: restorer.php:894
+msgid "You should check the file ownerships and permissions in your WordPress installation"
+msgstr ""
+
+#: restorer.php:895
+msgid "Could not delete old path."
+msgstr ""
+
+#: restorer.php:896
+msgid "Could not move new files into place."
+msgstr ""
+
+#: restorer.php:896
+msgid "Check your wp-content/upgrade folder."
+msgstr ""
+
+#: restorer.php:897
+msgid "Could not move the files into place."
+msgstr ""
+
+#: restorer.php:897
+msgid "Check your file permissions."
+msgstr ""
+
+#: restorer.php:898
+msgid "Failed to delete working directory after restoring."
+msgstr ""
+
+#: restorer.php:900
+msgid "Failed to unpack the archive"
+msgstr ""
+
+#: restorer.php:901
+msgid "Failed to read the manifest file from backup."
+msgstr ""
+
+#: restorer.php:902
+msgid "Failed to find a manifest file in the backup."
+msgstr ""
+
+#: restorer.php:903
+msgid "Failed to read from the working directory."
+msgstr ""
+
+#: restorer.php:1185
+msgid "Failed to create a temporary directory"
+msgstr ""
+
+#: restorer.php:1201
+msgid "Failed to write out the decrypted database to the filesystem"
+msgstr ""
+
+#: restorer.php:1285
+msgid "The directory does not exist, and the attempt to create it failed"
+msgstr ""
+
+#: restorer.php:1288
+msgid "The directory does not exist"
+msgstr ""
+
+#. translators: 1: String 'folder', 2: Upgrade folder path
+#. translators: 1: String 'file', 2: Upgrade folder path with random file name
+#: restorer.php:1585
+#: restorer.php:1598
+#, php-format
+msgid "BackupPlus needed to create a %1$s in your content directory, but failed - please check your file permissions and enable the access (%2$s)"
+msgstr ""
+
+#: restorer.php:1586
+msgid "folder"
+msgstr ""
+
+#: restorer.php:1599
+msgid "file"
+msgstr ""
+
+#. translators: %s: Old path
+#: restorer.php:1618
+#, php-format
+msgid "Existing unremoved folders from a previous restore exist (please use the \"Delete old folders\" button to delete them before trying again): %s"
+msgstr ""
+
+#: restorer.php:1626
+msgid "This version of BackupPlus does not know how to handle this type of foreign backup"
+msgstr ""
+
+#: restorer.php:1743
+#: restorer.php:1792
+msgid "The WordPress content folder (wp-content) was not found in this zip file."
+msgstr ""
+
+#: restorer.php:1884
+msgid "Files found:"
+msgstr ""
+
+#: restorer.php:2394
+msgid "Please supply the requested information, and then continue."
+msgstr ""
+
+#. translators: %s: Last error and last query information from $wpdb
+#: restorer.php:2465
+#, php-format
+msgid "An error occurred while attempting to retrieve the MySQL global log_bin_trust_function_creators variable %s"
+msgstr ""
+
+#. translators: %s: Last error and last query information from $wpdb
+#: restorer.php:2473
+#, php-format
+msgid "An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s"
+msgstr ""
+
+#: restorer.php:2509
+#: restorer.php:3191
+#: restorer.php:3375
+msgid "Old table prefix:"
+msgstr ""
+
+#. translators: %s: Table engine name
+#: restorer.php:2602
+#, php-format
+msgid "Requested table engine (%s) is not present - changing to MyISAM."
+msgstr ""
+
+#. translators: 1: Requested character set, 2: Fallback character set.
+#. translators: 1: Requested charset, 2: Fallback charset
+#: restorer.php:2650
+#: restorer.php:3495
+#, php-format
+msgid "Requested character set (%1$s) is not present - changing to %2$s."
+msgstr ""
+
+#: restorer.php:2662
+msgid "Found and replaced existing table foreign key constraints as the table prefix has changed."
+msgstr ""
+
+#. translators: 1: Table collation name that does not exist, 2: Table collation name to change to
+#: restorer.php:2707
+#, php-format
+msgid "Requested table collation (%1$s) is not present - changing to %2$s."
+msgid_plural "Requested table collations (%1$s) are not present - changing to %2$s."
+msgstr[0] ""
+
+#. translators: %s: Table engine and table name
+#: restorer.php:2710
+#, php-format
+msgid "Processing table (%s)"
+msgstr ""
+
+#: restorer.php:2714
+msgid "will restore as:"
+msgstr ""
+
+#: restorer.php:2868
+msgid "Warning: PHP safe_mode is active on your server."
+msgstr ""
+
+#: restorer.php:2868
+msgid "Timeouts are much more likely."
+msgstr ""
+
+#: restorer.php:2868
+msgid "If these happen, then you will need to manually restore the file via phpMyAdmin or another method."
+msgstr ""
+
+#: restorer.php:2891
+msgid "Failed to find database file"
+msgstr ""
+
+#: restorer.php:2912
+msgid "Failed to open database file"
+msgstr ""
+
+#: restorer.php:3031
+#: restorer.php:3080
+msgid "Your database user does not have permission to drop tables"
+msgstr ""
+
+#: restorer.php:3034
+msgid "Your database user does not have permission to create tables."
+msgstr ""
+
+#: restorer.php:3034
+msgid "We will attempt to restore by simply emptying the tables; this should work as long as a) you are restoring from a WordPress version with the same database structure, and b) Your imported database does not contain any tables which are not already present on the importing site."
+msgstr ""
+
+#: restorer.php:3086
+msgid "Your database user does not have permission to drop tables."
+msgstr ""
+
+#. translators: %s: Error message
+#: restorer.php:3088
+#, php-format
+msgid "We will attempt to restore by simply emptying the tables; this should work as long as you are restoring from a WordPress version with the same database structure (%s)"
+msgstr ""
+
+#. translators: %s: Old site
+#: restorer.php:3161
+#, php-format
+msgid "Backup of: %s"
+msgstr ""
+
+#: restorer.php:3168
+msgid "Backup created by:"
+msgstr ""
+
+#: restorer.php:3173
+msgid "Site home:"
+msgstr ""
+
+#: restorer.php:3179
+msgid "Content URL:"
+msgstr ""
+
+#: restorer.php:3184
+msgid "Uploads URL:"
+msgstr ""
+
+#: restorer.php:3194
+msgid "Skipped tables:"
+msgstr ""
+
+#: restorer.php:3220
+msgid "Old ABSPATH:"
+msgstr ""
+
+#: restorer.php:3308
+msgid "Split line to avoid exceeding maximum packet size"
+msgstr ""
+
+#. translators: %s: translated "INSERT (options)"
+#. translators: %s: String 'INSERT (options)'
+#. translators: %s: String 'CREATE TABLE'
+#. translators: %s: String 'SET NAMES'
+#: restorer.php:3345
+#: restorer.php:4117
+#: restorer.php:4194
+#: restorer.php:4216
+#, php-format
+msgid "An error occurred on the first %s command - aborting run"
+msgstr ""
+
+#. translators: 1: Charset found, 2: Changed charset to
+#: restorer.php:3488
+#, php-format
+msgid "Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset()."
+msgstr ""
+
+#. translators: %s: SQL line
+#: restorer.php:3720
+#, php-format
+msgid "SQL remained at the end of the backup that could not be executed: %s"
+msgstr ""
+
+#. translators: %s: Table name to be excluded (could be users or usermeta)
+#: restorer.php:3816
+#, php-format
+msgid "Skipping table %s: this table will not be restored"
+msgstr ""
+
+#. translators: %s: Table name to be excluded (user's chosen)
+#: restorer.php:3819
+#, php-format
+msgid "Skipping table %s: user has chosen not to restore this table"
+msgstr ""
+
+#. translators: 1: Table name, 2: Last table name
+#: restorer.php:3825
+#, php-format
+msgid "Skipping table %1$s: already restored on a prior run; next table to restore: %2$s"
+msgstr ""
+
+#. translators: %s: SQL line
+#: restorer.php:3987
+#, php-format
+msgid "An SQL line that is larger than the maximum packet size and cannot be split was found; this line will not be processed, but will be dropped: %s"
+msgstr ""
+
+#. translators: %s: Error message
+#: restorer.php:4161
+#, php-format
+msgctxt "The user is being told the number of times an error has happened, e.g. An error (27) occurred"
+msgid "An error (%s) occurred:"
+msgstr ""
+
+#: restorer.php:4181
+msgid "The Database connection has been closed and cannot be reopened."
+msgstr ""
+
+#: restorer.php:4209
+msgid "This problem is caused by trying to restore a database on a very old MySQL version that is incompatible with the source database."
+msgstr ""
+
+#. translators: %s: String '5.5'
+#: restorer.php:4211
+#, php-format
+msgid "This database needs to be deployed on MySQL version %s or later."
+msgstr ""
+
+#. translators: %s: The character set
+#: restorer.php:4218
+#, php-format
+msgid "To use this backup, your database server needs to support the %s character set."
+msgstr ""
+
+#: restorer.php:4231
+msgid "Too many database errors have occurred - aborting"
+msgstr ""
+
+#. translators: %s: String 'option' for table
+#. translators: %s: String 'usermeta' for table
+#: restorer.php:4361
+#: restorer.php:4465
+#, php-format
+msgid "Table prefix has changed: changing %s table field(s) accordingly:"
+msgstr ""
+
+#: templates/deactivation-popup-modal.php:5
+msgid "Deactivating stops scheduled backups and all other plugin features, but does not delete any stored backup sets."
+msgstr ""
+
+#: templates/deactivation-popup-modal.php:14
+msgid "Remove plugin settings"
+msgstr ""
+
+#: templates/deactivation-popup-modal.php:16
+msgid "Permanently deletes all BackupPlus settings and saved data, but not backup sets."
+msgstr ""
+
+#: templates/deactivation-popup-modal.php:17
+msgid "The data will only be deleted if the plugin is removed."
+msgstr ""
+
+#: templates/deactivation-popup-modal.php:18
+msgid "You still have a chance to undo your decision before the deletion happens."
+msgstr ""
+
+#: templates/wp-admin/advanced/advanced-tools.php:6
+msgid "Unless you have a problem, you can completely ignore everything here."
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:7
+#: templates/wp-admin/advanced/tools-menu.php:22
+msgid "Cron events"
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:8
+msgid "Here, you can view the scheduled tasks set up by the BackupPlus plugin."
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:8
+msgid "These cron jobs are responsible for automating various backup processes at specified intervals."
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:8
+msgid "Each schedule includes details like the hook name, the interval, and the next scheduled run time."
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:14
+msgid "Hook name"
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:15
+msgid "Interval"
+msgstr ""
+
+#: templates/wp-admin/advanced/cron-events.php:16
+msgid "Next run"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:4
+msgid "Search for table"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:8
+msgid "Total Size"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:17
+msgid "Reducing your database size with WP-Optimize helps to maintain a fast, efficient, and user-friendly website."
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:17
+msgid "Go here for more information."
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:22
+msgid "Clear"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:23
+msgid "Refresh"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:29
+msgid "Table name"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:30
+msgid "Records"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:31
+msgid "Data size"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:32
+msgid "Index size"
+msgstr ""
+
+#: templates/wp-admin/advanced/db-size.php:33
+msgid "Type"
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:5
+#: templates/wp-admin/advanced/tools-menu.php:26
+msgid "Export / import settings"
+msgstr ""
+
+#. translators: %s: "including any passwords" (wrapped in <strong> tags)
+#: templates/wp-admin/advanced/export-settings.php:10
+#, php-format
+msgid "Here, you can export your BackupPlus settings (%s), either for using on another site, or to keep as a backup."
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:11
+msgid "including any passwords"
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:12
+msgid "This tool will export what is currently in the settings tab."
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:15
+msgid "Export settings"
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:18
+msgid "You can also import previously-exported settings."
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:18
+msgid "This tool will replace all your saved settings."
+msgstr ""
+
+#: templates/wp-admin/advanced/export-settings.php:21
+msgid "Import settings"
+msgstr ""
+
+#: templates/wp-admin/advanced/site-info.php:5
+#: templates/wp-admin/advanced/tools-menu.php:6
+msgid "Site information"
+msgstr ""
+
+#: templates/wp-admin/advanced/tools-menu.php:14
+msgid "Site size"
+msgstr ""
+
+#: templates/wp-admin/advanced/tools-menu.php:18
+msgid "Database size"
+msgstr ""
+
+#: templates/wp-admin/advanced/tools-menu.php:30
+#: templates/wp-admin/advanced/wipe-settings.php:5
+#: templates/wp-admin/advanced/wipe-settings.php:10
+msgid "Wipe settings"
+msgstr ""
+
+#: templates/wp-admin/advanced/total-size.php:3
+msgid "Total (uncompressed) on-disk data:"
+msgstr ""
+
+#: templates/wp-admin/advanced/total-size.php:6
+msgid "N.B. This count is based upon what was, or was not, excluded the last time you saved the options."
+msgstr ""
+
+#: templates/wp-admin/advanced/total-size.php:16
+msgid "count"
+msgstr ""
+
+#: templates/wp-admin/advanced/wipe-settings.php:6
+msgid "This button will delete all BackupPlus settings and progress information for in-progress backups (but not any of your existing backups from your cloud storage)."
+msgstr ""
+
+#: templates/wp-admin/advanced/wipe-settings.php:6
+msgid "You will then need to enter all your settings again."
+msgstr ""
+
+#: templates/wp-admin/advanced/wipe-settings.php:6
+msgid "You can also do this before deactivating/deinstalling BackupPlus if you wish."
+msgstr ""
+
+#: templates/wp-admin/advanced/wipe-settings.php:10
+msgid "This will delete all your BackupPlus settings - are you sure you want to do this?"
+msgstr ""
+
+#: templates/wp-admin/notices/autobackup-notice.php:8
+#: templates/wp-admin/notices/horizontal-notice.php:10
+#: templates/wp-admin/notices/horizontal-notice.php:40
+msgid "notice image"
+msgstr ""
+
+#: templates/wp-admin/notices/button-label.php:5
+#: templates/wp-admin/notices/button-label.php:9
+msgid "Learn more"
+msgstr ""
+
+#: templates/wp-admin/notices/button-label.php:7
+msgid "Sign up"
+msgstr ""
+
+#: templates/wp-admin/notices/button-label.php:11
+msgid "Go there"
+msgstr ""
+
+#: templates/wp-admin/notices/button-label.php:13
+msgid "Read more"
+msgstr ""
+
+#: templates/wp-admin/notices/horizontal-notice.php:20
+msgid "Ok, you deserve it"
+msgstr ""
+
+#: templates/wp-admin/notices/horizontal-notice.php:24
+msgid "Maybe later"
+msgstr ""
+
+#: templates/wp-admin/notices/horizontal-notice.php:27
+msgid "Never"
+msgstr ""
+
+#. translators: %d: Number of months
+#: templates/wp-admin/notices/thanks-for-using-main-dash.php:6
+#, php-format
+msgid "Dismiss (for %d months)"
+msgstr ""
+
+#: templates/wp-admin/notices/thanks-for-using-main-dash.php:10
+msgid "Thank you for installing BackupPlus!"
+msgstr ""
+
+#: templates/wp-admin/notices/thanks-for-using-main-dash.php:11
+msgid "BackupPlus is a GPLv3 fork of UpdraftPlus. It retains compatibility with existing UpdraftPlus backup sets."
+msgstr ""
+
+#: templates/wp-admin/notices/thanks-for-using-main-dash.php:12
+msgid "Open BackupPlus settings"
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:6
+msgid "All WordPress tables will be backed up."
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:10
+msgid "Take a new backup"
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:11
+msgid "Take an incremental backup"
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:16
+msgid "Incremental backups are not enabled in this installation."
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:23
+msgid "Include your database in the backup"
+msgstr ""
+
+#: templates/wp-admin/settings/backupnow-modal.php:44
+msgid "Your saved settings also affect what is backed up - e.g. files excluded."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:10
+msgid "Delete backup set"
+msgstr ""
+
+#. translators: %s: Item to be removed
+#: templates/wp-admin/settings/delete-and-restore-modals.php:15
+#: templates/wp-admin/settings/delete-and-restore-modals.php:21
+#, php-format
+msgid "Are you sure that you wish to remove %s from BackupPlus?"
+msgstr ""
+
+#. translators: %s: Item to be removed
+#: templates/wp-admin/settings/delete-and-restore-modals.php:15
+msgid "this backup set"
+msgstr ""
+
+#. translators: %s: Item to be removed
+#: templates/wp-admin/settings/delete-and-restore-modals.php:21
+msgid "these backup sets"
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:31
+msgid "Also delete from remote storage"
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:38
+msgid "Restore files from"
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:40
+msgid "Restore backup"
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:44
+msgid "Retrieving (if necessary) and preparing backup files..."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:52
+msgid "Restoring will replace this site's themes, plugins, uploads, database and/or other content directories (according to what is contained in the backup set, and your selection)."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:52
+msgid "Choose the components to restore"
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:53
+msgid "Before restoring, confirm that you have a current backup and enough disk space for the restored files."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:69
+msgid "Your web server has PHP's so-called safe_mode active."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:69
+msgid "This makes time-outs much more likely. Turn it off if possible, or restore only one entity at a time."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:72
+msgid "Choose the components to restore:"
+msgstr ""
+
+#. translators: %s: Entity that cannot be restored
+#: templates/wp-admin/settings/delete-and-restore-modals.php:86
+#, php-format
+msgid "The following entity cannot be restored automatically: \"%s\"."
+msgstr ""
+
+#: templates/wp-admin/settings/delete-and-restore-modals.php:87
+msgid "You will need to restore it manually."
+msgstr ""
+
+#. translators: %s: Restoration type
+#: templates/wp-admin/settings/delete-and-restore-modals.php:98
+#, php-format
+msgid "%s restoration options:"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:27
+#: templates/wp-admin/settings/tab-backups.php:11
+msgid "Your WordPress installation has a problem with outputting extra whitespace."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:27
+#: templates/wp-admin/settings/tab-backups.php:11
+msgid "This can corrupt backups that you download from here. Check for output before or after PHP opening and closing tags in plugins and themes."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:45
+#: templates/wp-admin/settings/tab-backups.php:35
+msgid "More tasks:"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:49
+#: templates/wp-admin/settings/tab-backups.php:39
+msgid "Upload backup files"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:53
+#: templates/wp-admin/settings/tab-backups.php:43
+msgid "Press here to look inside your BackupPlus directory (in your web hosting space) for any new backup sets that you have uploaded."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:53
+#: templates/wp-admin/settings/tab-backups.php:43
+msgid "The location of this directory is set in the expert settings, in the Settings tab."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:53
+#: templates/wp-admin/settings/tab-backups.php:43
+msgid "Rescan local folder for new backup sets"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:54
+#: templates/wp-admin/settings/tab-backups.php:44
+msgid "Press here to look inside your remote storage methods for any existing backup sets (from any site, if they are stored in the same folder)."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:57
+#: templates/wp-admin/settings/tab-backups.php:47
+msgid "Opera web browser"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:57
+#: templates/wp-admin/settings/tab-backups.php:47
+msgid "If you are using this, then turn Turbo/Road mode off."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:66
+#: templates/wp-admin/settings/tab-backups.php:54
+msgid "BackupPlus - Upload backup files"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:67
+#: templates/wp-admin/settings/tab-backups.php:55
+msgid "Upload files into BackupPlus."
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:67
+#: templates/wp-admin/settings/tab-backups.php:55
+msgid "Or, you can place them manually into your BackupPlus directory (usually wp-content/backupplus), e.g. via FTP, and then use the \"rescan\" link above."
+msgstr ""
+
+#. translators: 1: Software name (WordPress), 2: Required version (3.3)
+#. translators: %1$s: WordPress, %2$s: Version number
+#. translators: %1$s: WordPress  %2$s: version number
+#: templates/wp-admin/settings/downloading-and-restoring.php:71
+#: templates/wp-admin/settings/form-contents.php:178
+#: templates/wp-admin/settings/tab-backups.php:61
+#, php-format
+msgid "This feature requires %1$s version %2$s or later"
+msgstr ""
+
+#: templates/wp-admin/settings/downloading-and-restoring.php:77
+msgid "Drop backup files here"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:4
+msgid "Exclude files/directories"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:8
+msgid "Select a way to exclude files or directories from the backup"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:11
+#: templates/wp-admin/settings/exclude-modal.php:27
+msgid "File/directory"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:14
+#: templates/wp-admin/settings/exclude-modal.php:49
+#: templates/wp-admin/settings/exclude-modal.php:51
+msgid "All files with this extension"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:17
+msgid "All files beginning with given characters"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:20
+msgid "Files/Directories containing the given characters in their names"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:33
+msgid "Select a file/folder which you would like to exclude"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:52
+msgid "Type an extension like zip"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:61
+#: templates/wp-admin/settings/exclude-modal.php:63
+msgid "All files beginning with these characters"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:64
+msgid "Type a file prefix"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:73
+msgid "All files/directories containing the given characters in their names"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:78
+msgid "Select the folder in which the files or sub-directories you would like to exclude are located"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:85
+msgid "All files/directories containing "
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:87
+msgid "these characters"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:89
+msgid "at the beginning of their names"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:90
+msgid "anywhere in their names"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:91
+msgid "at the end of their names"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-modal.php:95
+msgid "Add exclusion rule"
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-settings-modal/exclude-panel-heading.php:6
+msgid "Back..."
+msgstr ""
+
+#: templates/wp-admin/settings/exclude-settings-modal/exclude-panel-submit.php:5
+#: templates/wp-admin/settings/file-backup-exclude.php:22
+msgid "Add an exclusion rule"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:20
+#: templates/wp-admin/settings/existing-backups-table.php:62
+msgid "Backup date"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:21
+#: templates/wp-admin/settings/existing-backups-table.php:97
+msgid "Backup data (click to download)"
+msgstr ""
+
+#. translators: %s: Remote storage name
+#: templates/wp-admin/settings/existing-backups-table.php:87
+#, php-format
+msgid "Remote storage: %s"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:142
+msgid "Show more backups..."
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:142
+msgid "Show all backups..."
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:149
+msgid "Actions upon selected backups"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:150
+msgid "Delete selected backups"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:151
+msgid "Select all backups"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:151
+msgid "Select all"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:152
+msgid "Deselect all backups"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:152
+msgid "Deselect"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:153
+msgid "Use ctrl / cmd + press to select several items, or ctrl / cmd + shift + press to select all in between"
+msgstr ""
+
+#: templates/wp-admin/settings/existing-backups-table.php:156
+msgid "Please allow time for the communications with the remote storage to complete."
+msgstr ""
+
+#: templates/wp-admin/settings/file-backup-exclude.php:11
+msgid "Edit"
+msgstr ""
+
+#: templates/wp-admin/settings/file-backup-exclude.php:11
+msgid "Confirm change"
+msgstr ""
+
+#. translators: %s: Backup entity
+#: templates/wp-admin/settings/file-backup-exclude.php:20
+#, php-format
+msgid "Add an exclusion rule for %s"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:20
+msgid "Files backup schedule"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:23
+msgid "Files backup interval"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:42
+#: templates/wp-admin/settings/form-contents.php:80
+msgid "and retain this many scheduled backups"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:42
+msgid "Retain this many scheduled file backups"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:58
+msgid "Database backup schedule"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:62
+msgid "Database backup interval"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:80
+msgid "Retain this many scheduled database backups"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:91
+msgid "Sending Your Backup To Remote Storage"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:105
+msgid "Select your preferred remote storage location"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:105
+msgid "(tap on an icon to select or unselect)"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:129
+msgid "If you choose no remote storage, then the backups remain on the web-server."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:129
+msgid "This is not recommended (unless you plan to manually copy them to your computer), as losing the web-server would mean losing both your website and the backups in one event."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:135
+msgid "File Options"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:139
+msgid "Include in files backup"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:142
+msgid "This includes all WordPress file directories. WordPress core files can be downloaded again from WordPress.org."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:147
+msgid "Database Options"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:156
+msgid "Database encryption phrase"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:170
+msgid "You can manually decrypt an encrypted database here."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:173
+msgid "Manually decrypt a database backup file"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:185
+msgid "Drop encrypted database files (db.gz.crypt files) here to upload them for decryption"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:186
+msgctxt "Uploader: Drop db.gz.crypt files here to upload them for decryption - or - Select Files"
+msgid "or"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:187
+msgid "Select Files"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:188
+msgid "First, enter the decryption key"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:229
+msgid "Backup more databases"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:239
+msgid "Reporting"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:251
+msgid "Email"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:268
+msgid "Check this box to have a basic report sent to"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:268
+#: templates/wp-admin/settings/form-contents.php:271
+msgid "your site's admin address"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:271
+msgid "Your email backup and a report will be sent to"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:297
+msgid "Advanced / Debugging Settings"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:301
+msgid "Expert settings"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:302
+msgid "Show expert settings"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:302
+msgid "open this to show some further options; don't bother with this unless you have a problem or are curious."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:312
+msgid "Debug mode"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:313
+msgid "Check this to receive more information and emails on the backup process - useful if something is going wrong."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:313
+msgid "This will also cause debugging output from all plugins to be shown upon this screen - please do not be surprised to see these."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:317
+msgid "Split archives every:"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:321
+msgid "BackupPlus will split up backup archives when they exceed this file size."
+msgstr ""
+
+#. translators: %s: The default value of the backup split size
+#: templates/wp-admin/settings/form-contents.php:323
+#, php-format
+msgid "The default value is %s megabytes."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:324
+msgid "Be careful to leave some margin if your web-server has a hard size limit (e.g. the 2 GB / 2048 MB limit on some 32-bit servers/file systems)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:325
+msgid "The higher the value, the more server resources are required to create the archive."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:331
+msgid "Delete local backup"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:332
+msgid "Check this to delete any superfluous backup files from your server after the backup run finishes (i.e. Whilst this option is unchecked, files sent to remote storage will also remain stored locally, and no locally stored files will be deleted in response to any retention rules)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:336
+msgid "Backup directory"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:346
+msgid "This is where BackupPlus will write the zip files it creates initially."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:346
+msgid "This directory must be writable by your web server."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:346
+msgid "It is relative to your content directory (which by default is called wp-content)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:346
+msgid "Do not place it inside your uploads or plugins directory, as that will cause recursion (backups of backups of backups of...)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:352
+msgid "Use the server's SSL certificates"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:353
+msgid "By default BackupPlus uses its own store of SSL certificates to verify the identity of remote sites (i.e. to make sure it is talking to the real Dropbox, Amazon S3, etc., and not an attacker)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:353
+msgid "We keep these up to date."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:353
+msgid "However, if you get an SSL error, then choosing this option (which causes BackupPlus to use your web server's collection instead) may help."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:357
+msgid "Do not verify SSL certificates"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:358
+msgid "Choosing this option lowers your security by stopping BackupPlus from verifying the identity of encrypted sites that it connects to (e.g. Dropbox, Google Drive)."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:358
+msgid "It means that BackupPlus will be using SSL only for encryption of traffic, and not for authentication."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:358
+msgid "Note that not all cloud backup methods are necessarily using SSL authentication."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:362
+msgid "Disable SSL entirely where possible"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:363
+msgid "Choosing this option lowers your security by stopping BackupPlus from using SSL for authentication and encrypted transport at all, where possible."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:363
+msgid "Note that some cloud storage providers do not allow this (e.g. Dropbox), so with those providers this setting will have no effect."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:363
+msgid "For certificate errors, check that your server has an up-to-date CA certificate bundle."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:367
+msgid "Automatic updates"
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:368
+msgid "Ask WordPress to automatically update BackupPlus when it finds an available update."
+msgstr ""
+
+#: templates/wp-admin/settings/form-contents.php:368
+msgid "Read more about Easy Updates Manager"
+msgstr ""
+
+#: templates/wp-admin/settings/header.php:9
+msgid "Version"
+msgstr ""
+
+#: templates/wp-admin/settings/tab-backups.php:71
+msgid "Drop your backup files"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:6
+msgid "JavaScript warning"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:6
+msgid "This admin interface uses JavaScript heavily."
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:6
+msgid "You either need to activate it within your browser, or to use a JavaScript-capable browser."
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:19
+msgid "Next scheduled backups"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:43
+msgid "Time now"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:79
+msgid "Remote storage authentication"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:80
+msgid "You have selected a remote storage option which has an authorization step to complete:"
+msgstr ""
+
+#: templates/wp-admin/settings/take-backup.php:85
+msgid "Perform a backup"
+msgstr ""
+
+#: templates/wp-admin/settings/upload-backups-modal.php:5
+msgid "Upload backup"
+msgstr ""
+
+#: templates/wp-admin/settings/upload-backups-modal.php:6
+msgid "Select the remote storage destinations you want to upload this backup set to"
+msgstr ""
+
+#: templates/wp-admin/settings/upload-backups-modal.php:19
+msgid "already uploaded"
+msgstr ""
+
+#: includes/class-filesystem-functions.php:129
+msgid "This is a count of the contents of your BackupPlus directory"
+msgstr ""
+
+#: restorer.php:3226
+msgid "Plugin slug from backup:"
+msgstr ""
+
+#: includes/class-restore-search-replace.php:401
+msgid "you will want to use the search and replace option below to update the site address in the database."
+msgstr ""
+
+#: includes/class-restore-search-replace.php:432
+msgid "Search and replace site location in the database"
+msgstr ""
+
+#: class-backupplus.php:5028
+#: restorer.php:3201
+msgid "Restoring a single-site backup into a WordPress multisite network is not supported."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:116
+msgid "This backup set was not recorded as created by this WordPress installation."
+msgstr ""
+
+#: includes/class-wpadmin-commands.php:116
+msgid "Make sure it is intended for this website before restoring it."
+msgstr ""

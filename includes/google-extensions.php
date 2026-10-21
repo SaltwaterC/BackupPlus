@@ -6,11 +6,11 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 
 // Unfortunately, since the variables we want to access are private, not protected, we can't just extend the class. Instead, we have to clone it, and add these methods into our cloned copy.
 
-class UpdraftPlus_Google_Http_MediaFileUpload extends Google_Http_MediaFileUpload {
-	public function updraftplus_setResumeUri($resumeUri) { $this->resumeUri = $resumeUri; }
-	public function updraftplus_setProgress($progress) { $this->progress = $progress; }
+class BackupPlus_Google_Http_MediaFileUpload extends Google_Http_MediaFileUpload {
+	public function backupplus_setResumeUri($resumeUri) { $this->resumeUri = $resumeUri; }
+	public function backupplus_setProgress($progress) { $this->progress = $progress; }
 	// N.B. a public method getResumeUri already exists - and does something completely different
-	public function updraftplus_getResumeUri() { return empty($this->resumeUri) ? '' : $this->resumeUri; }
+	public function backupplus_getResumeUri() { return empty($this->resumeUri) ? '' : $this->resumeUri; }
 }
 */
 
@@ -38,13 +38,13 @@ if (!class_exists('UDP_Google_Client')) {
  * Manage large file uploads, which may be media but can be any type
  * of sizable data.
  */
-class UpdraftPlus_Google_Http_MediaFileUpload
+class BackupPlus_Google_Http_MediaFileUpload
 {
 
-public function updraftplus_setResumeUri($resumeUri) { $this->resumeUri = $resumeUri; }
-public function updraftplus_setProgress($progress) { $this->progress = $progress; }
+public function backupplus_setResumeUri($resumeUri) { $this->resumeUri = $resumeUri; }
+public function backupplus_setProgress($progress) { $this->progress = $progress; }
 //N.B. a public method getResumeUri already exists - and does something completely different
-public function updraftplus_getResumeUri() { return $this->resumeUri; }
+public function backupplus_getResumeUri() { return $this->resumeUri; }
 
   const UPLOAD_MEDIA_TYPE = 'media';
   const UPLOAD_MULTIPART_TYPE = 'multipart';

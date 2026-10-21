@@ -3,7 +3,7 @@
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-class UpdraftPlus_Database_Utility {
+class BackupPlus_Database_Utility {
 
 	/**
 	 * Indicated which database is being used
@@ -66,7 +66,7 @@ class UpdraftPlus_Database_Utility {
 	
 		if ('wp' != self::$whichdb) return strcmp($a, $b);
 
-		global $updraftplus;
+		global $backupplus;
 		if ($a == $b) return 0;
 		$our_table_prefix = self::$table_prefix_raw;
 		if ($a == $our_table_prefix.'options') return -1;
@@ -85,13 +85,13 @@ class UpdraftPlus_Database_Utility {
 		try {
 			$core_tables = array_merge(self::$dbhandle->tables, self::$dbhandle->global_tables, self::$dbhandle->ms_global_tables);
 		} catch (Exception $e) {
-			$updraftplus->log($e->getMessage());
+			$backupplus->log($e->getMessage());
 		}
 		
 		if (empty($core_tables)) $core_tables = array('terms', 'term_taxonomy', 'termmeta', 'term_relationships', 'commentmeta', 'comments', 'links', 'postmeta', 'posts', 'site', 'sitemeta', 'blogs', 'blogversions', 'blogmeta');
 
-		$na = UpdraftPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $a);
-		$nb = UpdraftPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $b);
+		$na = BackupPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $a);
+		$nb = BackupPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $b);
 		if (in_array($na, $core_tables) && !in_array($nb, $core_tables)) return -1;
 		if (!in_array($na, $core_tables) && in_array($nb, $core_tables)) return 1;
 		return strcmp($a, $b);
@@ -110,7 +110,7 @@ class UpdraftPlus_Database_Utility {
 		$wpdb = (null === $wpdb_obj) ? $GLOBALS['wpdb'] : $wpdb_obj;
 	
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DESCRIBE is a DDL command that cannot be parameterized; $table is a SQL identifier sanitized using backquote().
-		$table_structure = $wpdb->get_results("DESCRIBE ".UpdraftPlus_Manipulation_Functions::backquote($table));
+		$table_structure = $wpdb->get_results("DESCRIBE ".BackupPlus_Manipulation_Functions::backquote($table));
 		if (!$table_structure) return false;
 		
 		$primary_key_columns_found = 0;
@@ -361,7 +361,7 @@ class UpdraftPlus_Database_Utility {
 	 */
 	public static function set_sql_mode($modes = array(), $remove_modes = array(), $db_handle = null) {
 
-		global $updraftplus, $wpdb;
+		global $backupplus, $wpdb;
 		
 		$wpdb_handle_if_used = (null !== $db_handle && is_a($db_handle, 'WPDB')) ? $db_handle : $wpdb;
 		
@@ -379,7 +379,7 @@ class UpdraftPlus_Database_Utility {
 		$initial_modes = self::get_sql_modes();
 		
 		if (!is_array($initial_modes)) {
-			$updraftplus->log("Couldn't get the sql_mode value (".serialize($initial_modes)."); will not attempt any adjustment");
+			$backupplus->log("Couldn't get the sql_mode value (".serialize($initial_modes)."); will not attempt any adjustment");
 			return null;
 		}
 
@@ -405,11 +405,11 @@ class UpdraftPlus_Database_Utility {
 		if (is_array($after_modes)) {
 			$remaining_unwanted_modes = array_intersect($after_modes, $unwanted_modes);
 			if (empty($remaining_unwanted_modes)) {
-				$updraftplus->log("SQL compatibility mode is now: ".implode(',', $after_modes));
+				$backupplus->log("SQL compatibility mode is now: ".implode(',', $after_modes));
 				return true;
 			}
 			
-			$updraftplus->log("SQL compatibility mode has unwanted modes remaining: ".implode(', ', $unwanted_modes)." members present in: ".implode(', ', $after_modes));
+			$backupplus->log("SQL compatibility mode has unwanted modes remaining: ".implode(', ', $unwanted_modes)." members present in: ".implode(', ', $after_modes));
 			return false;
 		}
 		
@@ -618,7 +618,7 @@ class UpdraftPlus_Database_Utility {
 
 		global $table_prefix, $wpdb;
 
-		$random_table_name = $table_prefix.'updraft_tmp_'.wp_rand(0, 9999999).md5(microtime(true));
+		$random_table_name = $table_prefix.'backupplus_tmp_'.wp_rand(0, 9999999).md5(microtime(true));
 		
 		$drop_statement = "DROP TABLE IF EXISTS `$random_table_name`;";
 
@@ -720,7 +720,7 @@ class UpdraftPlus_Database_Utility {
 
 		global $wpdb;
 
-		$function_name = 'updraft_test_stored_routine';
+		$function_name = 'backupplus_test_stored_routine';
 		$sql = array(
 			"DROP_FUNCTION" => "DROP FUNCTION IF EXISTS ".$function_name,
 			// sql to check whether stored routines is supported
@@ -756,7 +756,7 @@ class UpdraftPlus_Database_Utility {
 			$wpdb->query($sql['DROP_FUNCTION']);
 		} else {
 			/* translators: 1: Last database error, 2: SQL create function statement. */
-			$is_stored_routine_supported = new WP_Error('routine_creation_error', sprintf(__('An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'updraftplus'), $wpdb->last_error.' -', $sql['CREATE_FUNCTION']));
+			$is_stored_routine_supported = new WP_Error('routine_creation_error', sprintf(__('An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'backupplus'), $wpdb->last_error.' -', $sql['CREATE_FUNCTION']));
 		}
 		$wpdb->suppress_errors($old_val);
 
@@ -825,7 +825,7 @@ class UpdraftPlus_Database_Utility {
 		$old_val = $wpdb->suppress_errors();
 		try {
 			/* translators: 1: Last database error, 2: Additional error details. */
-			$err_msg = __('An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'updraftplus');
+			$err_msg = __('An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'backupplus');
 			$function_status = $wpdb->get_results($wpdb->prepare('SHOW FUNCTION STATUS WHERE DB = %s', DB_NAME), ARRAY_A);
 			if (!empty($wpdb->last_error)) throw new Exception(sprintf($err_msg, $wpdb->last_error.' -', $wpdb->last_query), 0);
 			$procedure_status = $wpdb->get_results($wpdb->prepare('SHOW PROCEDURE STATUS WHERE DB = %s', DB_NAME), ARRAY_A);
@@ -835,10 +835,10 @@ class UpdraftPlus_Database_Utility {
 				if (empty($routine['Name']) || empty($routine['Type'])) continue;
 				$routine_name = $routine['Name'];
 				// Since routine name can include backquotes and routine name is typically enclosed with backquotes as well, the backquote escaping for the routine name can be done by adding a leading backquote
-				$quoted_escaped_routine_name = UpdraftPlus_Manipulation_Functions::backquote(str_replace('`', '``', $routine_name));
+				$quoted_escaped_routine_name = BackupPlus_Manipulation_Functions::backquote(str_replace('`', '``', $routine_name));
 				$routine = $wpdb->get_results($wpdb->prepare('SHOW CREATE %1$s %2$s', $routine['Type'], $quoted_escaped_routine_name), ARRAY_A);// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQLPlaceholders.UnquotedComplexPlaceholder -- No direct schema change here; this is a false positive. We use the unquoted placeholders because they are used for identifiers (the routine name and type).
 				/* translators: 1: Last database error, 2: Last executed SQL query. */
-				if (!empty($wpdb->last_error)) throw new Exception(sprintf(__('An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'updraftplus'), $wpdb->last_error.' -', $wpdb->last_query), 1);
+				if (!empty($wpdb->last_error)) throw new Exception(sprintf(__('An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'backupplus'), $wpdb->last_error.' -', $wpdb->last_query), 1);
 				$stored_routines[$key] = array_merge($stored_routines[$key], $routine ? $routine[0] : array());
 			}
 		} catch (Exception $ex) {
@@ -871,9 +871,9 @@ class UpdraftPlus_Database_Utility {
 
 		// Generally it is 'wp-optimize/wp-optimize.php',
 		// but we can't assume that the user hasn't renamed the plugin folder - with 3 million UDP users and 1 million AIOWPS, there will be some who have.
-		$wp_optimize_plugin_file_rel_to_plugins_dir = UpdraftPlus_Database_Utility::get_wp_optimize_plugin_file_rel_to_plugins_dir();
+		$wp_optimize_plugin_file_rel_to_plugins_dir = BackupPlus_Database_Utility::get_wp_optimize_plugin_file_rel_to_plugins_dir();
 
-		// If UpdraftPlus is installed but not activated, then return activate link.
+		// If BackupPlus is installed but not activated, then return activate link.
 		if ($wp_optimize_plugin_file_rel_to_plugins_dir) {
 			$activate_url = add_query_arg(array(
 				'_wpnonce'    => wp_create_nonce('activate-plugin_'.$wp_optimize_plugin_file_rel_to_plugins_dir),
@@ -885,11 +885,11 @@ class UpdraftPlus_Database_Utility {
 			if (is_network_admin()) {
 				$activate_url = add_query_arg(array('networkwide' => 1), $activate_url);
 			}
-			return sprintf('%s <a href="%s">%s</a>', __('WP-Optimize is installed but currently inactive.', 'updraftplus'), $activate_url, __('Follow this link to activate the WP-Optimize plugin.', 'updraftplus'));
+			return sprintf('%s <a href="%s">%s</a>', __('WP-Optimize is installed but currently inactive.', 'backupplus'), $activate_url, __('Follow this link to activate the WP-Optimize plugin.', 'backupplus'));
 		}
 
 		// If WP-Optimize is neither activated nor installed then return the installation link
-		return '<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;updraftplus_noautobackup=1&amp;plugin=wp-optimize'), 'install-plugin_wp-optimize').'">'.__('Follow this link to install the WP-Optimize plugin.', 'updraftplus').'</a>';
+		return '<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-optimize'), 'install-plugin_wp-optimize').'">'.__('Follow this link to install the WP-Optimize plugin.', 'backupplus').'</a>';
 	}
 
 	/**
@@ -920,11 +920,11 @@ class UpdraftPlus_Database_Utility {
 	 * @return string Escaped and backquoted table name.
 	 */
 	public static function escape_table_name($table) {
-		return UpdraftPlus_Manipulation_Functions::backquote(str_replace('`', '``', $table));
+		return BackupPlus_Manipulation_Functions::backquote(str_replace('`', '``', $table));
 	}
 }
 
-class UpdraftPlus_WPDB_OtherDB_Utility extends wpdb {
+class BackupPlus_WPDB_OtherDB_Utility extends wpdb {
 	/**
 	 * This adjusted bail() does two things: 1) Never dies and 2) logs in the UD log
 	 *
@@ -933,9 +933,9 @@ class UpdraftPlus_WPDB_OtherDB_Utility extends wpdb {
 	 * @return Boolean returns false
 	 */
 	public function bail($message, $error_code = '500') {
-		global $updraftplus;
+		global $backupplus;
 		if ('db_connect_fail' == $error_code) $message = 'Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled.';
-		$updraftplus->log("WPDB_OtherDB error: $message ($error_code)");
+		$backupplus->log("WPDB_OtherDB error: $message ($error_code)");
 		// Now do the things that would have been done anyway
 		$this->error = class_exists('WP_Error') ? new WP_Error($error_code, $message) : $message;
 		return false;

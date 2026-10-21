@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('UDP_Google_Client')) {
@@ -120,7 +122,7 @@ class UDP_Google_Http_REST
       
       $decoded = json_decode($body, true);
       if ($decoded === null || $decoded === "") {
-        # UpdraftPlus patch
+        # BackupPlus patch
         $error = "Invalid json in service response ($code): $body";
         if ($client) {
           $client->getLogger()->error($error);

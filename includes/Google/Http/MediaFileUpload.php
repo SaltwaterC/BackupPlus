@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('UDP_Google_Client')) {
@@ -47,12 +49,12 @@ class Google_Http_MediaFileUpload
   private $size;
 
   /** @var string $resumeUri */
-// UpdraftPlus patch
+// BackupPlus patch
   public $resumeUri;
 //   private $resumeUri;
 
   /** @var int $progress */
-// UpdraftPlus patch
+// BackupPlus patch
   public $progress;
 //   private $progress;
 

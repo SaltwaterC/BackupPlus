@@ -3,7 +3,7 @@
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-class UpdraftPlus_Search_Replace {
+class BackupPlus_Search_Replace {
 
 	private $columns = array();
 
@@ -23,19 +23,19 @@ class UpdraftPlus_Search_Replace {
 	 * Constructor
 	 */
 	public function __construct() {
-		add_action('updraftplus_restore_db_pre', array($this, 'updraftplus_restore_db_pre'));
-		$this->max_recursion = apply_filters('updraftplus_search_replace_max_recursion', 20);
+		add_action('backupplus_restore_db_pre', array($this, 'backupplus_restore_db_pre'));
+		$this->max_recursion = apply_filters('backupplus_search_replace_max_recursion', 20);
 	}
 
 	/**
-	 * This function is called via the filter updraftplus_restore_db_pre it sets up the search and replace database objects
+	 * This function is called via the filter backupplus_restore_db_pre it sets up the search and replace database objects
 	 *
 	 * @return void
 	 */
-	public function updraftplus_restore_db_pre() {
-		global $wpdb, $updraftplus_restorer;
+	public function backupplus_restore_db_pre() {
+		global $wpdb, $backupplus_restorer;
 		
-		$this->use_wpdb = $updraftplus_restorer->use_wpdb();
+		$this->use_wpdb = $backupplus_restorer->use_wpdb();
 		$this->wpdb_obj = $wpdb;
 
 		$mysql_dbh = false;
@@ -43,14 +43,14 @@ class UpdraftPlus_Search_Replace {
 
 		if (!$this->use_wpdb) {
 			// We have our own extension which drops lots of the overhead on the query
-			$wpdb_obj = $updraftplus_restorer->get_db_object();
+			$wpdb_obj = $backupplus_restorer->get_db_object();
 			// Was that successful?
 			if (!$wpdb_obj->is_mysql || !$wpdb_obj->ready) {
 				$this->use_wpdb = true;
 			} else {
 				$this->wpdb_obj = $wpdb_obj;
-				$mysql_dbh = $wpdb_obj->updraftplus_get_database_handle();
-				$use_mysqli = $wpdb_obj->updraftplus_use_mysqli();
+				$mysql_dbh = $wpdb_obj->backupplus_get_database_handle();
+				$use_mysqli = $wpdb_obj->backupplus_use_mysqli();
 			}
 		}
 
@@ -70,7 +70,7 @@ class UpdraftPlus_Search_Replace {
 
 		if (!is_array($tables)) return false;
 
-		global $wpdb, $updraftplus;
+		global $wpdb, $backupplus;
 
 		$report = array(
 			'tables' => 0,
@@ -89,26 +89,26 @@ class UpdraftPlus_Search_Replace {
 			$report['tables']++;
 
 			if ($search === $replace) {
-				$updraftplus->log("No search/replace required: would-be search and replacement are identical");
+				$backupplus->log("No search/replace required: would-be search and replacement are identical");
 				continue;
 			}
 
 			$this->columns = array();
 
-			$print_line = __('Search and replacing table:', 'updraftplus').' '.$table;
+			$print_line = __('Search and replacing table:', 'backupplus').' '.$table;
 
-			$updraftplus->check_db_connection($this->wpdb_obj, true);
+			$backupplus->check_db_connection($this->wpdb_obj, true);
 
 			// Get a list of columns in this table
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DESCRIBE is a DDL command that cannot be parameterized; $table is a SQL identifier sanitized using backquote().
-			$fields = $wpdb->get_results('DESCRIBE '.UpdraftPlus_Manipulation_Functions::backquote($table), ARRAY_A);
+			$fields = $wpdb->get_results('DESCRIBE '.BackupPlus_Manipulation_Functions::backquote($table), ARRAY_A);
 
 			$prikey_field = false;
 			foreach ($fields as $column) {
 				$primary_key = ('PRI' == $column['Key']) ? true : false;
 				if ($primary_key) $prikey_field = $column['Field'];
 				if ('posts' == $stripped_table && 'guid' == $column['Field']) {
-					$updraftplus->log('Skipping search/replace on GUID column in posts table');
+					$backupplus->log('Skipping search/replace on GUID column in posts table');
 					continue;
 				}
 				$this->columns[$column['Field']] = $primary_key;
@@ -133,7 +133,7 @@ class UpdraftPlus_Search_Replace {
 
 			// If that failed, try this
 			if (false !== $prikey_field && $wpdb->last_error) {
-				$escaped_table_name = UpdraftPlus_Database_Utility::escape_table_name($table);
+				$escaped_table_name = BackupPlus_Database_Utility::escape_table_name($table);
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $escaped_table_name and $prikey_field are SQL identifiers; identifiers cannot be parameterized with $wpdb->prepare(), table name is safely escaped via escape_table_name().
 				$row_countr = $wpdb->get_results("SELECT COUNT(*) FROM $escaped_table_name USE INDEX ($prikey_field)".$where, ARRAY_N);
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via escape_table_name().
@@ -142,9 +142,9 @@ class UpdraftPlus_Search_Replace {
 
 			$row_count = $row_countr[0][0];
 			/* translators: %d: Number of rows. */
-			$print_line .= ': '.sprintf(__('rows: %d', 'updraftplus'), $row_count);
-			$updraftplus->log($print_line, 'notice-restore', 'restoring-table-'.$table);
-			$updraftplus->log('Search and replacing table: '.$table.": rows: ".$row_count);
+			$print_line .= ': '.sprintf(__('rows: %d', 'backupplus'), $row_count);
+			$backupplus->log($print_line, 'notice-restore', 'restoring-table-'.$table);
+			$backupplus->log('Search and replacing table: '.$table.": rows: ".$row_count);
 
 			if (0 == $row_count) continue;
 
@@ -152,7 +152,7 @@ class UpdraftPlus_Search_Replace {
 
 				$this->current_row = 0;
 
-				if ($on_row>0) $updraftplus->log_e("Searching and replacing reached row: %d", $on_row);
+				if ($on_row>0) $backupplus->log_e("Searching and replacing reached row: %d", $on_row);
 
 				// Grab the contents of the table
 				list($data, $page_size) = $this->fetch_sql_result($table, $on_row, $page_size, $where);
@@ -225,8 +225,8 @@ class UpdraftPlus_Search_Replace {
 
 		$sql_line = sprintf('SELECT * FROM %s%s LIMIT %d, %d', $table, $where, $on_row, $page_size);
 
-		global $updraftplus;
-		$updraftplus->check_db_connection($this->wpdb_obj, true);
+		global $backupplus;
+		$backupplus->check_db_connection($this->wpdb_obj, true);
 
 		if ($this->use_wpdb) {
 			global $wpdb;
@@ -265,7 +265,7 @@ class UpdraftPlus_Search_Replace {
 	 */
 	private function process_row($table, $row, $search, $replace, $stripped_table) {
 
-		global $updraftplus, $wpdb, $updraftplus_restorer;
+		global $backupplus, $wpdb, $backupplus_restorer;
 
 		$report = array('change' => 0, 'errors' => array(), 'updates' => 0);
 
@@ -278,7 +278,7 @@ class UpdraftPlus_Search_Replace {
 		foreach ($this->columns as $column => $primary_key) {
 		
 			// Don't search/replace these
-			if (('options' == $stripped_table && 'option_value' == $column && !empty($row['option_name']) && 'updraft_remotesites' == $row['option_name']) || ('sitemeta' == $stripped_table && 'meta_value' == $column && !empty($row['meta_key']) && 'updraftplus_options' == $row['meta_key'])) {
+			if ('sitemeta' == $stripped_table && 'meta_value' == $column && !empty($row['meta_key']) && 'BackupPlus_Options' == $row['meta_key']) {
 				continue;
 			}
 		
@@ -293,17 +293,17 @@ class UpdraftPlus_Search_Replace {
 			} catch (Exception $e) {
 				$log_message = 'An Exception ('.get_class($e).') occurred during the recursive search/replace. Exception message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 				$report['errors'][] = $log_message;
-				UpdraftPlus_Manipulation_Functions::error_log($log_message);
-				$updraftplus->log($log_message);
+				BackupPlus_Manipulation_Functions::error_log($log_message);
+				$backupplus->log($log_message);
 				/* translators: 1: Exception class, 2: Exception message. */
-				$updraftplus->log(sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage()), 'warning-restore');
+				$backupplus->log(sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage()), 'warning-restore');
 			} catch (Error $e) {// phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 				$log_message = 'A PHP Fatal error (recoverable, '.get_class($e).') occurred during the recursive search/replace. Exception message: Error message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 				$report['errors'][] = $log_message;
-				UpdraftPlus_Manipulation_Functions::error_log($log_message);
-				$updraftplus->log($log_message);
+				BackupPlus_Manipulation_Functions::error_log($log_message);
+				$backupplus->log($log_message);
 				/* translators: 1: Fatal error class, 2: Error message. */
-				$updraftplus->log(sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage()), 'warning-restore');
+				$backupplus->log(sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage()), 'warning-restore');
 			}
 
 			// Something was changed
@@ -313,7 +313,7 @@ class UpdraftPlus_Search_Replace {
 				$wpdb->escape_by_ref($ed);
 				// Undo breakage introduced in WP 4.8.3 core
 				if (is_callable(array($wpdb, 'remove_placeholder_escape'))) $ed = $wpdb->remove_placeholder_escape($ed);
-				$update_sql[] = UpdraftPlus_Manipulation_Functions::backquote($column) . ' = "' . $ed . '"';
+				$update_sql[] = BackupPlus_Manipulation_Functions::backquote($column) . ' = "' . $ed . '"';
 				$upd = true;
 			}
 
@@ -322,13 +322,13 @@ class UpdraftPlus_Search_Replace {
 				$wpdb->escape_by_ref($df);
 				// Undo breakage introduced in WP 4.8.3 core
 				if (is_callable(array($wpdb, 'remove_placeholder_escape'))) $df = $wpdb->remove_placeholder_escape($df);
-				$where_sql[] = UpdraftPlus_Manipulation_Functions::backquote($column) . ' = "' . $df . '"';
+				$where_sql[] = BackupPlus_Manipulation_Functions::backquote($column) . ' = "' . $df . '"';
 			}
 		}
 
 		if ($upd && !empty($where_sql)) {
-			$sql = 'UPDATE '.UpdraftPlus_Manipulation_Functions::backquote($table).' SET '.implode(', ', $update_sql).' WHERE '.implode(' AND ', array_filter($where_sql));
-			$result = $updraftplus_restorer->sql_exec($sql, 5, '', false);
+			$sql = 'UPDATE '.BackupPlus_Manipulation_Functions::backquote($table).' SET '.implode(', ', $update_sql).' WHERE '.implode(' AND ', array_filter($where_sql));
+			$result = $backupplus_restorer->sql_exec($sql, 5, '', false);
 			if (false === $result || is_wp_error($result)) {
 				$last_error = $this->print_error($sql);
 				$report['errors'][] = $last_error;
@@ -338,9 +338,9 @@ class UpdraftPlus_Search_Replace {
 
 		} elseif ($upd) {
 			$report['errors'][] = sprintf('"%s" has no primary key, manual change needed on row %s.', $table, $this->current_row);
-			$updraftplus->log(__('Error:', 'updraftplus').' '.
+			$backupplus->log(__('Error:', 'backupplus').' '.
 				/* translators: 1: Table name, 2: Row number requiring manual change. */
-				sprintf(__('"%1$s" has no primary key, manual change needed on row %2$s.', 'updraftplus'), $table, $this->current_row),
+				sprintf(__('"%1$s" has no primary key, manual change needed on row %2$s.', 'backupplus'), $table, $this->current_row),
 			'warning-restore');
 		}
 
@@ -364,7 +364,7 @@ class UpdraftPlus_Search_Replace {
 	 */
 	private function recursive_unserialize_replace($from = '', $to = '', $data = '', $serialised = false, $recursion_level = 0, $visited_data = array()) {
 
-		global $updraftplus;
+		global $backupplus;
 
 		static $error_count = 0;
 
@@ -393,7 +393,7 @@ class UpdraftPlus_Search_Replace {
 			}
 
 			// O:8:"DateTime":0:{} : see https://bugs.php.net/bug.php?id=62852
-			if (is_serialized($data) && false === strpos($data, 'O:8:"DateTime":0:{}') && false !== ($unserialized = UpdraftPlus::unserialize($data))) {
+			if (is_serialized($data) && false === strpos($data, 'O:8:"DateTime":0:{}') && false !== ($unserialized = BackupPlus::unserialize($data))) {
 				$data = $this->recursive_unserialize_replace($from, $to, $unserialized, true, $recursion_level + 1);
 			} elseif (is_array($data)) {
 				$_tmp = array();
@@ -456,7 +456,7 @@ class UpdraftPlus_Search_Replace {
 		} catch (Exception $error) {
 			if (3 > $error_count) {
 				$log_message = 'PHP Fatal Exception error ('.get_class($error).') has occurred during recursive_unserialize_replace. Error Message: '.$error->getMessage().' (Code: '.$error->getCode().', line '.$error->getLine().' in '.$error->getFile().')';
-				$updraftplus->log($log_message, 'warning-restore');
+				$backupplus->log($log_message, 'warning-restore');
 				$error_count++;
 			}
 		}
@@ -472,14 +472,14 @@ class UpdraftPlus_Search_Replace {
 	 * @return void
 	 */
 	public function print_error($sql_line) {
-		global $wpdb, $updraftplus;
+		global $wpdb, $backupplus;
 		if ($this->use_wpdb) {
 			$last_error = $wpdb->last_error;
 		} else {
 			// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_error, WordPress.DB.RestrictedFunctions.mysql_mysqli_error -- Ignore removed extension compatibility, direct mysql/mysqli function used for low-level database operations outside of $wpdb.
 			$last_error = ($this->use_mysqli) ? mysqli_error($this->mysql_dbh) : mysql_error($this->mysql_dbh);
 		}
-		$updraftplus->log(__('Error:', 'updraftplus')." ".$last_error." - ".__('the database query being run was:', 'updraftplus').' '.$sql_line, 'warning-restore');
+		$backupplus->log(__('Error:', 'backupplus')." ".$last_error." - ".__('the database query being run was:', 'backupplus').' '.$sql_line, 'warning-restore');
 		return $last_error;
 	}
 }

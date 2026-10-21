@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Curl based implementation of Google_IO.
  *
@@ -77,7 +79,7 @@ class UDP_Google_IO_Curl extends UDP_Google_IO_Abstract
     curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
     // 1 is CURL_SSLVERSION_TLSv1, which is not always defined in PHP.
-// UpdraftPlus patch
+// BackupPlus patch
 // The SDK leaves this on the default setting in later releases
 //     curl_setopt($curl, CURLOPT_SSLVERSION, 1);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);

@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Http Streams based implementation of Google_IO.
  *
@@ -91,7 +93,7 @@ class UDP_Google_IO_Stream extends UDP_Google_IO_Abstract
     $requestSslContext = array_key_exists('ssl', $default_options) ?
         $default_options['ssl'] : array();
 
-# UpdraftPlus patch
+# BackupPlus patch
 //     if (!array_key_exists("cafile", $requestSslContext)) {
 //       $requestSslContext["cafile"] = dirname(__FILE__) . '/cacerts.pem';
 //     }
@@ -100,7 +102,7 @@ class UDP_Google_IO_Stream extends UDP_Google_IO_Abstract
 
     if (preg_match('#^https?://([^/]+)/#', $url, $umatches)) { $cname = $umatches[1]; } else { $cname = false; }
 
-# UpdraftPlus patch
+# BackupPlus patch
 // Added
 if (empty($this->options['disable_verify_peer'])) {
 	$requestSslContext['verify_peer'] = true;
@@ -126,7 +128,7 @@ if (!empty($this->options['proxy'])) {
             $requestHttpContext
         ),
         "ssl" => array_merge(
-# UpdraftPlus patch
+# BackupPlus patch
 //             self::$DEFAULT_SSL_CONTEXT,
             $requestSslContext
         )
@@ -134,7 +136,7 @@ if (!empty($this->options['proxy'])) {
 
     $context = stream_context_create($options);
 
-# UpdraftPlus patch
+# BackupPlus patch
 //     $url = $request->getUrl();
 
     if ($request->canGzip()) {
@@ -165,8 +167,8 @@ if (!empty($this->options['proxy'])) {
 // Reset
 	$this->trappedErrorNumber = null;
 	$this->trappedErrorString = null;
-       global $updraftplus;
-       $updraftplus->log("Using Stream, and fopen failed; retrying different CN match to try to overcome");
+       global $backupplus;
+       $backupplus->log("Using Stream, and fopen failed; retrying different CN match to try to overcome");
        // www.googleapis.com does not match the cert now being presented - *.storage.googleapis.com; presumably, PHP's stream handler isn't handling alternative names properly. Rather than turn off all verification, let's retry with a new name to match.
        $options['ssl']['CN_match'] = 'www.storage.googleapis.com';
        $context = stream_context_create($options);

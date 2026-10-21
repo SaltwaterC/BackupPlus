@@ -2,9 +2,9 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-if (!class_exists('UpdraftPlus_BackupModule')) updraft_try_include_file('methods/backup-module.php', 'require_once');
+if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
-class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModule {
+class BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule {
 
 	private $method;
 
@@ -25,15 +25,13 @@ class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModu
 		$this->image = $image;
 		$this->error_msg = 'This remote storage method ('.$this->description.') requires PHP '.$this->required_php.' or later';
 		/* translators: 1: Description, 2: Required PHP version */
-		$this->error_msg_trans = sprintf(__('This remote storage method (%1$s) requires PHP %2$s or later.', 'updraftplus'), $this->description, $this->required_php);
+		$this->error_msg_trans = sprintf(__('This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus'), $this->description, $this->required_php);
 	}
 
 	public function backup($backup_array) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform backup for specific storage is not exist.
 
-		$this->log("You do not have the UpdraftPlus ".$this->method.' feature installed - get it from '.apply_filters("updraftplus_com_link", "https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text").'');
+		$this->log(sprintf(__('BackupPlus %1$s support is not available because its required module is not installed.', 'backupplus'), $this->description), 'error', 'missingaddon-'.$this->method);
 		
-		/* translators: 1: Description, 2: URL */
-		$this->log(sprintf(__('You do not have the UpdraftPlus %1$s feature installed - get it from %2$s', 'updraftplus'), $this->description, ''.apply_filters("updraftplus_com_link", "https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text").''), 'error', 'missingaddon-'.$this->method);
 		
 		return false;
 
@@ -72,10 +70,8 @@ class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModu
 	}
 
 	public function delete($files, $method_obj = false, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform delete for specific storage is not exist.
-		$this->log('You do not have the UpdraftPlus '.$this->method.' feature installed - get it from '.apply_filters("updraftplus_com_link", "https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text").'');
+		$this->log(sprintf(__('BackupPlus %1$s support is not available because its required module is not installed.', 'backupplus'), $this->description), 'error', 'missingaddon-'.$this->method);
 		
-		/* translators: 1: Description, 2: URL */
-		$this->log(sprintf(__('You do not have the UpdraftPlus %1$s feature installed - get it from %2$s', 'updraftplus'), $this->description, ''.apply_filters("updraftplus_com_link", "https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text").''), 'error', 'missingaddon-'.$this->method);
 
 		return false;
 
@@ -83,7 +79,7 @@ class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModu
 
 	public function listfiles($match = 'backup_') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform listfiles for specific storage is not exist.
 		/* translators: 1: Description, 2: URL */
-		return new WP_Error('no_addon', sprintf(__('You do not have the UpdraftPlus %1$s feature installed - get it from %2$s', 'updraftplus'), $this->description, ''.apply_filters("updraftplus_com_link", "https://teamupdraft.com/updraftplus/pricing/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=get-it-here&utm_creative_format=text")));
+		return new WP_Error('no_addon', sprintf(__('BackupPlus %1$s support is not available because its required module is not installed.', 'backupplus'), $this->description));
 	}
 
 	/**
@@ -96,7 +92,7 @@ class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModu
 	?>
 		<tr class="{{css_class}} {{method_id}}">
 			<th>{{description}}:</th>
-			<td>{{{image}}}<a href="{{premium_url}}" target="_blank">{{addon_text}}</a></td>
+			<td>{{{image}}}{{addon_text}}</td>
 		</tr>
 		{{#unless php_version_supported}}
 		<tr class="{{css_class}} {{method_id}}">
@@ -117,21 +113,16 @@ class UpdraftPlus_BackupModule_AddonNotYetPresent extends UpdraftPlus_BackupModu
 	 * @return Array an associative array keyed by names that describe themselves as they are
 	 */
 	public function get_template_properties() {
-		global $updraftplus;
 		$properties = array(
 			'description' => $this->description,
-			'php_version_supported' => (bool) apply_filters('updraftplus_storage_meets_php_requirement', version_compare(phpversion(), $this->required_php, '>='), $this->method),
-			'image' => (!empty($this->image)) ? '<p><img src="'.UPDRAFTPLUS_URL.'/images/'.$this->image.'"></p>' : '',
+			'php_version_supported' => (bool) apply_filters('backupplus_storage_meets_php_requirement', version_compare(phpversion(), $this->required_php, '>='), $this->method),
+			'image' => (!empty($this->image)) ? '<p><img src="'.BACKUPPLUS_URL.'/images/'.$this->image.'"></p>' : '',
 			'error_msg_trans' => $this->error_msg_trans,
-			'premium_url' => $updraftplus->get_url('premium_'.$this->get_id()),
-			/* translators: 1: Description, 2: UpdraftPlus Premium */
-			'addon_text' => sprintf(__('Back up to %1$s with %2$s.', 'updraftplus'), $this->description, 'UpdraftPlus Premium'),
+			'addon_text' => sprintf(__('Support for %s is not available in this installation.', 'backupplus'), $this->description),
 			/* translators: %s: PHP version */
-			'php_version_text' => sprintf(__('Your PHP version: %s.', 'updraftplus'), phpversion()),
-			'hosting_text' => __('You will need to ask your web hosting company to upgrade.', 'updraftplus'),
+			'php_version_text' => sprintf(__('Your PHP version: %s.', 'backupplus'), phpversion()),
+			'hosting_text' => __('You will need to ask your web hosting company to upgrade.', 'backupplus'),
 		);
-		/* translators: 1: Description, 2: UpdraftPlus Premium */
-		if ('sftp' === $this->get_id()) $properties['addon_text'] = sprintf(__('Back up via %1$s with %2$s.', 'updraftplus'), $this->description, 'UpdraftPlus Premium');
 		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
 	}
 }

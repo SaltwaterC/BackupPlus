@@ -11,10 +11,10 @@ if (!empty($discount_code)) echo esc_html($discount_code).' ';
 
 if (!empty($button_link) && (!empty($button_meta) || !empty($button_text))) {
 
-	$link = apply_filters('updraftplus_com_link', $button_link);
+	$link = apply_filters('backupplus_com_link', $button_link);
 
-	global $updraftplus_admin;
-	$updraftplus_admin->include_template(
+	global $backupplus_admin;
+	$backupplus_admin->include_template(
 		'wp-admin/notices/button-label.php',
 		false,
 		array(

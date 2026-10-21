@@ -119,10 +119,10 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
         
         // Get the default options array
         $options = $this->defaultOptions;
-        if (!UpdraftPlus_Options::get_updraft_option('updraft_ssl_useservercerts')) {
-            $options[CURLOPT_CAINFO] = UPDRAFTPLUS_DIR.'/includes/cacert.pem';
+        if (!BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts')) {
+            $options[CURLOPT_CAINFO] = BACKUPPLUS_DIR.'/includes/cacert.pem';
         }
-        if (UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify')) {
+        if (BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify')) {
             $options[CURLOPT_SSL_VERIFYPEER] = false;
         } else {
             $options[CURLOPT_SSL_VERIFYPEER] = true;
@@ -200,7 +200,7 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
             $options[CURLOPT_TIMEOUT] = $additional['timeout'];
         }
         
-        if (function_exists('apply_filters')) $options = apply_filters('updraftplus_dropbox_fetch_curl_options', $options, $method, $url, $call, $additional);
+        if (function_exists('apply_filters')) $options = apply_filters('backupplus_dropbox_fetch_curl_options', $options, $method, $url, $call, $additional);
 
         // Set the cURL options at once
         curl_setopt_array($handle, $options);

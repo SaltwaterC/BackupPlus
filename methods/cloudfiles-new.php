@@ -8,9 +8,9 @@ use OpenCloud\Rackspace;
 // New SDK - https://github.com/rackspace/php-opencloud and http://docs.rackspace.com/sdks/guide/content/php.html
 // Uploading: https://github.com/rackspace/php-opencloud/blob/master/docs/userguide/ObjectStore/Storage/Object.md
 
-updraft_try_include_file('methods/openstack-base.php', 'require_once');
+backupplus_try_include_file('methods/openstack-base.php', 'require_once');
 
-class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_BackupModule_openstack_base {
+class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupModule_openstack_base {
 
 	/**
 	 * Cloudfiles available regions.
@@ -54,12 +54,12 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		parent::__construct('cloudfiles', 'Cloud Files', 'Rackspace Cloud Files', '/images/rackspacecloud-logo.png');
 
 		$this->regions = array(
-			'DFW' => __('Dallas (DFW) (default)', 'updraftplus'),
-			'SYD' => __('Sydney (SYD)', 'updraftplus'),
-			'ORD' => __('Chicago (ORD)', 'updraftplus'),
-			'IAD' => __('Northern Virginia (IAD)', 'updraftplus'),
-			'HKG' => __('Hong Kong (HKG)', 'updraftplus'),
-			'LON' => __('London (LON)', 'updraftplus')
+			'DFW' => __('Dallas (DFW) (default)', 'backupplus'),
+			'SYD' => __('Sydney (SYD)', 'backupplus'),
+			'ORD' => __('Chicago (ORD)', 'backupplus'),
+			'IAD' => __('Northern Virginia (IAD)', 'backupplus'),
+			'HKG' => __('Hong Kong (HKG)', 'backupplus'),
+			'LON' => __('London (LON)', 'backupplus')
 		);
 	}
 
@@ -74,14 +74,14 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		$authurl = $opts['authurl'];
 		$region = (!empty($opts['region'])) ? $opts['region'] : null;
 
-		updraft_try_include_file('vendor/autoload.php', 'include_once');
+		backupplus_try_include_file('vendor/autoload.php', 'include_once');
 
 		// The new authentication APIs don't match the values we were storing before
 		$new_authurl = ('https://lon.auth.api.rackspacecloud.com' == $authurl || 'uk' == $authurl) ? Rackspace::UK_IDENTITY_ENDPOINT : Rackspace::US_IDENTITY_ENDPOINT;
 
-		if (null === $disablesslverify) $disablesslverify = UpdraftPlus_Options::get_updraft_option('updraft_ssl_disableverify');
+		if (null === $disablesslverify) $disablesslverify = BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify');
 
-		if (empty($user) || empty($apikey)) throw new Exception(__('Authorisation failed (check your credentials)', 'updraftplus')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+		if (empty($user) || empty($apikey)) throw new Exception(__('Authorisation failed (check your credentials)', 'backupplus')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
 
 		$this->log("authentication URL: ".$new_authurl);
 
@@ -97,7 +97,7 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 			if ($useservercerts) {
 				$client->setConfig(array($client::SSL_CERT_AUTHORITY, 'system'));
 			} else {
-				$client->setSslVerification(UPDRAFTPLUS_DIR.'/includes/cacert.pem', true, 2);
+				$client->setSslVerification(BACKUPPLUS_DIR.'/includes/cacert.pem', true, 2);
 			}
 		}
 
@@ -113,10 +113,10 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		$partial_templates = array();
 		ob_start();
 		?>
-		<a href="{{updraftplus_premium_url}}" target="_blank"><em>{{api_key_setting_default_label}}</em></a>
+		{{api_key_setting_default_label}}
 		<?php
-		$partial_templates['updraft_cloudfiles_apikeysetting'] = apply_filters('updraft_cloudfiles_apikeysetting', ob_get_clean());
-		return wp_parse_args(apply_filters('updraft_'.$this->get_id().'_partial_templates', $partial_templates), parent::get_partial_templates());
+		$partial_templates['backupplus_cloudfiles_apikeysetting'] = apply_filters('backupplus_cloudfiles_apikeysetting', ob_get_clean());
+		return wp_parse_args(apply_filters('backupplus_'.$this->get_id().'_partial_templates', $partial_templates), parent::get_partial_templates());
 	}
 
 	/**
@@ -136,45 +136,45 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 	 * @return String - the partial template, ready for substitutions to be carried out
 	 */
 	public function get_configuration_middlesection_template() {
-		global $updraftplus;
+		global $backupplus;
 		
 		$classes = $this->get_css_classes();
 		$template_str = '
-		<tr class="'.$classes.'">
-			<th title="'.__('Accounts created at rackspacecloud.com are US accounts; accounts created at rackspace.co.uk are UK accounts.', 'updraftplus').'">'.__('US or UK-based Rackspace Account', 'updraftplus').':</th>
+		<tr class=""'.$classes.'>
+			<th title="'.__('Accounts created at rackspacecloud.com are US accounts; accounts created at rackspace.co.uk are UK accounts.', 'backupplus').'">'.__('US or UK-based Rackspace Account', 'backupplus').':</th>
 			<td>
-				<select data-updraft_settings_test="authurl" '.$this->output_settings_field_name_and_id('authurl', true).' title="'.__('Accounts created at rackspacecloud.com are US-accounts; accounts created at rackspace.co.uk are UK-based', 'updraftplus').'">
-					<option {{#ifeq "https://auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://auth.api.rackspacecloud.com">'.__('US (default)', 'updraftplus').'</option>
-					<option {{#ifeq "https://lon.auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://lon.auth.api.rackspacecloud.com">'.__('UK', 'updraftplus').'</option>
+				<select data-backupplus_settings_test="authurl" '.$this->output_settings_field_name_and_id('authurl', true).' title="'.__('Accounts created at rackspacecloud.com are US-accounts; accounts created at rackspace.co.uk are UK-based', 'backupplus').'">
+					<option {{#ifeq "https://auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://auth.api.rackspacecloud.com">'.__('US (default)', 'backupplus').'</option>
+					<option {{#ifeq "https://lon.auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://lon.auth.api.rackspacecloud.com">'.__('UK', 'backupplus').'</option>
 				</select>
 			</td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.__('Cloud Files Storage Region', 'updraftplus').':</th>
+		<tr class=""'.$classes.'>
+			<th>'.__('Cloud Files Storage Region', 'backupplus').':</th>
 			<td>
-				<select data-updraft_settings_test="region" '.$this->output_settings_field_name_and_id('region', true).'>						
+				<select data-backupplus_settings_test="region" '.$this->output_settings_field_name_and_id('region', true).'>
 					{{#each regions as |desc reg|}}
 						<option {{#ifeq ../region reg}}selected="selected"{{/ifeq}} value="{{reg}}">{{desc}}</option>
 					{{/each}}
 				</select>
 			</td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.__('Cloud Files Username', 'updraftplus').':</th>
-			<td><input data-updraft_settings_test="user" type="text" autocomplete="off" class="updraft_input--wide" '.$this->output_settings_field_name_and_id('user', true).' value="{{user}}" />
+		<tr class=""'.$classes.'>
+			<th>'.__('Cloud Files Username', 'backupplus').':</th>
+			<td><input data-backupplus_settings_test="user" type="text" autocomplete="off" class="backupplus_input--wide "'.$this->output_settings_field_name_and_id('user', true).' value="{{user}}" />
 			<div style="clear:both;">
-				'.apply_filters('updraft_cloudfiles_apikeysetting', '<a href="'.$updraftplus->get_url('premium').'" target="_blank"><em>'.__('To create a new Rackspace API sub-user and API key that has access only to this Rackspace container, use Premium.', 'updraftplus').'</em></a>').'
+				'.apply_filters('backupplus_cloudfiles_apikeysetting', '').'
 			</div>
 			</td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.__('Cloud Files API Key', 'updraftplus').':</th>
-			<td><input data-updraft_settings_test="apikey" type="'.apply_filters('updraftplus_admin_secret_field_type', 'password').'" autocomplete="off" class="updraft_input--wide" '.$this->output_settings_field_name_and_id('apikey', true).' value="{{apikey}}" />
+		<tr class=""'.$classes.'>
+			<th>'.__('Cloud Files API Key', 'backupplus').':</th>
+			<td><input data-backupplus_settings_test="apikey" type="'.apply_filters('backupplus_admin_secret_field_type', 'password').'" autocomplete="off" class="backupplus_input--wide "'.$this->output_settings_field_name_and_id('apikey', true).' value="{{apikey}}" />
 			</td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.apply_filters('updraftplus_cloudfiles_location_description', __('Cloud Files Container', 'updraftplus')).':</th>
-			<td><input data-updraft_settings_test="path" type="text" class="updraft_input--wide" '.$this->output_settings_field_name_and_id('path', true).' value="{{path}}" /></td>
+		<tr class=""'.$classes.'>
+			<th>'.apply_filters('backupplus_cloudfiles_location_description', __('Cloud Files Container', 'backupplus')).':</th>
+			<td><input data-backupplus_settings_test="path" type="text" class="backupplus_input--wide "'.$this->output_settings_field_name_and_id('path', true).' value="{{path}}" /></td>
 		</tr>';
 		return $template_str;
 	}
@@ -206,8 +206,8 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 			/* translators: %s: API key */
 			echo esc_html(sprintf(
 				/* translators: %s: API key */
-				__("Failure: No %s was given.", 'updraftplus'),
-			__('API key', 'updraftplus')));
+				__("Failure: No %s was given.", 'backupplus'),
+			__('API key', 'backupplus')));
 			return;
 		}
 
@@ -215,8 +215,8 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 			/* translators: %s: Username */
 			echo esc_html(sprintf(
 				/* translators: %s: Username */
-				__("Failure: No %s was given.", 'updraftplus'),
-			__('Username', 'updraftplus')));
+				__("Failure: No %s was given.", 'backupplus'),
+			__('Username', 'backupplus')));
 			return;
 		}
 
@@ -259,7 +259,7 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 				{{{json_last_error_existence_label}}}
 				{{{curl_existence_label}}}
 				<br>
-				<p>{{{rackspace_text_description}}} <a href="{{{faq_link_url}}}" target="_blank">{{faq_link_text}}</a></p>
+				<p>{{{rackspace_text_description}}}</p>
 			</td>
 		</tr>
 		<?php
@@ -276,7 +276,7 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		<tr class="{{get_template_css_classes true}}">
 			<th title="{{input_account_title}}">{{input_account_label}}:</th>
 			<td>
-				<select data-updraft_settings_test="authurl" class="udc-wd-600" id="{{get_template_input_attribute_value "id" "authurl"}}" name="{{get_template_input_attribute_value "name" "authurl"}}" title="{{input_account_title}}">
+				<select data-backupplus_settings_test="authurl" class="udc-wd-600" id="{{get_template_input_attribute_value "id" "authurl"}}" name="{{get_template_input_attribute_value "name" "authurl"}}" title="{{input_account_title}}">
 					{{#each input_account_option_labels}}
 						<option {{#ifeq ../authurl @key}}selected="selected"{{/ifeq}} value="{{@key}}">{{this}}</option>
 					{{/each}}
@@ -286,7 +286,7 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_region_label}}:</th>
 			<td>
-				<select data-updraft_settings_test="region" class="udc-wd-600" id="{{get_template_input_attribute_value "id" "region"}}" name="{{get_template_input_attribute_value "name" "region"}}">
+				<select data-backupplus_settings_test="region" class="udc-wd-600" id="{{get_template_input_attribute_value "id" "region"}}" name="{{get_template_input_attribute_value "name" "region"}}">
 					{{#each regions as |desc reg|}}
 						<option {{#ifeq ../region reg}}selected="selected"{{/ifeq}} value="{{reg}}">{{desc}}</option>
 					{{/each}}
@@ -295,21 +295,21 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		</tr>
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_username_label}}:</th>
-			<td><input data-updraft_settings_test="user" type="text" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "user"}}" name="{{get_template_input_attribute_value "name" "user"}}" value="{{user}}" />
+			<td><input data-backupplus_settings_test="user" type="text" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "user"}}" name="{{get_template_input_attribute_value "name" "user"}}" value="{{user}}" />
 			<div style="clear:both;">
-				{{#> updraft_cloudfiles_apikeysetting}}
-				{{/updraft_cloudfiles_apikeysetting}}
+				{{#> backupplus_cloudfiles_apikeysetting}}
+				{{/backupplus_cloudfiles_apikeysetting}}
 			</div>
 			</td>
 		</tr>
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_apikey_label}}:</th>
-			<td><input data-updraft_settings_test="apikey" type="{{input_apikey_type}}" autocomplete="off" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "apikey"}}" name="{{get_template_input_attribute_value "name" "apikey"}}" value="{{apikey}}" />
+			<td><input data-backupplus_settings_test="apikey" type="{{input_apikey_type}}" autocomplete="off" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "apikey"}}" name="{{get_template_input_attribute_value "name" "apikey"}}" value="{{apikey}}" />
 			</td>
 		</tr>
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_container_label}}:</th>
-			<td><input data-updraft_settings_test="path" type="text" class="updraft_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "path"}}" name="{{get_template_input_attribute_value "name" "path"}}" value="{{path}}" /></td>
+			<td><input data-backupplus_settings_test="path" type="text" class="backupplus_input--wide udc-wd-600" id="{{get_template_input_attribute_value "id" "path"}}" name="{{get_template_input_attribute_value "name" "path"}}" value="{{path}}" /></td>
 		</tr>';
 		{{{get_template_test_button_html "Rackspace Cloud Files"}}}
 		<?php
@@ -323,20 +323,20 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 	 * @return Array an associative array keyed by names that describe themselves as they are
 	 */
 	public function get_template_properties() {
-		global $updraftplus, $updraftplus_admin;
+		global $backupplus, $backupplus_admin;
 
 		$mb_substr_existence_label = $json_last_error_existence_label = '';
 
-		if (!apply_filters('updraftplus_openstack_mbsubstr_exists', function_exists('mb_substr'))) {
+		if (!apply_filters('backupplus_openstack_mbsubstr_exists', function_exists('mb_substr'))) {
 			$mb_substr_existence_label = wp_kses(
-				$updraftplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'updraftplus').':</strong> '.
+				$backupplus_admin->show_double_warning(
+					'<strong>'.__('Warning', 'backupplus').':</strong> '.
 					/* translators: %s: Missing PHP module */
-					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'updraftplus'), 'mbstring').' '.
-					__('Please contact your web hosting provider\'s support.', 'updraftplus').' '.
+					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'mbstring').' '.
+					__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
 					/* translators: 1: Module description, 2: Required module */
-					sprintf(__('UpdraftPlus\'s %1$s module <strong>requires</strong> %2$s.', 'updraftplus'), $this->desc, 'mbstring').' '.
-					__('Please do not file any support requests; there is no alternative.', 'updraftplus'),
+					sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $this->desc, 'mbstring').' '.
+					__('Please do not file any support requests; there is no alternative.', 'backupplus'),
 					$this->method,
 					false
 				),
@@ -344,16 +344,16 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 			);
 		}
 
-		if (!apply_filters('updraftplus_rackspace_jsonlasterror_exists', function_exists('json_last_error'))) {
+		if (!apply_filters('backupplus_rackspace_jsonlasterror_exists', function_exists('json_last_error'))) {
 			$json_last_error_existence_label = wp_kses(
-				$updraftplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'updraftplus').':</strong> '.
+				$backupplus_admin->show_double_warning(
+					'<strong>'.__('Warning', 'backupplus').':</strong> '.
 					/* translators: %s: Module description */
-					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'updraftplus'), 'json').' '.
-					__('Please contact your web hosting provider\'s support.', 'updraftplus').' '.
+					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'json').' '.
+					__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
 					/* translators: 1: Module description, 2: Required module */
-					sprintf(__('UpdraftPlus\'s %1$s module <strong>requires</strong> %2$s.', 'updraftplus'), 'Cloud Files', 'json').' '.
-					__('Please do not file any support requests; there is no alternative.', 'updraftplus'),
+					sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), 'Cloud Files', 'json').' '.
+					__('Please do not file any support requests; there is no alternative.', 'backupplus'),
 					'cloudfiles',
 					false
 				),
@@ -362,43 +362,40 @@ class UpdraftPlus_BackupModule_cloudfiles_opencloudsdk extends UpdraftPlus_Backu
 		}
 
 		$properties = array(
-			'storage_image_url' => !empty($this->img_url) ? UPDRAFTPLUS_URL.$this->img_url : '',
+			'storage_image_url' => !empty($this->img_url) ? BACKUPPLUS_URL.$this->img_url : '',
 			'storage_long_description' => $this->long_desc,
-			'api_key_setting_default_label' => __('To create a new Rackspace API sub-user and API key that has access only to this Rackspace container, use Premium.', 'updraftplus'),
+			'api_key_setting_default_label' => '',
 			'mb_substr_existence_label' => $mb_substr_existence_label,
 			'json_last_error_existence_label' => $json_last_error_existence_label,
-			'curl_existence_label' => wp_kses($updraftplus_admin->curl_check($this->long_desc, false, $this->method.' hidden-in-updraftcentral', false), $this->allowed_html_for_content_sanitisation()),
+			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($this->long_desc, false, $this->method.'', false), $this->allowed_html_for_content_sanitisation()),
 			'rackspace_text_description' => wp_kses(
 				sprintf(
 					/* translators: 1: API key URL, 2: instructions URL */
-					__('Get your API key <a href="%1$s" target="_blank">from your Rackspace Cloud console</a> (<a href="%2$s" target="_blank">read instructions here</a>), then pick a container name to use for storage.', 'updraftplus'),
+					__('Get your API key <a href="%1$s" target="_blank">from your Rackspace Cloud console</a> (<a href="%2$s" target="_blank">read instructions here</a>), then pick a container name to use for storage.', 'backupplus'),
 					'https://mycloud.rackspace.com/',
 					'https://docs.rackspace.com/support/how-to/set-up-an-api-key-cloud-office-control-panel'
-				).' '.__('This container will be created for you if it does not already exist.', 'updraftplus'),
+				).' '.__('This container will be created for you if it does not already exist.', 'backupplus'),
 				$this->allowed_html_for_content_sanitisation()
 			),
-			'faq_link_text' => __('Also, you should read this important FAQ.', 'updraftplus'),
-			'faq_link_url' => esc_url(apply_filters("updraftplus_com_link", "https://teamupdraft.com/documentation/updraftplus/topics/cloud-storage/rackspace/there-are-extra-files-in-my-rackspace-cloud-files-container?utm_source=udp-plugin&utm_medium=referral&utm_campaign=paac&utm_content=read-important-faq&utm_creative_format=text")),
-			'input_account_label' => __('US or UK-based Rackspace Account', 'updraftplus'),
-			'input_account_title' => __('Accounts created at rackspacecloud.com are US accounts; accounts created at rackspace.co.uk are UK accounts.', 'updraftplus'),
+			'input_account_label' => __('US or UK-based Rackspace Account', 'backupplus'),
+			'input_account_title' => __('Accounts created at rackspacecloud.com are US accounts; accounts created at rackspace.co.uk are UK accounts.', 'backupplus'),
 			'input_account_option_labels' => array(
-				'https://auth.api.rackspacecloud.com' => __('US (default)', 'updraftplus'),
-				'https://lon.auth.api.rackspacecloud.com' => __('UK', 'updraftplus'),
+				'https://auth.api.rackspacecloud.com' => __('US (default)', 'backupplus'),
+				'https://lon.auth.api.rackspacecloud.com' => __('UK', 'backupplus'),
 			),
-			'input_region_label' => __('Cloud Files Storage Region', 'updraftplus'),
+			'input_region_label' => __('Cloud Files Storage Region', 'backupplus'),
 			'input_region_option_labels' => $this->regions,
-			'input_username_label' => __('Cloud Files Username', 'updraftplus'),
-			'input_username_placeholder' => __('Enter your username', 'updraftplus'),
-			'input_apikey_label' => __('Cloud Files API Key', 'updraftplus'),
-			'input_apikey_type' => apply_filters('updraftplus_admin_secret_field_type', 'password'),
-			'input_apikey_placeholder' => __('Paste your key here', 'updraftplus'),
-			'input_container_label' => wp_kses(apply_filters('updraftplus_cloudfiles_location_description', __('Cloud Files Container', 'updraftplus')), $this->allowed_html_for_content_sanitisation()),
-			'input_container_placeholder' => __('Enter your container name', 'updraftplus'),
+			'input_username_label' => __('Cloud Files Username', 'backupplus'),
+			'input_username_placeholder' => __('Enter your username', 'backupplus'),
+			'input_apikey_label' => __('Cloud Files API Key', 'backupplus'),
+			'input_apikey_type' => apply_filters('backupplus_admin_secret_field_type', 'password'),
+			'input_apikey_placeholder' => __('Paste your key here', 'backupplus'),
+			'input_container_label' => wp_kses(apply_filters('backupplus_cloudfiles_location_description', __('Cloud Files Container', 'backupplus')), $this->allowed_html_for_content_sanitisation()),
+			'input_container_placeholder' => __('Enter your container name', 'backupplus'),
 			/* translators: %s: Backup method */
-			'input_test_label' => sprintf(__('Test %s Settings', 'updraftplus'), $updraftplus->backup_methods[$this->get_id()]),
-			'updraftplus_premium_url' => $updraftplus->get_url('premium'),
+			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
 		);
-		return wp_parse_args(apply_filters('updraft_'.$this->get_id().'_template_properties', array()), wp_parse_args($properties, $this->get_persistent_variables_and_methods()));
+		return wp_parse_args(apply_filters('backupplus_'.$this->get_id().'_template_properties', array()), wp_parse_args($properties, $this->get_persistent_variables_and_methods()));
 	}
 
 	/**

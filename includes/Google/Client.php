@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
 if (!class_exists('UDP_Google_Client')) {
@@ -708,7 +710,7 @@ class UDP_Google_Client
    */
   public function isAppEngine()
   {
-    $server_software = UpdraftPlus_Manipulation_Functions::fetch_superglobal('server', 'SERVER_SOFTWARE', '');
+    $server_software = BackupPlus_Manipulation_Functions::fetch_superglobal('server', 'SERVER_SOFTWARE', '');
     return (isset($server_software) && strpos($server_software, 'Google App Engine') !== false);
   }
 }

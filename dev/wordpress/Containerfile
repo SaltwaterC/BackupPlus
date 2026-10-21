@@ -1,0 +1,32 @@
+FROM ubuntu:26.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    WP_CLI_ALLOW_ROOT=1
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        ca-certificates \
+        curl \
+        mariadb-client \
+        php-cli \
+        php-bcmath \
+        php-curl \
+        php-gd \
+        php-imagick \
+        php-intl \
+        php-mbstring \
+        php-mysql \
+        php-xml \
+        php-zip \
+    && curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /usr/local/bin/wp \
+    && chmod 0755 /usr/local/bin/wp \
+    && php /usr/local/bin/wp --info \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY entrypoint.sh /usr/local/bin/backupplus-wordpress-entrypoint
+COPY router.php /usr/local/share/backupplus-router.php
+RUN chmod 0755 /usr/local/bin/backupplus-wordpress-entrypoint
+
+WORKDIR /var/www/html
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/backupplus-wordpress-entrypoint"]

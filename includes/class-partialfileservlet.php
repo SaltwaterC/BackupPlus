@@ -4,23 +4,23 @@
 // User: DaveRandom
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UpdraftPlus_NonExistentFileException')):
-class UpdraftPlus_NonExistentFileException extends RuntimeException {}
+if (!class_exists('BackupPlus_NonExistentFileException')):
+class BackupPlus_NonExistentFileException extends RuntimeException {}
 endif;
 
-if (!class_exists('UpdraftPlus_UnreadableFileException')):
-class UpdraftPlus_UnreadableFileException extends RuntimeException {}
+if (!class_exists('BackupPlus_UnreadableFileException')):
+class BackupPlus_UnreadableFileException extends RuntimeException {}
 endif;
 
-if (!class_exists('UpdraftPlus_UnsatisfiableRangeException')):
-class UpdraftPlus_UnsatisfiableRangeException extends RuntimeException {}
+if (!class_exists('BackupPlus_UnsatisfiableRangeException')):
+class BackupPlus_UnsatisfiableRangeException extends RuntimeException {}
 endif;
 
-if (!class_exists('UpdraftPlus_InvalidRangeHeaderException')):
-class UpdraftPlus_InvalidRangeHeaderException extends RuntimeException {}
+if (!class_exists('BackupPlus_InvalidRangeHeaderException')):
+class BackupPlus_InvalidRangeHeaderException extends RuntimeException {}
 endif;
 
-class UpdraftPlus_RangeHeader
+class BackupPlus_RangeHeader
 {
 	/**
 	 * The first byte in the file to send (0-indexed), a null value indicates the last
@@ -42,7 +42,7 @@ class UpdraftPlus_RangeHeader
 	 * Create a new instance from a Range header string
 	 *
 	 * @param string $header
-	 * @return UpdraftPlus_RangeHeader
+	 * @return BackupPlus_RangeHeader
 	 */
 	public static function createFromHeaderString($header)
 	{
@@ -50,9 +50,9 @@ class UpdraftPlus_RangeHeader
 			return null;
 		}
 		if (!preg_match('/^\s*([A-Za-z]+)\s*=\s*(\d*)\s*-\s*(\d*)\s*(?:,|$)/', $header, $info)) {
-			throw new UpdraftPlus_InvalidRangeHeaderException('Invalid header format');
+			throw new BackupPlus_InvalidRangeHeaderException('Invalid header format');
 		} else if (strtolower($info[1]) !== 'bytes') {
-			throw new UpdraftPlus_InvalidRangeHeaderException('Unknown range unit: ' . $info[1]); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
+			throw new BackupPlus_InvalidRangeHeaderException('Unknown range unit: ' . $info[1]); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 		}
 
 		return new self(
@@ -64,7 +64,7 @@ class UpdraftPlus_RangeHeader
 	/**
 	 * @param int|null $firstByte
 	 * @param int|null $lastByte
-	 * @throws UpdraftPlus_InvalidRangeHeaderException
+	 * @throws BackupPlus_InvalidRangeHeaderException
 	 */
 	public function __construct($firstByte, $lastByte)
 	{
@@ -72,15 +72,15 @@ class UpdraftPlus_RangeHeader
 		$this->lastByte = $lastByte === null ? $lastByte : (int)$lastByte;
 
 		if ($this->firstByte === null && $this->lastByte === null) {
-			throw new UpdraftPlus_InvalidRangeHeaderException(
+			throw new BackupPlus_InvalidRangeHeaderException(
 				'Both start and end position specifiers empty'
 			);
 		} else if ($this->firstByte < 0 || $this->lastByte < 0) {
-			throw new UpdraftPlus_InvalidRangeHeaderException(
+			throw new BackupPlus_InvalidRangeHeaderException(
 				'Position specifiers cannot be negative'
 			);
 		} else if ($this->lastByte !== null && $this->lastByte < $this->firstByte) {
-			throw new UpdraftPlus_InvalidRangeHeaderException(
+			throw new BackupPlus_InvalidRangeHeaderException(
 				'Last byte cannot be less than first byte'
 			);
 		}
@@ -91,7 +91,7 @@ class UpdraftPlus_RangeHeader
 	 *
 	 * @param int $fileSize
 	 * @return int
-	 * @throws UpdraftPlus_UnsatisfiableRangeException
+	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
 	public function getStartPosition($fileSize)
 	{
@@ -102,7 +102,7 @@ class UpdraftPlus_RangeHeader
 		}
 
 		if ($size <= $this->firstByte) {
-			throw new UpdraftPlus_UnsatisfiableRangeException(
+			throw new BackupPlus_UnsatisfiableRangeException(
 				'Start position is after the end of the file'
 			);
 		}
@@ -115,7 +115,7 @@ class UpdraftPlus_RangeHeader
 	 *
 	 * @param int $fileSize
 	 * @return int
-	 * @throws UpdraftPlus_UnsatisfiableRangeException
+	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
 	public function getEndPosition($fileSize)
 	{
@@ -126,7 +126,7 @@ class UpdraftPlus_RangeHeader
 		}
 
 		if ($size <= $this->lastByte) {
-			throw new UpdraftPlus_UnsatisfiableRangeException(
+			throw new BackupPlus_UnsatisfiableRangeException(
 				'End position is after the end of the file'
 			);
 		}
@@ -139,7 +139,7 @@ class UpdraftPlus_RangeHeader
 	 *
 	 * @param int $fileSize
 	 * @return int
-	 * @throws UpdraftPlus_UnsatisfiableRangeException
+	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
 	public function getLength($fileSize)
 	{
@@ -162,17 +162,17 @@ class UpdraftPlus_RangeHeader
 	}
 }
 
-class UpdraftPlus_PartialFileServlet
+class BackupPlus_PartialFileServlet
 {
 	/**
 	 * The range header on which the data transmission will be based
 	 *
-	 * @var UpdraftPlus_RangeHeader|null
+	 * @var BackupPlus_RangeHeader|null
 	 */
 	private $range;
 
 	/**
-	 * @param UpdraftPlus_RangeHeader $range Range header on which the transmission will be based
+	 * @param BackupPlus_RangeHeader $range Range header on which the transmission will be based
 	 */
 	public function __construct($range = null)
 	{
@@ -226,14 +226,14 @@ class UpdraftPlus_PartialFileServlet
 		// Make sure the file exists and is a file, otherwise we are wasting our time
 		$localPath = realpath($path);
 		if ($localPath === false || !is_file($localPath)) {
-			throw new UpdraftPlus_NonExistentFileException(
+			throw new BackupPlus_NonExistentFileException(
 				$path . ' does not exist or is not a file' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 			);
 		}
 
 		// Make sure we can open the file for reading
 		if (!$fp = fopen($localPath, 'r')) {
-			throw new UpdraftPlus_UnreadableFileException(
+			throw new BackupPlus_UnreadableFileException(
 				'Failed to open ' . $localPath . ' for reading' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 			);
 		}
