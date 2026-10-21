@@ -40,6 +40,10 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			'default_value' => '',
 			'contexts' => array('option', 'input'),
 		),
+		'encryption' => array(
+			'default_value' => 'none',
+			'contexts' => array('option', 'input'),
+		),
 		'user' => array(
 			'default_value' => '',
 			'contexts' => array('option', 'input'),
@@ -66,17 +70,26 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 	 * @param  String  $user 			 Specify Username
 	 * @param  String  $pass 			 Specify Password
 	 * @param  Boolean $disable_ssl		 Indicate whether to disable SSL
-	 * @param  Boolean $disable_verify	 Indicate whether to disable verifiction
-	 * @param  Boolean $use_server_certs Indicate whether to use server certificates
+	 * @param  Boolean $disable_verify	 Indicate whether to disable certificate verification
+	 * @param  Boolean $use_server_certs Indicate whether to use the system CA store instead of the bundled CA file
 	 * @param  Boolean $passive 		 Indicate whether to use passive FTP mode
-	 * @return Array
+	 * @param  String  $encryption       Connection encryption: none or tls (explicit FTPS)
+	 * @return BackupPlus_ftp_wrapper|WP_Error
 	 */
-	private function getFTP($server, $user, $pass, $disable_ssl = false, $disable_verify = true, $use_server_certs = false, $passive = true) {
+	private function getFTP($server, $user, $pass, $disable_ssl = false, $disable_verify = false, $use_server_certs = false, $passive = true, $encryption = 'none') {
+		$settings = $this->normalise_connection_settings(array('host' => $server, 'encryption' => $encryption));
+		$server = $settings['host'];
+		$encryption = $settings['encryption'];
 
 		/* translators: %s: Storage method name */
 		if ('' == trim($server) || '' == trim($user) || '' == trim($pass)) return new WP_Error('no_settings', sprintf(__('No %s settings were found', 'backupplus'), 'FTP'));
 
+		if (!in_array($encryption, array('none', 'tls'), true)) return new WP_Error('ftp_invalid_encryption', __('Unsupported FTP encryption setting.', 'backupplus'));
+		if ('tls' === $encryption && $disable_ssl) return new WP_Error('ftp_ssl_disabled', __('FTPS requires SSL/TLS. Uncheck the option to disable SSL in the expert settings, then try again.', 'backupplus'));
 		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('includes/ftp.class.php', 'include_once');
+		$missing = BackupPlus_ftp_wrapper::get_support_errors('tls' === $encryption);
+		/* translators: %s: Required PHP cURL functions or libcurl capabilities. */
+		if ($missing) return new WP_Error('ftp_missing_support', sprintf(__('Your PHP installation needs the following to use this FTP connection: %s.', 'backupplus'), implode(', ', $missing)));
 
 		$port = 21;
 		if (preg_match('/^(.*):(\d+)$/', $server, $matches)) {
@@ -86,13 +99,29 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 
 		$ftp = new BackupPlus_ftp_wrapper($server, $user, $pass, $port);
 
-		if ($disable_ssl) $ftp->ssl = false;
+		$ftp->ssl = ('tls' === $encryption);
 		$ftp->use_server_certs = $use_server_certs;
 		$ftp->disable_verify = $disable_verify;
 		$ftp->passive = ($passive) ? true : false;
 
 		return $ftp;
 
+	}
+
+	/**
+	 * Normalise host prefixes for saved settings, job options and unsaved tests.
+	 * A secure prefix always requests TLS, even when the encryption field is absent.
+	 *
+	 * @param Array $settings - connection settings
+	 * @return Array
+	 */
+	private function normalise_connection_settings($settings) {
+		if (!empty($settings['host']) && preg_match('#^ftp(es|s)?://(.*)$#i', trim($settings['host']), $matches)) {
+			$settings['host'] = rtrim($matches[2], "/ \t\n\r\0x0B");
+			if (!empty($matches[1])) $settings['encryption'] = 'tls';
+		}
+		if (!isset($settings['encryption'])) $settings['encryption'] = 'none';
+		return $settings;
 	}
 	
 	/**
@@ -105,9 +134,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 	public function options_filter($settings) {
 		if (is_array($settings) && !empty($settings['version']) && !empty($settings['settings'])) {
 			foreach ($settings['settings'] as $instance_id => $instance_settings) {
-				if (!empty($instance_settings['host']) && preg_match('#ftp(es|s)?://(.*)#i', $instance_settings['host'], $matches)) {
-					$settings['settings'][$instance_id]['host'] = rtrim($matches[2], "/ \t\n\r\0x0B");
-				}
+				$settings['settings'][$instance_id] = $this->normalise_connection_settings($instance_settings);
 				if (isset($instance_settings['pass'])) {
 					$settings['settings'][$instance_id]['pass'] = trim($instance_settings['pass'], "\n\r\0\x0B");
 				}
@@ -140,13 +167,13 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			foreach ($possible as $type => $missing) {
 				$ftp_not_possible[] = wp_kses(
 					'<strong>'.__('Warning', 'backupplus').':</strong> '.sprintf(
-						/* translators: %s: Disabled PHP functions */
-						__("Your web server's PHP installation has these functions disabled: %s.", 'backupplus'),
+						/* translators: %s: Missing PHP cURL functions or libcurl capabilities. */
+						__('Your PHP installation is missing the following: %s.', 'backupplus'),
 						implode(', ', $missing)
 					).' '.
 					sprintf(
 						/* translators: %s: Storage method name requiring enabled functions */
-						__('Your hosting company must enable these functions before %s can work.', 'backupplus'),
+						__('Your hosting company must enable this support before %s can work.', 'backupplus'),
 						$trans[$type]
 					),
 					$this->allowed_html_for_content_sanitisation()
@@ -154,10 +181,15 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			}
 		}
 		$properties = array(
-			'backupplus_sftp_ftps_notice' => wp_kses(apply_filters('backupplus_sftp_ftps_notice', '<strong>'.__('Only non-encrypted FTP is supported by BackupPlus.', 'backupplus').'</strong>'), $this->allowed_html_for_content_sanitisation()),
+			'backupplus_sftp_ftps_notice' => wp_kses(apply_filters('backupplus_sftp_ftps_notice', __('FTP and FTPS with explicit TLS are supported. FTPS server certificates are verified unless verification is disabled in the expert settings. Implicit FTPS is not supported.', 'backupplus')), $this->allowed_html_for_content_sanitisation()),
 			'ftp_not_possible_warnings' => $ftp_not_possible,
 			'input_host_label' => __('FTP server', 'backupplus'),
 			'input_host_placeholder' => __('Example: ftp.example.com', 'backupplus'),
+			'input_encryption_label' => __('Encryption', 'backupplus'),
+			'input_encryption_option_labels' => array(
+				'none' => __('None (plain FTP)', 'backupplus'),
+				'tls' => __('FTPS (explicit TLS)', 'backupplus'),
+			),
 			'input_user_label' => __('FTP login', 'backupplus'),
 			'input_user_placeholder' => __('Enter your username', 'backupplus'),
 			'input_password_label' => __('FTP password', 'backupplus'),
@@ -187,14 +219,15 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			$backupplus->get_job_option('backupplus_ssl_nossl'),
 			$backupplus->get_job_option('backupplus_ssl_disableverify'),
 			$backupplus->get_job_option('backupplus_ssl_useservercerts'),
-			$opts['passive']
+			$opts['passive'],
+			$opts['encryption']
 		);
 
 		if (is_wp_error($ftp) || !$ftp->connect()) {
 			if (is_wp_error($ftp)) {
 				$backupplus->log_wp_error($ftp);
 			} else {
-				$this->log("Failure: we did not successfully log in with those credentials.");
+				$this->log('FTP connection failed: '.$ftp->get_error());
 			}
 			$this->log(__("login failure", 'backupplus'), 'error');
 			return false;
@@ -204,10 +237,10 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 
 		$backupplus_dir = $backupplus->backups_dir_location().'/';
 
-		$ftp_remote_path = trailingslashit($opts['path']);
+		$ftp_remote_path = '' === $opts['path'] ? '' : trailingslashit($opts['path']);
 		foreach ($backup_array as $file) {
 			$fullpath = $backupplus_dir.$file;
-			$this->log("upload attempt: $file -> ftp://".$opts['user']."@".$opts['host']."/{$ftp_remote_path}{$file}");
+			$this->log("upload attempt: $file -> ".($ftp->ssl ? 'ftps' : 'ftp')."://".$opts['user']."@".$opts['host']."/{$ftp_remote_path}{$file}");
 			$timer_start = microtime(true);
 			$size_k = round(filesize($fullpath)/1024, 1);
 			// Note :Setting $resume to true unnecessarily is not meant to be a problem. Only ever (Feb 2014) seen one weird FTP server where calling SIZE on a non-existent file did create a problem. So, this code just helps that case. (the check for non-empty upload_status[p] is being cautious.
@@ -218,7 +251,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 				$resume = true;
 			}
 
-			if ($ftp->put($fullpath, $ftp_remote_path.$file, FTP_BINARY, $resume, $backupplus)) {
+			if ($ftp->put($fullpath, $ftp_remote_path.$file, BackupPlus_ftp_wrapper::BINARY, $resume, $backupplus)) {
 				$this->log("upload attempt successful (".$size_k."KB in ".(round(microtime(true)-$timer_start, 2)).'s)');
 				$backupplus->uploaded_file($file);
 			} else {
@@ -242,19 +275,20 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			$backupplus->get_job_option('backupplus_ssl_nossl'),
 			$backupplus->get_job_option('backupplus_ssl_disableverify'),
 			$backupplus->get_job_option('backupplus_ssl_useservercerts'),
-			$opts['passive']
+			$opts['passive'],
+			$opts['encryption']
 		);
 
 		if (is_wp_error($ftp)) return $ftp;
 
 		/* translators: %s: Storage method name */
-		if (!$ftp->connect()) return new WP_Error('ftp_login_failed', sprintf(__("%s login failure", 'backupplus'), 'FTP'));
+		if (!$ftp->connect()) return new WP_Error('ftp_login_failed', sprintf(__("%s connection failure", 'backupplus'), 'FTP').': '.$ftp->get_error());
 
 		$ftp_remote_path = $opts['path'];
 		if ($ftp_remote_path) $ftp_remote_path = trailingslashit($ftp_remote_path);
 
 		$dirlist = $ftp->dir_list($ftp_remote_path);
-		if (!is_array($dirlist)) return array();
+		if (!is_array($dirlist)) return new WP_Error('ftp_list_failed', __('FTP directory listing failed.', 'backupplus').' '.$ftp->get_error());
 
 		$results = array();
 
@@ -276,7 +310,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			unset($dirlist[$k]);
 		}
 
-		// ftp_nlist() doesn't return file sizes. rawlist() does, but is tricky to parse. So, we get the sizes manually.
+		// NLST does not return file sizes, so retrieve them separately.
 		foreach ($results as $ind => $name) {
 			$size = $ftp->size($ftp_remote_path.$name['name']);
 			if (0 === $size) {
@@ -315,18 +349,23 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 				$backupplus->get_job_option('backupplus_ssl_nossl'),
 				$backupplus->get_job_option('backupplus_ssl_disableverify'),
 				$backupplus->get_job_option('backupplus_ssl_useservercerts'),
-				$opts['passive']
+				$opts['passive'],
+				$opts['encryption']
 			);
 
 			if (is_wp_error($ftp) || !$ftp->connect()) {
-				if (is_wp_error($ftp)) $backupplus->log_wp_error($ftp);
+				if (is_wp_error($ftp)) {
+					$backupplus->log_wp_error($ftp);
+				} else {
+					$this->log('FTP connection failed: '.$ftp->get_error());
+				}
 				$this->log("Failure: we did not successfully log in with those credentials (host=".$opts['host'].").");
 				return 'authentication_fail';
 			}
 
 		}
 
-		$ftp_remote_path = isset($ftparr['ftp_remote_path']) ? $ftparr['ftp_remote_path'] : trailingslashit($opts['path']);
+		$ftp_remote_path = isset($ftparr['ftp_remote_path']) ? $ftparr['ftp_remote_path'] : ('' === $opts['path'] ? '' : trailingslashit($opts['path']));
 
 		$ret = true;
 		foreach ($files as $file) {
@@ -354,7 +393,8 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			$backupplus->get_job_option('backupplus_ssl_nossl'),
 			$backupplus->get_job_option('backupplus_ssl_disableverify'),
 			$backupplus->get_job_option('backupplus_ssl_useservercerts'),
-			$opts['passive']
+			$opts['passive'],
+			$opts['encryption']
 		);
 
 		if (is_wp_error($ftp)) {
@@ -364,14 +404,14 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		}
 
 		if (!$ftp->connect()) {
-			$this->log('Failure: we did not successfully log in with those credentials.');
+			$this->log('FTP connection failed: '.$ftp->get_error());
 			$this->log(__('login failure', 'backupplus'), 'error');
 			return false;
 		}
 
 		// $ftp->make_dir(); we may need to recursively create dirs? TODO
 		
-		$ftp_remote_path = trailingslashit($opts['path']);
+		$ftp_remote_path = '' === $opts['path'] ? '' : trailingslashit($opts['path']);
 		$fullpath = $backupplus->backups_dir_location().'/'.$file;
 
 		$resume = false;
@@ -380,14 +420,16 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			$this->log("File already exists locally; will resume: size: ".filesize($fullpath));
 		}
 
-		return $ftp->get($fullpath, $ftp_remote_path.$file, FTP_BINARY, $resume, $backupplus);
+		return $ftp->get($fullpath, $ftp_remote_path.$file, BackupPlus_ftp_wrapper::BINARY, $resume, $backupplus);
 	}
 
 	private function ftp_possible() {
+		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('includes/ftp.class.php', 'include_once');
 		$funcs_disabled = array();
-		foreach (array('ftp_connect', 'ftp_login', 'ftp_nb_fput') as $func) {
-			if (!function_exists($func)) $funcs_disabled['ftp'][] = $func;
-		}
+		$missing = BackupPlus_ftp_wrapper::get_support_errors();
+		if ($missing) $funcs_disabled['ftp'] = $missing;
+		$missing = BackupPlus_ftp_wrapper::get_support_errors(true);
+		if ($missing) $funcs_disabled['ftpsslexplicit'] = $missing;
 		$funcs_disabled = apply_filters('backupplus_ftp_possible', $funcs_disabled);
 		return (0 == count($funcs_disabled)) ? true : $funcs_disabled;
 	}
@@ -432,6 +474,15 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			</td>
 		</tr>
 		
+		<tr class="{{get_template_css_classes true}}">
+			<th>{{input_encryption_label}}:</th>
+			<td><select data-backupplus_settings_test="encryption" id="{{get_template_input_attribute_value "id" "encryption"}}" name="{{get_template_input_attribute_value "name" "encryption"}}">
+				{{#each input_encryption_option_labels}}
+				<option value="{{@key}}" {{#ifeq @key ../encryption}}selected="selected"{{/ifeq}}>{{this}}</option>
+				{{/each}}
+			</select></td>
+		</tr>
+
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_user_label}}:</th>
 			<td><input class="backupplus_input--wide" type="text" size="40" data-backupplus_settings_test="user" id="{{get_template_input_attribute_value "id" "user"}}" name="{{get_template_input_attribute_value "name" "user"}}" value="{{user}}" /></td>
@@ -491,28 +542,31 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			return;
 		}
 
-		if (preg_match('#ftp(es|s)?://(.*)#i', $server, $matches)) $server = untrailingslashit($matches[2]);
-
-		// $ftp = $this->getFTP($server, $login, $pass, $nossl, $disable_verify, $use_server_certs);
-		$ftp = $this->getFTP($server, $login, $pass, $nossl, $disable_verify, $use_server_certs, $passive);
+		$encryption = isset($posted_settings['encryption']) ? $posted_settings['encryption'] : 'none';
+		$ftp = $this->getFTP($server, $login, $pass, $nossl, $disable_verify, $use_server_certs, $passive, $encryption);
+		if (is_wp_error($ftp)) {
+			echo esc_html($ftp->get_error_message());
+			return;
+		}
 
 		if (!$ftp->connect()) {
-			esc_html_e('Failure: we did not successfully log in with those credentials.', 'backupplus');
+			echo esc_html(__('Failure: unable to connect to the FTP server.', 'backupplus').' '.$ftp->get_error());
 			return;
 		}
 		// $ftp->make_dir(); we may need to recursively create dirs? TODO
 
 		$file = md5(wp_rand(0, 99999999)).'.tmp';
-		$fullpath = trailingslashit($path).$file;
+		$fullpath = ('' === $path ? '' : trailingslashit($path)).$file;
 		
-		if ($ftp->put(ABSPATH.WPINC.'/version.php', $fullpath, FTP_BINARY, false, true)) {
+		if ($ftp->put(ABSPATH.WPINC.'/version.php', $fullpath, BackupPlus_ftp_wrapper::BINARY, false, true)) {
 			echo esc_html(__("Success: we successfully logged in, and confirmed our ability to create a file in the given directory (login type:", 'backupplus')." ".$ftp->login_type.')');
 			@$ftp->delete($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 			$this->set_connection_status(true);
 		} else {
 			esc_html_e('Failure: we successfully logged in, but were not able to create a file in the given directory.', 'backupplus');
+			echo ' '.esc_html($ftp->get_error());
 			if (!empty($ftp->ssl)) {
-				echo ' '.esc_html__('This is sometimes caused by a firewall - try turning off SSL in the expert settings, and testing again.', 'backupplus');
+				echo ' '.esc_html__('Check that your FTP server and firewall allow encrypted data connections.', 'backupplus');
 			}
 		}
 	}

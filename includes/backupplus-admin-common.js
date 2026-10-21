@@ -1993,6 +1993,15 @@ jQuery(function($) {
 		var notice_selector = $(this).closest('tr').find('[class^="backupplus_"][class$="_host_error"]');
 
 		notice_selector.hide();
+		if ($(this).hasClass('backupplus_ftp_host_settings')) {
+			var ftp_address = $(this).val().trim().match(/^ftp(es|s)?:\/\/(.*)$/i);
+			if (ftp_address) {
+				if (ftp_address[1]) {
+					$(document.getElementById(this.id.replace('_host_', '_encryption_'))).val('tls').trigger('change');
+				}
+				$(this).val(ftp_address[2].replace(/\/+$/, ''));
+			}
+		}
 		if (/\/|^https?:/.test($(this).val())) {
 			$(this).val($(this).val().replace(/^https?:|\/+/g, ''));
 			notice_selector.show();

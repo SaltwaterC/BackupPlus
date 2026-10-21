@@ -10,6 +10,20 @@ The plugin's versioned minified assets are generated from the stable inputs in `
 
 ## Storage providers
 
+The FTP provider supports plain FTP and FTPS with explicit TLS. Select **FTPS (explicit TLS)** under **Encryption** to encrypt the login and file transfers. Both modes default to port 21; enter `hostname:port` to use a custom port. The `ftps://` and `ftpes://` host prefixes also select explicit TLS, including in connection tests. Existing FTP settings continue to use plain FTP.
+
+Both modes use PHP's cURL extension with libcurl FTP support; FTPS also requires libcurl SSL/TLS support and SSL enabled in the plugin's expert settings. PHP's native FTP extension is not required. FTPS requires encryption on both control and data connections and never retries using plain FTP. Server certificate trust and hostname verification are enabled by default, honoring the existing expert settings for disabling verification and choosing the system CA store instead of the bundled CA file. System CA selection respects PHP's `curl.cainfo` setting. Implicit FTPS (typically port 990) is not supported. An empty remote path uses the login directory; paths beginning with `/` use the server root.
+
+Run `php scripts/test-ftp.php` and `php -d disable_functions=curl_init scripts/test-ftp.php` for FTP settings and failure handling checks. To test live transfers and certificate verification against disposable loopback servers:
+
+```sh
+python3 -m venv /tmp/backupplus-ftp-tests
+/tmp/backupplus-ftp-tests/bin/pip install pyftpdlib pyOpenSSL
+/tmp/backupplus-ftp-tests/bin/python scripts/test-ftp-integration.py
+```
+
+The integration checks disable the native PHP FTP functions and exercise both active and passive modes, transfer resumption, relative and absolute paths, filenames with URL metacharacters, and rejection of untrusted, expired and mismatched certificates. No external FTP service is needed.
+
 Each provider entry file in `methods/` declares its own registration headers:
 
 ```php
