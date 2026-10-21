@@ -1,13 +1,26 @@
 <?php
+/**
+ * BackupPlus Provider: DreamObjects
+ * Provider ID: dreamobjects
+ * Provider Class: BackupPlus_BackupModule_dreamobjects
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-backupplus_try_include_file('methods/s3.php', 'require_once');
+backupplus_try_include_file('methods/s3-base.php', 'require_once');
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
  */
-class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_s3 {
+class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_s3_base {
+
+	/** @return Array Endpoint validation data for the settings scripts. */
+	public function get_admin_script_data() {
+		return array(
+			'dreamobject_endpoints' => array_keys(self::get_endpoints()),
+			'dreamobject_endpoint_regex' => self::ENDPOINT_REGEX,
+		);
+	}
 
 	protected $provider_can_use_aws_sdk = false;
 	

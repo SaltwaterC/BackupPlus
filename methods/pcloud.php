@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: pCloud
+ * Provider ID: pcloud
+ * Provider Class: BackupPlus_BackupModule_pcloud
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 

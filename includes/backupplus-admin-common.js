@@ -245,26 +245,23 @@ function backupplus_remote_storage_tabs_setup() {
 	});
 	
 	jQuery('.backupplus_servicecheckbox').on('change', function() {
-		var sclass = jQuery(this).attr('id');
-		if ('backupplus_servicecheckbox_' == sclass.substring(0,24)) {
-			var serv = sclass.substring(24);
-			if (null != serv && '' != serv) {
-				if (jQuery(this).is(':checked')) {
-					anychecked++;
-					jQuery('.error.backupplusmethod.'+serv).show();
-					jQuery('.remote-tab-'+serv).fadeIn();
-					backupplus_remote_storage_tab_activation(serv);
-					if (jQuery('#backupplus-navtab-settings-content #backupplus_report_row_no_addon').length && 'email' === serv) set_email_report_storage_interface(true);
-				} else {
-					anychecked--;
-					jQuery('.error.backupplusmethod.'+serv).hide();
-					jQuery('.remote-tab-'+serv).hide();
-					// Check if this was the active tab, if yes, switch to another
-					if (jQuery('.remote-tab-'+serv).data('active') == true) {
-						backupplus_remote_storage_tab_activation(jQuery('.remote-tab:visible').last().attr('name'));
-					}
-					if (jQuery('#backupplus-navtab-settings-content #backupplus_report_row_no_addon').length && 'email' === serv) set_email_report_storage_interface(false);
+		var serv = jQuery(this).val();
+		if (serv) {
+			if (jQuery(this).is(':checked')) {
+				anychecked++;
+				jQuery('.error.backupplusmethod.'+serv).show();
+				jQuery('.remote-tab-'+serv).fadeIn();
+				backupplus_remote_storage_tab_activation(serv);
+				if (jQuery('#backupplus-navtab-settings-content #backupplus_report_row_no_addon').length && 'email' === serv) set_email_report_storage_interface(true);
+			} else {
+				anychecked--;
+				jQuery('.error.backupplusmethod.'+serv).hide();
+				jQuery('.remote-tab-'+serv).hide();
+				// Check if this was the active tab, if yes, switch to another
+				if (jQuery('.remote-tab-'+serv).data('active') == true) {
+					backupplus_remote_storage_tab_activation(jQuery('.remote-tab:visible').last().attr('name'));
 				}
+				if (jQuery('#backupplus-navtab-settings-content #backupplus_report_row_no_addon').length && 'email' === serv) set_email_report_storage_interface(false);
 			}
 		}
 

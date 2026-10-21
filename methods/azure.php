@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Microsoft Azure
+ * Provider ID: azure
+ * Provider Class: BackupPlus_BackupModule_azure
+ */
 
 if (!defined('ABSPATH')) die('No direct access.');
 

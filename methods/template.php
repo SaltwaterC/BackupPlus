@@ -9,7 +9,14 @@
  * - Search-and-replace "template" for the name of your access method
  * - You can also add the methods config_print_javascript_onready and credentials_test if you like
  * - Name your file accordingly (it is now template.php)
- * - Add the method to the array $backup_methods in backupplus.php when ready
+ * - Add these headers below the opening PHP tag when ready (leave them out of helper files):
+ *     `BackupPlus Provider: Your display name`
+ *     `Provider ID: template`
+ *     `Provider Class: BackupPlus_BackupModule_template`
+ * - The factory discovers these headers automatically; use get_storage_object('template')
+ *   to access the provider. The ID must match get_id() (or override get_id()).
+ * - Keep shared implementation in helper files so removing an entry point cannot
+ *   remove a dependency of another provider.
  * - Use the constant BACKUPPLUS_DIR to reach BackupPlus's plugin directory
  * - Call $backupplus->log("my log message") to log things, which greatly helps debugging
  * - BackupPlus is licensed under the GPL version 3 or later. Any distributed combined work must be licensed in a way compatible with the GPL.

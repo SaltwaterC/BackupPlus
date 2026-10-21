@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: FTP
+ * Provider ID: ftp
+ * Provider Class: BackupPlus_BackupModule_ftp
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 

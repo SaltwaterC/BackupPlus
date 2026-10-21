@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Google Cloud
+ * Provider ID: googlecloud
+ * Provider Class: BackupPlus_BackupModule_googlecloud
+ */
 
 if (!defined('ABSPATH')) die('No direct access.');
 

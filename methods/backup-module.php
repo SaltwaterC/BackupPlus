@@ -4,6 +4,11 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 
 abstract class BackupPlus_BackupModule {
 
+	/** @return Array Provider-specific values for the settings scripts. */
+	public function get_admin_script_data() {
+		return array();
+	}
+
 	private $_options;
 
 	private $_instance_id;

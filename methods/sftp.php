@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: SFTP / SCP
+ * Provider ID: sftp
+ * Provider Class: BackupPlus_BackupModule_sftp
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 

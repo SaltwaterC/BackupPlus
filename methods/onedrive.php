@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Microsoft OneDrive
+ * Provider ID: onedrive
+ * Provider Class: BackupPlus_BackupModule_onedrive
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 

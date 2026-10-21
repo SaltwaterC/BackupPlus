@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) die('No access.');
 
 /**
  * A class for interfacing with storage methods.
- * N.B. This class began life Sep 2018; it is not guaranteed that there are not many places that bypass it that could be ported over to use it.
+ * Provider discovery and construction are delegated to the storage provider factory.
  */
 class BackupPlus_Storage_Methods_Interface {
 
@@ -16,22 +16,7 @@ class BackupPlus_Storage_Methods_Interface {
 	 * @return Object|WP_Error - an instance of BackupPlus_BackupModule, or an error
 	 */
 	public static function get_storage_object($method) {
-	
-		if (!preg_match('/^[\-a-z0-9]+$/i', $method)) return new WP_Error('no_such_storage_class', "The specified storage method ($method) was not found");
-	
-		static $objects = array();
-	
-		if (!empty($objects[$method])) return $objects[$method];
-	
-		$method_class = 'BackupPlus_BackupModule_'.$method;
-		
-		if (!class_exists($method_class)) backupplus_try_include_file('methods/'.$method.'.php', 'include_once');
-		
-		if (!class_exists($method_class)) return new WP_Error('no_such_storage_class', "The specified storage method ($method) was not found");
-		
-		$objects[$method] = new $method_class;
-		
-		return $objects[$method];
+		return BackupPlus_Storage_Provider_Factory::create($method);
 	}
 	
 	/**
@@ -203,7 +188,7 @@ class BackupPlus_Storage_Methods_Interface {
 		
 		if ($already_active) return new WP_Error('recursion', 'self::update_remote_storage_options_format() was called in a loop. This is usually caused by an options filter failing to correctly process a "recursion" error code');
 	
-		if (!file_exists(BACKUPPLUS_DIR.'/methods/'.$method.'.php')) return new WP_Error('no_such_method', 'Remote storage method not found', $method);
+		if (!BackupPlus_Storage_Provider_Factory::has($method)) return new WP_Error('no_such_method', 'Remote storage method not found', $method);
 		
 		// Sanity/inconsistency check
 		$settings_keys = $backupplus->get_settings_keys();
@@ -221,6 +206,7 @@ class BackupPlus_Storage_Methods_Interface {
 		if (isset($current_setting['version'])) return $current_setting;
 		if (empty($current_setting)) {
 			$remote_storage = self::get_storage_object($method);
+			if (is_wp_error($remote_storage)) return $remote_storage;
 			$current_setting = $remote_storage->get_default_options();
 		}
 		$new_setting = self::wrap_remote_storage_options($current_setting);

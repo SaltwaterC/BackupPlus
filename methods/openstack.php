@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: OpenStack (Swift)
+ * Provider ID: openstack
+ * Provider Class: BackupPlus_BackupModule_openstack
+ */
 
 if (!defined('ABSPATH')) die('No direct access.');
 

@@ -1,13 +1,18 @@
 <?php
+/**
+ * BackupPlus Provider: S3-Compatible (Generic)
+ * Provider ID: s3generic
+ * Provider Class: BackupPlus_BackupModule_s3generic
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-backupplus_try_include_file('methods/s3.php', 'require_once');
+backupplus_try_include_file('methods/s3-base.php', 'require_once');
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
  */
-class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3 {
+class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3_base {
 
 	protected $provider_can_use_aws_sdk = false;
 	

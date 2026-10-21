@@ -445,12 +445,8 @@ class BackupPlus_Backup {
 		foreach ($services as $service) {
 			if ('none' === $service || '' == $service) continue;
 
-			$objname = "BackupPlus_BackupModule_{$service}";
-			if (!class_exists($objname) && file_exists(BACKUPPLUS_DIR.'/methods/'.$service.'.php')) {
-				backupplus_try_include_file('methods/'.$service.'.php', 'include_once');
-			}
-			if (class_exists($objname)) {
-				$remote_obj = new $objname;
+			$remote_obj = BackupPlus_Storage_Provider_Factory::create($service, false);
+			if (!is_wp_error($remote_obj)) {
 				$prune_services[$service]['all'] = array($remote_obj, null);
 			} else {
 				$backupplus->log("Could not prune from service $service: remote method not found");
@@ -554,6 +550,10 @@ class BackupPlus_Backup {
 		$errors_before_uploads = $backupplus->error_count();
 
 		foreach ($services as $ind => $service) {
+			if ('none' !== $service && '' !== $service && empty($storage_objects_and_ids[$service]['object'])) {
+				$backupplus->log(sprintf(__('Remote storage provider unavailable: %s', 'backupplus'), $service), 'error');
+				continue;
+			}
 			try {
 				$instance_id_count = 0;
 				$total_instance_ids = ('none' !== $service && '' !== $service && $storage_objects_and_ids[$service]['object']->supports_feature('multi_options')) ? count($storage_objects_and_ids[$service]['instance_settings']) : 1;

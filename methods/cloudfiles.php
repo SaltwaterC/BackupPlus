@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Rackspace Cloud Files
+ * Provider ID: cloudfiles
+ * Provider Class: BackupPlus_BackupModule_cloudfiles
+ */
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Using the default PHP fopen() function instead of the WP Filesystem API.
 if (!defined('ABSPATH')) die('No direct access allowed');
 

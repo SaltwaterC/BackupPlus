@@ -108,8 +108,8 @@ $multi = apply_filters('backupplus_storage_printoptions_multi', '');
 		<div id="remote-storage-container" class="available-remote-storages">
 			<?php
 			foreach ($backupplus->backup_methods as $method => $description) {
-				if (!class_exists('BackupPlus_BackupModule_'.$method)) backupplus_try_include_file('methods/'.$method.'.php', 'include_once');
-				if (is_subclass_of('BackupPlus_BackupModule_'.$method, 'BackupPlus_BackupModule_AddonNotYetPresent')) {
+				$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($method);
+				if (is_wp_error($provider) || is_a($provider, 'BackupPlus_BackupModule_AddonNotYetPresent')) {
 					continue;
 				}
 				/* translators: 1: String 'BackupPlus', 2: String 'AWS S3' */

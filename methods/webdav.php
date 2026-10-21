@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: WebDAV
+ * Provider ID: webdav
+ * Provider Class: BackupPlus_BackupModule_webdav
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 

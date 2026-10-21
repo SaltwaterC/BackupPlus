@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Backblaze
+ * Provider ID: backblaze
+ * Provider Class: BackupPlus_BackupModule_backblaze
+ */
 
 if (!defined('ABSPATH')) die('No direct access.');
 

@@ -371,8 +371,9 @@ class BackupPlus_Admin {
 		if (version_compare($backupplus->get_wordpress_version(), '3.2', '<')) add_action('all_admin_notices', array($this, 'show_admin_warning_wordpressversion'));
 		
 		// DreamObjects west cluster shutdown warning
-		if ('dreamobjects' === $service || (is_array($service) && in_array('dreamobjects', $service))) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('dreamobjects');
+		if (BackupPlus_Storage_Provider_Factory::has('dreamobjects') && ('dreamobjects' === $service || (is_array($service) && in_array('dreamobjects', $service)))) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object('dreamobjects');
+			$settings = is_wp_error($provider) ? $provider : BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('dreamobjects');
 			
 			if (is_wp_error($settings)) {
 				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
@@ -383,7 +384,7 @@ class BackupPlus_Admin {
 				foreach ($settings['settings'] as $storage_options) {
 					if ('objects-us-east-1.dream.io' == $storage_options['endpoint']) {
 						add_action('all_admin_notices', array($this, 'show_admin_warning_dreamobjects'));
-					} elseif (!BackupPlus_BackupModule_dreamobjects::is_valid_endpoint($storage_options['endpoint'])) {
+					} elseif (!$provider->is_valid_endpoint($storage_options['endpoint'])) {
 						add_action('all_admin_notices', array($this, 'show_admin_error_dreamobjects_invalid_custom_endpoint'));
 					}
 				}
@@ -787,15 +788,20 @@ class BackupPlus_Admin {
 			$selected = '';
 			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
 		}
-		$backup_methods = $backupplus->backup_methods;
 		$remote_storage_options_and_templates = BackupPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
+		$backup_methods = $backupplus->backup_methods;
+		$provider_script_data = array();
+		foreach (array_keys($backup_methods) as $method) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($method);
+			if (!is_wp_error($provider)) $provider_script_data = array_merge($provider_script_data, $provider->get_admin_script_data());
+		}
 		do_action('backupplus_admin_enqueue_scripts');
 		$main_tabs = $this->get_main_tabs_array();
 
 
 		$hosting_company = $backupplus->get_hosting_info();
 		$tab = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'tab', '', false, 'string', null);
-		wp_localize_script('backupplus-admin-common', 'backupplus_i18n', array(
+		wp_localize_script('backupplus-admin-common', 'backupplus_i18n', array_merge($provider_script_data, array(
 			'tab' => (empty($tab) || !preg_match('/^[a-z]+$/', $tab)) ? 'backups' : $tab,
 			'sendonlyonwarnings' => __('Send a report only when there are warnings/errors', 'backupplus'),
 			'wholebackup' => __('When email storage method is enabled, and an email address is entered, also send the backup', 'backupplus'),
@@ -1018,9 +1024,7 @@ class BackupPlus_Admin {
 			'reload_page' => __('Therefore, please reload the page.', 'backupplus'),
 			'save_changes' => __('Save Changes', 'backupplus'),
 			'close' => __('Close', 'backupplus'),
-			'dreamobject_endpoints' => array_keys(BackupPlus_BackupModule_dreamobjects::get_endpoints()),
-			'dreamobject_endpoint_regex' => BackupPlus_BackupModule_dreamobjects::ENDPOINT_REGEX,
-		));
+		)));
 	}
 	
 	/**
@@ -1378,6 +1382,7 @@ class BackupPlus_Admin {
 	public function get_method_auth_link($method) {
 		$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($method));
 
+		if (empty($storage_objects_and_ids[$method]['object'])) return;
 		$object = $storage_objects_and_ids[$method]['object'];
 
 		foreach ($this->auth_instance_ids[$method] as $instance_id) {
@@ -1783,28 +1788,29 @@ class BackupPlus_Admin {
 	
 		$method = (!empty($test_settings['method']) && preg_match("/^[a-z0-9]+$/", $test_settings['method'])) ? $test_settings['method'] : "";
 		
-		$objname = "BackupPlus_BackupModule_$method";
-		
 		$this->logged = array();
 		// TODO: Add action for WP HTTP SSL stuff
 		$error_levels = version_compare(PHP_VERSION, '8.4.0', '>=') ? E_ALL : E_ALL & ~E_STRICT;
 		set_error_handler(array($this, 'get_php_errors'), $error_levels);
 		
-		if (!class_exists($objname)) include_once(BACKUPPLUS_DIR."/methods/$method.php");
+		$obj = BackupPlus_Storage_Provider_Factory::create($method, false);
 
 		$ret = '';
 		$data = null;
 		
 		// TODO: Add action for WP HTTP SSL stuff
-		if (method_exists($objname, "credentials_test")) {
-			$obj = new $objname;
+		if (is_wp_error($obj)) {
+			$ret = esc_html($obj->get_error_message());
+			$data = array('success' => false);
+			if (!$return_instead_of_echo) echo $ret;
+		} elseif (is_callable(array($obj, 'credentials_test'))) {
 			$obj->set_connection_status(false);
 			if ($return_instead_of_echo) ob_start();
 			$data = $obj->credentials_test($test_settings);
 			if ($return_instead_of_echo) $ret .= ob_get_clean();
 		}
 
-		if ($obj->is_connection_successful()) {
+		if (!is_wp_error($obj) && $obj->is_connection_successful()) {
 			if (is_array($data)) {
 				$data['success'] = true;
 			} else {
@@ -1946,6 +1952,7 @@ class BackupPlus_Admin {
 
 						$deleted = -1;
 
+						if (empty($storage_objects_and_ids[$service]['object'])) continue;
 						$remote_obj = $storage_objects_and_ids[$service]['object'];
 
 						$instance_settings = $storage_objects_and_ids[$service]['instance_settings'];
@@ -4149,11 +4156,9 @@ class BackupPlus_Admin {
 			} else {
 				echo "jQuery('.none').show();\n";
 			}
-			foreach ($backupplus->backup_methods as $method => $description) {
-				// already done: backupplus_try_include_file('methods/'.$method.'.php', 'require_once');
-				$call_method = "BackupPlus_BackupModule_$method";
-				if (method_exists($call_method, 'config_print_javascript_onready')) {
-					$method_objects[$method]->config_print_javascript_onready();
+			foreach ($method_objects as $object) {
+				if (is_callable(array($object, 'config_print_javascript_onready'))) {
+					$object->config_print_javascript_onready();
 				}
 			}
 			?>
@@ -5894,6 +5899,9 @@ class BackupPlus_Admin {
 			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($remote_method));
 			
 			try {
+				if (empty($storage_objects_and_ids[$remote_method]['object'])) {
+					return array('result' => 'error', 'message' => __('Remote storage provider is unavailable.', 'backupplus'));
+				}
 				$storage_objects_and_ids[$remote_method]['object']->authenticate_storage($instance_id);
 			} catch (Exception $e) {
 				$response['result'] = 'error';
@@ -5928,6 +5936,9 @@ class BackupPlus_Admin {
 			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($remote_method));
 			
 			try {
+				if (empty($storage_objects_and_ids[$remote_method]['object'])) {
+					return array('result' => 'error', 'message' => __('Remote storage provider is unavailable.', 'backupplus'));
+				}
 				$storage_objects_and_ids[$remote_method]['object']->deauthenticate_storage($instance_id);
 			} catch (Exception $e) {
 				$response['result'] = 'error';

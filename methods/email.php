@@ -1,4 +1,9 @@
 <?php
+/**
+ * BackupPlus Provider: Email
+ * Provider ID: email
+ * Provider Class: BackupPlus_BackupModule_email
+ */
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 

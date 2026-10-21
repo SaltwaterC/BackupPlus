@@ -14,25 +14,8 @@ class BackupPlus {
 
 	public $plugin_title = 'BackupPlus';
 
-	// Choices will be shown in the admin menu in the order used here
-	public $backup_methods = array(
-		'dropbox' => 'Dropbox',
-		's3' => 'Amazon S3',
-		'cloudfiles' => 'Rackspace Cloud Files',
-		'googledrive' => 'Google Drive',
-		'onedrive' => 'Microsoft OneDrive',
-		'ftp' => 'FTP',
-		'azure' => 'Microsoft Azure',
-		'sftp' => 'SFTP / SCP',
-		'googlecloud' => 'Google Cloud',
-		'backblaze'    => 'Backblaze',
-		'webdav' => 'WebDAV',
-		's3generic' => 'S3-Compatible (Generic)',
-		'pcloud' => 'pCloud',
-		'openstack' => 'OpenStack (Swift)',
-		'dreamobjects' => 'DreamObjects',
-		'email' => 'Email'
-	);
+	// Populated from the installed providers, in alphabetical display order.
+	public $backup_methods = array();
 
 	public $errors = array();
 
@@ -111,6 +94,7 @@ class BackupPlus {
 			'BackupPlus_Encryption' => 'includes/class-backupplus-encryption.php',
 			'BackupPlus_Manipulation_Functions' => 'includes/class-manipulation-functions.php',
 			'BackupPlus_Filesystem_Functions' => 'includes/class-filesystem-functions.php',
+			'BackupPlus_Storage_Provider_Factory' => 'includes/class-storage-provider-factory.php',
 			'BackupPlus_Storage_Methods_Interface' => 'includes/class-storage-methods-interface.php',
 			'BackupPlus_Job_Scheduler' => 'includes/class-job-scheduler.php',
 			'BackupPlus_HTTP_Error_Descriptions' => 'includes/class-http-error-descriptions.php',
@@ -122,6 +106,8 @@ class BackupPlus {
 		foreach ($load_classes as $class => $relative_path) {
 			if (!class_exists($class)) backupplus_try_include_file(''.$relative_path, 'include_once');
 		}
+
+		$this->backup_methods = BackupPlus_Storage_Provider_Factory::get_methods();
 
 		new BackupPlus_Restore_Search_Replace();
 
@@ -543,7 +529,7 @@ class BackupPlus {
 		));
 
 		if ($request_method && $action && ('GET' == $request_method || 'POST' == $request_method)) {
-			if (preg_match("/^backupplusmethod-([a-z]+)-([a-z]+)$/", $action, $matches) && file_exists(BACKUPPLUS_DIR.'/methods/'.$matches[1].'.php') && BackupPlus_Options::user_can_manage()) {
+			if (preg_match("/^backupplusmethod-([a-z0-9]+)-([a-z]+)$/", $action, $matches) && BackupPlus_Storage_Provider_Factory::has($matches[1]) && BackupPlus_Options::user_can_manage()) {
 				$_GET['page'] = 'backupplus';
 				$_REQUEST['page'] = 'backupplus';
 				$method = $matches[1];
@@ -573,10 +559,8 @@ class BackupPlus {
 				}
 				$opts = $storage_objects_and_ids[$method]['instance_settings'][$instance_id];
 				if (!isset($storage_objects_and_ids[$method]['object']) || !is_object($storage_objects_and_ids[$method]['object'])) {
-					backupplus_try_include_file('methods/'.$method.'.php', 'include_once');
-					$call_class = "BackupPlus_BackupModule_".$method;
-					if (!class_exists($call_class)) die(esc_html($call_class)." class couldn't be found");
-					$backup_obj = new $call_class;
+					$backup_obj = BackupPlus_Storage_Provider_Factory::create($method);
+					if (is_wp_error($backup_obj)) return;
 				} else {
 					$backup_obj = $storage_objects_and_ids[$method]['object'];
 				}
@@ -3225,12 +3209,11 @@ class BackupPlus {
 			// Explained at backupplus/-/merge_requests/1302#note_206636
 			if (!is_array($method_info)) $canonised_storage_objects_and_ids[$method_id] = $method_info = array();
 			if (!isset($method_info['object']) || !is_object($method_info['object'])) {
-				backupplus_try_include_file('methods/'.$method_id.'.php', 'include_once');
-				$cclass = 'BackupPlus_BackupModule_'.$method_id;
-				if (class_exists($cclass)) {
-					$method_info['object'] = $canonised_storage_objects_and_ids[$method_id]['object'] = new $cclass;
+				$object = BackupPlus_Storage_Provider_Factory::create($method_id, false);
+				if (!is_wp_error($object)) {
+					$method_info['object'] = $canonised_storage_objects_and_ids[$method_id]['object'] = $object;
 				} else {
-					BackupPlus_Manipulation_Functions::error_log("BackupPlus: backup class does not exist: $cclass");
+					BackupPlus_Manipulation_Functions::error_log("BackupPlus: storage provider unavailable: $method_id");
 				}
 			}
 			if (isset($method_info['object']) && is_object($method_info['object']) && is_callable(array($method_info['object'], 'get_credentials'))) {
@@ -4077,6 +4060,7 @@ class BackupPlus {
 
 			if ('email' == $service || 'none' == $service || !$service) continue;
 
+			if (empty($storage_objects_and_ids[$service]['object'])) continue;
 			$remote_obj = $storage_objects_and_ids[$service]['object'];
 			$upload_completed = $this->jobdata_get('upload_completed', array());
 

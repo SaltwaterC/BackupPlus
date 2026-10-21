@@ -244,10 +244,6 @@ input.labelauty.googlecloud + label > span.labelauty-unchecked-image {
 	padding: 10px;
 }
 
-#remote-storage-container.available-remote-storages > label:first-of-type {
-	grid-column: 1 / -1;
-}
-
 @media (max-width: 768px) {
 	#remote-storage-container {
 		grid-template-columns: repeat(2, 1fr);
