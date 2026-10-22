@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-/** Preserve existing encrypted backup and token formats using phpseclib 3. */
+/** Read-only compatibility for legacy encrypted backup and token formats. */
 class BackupPlus_Crypto {
 	/**
 	 * Existing ciphertext uses CBC with a 128-bit block and raw passphrase bytes.

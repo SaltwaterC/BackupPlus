@@ -178,7 +178,7 @@ class BackupPlus_Backup_History {
 
 				foreach ($bdata[$entity] as $key => $filename) {
 
-					if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $filename, $matches)) {
+					if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches)) {
 
 						$timestamp = strtotime(get_gmt_from_date(date_format(DateTime::createFromFormat('Y-m-d-Hi', $matches[1]), 'Y-m-d H:i')));
 
@@ -344,7 +344,7 @@ class BackupPlus_Backup_History {
 				if (!is_array($values)) $values = array($values);
 				foreach ($values as $filename) {
 					if (!is_string($filename)) continue;
-					if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $filename, $matches)) {
+					if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches)) {
 						$nonce = $matches[2];
 						if (isset($bdata['service']) && ('none' === $bdata['service'] || (is_array($bdata['service']) && (array('none') === $bdata['service'] || (1 == count($bdata['service']) && isset($bdata['service'][0]) && empty($bdata['service'][0]))))) && !is_file($backupplus_dir.'/'.$filename)) {
 							// File without remote storage is no longer locally present
@@ -434,7 +434,7 @@ class BackupPlus_Backup_History {
 						
 						foreach ($files as $entry) {
 							$filename = $entry['name'];
-							if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|gz|gz\.crypt))?$/i', $filename, $matches)) continue;
+							if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches)) continue;
 
 							$nonce = $matches[2];
 							$btime = strtotime($matches[1]);
@@ -510,7 +510,7 @@ class BackupPlus_Backup_History {
 
 			if (false !== $only_add_this_file && $entry != $only_add_this_file['file']) continue;
 
-			if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|gz|gz\.crypt))?$/i', $entry, $matches)) {
+			if (preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $entry, $matches)) {
 				// Interpret the time as one from the blog's local timezone, rather than as UTC
 				// $matches[1] is YYYY-MM-DD-HHmm, to be interpreted as being the local timezone
 				$btime = strtotime($matches[1]);
@@ -669,7 +669,7 @@ class BackupPlus_Backup_History {
 		// If so, then we compare $remote_files with $backup_nonces_by_filename / $backup_times_by_nonce, and adjust $backup_history
 
 		foreach ($remote_files as $file => $services) {
-			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|gz|gz\.crypt))?$/i', $file, $matches)) continue;
+			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $file, $matches)) continue;
 			
 			$nonce = $matches[2];
 			$type = $matches[3];

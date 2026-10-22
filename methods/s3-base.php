@@ -108,9 +108,9 @@ abstract class BackupPlus_BackupModule_s3_base extends BackupPlus_BackupModule {
 		// BackupPlus_S3 (the internal, non-AWS toolkit) is used when not accessing Amazon Web Services, so set that as the default
 		$class_to_use = 'BackupPlus_S3';
 		
-		// If on a PHP version supported by the AWS SDK, and if the constant forcing the internal toolkit is not set, then consider using it. The 3.x branch of the AWS SDK requires PHP 5.5+
+		// If on a PHP version supported by the bundled Guzzle stack, and if the constant forcing the internal toolkit is not set, then consider using the AWS SDK compatibility path. Guzzle 7 requires PHP 7.2.5+
 		// The "old" in the define is a legacy reference to a time before v4 signatures were in that library.
-		if (version_compare(PHP_VERSION, '5.5', '>=') && $this->provider_can_use_aws_sdk && (!defined('BACKUPPLUS_S3_OLDLIB') || !BACKUPPLUS_S3_OLDLIB)) {
+		if (version_compare(PHP_VERSION, '7.2.5', '>=') && $this->provider_can_use_aws_sdk && (!defined('BACKUPPLUS_S3_OLDLIB') || !BACKUPPLUS_S3_OLDLIB)) {
 			
 			// Switch to AWS SDK increasingly less over time
 			if (!function_exists('curl_init') || (defined('BACKUPPLUS_FORCE_S3_AWS_SDK') && BACKUPPLUS_FORCE_S3_AWS_SDK) || apply_filters('backupplus_indicate_s3_class_prefer_aws_sdk', false)) {

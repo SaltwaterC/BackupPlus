@@ -459,13 +459,12 @@ class BackupPlus {
 
 		// First, basic security check: must be an admin page, with ability to manage options, with the right parameters
 		// Also, only on GET because WordPress on the options page repeats parameters sometimes when POST-ing via the _wp_referer field
-		list($request_method, $page, $action, $backupplus_backup_nonce, $backupplus_file, $decrypt_key, $what, $backup_timestamp, $findex) = array_values(BackupPlus_Manipulation_Functions::fetch_superglobal_array(
+		list($request_method, $page, $action, $backupplus_backup_nonce, $backupplus_file, $what, $backup_timestamp, $findex) = array_values(BackupPlus_Manipulation_Functions::fetch_superglobal_array(
 			array('server', 'REQUEST_METHOD'),
 			array('get', 'page'),
 			array('get', 'action'),
 			array('get', 'backupplus_backup_nonce'),
 			array('get', 'backupplus_file'),
-			array('get', 'decrypt_key', ''),
 			array('get', 'what'),
 			array('get', 'backup_timestamp'),
 			array('get', 'findex', 0)
@@ -534,15 +533,7 @@ class BackupPlus {
 					add_action('all_admin_notices', array($this, 'show_admin_warning_unreadablelog'));
 				}
 			} elseif ('backupplus' === $page && 'downloadfile' == $action && $backupplus_file && preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-db([0-9]+)?+\.(gz\.crypt)$/i', $backupplus_file) && BackupPlus_Options::user_can_manage()) {
-				// Though this (venerable) code uses the action 'downloadfile', in fact, it's not that general: it's just for downloading a decrypted copy of encrypted databases, and nothing else
-				$backupplus_dir = $this->backups_dir_location();
-				$spool_file = $backupplus_dir.'/'.basename($backupplus_file);
-				if (is_readable($spool_file)) {
-					$this->spool_file($spool_file, stripslashes($decrypt_key));
-					exit;
-				} else {
-					add_action('all_admin_notices', array($this, 'show_admin_warning_unreadablefile'));
-				}
+				wp_die('Use the database decryption form.', '', array('response' => 405));
 			} elseif ('backupplus_spool_file' === $action && $what && $backup_timestamp && is_numeric($backup_timestamp) && BackupPlus_Options::user_can_manage()) {
 				// At some point, it may be worth merging this with the previous section
 				$backupplus_dir = $this->backups_dir_location();
@@ -568,7 +559,7 @@ class BackupPlus {
 					exit;
 				}
 				
-				$this->spool_file($backupplus_dir.'/'.basename($filename), stripslashes($decrypt_key));
+				$this->spool_file($backupplus_dir.'/'.basename($filename));
 				exit;
 				
 			}
@@ -2360,6 +2351,10 @@ class BackupPlus {
 			try {
 				// This should be always called; if there were no files in this run, it returns us an empty array
 				$backup_array = $backupplus_backup->resumable_backup_of_files($resumption_no);
+				if (false === $backup_array) {
+					$this->log('File archive encryption failed; backup dispatch has been stopped.', 'error');
+					return false;
+				}
 				// This save, if there was something, is then immediately picked up again
 				if (is_array($backup_array)) {
 					$this->log('Saving backup status to database (elements: '.count($backup_array).")");
@@ -2474,7 +2469,12 @@ class BackupPlus {
 
 			// Potentially encrypt the database if it is not already
 			if ('no' != $backup_database && isset($our_files[$tindex]) && !preg_match("/\.crypt$/", $our_files[$tindex]) && 'incremental' != $job_type) {
-				$our_files[$tindex] = $backupplus_backup->encrypt_file($our_files[$tindex]);
+				$encrypted_file = $backupplus_backup->encrypt_file($our_files[$tindex]);
+				if (false === $encrypted_file || is_wp_error($encrypted_file)) {
+					$this->log('Database encryption failed; backup dispatch has been stopped.', 'error');
+					return false;
+				}
+				$our_files[$tindex] = $encrypted_file;
 				// No need to save backup history now, as it will happen in a few lines time
 				if (preg_match("/\.crypt$/", $our_files[$tindex])) {
 					$backup_databases[$whichdb] = array('status' => 'encrypted', 'dbinfo' => $dbinfo);
@@ -2484,7 +2484,25 @@ class BackupPlus {
 
 			if ('no' != $backup_database && isset($our_files[$tindex]) && file_exists($backupplus_dir.'/'.$our_files[$tindex])) {
 				$our_files[$tindex.'-size'] = filesize($backupplus_dir.'/'.$our_files[$tindex]);
+				if (BackupPlus_Encryption::is_file_encrypted($our_files[$tindex])) {
+					foreach ($this->which_checksums() as $checksum) {
+						$hash = hash_file($checksum, $backupplus_dir.'/'.$our_files[$tindex]);
+						if (false === $hash) return false;
+						$this->jobdata_set($checksum.'-'.$tindex.'0.crypt', $hash);
+					}
+				}
 				$this->save_backup_to_history($our_files);
+			}
+			if (isset($our_files[$tindex]) && BackupPlus_Encryption::is_file_encrypted($our_files[$tindex])) {
+				if (!is_file($backupplus_dir.'/'.$our_files[$tindex]) && !$this->is_uploaded($our_files[$tindex])) {
+					$this->log('The encrypted database archive is unavailable; backup dispatch has been stopped.', 'error');
+					return false;
+				}
+				$plaintext = $backupplus_dir.'/'.substr($our_files[$tindex], 0, -6);
+				if ((is_file($plaintext) || is_link($plaintext)) && !unlink($plaintext)) {
+					$this->log('Could not remove the plaintext database archive; backup dispatch has been stopped.', 'error');
+					return false;
+				}
 			}
 
 		}
@@ -2735,7 +2753,7 @@ class BackupPlus {
 			if (isset($backup['db'.$db_index])) {
 				$db_backup_name = $backup['db'.$db_index];
 				
-				if (preg_match('/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|gz|gz\.crypt))?$/i', $db_backup_name, $matches)) {
+				if (preg_match('/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $db_backup_name, $matches)) {
 					$backup_database_info['blog_name'] = $matches[2];
 				}
 
@@ -4545,20 +4563,9 @@ class BackupPlus {
 		// Don't enable this line - it causes 500 HTTP errors in some cases/hosts on some large files, for unknown reason
 		// @ini_set('display_errors', '0');
 	
-		if (BackupPlus_Encryption::is_file_encrypted($fullpath)) {
-			if (ob_get_level()) {
-				$flush_max = min(5, (int) ob_get_level());
-				for ($i=1; $i<=$flush_max; $i++) {
-					@ob_end_clean();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-				}
-			}
-			header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-			header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
-			BackupPlus_Encryption::spool_crypted_file($fullpath, (string) $encryption);
-			return;
-		}
-
-		$content_type = BackupPlus_Manipulation_Functions::get_mime_type_from_filename($fullpath, false);
+		// Ordinary backup downloads preserve ciphertext. Decryption has its own
+		// authorized POST handler and never takes a key from a download URL.
+		$content_type = BackupPlus_Encryption::is_file_encrypted($fullpath) ? 'application/octet-stream' : BackupPlus_Manipulation_Functions::get_mime_type_from_filename($fullpath, false);
 		
 		backupplus_try_include_file('includes/class-partialfileservlet.php', 'include_once');
 
@@ -4733,19 +4740,22 @@ class BackupPlus {
 
 		// Encrypted - decrypt it
 		if (BackupPlus_Encryption::is_file_encrypted($db_file)) {
+			if (BackupPlus_Age_Restore::is_age($db_file)) {
+				$decrypted_file = BackupPlus_Age_Restore::file($db_file, isset($res['backupplus_age_ticket']) ? $res['backupplus_age_ticket'] : '', '', $timestamp);
+			} else {
+				$encryption = empty($res['backupplus_encryptionphrase']) ? BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase') : $res['backupplus_encryptionphrase'];
 
-			$encryption = empty($res['backupplus_encryptionphrase']) ? BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase') : $res['backupplus_encryptionphrase'];
+				if (!$encryption) {
+					$err[] = sprintf(
+						/* translators: %s: Error message */
+						__('Error: %s', 'backupplus'),
+						__('Decryption failed.', 'backupplus').' '.__('The database file is encrypted, but no encryption key is configured.', 'backupplus')
+					);
+					return array($mess, $warn, $err, $info);
+				}
 
-			if (!$encryption) {
-				$err[] = sprintf(
-					/* translators: %s: Error message */
-					__('Error: %s', 'backupplus'),
-					__('Decryption failed.', 'backupplus').' '.__('The database file is encrypted, but no encryption key is configured.', 'backupplus')
-				);
-				return array($mess, $warn, $err, $info);
+				$decrypted_file = BackupPlus_Encryption::decrypt($db_file, $encryption);
 			}
-
-			$decrypted_file = BackupPlus_Encryption::decrypt($db_file, $encryption);
 
 			if (is_array($decrypted_file)) {
 				$db_file = $decrypted_file['fullpath'];
@@ -4768,7 +4778,7 @@ class BackupPlus {
 			return array($mess, $warn, $err, $info);
 		}
 
-		$is_plain = ('.gz' == substr($db_file, -3, 3)) ? false : true;
+		$is_plain = ('.gz' == substr(isset($decrypted_file['basename']) ? $decrypted_file['basename'] : $db_file, -3, 3)) ? false : true;
 
 		$dbhandle = $is_plain ? fopen($db_file, 'r') : BackupPlus_Filesystem_Functions::gzopen_for_read($db_file, $warn, $err);
 		if (!is_resource($dbhandle)) {
@@ -5464,7 +5474,7 @@ class BackupPlus {
 				'backupplus_interval_database',
 				'backupplus_retain',
 				'backupplus_retain_db',
-				'backupplus_encryptionphrase',
+				'backupplus_database_encryption',
 				'backupplus_service',
 				'backupplus_googledrive_clientid',
 				'backupplus_googledrive_secret',
@@ -6085,7 +6095,7 @@ class BackupPlus {
 		$phpseclib_related_features = array(
 			'dropbox' => 'Dropbox',
 			'sftp' => 'SFTP/SCP',
-			'dbencryption' => 'Database Encryption',
+			'dbencryption' => 'Backup Encryption',
 		);
 		$active_phpseclib_related_features = array_intersect_key($phpseclib_related_features, array_flip($this->list_active_features_requiring_phpseclib()));
 		return sprintf(
@@ -6113,11 +6123,11 @@ class BackupPlus {
 	 */
 	protected function list_active_features_requiring_phpseclib() {
 		$active_features = array();
-		$encryptionphrase = BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase', '');
+		$encryption_config = BackupPlus_Options::get_backupplus_option('backupplus_database_encryption', array());
 		$backupplus_services = $this->get_canonical_service_list();
 		if (in_array('dropbox', $backupplus_services)) $active_features[] = 'dropbox';
 		if (in_array('sftp', $backupplus_services)) $active_features[] = 'sftp';
-		if ('' !== $encryptionphrase) $active_features[] = 'dbencryption';
+		if (isset($encryption_config['mode']) && 'age' === $encryption_config['mode']) $active_features[] = 'dbencryption';
 		return $active_features;
 	}
 

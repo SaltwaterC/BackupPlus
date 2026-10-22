@@ -103,6 +103,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 								<?php do_action("backupplus_restore_form_db"); ?>
 								</div>
 							</div>
+							<div class="backupplus-restore-encryption">
+								<?php do_action('backupplus_restore_form_encryption'); ?>
+							</div>
 						</fieldset>
 					</form>
 				</div>

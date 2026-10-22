@@ -469,6 +469,8 @@ class BackupPlus_Backup {
 	private function maybe_cloud_backup($file, $whichone, $index) {
 
 		global $backupplus;
+		// Encrypted jobs publish all ZIP parts only after encryption is complete.
+		if ($this->archive_encryption_enabled()) return;
 
 		// Check if the feature is enabled
 		if (!defined('BACKUPPLUS_UPLOAD_AFTER_CREATE') || BACKUPPLUS_UPLOAD_AFTER_CREATE) {
@@ -508,6 +510,11 @@ class BackupPlus_Backup {
 	public function cloud_backup($backup_array, $stage = 'clouduploading') {
 
 		global $backupplus;
+		if ($this->archive_encryption_enabled()) {
+			foreach ($backup_array as $file) {
+				if (is_string($file) && preg_match('/\.zip$/i', $file)) throw new RuntimeException('Unencrypted file archive refused by backup dispatch.');
+			}
+		}
 
 		$services = (array) $backupplus->just_one($backupplus->jobdata_get('service'));
 		$remote_storage_instances = $backupplus->jobdata_get('remote_storage_instances', array());
@@ -1535,7 +1542,65 @@ class BackupPlus_Backup {
 			}
 		}
 		*/
-		return $this->backup_files_array;
+		return $this->encrypt_file_archives($this->backup_files_array);
+	}
+
+	/** Whether this job's saved encryption setting covers all backup archives. */
+	private function archive_encryption_enabled() {
+		global $backupplus;
+		$config = $backupplus->get_job_option('backupplus_database_encryption');
+		return is_array($config) && isset($config['mode']) && 'none' !== $config['mode'];
+	}
+
+	/** Encrypt each completed ZIP part and checkpoint before removing its plaintext. */
+	public function encrypt_file_archives($files) {
+		global $backupplus;
+		if (!$this->archive_encryption_enabled()) return $files;
+		$config = $backupplus->get_job_option('backupplus_database_encryption');
+		if ('age' !== $config['mode']) {
+			$backupplus->log('Unsupported backup encryption mode. Choose Disabled or age public keys in Settings.', 'error');
+			return false;
+		}
+		$directory = $backupplus->backups_dir_location();
+		foreach ($backupplus->get_backupable_file_entities(true) as $entity => $unused) {
+			if (!isset($files[$entity])) continue;
+			$files[$entity] = (array) $files[$entity];
+			foreach ($files[$entity] as $index => $file) {
+				if (!is_string($file) || basename($file) !== $file || !preg_match('/\.zip(?:\.crypt)?$/i', $file)) return false;
+				$encrypted = BackupPlus_Encryption::is_file_encrypted($file);
+				$source = $encrypted ? substr($file, 0, -6) : $file;
+				$path = $directory.'/'.$file;
+				if (!$encrypted) {
+					if (is_link($path) || !is_file($path)) return false;
+					$file = $this->encrypt_file($file);
+					if (false === $file || is_wp_error($file)) return false;
+					$path = $directory.'/'.$file;
+					$files[$entity][$index] = $file;
+				}
+				if (is_file($path) && !is_link($path)) {
+					$size = filesize($path);
+					if (false === $size) return false;
+					$files[$entity.(0 == $index ? '' : $index).'-size'] = $size;
+					$backupplus->jobdata_set('filesize-'.$entity.$index, $size);
+					foreach ($backupplus->which_checksums() as $checksum) {
+						$hash = hash_file($checksum, $path);
+						if (false === $hash) return false;
+						$recorded = $backupplus->jobdata_get($checksum.'-'.$entity.$index.'.crypt');
+						if ($encrypted && is_string($recorded) && !hash_equals($recorded, $hash)) return false;
+						$backupplus->jobdata_set($checksum.'-'.$entity.$index.'.crypt', $hash);
+					}
+				} elseif (!$encrypted || !$backupplus->is_uploaded($file)) {
+					return false;
+				}
+				// A retry reads encrypted names even if interrupted during cleanup.
+				$backupplus->jobdata_set('backup_files_array', $files);
+				foreach (array($directory.'/'.$source, $directory.'/'.$source.'.list.tmp') as $plaintext) {
+					if ((is_file($plaintext) || is_link($plaintext)) && !unlink($plaintext)) return false;
+				}
+			}
+		}
+		$this->backup_files_array = $files;
+		return $files;
 	}
 
 	/**
@@ -2870,36 +2935,15 @@ class BackupPlus_Backup {
 	 */
 	public function encrypt_file($file) {
 		global $backupplus;
-		$encryption = $backupplus->get_job_option('backupplus_encryptionphrase');
-		if (!is_string($encryption)) $encryption = '';
-		if (strlen($encryption) > 0) {
-			$backupplus->log("Attempting to encrypt backup file");
-			try {
-				$result = apply_filters('backupplus_encrypt_file', null, $file, $encryption, $this->whichdb, $this->whichdb_suffix);
-			} catch (Exception $e) {
-				$log_message = 'Exception ('.get_class($e).') occurred during encryption: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				// @codingStandardsIgnoreLine
-				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$backupplus->log($log_message);
-				/* translators: 1: Exception class, 2: Exception message */
-				$backupplus->log(sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage()), 'error');
-				die();
-			} catch (Error $e) {// phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during encryption. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				// @codingStandardsIgnoreLine
-				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$backupplus->log($log_message);
-				/* translators: 1: Exception class, 2: Exception message */
-				$backupplus->log(sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage()), 'error');
-				die();
-			}
-			if (null === $result) return basename($file);
-			return $result;
-		} else {
-			return basename($file);
+		$config = $backupplus->get_job_option('backupplus_database_encryption');
+		if (!is_array($config) || !isset($config['mode']) || 'none' === $config['mode']) return basename($file);
+		if ('age' !== $config['mode']) {
+			$backupplus->log('Unsupported backup encryption mode. Choose Disabled or age public keys in Settings.', 'error');
+			return false;
 		}
+		$recipients = isset($config['recipients']) ? $config['recipients'] : array();
+		$result = BackupPlus_Encryption::encrypt($backupplus->backups_dir_location().'/'.basename($file), $recipients);
+		return false === $result ? false : basename($result);
 	}
 
 	/**

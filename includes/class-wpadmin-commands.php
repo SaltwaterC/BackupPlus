@@ -116,10 +116,21 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				$warn[] = __('This backup set was not recorded as created by this WordPress installation.', 'backupplus').' '.__('Make sure it is intended for this website before restoring it.', 'backupplus');
 			}
 
+			$age_ticket = '';
+			$info = array();
+			try {
+				$age_ticket = BackupPlus_Age_Restore::prepare($backups[$timestamp], $timestamp, isset($res['backupplus_age_identity']) ? $res['backupplus_age_identity'] : '', isset($res['backupplus_age_key_passphrase']) ? $res['backupplus_age_key_passphrase'] : '', isset($res['backupplus_age_ticket']) ? $res['backupplus_age_ticket'] : '', array_keys($elements), isset($res['backupplus_encryptionphrase']) ? $res['backupplus_encryptionphrase'] : '');
+				$res['backupplus_age_ticket'] = $age_ticket;
+			} catch (Exception $e) {
+				$err[] = __('Could not prepare the encrypted backup archives. Check the identity and passphrases, then try again.', 'backupplus');
+			} catch (Throwable $e) {
+				$err[] = __('Could not prepare the encrypted backup archives. Check the identity and passphrases, then try again.', 'backupplus');
+			}
+			unset($res['backupplus_age_identity'], $res['backupplus_age_key_passphrase']);
 			if (isset($elements['db'])) {
-				
 				// Analyse the header of the database file + display results
-				list ($mess2, $warn2, $err2, $info) = $this->_backupplus->analyse_db_file($timestamp, $res);
+				if (!$err) list ($mess2, $warn2, $err2, $info) = $this->_backupplus->analyse_db_file($timestamp, $res);
+				else { $mess2 = $warn2 = $err2 = array(); $info = array(); }
 				$mess = array_merge($mess, $mess2);
 				$warn = array_merge($warn, $warn2);
 				$err = array_merge($err, $err2);
@@ -176,7 +187,13 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 								$warn[] = sprintf(__('File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt.', 'backupplus'), $file, filesize($backupplus_dir.'/'.$file), $backups[$timestamp][$type.$itext.'-size']);
 							}
 						}
-						do_action_ref_array("backupplus_checkzip_$type", array($backupplus_dir.'/'.$file, &$mess, &$warn, &$err));
+						$check_path = $backupplus_dir.'/'.$file;
+						if ('db' !== $type && BackupPlus_Encryption::is_file_encrypted($file)) {
+							$prepared = BackupPlus_Age_Restore::file($check_path, $age_ticket, '', $timestamp);
+							if (!$prepared) continue; // Preparation already reports the error.
+							$check_path = $prepared['fullpath'];
+						}
+						do_action_ref_array("backupplus_checkzip_$type", array($check_path, &$mess, &$warn, &$err));
 					}
 					$expected_index++;
 				}
@@ -234,6 +251,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 
 			// Get the info if it hasn't already come from the DB scan
 			if (!isset($info) || !is_array($info)) $info = array();
+			if ('' !== $age_ticket) $info['age_ticket'] = $age_ticket;
 
 			// Not all characters can be json-encoded, and we don't need this potentially-arbitrary user-supplied info.
 			unset($info['label']);

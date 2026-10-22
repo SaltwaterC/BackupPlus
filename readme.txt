@@ -1,6 +1,7 @@
 === BackupPlus: WordPress Backup & Restore ===
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.9
+Requires PHP: 7.2.5
 Tested up to: 7.1
 Stable tag: 3.0.0
 License: GPLv3
@@ -40,6 +41,7 @@ Contact the maintainers of the repository or distribution from which you obtaine
 
 * TWEAK: Remove the onboarding wizard and bundled promotional, newsletter, and recommended-plugin steps.
 * TWEAK: Include GPL and third-party license texts and notices with the source distribution.
+* TWEAK: Upgrade the bundled Guzzle HTTP stack; requires PHP 7.2.5 or newer.
 
 The entries below document the UpdraftPlus releases from which BackupPlus is derived. The original release notes are retained as project history.
 

@@ -9,8 +9,7 @@
         'name' => 'updraftplus/updraftplus',
         'dev' => false,
     ),
-    'versions' => array(
-        'brumann/polyfill-unserialize' => array(
+    'versions' => array('brumann/polyfill-unserialize' => array(
             'pretty_version' => 'v2.0.0',
             'version' => '2.0.0.0',
             'type' => 'library',
@@ -19,7 +18,7 @@
             'reference' => '46e5c18ee87d8a9b5765ef95468c1ac27bd107bf',
             'dev_requirement' => false,
         ),
-        'components/jquery' => array(
+'components/jquery' => array(
             'pretty_version' => '4.0.0',
             'version' => '4.0.0.0',
             'type' => 'component',
@@ -28,7 +27,7 @@
             'reference' => '594f9dd922c3b12519c8d52bde744b79fd2ca816',
             'dev_requirement' => false,
         ),
-        'eher/oauth' => array(
+'eher/oauth' => array(
             'pretty_version' => '1.0.7',
             'version' => '1.0.7.0',
             'type' => 'library',
@@ -37,28 +36,28 @@
             'reference' => '935c1f7709d1c1457de9e250d0e5f29cac06e507',
             'dev_requirement' => false,
         ),
-        'guzzle/batch' => array(
+'guzzle/batch' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/cache' => array(
+'guzzle/cache' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/common' => array(
+'guzzle/common' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/guzzle' => array(
+'guzzle/guzzle' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
             'type' => 'library',
@@ -69,167 +68,167 @@
             'reference' => '33e727db47ca87262814f3ced23642261452c2f0',
             'dev_requirement' => false,
         ),
-        'guzzle/http' => array(
+'guzzle/http' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/inflection' => array(
+'guzzle/inflection' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/iterator' => array(
+'guzzle/iterator' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/log' => array(
+'guzzle/log' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/parser' => array(
+'guzzle/parser' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin' => array(
+'guzzle/plugin' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-async' => array(
+'guzzle/plugin-async' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-backoff' => array(
+'guzzle/plugin-backoff' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-cache' => array(
+'guzzle/plugin-cache' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-cookie' => array(
+'guzzle/plugin-cookie' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-curlauth' => array(
+'guzzle/plugin-curlauth' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-error-response' => array(
+'guzzle/plugin-error-response' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-history' => array(
+'guzzle/plugin-history' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-log' => array(
+'guzzle/plugin-log' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-md5' => array(
+'guzzle/plugin-md5' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-mock' => array(
+'guzzle/plugin-mock' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/plugin-oauth' => array(
+'guzzle/plugin-oauth' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/service' => array(
+'guzzle/service' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzle/stream' => array(
+'guzzle/stream' => array(
             'dev_requirement' => false,
             'replaced' => array(
                 0 => '3.9.x-dev',
                 1 => 'dev-master',
             ),
         ),
-        'guzzlehttp/guzzle' => array(
-            'pretty_version' => '6.5.8',
-            'version' => '6.5.8.0',
+'guzzlehttp/guzzle' => array(
+            'pretty_version' => '7.15.5',
+            'version' => '7.15.5.0',
+            'reference' => 'ee80339fd9177ba44c49cdb653ff02a4d1106b9a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/guzzle',
             'aliases' => array(),
-            'reference' => 'a52f0440530b54fa079ce76e8c5d196a42cad981',
             'dev_requirement' => false,
         ),
-        'guzzlehttp/promises' => array(
-            'pretty_version' => '1.5.3',
-            'version' => '1.5.3.0',
+'guzzlehttp/promises' => array(
+            'pretty_version' => '2.6.0',
+            'version' => '2.6.0.0',
+            'reference' => '3d88c829bd5f13d13847b39067dbf09a60af2154',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/promises',
             'aliases' => array(),
-            'reference' => '67ab6e18aaa14d753cc148911d273f6e6cb6721e',
             'dev_requirement' => false,
         ),
-        'guzzlehttp/psr7' => array(
-            'pretty_version' => '1.9.1',
-            'version' => '1.9.1.0',
+'guzzlehttp/psr7' => array(
+            'pretty_version' => '2.13.2',
+            'version' => '2.13.2.0',
+            'reference' => 'adee536f95101929f262b8c59e8a61472f347d58',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/psr7',
             'aliases' => array(),
-            'reference' => 'e4490cabc77465aaee90b20cfc9a770f8c04be6b',
             'dev_requirement' => false,
         ),
-        'mikemccabe/json-patch-php' => array(
+'mikemccabe/json-patch-php' => array(
             'pretty_version' => '0.1.0',
             'version' => '0.1.0.0',
             'type' => 'library',
@@ -238,7 +237,7 @@
             'reference' => 'b3af30a6aec7f6467c773cd49b2d974a70f7c0d4',
             'dev_requirement' => false,
         ),
-        'paragonie/constant_time_encoding' => array(
+'paragonie/constant_time_encoding' => array(
             'pretty_version' => 'v1.1.0',
             'version' => '1.1.0.0',
             'type' => 'library',
@@ -247,7 +246,7 @@
             'reference' => '317718fb438e60151f72b20404f040cb5ae1d494',
             'dev_requirement' => false,
         ),
-        'paragonie/random_compat' => array(
+'paragonie/random_compat' => array(
             'pretty_version' => 'v2.0.21',
             'version' => '2.0.21.0',
             'type' => 'library',
@@ -256,7 +255,7 @@
             'reference' => '96c132c7f2f7bc3230723b66e89f8f150b29d5ae',
             'dev_requirement' => false,
         ),
-        'phpseclib/phpseclib' => array(
+'phpseclib/phpseclib' => array(
             'pretty_version' => '3.0.57',
             'version' => '3.0.57.0',
             'type' => 'library',
@@ -265,22 +264,22 @@
             'reference' => 'd17e0ddaeaf6f22f7e007cbb437d78792fe2a0e4',
             'dev_requirement' => false,
         ),
-        'psr/http-message' => array(
+'psr/http-message' => array(
             'pretty_version' => '1.1',
             'version' => '1.1.0.0',
+            'reference' => 'cb6ce4845ce34a8ad9e68117c10ee90a29919eba',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/http-message',
             'aliases' => array(),
-            'reference' => 'cb6ce4845ce34a8ad9e68117c10ee90a29919eba',
             'dev_requirement' => false,
         ),
-        'psr/http-message-implementation' => array(
+'psr/http-message-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
             ),
         ),
-        'psr/log' => array(
+'psr/log' => array(
             'pretty_version' => '1.1.4',
             'version' => '1.1.4.0',
             'type' => 'library',
@@ -289,7 +288,7 @@
             'reference' => 'd49695b909c3b7628b6289db5479a1c204601f11',
             'dev_requirement' => false,
         ),
-        'rackspace/php-opencloud' => array(
+'rackspace/php-opencloud' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
             'type' => 'library',
@@ -298,16 +297,16 @@
             'reference' => '062bf8bb3432c6e0f68e21a2f6dd5f02f2fc19d7',
             'dev_requirement' => false,
         ),
-        'ralouphie/getallheaders' => array(
-            'pretty_version' => '2.0.5',
-            'version' => '2.0.5.0',
+'ralouphie/getallheaders' => array(
+            'pretty_version' => '3.0.3',
+            'version' => '3.0.3.0',
+            'reference' => '120b605dfeb996808c31b6477290a714d356e822',
             'type' => 'library',
             'install_path' => __DIR__ . '/../ralouphie/getallheaders',
             'aliases' => array(),
-            'reference' => '5601c8a83fbba7ef674a7369456d12f1e0d0eafa',
             'dev_requirement' => false,
         ),
-        'symfony/event-dispatcher' => array(
+'symfony/event-dispatcher' => array(
             'pretty_version' => 'v2.8.52',
             'version' => '2.8.52.0',
             'type' => 'library',
@@ -316,7 +315,7 @@
             'reference' => 'a77e974a5fecb4398833b0709210e3d5e334ffb0',
             'dev_requirement' => false,
         ),
-        'symfony/polyfill-intl-idn' => array(
+'symfony/polyfill-intl-idn' => array(
             'pretty_version' => 'v1.19.0',
             'version' => '1.19.0.0',
             'type' => 'library',
@@ -325,7 +324,7 @@
             'reference' => '4ad5115c0f5d5172a9fe8147675ec6de266d8826',
             'dev_requirement' => false,
         ),
-        'symfony/polyfill-intl-normalizer' => array(
+'symfony/polyfill-intl-normalizer' => array(
             'pretty_version' => 'v1.19.0',
             'version' => '1.19.0.0',
             'type' => 'library',
@@ -334,7 +333,7 @@
             'reference' => '8db0ae7936b42feb370840cf24de1a144fb0ef27',
             'dev_requirement' => false,
         ),
-        'symfony/polyfill-mbstring' => array(
+'symfony/polyfill-mbstring' => array(
             'pretty_version' => 'v1.19.0',
             'version' => '1.19.0.0',
             'type' => 'library',
@@ -343,7 +342,7 @@
             'reference' => 'b5f7b932ee6fa802fc792eabd77c4c88084517ce',
             'dev_requirement' => false,
         ),
-        'symfony/polyfill-php70' => array(
+'symfony/polyfill-php70' => array(
             'pretty_version' => 'v1.19.0',
             'version' => '1.19.0.0',
             'type' => 'library',
@@ -352,7 +351,7 @@
             'reference' => '3fe414077251a81a1b15b1c709faf5c2fbae3d4e',
             'dev_requirement' => false,
         ),
-        'symfony/polyfill-php72' => array(
+'symfony/polyfill-php72' => array(
             'pretty_version' => 'v1.19.0',
             'version' => '1.19.0.0',
             'type' => 'library',
@@ -361,7 +360,7 @@
             'reference' => 'beecef6b463b06954638f02378f52496cb84bacc',
             'dev_requirement' => false,
         ),
-        'team-updraft/common-libs' => array(
+'team-updraft/common-libs' => array(
             'pretty_version' => '3.1.11',
             'version' => '3.1.11.0',
             'type' => 'library',
@@ -370,7 +369,7 @@
             'reference' => '8942fafb45af64263c163fbb63d7b9e93dda741f',
             'dev_requirement' => false,
         ),
-        'updraftplus/updraftplus' => array(
+'updraftplus/updraftplus' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
             'type' => 'project',
@@ -379,13 +378,61 @@
             'reference' => 'dae94e7523a3a7cbf4c87d6b635d3a14287d0701',
             'dev_requirement' => false,
         ),
-        'vakata/jstree' => array(
+'vakata/jstree' => array(
             'pretty_version' => '3.3.17',
             'version' => '3.3.17.0',
             'type' => 'component',
             'install_path' => __DIR__ . '/../vakata/jstree',
             'aliases' => array(),
             'reference' => '6256df013ebd98aea138402d8ac96db3efe0c0da',
+            'dev_requirement' => false,
+        ),
+'psr/http-client' => array(
+            'pretty_version' => '1.0.3',
+            'version' => '1.0.3.0',
+            'reference' => 'bb5906edc1c324c9a05aa0873d40117941e5fa90',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/http-client',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+'psr/http-client-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
+        ),
+'psr/http-factory' => array(
+            'pretty_version' => '1.1.0',
+            'version' => '1.1.0.0',
+            'reference' => '2b4765fddfe3b508ac62f829e852b1501d3f6e8a',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/http-factory',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+'psr/http-factory-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
+        ),
+'symfony/deprecation-contracts' => array(
+            'pretty_version' => 'v2.5.4',
+            'version' => '2.5.4.0',
+            'reference' => '605389f2a7e5625f273b53960dc46aeaf9c62918',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/deprecation-contracts',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+'symfony/polyfill-php80' => array(
+            'pretty_version' => 'v1.43.0',
+            'version' => '1.43.0.0',
+            'reference' => '9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-php80',
+            'aliases' => array(),
             'dev_requirement' => false,
         ),
     ),

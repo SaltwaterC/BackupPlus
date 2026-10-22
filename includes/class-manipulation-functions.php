@@ -147,7 +147,7 @@ class BackupPlus_Manipulation_Functions {
 	 * @return Array|Boolean - the parsed values, or false if parsing failed
 	 */
 	public static function parse_filename($filename) {
-		if (preg_match('/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|gz|gz\.crypt)$/i', $filename, $matches)) {
+		if (preg_match('/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|zip\.crypt|gz|gz\.crypt)$/i', $filename, $matches)) {
 			return array(
 				'date' => strtotime($matches[1].' '.$matches[2]),
 				'nonce' => $matches[3],

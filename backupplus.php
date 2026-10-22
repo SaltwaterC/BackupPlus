@@ -6,6 +6,7 @@ Plugin Name: BackupPlus - Backup/Restore
 Description: Backup and restore: take backups locally, or backup to Amazon S3, Dropbox, Google Drive, Rackspace, (S)FTP, WebDAV & email, on automatic schedules.
 Author: BackupPlus contributors
 Version: 3.0.0
+Requires PHP: 7.2.5
 License: GPLv3
 Text Domain: backupplus
 Domain Path: /languages
@@ -326,3 +327,6 @@ add_filter('backupplus_exclude_file', array('BackupPlus_Credential_Key_Store', '
 add_filter('backupplus_exclude_directory', array('BackupPlus_Credential_Key_Store', 'exclude'), 100, 2);
 BackupPlus_Credential_Key_Admin::register();
 BackupPlus_Credential_Key_Rotation::register();
+require_once BACKUPPLUS_DIR.'/includes/class-database-encryption.php';
+require_once BACKUPPLUS_DIR.'/includes/class-age-restore.php';
+BackupPlus_Database_Encryption::register();

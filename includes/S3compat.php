@@ -1,6 +1,6 @@
 <?php
 // @codingStandardsIgnoreStart
-// This is a compatibility library, using Amazon's official PHP SDK (PHP 5.3.3+), but providing the methods of Donovan Schönknecht's S3.php library (which we used to always use) - but we've only cared about making code-paths in BackupPlus work, so be careful if re-deploying this in another project. And, we have a few bits of BackupPlus-specific code below, for logging.
+// This is a compatibility library using Amazon's official PHP SDK, while providing the methods of Donovan Schönknecht's S3.php library (which we used to always use). The bundled Guzzle 7 stack requires PHP 7.2.5+. This code also includes BackupPlus-specific logging.
 
 /**
  *
@@ -34,7 +34,7 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-// SDK requires PHP 5.5+
+// Bundled Guzzle 7 requires PHP 7.2.5+
 use Aws\Common\RulesEndpointProvider;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\NoSuchBucketException;

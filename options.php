@@ -209,7 +209,7 @@ class BackupPlus_Options {
 		register_setting('backupplus-options-group', 'backupplus_retain_db', array('BackupPlus_Manipulation_Functions', 'retain_range'));
 		register_setting('backupplus-options-group', 'backupplus_retain_extrarules', array($backupplus_admin, 'return_array'));
 
-		register_setting('backupplus-options-group', 'backupplus_encryptionphrase', 'strval');
+		register_setting('backupplus-options-group', 'backupplus_database_encryption', array('BackupPlus_Database_Encryption', 'sanitize'));
 		register_setting('backupplus-options-group', 'backupplus_service', array($backupplus, 'just_one'));
 
 		$services_to_register = array_keys($backupplus->backup_methods);

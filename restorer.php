@@ -943,6 +943,15 @@ class BackupPlus_Restorer {
 		$delete_package = $this->delete_archives_upon_restoration;
 		
 		$package = $backupplus->backups_dir_location().'/'.$package;
+		$encrypted_package = false;
+		$archive_name = $package;
+		if (BackupPlus_Encryption::is_file_encrypted($package)) {
+			$prepared = BackupPlus_Age_Restore::file($package, isset($this->restore_options['backupplus_age_ticket']) ? $this->restore_options['backupplus_age_ticket'] : '', $backupplus->nonce);
+			if (!$prepared) return new WP_Error('decrypt_failed', __('The prepared encrypted archive is unavailable or has changed. Prepare the restore again.', 'backupplus'));
+			$encrypted_package = $package;
+			$archive_name = $prepared['basename'];
+			$package = $prepared['fullpath'];
+		}
 		
 		// If it is a non-UD archive that is already unpacked, then don't re-run, but return the existing result
 		if (!empty($this->ud_foreign) && !empty($this->ud_foreign_working_dir) && $package == $this->ud_foreign_package) {
@@ -962,9 +971,9 @@ class BackupPlus_Restorer {
 		// We need a working directory. This has a change from the WP core version - minimise path length
 		// N.B. It is deterministic; the same package file will get the same working directory
 		// $working_dir = $upgrade_folder . basename($package, '.zip');
-		$working_dir = $upgrade_folder.substr(md5($package), 0, 8);
+		$working_dir = $upgrade_folder.substr(md5($encrypted_package ? $encrypted_package : $package), 0, 8);
 		
-		if (preg_match('#\.zip$#i', $package)) {
+		if (preg_match('#\.zip$#i', $archive_name)) {
 		
 			$last_index_key = BackupPlus_Filesystem_Functions::get_jobdata_progress_key($package);
 			
@@ -1003,7 +1012,7 @@ class BackupPlus_Restorer {
 		}
 
 		// Unzip package to working directory
-		if (preg_match('#\.zip$#i', $package)) {
+		if (preg_match('#\.zip$#i', $archive_name)) {
 
 			$folders_to_include = array();
 			
@@ -1064,8 +1073,11 @@ class BackupPlus_Restorer {
 			}
 		}
 
-		// Once extracted, delete the package if required.
-		if ($delete_package) unlink($package);
+		// Keep prepared plaintext for interrupted extraction; remove it on success.
+		if (!is_wp_error($result) && $result) {
+			if ($encrypted_package || $delete_package) unlink($package);
+			if ($encrypted_package && $delete_package) unlink($encrypted_package);
+		}
 
 		if (is_wp_error($result)) {
 			$wp_filesystem->delete($working_dir, true);
@@ -1187,13 +1199,16 @@ class BackupPlus_Restorer {
 		// Unpack package to working directory
 		if (BackupPlus_Encryption::is_file_encrypted($package)) {
 			$this->skin->feedback($this->strings['decrypt_database']);
+			if (BackupPlus_Age_Restore::is_age($backup_dir.$package)) {
+				$decrypted_file = BackupPlus_Age_Restore::file($backup_dir.$package, isset($this->restore_options['backupplus_age_ticket']) ? $this->restore_options['backupplus_age_ticket'] : '', $backupplus->nonce);
+			} else {
+				$encryption = empty($this->restore_options['backupplus_encryptionphrase']) ? BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase') : $this->restore_options['backupplus_encryptionphrase'];
 
-			$encryption = empty($this->restore_options['backupplus_encryptionphrase']) ? BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase') : $this->restore_options['backupplus_encryptionphrase'];
+				if (!$encryption) return new WP_Error('no_encryption_key', __('Decryption failed.', 'backupplus').' '.__('The database file is encrypted, but you have no encryption key entered.', 'backupplus'));
 
-			if (!$encryption) return new WP_Error('no_encryption_key', __('Decryption failed.', 'backupplus').' '.__('The database file is encrypted, but you have no encryption key entered.', 'backupplus'));
-
-			// function decrypt
-			$decrypted_file = BackupPlus_Encryption::decrypt($backup_dir.$package, $encryption);
+				// function decrypt
+				$decrypted_file = BackupPlus_Encryption::decrypt($backup_dir.$package, $encryption);
+			}
 
 			if (is_array($decrypted_file)) {
 				$this->skin->feedback($this->strings['decrypted_database']);

@@ -1,6 +1,6 @@
 # Encryption and credential-storage findings
 
-Reviewed: 2026-10-22. SEC-001 is fixed in the working tree; SEC-002 through SEC-005 remain open.
+Reviewed: 2026-10-22. SEC-001, SEC-002 and SEC-004 are fixed in the working tree. SEC-003 has a code fix with browser/log verification pending; SEC-005 remains open.
 
 This records a source review of the current BackupPlus working tree, whose plugin header reports version 3.0.0. The reviewed tree includes the SFTP/SCP provider and the migration to phpseclib 3. Findings apply to this tree; affected published versions have not been established.
 
@@ -13,9 +13,9 @@ Priorities are implementation priorities, not CVSS scores. P1 means address prom
 | ID | Finding | Priority | Status |
 | --- | --- | --- | --- |
 | SEC-001 | Dropbox OAuth token encryption uses a shared hardcoded key and lacks ciphertext authentication | P1 | Fixed (working tree) |
-| SEC-002 | Database-backup encryption uses a fixed IV, direct passphrase conversion, and unauthenticated CBC | P1 | Open |
-| SEC-003 | Manual decryption puts the key in a URL and displays it on the page | P1 | Open |
-| SEC-004 | Failed database decryption includes the supplied key in its response | P2 | Open |
+| SEC-002 | Database-backup encryption uses a fixed IV, direct passphrase conversion, and unauthenticated CBC | P1 | Fixed (working tree) |
+| SEC-003 | Manual decryption puts the key in a URL and displays it on the page | P1 | Remediated; verification pending |
+| SEC-004 | Failed database decryption includes the supplied key in its response | P2 | Fixed (working tree) |
 | SEC-005 | Provider credentials and backup encryption phrases lack plugin-level encryption in WordPress options | P1 | Open |
 
 The only shared hardcoded data-encryption key found in the original reviewed first-party code was the Dropbox key in SEC-001. After remediation, it remains only in the one-time credential upgrade; normal token reads and writes cannot use it. This is a scoped search result, not proof that no other security issues exist. OAuth application identifiers and application secrets are a separate concern from the key used to encrypt stored user tokens.
@@ -50,13 +50,13 @@ The one-time automatic credential upgrade prepares/verifies every replacement be
 
 ## SEC-002: Database-backup encryption preserves an unsafe legacy format
 
-**Evidence.** [`BackupPlus_Encryption::encrypt()`](../includes/class-backupplus-encryption.php#L178) creates its cipher without an IV argument. [`BackupPlus_Crypto::rijndael()`](../includes/class-backupplus-crypto.php#L15) then:
+**Original evidence (before the fix).** `BackupPlus_Encryption::encrypt()` created its cipher without an IV argument. [`BackupPlus_Crypto::rijndael()`](../includes/class-backupplus-crypto.php#L15) then:
 
 - Uses CBC with a 128-bit block and an all-zero initial IV.
 - Rounds the raw passphrase length to 16, 20, 24, 28, or 32 bytes, zero-pads short values, and truncates values longer than 32 bytes.
 - Uses those bytes directly as the key, without a salt or password-derivation work factor.
 
-The backup encryption writer adds no MAC or authentication tag. The [`decryptor`](../includes/class-backupplus-encryption.php#L64) inspects file signatures and trailing padding; these checks do not authenticate the archive. Resumption uses the previous ciphertext block to continue CBC, rather than generating a new initial IV for each archive.
+The original backup encryption writer added no MAC or authentication tag. Its decryptor inspected file signatures and trailing padding; these checks do not authenticate the archive. Resumption uses the previous ciphertext block to continue CBC, rather than generating a new initial IV for each archive.
 
 **Impact and conditions.** For encrypted archives made with the same passphrase, identical plaintext prefixes produce identical ciphertext prefixes. An attacker holding an archive can try candidate passphrases without a password-derivation cost. Different long passphrases sharing the first 32 bytes produce the same effective key. An attacker able to alter an archive can change unauthenticated ciphertext; reliable malicious restoration or a padding-oracle exploit has not been established by this review.
 
@@ -66,9 +66,19 @@ The passphrase is user supplied, rather than a second shared hardcoded key. The 
 
 **Verification required before closure.** Restore the saved pre-migration fixtures; ensure repeated new encryptions differ; reject wrong passwords, modified headers, modified ciphertext, reordered chunks, and truncation; exercise interrupted encryption and restoration. Test passphrases longer than 32 bytes to confirm their suffixes affect the new key derivation.
 
+**Resolution (2026-10-22; fixing commit pending).** New encrypted backups use standard age v1 with native X25519 or SSH RSA/Ed25519 public recipients, an authenticated header and bounded ChaCha20-Poly1305 STREAM segments. Settings offer only Disabled or age public keys. Backup passphrase writing has been removed. Invalid or stale password-mode jobs fail closed; a saved legacy phrase cannot trigger a backup writer or enter new backup job snapshots. Restore and the local browser decryptor retain read-only compatibility with the original UpdraftPlus CBC passphrase format. See [the format and deployment notes](database-backup-encryption.md).
+
+Every age encryption attempt starts with a fresh file key, payload nonce and ephemeral recipient keys. Retries restart unfinished parts with fresh randomness. Decryption stages output and publishes it only after the entire authenticated archive verifies. Wrong identities, corruption, ordering errors and incomplete archives remove staged plaintext and preserve existing destinations. Legacy CBC remains unauthenticated and is clearly identified as such in the browser decryptor.
+
+**Verification evidence.** Regression checks restore saved pre-migration database vectors and the large legacy fixture, reject password writing and stale password configurations, and verify native X25519 and SSH RSA/Ed25519 age interoperability against the independent age CLI, including encrypted private keys, exact boundaries, corruption, ordering and truncation. File archive tests cover split-part retries, checkpoints, plaintext cleanup and file-only restoration. Browser checks confirm local decryption, legacy passphrase support, cancellation cleanup and no file/key uploads. Existing third-party PHP deprecation notices remain.
+
+**File archive coverage.** The same configured encryption now covers each completed file ZIP part as well as database dumps. Encrypted jobs defer early ZIP uploads, checkpoint ciphertext sizes/checksums per part, and remove completed plaintext archives before dispatch. Restore preparation authenticates all selected encrypted file parts and carries only file bindings into the restore job; those bindings survive replacement of the options table by a database restore. Ordinary downloads preserve ciphertext, while the local browser decryptor supports both `.gz.crypt` and `.zip.crypt`. Regression tests cover split-part failure/retry, cleanup, rescan/incremental recognition, file-only preflight, changed-file rejection, and both ZIP extractors.
+
+**Remaining limitations.** Interrupted encryption restarts from the beginning, so hosts with strict execution deadlines may require a longer execution window for large archives. Abrupt termination can leave owner-only temporary files for the existing reaper. Older plugin/decryptor versions cannot read the new format. Legacy CBC archives retain their original weaknesses; only recreation gives them authentication. Legacy reading now requires block alignment and a recognizable compressed-file or SQL-comment signature; arbitrary legacy binary inputs without those signatures are rejected. Format signatures do not authenticate legacy backups. This implementation follows a published construction and has interoperability checks; it has not received an independent cryptographic audit. SEC-003 browser/log verification and SEC-005 remain separate outstanding work.
+
 ## SEC-003: Manual decryption exposes keys in URLs and page content
 
-**Evidence.** The [`FileUploaded` callback](../includes/backupplus-admin-common.js#L3995) builds a download link containing `&decrypt_key=` followed by the URL-encoded contents of the decryption-key input. The same statement appends the key visibly to the page. [`BackupPlus::handle_url_actions()`](../class-backupplus.php#L462) reads `decrypt_key` from the GET parameters and passes it to the download/decryption path.
+**Original evidence (before the fix).** The `FileUploaded` callback built a download link containing `&decrypt_key=` followed by the URL-encoded contents of the decryption-key input. The same statement appended the key visibly to the page. `BackupPlus::handle_url_actions()` read `decrypt_key` from the GET parameters and passed it to the download/decryption path.
 
 **Impact and conditions.** Following the link places the key in the request URL. Depending on deployment and browser behavior, it can be retained in browser history, proxy/access logs, monitoring systems, and referrer data. The visible page text is another disclosure surface. Someone with access to one of these records may learn the key without access to the WordPress options table. URL encoding and HTTPS do not prevent endpoint-side URL retention. Referrer disclosure is policy dependent and is not asserted to occur on every deployment. [CWE-598 describes this exposure mechanism](https://cwe.mitre.org/data/definitions/598.html).
 
@@ -76,9 +86,13 @@ The passphrase is user supplied, rather than a second shared hardcoded key. The 
 
 **Verification required before closure.** Complete manual decryption with a synthetic sentinel key and assert that it is absent from generated links, request URLs, visible page text, redirects, and error messages. Check representative access/proxy logs and browser history in a disposable environment. Verify that an expired or differently authenticated download reference fails.
 
+**Code remediation (2026-10-22; fixing commit pending).** The Decryption tab now processes archives and private identities entirely in a bundled browser worker. It creates local Blob download links only after successful decryption and complete authentication for modern formats. It has no upload, secret-bearing URL, POST decryption request, or server fallback. Key fields are cleared when processing starts, and cancellation/clear removes temporary browser output. Compatibility server downloads retain authorized nonce-protected POST bodies, generic errors and no-store responses. Older GET decryption routes reject the request. Age restore preparation uses a separate opaque, short-lived reference to already-verified plaintext, bound to the authorized user, blog, backup timestamp and restore job; no identity is retained with it.
+
+**Verification evidence and outstanding closure work.** The real WordPress HTTP check exercises successful identity downloads and rejects GET, invalid nonce, invalid filename, anonymous and subscriber requests; it verifies no-store attachments and generic failure bodies. Restore reference tests cover different users/blogs/backups/jobs, expiration and file tampering. The JavaScript regression rejects the previous `decrypt_key` URL construction and key-display expression. The real Chromium regression decrypts native/SSH age and password/legacy fixtures, checks local Blob output and cleared input fields, and asserts that no archive upload, decryption endpoint request, or submitted secret appears in captured network requests. It also checks corrupted input and cancellation cleanup. Representative deployment access/proxy logs and retained historical browser records have not been inspected, so SEC-003 remains pending that verification rather than closed.
+
 ## SEC-004: Decryption failures echo the supplied key
 
-**Evidence.** On failure, [`BackupPlus_Encryption::spool_crypted_file()`](../includes/class-backupplus-encryption.php#L351) appends the supplied key to a text response after the message `The decryption key used:`. This can be a manually supplied value or the configured phrase used as a fallback. HTML escaping does not redact it.
+**Original evidence (before the fix).** On failure, `BackupPlus_Encryption::spool_crypted_file()` appended the supplied key to a text response after the message `The decryption key used:`. This can be a manually supplied value or the configured phrase used as a fallback. HTML escaping does not redact it.
 
 **Impact and conditions.** The attempted key is exposed in the response whenever this failure branch runs. It may subsequently be captured in screenshots, support attachments, browser tooling, or systems that record response bodies. No authentication bypass is established here; the issue is unnecessary disclosure within an otherwise authorized operation. A failed attempt may still disclose a valid key used with a corrupted or unrelated file.
 
@@ -86,11 +100,15 @@ The passphrase is user supplied, rather than a second shared hardcoded key. The 
 
 **Verification required before closure.** Trigger the failure branch using synthetic keys and invalid or corrupted files. Assert that neither a directly supplied key nor a configured fallback phrase appears in the response or captured diagnostics.
 
+**Resolution (2026-10-22; fixing commit pending).** Decryption failures return HTTP 400 and a generic message with no supplied key or key passphrase. Failed downloads do not return attachment headers. Crypto exceptions are logged using a generic message rather than exception arguments or traces.
+
+**Verification evidence.** The WordPress HTTP regression attempts decryption with a synthetic directly supplied backup phrase, a configured fallback phrase, and an encrypted SSH identity with a wrong key passphrase. It asserts that failure bodies omit all supplied secrets and publish no attachment. Restore-start serialization checks also confirm that top-level and nested age identities/key passphrases are discarded before job persistence, while ordinary options remain available.
+
 ## SEC-005: Provider secrets are stored directly in WordPress options
 
 **Evidence.** [`BackupPlus_BackupModule::save_options()`](../methods/backup-module.php#L75) copies the provider's options directly into its settings array. [`BackupPlus_Options::update_backupplus_option()`](../options.php#L79) passes the value to WordPress's `update_option()`. The corresponding getter returns it through `get_option()`. Hooks exist for external customization, but no built-in encryption handler for these hooks was found.
 
-Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_passphrase` fields](../methods/sftp.php#L24). The SFTP provider added in this working tree follows the same persistence design. Consequently, an encrypted private key and the passphrase needed to unlock it can be stored together. The [`backupplus_encryptionphrase` setting](../options.php#L212) is also registered as a string without an encryption wrapper. Dropbox access tokens originally had the separate fixed-key wrapper described in SEC-001; the SEC-001 fix replaces it with authenticated encryption under an automatically managed installation key. Other credentials listed here remain outside that fix.
+Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_passphrase` fields](../methods/sftp.php#L24). The SFTP provider added in this working tree follows the same persistence design. Consequently, an encrypted private key and the passphrase needed to unlock it can be stored together. The former `backupplus_encryptionphrase` setting was also stored without an encryption wrapper. Passphrase backup writing and its settings field have now been removed; previously saved phrases can still be read as a restore-only fallback. Dropbox access tokens originally had the separate fixed-key wrapper described in SEC-001; the SEC-001 fix replaces it with authenticated encryption under an automatically managed installation key. Other credentials listed here remain outside that fix.
 
 **Impact and conditions.** Someone who can read the relevant options through a database disclosure, a database backup, or a settings export that includes secrets can recover the provider credentials. For SFTP, the stored key and passphrase may permit remote authentication; the account's permissions determine the impact. A settings input rendered as a password field only changes browser presentation. Deployment-level database or disk encryption and third-party option hooks were not assessed.
 
@@ -100,8 +118,8 @@ Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_
 
 ## Migration and closure notes
 
-The phpseclib 3 migration removed the obsolete library; it did not resolve these application-level designs. Existing [`scripts/test-encryption.php`](../scripts/test-encryption.php) and [`fixtures`](../scripts/fixtures/phpseclib2-compat.json) test legacy database ciphertext compatibility. Passing those tests is not evidence that SEC-002 is fixed. SEC-001 has separate authenticated-storage and migration checks described above.
+The phpseclib 3 migration removed the obsolete library; it did not itself resolve these application-level designs. SEC-001 and SEC-002 now have separate authenticated formats and regression evidence described above. [`scripts/test-encryption.php`](../scripts/test-encryption.php) covers both the new archive format and read-only compatibility with the saved [legacy fixtures](../scripts/fixtures/phpseclib2-compat.json).
 
-Address the URL and response disclosures without waiting for a ciphertext-format migration. Coordinate SEC-001 and SEC-005 around a common secret-storage policy. Treat SEC-002 as a versioned file-format change: preserve restore support for existing archives without continuing unsafe new writes.
+The URL/response disclosure code was remediated alongside the age restore controls; the remaining SEC-003 browser/log verification is recorded above. Coordinate SEC-001 and SEC-005 around a common secret-storage policy. Treat SEC-002 as a versioned file-format change: preserve restore support for existing archives without continuing unsafe new writes.
 
 Close a finding only after its implementation and regression tests satisfy the relevant verification criteria. Record the fixing commit, test evidence, migration behavior, and any remaining limitations here. Follow the repository's [security reporting policy](../SECURITY.md) for external disclosure.

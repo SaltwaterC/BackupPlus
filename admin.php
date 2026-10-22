@@ -759,6 +759,25 @@ class BackupPlus_Admin {
 		wp_enqueue_style('backupplus-jquery-ui', BACKUPPLUS_URL."/includes/jquery-ui.custom-v$jquery_ui_version$backupplus_min_or_not.css", array(), $jquery_ui_css_enqueue_version);
 	
 		wp_enqueue_style('backupplus-admin-css', BACKUPPLUS_URL.'/css/backupplus-admin'.$backupplus_min_or_not.'.css', array(), $enqueue_version);
+		wp_enqueue_style('backupplus-decryption-css', BACKUPPLUS_URL.'/css/backupplus-decryption.css', array('backupplus-admin-css'), $enqueue_version);
+		wp_enqueue_script('backupplus-decryption', BACKUPPLUS_URL.'/includes/backupplus-decryption.js', array(), $enqueue_version, true);
+		wp_localize_script('backupplus-decryption', 'backupplus_decryption', array(
+			'worker' => BACKUPPLUS_URL.'/js/backupplus-decryption-worker.js?ver='.rawurlencode($enqueue_version),
+			'decrypting' => __('Decrypting locally:', 'backupplus'),
+			'download' => __('Download', 'backupplus'),
+			'complete' => __('Decryption complete. Download your archives, then clear the files to remove temporary browser copies.', 'backupplus'),
+			'cancelled' => __('Decryption cancelled. Temporary output and keys have been cleared.', 'backupplus'),
+			'legacy' => __('Legacy encryption: integrity cannot be verified. Check the downloaded archive before use.', 'backupplus'),
+			'errors' => array(
+				'CLEANUP_FAILED' => __('Temporary browser files could not be removed. Close other decryption tabs and clear files again, or clear this site’s browser storage.', 'backupplus'),
+				'STORAGE_FAILED' => __('Browser storage is full or unavailable. Free local space and try again.', 'backupplus'),
+				'DECRYPT_FAILED' => __('Unable to decrypt. Check the passphrase or identity and that the archive is complete and unmodified.', 'backupplus'),
+				'UNSUPPORTED_KEY' => __('Unsupported private key format or cipher. Use a native age identity, an OpenSSH RSA/Ed25519 key (unencrypted or bcrypt/aes256-ctr), or a PEM key (unencrypted or PBES2/PBKDF2/AES-CBC).', 'backupplus'),
+				'SECURE_CONTEXT' => __('Local decryption requires HTTPS (or localhost), Web Crypto and Web Workers in a modern browser.', 'backupplus'),
+				'MEMORY_LIMIT' => __('This browser cannot stage large files locally. Allow private browser storage or use a browser with Origin Private File System support. Files above 128 MiB require that storage.', 'backupplus'),
+				'WORKER_FAILED' => __('The local decryption worker could not run. Check browser storage, memory and site policy, then try again.', 'backupplus'),
+			),
+		));
 		// add_filter('style_loader_tag', array($this, 'style_loader_tag'), 10, 2);
 
 		$this->ensure_sufficient_jquery_and_enqueue();
@@ -844,13 +863,13 @@ class BackupPlus_Admin {
 			'phpinfo' => __('PHP information', 'backupplus'),
 			'delete_old_dirs' => __('Delete Old Directories', 'backupplus'),
 			'raw' => __('Raw backup history', 'backupplus'),
-			'notarchive' => __('This file is not a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz)).', 'backupplus').' '.__('However, BackupPlus and UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern.', 'backupplus'),
-			'notarchive2' => '<p>'.__('This file is not a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz)).', 'backupplus').'</p>',
+			'notarchive' => __('This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus').' '.__('However, BackupPlus and UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern.', 'backupplus'),
+			'notarchive2' => '<p>'.__('This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus').'</p>',
 			'makesure' => __('(make sure that you were trying to upload a zip file previously created by BackupPlus or UpdraftPlus)', 'backupplus'),
 			'uploaderror' => __('Upload error:', 'backupplus'),
-			'notdba' => __('This file is not a BackupPlus or UpdraftPlus encrypted database archive (such files are .gz.crypt files which have a name like: backup_(time)_(site name)_(code)_db.crypt.gz).', 'backupplus'),
+			'notdba' => __('Use a BackupPlus encrypted archive ending in .gz.crypt or .zip.crypt.', 'backupplus'),
 			'uploaderr' => __('Upload error', 'backupplus'),
-			'followlink' => __('Follow this link to attempt decryption and download the database file to your computer.', 'backupplus'),
+			'followlink' => __('Decrypt and download the backup archive to your computer.', 'backupplus'),
 			'thiskey' => __('This decryption key will be attempted:', 'backupplus'),
 			'unknownresp' => __('Unknown server response:', 'backupplus'),
 			'ukrespstatus' => __('Unknown server response status:', 'backupplus'),
@@ -1082,15 +1101,6 @@ class BackupPlus_Admin {
 			var backupplus_plupload_config = <?php echo json_encode($plupload_init); ?>;
 			var backupplus_download_nonce = '<?php echo esc_js(wp_create_nonce('backupplus_download'));?>';
 			var backupplus_accept_archivename = <?php echo esc_js(apply_filters('backupplus_accept_archivename_js', "[]"));?>;
-			<?php
-			$plupload_init['browse_button'] = 'plupload-browse-button2';
-			$plupload_init['container'] = 'plupload-upload-ui2';
-			$plupload_init['drop_element'] = 'drag-drop-area2';
-			$plupload_init['multipart_params']['action'] = 'plupload_action2';
-			$plupload_init['filters'] = array(array('title' => __('Allowed Files'), 'extensions' => 'crypt'));// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
-			?>
-			var backupplus_plupload_config2 = <?php echo json_encode($plupload_init); ?>;
-			var backupplus_downloader_nonce = '<?php wp_create_nonce("backupplus_download"); ?>'
 			<?php
 				$overdue = $this->howmany_overdue_crons();
 				if ($overdue >= 4) {
@@ -2631,7 +2641,7 @@ class BackupPlus_Admin {
 
 		$response = array();
 		if (!isset($_POST['chunks']) || (isset($chunk) && preg_match('/^[0-9]+$/', $chunk) && $chunk == $_POST['chunks']-1) && isset($final_file)) {
-			if (!preg_match('/^log\.[a-f0-9]{12}\.txt/i', $final_file) && !preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|gz|gz\.crypt))?$/i', $final_file, $matches)) {
+			if (!preg_match('/^log\.[a-f0-9]{12}\.txt/i', $final_file) && !preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $final_file, $matches)) {
 				$accept = apply_filters('backupplus_accept_archivename', array());
 				if (is_array($accept)) {
 					foreach ($accept as $acc) {
@@ -2688,7 +2698,8 @@ class BackupPlus_Admin {
 							fseek($rh, -4, SEEK_END);
 							$data = fgets($rh, 5);
 							
-							if ("null" === $data) {
+							// Authenticated archives must survive upload byte-for-byte.
+							if (!BackupPlus_Encryption::is_file_encrypted($final_file) && "null" === $data) {
 								ftruncate($rh, filesize($rf) - 4);
 							}
 
@@ -2725,7 +2736,7 @@ class BackupPlus_Admin {
 	}
 
 	/**
-	 * Database decrypter - runs upon the WP action plupload_action2
+	 * Archive decrypter - runs upon the WP action plupload_action2
 	 */
 	public function plupload_action2() {
 
@@ -2771,10 +2782,10 @@ class BackupPlus_Admin {
 		}
 
 		if (!isset($_POST['chunks']) || (isset($chunk) && $chunk == $_POST['chunks']-1)) {
-			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-db([0-9]+)?\.(gz\.crypt)$/i', $final_file)) {
+			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-(?:db[0-9]*\.gz|[\-a-z]+[0-9]*\.zip)\.crypt$/i', $final_file)) {
 
 				@unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				echo 'ERROR:'.wp_kses_post(__('Bad filename format - this does not look like an encrypted database file created by BackupPlus or UpdraftPlus', 'backupplus'));
+				echo 'ERROR:'.wp_kses_post(__('Bad filename format - this does not look like an encrypted backup archive created by BackupPlus or UpdraftPlus', 'backupplus'));
 				exit;
 			}
 			
@@ -3003,6 +3014,10 @@ class BackupPlus_Admin {
 			<?php $this->settings_advanced_tools(); ?>
 		</div>
 
+		<div id="backupplus-navtab-decryption-content"<?php if ('decryption' != $tabflag) echo ' class="backupplus-hidden"'; ?> style="<?php if ('decryption' != $tabflag) echo 'display:none;'; ?>">
+			<?php $this->include_template('wp-admin/settings/tab-decryption.php'); ?>
+		</div>
+
 		<?php
 		do_action('backupplus_after_main_tab_content', $tabflag);
 		// settings_header() opens a div
@@ -3019,6 +3034,7 @@ class BackupPlus_Admin {
 			'backups' => __('Backup / Restore', 'backupplus'),
 			'settings' => __('Settings', 'backupplus'),
 			'expert' => __('Advanced Tools', 'backupplus'),
+			'decryption' => __('Decryption', 'backupplus'),
 		);
 
 		$main_tabs = apply_filters('backupplus_main_tabs', $main_tabs);
@@ -5029,8 +5045,10 @@ class BackupPlus_Admin {
 			if (empty($restore_job_id)) {
 				$jobdata_to_save = array();
 				foreach ($_REQUEST as $key => $value) {
+					if (in_array($key, array('backupplus_age_identity', 'backupplus_age_key_passphrase'), true)) continue;
 					if (false !== strpos($key, 'backupplus_') || 'backup_timestamp' == $key || 'meta_foreign' == $key) {
 						if ('backupplus_restorer_restore_options' == $key) parse_str(stripslashes($value), $value);
+						if (is_array($value)) unset($value['backupplus_age_identity'], $value['backupplus_age_key_passphrase']);
 						$jobdata_to_save[$key] = $value;
 					}
 				}
@@ -5309,6 +5327,13 @@ class BackupPlus_Admin {
 		global $backupplus;
 
 		$restore_options = $backupplus->jobdata_get('backupplus_restorer_restore_options');
+		if (!is_array($restore_options)) $restore_options = array();
+		$age_ticket = $backupplus->jobdata_get('backupplus_age_ticket', '');
+		if ('' !== $age_ticket) {
+			try { BackupPlus_Age_Restore::claim($age_ticket, $backupplus->jobdata_get('backup_timestamp'), $backupplus->nonce); }
+			catch (Exception $e) { wp_die(esc_html__('The prepared encrypted restore has expired or belongs to another restore. Prepare the archives again.', 'backupplus')); }
+			$restore_options['backupplus_age_ticket'] = $age_ticket;
+		}
 		$backupplus_encryptionphrase = $backupplus->jobdata_get('backupplus_encryptionphrase');
 		$include_wpconfig = $backupplus->jobdata_get('backupplus_restorer_wpcore_includewpconfig');
 

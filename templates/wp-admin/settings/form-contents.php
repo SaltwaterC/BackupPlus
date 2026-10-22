@@ -144,98 +144,6 @@ $multi = apply_filters('backupplus_storage_printoptions_multi', '');
 	</tr>
 </table>
 
-<h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Database Options', 'backupplus');?></h2>
-
-<table class="form-table width-900">
-
-	<?php
-		$database_encryption_config = apply_filters('backupplus_database_encryption_config', '');
-		if (!empty($database_encryption_config)) {
-	?>
-	<tr>
-		<th><?php esc_html_e('Database encryption phrase', 'backupplus');?>:</th>
-		<td><?php echo wp_kses($database_encryption_config, $backupplus_admin->kses_allow_tags()); ?></td>
-	</tr>
-	<?php } ?>
-	
-	<?php
-		if (!empty($options['include_database_decrypter'])) {
-		?>
-	
-		<tr class="backup-crypt-description">
-			<td></td>
-
-			<td>
-
-			<a href="<?php echo esc_url(BackupPlus::get_current_clean_url());?>" class="backupplus_show_decryption_widget"><?php esc_html_e('You can manually decrypt an encrypted database here.', 'backupplus');?></a>
-
-			<div id="backupplus-manualdecrypt-modal" class="backupplus-hidden" style="display:none;">
-				<p><h3><?php esc_html_e("Manually decrypt a database backup file", 'backupplus'); ?></h3></p>
-
-				<?php
-				if (version_compare($backupplus->get_wordpress_version(), '3.3', '<')) {
-					/* translators: %1$s: WordPress, %2$s: Version number */
-					echo '<em>'.esc_html(sprintf(__('This feature requires %1$s version %2$s or later', 'backupplus'), 'WordPress', '3.3')).'</em>';
-				} else {
-				?>
-
-				<div id="plupload-upload-ui2">
-					<div id="drag-drop-area2">
-						<div class="drag-drop-inside">
-							<p class="drag-drop-info"><?php esc_html_e('Drop encrypted database files (db.gz.crypt files) here to upload them for decryption', 'backupplus'); ?></p>
-							<p><?php echo esc_html_x('or', 'Uploader: Drop db.gz.crypt files here to upload them for decryption - or - Select Files', 'backupplus'); ?></p>
-							<p class="drag-drop-buttons"><input id="plupload-browse-button2" type="button" value="<?php esc_attr_e('Select Files', 'backupplus'); ?>" class="button /"></p>
-							<p style="margin-top: 18px;"><?php esc_html_e('First, enter the decryption key', 'backupplus'); ?>: <input id="backupplus_db_decrypt" type="text" size="12"></p>
-						</div>
-					</div>
-					<div id="filelist2">
-					</div>
-				</div>
-
-				<?php } ?>
-
-			</div>
-			
-			<?php
-				$plugins = get_plugins();
-				$wp_optimize_file = false;
-
-				foreach ($plugins as $key => $value) {
-					if ('wp-optimize' == $value['TextDomain']) {
-						$wp_optimize_file = $key;
-						break;
-					}
-				}
-				
-				if (!$wp_optimize_file) {
-					?>
-					<?php
-				}
-			?>
-			
-
-
-
-			</td>
-		</tr>
-	
-	<?php
-		}
-
-		$moredbs_config = apply_filters('backupplus_database_moredbs_config', '');
-		if (!empty($moredbs_config)) {
-		?>
-			<tr>
-				<th><?php esc_html_e('Backup more databases', 'backupplus');?>:</th>
-				<td><?php echo wp_kses($moredbs_config, $backupplus_admin->kses_allow_tags()); ?>
-				</td>
-			</tr>
-		<?php
-		}
-	?>
-
-</table>
-
 <h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Reporting', 'backupplus');?></h2>
 
 <table class="form-table width-900">
@@ -279,6 +187,43 @@ $multi = apply_filters('backupplus_storage_printoptions_multi', '');
 	}
 ?>
 </table>
+
+<h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Backup encryption', 'backupplus');?></h2>
+
+<table class="form-table width-900">
+	<?php BackupPlus_Database_Encryption::render(); ?>
+
+</table>
+
+<h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Database Options', 'backupplus');?></h2>
+
+<table class="form-table width-900">
+
+	<?php
+		$database_encryption_config = apply_filters('backupplus_database_encryption_config', '');
+		if (!empty($database_encryption_config)) {
+	?>
+	<tr>
+		<th><?php esc_html_e('Database encryption phrase', 'backupplus');?>:</th>
+		<td><?php echo wp_kses($database_encryption_config, $backupplus_admin->kses_allow_tags()); ?></td>
+	</tr>
+	<?php } ?>
+
+	<?php
+		$moredbs_config = apply_filters('backupplus_database_moredbs_config', '');
+		if (!empty($moredbs_config)) {
+		?>
+			<tr>
+				<th><?php esc_html_e('Backup more databases', 'backupplus');?>:</th>
+				<td><?php echo wp_kses($moredbs_config, $backupplus_admin->kses_allow_tags()); ?>
+				</td>
+			</tr>
+		<?php
+		}
+	?>
+
+</table>
+
 
 <script>
 <?php

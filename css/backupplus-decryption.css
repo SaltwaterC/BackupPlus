@@ -1,0 +1,34 @@
+#backupplus-navtab-decryption-content .backupplus-decryption-tool {
+	max-width: 760px;
+	margin-block: 24px;
+}
+
+#backupplus-navtab-decryption-content .backupplus-decryption-credentials {
+	margin-block: 24px;
+}
+
+#backupplus-navtab-decryption-content label {
+	display: block;
+	margin-bottom: 6px;
+	font-weight: 600;
+}
+
+#backupplus-navtab-decryption-content input,
+#backupplus-navtab-decryption-content textarea {
+	box-sizing: border-box;
+	max-width: 100%;
+}
+
+#backupplus-decrypt-drop {
+	border: 3px dashed #c3c4c7;
+	padding: 24px 16px;
+	margin-block: 24px;
+}
+#backupplus-decrypt-drop.drag-over { border-color: #2271b1; }
+#backupplus-decrypt-selection,
+#backupplus-decrypt-status,
+#backupplus-decrypt-results { overflow-wrap: anywhere; }
+#backupplus-decrypt-progress { width: 100%; }
+#backupplus-decrypt-results .button { white-space: normal; height: auto; }
+.backupplus-decrypt-legacy { display: block; margin-top: 8px; }
+#backupplus-navtab-decryption-content [hidden] { display: none !important; }

@@ -1718,6 +1718,10 @@ function backupplus_restorer_checkstage2(doalert) {
 				// Store the information passed back from the backup scan
 				try {
 					info = ud_parse_json(resp.i);
+					if (info.age_ticket) {
+						jQuery('#backupplus-age-ticket').val(info.age_ticket);
+						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', true);
+					}
 // if (info.hasOwnProperty('multisite') && info.multisite && info.hasOwnProperty('same_url') && info.same_url) {
 					if (info.hasOwnProperty('addui')) {
 						console.log("Further UI options are being displayed");
@@ -3323,12 +3327,6 @@ jQuery(function($) {
 		jQuery('#backupplus-navtab-settings-content .'+active_class).show();
 	});
 
-	jQuery('#backupplus-navtab-settings-content a.backupplus_show_decryption_widget').on('click', function(e) {
-		e.preventDefault();
-		jQuery('#backupplus_db_decrypt').val(jQuery('#backupplus_encryptionphrase').val());
-		jQuery('#backupplus-manualdecrypt-modal').slideToggle();
-	});
-	
 	jQuery('#backupplus-phpinfo').on('click', function(e) {
 		e.preventDefault();
 		backupplus_iframe_modal('phpinfo', backupplus_i18n.phpinfo);
@@ -3349,6 +3347,10 @@ jQuery(function($) {
 	});
 	jQuery('#backupplus-navtab-expert').on('click', function() {
 		backupplus_open_main_tab('expert');
+		backupplus_page_is_visible = 1;
+	});
+	jQuery('#backupplus-navtab-decryption').on('click', function() {
+		backupplus_open_main_tab('decryption');
 		backupplus_page_is_visible = 1;
 	});
 	jQuery('#backupplus-navtab-settings, #backupplus-navtab-settings2, #backupplus_backupnow_gotosettings').on('click', function() {
@@ -3416,7 +3418,7 @@ jQuery(function($) {
 		
 		plupload.each(files, function(file) {
 				// @codingStandardsIgnoreLine
-				if (! /^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+?)?(\.(zip|gz|gz\.crypt))?$/i.test(file.name) && ! /^log\.([0-9a-f]{12})\.txt$/.test(file.name)) {
+				if (! /^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+?)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i.test(file.name) && ! /^log\.([0-9a-f]{12})\.txt$/.test(file.name)) {
 					var accepted_file = false;
 					for (var i = 0; i<backupplus_accept_archivename.length; i++) {
 						if (backupplus_accept_archivename[i].test(file.name)) {
@@ -3582,6 +3584,9 @@ jQuery(function($) {
 	});
 	
 	function backupplus_restore_setup(entities, key, show_data) {
+		jQuery('#backupplus-restore-passphrase').val('');
+		jQuery('#backupplus-age-ticket').val('');
+		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
 		if (key.toString().match(/^[0-9]+$/i)) jQuery('#backupplus_restore_timestamp').val(key);
 		jQuery('.backupplus_restore_date').text(show_data);
@@ -3911,97 +3916,7 @@ jQuery(function($) {
 
 }); // End ready Vault
 
-// Next: the encrypted database pluploader
 jQuery(function($) {
-	
-	try {
-		if (typeof backupplus_plupload_config2 !== 'undefined') {
-			plupload_init();
-		}
-	} catch (err) {
-		console.log(err);
-	}
-		
-	function plupload_init() {
-		// create the uploader and pass the config from above
-		var uploader = new plupload.Uploader(backupplus_plupload_config2);
-		
-		// checks if browser supports drag and drop upload, makes some css adjustments if necessary
-		uploader.bind('Init', function(up) {
-			var uploaddiv = jQuery('#plupload-upload-ui2');
-
-			if (up.features.dragdrop) {
-				uploaddiv.addClass('drag-drop');
-				jQuery('#drag-drop-area2')
-				.on('dragover.wp-uploader', function() {
- uploaddiv.addClass('drag-over'); })
-				.on('dragleave.wp-uploader, drop.wp-uploader', function() {
- uploaddiv.removeClass('drag-over'); });
-			} else {
-				uploaddiv.removeClass('drag-drop');
-				jQuery('#drag-drop-area2').off('.wp-uploader');
-			}
-		});
-		
-		uploader.init();
-		
-		// a file was added in the queue
-		uploader.bind('FilesAdded', function(up, files) {
-			// var hundredmb = 100 * 1024 * 1024, max = parseInt(up.settings.max_file_size, 10);
-			
-			plupload.each(files, function(file) {
-				// @codingStandardsIgnoreLine
-				if (!/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-db([0-9]+)?\.(gz\.crypt)$/i.test(file.name)) {
-					alert(file.name+': '+backupplus_i18n.notdba);
-					uploader.removeFile(file);
-					return;
-				}
-				
-				// a file was added, you may want to update your DOM here...
-				jQuery('#filelist2').append(
-					'<div class="file" id="' + file.id + '"><b>' +
-					file.name + '</b> (<span>' + plupload.formatSize(0) + '</span>/' + plupload.formatSize(file.size) + ') ' +
-				'<div class="fileprogress"></div></div>');
-			});
-		
-			up.refresh();
-			up.start();
-		});
-		
-		uploader.bind('UploadProgress', function(up, file) {
-			jQuery('#' + file.id + " .fileprogress").width(file.percent + "%");
-			jQuery('#' + file.id + " span").html(plupload.formatSize(parseInt(file.size * file.percent / 100)));
-		});
-		
-		uploader.bind('Error', function(up, error) {
-			if ('-200' == error.code) {
-				err_makesure = '\n'+backupplus_i18n.makesure2;
-			} else {
-				err_makesure = backupplus_i18n.makesure;
-			}
-			alert(backupplus_i18n.uploaderr+' (code '+error.code+") : "+error.message+" "+err_makesure);
-		});
-		
-		// a file was uploaded
-		uploader.bind('FileUploaded', function(up, file, response) {
-			
-			if (response.status == '200') {
-				// this is your ajax response, update the DOM with it or something...
-				if (response.response.substring(0,6) == 'ERROR:') {
-					alert(backupplus_i18n.uploaderror+" "+response.response.substring(6));
-				} else if (response.response.substring(0,3) == 'OK:') {
-					bkey = response.response.substring(3);
-					jQuery('#' + file.id + " .fileprogress").hide();
-					jQuery('#' + file.id).append(backupplus_i18n.uploaded+' <a href="?page=backupplus&action=downloadfile&backupplus_file='+bkey+'&decrypt_key='+encodeURIComponent(jQuery('#backupplus_db_decrypt').val())+'">'+backupplus_i18n.followlink+'</a> '+backupplus_i18n.thiskey+' '+jQuery('#backupplus_db_decrypt').val().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
-				} else {
-					alert(backupplus_i18n.unknownresp+' '+response.response);
-				}
-			} else {
-				alert(backupplus_i18n.ukrespstatus+' '+response.code);
-			}
-			
-		});
-	}
 
 	jQuery('#backupplus-hidethis').remove();
 	

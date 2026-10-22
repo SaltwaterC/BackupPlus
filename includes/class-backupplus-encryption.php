@@ -3,317 +3,160 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch, WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 if (!defined('ABSPATH')) die('No direct access.');
 
+require_once __DIR__.'/class-archive-io.php';
+require_once __DIR__.'/class-age-crypto.php';
+
 class BackupPlus_Encryption {
 
 	/**
-	 * This will decrypt an encrypted file
+	 * Read age archives and original UpdraftPlus CBC passphrase backups.
+	 * Plaintext is published only after the whole archive has been checked.
 	 *
-	 * @param String  $fullpath          This is the full filesystem path to the encrypted file location
-	 * @param String  $key               This is the key to be used when decrypting
-	 * @param Boolean $to_temporary_file Use if the resulting file is not intended to be kept
-	 *
-	 * @return Boolean|Array -An array with info on the decryption; or false for failure
+	 * @return Boolean|Array Path and basename, or false on failure.
 	 */
-	public static function decrypt($fullpath, $key, $to_temporary_file = false) {
-	
+	public static function decrypt($fullpath, $key, $to_temporary_file = false, $key_passphrase = '') {
 		global $backupplus;
-	
-		$ensure_phpseclib = $backupplus->ensure_phpseclib();
-		
-		if (is_wp_error($ensure_phpseclib)) {
-			$backupplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message());
-			$backupplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message(), 'error');
+		if (is_wp_error($backupplus->ensure_phpseclib())) return false;
+		$input = false;
+		$output = false;
+		$temporary = false;
+		$success = false;
+		try {
+			$input = fopen($fullpath, 'rb');
+			if (false === $input) return false;
+			list($temporary, $output) = self::temporary_file(dirname($fullpath), 'decrypt');
+			self::decrypt_stream($input, $output, $key, $key_passphrase);
+			if (!fflush($output)) return false;
+			fclose($output);
+			$output = false;
+			$new_path = preg_replace('/\.crypt$/i', '', $fullpath, 1);
+			if (!$to_temporary_file) {
+				if ($new_path === $fullpath || !rename($temporary, $new_path)) return false;
+			}
+			$success = true;
+			return array('fullpath' => $to_temporary_file ? $temporary : $new_path, 'basename' => basename($new_path));
+		} catch (\Exception $e) {
+			// Exception messages and traces can contain sensitive arguments.
+			$backupplus->log('Database archive decryption failed.', 'error');
 			return false;
+		} catch (\Throwable $e) {
+			$backupplus->log('Database archive decryption failed.', 'error');
+			return false;
+		} finally {
+			if (is_resource($input)) fclose($input);
+			if (is_resource($output)) fclose($output);
+			if (!$success && false !== $temporary) unlink($temporary);
 		}
-		
-		// open file to read
-		if (false === ($file_handle = fopen($fullpath, 'rb'))) return false;
-
-		$decrypted_path = dirname($fullpath).'/decrypt_'.basename($fullpath).'.tmp';
-		// open new file from new path
-		if (false === ($decrypted_handle = fopen($decrypted_path, 'wb+'))) return false;
-
-		// setup encryption
-		$rijndael = BackupPlus_Crypto::rijndael($key);
-		$rijndael->disablePadding();
-		$rijndael->enableContinuousBuffer();
-		
-		if (defined('BACKUPPLUS_DECRYPTION_ENGINE')) {
-			if ('openssl' == BACKUPPLUS_DECRYPTION_ENGINE) {
-				$rijndael->setPreferredEngine('OpenSSL');
-			} elseif ('internal' == BACKUPPLUS_DECRYPTION_ENGINE) {
-				$rijndael->setPreferredEngine('PHP');
-			}
-		}
-
-		$file_size = filesize($fullpath);
-		$bytes_decrypted = 0;
-		$buffer_size = defined('BACKUPPLUS_CRYPT_BUFFER_SIZE') ? BACKUPPLUS_CRYPT_BUFFER_SIZE : 2097152;
-
-		// loop around the file
-		while ($bytes_decrypted < $file_size) {
-			// read buffer sized amount from file
-			if (false === ($file_part = fread($file_handle, $buffer_size))) return false;
-			// check to ensure padding is needed before decryption
-			$length = strlen($file_part);
-			if (0 != $length % 16) {
-				$pad = 16 - ($length % 16);
-				$file_part = str_pad($file_part, $length + $pad, chr($pad));
-			}
-			
-			$decrypted_data = $rijndael->decrypt($file_part);
-			
-			if (0 == $bytes_decrypted) {
-				if (BackupPlus_Manipulation_Functions::str_ends_with($fullpath, '.gz.crypt')) {
-					$first_two_chars = unpack('C*', substr($decrypted_data, 0, 2));
-					// The first two decrypted bytes of the .gz file should always be 1f 8b
-					if (31 != $first_two_chars[1] || 139 != $first_two_chars[2]) {
-						return false;
-					}
-				} elseif (BackupPlus_Manipulation_Functions::str_ends_with($fullpath, '.zip.crypt')) {
-					$first_four_chars = unpack('C*', substr($decrypted_data, 0, 2));
-					// The first four decrypted bytes of the .zip file should always be 50 4B 03 04 or 50 4B 05 06 or 50 4B 07 08
-					if (80 != $first_four_chars[1] || 75 != $first_four_chars[2] || !in_array($first_four_chars[3], array(3, 5, 7)) || !in_array($first_four_chars[3], array(4, 6, 8))) {
-						return false;
-					}
-					
-				}
-			}
-			
-			$is_last_block = ($bytes_decrypted + strlen($decrypted_data) >= $file_size);
-			
-			$write_bytes = min($file_size - $bytes_decrypted, strlen($decrypted_data));
-			if ($is_last_block) {
-				$is_padding = false;
-				$last_byte = ord(substr($decrypted_data, -1, 1));
-				if ($last_byte < 16) {
-					$is_padding = true;
-					for ($j = 1; $j<=$last_byte; $j++) {
-						if (substr($decrypted_data, -$j, 1) != chr($last_byte)) $is_padding = false;
-					}
-				}
-				if ($is_padding) {
-					$write_bytes -= $last_byte;
-				}
-			}
-			
-			if (false === fwrite($decrypted_handle, $decrypted_data, $write_bytes)) return false;
-			$bytes_decrypted += $buffer_size;
-		}
-		 
-		// close the main file handle
-		fclose($decrypted_handle);
-		// close original file
-		fclose($file_handle);
-		
-		// remove the crypt extension from the end as this causes issues when opening
-		$fullpath_new = preg_replace('/\.crypt$/', '', $fullpath, 1);
-		// //need to replace original file with tmp file
-		
-		$fullpath_basename = basename($fullpath_new);
-		
-		if ($to_temporary_file) {
-			return array(
-				'fullpath' 	=> $decrypted_path,
-				'basename' => $fullpath_basename
-			);
-		}
-		
-		if (false === rename($decrypted_path, $fullpath_new)) return false;
-
-		// need to send back the new decrypted path
-		$decrypt_return = array(
-			'fullpath' 	=> $fullpath_new,
-			'basename' => $fullpath_basename
-		);
-
-		return $decrypt_return;
 	}
 
 	/**
-	 * This is the encryption process when encrypting a file
-	 *
-	 * @param String $fullpath This is the full path to the DB file that needs ecrypting
-	 * @param String $key      This is the key (salting) to be used when encrypting
-	 *
-	 * @return String|Boolean - Return the full path of the encrypted file, or false for an error
+	 * Shared with the standalone decryptor. phpseclib must already be loaded.
+	 * Output must remain private until this returns successfully; discard it on
+	 * any exception. This method neither closes nor publishes the supplied handles.
 	 */
-	public static function encrypt($fullpath, $key) {
-	
-		global $backupplus;
-
-		if (!extension_loaded('openssl')) {
-			/* translators: %s: The name of the missing encryption module. */
-			$backupplus->log(sprintf(__('Your web-server does not have the %s module installed.', 'backupplus'), 'PHP/OpenSSL').' '.__('Without it, encryption will be a lot slower.', 'backupplus'), 'warning', 'nocrypt');
+	public static function decrypt_stream($input, $output, $key, $key_passphrase = '') {
+		$prefix = BackupPlus_Archive_IO::read_up_to($input, strlen(BackupPlus_Age_Crypto::MAGIC));
+		if (0 !== fseek($input, 0)) throw new \RuntimeException('Archive seek failed.');
+		if (0 === strpos($prefix, 'age-encryption.org/')) {
+			BackupPlus_Age_Crypto::decrypt($input, $output, $key, $key_passphrase);
+		} else {
+			self::decrypt_legacy($input, $output, $key);
 		}
-
-		// include Rijndael library from phpseclib
-		$ensure_phpseclib = $backupplus->ensure_phpseclib();
-		
-		if (is_wp_error($ensure_phpseclib)) {
-			$backupplus->log("Failed to load phpseclib classes (".$ensure_phpseclib->get_error_code()."): ".$ensure_phpseclib->get_error_message());
-			return false;
-		}
-
-		// open file to read
-		if (false === ($file_handle = fopen($fullpath, 'rb'))) {
-			$backupplus->log("Failed to open file for read access: $fullpath");
-			return false;
-		}
-
-		// encrypted path name. The trailing .tmp ensures that it will be cleaned up by the temporary file reaper eventually, if needs be.
-		$encrypted_path = dirname($fullpath).'/encrypt_'.basename($fullpath).'.tmp';
-
-		$data_encrypted = 0;
-		$buffer_size = defined('BACKUPPLUS_CRYPT_BUFFER_SIZE') ? BACKUPPLUS_CRYPT_BUFFER_SIZE : 2097152;
-
-		$time_last_logged = microtime(true);
-		
-		$file_size = filesize($fullpath);
-
-		// Set initial value to false so we can check it later and decide what to do
-		$resumption = false;
-
-		// setup encryption
-		$rijndael = BackupPlus_Crypto::rijndael($key);
-		$rijndael->disablePadding();
-		$rijndael->enableContinuousBuffer();
-		
-		// First we need to get the block length, this method returns the length in bits we need to change this back to bytes in order to use it with the file operation methods.
-		$block_length = $rijndael->getBlockLength() >> 3;
-
-		// Check if the path already exists as this could be a resumption
-		if (file_exists($encrypted_path)) {
-			
-			$backupplus->log("Temporary encryption file found, will try to resume the encryption");
-
-			// The temp file exists so set resumption to true
-			$resumption = true;
-
-			// Get the file size as this is needed to help resume the encryption
-			$data_encrypted = filesize($encrypted_path);
-			// Get the true file size e.g without padding used for various resumption paths
-			$true_data_encrypted = $data_encrypted - ($data_encrypted % $buffer_size);
-
-			if ($data_encrypted >= $block_length) {
-		
-				// Open existing file from the path
-				if (false === ($encrypted_handle = fopen($encrypted_path, 'rb+'))) {
-					$backupplus->log("Failed to open file for write access on resumption: $encrypted_path");
-					$resumption = false;
-				}
-				
-				// First check if our buffer size needs padding if it does increase buffer size to length that doesn't need padding
-				if (0 != $buffer_size % 16) {
-					$pad = 16 - ($buffer_size % 16);
-					$true_buffer_size = $buffer_size + $pad;
-				} else {
-					$true_buffer_size = $buffer_size;
-				}
-				
-				// Now check if using modulo on data encrypted and buffer size returns 0 if it doesn't then the last block was a partial write and we need to discard that and get the last useable IV by adding this value to the block length
-				$partial_data_size = $data_encrypted % $true_buffer_size;
-
-				// We need to reconstruct the IV from the previous run in order for encryption to resume
-				if (-1 === (fseek($encrypted_handle, $data_encrypted - ($block_length + $partial_data_size)))) {
-					$backupplus->log("Failed to move file pointer to correct position to get IV: $encrypted_path");
-					$resumption = false;
-				}
-
-				// Read previous block length from file
-				if (false === ($iv = fread($encrypted_handle, $block_length))) {
-					$backupplus->log("Failed to read from file to get IV: $encrypted_path");
-					$resumption = false;
-				}
-
-				$rijndael->setIV($iv);
-
-				// Now we need to set the file pointer for the original file to the correct position and take into account the padding added, this padding needs to be removed to get the true amount of bytes read from the original file
-				if (-1 === (fseek($file_handle, $true_data_encrypted))) {
-					$backupplus->log("Failed to move file pointer to correct position to resume encryption: $fullpath");
-					$resumption = false;
-				}
-				
-			} else {
-				// If we enter here then the temp file exists but it is either empty or has one incomplete block we may as well start again
-				$resumption = false;
-			}
-
-			if (!$resumption) {
-				$backupplus->log("Could not resume the encryption will now try to start again");
-				// remove the existing encrypted file as it's no good to us now
-				@unlink($encrypted_path);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				// reset the data encrypted so that the loop can be entered
-				$data_encrypted = 0;
-				// setup encryption to reset the IV
-				$rijndael = BackupPlus_Crypto::rijndael($key);
-				$rijndael->disablePadding();
-				$rijndael->enableContinuousBuffer();
-				// reset the file pointer and then we should be able to start from fresh
-				if (-1 === (fseek($file_handle, 0))) {
-					$backupplus->log("Failed to move file pointer to start position to restart encryption: $fullpath");
-					$resumption = false;
-				}
-			}
-		}
-
-		if (!$resumption) {
-			// open new file from new path
-			if (false === ($encrypted_handle = fopen($encrypted_path, 'wb+'))) {
-				$backupplus->log("Failed to open file for write access: $encrypted_path");
-				return false;
-			}
-		}
-		
-		// loop around the file
-		while ($data_encrypted < $file_size) {
-
-			// read buffer-sized amount from file
-			if (false === ($file_part = fread($file_handle, $buffer_size))) {
-				$backupplus->log("Failed to read from file: $fullpath");
-				return false;
-			}
-			
-			// check to ensure padding is needed before encryption
-			$length = strlen($file_part);
-			if (0 != $length % 16) {
-				$pad = 16 - ($length % 16);
-				$file_part = str_pad($file_part, $length + $pad, chr($pad));
-			}
-
-			$encrypted_data = $rijndael->encrypt($file_part);
-			
-			if (false === fwrite($encrypted_handle, $encrypted_data)) {
-				$backupplus->log("Failed to write to file: $encrypted_path");
-				return false;
-			}
-			
-			$data_encrypted += $buffer_size;
-			
-			$time_since_last_logged = microtime(true) - $time_last_logged;
-			if ($time_since_last_logged > 5) {
-				$time_since_last_logged = microtime(true);
-				$backupplus->log("Encrypting file: completed $data_encrypted bytes");
-			}
-			
-		}
-
-		// close the main file handle
-		fclose($encrypted_handle);
-		fclose($file_handle);
-
-		// encrypted path
-		$result_path = $fullpath.'.crypt';
-
-		// need to replace original file with tmp file
-		if (false === rename($encrypted_path, $result_path)) {
-			$backupplus->log("File rename failed: $encrypted_path -> $result_path");
-			return false;
-		}
-
-		return $result_path;
 	}
-	
+
+	/**
+	 * New writes use age public recipients only. Interrupted attempts restart
+	 * with fresh randomness. Passphrase formats are supported only for reading.
+	 *
+	 * @return String|Boolean Encrypted path, or false on failure.
+	 */
+	public static function encrypt($fullpath, $key, $format = 'age') {
+		global $backupplus;
+		if ('age' !== $format || !is_array($key)) return false;
+		if (is_wp_error($backupplus->ensure_phpseclib())) return false;
+		$input = false;
+		$output = false;
+		$temporary = false;
+		$success = false;
+		try {
+			$input = fopen($fullpath, 'rb');
+			if (false === $input) return false;
+			list($temporary, $output) = self::temporary_file(dirname($fullpath), 'encrypt');
+			BackupPlus_Age_Crypto::encrypt($input, $output, $key);
+			if (!fflush($output)) return false;
+			fclose($output);
+			$output = false;
+			if (!rename($temporary, $fullpath.'.crypt')) return false;
+			$success = true;
+			return $fullpath.'.crypt';
+		} catch (\Exception $e) {
+			$backupplus->log('Database archive encryption failed.', 'error');
+			return false;
+		} catch (\Throwable $e) {
+			$backupplus->log('Database archive encryption failed.', 'error');
+			return false;
+		} finally {
+			if (is_resource($input)) fclose($input);
+			if (is_resource($output)) fclose($output);
+			if (!$success && false !== $temporary) unlink($temporary);
+		}
+	}
+
+	/** Unique, owner-only staging files, recognized by the temporary file reaper. */
+	private static function temporary_file($directory, $prefix) {
+		$path = $directory.'/'.$prefix.'_'.bin2hex(\phpseclib3\Crypt\Random::string(16)).'.tmp';
+		$mask = umask(0077);
+		try {
+			$handle = fopen($path, 'x+b');
+		} finally {
+			umask($mask);
+		}
+		if (false === $handle) throw new \RuntimeException('Could not create archive staging file.');
+		// Set the mode before writing, including on hosts with inherited ACLs.
+		if (!chmod($path, 0600)) {
+			fclose($handle);
+			unlink($path);
+			throw new \RuntimeException('Could not protect archive staging file.');
+		}
+		return array($path, $handle);
+	}
+
+	/**
+	 * Read-only compatibility for the historical zero-IV CBC format. These
+	 * archives have no authentication. Require a recognizable database/compressed
+	 * file signature so a damaged modern header cannot return arbitrary garbage.
+	 */
+	private static function decrypt_legacy($input, $output, $key) {
+		$stat = fstat($input);
+		if (false === $stat || $stat['size'] < 16 || 0 !== $stat['size'] % 16) throw new \RuntimeException('Invalid legacy archive length.');
+		$cipher = BackupPlus_Crypto::rijndael($key);
+		$cipher->disablePadding();
+		$cipher->enableContinuousBuffer();
+		if (defined('BACKUPPLUS_DECRYPTION_ENGINE')) {
+			$cipher->setPreferredEngine('internal' === BACKUPPLUS_DECRYPTION_ENGINE ? 'PHP' : BACKUPPLUS_DECRYPTION_ENGINE);
+		}
+		$remaining = $stat['size'];
+		$first = true;
+		while ($remaining > 0) {
+			$data = BackupPlus_Archive_IO::read_up_to($input, min(2097152, $remaining));
+			if ('' === $data || strlen($data) % 16) throw new \RuntimeException('Truncated legacy archive.');
+			$plain = $cipher->decrypt($data);
+			if ($first) {
+				$compressed = "\x1f\x8b" === substr($plain, 0, 2) || in_array(substr($plain, 0, 4), array("PK\x03\x04", "PK\x05\x06", "PK\x07\x08"), true);
+				$sql = preg_match('/\A(?:#[ \t]+[^\r\n]{12,}\r?\n|-- [^\r\n]{12,}\r?\n|\/\*[! *][^\r\n]{12,})/', $plain);
+				if (!$compressed && !$sql) throw new \RuntimeException('Unrecognized legacy database archive.');
+				$first = false;
+			}
+			$remaining -= strlen($data);
+			if (0 === $remaining) {
+				// The old writer padded only partial blocks, never aligned ones.
+				$padding = ord(substr($plain, -1));
+				if ($padding > 0 && $padding < 16 && substr($plain, -$padding) === str_repeat(chr($padding), $padding)) $plain = substr($plain, 0, -$padding);
+			}
+			BackupPlus_Archive_IO::write_all($output, $plain);
+		}
+	}
+
 	/**
 	 * This function spools the decrypted contents of a file to the browser
 	 *
@@ -322,24 +165,25 @@ class BackupPlus_Encryption {
 	 *
 	 * @uses header()
 	 */
-	public static function spool_crypted_file($fullpath, $encryption) {
+	public static function spool_crypted_file($fullpath, $encryption, $key_passphrase = '') {
 	
 		global $backupplus;
 	
 		if ('' == $encryption) $encryption = BackupPlus_Options::get_backupplus_option('backupplus_encryptionphrase');
 		
 		if ('' == $encryption) {
+			http_response_code(400);
 			header('Content-type: text/plain');
 			echo esc_html(__('Decryption failed.', 'backupplus').' '.__('The database file is encrypted, but you have no encryption key entered.', 'backupplus'));
 			$backupplus->log('Decryption of database failed: the database file is encrypted, but you have no encryption key entered.', 'error');
 		} else {
 
 			// now decrypt the file and return array
-			$decrypted_file = self::decrypt($fullpath, $encryption, true);
+			$decrypted_file = self::decrypt($fullpath, $encryption, true, $key_passphrase);
 
 			// check to ensure there is a response back
 			if (is_array($decrypted_file)) {
-				header('Content-type: application/x-gzip');
+				header('Content-type: '.(preg_match('/\.zip$/i', $decrypted_file['basename']) ? 'application/zip' : 'application/x-gzip'));
 				header("Content-Disposition: attachment; filename=\"".$decrypted_file['basename']."\";");
 				header("Content-Length: ".filesize($decrypted_file['fullpath']));
 				readfile($decrypted_file['fullpath']);
@@ -347,8 +191,9 @@ class BackupPlus_Encryption {
 				// need to remove the file as this is no longer needed on the local server
 				unlink($decrypted_file['fullpath']);
 			} else {
+				http_response_code(400);
 				header('Content-type: text/plain');
-				echo esc_html(__('Decryption failed.', 'backupplus').' '.__('The most likely cause is that you used the wrong key.', 'backupplus').' '.__('The decryption key used:', 'backupplus').' '.$encryption);
+				echo esc_html(__('Decryption failed. Check the key or private key passphrase and ensure the archive is complete.', 'backupplus'));
 				
 			}
 		}
