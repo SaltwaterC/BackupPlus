@@ -93,6 +93,7 @@ class BackupPlus {
 
 		$load_classes = array(
 			'BackupPlus_Backup_History'            => 'includes/class-backup-history.php',
+			'BackupPlus_Incremental_Backups'       => 'includes/class-incremental-backups.php',
 			'BackupPlus_Encryption'                => 'includes/class-backupplus-encryption.php',
 			'BackupPlus_Manipulation_Functions'    => 'includes/class-manipulation-functions.php',
 			'BackupPlus_Filesystem_Functions'      => 'includes/class-filesystem-functions.php',
@@ -131,6 +132,7 @@ class BackupPlus {
 		// The two actions which we schedule upon
 		add_action( 'backupplus_backup', array( $this, 'backup_files' ) );
 		add_action( 'backupplus_backup_database', array( $this, 'backup_database' ) );
+		add_action( 'backupplus_backup_increments', array( $this, 'backup_increments' ) );
 
 		// The three actions that can be called from "Backup Now"
 		add_action( 'backupplus_backupnow_backup', array( $this, 'backupnow_files' ) );
@@ -1969,7 +1971,7 @@ class BackupPlus {
 		$is_incremental = ( ! empty( $jobdata ) && ! empty( $jobdata['job_type'] ) && 'incremental' == $jobdata['job_type'] && 'db' != substr( $entity, 0, 2 ) ) ? true : false;
 
 		if ( $is_incremental ) {
-			$backup_timestamp = $jobdata['backup_time'];
+			$backup_timestamp = isset( $jobdata['incremental_base_time'] ) ? $jobdata['incremental_base_time'] : $jobdata['backup_time'];
 			$backup_history   = BackupPlus_Backup_History::get_history( $backup_timestamp );
 			$pfiles          .= '<dl>';
 			foreach ( $backup_history['incremental_sets'] as $timestamp => $backup ) {
@@ -2312,7 +2314,7 @@ class BackupPlus {
 			// Get the warnings before opening the log file, as opening the log file may generate new ones (which then leads to $this->errors having duplicate entries when they are copied over below)
 			$warnings = $this->jobdata_get( 'warnings' );
 
-			$this->logfile_open( $this->file_nonce );
+			$this->logfile_open( $this->nonce );
 
 			if ( ! $this->get_backup_job_semaphore_lock( $this->nonce, $resumption_no ) ) {
 				$this->log( 'Failed to get backup job lock; possible overlapping resumptions - will abort this instance' );
@@ -2706,7 +2708,7 @@ class BackupPlus {
 			$this->save_backup_to_history( $our_files );
 
 			// Potentially encrypt the database if it is not already
-			if ( 'no' != $backup_database && isset( $our_files[ $tindex ] ) && ! preg_match( '/\.crypt$/', $our_files[ $tindex ] ) && 'incremental' != $job_type ) {
+			if ( 'no' != $backup_database && isset( $our_files[ $tindex ] ) && ! preg_match( '/\.crypt$/', $our_files[ $tindex ] ) ) {
 				$encrypted_file = $backupplus_backup->encrypt_file( $our_files[ $tindex ] );
 				if ( false === $encrypted_file || is_wp_error( $encrypted_file ) ) {
 					$this->log( 'Database encryption failed; backup dispatch has been stopped.', 'error' );
@@ -2794,6 +2796,9 @@ class BackupPlus {
 					}
 				}
 
+				if ( ! $this->is_ours_to_upload( $file, $key ) && 'db' !== $key ) {
+					continue;
+				}
 				if ( $this->is_uploaded( $file ) ) {
 					$this->log( "$file: $key: $message" );
 				} elseif ( is_file( $backupplus_dir . '/' . $file ) ) {
@@ -3099,6 +3104,24 @@ class BackupPlus {
 		$this->boot_backup( true, false );
 	}
 
+	/** Run the selected incremental schedule, promoting to full whenever required. */
+	public function backup_increments() {
+		$interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' );
+		if ( 'none' !== $interval && ! empty( $interval ) ) {
+			$this->boot_backup(
+				1,
+				0,
+				false,
+				false,
+				false,
+				array(
+					'incremental'           => true,
+					'scheduled_incremental' => true,
+				)
+			);
+		}
+	}
+
 	/**
 	 * Start a database backup (used by WP cron)
 	 */
@@ -3322,7 +3345,7 @@ class BackupPlus {
 		}       if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
-		$is_scheduled_backup = is_bool( $backup_files ) || is_bool( $backup_database );
+		$is_scheduled_backup = is_bool( $backup_files ) || is_bool( $backup_database ) || ! empty( $options['scheduled_incremental'] );
 
 		$hosting_company = $this->get_hosting_info();
 		if ( ! empty( $options['incremental'] ) && in_array( 'only_one_incremental_per_day', $this->is_hosting_backup_limit_reached() ) ) {
@@ -3358,7 +3381,7 @@ class BackupPlus {
 		$this->backup_time_nonce( $use_nonce, $use_timestamp );
 		// The current_resumption is consulted within logfile_open()
 		$this->current_resumption = 0;
-		$this->logfile_open( $this->file_nonce );
+		$this->logfile_open( $this->nonce );
 
 		if ( ! is_file( $this->logfile_name ) ) {
 			$this->log( 'Failed to open log file (' . $this->logfile_name . ') - you need to check your BackupPlus settings (your chosen directory for creating files in is not writable, or you ran out of disk space). Backup aborted.' );
@@ -3538,6 +3561,19 @@ class BackupPlus {
 			}
 		}
 
+		$incremental_configuration = BackupPlus_Incremental_Backups::configuration( array_keys( $job_file_entities ), $service, isset( $options['remote_storage_instances'] ) ? $options['remote_storage_instances'] : array(), $option_cache );
+		$incremental_base          = ! empty( $options['incremental'] ) && ! empty( $job_file_entities ) ? BackupPlus_Incremental_Backups::find_base( array_keys( $job_file_entities ), $incremental_configuration ) : false;
+		if ( $incremental_base ) {
+			$this->file_nonce = $incremental_base['nonce'];
+			foreach ( $job_file_entities as $entity => &$entity_info ) {
+				$entity_info['index'] = max( array_keys( (array) $incremental_base[ $entity ] ) ) + 1;
+			}
+			unset( $entity_info );
+			$this->log( 'Adding changed files to backup chain ' . $this->file_nonce );
+		} elseif ( ! empty( $options['incremental'] ) ) {
+			$this->log( 'Taking a full backup: no completed compatible base less than seven days old is available.' );
+		}
+
 		$followups_allowed = ( ( ( ! $one_shot && defined( 'DOING_CRON' ) && DOING_CRON ) ) || ( defined( 'BACKUPPLUS_FOLLOWUPS_ALLOWED' ) && BACKUPPLUS_FOLLOWUPS_ALLOWED ) );
 
 		$split_every = max( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_split_every', 400 ), BACKUPPLUS_SPLIT_MIN );
@@ -3572,6 +3608,22 @@ class BackupPlus {
 			'last_sapi',
 			PHP_SAPI,
 		);
+
+		array_push( $initial_jobdata, 'incremental_configuration', $incremental_configuration );
+		if ( $incremental_base ) {
+			$previous_files = array();
+			foreach ( $job_file_entities as $entity => $unused ) {
+				$previous_files[ $entity ] = (array) $incremental_base[ $entity ];
+				foreach ( $previous_files[ $entity ] as $index => $file ) {
+					$key = $entity . ( $index ? $index : '' ) . '-size';
+					if ( isset( $incremental_base[ $key ] ) ) {
+						$previous_files[ $key ] = $incremental_base[ $key ];
+					}
+				}
+			}
+			$initial_jobdata[ array_search( 'job_type', $initial_jobdata, true ) + 1 ] = 'incremental';
+			array_push( $initial_jobdata, 'incremental_base_time', $incremental_base['timestamp'], 'incremental_previous_snapshots', $incremental_base['incremental']['snapshots'], 'previous_backup_files_array', $previous_files, 'backup_files_array', $previous_files );
+		}
 
 		if ( $one_shot ) {
 			update_site_option( 'backupplus_oneshotnonce', $this->nonce );
@@ -3752,6 +3804,7 @@ class BackupPlus {
 				}
 			}
 			if ( $do_cleanup ) {
+				BackupPlus_Incremental_Backups::complete();
 				$delete_jobdata = apply_filters( 'backupplus_backup_complete', $delete_jobdata );
 			}
 		} elseif ( false == $this->newresumption_scheduled || $this->current_resumption + 1 == $this->jobdata_get( 'fail_on_resume' ) ) {
@@ -4222,6 +4275,12 @@ class BackupPlus {
 			),
 			$last_backup
 		);
+		if ( 'incremental' === $this->jobdata_get( 'job_type' ) ) {
+			$last_backup['backup_time_incremental'] = $this->backup_time;
+			$last_backup['backup_time']             = $this->jobdata_get( 'incremental_base_time', $this->backup_time );
+		} else {
+			unset( $last_backup['backup_time_incremental'] );
+		}
 		$last_backup = apply_filters( 'backupplus_save_last_backup', $last_backup );
 		BackupPlus_Options::update_backupplus_option( 'backupplus_last_backup', $last_backup, false );
 	}
@@ -4688,6 +4747,7 @@ class BackupPlus {
 		$job_type = $this->jobdata_get( 'job_type' );
 
 		$backup_array['nonce']                = $this->file_nonce;
+		$backup_array['native']               = true;
 		$backup_array['service']              = $this->jobdata_get( 'service' );
 		$backup_array['service_instance_ids'] = array();
 		if ( 'incremental' != $job_type ) {
@@ -4726,7 +4786,18 @@ class BackupPlus {
 			$backup_array['morefiles_more_locations'] = $morefiles_more_locations;
 		}
 
-		BackupPlus_Backup_History::save_backup( apply_filters( 'backupplus_save_backup_history_timestamp', $this->backup_time ), $backup_array );
+		$history_time = $this->jobdata_get( 'incremental_base_time', $this->backup_time );
+		$existing     = BackupPlus_Backup_History::get_history( $history_time );
+		if ( 'incremental' === $job_type ) {
+			// Array replacement preserves split indices, checksums, database and retention metadata.
+			$backup_array = array_replace_recursive( $existing, $backup_array );
+		}
+		$backup_array['incremental'] = array(
+			'configuration' => $this->jobdata_get( 'incremental_configuration' ),
+			'complete'      => false,
+			'snapshots'     => $this->jobdata_get( 'incremental_snapshots', array() ),
+		);
+		BackupPlus_Backup_History::save_backup( apply_filters( 'backupplus_save_backup_history_timestamp', $history_time ), $backup_array );
 	}
 
 	/**
@@ -4788,8 +4859,6 @@ class BackupPlus {
 		// Clear schedule so that we don't stack up scheduled backups
 		wp_clear_scheduled_hook( 'backupplus_backup' );
 		if ( 'manual' == $interval ) {
-			// Clear increments schedule as the file schedule is manual
-			wp_clear_scheduled_hook( 'backupplus_backup_increments' );
 			return 'manual';
 		}
 		$previous_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval' );
@@ -4856,7 +4925,7 @@ class BackupPlus {
 		$previous_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments' );
 
 		$valid_schedules = wp_get_schedules();
-		if ( empty( $valid_schedules[ $interval ] ) ) {
+		if ( empty( $valid_schedules[ $interval ] ) || $valid_schedules[ $interval ]['interval'] > DAY_IN_SECONDS || $valid_schedules[ $interval ]['interval'] < HOUR_IN_SECONDS ) {
 			$interval = 'daily';
 		}
 

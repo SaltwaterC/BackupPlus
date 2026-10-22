@@ -21,6 +21,8 @@ class BackupPlus_Backup {
 
 	private $manifest_path;
 
+	private $incremental_manifest;
+
 	private $zipfiles_added;
 
 	private $zipfiles_added_thisrun = 0;
@@ -286,6 +288,10 @@ class BackupPlus_Backup {
 		$this->whichone           = $whichone;
 
 		global $backupplus;
+		$previous = $backupplus->jobdata_get( 'previous_backup_files_array', array() );
+		if ( isset( $previous[ $whichone ] ) ) {
+			$this->first_linked_index = max( $this->first_linked_index, max( array_keys( $previous[ $whichone ] ) ) + 1 );
+		}
 
 		$this->zip_split_every = max( (int) $backupplus->jobdata_get( 'split_every' ), BACKUPPLUS_SPLIT_MIN ) * 1048576;
 
@@ -310,7 +316,11 @@ class BackupPlus_Backup {
 			if ( $flag_error ) {
 				$backupplus->log( sprintf( __( '%1$s - could not back this entity up; the corresponding directory does not exist (%2$s)', 'backupplus' ), $whichone, $create_from_dir ), 'error' );
 			}
-			return false;
+			if ( ! $flag_error && $backupplus->jobdata_get( 'incremental_configuration' ) ) {
+				$create_from_dir = array();
+			} else {
+				return false;
+			}
 		}
 
 		$itext     = empty( $index ) ? '' : $index + 1;
@@ -1579,7 +1589,7 @@ class BackupPlus_Backup {
 						}
 					}
 
-					if ( ! empty( $dirlist ) ) {
+					if ( ! empty( $dirlist ) || $backupplus->jobdata_get( 'incremental_configuration' ) ) {
 						$created = $this->create_zip( $dirlist, $youwhat, $backup_file_basename, $index );
 						// Now, store the results
 						if ( ! is_string( $created ) && ! is_array( $created ) ) {
@@ -1718,6 +1728,10 @@ class BackupPlus_Backup {
 			foreach ( $files[ $entity ] as $index => $file ) {
 				if ( ! is_string( $file ) || basename( $file ) !== $file || ! preg_match( '/\.zip(?:\.crypt)?$/i', $file ) ) {
 					return false;
+				}
+				$previous = $backupplus->jobdata_get( 'previous_backup_files_array', array() );
+				if ( isset( $previous[ $entity ] ) && in_array( $file, $previous[ $entity ], true ) ) {
+					continue;
 				}
 				$encrypted = BackupPlus_Encryption::is_file_encrypted( $file );
 				$source    = $encrypted ? substr( $file, 0, -6 ) : $file;
@@ -3453,7 +3467,7 @@ class BackupPlus_Backup {
 			} elseif ( is_readable( $fullpath ) ) {
 				$mtime = filemtime( $fullpath );
 				$key   = ( $fullpath == $original_fullpath ) ? ( ( 2 == $startlevels ) ? $use_path_when_storing : $this->basename( $fullpath ) ) : $use_path_when_storing . '/' . $this->basename( $fullpath );
-				if ( $mtime > 0 && $mtime > $if_altered_since ) {
+				if ( $backupplus->jobdata_get( 'incremental_configuration' ) || ( $mtime > 0 && $mtime > $if_altered_since ) ) {
 					$this->zipfiles_batched[ $fullpath ]   = $key;
 					$this->makezip_recursive_batchedbytes += @filesize( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 					// @touch($zipfile);
@@ -3481,7 +3495,7 @@ class BackupPlus_Backup {
 				return true;
 			}
 
-			if ( ! isset( $this->existing_files[ $use_path_when_storing ] ) ) {
+			if ( $backupplus->jobdata_get( 'incremental_configuration' ) || ! isset( $this->existing_files[ $use_path_when_storing ] ) ) {
 				$this->zipfiles_dirbatched[] = $use_path_when_storing;
 			}
 
@@ -3529,7 +3543,7 @@ class BackupPlus_Backup {
 							$backupplus->log( "Entity excluded by filter: $use_stripped" );
 						} elseif ( is_readable( $deref ) ) {
 							$mtime = filemtime( $deref );
-							if ( $mtime > 0 && $mtime > $if_altered_since ) {
+							if ( $backupplus->jobdata_get( 'incremental_configuration' ) || ( $mtime > 0 && $mtime > $if_altered_since ) ) {
 								$this->zipfiles_batched[ $deref ]      = $use_path_when_storing . '/' . $e;
 								$this->makezip_recursive_batchedbytes += @filesize( $deref );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 								// @touch($zipfile);
@@ -3560,7 +3574,7 @@ class BackupPlus_Backup {
 						$backupplus->log( "Entity excluded by filter: $use_stripped" );
 					} elseif ( is_readable( $fullpath . '/' . $e ) ) {
 						$mtime = filemtime( $fullpath . '/' . $e );
-						if ( $mtime > 0 && $mtime > $if_altered_since ) {
+						if ( $backupplus->jobdata_get( 'incremental_configuration' ) || ( $mtime > 0 && $mtime > $if_altered_since ) ) {
 							$this->zipfiles_batched[ $fullpath . '/' . $e ] = $use_path_when_storing . '/' . $e;
 							$this->makezip_recursive_batchedbytes          += @filesize( $fullpath . '/' . $e );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 						} else {
@@ -3921,7 +3935,7 @@ class BackupPlus_Backup {
 		// || 'others' == $whichone
 		if ( ( 'uploads' == $whichone || 'others' == $whichone ) && function_exists( 'gzopen' ) && function_exists( 'gzread' ) ) {
 			$use_cache_files = false;
-			$cache_file_base = $this->zip_basename . '-cachelist-' . $this->makezip_if_altered_since;
+			$cache_file_base = $this->zip_basename . '-cachelist-' . $this->makezip_if_altered_since . ( $backupplus->jobdata_get( 'incremental_configuration' ) ? '-' . $backupplus->nonce : '' );
 			// Cache file suffixes: -zfd.gz.tmp, -zfb.gz.tmp, -info.tmp, (possible)-zfs.gz.tmp
 			if ( file_exists( $cache_file_base . '-zfd.gz.tmp' ) && file_exists( $cache_file_base . '-zfb.gz.tmp' ) && file_exists( $cache_file_base . '-info.tmp' ) ) {
 				// Cache files exist; shall we use them?
@@ -4011,7 +4025,7 @@ class BackupPlus_Backup {
 		// We use gzip to reduce the size as on hosts which limit disk I/O, the caching may make things worse
 		// || 'others' == $whichone
 		if ( ( 'uploads' == $whichone || 'others' == $whichone ) && ! $error_occurred && function_exists( 'gzopen' ) && function_exists( 'gzwrite' ) ) {
-			$cache_file_base = $this->zip_basename . '-cachelist-' . $this->makezip_if_altered_since;
+			$cache_file_base = $this->zip_basename . '-cachelist-' . $this->makezip_if_altered_since . ( $backupplus->jobdata_get( 'incremental_configuration' ) ? '-' . $backupplus->nonce : '' );
 
 			// Just approximate - we're trying to avoid an otherwise-unpredictable PHP fatal error. Caching only happens if file enumeration took a long time - so presumably there are very many.
 			$memory_needed_estimate = 0;
@@ -4099,6 +4113,11 @@ class BackupPlus_Backup {
 
 		}
 
+		$this->incremental_manifest = null;
+		if ( $backupplus->jobdata_get( 'incremental_configuration' ) ) {
+			$this->incremental_manifest = BackupPlus_Incremental_Backups::scan( $whichone, $this->zipfiles_batched, $this->zipfiles_dirbatched, $this->zipfiles_skipped_notaltered );
+		}
+
 		// Any not yet dispatched? Under our present scheme, at this point nothing has yet been despatched. And since the enumerating of all files can take a while, we can at this point do a further modification check to reduce the chance of overlaps.
 		// This relies on us *not* touch()ing the zip file to indicate to any resumption 'behind us' that we're already here. Rather, we're relying on the combined facts that a) if it takes us a while to search the directory tree, then it should do for the one behind us too (though they'll have the benefit of cache, so could catch very fast) and b) we touch *immediately* after finishing the enumeration of the files to add.
 		// $retry_on_error is here being used as a proxy for 'not the second time around, when there might be the remains of the file on the first time around'
@@ -4110,7 +4129,7 @@ class BackupPlus_Backup {
 			touch( $destination );
 		}
 
-		if ( count( $this->zipfiles_dirbatched ) > 0 || count( $this->zipfiles_batched ) > 0 ) {
+		if ( $this->incremental_manifest || count( $this->zipfiles_dirbatched ) > 0 || count( $this->zipfiles_batched ) > 0 ) {
 
 			$backupplus->log( sprintf( 'Total entities for the zip file: %d directories, %d files (%d skipped as non-modified), %s MB', count( $this->zipfiles_dirbatched ), count( $this->zipfiles_batched ), count( $this->zipfiles_skipped_notaltered ), round( $this->makezip_recursive_batchedbytes / 1048576, 1 ) ) );
 
@@ -4212,6 +4231,19 @@ class BackupPlus_Backup {
 	 */
 	private function backupplus_include_manifest( $whichone ) {
 		global $backupplus;
+
+		if ( $this->incremental_manifest ) {
+			$manifest = $this->backupplus_dir . '/manifest-' . $backupplus->nonce . '-' . $whichone . '.tmp';
+			$data     = json_encode( $this->incremental_manifest );
+			if ( false === $data || false === file_put_contents( $manifest, $data ) ) {
+				throw new RuntimeException( 'Could not write the incremental restore manifest.' );
+			}
+			$this->manifest_path                 = $manifest;
+			$this->zipfiles_batched[ $manifest ] = 'backupplus-manifest.json';
+			// Always replace a manifest left by a previous resumption, even if its size is unchanged.
+			unset( $this->existing_files['backupplus-manifest.json'] );
+			return true;
+		}
 
 		$manifest_name = 'backupplus-manifest.json';
 		$manifest      = trailingslashit( $this->backupplus_dir ) . $manifest_name;
@@ -4415,7 +4447,7 @@ class BackupPlus_Backup {
 			return new WP_Error( 'no_open', sprintf( __( 'Failed to open the zip file (%1$s) - %2$s', 'backupplus' ), $zipfile, $zip->last_error ) );
 		}
 
-		if ( apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
+		if ( $this->incremental_manifest || apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
 			$this->backupplus_include_manifest( $this->whichone );
 		}
 
@@ -4504,7 +4536,7 @@ class BackupPlus_Backup {
 				if ( ! $force_allinone && ( $zipfiles_added_thisbatch > BACKUPPLUS_MAXBATCHFILES || $reaching_split_limit || $data_added_since_reopen > $maxzipbatch || ( time() - $this->zipfiles_lastwritetime ) > 2 ) ) {
 
 					// We are coming towards a limit and about to close the zip, check if this is a more file backup and the manifest file has made it into this zip if not add it
-					if ( apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
+					if ( $this->incremental_manifest || apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
 
 						$manifest = false;
 
@@ -4770,7 +4802,7 @@ class BackupPlus_Backup {
 			$this->record_zip_error( $files_zipadded_since_open, $zip->last_error, $warn_on_failures );
 		}
 
-		if ( apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
+		if ( $this->incremental_manifest || apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
 			if ( ! empty( $this->manifest_path ) && file_exists( $this->manifest_path ) ) {
 				$backupplus->log( 'Removing manifest file: ' . basename( $this->manifest_path ) . ': ' . ( @unlink( $this->manifest_path ) ? 'OK' : 'failed' ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 			}

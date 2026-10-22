@@ -21,79 +21,82 @@ foreach ( $default_options as $k => $v ) {
 ?>
 <table class="form-table backup-schedule">
 	<tr>
-		<th><?php esc_html_e( 'Files backup schedule', 'backupplus' ); ?>:</th>
+		<th scope="row"><label for="backupplus_interval"><?php esc_html_e( 'Full file backups', 'backupplus' ); ?></label></th>
 		<td class="js-file-backup-schedule">
-			<div>
-				<select title="<?php esc_attr_e( 'Files backup interval', 'backupplus' ); ?>" class="backupplus_interval" name="backupplus_interval">
+			<div class="backupplus-schedule-controls">
+				<select id="backupplus_interval" title="<?php esc_attr_e( 'Files backup interval', 'backupplus' ); ?>" class="backupplus_interval" name="backupplus_interval">
 				<?php
 				$intervals         = $backupplus_admin->get_intervals( 'files' );
 				$selected_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval', 'manual' );
 				foreach ( $intervals as $cronsched => $descrip ) {
-					echo '<option value="' . esc_attr( $cronsched ) . '" ';
-					if ( $cronsched == $selected_interval ) {
-						echo 'selected="selected"';
-					}
-					echo '>' . esc_html( $descrip ) . "</option>\n";
+					echo '<option value="' . esc_attr( $cronsched ) . '" ' . selected( $selected_interval, $cronsched, false ) . '>' . esc_html( $descrip ) . '</option>';
 				}
+				$backupplus_retain = max( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain', 2 ), 1 );
 				?>
-				</select> <span class="backupplus_files_timings">
-					<?php echo wp_kses( apply_filters( 'backupplus_schedule_showfileopts', '<input type="hidden" name="backupplus_starttime_files" value="">', $selected_interval ), $backupplus_admin->kses_allow_tags() ); ?>
-				</span>
-			
-
-				<?php
-
-					$backupplus_retain = max( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain', 2 ), 1 );
-
-					$retain_files_config = __( 'and retain this many scheduled backups', 'backupplus' ) . ': <input type="number" min="1" step="1" title="' . __( 'Retain this many scheduled file backups', 'backupplus' ) . '" name="backupplus_retain" value="' . $backupplus_retain . '" class="retain-files /">';
-
-					echo wp_kses( $retain_files_config, $backupplus_admin->kses_allow_tags() );
-
-				?>
+				</select>
+				<label class="backupplus-schedule-retention" for="backupplus_retain">
+					<span><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
+					<input id="backupplus_retain" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many scheduled file backups', 'backupplus' ); ?>" name="backupplus_retain" value="<?php echo esc_attr( $backupplus_retain ); ?>" class="retain-files">
+					<span><?php esc_html_e( 'backup chains', 'backupplus' ); ?></span>
+				</label>
 			</div>
+			<span class="backupplus_files_timings">
+				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showfileopts', '<input type="hidden" name="backupplus_starttime_files" value="">', $selected_interval ), $backupplus_admin->kses_allow_tags() ); ?>
+			</span>
 			<?php
 				do_action( 'backupplus_incremental_cell', $selected_interval );
 				do_action( 'backupplus_after_filesconfig' );
 			?>
 		</td>
 	</tr>
-
-	<?php apply_filters( 'backupplus_after_file_intervals', false, $selected_interval ); ?>
 	<tr>
-		<th>
-			<?php esc_html_e( 'Database backup schedule', 'backupplus' ); ?>:
-		</th>
-		<td class="js-database-backup-schedule">
-		<div>
-			<select class="backupplus_interval_database" title="<?php esc_attr_e( 'Database backup interval', 'backupplus' ); ?>" name="backupplus_interval_database">
-			<?php
-			$intervals            = $backupplus_admin->get_intervals( 'db' );
-			$selected_interval_db = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) );
-			foreach ( $intervals as $cronsched => $descrip ) {
-				echo '<option value="' . esc_attr( $cronsched ) . '" ';
-				if ( $cronsched == $selected_interval_db ) {
-					echo 'selected="selected"';
-				}
-				echo '>' . esc_html( $descrip ) . "</option>\n";
-			}
-			?>
-			</select> <span class="backupplus_same_schedules_message"><?php echo esc_html( apply_filters( 'backupplus_schedule_sametimemsg', '' ) ); ?></span><span class="backupplus_db_timings">
-				<?php
-					echo wp_kses( apply_filters( 'backupplus_schedule_showdbopts', '<input type="hidden" name="backupplus_starttime_db" value="">', $selected_interval_db ), $backupplus_admin->kses_allow_tags() );
-				?>
-			</span>
-
-			<?php
-				$backupplus_retain_db = max( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', $backupplus_retain ), 1 );
-				$retain_dbs_config    = __( 'and retain this many scheduled backups', 'backupplus' ) . ': <input type="number" min="1" step="1" title="' . __( 'Retain this many scheduled database backups', 'backupplus' ) . '" name="backupplus_retain_db" value="' . $backupplus_retain_db . '" class="retain-files /">';
-
-				echo wp_kses( $retain_dbs_config, $backupplus_admin->kses_allow_tags() );
-			?>
+		<th scope="row"><label for="backupplus_interval_increments"><?php esc_html_e( 'Incremental file backups', 'backupplus' ); ?></label></th>
+		<td>
+			<div class="backupplus-schedule-controls">
+				<select id="backupplus_interval_increments" name="backupplus_interval_increments" aria-describedby="backupplus-incremental-description">
+					<option value="none"><?php esc_html_e( 'Disabled', 'backupplus' ); ?></option>
+					<?php
+					$increment_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' );
+					foreach ( wp_get_schedules() as $schedule => $details ) {
+						if ( $details['interval'] >= HOUR_IN_SECONDS && $details['interval'] <= DAY_IN_SECONDS ) {
+							echo '<option value="' . esc_attr( $schedule ) . '" ' . selected( $increment_interval, $schedule, false ) . '>' . esc_html( $details['display'] ) . '</option>';
+						}
+					}
+					?>
+				</select>
 			</div>
-			<?php do_action( 'backupplus_after_dbconfig' ); ?>
+			<p id="backupplus-incremental-description" class="description"><?php esc_html_e( 'Back up changed files between full backups. A new full backup is taken at least every seven days. Increments are kept with their full backup.', 'backupplus' ); ?></p>
 		</td>
 	</tr>
 
+	<?php apply_filters( 'backupplus_after_file_intervals', false, $selected_interval ); ?>
+	<tr>
+		<th scope="row"><label for="backupplus_interval_database"><?php esc_html_e( 'Database backups', 'backupplus' ); ?></label></th>
+		<td class="js-database-backup-schedule">
+			<div class="backupplus-schedule-controls">
+				<select id="backupplus_interval_database" class="backupplus_interval_database" title="<?php esc_attr_e( 'Database backup interval', 'backupplus' ); ?>" name="backupplus_interval_database">
+				<?php
+				$intervals            = $backupplus_admin->get_intervals( 'db' );
+				$selected_interval_db = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) );
+				foreach ( $intervals as $cronsched => $descrip ) {
+					echo '<option value="' . esc_attr( $cronsched ) . '" ' . selected( $selected_interval_db, $cronsched, false ) . '>' . esc_html( $descrip ) . '</option>';
+				}
+				$backupplus_retain_db = max( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', $backupplus_retain ), 1 );
+				?>
+				</select>
+				<label class="backupplus-schedule-retention" for="backupplus_retain_db">
+					<span><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
+					<input id="backupplus_retain_db" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many scheduled database backups', 'backupplus' ); ?>" name="backupplus_retain_db" value="<?php echo esc_attr( $backupplus_retain_db ); ?>" class="retain-files">
+					<span><?php esc_html_e( 'backups', 'backupplus' ); ?></span>
+				</label>
+			</div>
+			<span class="backupplus_same_schedules_message"><?php echo esc_html( apply_filters( 'backupplus_schedule_sametimemsg', '' ) ); ?></span>
+			<span class="backupplus_db_timings">
+				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showdbopts', '<input type="hidden" name="backupplus_starttime_db" value="">', $selected_interval_db ), $backupplus_admin->kses_allow_tags() ); ?>
+			</span>
+			<?php do_action( 'backupplus_after_dbconfig' ); ?>
+		</td>
+	</tr>
 </table>
 
 <h2 class="backupplus_settings_sectionheading"><?php esc_html_e( 'Sending Your Backup To Remote Storage', 'backupplus' ); ?></h2>
@@ -214,7 +217,7 @@ if ( is_string( $report_rows ) ) {
 
 <h2 class="backupplus_settings_sectionheading"><?php esc_html_e( 'Backup encryption', 'backupplus' ); ?></h2>
 
-<table class="form-table width-900">
+<table class="form-table width-900 backupplus-encryption-settings">
 	<?php BackupPlus_Database_Encryption::render(); ?>
 
 </table>

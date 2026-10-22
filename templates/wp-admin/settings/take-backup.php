@@ -54,7 +54,7 @@
 			" onclick="backupplus_backup_dialog_open(); return false;"><?php echo esc_html( str_ireplace( 'Back Up', 'Backup', __( 'Backup Now', 'backupplus' ) ) ); ?></button>
 			<?php
 			if ( ! $backup_disabled ) {
-				$link = '';
+				$link = '<p><a href="#" id="backupplus_incremental_backup_link" data-incremental="1" onclick="backupplus_backup_dialog_open(\'incremental\'); return false;">' . esc_html__( 'Take an incremental backup', 'backupplus' ) . '</a></p>';
 				echo wp_kses( apply_filters( 'backupplus_incremental_backup_link', $link ), $backupplus_admin->kses_allow_tags() );
 			}
 			?>

@@ -13,11 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<h3 class="incremental-backups-only"><?php esc_html_e( 'Take an incremental backup', 'backupplus' ); ?></h3>
 </p>
 
-<div class="incremental-free-only">
-	<p>
-	<?php esc_html_e( 'Incremental backups are not enabled in this installation.', 'backupplus' ); ?>
-	</p>
-</div>
+<p class="incremental-backups-only"><?php esc_html_e( 'Back up only file changes since the previous backup. A full backup is taken automatically when no usable base exists or the base is seven days old.', 'backupplus' ); ?></p>
 
 <p id="backupnow_database_container" class="new-backups-only">
 

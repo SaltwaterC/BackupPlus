@@ -124,7 +124,8 @@ class BackupPlus_Database_Encryption {
 		$mode    = isset( $config['mode'] ) ? $config['mode'] : 'none';
 		$sources = isset( $config['sources'] ) ? $config['sources'] : ( isset( $config['recipients'] ) ? $config['recipients'] : array() );
 		?>
-		<tr><th><label for="backupplus-database-encryption"><?php esc_html_e( 'Backup encryption', 'backupplus' ); ?></label></th><td>
+		<tr><th scope="row"><label for="backupplus-database-encryption"><?php esc_html_e( 'Backup encryption', 'backupplus' ); ?></label></th><td>
+		<div class="backupplus-encryption-fields">
 		<select id="backupplus-database-encryption" name="backupplus_database_encryption[mode]">
 		<?php
 		foreach ( array(
@@ -139,7 +140,7 @@ class BackupPlus_Database_Encryption {
 		<?php } ?>
 		<p class="description"><?php esc_html_e( 'Encrypts database dumps and every file archive, including split ZIP parts. Encryption must complete before files are uploaded.', 'backupplus' ); ?></p>
 		<p><label for="backupplus-age-recipients"><?php esc_html_e( 'age recipients, one per line', 'backupplus' ); ?></label><br>
-		<textarea id="backupplus-age-recipients" name="backupplus_database_encryption[sources]" rows="5" cols="80" spellcheck="false"><?php echo esc_textarea( implode( "\n", $sources ) ); ?></textarea></p>
+		<textarea id="backupplus-age-recipients" name="backupplus_database_encryption[sources]" rows="5" spellcheck="false"><?php echo esc_textarea( implode( "\n", $sources ) ); ?></textarea></p>
 		<p><button type="button" id="backupplus-age-generate" class="button"><?php esc_html_e( 'Generate age key in browser', 'backupplus' ); ?></button></p>
 		<p id="backupplus-age-key-status" class="description" role="status" aria-live="polite"></p>
 		<dialog id="backupplus-age-key-dialog" aria-labelledby="backupplus-age-key-title">
@@ -156,6 +157,7 @@ class BackupPlus_Database_Encryption {
 		</dialog>
 		<p class="description"><?php esc_html_e( 'Use age1… recipients, SSH RSA/Ed25519 public keys, or github:USERNAME. GitHub keys are fetched and pinned when you save; save again to refresh them. Backups use every saved recipient without contacting GitHub.', 'backupplus' ); ?></p>
 		<p class="description"><?php echo esc_html( sprintf( __( 'Saved public recipients: %d. Each recipient can decrypt the backup. Keep the corresponding private key for restoration; it is never saved here.', 'backupplus' ), isset( $config['recipients'] ) ? count( $config['recipients'] ) : 0 ) ); ?></p>
+		</div>
 		</td></tr>
 		<?php
 	}

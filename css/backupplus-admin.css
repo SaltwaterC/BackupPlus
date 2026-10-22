@@ -3649,3 +3649,104 @@ div#backupplus-restore-modal .udp-notice, .udp-notice.backupplus-restore-option 
 	content: "\f463";
 }
 
+
+/* Keep schedule and encryption controls on the settings form's shared field column. */
+#backupplus-wrap .backup-schedule th,
+#backupplus-wrap .backupplus-encryption-settings th {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+#backupplus-wrap .backup-schedule th > label,
+#backupplus-wrap .backupplus-encryption-settings th > label {
+	display: flex;
+	align-items: center;
+	min-height: 40px;
+}
+
+#backupplus-wrap .backup-schedule td,
+#backupplus-wrap .backupplus-encryption-settings td {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+.backupplus-schedule-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 24px;
+}
+
+.backupplus-schedule-controls > select,
+.backupplus-encryption-fields > select {
+	box-sizing: border-box;
+	width: 208px;
+	max-width: 100%;
+	min-height: 40px;
+	margin: 0;
+}
+
+.backupplus-schedule-retention {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	white-space: nowrap;
+}
+
+.backupplus-schedule-retention input.retain-files {
+	box-sizing: border-box;
+	width: 70px;
+	min-height: 32px;
+	margin: 0;
+}
+
+#backupplus-wrap .backup-schedule p.description,
+#backupplus-wrap .backupplus-encryption-fields > p {
+	margin: 8px 0 0;
+	max-width: 700px;
+}
+
+#backupplus-wrap .backup-schedule p.description {
+	max-width: 65ch;
+}
+
+#backupplus-wrap .backupplus-encryption-settings {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.backupplus-encryption-fields {
+	max-width: 700px;
+}
+
+.backupplus-encryption-fields textarea {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	margin-top: 6px;
+}
+
+.backupplus-encryption-fields > p > label + br,
+.backupplus-encryption-fields > p:empty {
+	display: none;
+}
+
+@media only screen and (max-width: 782px) {
+	#backupplus-wrap .backup-schedule th,
+	#backupplus-wrap .backupplus-encryption-settings th {
+		width: auto;
+		padding: 12px 0 6px;
+	}
+
+	#backupplus-wrap .backup-schedule th > label,
+	#backupplus-wrap .backupplus-encryption-settings th > label {
+		min-height: 0;
+	}
+
+	#backupplus-wrap .backup-schedule td,
+	#backupplus-wrap .backupplus-encryption-settings td {
+		padding: 0 0 12px;
+	}
+}

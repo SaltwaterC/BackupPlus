@@ -396,6 +396,12 @@ class BackupPlus_Admin {
 			echo '<span class="backupplus_next_scheduled_date_time">' . esc_html( $next_scheduled_backup ) . '</span>';
 		}
 
+		$next_increment = wp_next_scheduled( 'backupplus_backup_increments' );
+		if ( $next_increment ) {
+			$increment_date = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next_increment ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next_increment ), 'D, F j, Y H:i' );
+			echo '<br><span>' . esc_html( sprintf( __( 'Incremental backup (or required full backup): %s', 'backupplus' ), $increment_date ) ) . '</span>';
+		}
+
 		if ( $return_instead_of_echo ) {
 			return ob_get_clean();
 		}
@@ -2348,12 +2354,9 @@ class BackupPlus_Admin {
 	public function request_backupnow( $request, $close_connection_callable = false ) {
 		global $backupplus;
 
-		$abort_before_booting = false;
-		$backupnow_nocloud    = ! empty( $request['backupnow_nocloud'] );
+		$backupnow_nocloud = ! empty( $request['backupnow_nocloud'] );
 
 		$request['incremental'] = ! empty( $request['incremental'] );
-
-		$entities = ! empty( $request['onlythisfileentity'] ) ? explode( ',', $request['onlythisfileentity'] ) : array();
 
 		$remote_storage_instances = array();
 
@@ -2369,8 +2372,6 @@ class BackupPlus_Admin {
 			}
 		}
 
-		$incremental = $request['incremental'] ? apply_filters( 'backupplus_prepare_incremental_run', false, $entities ) : false;
-
 		// The call to backup_time_nonce() allows us to know the nonce in advance, and return it
 		$nonce = $backupplus->backup_time_nonce();
 
@@ -2383,21 +2384,10 @@ class BackupPlus_Admin {
 			$msg['nonce'] = $request['backup_nonce'];
 		}
 
-		if ( ! empty( $request['incremental'] ) && ! $incremental ) {
-			$msg                  = array(
-				'error' => __( 'No suitable backup set (that already contains a full backup of all the requested file component types) was found, to add increments to.', 'backupplus' ) . ' ' . __( 'Aborting this backup.', 'backupplus' ),
-			);
-			$abort_before_booting = true;
-		}
-
 		if ( $close_connection_callable && is_callable( $close_connection_callable ) ) {
 			call_user_func( $close_connection_callable, $msg );
 		} else {
 			$backupplus->close_browser_connection( json_encode( $msg ) );
-		}
-
-		if ( $abort_before_booting ) {
-			die;
 		}
 
 		$options = array(
@@ -2410,10 +2400,7 @@ class BackupPlus_Admin {
 			$options['restrict_files_to_override'] = explode( ',', $request['onlythisfileentity'] );
 		}
 
-		if ( $request['incremental'] && ! $incremental ) {
-			$backupplus->log( 'An incremental backup was requested but no suitable backup found to add increments to; will proceed with a new backup' );
-			$request['incremental'] = false;
-		}
+		$options['incremental'] = $request['incremental'];
 
 		if ( ! empty( $request['extradata'] ) ) {
 			$options['extradata'] = $request['extradata'];

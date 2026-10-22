@@ -4,6 +4,20 @@ BackupPlus is a WordPress backup and restore plugin. To move a site, create a ba
 
 Start with `cp .env.example .env && ./dev/up.sh`. See [the development environment guide](dev/README.md) for configuration, WP-CLI commands, and cleanup.
 
+## Incremental backups
+
+Choose an **Incremental file backups** interval in Settings, or click **Take an incremental backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. Database backups continue to use their existing full-backup schedule.
+
+An incremental request automatically creates a full backup when the base is seven days old, incomplete, incompatible with the current file selection/exclusions/encryption/storage settings, or unavailable. Incremental schedules run at least daily; the weekly limit uses the original full backup's time, so adding increments never extends it. Scheduled backups depend on WordPress cron running. The normal file schedule still creates full backups and can run more frequently.
+
+Restoring a backup chain applies its full backup and increments in order, including recorded deletions. Keep every archive in the chain; scheduled retention counts and removes complete chains together. Encrypted increments use the saved age recipients. Local protected inventories support change detection; if an inventory is lost (for example after moving to a different installation), the next request creates a new full backup. Restore requires the archives and does not require those inventories.
+
+`make test-wordpress` includes disposable end-to-end checks for incremental creation, same-size edits with preserved timestamps, unchanged files, deletions and restoration, encrypted increments, missing/corrupt bases and seven-day rollover. Run the focused checks with:
+
+```sh
+podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
+```
+
 ## Building assets
 
 The plugin's versioned minified assets are generated from the stable inputs in `assets-src/`. After changing the `Version:` header in `backupplus.php`, run `make build-assets` to produce the filenames used by the plugin and update CSS source-map references. Run `make check-assets` to verify the checked-in assets match the current plugin version. The browser decryptor is bundled from `assets-src/decryption/` using the pinned npm dependencies. Install build/test dependencies with `npm ci --ignore-scripts --omit=optional` (Node 22.4+), then run the same Make targets. The checked-in worker and license notices ship with the plugin; deployed WordPress sites require neither Node nor npm. `make test-client` checks independent crypto fixtures and archive boundaries. `make test-client-browser` checks the actual WordPress Decryption tab in Chromium; set `CHROMIUM` to your Chromium executable and optionally `BACKUPPLUS_TEST_URL` to the local development site.

@@ -2022,7 +2022,7 @@ class BackupPlus_Restorer {
 					$move_from          = $new_move_from;
 				}
 
-				$move_in = $this->move_backup_in( $move_from, trailingslashit( $wp_filesystem_dir ), $preserve_existing, array( 'plugins', 'themes', 'uploads', 'upgrade' ), 'others' );
+				$move_in = $this->move_backup_in( $move_from, trailingslashit( $wp_filesystem_dir ), $preserve_existing, array( 'plugins', 'themes', 'uploads', 'upgrade', 'backupplus-manifest.json' ), 'others' );
 
 				if ( is_wp_error( $move_in ) ) {
 					return $move_in;
@@ -2143,7 +2143,7 @@ class BackupPlus_Restorer {
 				if ( file_exists( $working_dir . DIRECTORY_SEPARATOR . 'backupplus-manifest.json' ) ) {
 					// Before we cleanup and remove the manifest check if this is the last entity of this type, if it is then we want to remove anything that no longer exists in this manifest
 					if ( $last_entity ) {
-						$incremental_restore_prune = $this->incremental_restore_prune_files( $working_dir, $type );
+						$incremental_restore_prune = $this->incremental_restore_prune_files( $working_dir, $type, $wp_filesystem_dir );
 						if ( is_wp_error( $incremental_restore_prune ) ) {
 							return $incremental_restore_prune;
 						}
@@ -2243,7 +2243,7 @@ class BackupPlus_Restorer {
 	 * @param  string $type        - the type of file
 	 * @return boolean|WP_Error
 	 */
-	private function incremental_restore_prune_files( $working_dir, $type ) {
+	private function incremental_restore_prune_files( $working_dir, $type, $destination = null ) {
 		// Check file exists again just in case it some how got removed
 		$manifest_file = $working_dir . DIRECTORY_SEPARATOR . 'backupplus-manifest.json';
 		if ( file_exists( $manifest_file ) && filesize( $manifest_file ) > 0 ) {
@@ -2259,12 +2259,67 @@ class BackupPlus_Restorer {
 				global $backupplus;
 				$backupplus->log( 'Manifest file had invalid JSON, but it was successfully patched' );
 			}
+			if ( isset( $decoded_manifest['version'] ) && 2 === $decoded_manifest['version'] ) {
+				return $this->incremental_restore_deleted_paths( $decoded_manifest, $type, $destination );
+			}
 			$base_path = trailingslashit( WP_CONTENT_DIR );
 			$path      = $base_path . $type;
 			return $this->incremental_restore_scan_dir( $base_path, $path, 1, $decoded_manifest );
 		} else {
 			return new WP_Error( 'manifest_not_found', $this->strings['manifest_not_found'] );
 		}
+	}
+
+	/** Apply cumulative deletions only within this entity's actual restore destination. */
+	private function incremental_restore_deleted_paths( $manifest, $type, $destination ) {
+		global $wp_filesystem;
+		if ( ! $destination || ! isset( $manifest['type'], $manifest['root'], $manifest['deleted'] ) || $type !== $manifest['type'] || ! is_array( $manifest['deleted'] ) ) {
+			return new WP_Error( 'read_manifest_failed', 'Invalid incremental restore manifest.' );
+		}
+		$paths = array();
+		foreach ( $manifest['deleted'] as $relative ) {
+			if ( ! is_string( $relative ) || preg_match( '#(^/|[\\\\:\x00]|(^|/)\.\.?(/|$)|//)#', $relative ) ) {
+				return new WP_Error( 'read_manifest_failed', 'Unsafe path in incremental restore manifest.' );
+			}
+			if ( 'others' !== $type ) {
+				$prefix = $manifest['root'] . '/';
+				if ( 0 !== strpos( $relative, $prefix ) ) {
+					return new WP_Error( 'read_manifest_failed', 'Incremental deletion is outside the restored component.' );
+				}
+				$relative = substr( $relative, strlen( $prefix ) );
+			}
+			if ( '' === $relative ) {
+				return new WP_Error( 'read_manifest_failed', 'Invalid incremental deletion path.' );
+			}
+			$component = explode( '/', $relative )[0];
+			if ( 'plugins' === $type && ( in_array( $component, $this->plugins_to_skip, true ) || ( ! empty( $this->plugins_to_restore ) && ! $this->include_unspecified_plugins && ! in_array( $component, $this->plugins_to_restore, true ) ) ) ) {
+				continue;
+			}
+			if ( 'themes' === $type && ( in_array( $component, $this->themes_to_skip, true ) || ( ! empty( $this->themes_to_restore ) && ! $this->include_unspecified_themes && ! in_array( $component, $this->themes_to_restore, true ) ) ) ) {
+				continue;
+			}
+			$paths[] = trailingslashit( $destination ) . $relative;
+		}
+		// Children precede their deleted parents. Never follow a parent symlink outside the destination.
+		usort(
+			$paths,
+			function ( $a, $b ) {
+				return strlen( $b ) - strlen( $a );
+			}
+		);
+		foreach ( $paths as $path ) {
+			$parent = dirname( $path );
+			while ( strlen( $parent ) > strlen( untrailingslashit( $destination ) ) ) {
+				if ( is_link( $parent ) ) {
+					return new WP_Error( 'read_manifest_failed', 'Incremental deletion traverses a symbolic link.' );
+				}
+				$parent = dirname( $parent );
+			}
+			if ( $wp_filesystem->exists( $path ) && ! $wp_filesystem->delete( $path, true ) ) {
+				return new WP_Error( 'incremental_delete_failed', 'Could not remove a deleted file during incremental restore.' );
+			}
+		}
+		return true;
 	}
 
 	/**

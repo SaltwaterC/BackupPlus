@@ -1,4 +1,4 @@
-.PHONY: build-assets check-assets install-tools format-tools format check-format test test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser
+.PHONY: build-assets check-assets check-php install-tools format-tools format check-format test test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser
 
 PYTHON ?= python3
 TEST_VENV ?= .cache/test-venv
@@ -20,6 +20,9 @@ check-assets:
 	php scripts/build-assets.php --check
 	node scripts/build-decryptor.mjs --check
 
+check-php:
+	@find . -type d \( -name vendor -o -name node_modules -o -name .git -o -name .cache \) -prune -o -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+
 install-tools:
 	COMPOSER_HOME="$(CURDIR)/.cache/composer-home" COMPOSER_CACHE_DIR="$(CURDIR)/.cache/composer-cache" $(COMPOSER) install --no-interaction --prefer-dist
 
@@ -36,7 +39,7 @@ check-format: format-tools
 
 # Keep prerequisites ahead of every suite, including when invoked with make -j.
 test: test-prerequisites
-	$(MAKE) check-assets test-unit test-integration test-wordpress test-client test-client-browser
+	$(MAKE) check-php check-assets test-unit test-integration test-wordpress test-client test-client-browser
 	@echo 'All tests passed.'
 
 test-prerequisites:
@@ -74,6 +77,7 @@ test-integration: $(TEST_VENV)/.requirements-installed
 	done
 
 test-wordpress:
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-credential-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-dropbox-token-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-age-encryption.php

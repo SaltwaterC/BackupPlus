@@ -261,6 +261,8 @@ class BackupPlus_Backup_History {
 			unset( $backup_history[ $btime ]['incremental_sets'] );
 		}
 
+		$previous_history = self::get_history();
+
 		$wpdb_previous_last_error = $wpdb->last_error;
 
 		// Explicitly set autoload to 'no', as the backup history can get quite big.
@@ -305,6 +307,13 @@ class BackupPlus_Backup_History {
 
 					$backupplus->log( 'The attempt to write the backup history to the WP database returned a negative code and the max packet size looked small. However, WP does not distinguish between a failure and no change from a previous update, so, this code is not conclusive and if no other symptoms are observed then there is no reason to infer any problem. Info: The updated database packet size is ' . $max_packet_size . '; the serialization size is ' . $serialization_size );
 
+				}
+			}
+		}
+		if ( $changed && class_exists( 'BackupPlus_Incremental_Backups' ) ) {
+			foreach ( array_diff_key( $previous_history, $backup_history ) as $removed ) {
+				if ( ! empty( $removed['incremental']['snapshots'] ) ) {
+					BackupPlus_Incremental_Backups::discard_snapshots( $removed['incremental']['snapshots'] );
 				}
 			}
 		}
