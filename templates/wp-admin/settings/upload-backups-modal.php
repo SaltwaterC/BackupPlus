@@ -1,9 +1,11 @@
 <?php
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 ?>
 
-<div id="backupplus-upload-modal" title="BackupPlus - <?php esc_attr_e('Upload backup', 'backupplus');?>">
-	<p><?php esc_html_e("Select the remote storage destinations you want to upload this backup set to", 'backupplus');?>:</p>
+<div id="backupplus-upload-modal" title="BackupPlus - <?php esc_attr_e( 'Upload backup', 'backupplus' ); ?>">
+	<p><?php esc_html_e( 'Select the remote storage destinations you want to upload this backup set to', 'backupplus' ); ?>:</p>
 	<form id="backupplus_upload_form" method="post">
 		<fieldset>
 			<input type="hidden" name="backup_timestamp" value="0" id="backupplus_upload_timestamp">
@@ -11,13 +13,15 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 			<?php
 				global $backupplus;
-				
-				$service = (array) $backupplus->just_one($backupplus->get_canonical_service_list());
 
-				foreach ($service as $value) {
-					if ('' == $value) continue;
-					echo '<input class="backupplus_remote_storage_destination" id="backupplus_remote_"'.esc_attr($value).' checked="checked" type="checkbox" name="backupplus_remote_storage_destination_'. esc_attr($value) . '" value="'.esc_attr($value).'"> <label for="backupplus_remote_"'.esc_attr($value).'>'.esc_html($backupplus->backup_methods[$value]).' <span style="display: none">('.esc_html__('already uploaded', 'backupplus').')</span></label><br>';
+				$service = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+
+			foreach ( $service as $value ) {
+				if ( '' == $value ) {
+					continue;
 				}
+				echo '<input class="backupplus_remote_storage_destination" id="backupplus_remote_"' . esc_attr( $value ) . ' checked="checked" type="checkbox" name="backupplus_remote_storage_destination_' . esc_attr( $value ) . '" value="' . esc_attr( $value ) . '"> <label for="backupplus_remote_"' . esc_attr( $value ) . '>' . esc_html( $backupplus->backup_methods[ $value ] ) . ' <span style="display: none">(' . esc_html__( 'already uploaded', 'backupplus' ) . ')</span></label><br>';
+			}
 			?>
 		</fieldset>
 	</form>

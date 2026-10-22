@@ -1,9 +1,13 @@
-.PHONY: build-assets check-assets test test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser
+.PHONY: build-assets check-assets install-tools format-tools format check-format test test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser
 
 PYTHON ?= python3
 TEST_VENV ?= .cache/test-venv
 PODMAN ?= podman
 WP_TEST_CONTAINER ?= backupplus-dev-wordpress
+COMPOSER ?= $(if $(wildcard .cache/composer.phar),php .cache/composer.phar,composer)
+PHP_TOOLS_BIN := .cache/php-tools/vendor/bin
+PHP_TOOLS_MEMORY_LIMIT ?= 512M
+FORMAT_PATHS ?= .
 
 PHP_TESTS := $(filter-out scripts/test-storage-providers.php,$(wildcard scripts/test-*.php))
 INTEGRATION_TESTS := $(wildcard scripts/test-*-integration.py)
@@ -15,6 +19,20 @@ build-assets:
 check-assets:
 	php scripts/build-assets.php --check
 	node scripts/build-decryptor.mjs --check
+
+install-tools:
+	COMPOSER_HOME="$(CURDIR)/.cache/composer-home" COMPOSER_CACHE_DIR="$(CURDIR)/.cache/composer-cache" $(COMPOSER) install --no-interaction --prefer-dist
+
+format-tools:
+	@test -f "$(PHP_TOOLS_BIN)/phpcs" -a -f "$(PHP_TOOLS_BIN)/phpcbf" || { echo 'PHP formatting tools are missing. Run make install-tools first.' >&2; exit 1; }
+
+format: format-tools
+	@php -d memory_limit="$(PHP_TOOLS_MEMORY_LIMIT)" "$(PHP_TOOLS_BIN)/phpcbf" --standard=.phpcs.xml.dist $(FORMAT_PATHS); \
+	status=$$?; \
+	case $$status in 0|1) exit 0 ;; *) exit $$status ;; esac
+
+check-format: format-tools
+	php -d memory_limit="$(PHP_TOOLS_MEMORY_LIMIT)" "$(PHP_TOOLS_BIN)/phpcs" --standard=.phpcs.xml.dist $(FORMAT_PATHS)
 
 # Keep prerequisites ahead of every suite, including when invoked with make -j.
 test: test-prerequisites
@@ -45,6 +63,7 @@ test-unit:
 	php -d disable_functions=curl_init scripts/test-ftp.php
 	php -d disable_functions=fsockopen scripts/test-sftp.php
 	php -d disable_functions=curl_init scripts/test-webdav.php
+	php -d disable_functions=curl_init scripts/test-cloud-http.php
 	php -d disable_functions=openssl_encrypt,openssl_decrypt scripts/test-encryption.php --portable
 	php -d disable_functions=openssl_encrypt,openssl_decrypt,sodium_crypto_aead_chacha20poly1305_ietf_encrypt,sodium_crypto_aead_chacha20poly1305_ietf_decrypt,sodium_crypto_scalarmult,sodium_crypto_box_publickey_from_secretkey scripts/test-age.php --portable
 

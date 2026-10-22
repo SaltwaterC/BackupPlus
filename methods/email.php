@@ -5,11 +5,15 @@
  * Provider Class: BackupPlus_BackupModule_email
  */
 
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
 // Files can easily get too big for this method
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 
@@ -27,86 +31,92 @@ class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 	protected $input_option_field_mappings = array(
 		'email_address' => array(
 			'default_value' => '',
-			'contexts' => array('input'),
+			'contexts'      => array( 'input' ),
 		),
 	);
 
-	public function backup($backup_array) {
+	public function backup( $backup_array ) {
 
 		global $backupplus;
 
-		$backupplus_dir = trailingslashit($backupplus->backups_dir_location());
+		$backupplus_dir = trailingslashit( $backupplus->backups_dir_location() );
 
-		$email = $backupplus->just_one_email(BackupPlus_Options::get_backupplus_option('backupplus_email'), true);
-		
-		if (!is_array($email)) $email = array_filter(array($email));
-		
-		foreach ($backup_array as $type => $file) {
+		$email = $backupplus->just_one_email( BackupPlus_Options::get_backupplus_option( 'backupplus_email' ), true );
 
-			$descrip_type = preg_match('/^(.*)\d+$/', $type, $matches) ? $matches[1] : $type;
+		if ( ! is_array( $email ) ) {
+			$email = array_filter( array( $email ) );
+		}
 
-			$fullpath = $backupplus_dir.$file;
+		foreach ( $backup_array as $type => $file ) {
 
-			if (file_exists($fullpath) && filesize($fullpath) > BACKUPPLUS_WARN_EMAIL_SIZE) {
-				$size_in_mb_of_big_file = round(filesize($fullpath)/1048576, 1);
-				$toobig_hash = md5($file);
+			$descrip_type = preg_match( '/^(.*)\d+$/', $type, $matches ) ? $matches[1] : $type;
+
+			$fullpath = $backupplus_dir . $file;
+
+			if ( file_exists( $fullpath ) && filesize( $fullpath ) > BACKUPPLUS_WARN_EMAIL_SIZE ) {
+				$size_in_mb_of_big_file = round( filesize( $fullpath ) / 1048576, 1 );
+				$toobig_hash            = md5( $file );
 				/* translators: %s: Backup file size in MB */
-				$this->log($file.': '.sprintf(__('This backup archive is %s MB in size - the attempt to send this via email is likely to fail (few email servers allow attachments of this size).', 'backupplus'), $size_in_mb_of_big_file).' '.__('If so, you should switch to using a different remote storage method.', 'backupplus'), 'warning', 'toobigforemail_'.$toobig_hash);
+				$this->log( $file . ': ' . sprintf( __( 'This backup archive is %s MB in size - the attempt to send this via email is likely to fail (few email servers allow attachments of this size).', 'backupplus' ), $size_in_mb_of_big_file ) . ' ' . __( 'If so, you should switch to using a different remote storage method.', 'backupplus' ), 'warning', 'toobigforemail_' . $toobig_hash );
 			}
 
 			$any_attempted = false;
-			$any_sent = false;
-			$any_skip = false;
-			foreach ($email as $ind => $addr) {
+			$any_sent      = false;
+			$any_skip      = false;
+			foreach ( $email as $ind => $addr ) {
 
-				if (apply_filters('backupplus_email_backup', true, $addr, $ind, $type)) {
-					foreach (explode(',', $addr) as $sendmail_addr) {
-						if (!preg_match('/^https?:\/\//i', $sendmail_addr)) {
-							$send_short = (strlen($sendmail_addr)>5) ? substr($sendmail_addr, 0, 5).'...' : $sendmail_addr;
-							$this->log("$file: email to: $send_short");
+				if ( apply_filters( 'backupplus_email_backup', true, $addr, $ind, $type ) ) {
+					foreach ( explode( ',', $addr ) as $sendmail_addr ) {
+						if ( ! preg_match( '/^https?:\/\//i', $sendmail_addr ) ) {
+							$send_short = ( strlen( $sendmail_addr ) > 5 ) ? substr( $sendmail_addr, 0, 5 ) . '...' : $sendmail_addr;
+							$this->log( "$file: email to: $send_short" );
 							$any_attempted = true;
-							$headers = array();
-		
-							$subject = __("WordPress Backup", 'backupplus').': '.get_bloginfo('name').' (BackupPlus '.$backupplus->version.') '.get_date_from_gmt(gmdate('Y-m-d H:i:s', $backupplus->backup_time), 'Y-m-d H:i');
-							$from_email = apply_filters('backupplus_email_from_header', $backupplus->get_email_from_header());
-							$from_name = apply_filters('backupplus_email_from_name_header', $backupplus->get_email_from_name_header());
+							$headers       = array();
+
+							$subject                 = __( 'WordPress Backup', 'backupplus' ) . ': ' . get_bloginfo( 'name' ) . ' (BackupPlus ' . $backupplus->version . ') ' . get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $backupplus->backup_time ), 'Y-m-d H:i' );
+							$from_email              = apply_filters( 'backupplus_email_from_header', $backupplus->get_email_from_header() );
+							$from_name               = apply_filters( 'backupplus_email_from_name_header', $backupplus->get_email_from_name_header() );
 							$use_wp_from_name_filter = '' === $from_email;
 							// Notice that we don't use the 'wp_mail_from' filter, but only the 'From:' header to set sender name and sender email address, the reason behind it is that some SMTP plugins override the "wp_mail()" function and they do anything they want inside their own "wp_mail()" function, including not to call the php_mailer filter nor the wp_mail_from and wp_mail_from_name filters, but since the function signature remain the same as the WP one, so they may evaluate and do something with the header parameter
-							if (!$use_wp_from_name_filter) {
-								$headers[] = sprintf('From: %s <%s>', $from_name, $from_email);
+							if ( ! $use_wp_from_name_filter ) {
+								$headers[] = sprintf( 'From: %s <%s>', $from_name, $from_email );
 							} else {
-								add_filter('wp_mail_from_name', array($backupplus, 'get_email_from_name_header'), 9);
+								add_filter( 'wp_mail_from_name', array( $backupplus, 'get_email_from_name_header' ), 9 );
 							}
-							add_action('wp_mail_failed', array($backupplus, 'log_email_delivery_failure'));
+							add_action( 'wp_mail_failed', array( $backupplus, 'log_email_delivery_failure' ) );
 							/* translators: %s: Site URL and description type */
-							$sent = wp_mail(trim($sendmail_addr), $subject, sprintf(__("Backup is of: %s.", 'backupplus'), site_url().' ('.$descrip_type.')'), $headers, array($fullpath));
-							remove_action('wp_mail_failed', array($backupplus, 'log_email_delivery_failure'));
-							if ($use_wp_from_name_filter) remove_filter('wp_mail_from_name', array($this, 'get_email_from_name_header'), 9);
-							if ($sent) $any_sent = true;
+							$sent = wp_mail( trim( $sendmail_addr ), $subject, sprintf( __( 'Backup is of: %s.', 'backupplus' ), site_url() . ' (' . $descrip_type . ')' ), $headers, array( $fullpath ) );
+							remove_action( 'wp_mail_failed', array( $backupplus, 'log_email_delivery_failure' ) );
+							if ( $use_wp_from_name_filter ) {
+								remove_filter( 'wp_mail_from_name', array( $this, 'get_email_from_name_header' ), 9 );
+							}
+							if ( $sent ) {
+								$any_sent = true;
+							}
 						}
 					}
 				} else {
-					$log_message = apply_filters('backupplus_email_backup_skip_log_message', '', $addr, $ind, $descrip_type);
-					if (!empty($log_message)) {
-						$this->log($log_message);
+					$log_message = apply_filters( 'backupplus_email_backup_skip_log_message', '', $addr, $ind, $descrip_type );
+					if ( ! empty( $log_message ) ) {
+						$this->log( $log_message );
 					}
 					$any_skip = true;
 				}
 			}
-			if ($any_sent) {
-				if (isset($toobig_hash)) {
-					$backupplus->log_remove_warning('toobigforemail_'.$toobig_hash);
+			if ( $any_sent ) {
+				if ( isset( $toobig_hash ) ) {
+					$backupplus->log_remove_warning( 'toobigforemail_' . $toobig_hash );
 					// Don't leave it still set for the next archive
-					unset($toobig_hash);
+					unset( $toobig_hash );
 				}
-				$backupplus->uploaded_file($file);
-			} elseif ($any_attempted) {
-				$this->log('Mails were not sent successfully');
-				$this->log(__('The attempt to send the backup via email failed (probably the backup was too large for this method)', 'backupplus'), 'error');
-			} elseif ($any_skip) {
-				$this->log('No email addresses were configured to send email to '.$descrip_type);
+				$backupplus->uploaded_file( $file );
+			} elseif ( $any_attempted ) {
+				$this->log( 'Mails were not sent successfully' );
+				$this->log( __( 'The attempt to send the backup via email failed (probably the backup was too large for this method)', 'backupplus' ), 'error' );
+			} elseif ( $any_skip ) {
+				$this->log( 'No email addresses were configured to send email to ' . $descrip_type );
 			} else {
-				$this->log('No email addresses were configured to send to');
+				$this->log( 'No email addresses were configured to send to' );
 			}
 		}
 		return null;
@@ -119,21 +129,23 @@ class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 	 *
 	 * @return Array - the returned array can either be the set of updated settings or a WordPress error array
 	 */
-	public function options_filter($options) {
+	public function options_filter( $options ) {
 		global $backupplus;
-		return $backupplus->just_one_email($options);
+		return $backupplus->just_one_email( $options );
 	}
-	
+
 	public function config_print() {
 		global $backupplus;
 		?>
 		<tr class="backupplusmethod email">
-			<th><?php esc_html_e('Email:', 'backupplus');?></th>
-			<td><?php
+			<th><?php esc_html_e( 'Email:', 'backupplus' ); ?></th>
+			<td>
+			<?php
 
-				$used = apply_filters('backupplus_email_whichaddresses',
+				$used = apply_filters(
+					'backupplus_email_whichaddresses',
 					/* translators: %s: Admin email address */
-					sprintf(__("Your site's admin email address (%s) will be used.", 'backupplus'), get_bloginfo('admin_email').' - <a href="'.esc_attr(admin_url('options-general.php')).'">'.__("configure it here", 'backupplus').'</a>').
+					sprintf( __( "Your site's admin email address (%s) will be used.", 'backupplus' ), get_bloginfo( 'admin_email' ) . ' - <a href="' . esc_attr( admin_url( 'options-general.php' ) ) . '">' . __( 'configure it here', 'backupplus' ) . '</a>' ) .
 					''
 				);
 
@@ -141,18 +153,18 @@ class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 					'a' => array(
 						'href'   => array(),
 						'target' => array(),
-					)
+					),
 				);
 
 				/* translators: %s: Approximate email size limit in MB */
-				echo wp_kses($used.' '.sprintf(__('Be aware that mail servers tend to have size limits; typically around %s MB; backups larger than any limits will likely not arrive.', 'backupplus'), '10-20'), $allowed_html);
+				echo wp_kses( $used . ' ' . sprintf( __( 'Be aware that mail servers tend to have size limits; typically around %s MB; backups larger than any limits will likely not arrive.', 'backupplus' ), '10-20' ), $allowed_html );
 				?>
 			</td>
 		</tr>
 		<?php
 	}
 
-	public function delete($files, $data = null, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the caller uses 3 arguments.
+	public function delete( $files, $data = null, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the caller uses 3 arguments.
 		return true;
 	}
 
@@ -162,8 +174,10 @@ class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 	 * @param array $opts Stored/saved configuration settings
 	 * @return array - Modified handlebar template options
 	 */
-	public function transform_options_for_template($opts) {
-		if (isset($opts[0])) return $opts = array('email_address' => $opts[0]);
+	public function transform_options_for_template( $opts ) {
+		if ( isset( $opts[0] ) ) {
+			return $opts = array( 'email_address' => $opts[0] );
+		}
 	}
 
 	/**
@@ -173,13 +187,12 @@ class BackupPlus_BackupModule_email extends BackupPlus_BackupModule {
 	 * @return array an associative array keyed by names that describe themselves as they are
 	 */
 	public function get_template_properties() {
-		$properties = array(
-			'input_email_address_label' => __('Email address', 'backupplus'),
-			'input_email_address_placeholder' => __('Enter your email address', 'backupplus'),
+		$properties                             = array(
+			'input_email_address_label'       => __( 'Email address', 'backupplus' ),
+			'input_email_address_placeholder' => __( 'Enter your email address', 'backupplus' ),
 		);
 		$properties['input_email_address_type'] = 'email';
-		
-		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
-	}
 
+		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );
+	}
 }

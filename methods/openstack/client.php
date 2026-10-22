@@ -1,12 +1,14 @@
 <?php
 
-if (!defined('ABSPATH')) die('No direct access allowed.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
 
 // SDK uses namespacing - requires PHP 5.3 (actually the SDK states its requirements as 5.3.3)
 // @codingStandardsIgnoreLine
 use OpenCloud\OpenStack;
 
-backupplus_try_include_file('methods/openstack/base.php', 'require_once');
+backupplus_try_include_file( 'methods/openstack/base.php', 'require_once' );
 
 class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstack_base {
 
@@ -16,38 +18,38 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	 * @var array
 	 */
 	protected $input_option_field_mappings = array(
-		'authurl' => array(
-			'default_value' => '',
+		'authurl'  => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'authentication_uri',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
-		'tenant' => array(
+		'tenant'   => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
-		'region' => array(
+		'region'   => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
-		'user' => array(
-			'default_value' => '',
+		'user'     => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'username',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
 		'password' => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
-		'path' => array(
-			'default_value' => '',
+		'path'     => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'container',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
 	);
 
 	public function __construct() {
 		// 4th parameter is a relative (to BACKUPPLUS_DIR) logo URL, which should begin with /, should we get approved for use of the OpenStack logo in future (have requested info)
-		parent::__construct('openstack', 'OpenStack', 'OpenStack (Swift)', '');
+		parent::__construct( 'openstack', 'OpenStack', 'OpenStack (Swift)', '' );
 	}
 
 	/**
@@ -58,53 +60,62 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	 * @param  String  $disablesslverify Check to disable SSL Verify
 	 * @return Array
 	 */
-	public function get_openstack_service($opts, $useservercerts = false, $disablesslverify = null) {
+	public function get_openstack_service( $opts, $useservercerts = false, $disablesslverify = null ) {
 
 		// 'tenant', 'user', 'password', 'authurl', 'path', (optional) 'region'
-		extract($opts);
+		extract( $opts );
 
-		if (null === $disablesslverify) $disablesslverify = BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify');
-
-		if (empty($user) || empty($password) || empty($authurl)) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user, $password and $authurl being extracted in extract() line 29
-			throw new Exception(__('Authorisation failed (check your credentials)', 'backupplus')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+		if ( null === $disablesslverify ) {
+			$disablesslverify = BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' );
 		}
 
-		backupplus_try_include_file('vendor/autoload.php', 'include_once');
-		global $backupplus;
-		$backupplus->log("OpenStack authentication URL: ".$authurl);// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
+		if ( empty( $user ) || empty( $password ) || empty( $authurl ) ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user, $password and $authurl being extracted in extract() line 29
+			throw new Exception( __( 'Authorisation failed (check your credentials)', 'backupplus' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+		}
 
-		$client = new OpenStack($authurl, array(// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
-			'username' => $user,// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user being extracted in extract() line 29
-			'password' => $password,// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $password being extracted in extract() line 29
-			'tenantName' => $tenant// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $tenant being extracted in extract() line 29
-		));
+		backupplus_try_include_file( 'vendor/autoload.php', 'include_once' );
+		global $backupplus;
+		$backupplus->log( 'OpenStack authentication URL: ' . $authurl );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
+
+		$client       = new OpenStack(
+			$authurl,
+			array(// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $authurl being extracted in extract() line 29
+			'username'   => $user, // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $user being extracted in extract() line 29
+			'password'   => $password, // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $password being extracted in extract() line 29
+			'tenantName' => $tenant, // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- $tenant being extracted in extract() line 29
+			)
+		);
 		$this->client = $client;
 
-		if ($disablesslverify) {
-			$client->setSslVerification(false);
+		if ( $disablesslverify ) {
+			$client->setSslVerification( false );
 		} else {
-			if ($useservercerts) {
-				$client->setConfig(array($client::SSL_CERT_AUTHORITY => false));
+			if ( $useservercerts ) {
+				$client->setConfig( array( $client::SSL_CERT_AUTHORITY => false ) );
 			} else {
-				$client->setSslVerification(BACKUPPLUS_DIR.'/includes/cacert.pem', true, 2);
+				$client->setSslVerification( BACKUPPLUS_DIR . '/includes/cacert.pem', true, 2 );
 			}
 		}
 
 		$client->authenticate();
 
-		if (empty($region)) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- The variable is defined below.
+		if ( empty( $region ) ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- The variable is defined below.
 			$catalog = $client->getCatalog();
-			if (!empty($catalog)) {
+			if ( ! empty( $catalog ) ) {
 				$items = $catalog->getItems();
-				if (is_array($items)) {
-					foreach ($items as $item) {
+				if ( is_array( $items ) ) {
+					foreach ( $items as $item ) {
 						$name = $item->getName();
 						$type = $item->getType();
-						if ('swift' != $name || 'object-store' != $type) continue;
+						if ( 'swift' != $name || 'object-store' != $type ) {
+							continue;
+						}
 						$eps = $item->getEndpoints();
-						if (!is_array($eps)) continue;
-						foreach ($eps as $ep) {
-							if (is_object($ep) && !empty($ep->region)) {
+						if ( ! is_array( $eps ) ) {
+							continue;
+						}
+						foreach ( $eps as $ep ) {
+							if ( is_object( $ep ) && ! empty( $ep->region ) ) {
 								$region = $ep->region;
 							}
 						}
@@ -115,8 +126,7 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 
 		$this->region = $region;
 
-		return $client->objectStoreService('swift', $region);
-
+		return $client->objectStoreService( 'swift', $region );
 	}
 
 	/**
@@ -127,44 +137,44 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
+		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic' );
 	}
-	
-	public function credentials_test($posted_settings) {
 
-		if (empty($posted_settings['user'])) {
+	public function credentials_test( $posted_settings ) {
+
+		if ( empty( $posted_settings['user'] ) ) {
 			/* translators: %s: Username */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('username', 'backupplus')));
+			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'username', 'backupplus' ) ) );
 			return;
 		}
 
-		if (empty($posted_settings['password'])) {
+		if ( empty( $posted_settings['password'] ) ) {
 			/* translators: %s: Password */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('password', 'backupplus')));
+			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'password', 'backupplus' ) ) );
 			return;
 		}
 
-		if (empty($posted_settings['tenant'])) {
+		if ( empty( $posted_settings['tenant'] ) ) {
 			/* translators: %s: Tenant (used in OpenStack storage) */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), _x('tenant', '"tenant" is a term used with OpenStack storage - Google for "OpenStack tenant" to get more help on its meaning', 'backupplus')));
+			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), _x( 'tenant', '"tenant" is a term used with OpenStack storage - Google for "OpenStack tenant" to get more help on its meaning', 'backupplus' ) ) );
 			return;
 		}
 
-		if (empty($posted_settings['authurl'])) {
+		if ( empty( $posted_settings['authurl'] ) ) {
 			/* translators: %s: Authentication URI */
-			echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), __('authentication URI', 'backupplus')));
+			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'authentication URI', 'backupplus' ) ) );
 			return;
 		}
 
 		$opts = array(
-			'user' => $posted_settings['user'],
+			'user'     => $posted_settings['user'],
 			'password' => $posted_settings['password'],
-			'authurl' => $posted_settings['authurl'],
-			'tenant' => $posted_settings['tenant'],
-			'region' => empty($posted_settings['region']) ? '' : $posted_settings['region'],
+			'authurl'  => $posted_settings['authurl'],
+			'tenant'   => $posted_settings['tenant'],
+			'region'   => empty( $posted_settings['region'] ) ? '' : $posted_settings['region'],
 		);
 
-		$this->credentials_test_go($opts, $posted_settings['path'], $posted_settings['useservercerts'], $posted_settings['disableverify']);
+		$this->credentials_test_go( $opts, $posted_settings['path'], $posted_settings['useservercerts'], $posted_settings['disableverify'] );
 	}
 
 	/**
@@ -174,8 +184,10 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	 *
 	 * @return Boolean
 	 */
-	public function options_exist($opts) {
-		if (is_array($opts) && $opts['user'] && '' !== $opts['user'] && !empty($opts['authurl'])) return true;
+	public function options_exist( $opts ) {
+		if ( is_array( $opts ) && $opts['user'] && '' !== $opts['user'] && ! empty( $opts['authurl'] ) ) {
+			return true;
+		}
 		return false;
 	}
 
@@ -263,48 +275,51 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 		global $backupplus, $backupplus_admin;
 
 		$mb_substr_existence_label = '';
-		if (!apply_filters('backupplus_openstack_mbsubstr_exists', function_exists('mb_substr'))) {
-			$mb_substr_existence_label = wp_kses($backupplus_admin->show_double_warning(
-				'<strong>'.__('Warning', 'backupplus').':</strong> '.
-				/* translators: %s: Required module name */
-				sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'mbstring').' '.
-				__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
-				/* translators: 1: Module name, 2: Required module name */
-				sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $this->desc, 'mbstring').' '.
-				__('Please do not file any support requests; there is no alternative.', 'backupplus'),
-				$this->method,
-				false
-			), $this->allowed_html_for_content_sanitisation());
+		if ( ! apply_filters( 'backupplus_openstack_mbsubstr_exists', function_exists( 'mb_substr' ) ) ) {
+			$mb_substr_existence_label = wp_kses(
+				$backupplus_admin->show_double_warning(
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
+					/* translators: %s: Required module name */
+					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
+					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
+					/* translators: 1: Module name, 2: Required module name */
+					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $this->desc, 'mbstring' ) . ' ' .
+					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
+					$this->method,
+					false
+				),
+				$this->allowed_html_for_content_sanitisation()
+			);
 		}
 
 		$properties = array(
-			'storage_image_url' => !empty($this->img_url) ? BACKUPPLUS_URL.$this->img_url : '',
-			'storage_long_description' => $this->long_desc,
-			'mb_substr_existence_label' => $mb_substr_existence_label,
-			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($this->long_desc, false, $this->method.'', false), $this->allowed_html_for_content_sanitisation()),
-			'openstack_text_description' => __('Get your access credentials from your OpenStack Swift provider, and then pick a container name to use for storage.', 'backupplus').' '.__('This container will be created for you if it does not already exist.', 'backupplus'),
-			'input_authentication_uri_label' => __('Authentication URI', 'backupplus'),
-			'input_authentication_uri_title' => _x('This needs to be a v2 (Keystone) authentication URI; v1 (Swauth) is not supported.', 'Keystone and swauth are technical terms which cannot be translated', 'backupplus'),
-			'input_authentication_uri_placeholder' => __('Example: https://keystone.example.com/v2.0', 'backupplus'),
-			'input_tenant_label' => __('Tenant', 'backupplus'),
-			'input_tenant_link_url' => 'https://docs.openstack.org/openstack-ops/content/projects_users.html',
-			'input_tenant_link_title' => __('Follow this link for more information', 'backupplus'),
-			'input_tenant_placeholder' => __('Example: my-project', 'backupplus'),
-			'input_region_label' => __('Region', 'backupplus'),
-			'input_region_title' => __('Leave this blank, and a default will be chosen.', 'backupplus'),
-			'input_region_placeholder' => __('Enter a region', 'backupplus'),
-			'input_username_label' => __('Username', 'backupplus'),
-			'input_username_placeholder' => __('Enter your username', 'backupplus'),
-			'input_password_label' => __('Password', 'backupplus'),
-			'input_password_type' => apply_filters('backupplus_admin_secret_field_type', 'password'),
-			'input_container_label' => __('Container', 'backupplus'),
-			'input_container_placeholder' => __('Example: backups', 'backupplus'),
+			'storage_image_url'                    => ! empty( $this->img_url ) ? BACKUPPLUS_URL . $this->img_url : '',
+			'storage_long_description'             => $this->long_desc,
+			'mb_substr_existence_label'            => $mb_substr_existence_label,
+			'curl_existence_label'                 => wp_kses( $backupplus_admin->curl_check( $this->long_desc, false, $this->method . '', false ), $this->allowed_html_for_content_sanitisation() ),
+			'openstack_text_description'           => __( 'Get your access credentials from your OpenStack Swift provider, and then pick a container name to use for storage.', 'backupplus' ) . ' ' . __( 'This container will be created for you if it does not already exist.', 'backupplus' ),
+			'input_authentication_uri_label'       => __( 'Authentication URI', 'backupplus' ),
+			'input_authentication_uri_title'       => _x( 'This needs to be a v2 (Keystone) authentication URI; v1 (Swauth) is not supported.', 'Keystone and swauth are technical terms which cannot be translated', 'backupplus' ),
+			'input_authentication_uri_placeholder' => __( 'Example: https://keystone.example.com/v2.0', 'backupplus' ),
+			'input_tenant_label'                   => __( 'Tenant', 'backupplus' ),
+			'input_tenant_link_url'                => 'https://docs.openstack.org/openstack-ops/content/projects_users.html',
+			'input_tenant_link_title'              => __( 'Follow this link for more information', 'backupplus' ),
+			'input_tenant_placeholder'             => __( 'Example: my-project', 'backupplus' ),
+			'input_region_label'                   => __( 'Region', 'backupplus' ),
+			'input_region_title'                   => __( 'Leave this blank, and a default will be chosen.', 'backupplus' ),
+			'input_region_placeholder'             => __( 'Enter a region', 'backupplus' ),
+			'input_username_label'                 => __( 'Username', 'backupplus' ),
+			'input_username_placeholder'           => __( 'Enter your username', 'backupplus' ),
+			'input_password_label'                 => __( 'Password', 'backupplus' ),
+			'input_password_type'                  => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
+			'input_container_label'                => __( 'Container', 'backupplus' ),
+			'input_container_placeholder'          => __( 'Example: backups', 'backupplus' ),
 			/* translators: %s: Remote storage method */
-			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
+			'input_test_label'                     => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
-		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
+		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );
 	}
-	
+
 	/**
 	 * Customize generated field data using legacy mapping values.
 	 *
@@ -319,10 +334,12 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	 *
 	 * @return array
 	 */
-	public function configure_field_from_legacy($field, $template_properties, $field_name, $option) {
-		$prefix = 'input_'.$option['template_property_input_mapping'].'_';
+	public function configure_field_from_legacy( $field, $template_properties, $field_name, $option ) {
+		$prefix = 'input_' . $option['template_property_input_mapping'] . '_';
 
-		if (empty($field['tooltip']) && isset($template_properties[$prefix.'title'])) $field['tooltip'] = array('text' => $template_properties[$prefix.'title']);
+		if ( empty( $field['tooltip'] ) && isset( $template_properties[ $prefix . 'title' ] ) ) {
+			$field['tooltip'] = array( 'text' => $template_properties[ $prefix . 'title' ] );
+		}
 
 		return $field;
 	}

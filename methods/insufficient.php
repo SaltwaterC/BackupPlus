@@ -1,8 +1,12 @@
 <?php
 
-if (!defined('ABSPATH')) die('No direct access allowed.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 
@@ -18,20 +22,20 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 
 	private $error_msg_trans;
 
-	public function __construct($method, $desc, $php, $image = null) {
-		$this->method = $method;
-		$this->desc = $desc;
+	public function __construct( $method, $desc, $php, $image = null ) {
+		$this->method       = $method;
+		$this->desc         = $desc;
 		$this->required_php = $php;
-		$this->image = $image;
-		$this->error_msg = 'This remote storage method ('.$this->desc.') requires PHP '.$this->required_php.' or later';
+		$this->image        = $image;
+		$this->error_msg    = 'This remote storage method (' . $this->desc . ') requires PHP ' . $this->required_php . ' or later';
 		/* translators: 1: remote storage method, 2: required PHP version */
-		$this->error_msg_trans = sprintf(__('This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus'), $this->desc, $this->required_php);
+		$this->error_msg_trans = sprintf( __( 'This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus' ), $this->desc, $this->required_php );
 	}
 
 	private function log_error() {
 		global $backupplus;
-		$backupplus->log($this->error_msg);
-		$backupplus->log($this->error_msg_trans, 'error', 'insufficientphp');
+		$backupplus->log( $this->error_msg );
+		$backupplus->log( $this->error_msg_trans, 'error', 'insufficientphp' );
 		return false;
 	}
 
@@ -41,7 +45,7 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 	 * @param  array $backup_array An array backups
 	 * @return Array
 	 */
-	public function backup($backup_array) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform backup for specific storage is not exist.
+	public function backup( $backup_array ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform backup for specific storage is not exist.
 		return $this->log_error();
 	}
 
@@ -70,7 +74,7 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 	 */
 	public function get_supported_features() {
 		// The 'multi_options' options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates');
+		return array( 'multi_options', 'config_templates' );
 	}
 
 	/**
@@ -79,19 +83,19 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 	 * @param  String $match THis will specify which match is used for the SQL but by default it is set to 'backup_' unless specified
 	 * @return Array
 	 */
-	public function listfiles($match = 'backup_') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform listfiles for specific storage is not exist.
-		return new WP_Error('insufficient_php', $this->error_msg_trans);
+	public function listfiles( $match = 'backup_' ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform listfiles for specific storage is not exist.
+		return new WP_Error( 'insufficient_php', $this->error_msg_trans );
 	}
 
 	/**
 	 * delete method: takes an array of file names (base name) or a single string, and removes them from the cloud storage
 	 *
-	 * @param  String  $files 	 List of files
-	 * @param  Boolean $data 	 Specifies data or not
+	 * @param  String  $files    List of files
+	 * @param  Boolean $data     Specifies data or not
 	 * @param  array   $sizeinfo This is the size info on the file.
 	 * @return Array
 	 */
-	public function delete($files, $data = false, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform delete for specific storage is not exist.
+	public function delete( $files, $data = false, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform delete for specific storage is not exist.
 		return $this->log_error();
 	}
 
@@ -102,7 +106,7 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 	 * @param  String $file List of files
 	 * @return Array
 	 */
-	public function download($file) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform download for specific storage is not exist.
+	public function download( $file ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform download for specific storage is not exist.
 		return $this->log_error();
 	}
 
@@ -118,16 +122,16 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 		ob_start();
 		$this->extra_config();
 		?>
-		<tr class="backupplusmethod <?php echo esc_attr($this->method);?>">
-			<th><?php echo esc_html($this->desc);?>:</th>
+		<tr class="backupplusmethod <?php echo esc_attr( $this->method ); ?>">
+			<th><?php echo esc_html( $this->desc ); ?>:</th>
 			<td>
 				<em>
 					<?php
-					echo (!empty($this->image)) ? '<p><img src="'.esc_url(BACKUPPLUS_URL.'/images/'.$this->image).'"></p>' : '';
-					echo esc_html($this->error_msg_trans);
-					esc_html_e('You will need to ask your web hosting company to upgrade.', 'backupplus');
+					echo ( ! empty( $this->image ) ) ? '<p><img src="' . esc_url( BACKUPPLUS_URL . '/images/' . $this->image ) . '"></p>' : '';
+					echo esc_html( $this->error_msg_trans );
+					esc_html_e( 'You will need to ask your web hosting company to upgrade.', 'backupplus' );
 					/* translators: 1: plugin name, 2: version number */
-					echo esc_html(sprintf(__('Your %1$s version: %2$s.', 'backupplus'), 'PHP', phpversion()));
+					echo esc_html( sprintf( __( 'Your %1$s version: %2$s.', 'backupplus' ), 'PHP', phpversion() ) );
 					?>
 				</em>
 			</td>

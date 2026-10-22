@@ -5,11 +5,13 @@
  * Provider Class: BackupPlus_BackupModule_dreamobjects
  */
 
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
-require_once __DIR__.'/dreamobjects/admin.php';
+require_once __DIR__ . '/dreamobjects/admin.php';
 
-backupplus_try_include_file('methods/dreamobjects/base.php', 'require_once');
+backupplus_try_include_file( 'methods/dreamobjects/base.php', 'require_once' );
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
@@ -20,13 +22,13 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	/** @return Array Endpoint validation data for the settings scripts. */
 	public function get_admin_script_data() {
 		return array(
-			'dreamobject_endpoints' => array_keys(self::get_endpoints()),
+			'dreamobject_endpoints'      => array_keys( self::get_endpoints() ),
 			'dreamobject_endpoint_regex' => self::ENDPOINT_REGEX,
 		);
 	}
 
 	protected $provider_can_use_aws_sdk = false;
-	
+
 	protected $provider_has_regions = true;
 
 	/**
@@ -37,20 +39,20 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	protected $input_option_field_mappings = array(
 		'accesskey' => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
 		'secretkey' => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
-		'path' => array(
-			'default_value' => '',
+		'path'      => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'location',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
-		'endpoint' => array(
+		'endpoint'  => array(
 			'default_value' => '',
-			'contexts' => array('input'),
+			'contexts'      => array( 'input' ),
 		),
 	);
 
@@ -65,7 +67,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 * Class constructor
 	 */
 	public function __construct() {
-		add_action('backupplus_admin_enqueue_scripts', array($this, 'backupplus_admin_enqueue_scripts'));
+		add_action( 'backupplus_admin_enqueue_scripts', array( $this, 'backupplus_admin_enqueue_scripts' ) );
 	}
 
 	/**
@@ -89,34 +91,34 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 		return array(
 			// Endpoint, then the label
 			's3.us-east-005.dream.io'    => 's3.us-east-005.dream.io',
-			'objects-us-east-1.dream.io' => 'objects-us-east-1.dream.io ('.__('Permanently unavailable on Nov 12th, 2025', 'backupplus').')',
+			'objects-us-east-1.dream.io' => 'objects-us-east-1.dream.io (' . __( 'Permanently unavailable on Nov 12th, 2025', 'backupplus' ) . ')',
 		);
 	}
-	
+
 	protected $use_v4 = false;
 
 	/**
 	 * Given an S3 object, possibly set the region on it
 	 *
-	 * @param Object $obj		  - like BackupPlus_DreamObjects
-	 * @param String $region	  - or empty to fetch one from saved configuration
+	 * @param Object $obj         - like BackupPlus_DreamObjects
+	 * @param String $region      - or empty to fetch one from saved configuration
 	 * @param String $bucket_name
 	 */
-	protected function set_region($obj, $region = '', $bucket_name = '') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $bucket_name
+	protected function set_region( $obj, $region = '', $bucket_name = '' ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $bucket_name
 
-		$config = $this->get_config();
-		$endpoint = ('' != $region && 'n/a' != $region) ? $region : $config['endpoint'];
+		$config   = $this->get_config();
+		$endpoint = ( '' != $region && 'n/a' != $region ) ? $region : $config['endpoint'];
 		global $backupplus;
-		if ($backupplus->backup_time) {
-			$backupplus->log("Set endpoint (".get_class($obj)."): $endpoint");
-		
+		if ( $backupplus->backup_time ) {
+			$backupplus->log( 'Set endpoint (' . get_class( $obj ) . "): $endpoint" );
+
 			// Warning for objects-us-east-1 shutdown in Nov 2025
-			if ('objects-us-east-1.dream.io' == $endpoint) {
-				$backupplus->log("The objects-us-east-1.dream.io endpoint is permanently unavailable since Nov. 12th, 2025. Please switch to a new endpoint as suggested in: https://help.dreamhost.com/hc/en-us/articles/360001370846-What-DreamObjects-hostname-should-I-use-to-connect", 'warning', 'dreamobjects_east_shutdown');
+			if ( 'objects-us-east-1.dream.io' == $endpoint ) {
+				$backupplus->log( 'The objects-us-east-1.dream.io endpoint is permanently unavailable since Nov. 12th, 2025. Please switch to a new endpoint as suggested in: https://help.dreamhost.com/hc/en-us/articles/360001370846-What-DreamObjects-hostname-should-I-use-to-connect', 'warning', 'dreamobjects_east_shutdown' );
 			}
 		}
-		
-		$obj->setEndpoint($endpoint);
+
+		$obj->setEndpoint( $endpoint );
 	}
 
 	/**
@@ -126,7 +128,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
+		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic' );
 	}
 
 	/**
@@ -136,13 +138,13 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return Array - an array of options
 	 */
-	protected function get_config($force_refresh = false) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $force_refresh unused
-		$opts = $this->get_options();
-		$opts['whoweare'] = 'DreamObjects';
+	protected function get_config( $force_refresh = false ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $force_refresh unused
+		$opts                  = $this->get_options();
+		$opts['whoweare']      = 'DreamObjects';
 		$opts['whoweare_long'] = 'DreamObjects';
-		$opts['key'] = 'dreamobjects';
-		if (empty($opts['endpoint'])) {
-			$endpoints = array_keys(self::get_endpoints());
+		$opts['key']           = 'dreamobjects';
+		if ( empty( $opts['endpoint'] ) ) {
+			$endpoints        = array_keys( self::get_endpoints() );
 			$opts['endpoint'] = $endpoints[0];
 		}
 		return $opts;
@@ -206,19 +208,19 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 		<?php
 		return ob_get_clean();
 	}
-	
+
 	/**
 	 * Modifies handerbar template options
 	 *
 	 * @param array $opts
 	 * @return Array - Modified handerbar template options
 	 */
-	public function transform_options_for_template($opts) {
-		$opts['endpoint'] = empty($opts['endpoint']) ? '' : $opts['endpoint'];
+	public function transform_options_for_template( $opts ) {
+		$opts['endpoint']               = empty( $opts['endpoint'] ) ? '' : $opts['endpoint'];
 		$opts['dreamobjects_endpoints'] = self::get_endpoints();
 		// Add custom endpoint in dropdown.
-		if (!empty($opts['endpoint']) && !isset($opts['dreamobjects_endpoints'][$opts['endpoint']])) {
-			$opts['dreamobjects_endpoints'][$opts['endpoint']] = $opts['endpoint'];
+		if ( ! empty( $opts['endpoint'] ) && ! isset( $opts['dreamobjects_endpoints'][ $opts['endpoint'] ] ) ) {
+			$opts['dreamobjects_endpoints'][ $opts['endpoint'] ] = $opts['endpoint'];
 		}
 		return $opts;
 	}
@@ -232,16 +234,16 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	public function get_template_properties() {
 		global $backupplus, $backupplus_admin;
 
-		if (!apply_filters('backupplus_dreamobjects_simplexmlelement_exists', class_exists('SimpleXMLElement'))) {
+		if ( ! apply_filters( 'backupplus_dreamobjects_simplexmlelement_exists', class_exists( 'SimpleXMLElement' ) ) ) {
 			$simplexmlelement_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'backupplus').':</strong> '.
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 					/* translators: %s: missing PHP module */
-					sprintf(__("Your web server's PHP installation does not include a required module (%s).", 'backupplus'), 'SimpleXMLElement').' '.
-					__("Please contact your web hosting provider's support.", 'backupplus').' '.
+					sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
+					__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
 					/* translators: 1: module description, 2: required module */
-					sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $backupplus->backup_methods[$this->get_id()], 'SimpleXMLElement').' '.
-					__('Please do not file any support requests; there is no alternative.', 'backupplus'),
+					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ], 'SimpleXMLElement' ) . ' ' .
+					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->get_id(),
 					false
 				),
@@ -251,13 +253,13 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 			$simplexmlelement_existence_label = '';
 		}
 
-		if (!apply_filters('backupplus_dreamobjects_xmlwriter_exists', 'BackupPlus_DreamObjects_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
+		if ( ! apply_filters( 'backupplus_dreamobjects_xmlwriter_exists', 'BackupPlus_DreamObjects_Compat' != $this->indicate_s3_class() || ! class_exists( 'XMLWriter' ) ) ) {
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'backupplus').':</strong> '.
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 					/* translators: %s: missing PHP module */
-					sprintf(__("Your web server's PHP installation does not included a required module (%s).", 'backupplus'), 'XMLWriter').' '.
-					__("Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus'),
+					sprintf( __( "Your web server's PHP installation does not included a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
+					__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ),
 					$this->get_id(),
 					false
 				),
@@ -268,40 +270,40 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 		}
 
 		$properties = array(
-			'storage_image_url' => BACKUPPLUS_URL."/images/dreamobjects_logo-horiz-2013.png",
-			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($backupplus->backup_methods[$this->get_id()], false, $this->get_id()."", false), $this->allowed_html_for_content_sanitisation()),
+			'storage_image_url'                => BACKUPPLUS_URL . '/images/dreamobjects_logo-horiz-2013.png',
+			'curl_existence_label'             => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], false, $this->get_id() . '', false ), $this->allowed_html_for_content_sanitisation() ),
 			'simplexmlelement_existence_label' => $simplexmlelement_existence_label,
-			'xmlwriter_existence_label' => $xmlwriter_existence_label,
-			'console_url_text' => sprintf(
+			'xmlwriter_existence_label'        => $xmlwriter_existence_label,
+			'console_url_text'                 => sprintf(
 				/* translators: 1: console URL, 2: service name, 3: service name */
-				__('Get your access key and secret key from your <a href="%1$s">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage.', 'backupplus'),
+				__( 'Get your access key and secret key from your <a href="%1$s">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage.', 'backupplus' ),
 				'https://panel.dreamhost.com/index.cgi?tree=storage.dreamhostobjects',
-				$backupplus->backup_methods[$this->get_id()],
-				$backupplus->backup_methods[$this->get_id()]
-			).' '.__('This bucket will be created for you if it does not already exist.', 'backupplus'),
-			'ssl_error_text' => esc_html__('If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus'),
-			'credentials_creation_link_text' => __('Create Azure credentials in your Azure developer console.', 'backupplus'),
-			'configuration_helper_link_text' => __('For more detailed instructions, follow this link.', 'backupplus'),
+				$backupplus->backup_methods[ $this->get_id() ],
+				$backupplus->backup_methods[ $this->get_id() ]
+			) . ' ' . __( 'This bucket will be created for you if it does not already exist.', 'backupplus' ),
+			'ssl_error_text'                   => esc_html__( 'If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus' ),
+			'credentials_creation_link_text'   => __( 'Create Azure credentials in your Azure developer console.', 'backupplus' ),
+			'configuration_helper_link_text'   => __( 'For more detailed instructions, follow this link.', 'backupplus' ),
 			/* translators: %s: service name */
-			'input_accesskey_label' => sprintf(__('%s access key', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
-			'input_accesskey_placeholder' => __('Paste your access key here', 'backupplus'),
+			'input_accesskey_label'            => sprintf( __( '%s access key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'input_accesskey_placeholder'      => __( 'Paste your access key here', 'backupplus' ),
 			/* translators: %s: service name */
-			'input_secretkey_label' => sprintf(__('%s secret key', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
-			'input_secretkey_placeholder' => __('Paste your secret key here', 'backupplus'),
-			'input_secretkey_type' => apply_filters('backupplus_admin_secret_field_type', 'password'),
+			'input_secretkey_label'            => sprintf( __( '%s secret key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'input_secretkey_placeholder'      => __( 'Paste your secret key here', 'backupplus' ),
+			'input_secretkey_type'             => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
 			/* translators: %s: service name */
-			'input_location_label' => sprintf(__('%s location', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
-			'input_location_prefix' => 'dreamobjects://',
-			'input_location_title' => __('Enter only a bucket name or a bucket and path.', 'backupplus').' '.__('Examples: mybucket, mybucket/mypath', 'backupplus'),
+			'input_location_label'             => sprintf( __( '%s location', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'input_location_prefix'            => 'dreamobjects://',
+			'input_location_title'             => __( 'Enter only a bucket name or a bucket and path.', 'backupplus' ) . ' ' . __( 'Examples: mybucket, mybucket/mypath', 'backupplus' ),
 			/* translators: %s: service name */
-			'input_endpoint_label' => sprintf(__('%s end-point', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
-			'input_endpoint_option_labels' => self::get_endpoints(),
+			'input_endpoint_label'             => sprintf( __( '%s end-point', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'input_endpoint_option_labels'     => self::get_endpoints(),
 			/* translators: %s: service name */
-			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
+			'input_test_label'                 => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			/* translators: %s: Desired endpoint format.*/
-			'invalid_endpoint_error_message' => sprintf(__('Custom endpoint should be in the following format "%s".', 'backupplus'), 's3.<region>.dream.io'),
+			'invalid_endpoint_error_message'   => sprintf( __( 'Custom endpoint should be in the following format "%s".', 'backupplus' ), 's3.<region>.dream.io' ),
 		);
-		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
+		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );
 	}
 
 	/**
@@ -314,14 +316,15 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return Array - N.B. May contain updated versions of $storage and $config
 	 */
-	protected function get_bucket_access($storage, $config, $bucket, $path) {
-		if (empty($config['endpoint']) || !self::is_valid_endpoint($config['endpoint'])) throw new Exception('Invalid DreamObjects endpoint: '.$config['endpoint']); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
-		if (preg_match('/'.self::ENDPOINT_REGEX.'/i', trim($config['endpoint']))) {
+	protected function get_bucket_access( $storage, $config, $bucket, $path ) {
+		if ( empty( $config['endpoint'] ) || ! self::is_valid_endpoint( $config['endpoint'] ) ) {
+			throw new Exception( 'Invalid DreamObjects endpoint: ' . $config['endpoint'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
+		}       if ( preg_match( '/' . self::ENDPOINT_REGEX . '/i', trim( $config['endpoint'] ) ) ) {
 			$this->use_v4 = true;
-			$storage->setSignatureVersion('v4');
-			$storage->useDNSBucketName(false);
+			$storage->setSignatureVersion( 'v4' );
+			$storage->useDNSBucketName( false );
 		}
-		return parent::get_bucket_access($storage, $config, $bucket, $path);
+		return parent::get_bucket_access( $storage, $config, $bucket, $path );
 	}
 
 	/**
@@ -331,13 +334,13 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return void Echo the result of credentials test.
 	 */
-	public function credentials_test($posted_settings) {
-		if (!empty($posted_settings['endpoint']) && !self::is_valid_endpoint($posted_settings['endpoint'])) {
+	public function credentials_test( $posted_settings ) {
+		if ( ! empty( $posted_settings['endpoint'] ) && ! self::is_valid_endpoint( $posted_settings['endpoint'] ) ) {
 			/* translators: 1: Invalid custom endpoint, 2: Expected endpoint format */
-			echo sprintf(esc_html__('Failure: Custom endpoint "%1$s" is not in the desired format "%2$s".', 'backupplus'), $posted_settings['endpoint'], 's3.<region>.dream.io'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Prevent escaping '<' & '>' in endpoint as this message is shown in alert.
+			echo sprintf( esc_html__( 'Failure: Custom endpoint "%1$s" is not in the desired format "%2$s".', 'backupplus' ), $posted_settings['endpoint'], 's3.<region>.dream.io' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Prevent escaping '<' & '>' in endpoint as this message is shown in alert.
 			return;
 		}
-		parent::credentials_test($posted_settings);
+		parent::credentials_test( $posted_settings );
 	}
 
 	/**
@@ -347,24 +350,26 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return array Sanitized settings to be saved in DB.
 	 */
-	public function options_filter($new_settings) {
-		$current_settings = BackupPlus_Options::get_backupplus_option('backupplus_dreamobjects', array());
+	public function options_filter( $new_settings ) {
+		$current_settings = BackupPlus_Options::get_backupplus_option( 'backupplus_dreamobjects', array() );
 		// Previous settings would be empty on initial load.
-		if (empty($current_settings)) return parent::options_filter($new_settings);
+		if ( empty( $current_settings ) ) {
+			return parent::options_filter( $new_settings );
+		}
 
 		$current_settings = $current_settings['settings'];
 		// Check if endpoint is updated to an invalid format, then log it.
-		foreach ($new_settings['settings'] as $instance_id => $new_storage_options) {
-			if (isset($current_settings[$instance_id]['endpoint'], $new_storage_options['endpoint'])
-				&& $current_settings[$instance_id]['endpoint'] !== $new_storage_options['endpoint']
-				&& !self::is_valid_endpoint($new_storage_options['endpoint'])
+		foreach ( $new_settings['settings'] as $instance_id => $new_storage_options ) {
+			if ( isset( $current_settings[ $instance_id ]['endpoint'], $new_storage_options['endpoint'] )
+				&& $current_settings[ $instance_id ]['endpoint'] !== $new_storage_options['endpoint']
+				&& ! self::is_valid_endpoint( $new_storage_options['endpoint'] )
 			) {
-				$msg = sprintf('Custom endpoint "%s" is not in the format "s3.<region>.dream.io".', esc_html($new_storage_options['endpoint']));
-				$this->log($msg, 'error');
-				BackupPlus_Manipulation_Functions::error_log('BackupPlus: DreamObjects: '.$msg);
+				$msg = sprintf( 'Custom endpoint "%s" is not in the format "s3.<region>.dream.io".', esc_html( $new_storage_options['endpoint'] ) );
+				$this->log( $msg, 'error' );
+				BackupPlus_Manipulation_Functions::error_log( 'BackupPlus: DreamObjects: ' . $msg );
 			}
 		}
-		return parent::options_filter($new_settings);
+		return parent::options_filter( $new_settings );
 	}
 
 	/**
@@ -374,10 +379,12 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return bool True for valid endpoint else false.
 	 */
-	public static function is_valid_endpoint($endpoint) {
-		$endpoint  = trim($endpoint);
+	public static function is_valid_endpoint( $endpoint ) {
+		$endpoint  = trim( $endpoint );
 		$endpoints = self::get_endpoints();
-		if (isset($endpoints[$endpoint]) || preg_match('/'.self::ENDPOINT_REGEX.'/i', $endpoint)) return true;
+		if ( isset( $endpoints[ $endpoint ] ) || preg_match( '/' . self::ENDPOINT_REGEX . '/i', $endpoint ) ) {
+			return true;
+		}
 		return false;
 	}
 
@@ -395,10 +402,12 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 	 *
 	 * @return array
 	 */
-	public function configure_field_from_legacy($field, $template_properties, $field_name, $option) {
-		$prefix = 'input_'.$option['template_property_input_mapping'].'_';
+	public function configure_field_from_legacy( $field, $template_properties, $field_name, $option ) {
+		$prefix = 'input_' . $option['template_property_input_mapping'] . '_';
 
-		if (empty($field['tooltip']) && isset($template_properties[$prefix.'title'])) $field['tooltip'] = array('text' => $template_properties[$prefix.'title']);
+		if ( empty( $field['tooltip'] ) && isset( $template_properties[ $prefix . 'title' ] ) ) {
+			$field['tooltip'] = array( 'text' => $template_properties[ $prefix . 'title' ] );
+		}
 
 		return $field;
 	}

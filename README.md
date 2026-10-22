@@ -8,6 +8,26 @@ Start with `cp .env.example .env && ./dev/up.sh`. See [the development environme
 
 The plugin's versioned minified assets are generated from the stable inputs in `assets-src/`. After changing the `Version:` header in `backupplus.php`, run `make build-assets` to produce the filenames used by the plugin and update CSS source-map references. Run `make check-assets` to verify the checked-in assets match the current plugin version. The browser decryptor is bundled from `assets-src/decryption/` using the pinned npm dependencies. Install build/test dependencies with `npm ci --ignore-scripts --omit=optional` (Node 22.4+), then run the same Make targets. The checked-in worker and license notices ship with the plugin; deployed WordPress sites require neither Node nor npm. `make test-client` checks independent crypto fixtures and archive boundaries. `make test-client-browser` checks the actual WordPress Decryption tab in Chromium; set `CHROMIUM` to your Chromium executable and optionally `BACKUPPLUS_TEST_URL` to the local development site.
 
+## PHP formatting
+
+Install the development tools with PHP and Composer 2:
+
+```sh
+make install-tools
+```
+
+This installs locked versions of PHP_CodeSniffer, its automatic fixer (`phpcbf`), and WordPress Coding Standards under `.cache/php-tools/`. The plugin's bundled runtime libraries in `vendor/` are managed separately. If Composer is not on your PATH, pass `COMPOSER='php /path/to/composer.phar'`; a local `.cache/composer.phar` is also detected automatically. See [Composer installation](https://getcomposer.org/download/).
+
+```sh
+make format        # Automatically fix PHP coding style
+make check-format  # Report violations without changing files
+make format FORMAT_PATHS='includes/class-age-keys.php methods/ftp'
+```
+
+Both targets use the same explicit subset of WordPress formatting rules in `.phpcs.xml.dist`: indentation, whitespace, braces, argument spacing, array layout, and line endings. Bundled libraries, dependencies, and generated assets are excluded. Comparisons, naming conventions, SQL checks, and other code-quality rules are outside the formatter's scope. Heredoc/nowdoc contents and closing-marker indentation are preserved. `make check-format` exits nonzero for outstanding formatting violations. `make format` treats the fixer's successful "files changed" status as success and still fails if fixes could not be completed. Formatting is separate from `make test`.
+
+The formatter uses a 512 MB PHP memory limit for the larger source files. Override it with `PHP_TOOLS_MEMORY_LIMIT`, for example `make check-format PHP_TOOLS_MEMORY_LIMIT=1G`.
+
 ## Tests
 
 Run the complete suite with:
@@ -22,11 +42,13 @@ Prerequisites are PHP with cURL, DOM, OpenSSL and ctype (libcurl must support FT
 
 For a focused run, use `make test-unit`, `make test-integration`, `make test-wordpress`, or `make check-assets`. Override `PYTHON`, `TEST_VENV`, `PODMAN`, or `WP_TEST_CONTAINER` on the Make command line if needed, for example `make test PYTHON=python3.12`.
 
-Provider behavior tests cover all 11 implemented backends. `scripts/test-s3.php` exercises Amazon S3, S3-compatible storage and DreamObjects; `scripts/test-swift.php` exercises OpenStack and Rackspace Cloud Files; and `scripts/test-dropbox.php`, `scripts/test-googledrive.php` and `scripts/test-email.php` cover their respective providers. Run them directly with PHP or together with the existing FTP, SFTP/SCP and WebDAV checks through `make test-unit`. Cloud service calls and email delivery use fakes, so no external accounts or real emails are needed. Coverage includes transfers, pagination, upload resumption, retention deletion and failure handling where supported. The Azure, Backblaze, Google Cloud, OneDrive and pCloud placeholders are excluded from these behavior tests.
+Provider behavior tests cover all 16 implemented backends. `scripts/test-s3.php` exercises Amazon S3, S3-compatible storage and DreamObjects; `scripts/test-swift.php` exercises OpenStack and Rackspace Cloud Files. Dropbox, Google Drive, Email, Azure, Backblaze B2, Google Cloud Storage, OneDrive and pCloud each have a `scripts/test-<provider>.php` suite. Run them directly with PHP or together with the FTP, SFTP/SCP and WebDAV checks through `make test-unit`. Cloud API responses and email delivery use fakes, so no external accounts or real emails are needed. Coverage includes binary/empty transfers, pagination, chunk boundaries, retention deletion, credential tests, failure handling and provider isolation. `scripts/test-cloud-http-integration.py` additionally exercises real streaming uploads against a disposable loopback HTTPS server, including TLS trust, hostname verification and redirect refusal.
 
 ## Storage providers
 
-The **WebDAV** provider supports HTTP and HTTPS with Basic or Digest authentication. Enter the server hostname, optional port, username, password, and remote directory. HTTPS is the default; ports default to 443 for HTTPS and 80 for HTTP. The directory must already exist. Enter its path without URL encoding (for example, `remote.php/dav/files/username/backups` for Nextcloud); an empty path or `/` uses the server root. Legacy WebDAV settings are retained.
+Azure, Backblaze B2, Google Cloud Storage, OneDrive and pCloud are built in and support uploads, listings, downloads, retention deletion and a connection test that writes, reads and deletes a temporary file. See [cloud provider setup](docs/cloud-providers.md) for credentials, permissions and configuration. Each provider owns its settings, authentication and REST implementation in `methods/<provider>/`; shared HTTP and backup-module utilities contain no provider-specific API logic.
+
+The **WebDAV** provider supports HTTP and HTTPS with Basic or Digest authentication. Enter the server hostname, optional port, username, password, and remote directory. HTTPS is the default; ports default to 443 for HTTPS and 80 for HTTP. The directory must already exist. Use the path after the hostname in your WebDAV folder URL: for `https://cloud.example.com/webdav/backups`, enter `cloud.example.com` as the server and `/webdav/backups` as the remote path. Enter spaces and other characters as written, without URL encoding. An empty path or `/` uses the server root. Legacy WebDAV settings are retained.
 
 WebDAV supports backup uploads, restore downloads, backup discovery, retention deletion, and a settings test that lists the directory, uploads a disposable file, reads it back, and deletes it. Transfers stream through PHP cURL. Retried uploads restart in full; downloads replace local files only after a successful complete transfer. Configure the final WebDAV endpoint because redirects are rejected. PHP cURL and DOM XML are required. HTTPS verifies server certificates and hostnames by default, honoring the plugin's expert settings for certificate verification and system CA selection (`curl.cainfo`); disabling SSL rejects HTTPS connections.
 

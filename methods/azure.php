@@ -4,47 +4,26 @@
  * Provider ID: azure
  * Provider Class: BackupPlus_BackupModule_azure
  */
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
+require_once BACKUPPLUS_DIR . '/includes/class-remote-storage-module.php';
+require_once __DIR__ . '/azure/admin.php';
+require_once __DIR__ . '/azure/client.php';
 
-if (!defined('ABSPATH')) die('No direct access.');
+class BackupPlus_BackupModule_azure extends BackupPlus_Remote_Storage_Module {
+	use BackupPlus_azure_Admin;
 
-require_once __DIR__.'/azure/admin.php';
-
-if (version_compare(phpversion(), '5.6', '>=')) {
-
-	if (class_exists('BackupPlus_Addons_RemoteStorage_azure')) {
-		class BackupPlus_BackupModule_azure extends BackupPlus_Addons_RemoteStorage_azure {
-			use BackupPlus_azure_Admin;
-			public function __construct() {
-				parent::__construct('azure', 'Microsoft Azure', true, true);
-			}
-		}
-		
-	} else {
-	
-		backupplus_try_include_file('methods/addon-not-yet-present.php', 'include_once');
-		/**
-		 * N.B. BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
-		 */
-		class BackupPlus_BackupModule_azure extends BackupPlus_BackupModule_AddonNotYetPresent {
-			use BackupPlus_azure_Admin;
-			public function __construct() {
-				parent::__construct('azure', 'Microsoft Azure', '5.6', 'azure.png');
-			}
-		}
-		
-	}
-	
-} else {
-
-	backupplus_try_include_file('methods/insufficient.php', 'include_once');
-	/**
-	 * N.B. BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule
-	 */
-	class BackupPlus_BackupModule_azure extends BackupPlus_BackupModule_insufficientphp {
-		use BackupPlus_azure_Admin;
-		public function __construct() {
-			parent::__construct('azure', 'Microsoft Azure', '5.6', 'azure.png');
-		}
-	}
-	
+	protected $fields       = array(
+		'account'    => array( 'Storage account name', '' ),
+		'accountkey' => array( 'Storage account key (base64)', '', 'password' ),
+		'container'  => array( 'Blob container', '' ),
+		'path'       => array( 'Folder prefix (optional)', '' ),
+		'endpoint'   => array( 'Blob endpoint suffix', 'blob.core.windows.net' ),
+	);
+	protected $instructions = 'Use an existing private Blob container and an account key. Endpoint suffixes support Azure Global, US Government and China.';
+	public function options_exist( $options ) {
+		return ! empty( $options['account'] ) && ! empty( $options['accountkey'] ) && ! empty( $options['container'] ); }
+	protected function create_client( $options ) {
+		return new BackupPlus_Azure_Client( $options ); }
 }

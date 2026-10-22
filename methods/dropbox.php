@@ -9,30 +9,38 @@
  * https://www.dropbox.com/developers/apply?cont=/developers/apps
  */
 
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
-require_once __DIR__.'/dropbox/admin.php';
+require_once __DIR__ . '/dropbox/admin.php';
 
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 // Fix a potential problem for users who had the short-lived 1.12.35-1.12.38 free versions (see: https://wordpress.org/support/topic/1-12-37-dropbox-auth-broken/page/2/#post-8981457)
 // Can be removed after a few months
-$potential_options = BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
-if (is_array($potential_options) && isset($potential_options['version']) && isset($potential_options['settings']) && array() === $potential_options['settings']) {
+$potential_options = BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' );
+if ( is_array( $potential_options ) && isset( $potential_options['version'] ) && isset( $potential_options['settings'] ) && array() === $potential_options['settings'] ) {
 	// Wipe it, which will force its re-creation in proper format
-	BackupPlus_Options::delete_backupplus_option('backupplus_dropbox');
+	BackupPlus_Options::delete_backupplus_option( 'backupplus_dropbox' );
 }
 
 class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	use BackupPlus_dropbox_Admin;
 
 	/** Repair files written by the historical Dropbox upload bug. */
-	public function download_complete($handle, $path) {
-		if (filesize($path) < 4) return;
-		fseek($handle, -4, SEEK_END);
-		if ('null' === fread($handle, 4)) ftruncate($handle, filesize($path) - 4);
+	public function download_complete( $handle, $path ) {
+		if ( filesize( $path ) < 4 ) {
+			return;
+		}
+		fseek( $handle, -4, SEEK_END );
+		if ( 'null' === fread( $handle, 4 ) ) {
+			ftruncate( $handle, filesize( $path ) - 4 );
+		}
 	}
 
 	private $current_file_hash;
@@ -49,73 +57,77 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @var array
 	 */
 	protected $input_option_field_mappings = array(
-		'appkey' => array(
+		'appkey'          => array(
 			'default_value' => '',
-			'contexts' => array('option'),
+			'contexts'      => array( 'option' ),
 		),
-		'secret' => array(
+		'secret'          => array(
 			'default_value' => '',
-			'contexts' => array('option'),
+			'contexts'      => array( 'option' ),
 		),
 		'tk_access_token' => array(
 			'default_value' => '',
-			'contexts' => array('option'),
+			'contexts'      => array( 'option' ),
 		),
-		'folder' => array(
+		'folder'          => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
 	);
 
 	/**
 	 * This callback is called as upload progress is made
 	 *
-	 * @param Integer		 $offset   - the byte offset
-	 * @param String		 $uploadid - identifier for the upload in progress
+	 * @param Integer        $offset   - the byte offset
+	 * @param String         $uploadid - identifier for the upload in progress
 	 * @param Boolean|String $fullpath - optional full path to the file being uploaded
 	 */
-	public function chunked_callback($offset, $uploadid, $fullpath = false) {
-	
+	public function chunked_callback( $offset, $uploadid, $fullpath = false ) {
+
 		global $backupplus;
 
 		$storage = $this->get_storage();
 
 		// Update upload ID
-		$this->jobdata_set('upload_id_'.$this->current_file_hash, $uploadid);
-		$this->jobdata_set('upload_offset_'.$this->current_file_hash, $offset);
+		$this->jobdata_set( 'upload_id_' . $this->current_file_hash, $uploadid );
+		$this->jobdata_set( 'upload_offset_' . $this->current_file_hash, $offset );
 
-		$time_now = microtime(true);
-		
+		$time_now = microtime( true );
+
 		$time_since_last_tick = $time_now - $this->upload_tick;
 		$data_since_last_tick = $offset - $this->uploaded_offset;
-		
-		$this->upload_tick = $time_now;
+
+		$this->upload_tick     = $time_now;
 		$this->uploaded_offset = $offset;
-		
+
 		// Here we use job-wide data, because we don't expect wildly different performance for different Dropbox accounts
-		$chunk_size = $backupplus->jobdata_get('dropbox_chunk_size', 1048576);
+		$chunk_size = $backupplus->jobdata_get( 'dropbox_chunk_size', 1048576 );
 		// Don't go beyond 10MB, or change the chunk size after the last segment
-		if ($chunk_size < 10485760 && $this->current_file_size > 0 && $offset < $this->current_file_size) {
+		if ( $chunk_size < 10485760 && $this->current_file_size > 0 && $offset < $this->current_file_size ) {
 			$job_run_time = $time_now - $backupplus->job_time_ms;
-			if ($time_since_last_tick < 10) {
-				$upload_rate = $data_since_last_tick / max($time_since_last_tick, 1);
-				$upload_secs = min(floor($job_run_time), 10);
-				if ($job_run_time < 15) $upload_secs = max(6, $job_run_time*0.6);
-				$new_chunk = (int) max(min($upload_secs * $upload_rate * 0.9, 10485760), 1048576);
-				$new_chunk = $new_chunk - ($new_chunk % 524288);
+			if ( $time_since_last_tick < 10 ) {
+				$upload_rate = $data_since_last_tick / max( $time_since_last_tick, 1 );
+				$upload_secs = min( floor( $job_run_time ), 10 );
+				if ( $job_run_time < 15 ) {
+					$upload_secs = max( 6, $job_run_time * 0.6 );
+				}
+				$new_chunk  = (int) max( min( $upload_secs * $upload_rate * 0.9, 10485760 ), 1048576 );
+				$new_chunk  = $new_chunk - ( $new_chunk % 524288 );
 				$chunk_size = $new_chunk;
-				$storage->setChunkSize($chunk_size);
-				$backupplus->jobdata_set('dropbox_chunk_size', $chunk_size);
+				$storage->setChunkSize( $chunk_size );
+				$backupplus->jobdata_set( 'dropbox_chunk_size', $chunk_size );
 			}
 		}
-		
-		if ($this->current_file_size > 0) {
-			$percent = round(100*($offset/$this->current_file_size), 1);
-			$backupplus->record_uploaded_chunk($percent, "$uploadid, $offset, ".round($chunk_size/1024, 1)." KB", $fullpath);
+
+		if ( $this->current_file_size > 0 ) {
+			$percent = round( 100 * ( $offset / $this->current_file_size ), 1 );
+			$backupplus->record_uploaded_chunk( $percent, "$uploadid, $offset, " . round( $chunk_size / 1024, 1 ) . ' KB', $fullpath );
 		} else {
-			$this->log("Chunked Upload: $offset bytes uploaded");
+			$this->log( "Chunked Upload: $offset bytes uploaded" );
 			// This act is done by record_uploaded_chunk, and helps prevent overlapping runs
-			if ($fullpath) touch($fullpath);
+			if ( $fullpath ) {
+				touch( $fullpath );
+			}
 		}
 	}
 
@@ -126,7 +138,7 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('phpseclib', 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic', 'manual_authentication');
+		return array( 'phpseclib', 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic', 'manual_authentication' );
 	}
 
 	/**
@@ -136,8 +148,10 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @return Boolean
 	 */
-	public function options_exist($opts) {
-		if (is_array($opts) && !empty($opts['tk_access_token'])) return true;
+	public function options_exist( $opts ) {
+		if ( is_array( $opts ) && ! empty( $opts['tk_access_token'] ) ) {
+			return true;
+		}
 		return false;
 	}
 
@@ -147,106 +161,116 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @param  Array $dropbox - An array of Dropbox options
 	 * @return Array - the returned array can either be the set of updated Dropbox settings or a WordPress error array
 	 */
-	public function options_filter($dropbox) {
+	public function options_filter( $dropbox ) {
 
 		// Get the current options (and possibly update them to the new format)
-		$opts = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('dropbox');
-		
-		if (is_wp_error($opts)) {
-			if ('recursion' !== $opts->get_error_code()) {
-				$msg = "(".$opts->get_error_code()."): ".$opts->get_error_message();
-				$this->log($msg);
-				BackupPlus_Manipulation_Functions::error_log("BackupPlus: $msg");
+		$opts = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format( 'dropbox' );
+
+		if ( is_wp_error( $opts ) ) {
+			if ( 'recursion' !== $opts->get_error_code() ) {
+				$msg = '(' . $opts->get_error_code() . '): ' . $opts->get_error_message();
+				$this->log( $msg );
+				BackupPlus_Manipulation_Functions::error_log( "BackupPlus: $msg" );
 			}
 			// The saved options had a problem; so, return the new ones
 			return $dropbox;
 		}
-		
+
 		// If the input is not as expected, then return the current options
-		if (!is_array($dropbox)) return $opts;
-		
-		// Remove instances that no longer exist
-		foreach ($opts['settings'] as $instance_id => $storage_options) {
-			if (!isset($dropbox['settings'][$instance_id])) unset($opts['settings'][$instance_id]);
+		if ( ! is_array( $dropbox ) ) {
+			return $opts;
 		}
-		
+
+		// Remove instances that no longer exist
+		foreach ( $opts['settings'] as $instance_id => $storage_options ) {
+			if ( ! isset( $dropbox['settings'][ $instance_id ] ) ) {
+				unset( $opts['settings'][ $instance_id ] );
+			}
+		}
+
 		// Dropbox has a special case where the settings could be empty so we should check for this before
-		if (!empty($dropbox['settings'])) {
-		
-			foreach ($dropbox['settings'] as $instance_id => $storage_options) {
-				if (!empty($opts['settings'][$instance_id]['tk_access_token'])) {
-				
-					$current_app_key = empty($opts['settings'][$instance_id]['appkey']) ? false : $opts['settings'][$instance_id]['appkey'];
-					$new_app_key = empty($storage_options['appkey']) ? false : $storage_options['appkey'];
+		if ( ! empty( $dropbox['settings'] ) ) {
+
+			foreach ( $dropbox['settings'] as $instance_id => $storage_options ) {
+				if ( ! empty( $opts['settings'][ $instance_id ]['tk_access_token'] ) ) {
+
+					$current_app_key = empty( $opts['settings'][ $instance_id ]['appkey'] ) ? false : $opts['settings'][ $instance_id ]['appkey'];
+					$new_app_key     = empty( $storage_options['appkey'] ) ? false : $storage_options['appkey'];
 
 					// If a different app key is being used, then wipe the stored token as it cannot belong to the new app
-					if ($current_app_key !== $new_app_key) {
-						unset($opts['settings'][$instance_id]['tk_access_token']);
-						unset($opts['settings'][$instance_id]['ownername']);
-						unset($opts['settings'][$instance_id]['CSRF']);
+					if ( $current_app_key !== $new_app_key ) {
+						unset( $opts['settings'][ $instance_id ]['tk_access_token'] );
+						unset( $opts['settings'][ $instance_id ]['ownername'] );
+						unset( $opts['settings'][ $instance_id ]['CSRF'] );
 					}
-				
 				}
 
 				// Now loop over the new options, and replace old options with them
-				foreach ($storage_options as $key => $value) {
-					if (null === $value) {
-						unset($opts['settings'][$instance_id][$key]);
+				foreach ( $storage_options as $key => $value ) {
+					if ( null === $value ) {
+						unset( $opts['settings'][ $instance_id ][ $key ] );
 					} else {
-						if (!isset($opts['settings'][$instance_id])) $opts['settings'][$instance_id] = array();
-						$opts['settings'][$instance_id][$key] = $value;
+						if ( ! isset( $opts['settings'][ $instance_id ] ) ) {
+							$opts['settings'][ $instance_id ] = array();
+						}
+						$opts['settings'][ $instance_id ][ $key ] = $value;
 					}
 				}
-				
-				if (!empty($opts['settings'][$instance_id]['folder']) && preg_match('#^https?://(www.)dropbox\.com/home/Apps/BackupPlus(.Com)?([^/]*)/(.*)$#i', $opts['settings'][$instance_id]['folder'], $matches)) $opts['settings'][$instance_id]['folder'] = $matches[3];
-				
+
+				if ( ! empty( $opts['settings'][ $instance_id ]['folder'] ) && preg_match( '#^https?://(www.)dropbox\.com/home/Apps/BackupPlus(.Com)?([^/]*)/(.*)$#i', $opts['settings'][ $instance_id ]['folder'], $matches ) ) {
+					$opts['settings'][ $instance_id ]['folder'] = $matches[3];
+				}
+
 				// check if we have the dummy nosave option and remove it so that it doesn't get saved
-				if (isset($opts['settings'][$instance_id]['dummy-nosave'])) unset($opts['settings'][$instance_id]['dummy-nosave']);
+				if ( isset( $opts['settings'][ $instance_id ]['dummy-nosave'] ) ) {
+					unset( $opts['settings'][ $instance_id ]['dummy-nosave'] );
+				}
 			}
-			
 		}
-		
+
 		return $opts;
 	}
-	
-	public function backup($backup_array) {
+
+	public function backup( $backup_array ) {
 
 		global $backupplus;
 
 		$opts = $this->get_options();
-		
-		if (empty($opts['tk_access_token'])) {
-			$this->log('You are not authenticated with Dropbox (1)');
-			$this->log(__('You are not authenticated with Dropbox', 'backupplus'), 'error');
+
+		if ( empty( $opts['tk_access_token'] ) ) {
+			$this->log( 'You are not authenticated with Dropbox (1)' );
+			$this->log( __( 'You are not authenticated with Dropbox', 'backupplus' ), 'error' );
 			return false;
 		}
-		
+
 		// 28 September 2017: APIv1 is gone. We'll keep the variable to make life easier if there's ever an APIv3.
 		$use_api_ver = 2;
-		
-		if (empty($opts['tk_request_token'])) {
-			$this->log("begin cloud upload (using API version $use_api_ver with OAuth v2 token)");
+
+		if ( empty( $opts['tk_request_token'] ) ) {
+			$this->log( "begin cloud upload (using API version $use_api_ver with OAuth v2 token)" );
 		} else {
-			$this->log("begin cloud upload (using API version $use_api_ver with OAuth v1 token)");
+			$this->log( "begin cloud upload (using API version $use_api_ver with OAuth v1 token)" );
 		}
 
-		$chunk_size = $backupplus->jobdata_get('dropbox_chunk_size', 1048576);
+		$chunk_size = $backupplus->jobdata_get( 'dropbox_chunk_size', 1048576 );
 
 		try {
 			$dropbox = $this->bootstrap();
-			if (false === $dropbox) throw new Exception(__('You are not authenticated with Dropbox', 'backupplus'));
-			$this->log("access gained; setting chunk size to: ".round($chunk_size/1024, 1)." KB");
-			$dropbox->setChunkSize($chunk_size);
-		} catch (Exception $e) {
-			$this->log('error when trying to gain access: '.$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
+			if ( false === $dropbox ) {
+				throw new Exception( __( 'You are not authenticated with Dropbox', 'backupplus' ) );
+			}
+			$this->log( 'access gained; setting chunk size to: ' . round( $chunk_size / 1024, 1 ) . ' KB' );
+			$dropbox->setChunkSize( $chunk_size );
+		} catch ( Exception $e ) {
+			$this->log( 'error when trying to gain access: ' . $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			/* translators: %s: Error message */
-			$this->log(sprintf(__('error: %s (see log file for more)', 'backupplus'), $e->getMessage()), 'error');
+			$this->log( sprintf( __( 'error: %s (see log file for more)', 'backupplus' ), $e->getMessage() ), 'error' );
 			return false;
 		}
 
 		$backupplus_dir = $backupplus->backups_dir_location();
 
-		foreach ($backup_array as $file) {
+		foreach ( $backup_array as $file ) {
 
 			$available_quota = -1;
 
@@ -259,114 +283,118 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 				$quota_info = $dropbox->quotaInfo();
 
 				// Access token expired try to refresh and then call quota info again
-				if ("401" == $quota_info['code']) {
-					$this->log('HTTP code 401 (unauthorized) code returned from Dropbox; attempting to refresh access token');
+				if ( '401' == $quota_info['code'] ) {
+					$this->log( 'HTTP code 401 (unauthorized) code returned from Dropbox; attempting to refresh access token' );
 					$dropbox->refreshAccessToken();
 					$quota_info = $dropbox->quotaInfo();
 				}
 
-				if ("200" != $quota_info['code']) {
-					$message = "account/info did not return HTTP 200; returned: ". $quota_info['code'];
-				} elseif (!isset($quota_info['body'])) {
-					$message = "account/info did not return the expected data";
+				if ( '200' != $quota_info['code'] ) {
+					$message = 'account/info did not return HTTP 200; returned: ' . $quota_info['code'];
+				} elseif ( ! isset( $quota_info['body'] ) ) {
+					$message = 'account/info did not return the expected data';
 				} else {
 					$body = $quota_info['body'];
-					if (isset($body->quota_info)) {
-						$quota_info = $body->quota_info;
-						$total_quota = $quota_info->quota;
-						$normal_quota = $quota_info->normal;
-						$shared_quota = $quota_info->shared;
-						$available_quota = $total_quota - ($normal_quota + $shared_quota);
-						$message = "quota usage: normal=".round($normal_quota/1048576, 1)." MB, shared=".round($shared_quota/1048576, 1)." MB, total=".round($total_quota/1048576, 1)." MB, available=".round($available_quota/1048576, 1)." MB";
+					if ( isset( $body->quota_info ) ) {
+						$quota_info      = $body->quota_info;
+						$total_quota     = $quota_info->quota;
+						$normal_quota    = $quota_info->normal;
+						$shared_quota    = $quota_info->shared;
+						$available_quota = $total_quota - ( $normal_quota + $shared_quota );
+						$message         = 'quota usage: normal=' . round( $normal_quota / 1048576, 1 ) . ' MB, shared=' . round( $shared_quota / 1048576, 1 ) . ' MB, total=' . round( $total_quota / 1048576, 1 ) . ' MB, available=' . round( $available_quota / 1048576, 1 ) . ' MB';
 					} else {
-						$total_quota = max($body->allocation->allocated, 1);
-						$used = $body->used;
+						$total_quota = max( $body->allocation->allocated, 1 );
+						$used        = $body->used;
 						/* check here to see if the account is a team account and if so use the other used value
 						This will give us their total usage including their individual account and team account */
-						if (isset($body->allocation->used)) $used = $body->allocation->used;
+						if ( isset( $body->allocation->used ) ) {
+							$used = $body->allocation->used;
+						}
 						$available_quota = $total_quota - $used;
-						$message = "quota usage: used=".round($used/1048576, 1)." MB, total=".round($total_quota/1048576, 1)." MB, available=".round($available_quota/1048576, 1)." MB";
+						$message         = 'quota usage: used=' . round( $used / 1048576, 1 ) . ' MB, total=' . round( $total_quota / 1048576, 1 ) . ' MB, available=' . round( $available_quota / 1048576, 1 ) . ' MB';
 					}
 				}
-				$this->log($message);
-			} catch (Exception $e) {
-				$this->log("exception (".get_class($e).") occurred whilst getting account info: ".$e->getMessage());
+				$this->log( $message );
+			} catch ( Exception $e ) {
+				$this->log( 'exception (' . get_class( $e ) . ') occurred whilst getting account info: ' . $e->getMessage() );
 				// $this->log(sprintf(__("%s error: %s", 'backupplus'), 'Dropbox', $e->getMessage()).' ('.$e->getCode().')', 'warning', md5($e->getMessage()));
 			}
 
 			$file_success = 1;
 
-			$hash = md5($file);
+			$hash                    = md5( $file );
 			$this->current_file_hash = $hash;
 
-			$filesize = filesize($backupplus_dir.'/'.$file);
+			$filesize                = filesize( $backupplus_dir . '/' . $file );
 			$this->current_file_size = $filesize;
 
 			// Into KB
-			$filesize = $filesize/1024;
-			$microtime = microtime(true);
+			$filesize  = $filesize / 1024;
+			$microtime = microtime( true );
 
-			if ('None' != ($upload_id = $this->jobdata_get('upload_id_'.$hash, 'None', 'updraf_dbid_'.$hash))) {
+			if ( 'None' != ( $upload_id = $this->jobdata_get( 'upload_id_' . $hash, 'None', 'updraf_dbid_' . $hash ) ) ) {
 				// Resume
-				$offset = $this->jobdata_get('upload_offset_'.$hash, 0, 'updraf_dbof_'.$hash);
-				if ($offset) $this->log("This is a resumption: $offset bytes had already been uploaded");
+				$offset = $this->jobdata_get( 'upload_offset_' . $hash, 0, 'updraf_dbof_' . $hash );
+				if ( $offset ) {
+					$this->log( "This is a resumption: $offset bytes had already been uploaded" );
+				}
 			} else {
-				$offset = 0;
+				$offset    = 0;
 				$upload_id = 'None';
 			}
 
 			// We don't actually abort now - there's no harm in letting it try and then fail
-			if (-1 != $available_quota && $available_quota < ($filesize-$offset)) {
-				$this->log("File upload expected to fail: file data remaining to upload ($file) size is ".($filesize-$offset)." b (overall file size; .".($filesize*1024)." b), whereas available quota is only $available_quota b");
-// $this->log(sprintf(__("Account full: your %s account has only %d bytes left, but the file to be uploaded has %d bytes remaining (total size: %d bytes)",'backupplus'),'Dropbox', $available_quota, $filesize-$offset, $filesize), 'warning');
+			if ( -1 != $available_quota && $available_quota < ( $filesize - $offset ) ) {
+				$this->log( "File upload expected to fail: file data remaining to upload ($file) size is " . ( $filesize - $offset ) . ' b (overall file size; .' . ( $filesize * 1024 ) . " b), whereas available quota is only $available_quota b" );
+				// $this->log(sprintf(__("Account full: your %s account has only %d bytes left, but the file to be uploaded has %d bytes remaining (total size: %d bytes)",'backupplus'),'Dropbox', $available_quota, $filesize-$offset, $filesize), 'warning');
 			}
 
-			$ufile = apply_filters('backupplus_dropbox_modpath', $file, $this);
+			$ufile = apply_filters( 'backupplus_dropbox_modpath', $file, $this );
 
-			$this->log("Attempt to upload: $file to: $ufile");
+			$this->log( "Attempt to upload: $file to: $ufile" );
 
-			$this->upload_tick = microtime(true);
+			$this->upload_tick     = microtime( true );
 			$this->uploaded_offset = $offset;
 
 			try {
-				$response = $dropbox->chunkedUpload($backupplus_dir.'/'.$file, '', $ufile, true, $offset, $upload_id, array($this, 'chunked_callback'));
-				if (empty($response['code']) || "200" != $response['code']) {
-					$this->log('Unexpected HTTP code returned from Dropbox: '.$response['code']." (".serialize($response).")");
-					if ($response['code'] >= 400) {
-						if (401 == $response['code']) {
-							$this->log('HTTP code 401 returned from Dropbox, refreshing access token');
+				$response = $dropbox->chunkedUpload( $backupplus_dir . '/' . $file, '', $ufile, true, $offset, $upload_id, array( $this, 'chunked_callback' ) );
+				if ( empty( $response['code'] ) || '200' != $response['code'] ) {
+					$this->log( 'Unexpected HTTP code returned from Dropbox: ' . $response['code'] . ' (' . serialize( $response ) . ')' );
+					if ( $response['code'] >= 400 ) {
+						if ( 401 == $response['code'] ) {
+							$this->log( 'HTTP code 401 returned from Dropbox, refreshing access token' );
 							$dropbox->refreshAccessToken();
 						}
 						/* translators: %s: Destination path */
-						$this->log(sprintf(__('error: failed to upload file to %s (see log file for more)', 'backupplus'), $file), 'error');
+						$this->log( sprintf( __( 'error: failed to upload file to %s (see log file for more)', 'backupplus' ), $file ), 'error' );
 						$file_success = 0;
 					} else {
-						$this->log(__('did not return the expected response - check your log file for more details', 'backupplus'), 'warning');
+						$this->log( __( 'did not return the expected response - check your log file for more details', 'backupplus' ), 'warning' );
 					}
 				}
-			} catch (Exception $e) {
-				$this->log("chunked upload exception (".get_class($e)."): ".$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
-				if (preg_match("/Submitted input out of alignment: got \[(\d+)\] expected \[(\d+)\]/i", $e->getMessage(), $matches)) {
+			} catch ( Exception $e ) {
+				$this->log( 'chunked upload exception (' . get_class( $e ) . '): ' . $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
+				if ( preg_match( '/Submitted input out of alignment: got \[(\d+)\] expected \[(\d+)\]/i', $e->getMessage(), $matches ) ) {
 					// Try the indicated offset
-					$we_tried = $matches[1];
+					$we_tried       = $matches[1];
 					$dropbox_wanted = (int) $matches[2];
-					$this->log("not yet aligned: tried=$we_tried, wanted=$dropbox_wanted; will attempt recovery");
+					$this->log( "not yet aligned: tried=$we_tried, wanted=$dropbox_wanted; will attempt recovery" );
 					$this->uploaded_offset = $dropbox_wanted;
-					$upload_id = $this->jobdata_get('upload_id_'.$hash, 'None', 'updraf_dbid_'.$hash);
+					$upload_id             = $this->jobdata_get( 'upload_id_' . $hash, 'None', 'updraf_dbid_' . $hash );
 					try {
-						$dropbox->chunkedUpload($backupplus_dir.'/'.$file, '', $ufile, true, $dropbox_wanted, $upload_id, array($this, 'chunked_callback'));
-					} catch (Exception $e) {
+						$dropbox->chunkedUpload( $backupplus_dir . '/' . $file, '', $ufile, true, $dropbox_wanted, $upload_id, array( $this, 'chunked_callback' ) );
+					} catch ( Exception $e ) {
 						$msg = $e->getMessage();
-						if (preg_match('/Upload with upload_id .* already completed/', $msg)) {
-							$this->log('returned an error, but apparently indicating previous success: '.$msg);
+						if ( preg_match( '/Upload with upload_id .* already completed/', $msg ) ) {
+							$this->log( 'returned an error, but apparently indicating previous success: ' . $msg );
 						} else {
-							$this->log($msg.' (line: '.$e->getLine().', file: '.$e->getFile().')');
+							$this->log( $msg . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 							/* translators: %s: Destination path */
-							$this->log(sprintf(__('failed to upload file to %s (see log file for more)', 'backupplus'), $ufile), 'error');
+							$this->log( sprintf( __( 'failed to upload file to %s (see log file for more)', 'backupplus' ), $ufile ), 'error' );
 							$file_success = 0;
-							if (strpos($msg, 'select/poll returned error') !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800) {
-								BackupPlus_Job_Scheduler::reschedule(60);
-								$this->log("Select/poll returned after a long time: scheduling a resumption and terminating for now");
+							if ( strpos( $msg, 'select/poll returned error' ) !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800 ) {
+								BackupPlus_Job_Scheduler::reschedule( 60 );
+								$this->log( 'Select/poll returned after a long time: scheduling a resumption and terminating for now' );
 								BackupPlus_Job_Scheduler::record_still_alive();
 								die;
 							}
@@ -374,35 +402,33 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 					}
 				} else {
 					$msg = $e->getMessage();
-					if (preg_match('/Upload with upload_id .* already completed/', $msg)) {
-						$this->log('returned an error, but apparently indicating previous success: '.$msg);
+					if ( preg_match( '/Upload with upload_id .* already completed/', $msg ) ) {
+						$this->log( 'returned an error, but apparently indicating previous success: ' . $msg );
 					} else {
 						/* translators: %s: Destination path */
-						$this->log(sprintf(__('failed to upload file to %s (see log file for more)', 'backupplus'), $ufile), 'error');
+						$this->log( sprintf( __( 'failed to upload file to %s (see log file for more)', 'backupplus' ), $ufile ), 'error' );
 						$file_success = 0;
-						if (strpos($msg, 'select/poll returned error') !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800) {
-							BackupPlus_Job_Scheduler::reschedule(60);
-							$this->log("Select/poll returned after a long time: scheduling a resumption and terminating for now");
+						if ( strpos( $msg, 'select/poll returned error' ) !== false && $this->upload_tick > 0 && time() - $this->upload_tick > 800 ) {
+							BackupPlus_Job_Scheduler::reschedule( 60 );
+							$this->log( 'Select/poll returned after a long time: scheduling a resumption and terminating for now' );
 							BackupPlus_Job_Scheduler::record_still_alive();
 							die;
 						}
 					}
 				}
 			}
-			if ($file_success) {
-				$backupplus->uploaded_file($file);
-				$microtime_elapsed = microtime(true)-$microtime;
-				$speedps = ($microtime_elapsed > 0) ? $filesize/$microtime_elapsed : 0;
-				$speed = sprintf("%.2d", $filesize)." KB in ".sprintf("%.2d", $microtime_elapsed)."s (".sprintf("%.2d", $speedps)." KB/s)";
-				$this->log("File upload success (".$file."): $speed");
-				$this->jobdata_delete('upload_id_'.$hash, 'updraf_dbid_'.$hash);
-				$this->jobdata_delete('upload_offset_'.$hash, 'updraf_dbof_'.$hash);
+			if ( $file_success ) {
+				$backupplus->uploaded_file( $file );
+				$microtime_elapsed = microtime( true ) - $microtime;
+				$speedps           = ( $microtime_elapsed > 0 ) ? $filesize / $microtime_elapsed : 0;
+				$speed             = sprintf( '%.2d', $filesize ) . ' KB in ' . sprintf( '%.2d', $microtime_elapsed ) . 's (' . sprintf( '%.2d', $speedps ) . ' KB/s)';
+				$this->log( 'File upload success (' . $file . "): $speed" );
+				$this->jobdata_delete( 'upload_id_' . $hash, 'updraf_dbid_' . $hash );
+				$this->jobdata_delete( 'upload_offset_' . $hash, 'updraf_dbof_' . $hash );
 			}
-
 		}
 
 		return null;
-
 	}
 
 	/**
@@ -411,72 +437,87 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @param  String $match a substring to require (tested via strpos() !== false)
 	 * @return Array
 	 */
-	public function listfiles($match = 'backup_') {
+	public function listfiles( $match = 'backup_' ) {
 
 		$opts = $this->get_options();
 
-		if (empty($opts['tk_access_token'])) return new WP_Error('no_settings', __('No settings were found', 'backupplus').' (dropbox)');
+		if ( empty( $opts['tk_access_token'] ) ) {
+			return new WP_Error( 'no_settings', __( 'No settings were found', 'backupplus' ) . ' (dropbox)' );
+		}
 
 		try {
 			$dropbox = $this->bootstrap();
-		} catch (Exception $e) {
-			$this->log('access error: '.$e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
-			return new WP_Error('access_error', $e->getMessage());
+		} catch ( Exception $e ) {
+			$this->log( 'access error: ' . $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
+			return new WP_Error( 'access_error', $e->getMessage() );
 		}
 
-		$searchpath = '/'.untrailingslashit(apply_filters('backupplus_dropbox_modpath', '', $this));
+		$searchpath = '/' . untrailingslashit( apply_filters( 'backupplus_dropbox_modpath', '', $this ) );
 
 		try {
 			/* Some users could have a large amount of backups, the max search is 1000 entries we should continue to search until there are no more entries to bring back. */
-			$cursor = '';
+			$cursor  = '';
 			$matches = array();
 
-			while (true) {
-				$search = $dropbox->search($match, $searchpath, 1000, $cursor);
+			while ( true ) {
+				$search = $dropbox->search( $match, $searchpath, 1000, $cursor );
 				/* translators: 1: Service name, 2: HTTP response code */
-				if (empty($search['code']) || 200 != $search['code']) return new WP_Error('response_error', sprintf(__('%1$s returned an unexpected HTTP response: %2$s', 'backupplus'), 'Dropbox', $search['code']), $search['body']);
+				if ( empty( $search['code'] ) || 200 != $search['code'] ) {
+					return new WP_Error( 'response_error', sprintf( __( '%1$s returned an unexpected HTTP response: %2$s', 'backupplus' ), 'Dropbox', $search['code'] ), $search['body'] );
+				}
 
-				if (empty($search['body'])) return array();
+				if ( empty( $search['body'] ) ) {
+					return array();
+				}
 
-				if (isset($search['body']->matches) && is_array($search['body']->matches)) {
-					$matches = array_merge($matches, $search['body']->matches);
-				} elseif (is_array($search['body'])) {
+				if ( isset( $search['body']->matches ) && is_array( $search['body']->matches ) ) {
+					$matches = array_merge( $matches, $search['body']->matches );
+				} elseif ( is_array( $search['body'] ) ) {
 					$matches = $search['body'];
 				} else {
 					break;
 				}
 
-				if (isset($search['body']->has_more) && true == $search['body']->has_more && isset($search['body']->cursor)) {
+				if ( isset( $search['body']->has_more ) && true == $search['body']->has_more && isset( $search['body']->cursor ) ) {
 					$cursor = $search['body']->cursor;
 				} else {
 					break;
 				}
 			}
-
-		} catch (Exception $e) {
-			$this->log($e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
+		} catch ( Exception $e ) {
+			$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			// The most likely cause of a search_error is specifying a non-existent path, which should just result in an empty result set.
-// return new WP_Error('search_error', $e->getMessage());
+			// return new WP_Error('search_error', $e->getMessage());
 			return array();
 		}
 
 		$results = array();
 
-		foreach ($matches as $item) {
+		foreach ( $matches as $item ) {
 			$item = $item->metadata;
-			if (!is_object($item)) continue;
-			if (isset($item->metadata)) $item = $item->metadata; // 2/files/search_v2 has a slightly different output structure compared to 2/files/search model
+			if ( ! is_object( $item ) ) {
+				continue;
+			}
+			if ( isset( $item->metadata ) ) {
+				$item = $item->metadata; // 2/files/search_v2 has a slightly different output structure compared to 2/files/search model
+			}
 
-			if ((!isset($item->size) || $item->size > 0) && 'folder' != $item->{'.tag'} && !empty($item->path_display) && 0 === strpos($item->path_display, $searchpath)) {
+			if ( ( ! isset( $item->size ) || $item->size > 0 ) && 'folder' != $item->{'.tag'} && ! empty( $item->path_display ) && 0 === strpos( $item->path_display, $searchpath ) ) {
 
-				$path = substr($item->path_display, strlen($searchpath));
-				if ('/' == substr($path, 0, 1)) $path = substr($path, 1);
+				$path = substr( $item->path_display, strlen( $searchpath ) );
+				if ( '/' == substr( $path, 0, 1 ) ) {
+					$path = substr( $path, 1 );
+				}
 
 				// Ones in subfolders are not wanted
-				if (false !== strpos($path, '/')) continue;
+				if ( false !== strpos( $path, '/' ) ) {
+					continue;
+				}
 
-				$result = array('name' => $path);
-				if (!empty($item->size)) $result['size'] = $item->size;
+				$result = array( 'name' => $path );
+				if ( ! empty( $item->size ) ) {
+					$result['size'] = $item->size;
+				}
 
 				$results[] = $result;
 			}
@@ -491,7 +532,7 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @return Array
 	 */
 	private function defaults() {
-		return apply_filters('backupplus_dropbox_defaults', array('Z3Q3ZmkwbnplNHA0Zzlx', 'bTY0bm9iNmY4eWhjODRt'));
+		return apply_filters( 'backupplus_dropbox_defaults', array( 'Z3Q3ZmkwbnplNHA0Zzlx', 'bTY0bm9iNmY4eWhjODRt' ) );
 	}
 
 	/**
@@ -502,120 +543,127 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @param Array $sizeinfo - unused here
 	 * @return Boolean|String - either a boolean true or an error code string
 	 */
-	public function delete($files, $data = null, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $data and $sizeinfo unused
+	public function delete( $files, $data = null, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $data and $sizeinfo unused
 
-		if (is_string($files)) $files = array($files);
+		if ( is_string( $files ) ) {
+			$files = array( $files );
+		}
 
 		$opts = $this->get_options();
 
-		if (empty($opts['tk_access_token'])) {
-			$this->log('You are not authenticated with Dropbox (3)');
+		if ( empty( $opts['tk_access_token'] ) ) {
+			$this->log( 'You are not authenticated with Dropbox (3)' );
 			/* translators: %s: Service name */
-			$this->log(sprintf(__('You are not authenticated with %s (whilst deleting)', 'backupplus'), 'Dropbox'), 'warning');
+			$this->log( sprintf( __( 'You are not authenticated with %s (whilst deleting)', 'backupplus' ), 'Dropbox' ), 'warning' );
 			return 'authentication_fail';
 		}
 
 		try {
 			$dropbox = $this->bootstrap();
-		} catch (Exception $e) {
-			$this->log($e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
+		} catch ( Exception $e ) {
+			$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			/* translators: %s: Service name */
-			$this->log(sprintf(__('Failed to access %s when deleting (see log file for more)', 'backupplus'), 'Dropbox'), 'warning');
+			$this->log( sprintf( __( 'Failed to access %s when deleting (see log file for more)', 'backupplus' ), 'Dropbox' ), 'warning' );
 			return 'service_unavailable';
 		}
-		if (false === $dropbox) return false;
+		if ( false === $dropbox ) {
+			return false;
+		}
 
 		$any_failures = false;
-		
-		foreach ($files as $file) {
-			$ufile = apply_filters('backupplus_dropbox_modpath', $file, $this);
-			$this->log("request deletion: $ufile");
+
+		foreach ( $files as $file ) {
+			$ufile = apply_filters( 'backupplus_dropbox_modpath', $file, $this );
+			$this->log( "request deletion: $ufile" );
 
 			try {
-				$dropbox->delete($ufile);
+				$dropbox->delete( $ufile );
 				$file_success = 1;
-			} catch (Exception $e) {
-				$this->log($e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
+			} catch ( Exception $e ) {
+				$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			}
 
-			if (isset($file_success)) {
-				$this->log('deletion succeeded');
+			if ( isset( $file_success ) ) {
+				$this->log( 'deletion succeeded' );
 			} else {
-				$this->log('deletion failed');
+				$this->log( 'deletion failed' );
 				$any_failures = true;
 			}
 		}
-		
-		return $any_failures ? 'file_delete_error' : true;
 
+		return $any_failures ? 'file_delete_error' : true;
 	}
 
-	public function download($file) {
+	public function download( $file ) {
 
 		global $backupplus;
 
 		$opts = $this->get_options();
 
-		if (empty($opts['tk_access_token'])) {
-			$this->log('You are not authenticated with Dropbox (4)');
+		if ( empty( $opts['tk_access_token'] ) ) {
+			$this->log( 'You are not authenticated with Dropbox (4)' );
 			/* translators: %s: Service name */
-			$this->log(sprintf(__('You are not authenticated with %s', 'backupplus'), 'Dropbox'), 'error');
+			$this->log( sprintf( __( 'You are not authenticated with %s', 'backupplus' ), 'Dropbox' ), 'error' );
 			return false;
 		}
 
 		try {
 			$dropbox = $this->bootstrap();
-		} catch (Exception $e) {
-			$this->log($e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')');
-			$this->log($e->getMessage().' (line: '.$e->getLine().', file: '.$e->getFile().')', 'error');
+		} catch ( Exception $e ) {
+			$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
+			$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')', 'error' );
 			return false;
 		}
-		if (false === $dropbox) return false;
-		
-		$remote_files = $this->listfiles($file);
-		
-		foreach ($remote_files as $file_info) {
-			if ($file_info['name'] == $file) {
-				return $backupplus->chunked_download($file, $this, $file_info['size'], apply_filters('backupplus_dropbox_downloads_manually_break_up', false), null, 2*1048576);
+		if ( false === $dropbox ) {
+			return false;
+		}
+
+		$remote_files = $this->listfiles( $file );
+
+		foreach ( $remote_files as $file_info ) {
+			if ( $file_info['name'] == $file ) {
+				return $backupplus->chunked_download( $file, $this, $file_info['size'], apply_filters( 'backupplus_dropbox_downloads_manually_break_up', false ), null, 2 * 1048576 );
 			}
 		}
 
-		$this->log("$file: file not found in listing of remote directory");
-		
+		$this->log( "$file: file not found in listing of remote directory" );
+
 		return false;
 	}
 
 	/**
 	 * Callback used by by chunked downloading API
 	 *
-	 * @param String   $file	- the file (basename) to be downloaded
-	 * @param Array	   $headers - supplied headers
-	 * @param Mixed	   $data    - pass-back from our call to the API (which we don't use)
+	 * @param String   $file    - the file (basename) to be downloaded
+	 * @param Array    $headers - supplied headers
+	 * @param Mixed    $data    - pass-back from our call to the API (which we don't use)
 	 * @param resource $fh      - the local file handle
 	 *
 	 * @return String - the data downloaded
 	 */
-	public function chunked_download($file, $headers, $data, $fh) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from BackupPlus class uses 4 arguments.
+	public function chunked_download( $file, $headers, $data, $fh ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from BackupPlus class uses 4 arguments.
 
-		$opts = $this->get_options();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- filter use
+		$opts    = $this->get_options();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- filter use
 		$storage = $this->get_storage();
 
 		$try_the_other_one = false;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- filter use
 
-		$ufile = apply_filters('backupplus_dropbox_modpath', $file, $this);
+		$ufile = apply_filters( 'backupplus_dropbox_modpath', $file, $this );
 
 		$options = array();
-		
-		if (!empty($headers)) $options['headers'] = $headers;
+
+		if ( ! empty( $headers ) ) {
+			$options['headers'] = $headers;
+		}
 
 		try {
-			$get = $storage->download($ufile, $fh, $options);
-		} catch (Exception $e) {
-			$this->log($e);
-			$this->log($e->getMessage(), 'error');
+			$get = $storage->download( $ufile, $fh, $options );
+		} catch ( Exception $e ) {
+			$this->log( $e );
+			$this->log( $e->getMessage(), 'error' );
 			$get = false;
 		}
-		
+
 		return $get;
 	}
 
@@ -628,37 +676,37 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	public function get_template_properties() {
 		global $backupplus, $backupplus_admin;
 		$partial_templates = $this->get_partial_templates();
-		$properties = array(
-			'storage_image_url' => BACKUPPLUS_URL.'/images/dropbox-logo.png',
+		$properties        = array(
+			'storage_image_url'                       => BACKUPPLUS_URL . '/images/dropbox-logo.png',
 			/* translators: %s: Service name */
-			'storage_image_description' => sprintf(__('%s logo', 'backupplus'), 'Dropbox'),
-			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($backupplus->backup_methods[$this->get_id()], true, $this->get_id().'', false), $this->allowed_html_for_content_sanitisation()),
-			'app_authorisation_policy_label' => esc_html__('BackupPlus uses Dropbox authorization to store backups in the Dropbox account you select.', 'backupplus'),
-			'sub_folders_instruction_label1' => __('Need to use sub-folders?', 'backupplus'),
+			'storage_image_description'               => sprintf( __( '%s logo', 'backupplus' ), 'Dropbox' ),
+			'curl_existence_label'                    => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], true, $this->get_id() . '', false ), $this->allowed_html_for_content_sanitisation() ),
+			'app_authorisation_policy_label'          => esc_html__( 'BackupPlus uses Dropbox authorization to store backups in the Dropbox account you select.', 'backupplus' ),
+			'sub_folders_instruction_label1'          => __( 'Need to use sub-folders?', 'backupplus' ),
 			/* translators: %s: Backup folder path */
-			'sub_folders_instruction_label2' => sprintf(__('Backups are saved in %s.', 'backupplus'), 'apps/BackupPlus'),
+			'sub_folders_instruction_label2'          => sprintf( __( 'Backups are saved in %s.', 'backupplus' ), 'apps/BackupPlus' ),
 			/* translators: 1: Opening link tag, 2: Closing link tag */
-			'sub_folders_instruction_label3' => __('BackupPlus uses the configured Dropbox app folder for backups.', 'backupplus'),
-			'input_authenticate_with_label' => sprintf(
+			'sub_folders_instruction_label3'          => __( 'BackupPlus uses the configured Dropbox app folder for backups.', 'backupplus' ),
+			'input_authenticate_with_label'           => sprintf(
 				/* translators: %s: Service name */
-				__('Authenticate with %s', 'backupplus'),
-				__('Dropbox', 'backupplus')
+				__( 'Authenticate with %s', 'backupplus' ),
+				__( 'Dropbox', 'backupplus' )
 			),
-			'already_authenticated_label' => __('(You are already authenticated).', 'backupplus'),
+			'already_authenticated_label'             => __( '(You are already authenticated).', 'backupplus' ),
 			/* translators: %s: Service name */
-			'authentication_link_text' => wp_kses(sprintf(__("<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'backupplus'), $backupplus->backup_methods[$this->get_id()]), $this->allowed_html_for_content_sanitisation()),
+			'authentication_link_text'                => wp_kses( sprintf( __( "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ), $this->allowed_html_for_content_sanitisation() ),
 			/* translators: %s: Service name */
-			'deauthentication_link_text' => sprintf(__("Follow this link to remove these settings for %s.", 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
-			'authentication_label' => __('Ensure you are logged into the correct account before continuing.', 'backupplus'),
-			'authorised_redirect_uri_label' => __('You must add the following as the authorised redirect URI in your Dropbox console (under "API Settings") when asked', 'backupplus'),
-			'input_app_key_label' => __('Your Dropbox App Key', 'backupplus'),
-			'input_app_secret_label' => __('Your Dropbox App Secret', 'backupplus'),
-			'partial_templates_contain_input_element' => isset($partial_templates['dropbox_additional_configuration_top']) && preg_match('/<input(?:>|[^>]+>)/i', $partial_templates['dropbox_additional_configuration_top']),
-			'deauthentication_nonce' => wp_create_nonce($this->get_id().'_deauth_nonce'),
-			'input_folder_label' => __('Store at', 'backupplus'),
-			'input_folder_prefix' => 'apps/UpdraftPlus.Com/',
+			'deauthentication_link_text'              => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'authentication_label'                    => __( 'Ensure you are logged into the correct account before continuing.', 'backupplus' ),
+			'authorised_redirect_uri_label'           => __( 'You must add the following as the authorised redirect URI in your Dropbox console (under "API Settings") when asked', 'backupplus' ),
+			'input_app_key_label'                     => __( 'Your Dropbox App Key', 'backupplus' ),
+			'input_app_secret_label'                  => __( 'Your Dropbox App Secret', 'backupplus' ),
+			'partial_templates_contain_input_element' => isset( $partial_templates['dropbox_additional_configuration_top'] ) && preg_match( '/<input(?:>|[^>]+>)/i', $partial_templates['dropbox_additional_configuration_top'] ),
+			'deauthentication_nonce'                  => wp_create_nonce( $this->get_id() . '_deauth_nonce' ),
+			'input_folder_label'                      => __( 'Store at', 'backupplus' ),
+			'input_folder_prefix'                     => 'apps/UpdraftPlus.Com/',
 		);
-		return wp_parse_args(apply_filters('backupplus_'.$this->get_id().'_template_properties', array()), wp_parse_args($properties, $this->get_persistent_variables_and_methods()));
+		return wp_parse_args( apply_filters( 'backupplus_' . $this->get_id() . '_template_properties', array() ), wp_parse_args( $properties, $this->get_persistent_variables_and_methods() ) );
 	}
 
 	/**
@@ -697,7 +745,7 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 			</tr>
 		<?php
 		$partial_templates['dropbox_additional_configuration_top'] = ob_get_clean();
-		return wp_parse_args(apply_filters('backupplus_'.$this->get_id().'_partial_templates', $partial_templates), parent::get_partial_templates());
+		return wp_parse_args( apply_filters( 'backupplus_' . $this->get_id() . '_partial_templates', $partial_templates ), parent::get_partial_templates() );
 	}
 
 	/**
@@ -760,51 +808,51 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @param array $opts
 	 * @return String - Ownername with email
 	 */
-	private function generate_ownername_with_email($opts) {
+	private function generate_ownername_with_email( $opts ) {
 		$ownername_with_email = '';
-		
-		if (!empty($opts['ownername'])) {
+
+		if ( ! empty( $opts['ownername'] ) ) {
 			$ownername_with_email = $opts['ownername'];
 		}
-		
-		if (!empty($opts['email'])) {
-			if (!empty($ownername_with_email)) {
-				$ownername_with_email = $ownername_with_email.' ('.$opts['email'].')';
+
+		if ( ! empty( $opts['email'] ) ) {
+			if ( ! empty( $ownername_with_email ) ) {
+				$ownername_with_email = $ownername_with_email . ' (' . $opts['email'] . ')';
 			} else {
 				$ownername_with_email = $opts['email'];
 			}
 		}
 
-	   return $ownername_with_email;
+		return $ownername_with_email;
 	}
-	
+
 	/**
 	 * Modifies handerbar template options
 	 *
 	 * @param array $opts
 	 * @return Array - Modified handerbar template options
 	 */
-	public function transform_options_for_template($opts) {
-		if (!empty($opts['tk_access_token'])) {
-			$opts['ownername'] = empty($opts['ownername']) ? '' : $opts['ownername'];
-			$opts['email'] = empty($opts['email']) ? '' : $opts['email'];
-			$ownername_with_email = $this->generate_ownername_with_email($opts);
-			
-			if ($ownername_with_email) {
+	public function transform_options_for_template( $opts ) {
+		if ( ! empty( $opts['tk_access_token'] ) ) {
+			$opts['ownername']    = empty( $opts['ownername'] ) ? '' : $opts['ownername'];
+			$opts['email']        = empty( $opts['email'] ) ? '' : $opts['email'];
+			$ownername_with_email = $this->generate_ownername_with_email( $opts );
+
+			if ( $ownername_with_email ) {
 				/* translators: %s: Account holder's name with email */
-				$opts['ownername_sentence']	= sprintf(__("Account holder's name: %s.", 'backupplus'), $ownername_with_email).' ';
+				$opts['ownername_sentence'] = sprintf( __( "Account holder's name: %s.", 'backupplus' ), $ownername_with_email ) . ' ';
 			}
 			$opts['is_authenticated'] = true;
 		}
-		$opts['old_user_settings'] = (!empty($opts['appkey']) || (defined('BACKUPPLUS_CUSTOM_DROPBOX_APP') && BACKUPPLUS_CUSTOM_DROPBOX_APP));
-		if ($opts['old_user_settings']) {
-			$opts['appkey'] = empty($opts['appkey']) ? '' : $opts['appkey'];
-			$opts['secret'] = empty($opts['secret']) ? '' : $opts['secret'];
+		$opts['old_user_settings'] = ( ! empty( $opts['appkey'] ) || ( defined( 'BACKUPPLUS_CUSTOM_DROPBOX_APP' ) && BACKUPPLUS_CUSTOM_DROPBOX_APP ) );
+		if ( $opts['old_user_settings'] ) {
+			$opts['appkey'] = empty( $opts['appkey'] ) ? '' : $opts['appkey'];
+			$opts['secret'] = empty( $opts['secret'] ) ? '' : $opts['secret'];
 		}
-		$opts = apply_filters("backupplus_options_dropbox_options", $opts);
+		$opts = apply_filters( 'backupplus_options_dropbox_options', $opts );
 		return $opts;
 	}
-	
+
 	/**
 	 * Gives settings keys which values should not passed to handlebarsjs context.
 	 * The settings stored in UD in the database sometimes also include internal information that it would be best not to send to the front-end (so that it can't be stolen by a man-in-the-middle attacker)
@@ -835,40 +883,43 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @return null
 	 */
 	public function action_auth() {
-		$backupplus_dropboxauth = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'backupplus_dropboxauth');
-		$request_state = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'state');
-		if (isset($backupplus_dropboxauth)) {
-			if ('doit' == $backupplus_dropboxauth) {
+		$backupplus_dropboxauth = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_dropboxauth' );
+		$request_state          = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'state' );
+		if ( isset( $backupplus_dropboxauth ) ) {
+			if ( 'doit' == $backupplus_dropboxauth ) {
 				$this->action_authenticate_storage();
 				return;
-			} elseif ('deauth' == $backupplus_dropboxauth) {
+			} elseif ( 'deauth' == $backupplus_dropboxauth ) {
 				$this->action_deauthenticate_storage();
 				return;
 			}
-		} elseif (isset($request_state)) {
-			if (isset($_SERVER['REQUEST_METHOD']) && 'POST' == $_SERVER['REQUEST_METHOD']) {
-				$auth_state = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'state', '');
-				$raw_state = urldecode($auth_state);
-				$raw_code = urldecode(BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'code', ''));
+		} elseif ( isset( $request_state ) ) {
+			if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] ) {
+				$auth_state = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'state', '' );
+				$raw_state  = urldecode( $auth_state );
+				$raw_code   = urldecode( BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'code', '' ) );
 			} else {
-				$raw_state = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'state', '');
-				$raw_code = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'code', '');
+				$raw_state = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'state', '' );
+				$raw_code  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'code', '' );
 			}
 
-			if (!empty($raw_code)) $this->do_complete_authentication($raw_state, $raw_code);
+			if ( ! empty( $raw_code ) ) {
+				$this->do_complete_authentication( $raw_state, $raw_code );
+			}
 		}
 		try {
 			$this->auth_request();
-		} catch (Exception $e) {
+		} catch ( Exception $e ) {
 			$this->log(
 				sprintf(
 					/* translators: 1: Service name, 2: Error message */
-					__('%1$s error: %2$s', 'backupplus'),
+					__( '%1$s error: %2$s', 'backupplus' ),
 					/* translators: %s: Service name */
-					sprintf(__('%s authentication', 'backupplus'), 'Dropbox'),
+					sprintf( __( '%s authentication', 'backupplus' ), 'Dropbox' ),
 					$e->getMessage()
 				),
-			'error');
+				'error'
+			);
 		}
 	}
 
@@ -881,29 +932,33 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @return void|string - returns the authentication message if return_instead_of_echo is true
 	 */
-	public function do_complete_authentication($raw_state, $raw_code, $return_instead_of_echo = false) {
+	public function do_complete_authentication( $raw_state, $raw_code, $return_instead_of_echo = false ) {
 		// Get the CSRF from setting and check it matches the one returned if it does no CSRF attack has happened
-		$opts = $this->get_options();
-		$csrf = $opts['CSRF'];
-		$state = stripslashes($raw_state);
+		$opts  = $this->get_options();
+		$csrf  = $opts['CSRF'];
+		$state = stripslashes( $raw_state );
 		// Check the state to see if an instance_id has been attached and if it has then extract the state
-		$parts = explode(':', $state);
+		$parts = explode( ':', $state );
 		$state = $parts[0];
 
-		if (strcmp($csrf, $state) == 0) {
+		if ( strcmp( $csrf, $state ) == 0 ) {
 			$opts['CSRF'] = '';
-			if (isset($raw_code)) {
+			if ( isset( $raw_code ) ) {
 				// set code so it can be accessed in the next authentication step
-				$opts['code'] = stripslashes($raw_code);
+				$opts['code'] = stripslashes( $raw_code );
 				// remove our flag so we know this authentication is complete
-				if (isset($opts['auth_in_progress'])) unset($opts['auth_in_progress']);
-				$this->set_options($opts, true);
-				$this->set_connection_status(true);
-				$auth_result = $this->auth_token($return_instead_of_echo);
-				if ($return_instead_of_echo) return $auth_result;
+				if ( isset( $opts['auth_in_progress'] ) ) {
+					unset( $opts['auth_in_progress'] );
+				}
+				$this->set_options( $opts, true );
+				$this->set_connection_status( true );
+				$auth_result = $this->auth_token( $return_instead_of_echo );
+				if ( $return_instead_of_echo ) {
+					return $auth_result;
+				}
 			}
 		} else {
-			BackupPlus_Manipulation_Functions::error_log("BackupPlus: CSRF comparison failure: $csrf != $state");
+			BackupPlus_Manipulation_Functions::error_log( "BackupPlus: CSRF comparison failure: $csrf != $state" );
 		}
 	}
 
@@ -912,52 +967,56 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @param  String $instance_id - the instance id of the settings we want to authenticate
 	 */
-	public function do_authenticate_storage($instance_id) {
+	public function do_authenticate_storage( $instance_id ) {
 		try {
 			// Clear out the existing credentials
-			$opts = $this->get_options();
+			$opts                    = $this->get_options();
 			$opts['tk_access_token'] = '';
-			unset($opts['tk_request_token']);
+			unset( $opts['tk_request_token'] );
 			$opts['ownername'] = '';
 			// Set a flag so we know this authentication is in progress
 			$opts['auth_in_progress'] = true;
-			$this->set_options($opts, true);
+			$this->set_options( $opts, true );
 
-			$this->set_instance_id($instance_id);
-			$this->bootstrap(false);
-		} catch (Exception $e) {
+			$this->set_instance_id( $instance_id );
+			$this->bootstrap( false );
+		} catch ( Exception $e ) {
 			$this->log(
 				sprintf(
 					/* translators: 1: Service name, 2: Error message */
-					__('%1$s error: %2$s', 'backupplus'),
+					__( '%1$s error: %2$s', 'backupplus' ),
 					/* translators: %s: Service name */
-					sprintf(__('%s authentication', 'backupplus'),
-					'Dropbox'),
+					sprintf(
+						__( '%s authentication', 'backupplus' ),
+						'Dropbox'
+					),
 					$e->getMessage()
 				),
-			'error');
+				'error'
+			);
 		}
 	}
-	
+
 	/**
 	 * This method will start the bootstrap process for a de-authentication
 	 *
 	 * @param  String $instance_id - the instance id of the settings we want to de-authenticate
 	 */
-	public function do_deauthenticate_storage($instance_id) {
+	public function do_deauthenticate_storage( $instance_id ) {
 		try {
-			$this->set_instance_id($instance_id);
-			$this->bootstrap(true);
-		} catch (Exception $e) {
+			$this->set_instance_id( $instance_id );
+			$this->bootstrap( true );
+		} catch ( Exception $e ) {
 			$this->log(
 				sprintf(
 					/* translators: 1: Service name, 2: Error message */
-					__('%1$s error: %2$s', 'backupplus'),
+					__( '%1$s error: %2$s', 'backupplus' ),
 					/* translators: %s: Service name */
-					sprintf(__('%s de-authentication', 'backupplus'), 'Dropbox'),
+					sprintf( __( '%s de-authentication', 'backupplus' ), 'Dropbox' ),
 					$e->getMessage()
 				),
-			'error');
+				'error'
+			);
 		}
 	}
 
@@ -968,96 +1027,102 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @return void|string - returns the authentication message if return_instead_of_echo is true
 	 */
-	public function show_authed_admin_warning($return_instead_of_echo) {
+	public function show_authed_admin_warning( $return_instead_of_echo ) {
 		global $backupplus_admin;
 
 		$dropbox = $this->bootstrap();
-		if (false === $dropbox) return false;
+		if ( false === $dropbox ) {
+			return false;
+		}
 
 		try {
 			$account_info = $dropbox->accountInfo();
-		} catch (Exception $e) {
+		} catch ( Exception $e ) {
 			/* translators: 1: Service name, 2: Error message */
-			$accountinfo_err = sprintf(__('%1$s error: %2$s', 'backupplus'), 'Dropbox', $e->getMessage()).' ('.$e->getCode().')';
+			$accountinfo_err = sprintf( __( '%1$s error: %2$s', 'backupplus' ), 'Dropbox', $e->getMessage() ) . ' (' . $e->getCode() . ')';
 		}
 
-		$message = "<strong>".__('Success:', 'backupplus').'</strong> '.
+		$message = '<strong>' . __( 'Success:', 'backupplus' ) . '</strong> ' .
 			/* translators: %s: Service name */
-			sprintf(__('you have authenticated your %s account', 'backupplus'), 'Dropbox');
+			sprintf( __( 'you have authenticated your %s account', 'backupplus' ), 'Dropbox' );
 		// We log, because otherwise people get confused by the most recent log message of 'Parameter not found: oauth_token' and raise support requests
 		$this->log(
-			__('Success:', 'backupplus').' '.
+			__( 'Success:', 'backupplus' ) . ' ' .
 			/* translators: %s: Service name */
-			sprintf(__('you have authenticated your %s account', 'backupplus'), 'Dropbox')
+			sprintf( __( 'you have authenticated your %s account', 'backupplus' ), 'Dropbox' )
 		);
 
-		if (empty($account_info['code']) || "200" != $account_info['code']) {
-			$message .= " (".__('though part of the returned information was not as expected - whether this indicates a real problem cannot be determined', 'backupplus').") ". $account_info['code'];
-			if (!empty($accountinfo_err)) $message .= "<br>".htmlspecialchars($accountinfo_err);
+		if ( empty( $account_info['code'] ) || '200' != $account_info['code'] ) {
+			$message .= ' (' . __( 'though part of the returned information was not as expected - whether this indicates a real problem cannot be determined', 'backupplus' ) . ') ' . $account_info['code'];
+			if ( ! empty( $accountinfo_err ) ) {
+				$message .= '<br>' . htmlspecialchars( $accountinfo_err );
+			}
 		} else {
-			$body = $account_info['body'];
-			$name = '';
+			$body  = $account_info['body'];
+			$name  = '';
 			$email = '';
-			if (isset($body->display_name)) {
+			if ( isset( $body->display_name ) ) {
 				$name = $body->display_name;
 			} else {
 				$name = $body->name->display_name;
 			}
-			if (isset($body->email)) {
+			if ( isset( $body->email ) ) {
 				$email = $body->email;
 			}
 
-			$opts = $this->get_options();
-			$opts['ownername'] = $name;
-			$opts['email'] = $email;
-			$ownername_with_email = $this->generate_ownername_with_email($opts);
+			$opts                 = $this->get_options();
+			$opts['ownername']    = $name;
+			$opts['email']        = $email;
+			$ownername_with_email = $this->generate_ownername_with_email( $opts );
 			/* translators: 1: Service name, 2: Account holder's name with email */
-			$message .= ". <br>".sprintf(__('Your %1$s account name: %2$s', 'backupplus'), 'Dropbox', htmlspecialchars($ownername_with_email));
-			$this->set_options($opts, true);
+			$message .= '. <br>' . sprintf( __( 'Your %1$s account name: %2$s', 'backupplus' ), 'Dropbox', htmlspecialchars( $ownername_with_email ) );
+			$this->set_options( $opts, true );
 
 			try {
 				/**
 				 * Quota information is no longer provided with account information a new call to qoutaInfo must be made to get this information. The timeout is because we've seen cases where it returned after 180 seconds (apparently a faulty outgoing proxy), and we may as well wait as cause an error leading to user confusion.
 				 */
-				$quota_info = $dropbox->quotaInfo(array('timeout' => 190));
+				$quota_info = $dropbox->quotaInfo( array( 'timeout' => 190 ) );
 
-				if (empty($quota_info['code']) || "200" != $quota_info['code']) {
-					$message .= " (".__('though part of the returned information was not as expected - whether this indicates a real problem cannot be determined', 'backupplus').")". $quota_info['code'];
-					if (!empty($accountinfo_err)) $message .= "<br>".htmlspecialchars($accountinfo_err);
+				if ( empty( $quota_info['code'] ) || '200' != $quota_info['code'] ) {
+					$message .= ' (' . __( 'though part of the returned information was not as expected - whether this indicates a real problem cannot be determined', 'backupplus' ) . ')' . $quota_info['code'];
+					if ( ! empty( $accountinfo_err ) ) {
+						$message .= '<br>' . htmlspecialchars( $accountinfo_err );
+					}
 				} else {
 					$body = $quota_info['body'];
-					if (isset($body->quota_info)) {
-						$quota_info = $body->quota_info;
-						$total_quota = max($quota_info->quota, 1);
-						$normal_quota = $quota_info->normal;
-						$shared_quota = $quota_info->shared;
-						$available_quota =$total_quota - ($normal_quota + $shared_quota);
-						$used_perc = round(($normal_quota + $shared_quota)*100/$total_quota, 1);
+					if ( isset( $body->quota_info ) ) {
+						$quota_info      = $body->quota_info;
+						$total_quota     = max( $quota_info->quota, 1 );
+						$normal_quota    = $quota_info->normal;
+						$shared_quota    = $quota_info->shared;
+						$available_quota = $total_quota - ( $normal_quota + $shared_quota );
+						$used_perc       = round( ( $normal_quota + $shared_quota ) * 100 / $total_quota, 1 );
 						/* translators: 1: Service name, 2: Percentage used, 3: Available space */
-						$message .= ' <br>'.sprintf(__('Your %1$s quota usage: %2$s %% used, %3$s available', 'backupplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB');
+						$message .= ' <br>' . sprintf( __( 'Your %1$s quota usage: %2$s %% used, %3$s available', 'backupplus' ), 'Dropbox', $used_perc, round( $available_quota / 1048576, 1 ) . ' MB' );
 					} else {
-						$total_quota = max($body->allocation->allocated, 1);
-						$used = $body->used;
+						$total_quota = max( $body->allocation->allocated, 1 );
+						$used        = $body->used;
 						/* check here to see if the account is a team account and if so use the other used value
 						This will give us their total usage including their individual account and team account */
-						if (isset($body->allocation->used)) $used = $body->allocation->used;
-						$available_quota =$total_quota - $used;
-						$used_perc = round($used*100/$total_quota, 1);
+						if ( isset( $body->allocation->used ) ) {
+							$used = $body->allocation->used;
+						}
+						$available_quota = $total_quota - $used;
+						$used_perc       = round( $used * 100 / $total_quota, 1 );
 						/* translators: 1: Service name, 2: Percentage of quota used, 3: Available quota in MB */
-						$message .= ' <br>'.sprintf(__('Your %1$s quota usage: %2$s%% used, %3$s available', 'backupplus'), 'Dropbox', $used_perc, round($available_quota/1048576, 1).' MB');
+						$message .= ' <br>' . sprintf( __( 'Your %1$s quota usage: %2$s%% used, %3$s available', 'backupplus' ), 'Dropbox', $used_perc, round( $available_quota / 1048576, 1 ) . ' MB' );
 					}
 				}
-			} catch (Exception $e) {
+			} catch ( Exception $e ) {
 				// Catch
 			}
-
 		}
-		if ($return_instead_of_echo) {
+		if ( $return_instead_of_echo ) {
 			return "<div class='backupplusmessage updated'><p>{$message}</p></div>";
 		} else {
-			$backupplus_admin->show_admin_warning($message);
+			$backupplus_admin->show_admin_warning( $message );
 		}
-
 	}
 
 	/**
@@ -1067,14 +1132,14 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @return void|string - returns the authentication message if return_instead_of_echo is true
 	 */
-	public function auth_token($return_instead_of_echo) {
+	public function auth_token( $return_instead_of_echo ) {
 		$this->bootstrap();
 		$opts = $this->get_options();
-		if (!empty($opts['tk_access_token'])) {
-			if ($return_instead_of_echo) {
-				return $this->show_authed_admin_warning($return_instead_of_echo);
+		if ( ! empty( $opts['tk_access_token'] ) ) {
+			if ( $return_instead_of_echo ) {
+				return $this->show_authed_admin_warning( $return_instead_of_echo );
 			} else {
-				add_action('all_admin_notices', array($this, 'show_authed_admin_warning'));
+				add_action( 'all_admin_notices', array( $this, 'show_authed_admin_warning' ) );
 			}
 		}
 	}
@@ -1092,83 +1157,89 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 * @param  Boolean $deauthenticate indicates if we should bootstrap for a deauth or auth request
 	 * @return object
 	 */
-	public function bootstrap($deauthenticate = false) {
+	public function bootstrap( $deauthenticate = false ) {
 
 		$storage = $this->get_storage();
 
-		if (!empty($storage) && !is_wp_error($storage)) return $storage;
+		if ( ! empty( $storage ) && ! is_wp_error( $storage ) ) {
+			return $storage;
+		}
 
 		// Dropbox APIv1 is dead, but we'll keep the variable in case v3 is ever announced
 		$dropbox_api = 'Dropbox2';
 
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/API.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/Exception.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/ConsumerAbstract.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/StorageInterface.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/Encrypter.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/WordPress.php', 'include_once');
-		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/Curl.php', 'include_once');
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/API.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/Exception.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Consumer/ConsumerAbstract.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/StorageInterface.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/Encrypter.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/WordPress.php', 'include_once' );
+		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Consumer/Curl.php', 'include_once' );
 		// backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/WordPress.php', 'require_once');
 
 		$opts = $this->get_options();
 
-		$key = empty($opts['secret']) ? '' : $opts['secret'];
-		$sec = empty($opts['appkey']) ? '' : $opts['appkey'];
-		
-		$oauth2_id = defined('BACKUPPLUS_DROPBOX_CLIENT_ID') ? BACKUPPLUS_DROPBOX_CLIENT_ID : base64_decode('dzQxM3o0cWhqejY1Nm5l');
+		$key = empty( $opts['secret'] ) ? '' : $opts['secret'];
+		$sec = empty( $opts['appkey'] ) ? '' : $opts['appkey'];
+
+		$oauth2_id = defined( 'BACKUPPLUS_DROPBOX_CLIENT_ID' ) ? BACKUPPLUS_DROPBOX_CLIENT_ID : base64_decode( 'dzQxM3o0cWhqejY1Nm5l' );
 
 		// Set the callback URL
-		$callbackhome = BackupPlus_Options::admin_page_url().'?page=backupplus&action=backupplusmethod-dropbox-auth';
-		$callback = defined('BACKUPPLUS_DROPBOX_AUTH_RETURN_URL') ? BACKUPPLUS_DROPBOX_AUTH_RETURN_URL : 'https://auth.backupplusplus.com/auth/dropbox/';
+		$callbackhome = BackupPlus_Options::admin_page_url() . '?page=backupplus&action=backupplusmethod-dropbox-auth';
+		$callback     = defined( 'BACKUPPLUS_DROPBOX_AUTH_RETURN_URL' ) ? BACKUPPLUS_DROPBOX_AUTH_RETURN_URL : 'https://auth.backupplusplus.com/auth/dropbox/';
 
-		if (defined('BACKUPPLUS_CUSTOM_DROPBOX_APP') && BACKUPPLUS_CUSTOM_DROPBOX_APP) $callback = $callbackhome;
-		
+		if ( defined( 'BACKUPPLUS_CUSTOM_DROPBOX_APP' ) && BACKUPPLUS_CUSTOM_DROPBOX_APP ) {
+			$callback = $callbackhome;
+		}
+
 		$instance_id = $this->get_instance_id();
 		// Instantiate the Encryptor and storage objects
 		try {
-			$encrypter = Dropbox_Encrypter::from_config($instance_id);
-		} catch (Exception $e) {
-			$this->log($e->getMessage(), 'error');
+			$encrypter = Dropbox_Encrypter::from_config( $instance_id );
+		} catch ( Exception $e ) {
+			$this->log( $e->getMessage(), 'error' );
 			return false;
 		}
 
 		// Instantiate the storage
-		$dropbox_storage = new Dropbox_WordPress($encrypter, "tk_", 'backupplus_dropbox', $this);
+		$dropbox_storage = new Dropbox_WordPress( $encrypter, 'tk_', 'backupplus_dropbox', $this );
 
 		// WordPress consumer does not yet work
 		// $oauth = new Dropbox_ConsumerWordPress($sec, $key, $dropbox_storage, $callback);
 
 		// Get the DropBox API access details
 		list($d2, $d1) = $this->defaults();
-		if (empty($sec)) {
-			$sec = base64_decode($d1);
+		if ( empty( $sec ) ) {
+			$sec = base64_decode( $d1 );
 		}
 
-		if (empty($key)) {
-			$key = base64_decode($d2);
+		if ( empty( $key ) ) {
+			$key = base64_decode( $d2 );
 		}
 
 		$root = 'sandbox';
-		if ('dropbox:' == substr($sec, 0, 8)) {
-			$sec = substr($sec, 8);
+		if ( 'dropbox:' == substr( $sec, 0, 8 ) ) {
+			$sec  = substr( $sec, 8 );
 			$root = 'dropbox';
 		}
-		
+
 		try {
-			$oauth = new Dropbox_Curl($sec, $oauth2_id, $key, $dropbox_storage, $callback, $callbackhome, $deauthenticate, $instance_id);
-		} catch (Exception $e) {
-			$this->log("Curl error: ".$e->getMessage());
+			$oauth = new Dropbox_Curl( $sec, $oauth2_id, $key, $dropbox_storage, $callback, $callbackhome, $deauthenticate, $instance_id );
+		} catch ( Exception $e ) {
+			$this->log( 'Curl error: ' . $e->getMessage() );
 			/* translators: 1: Service name, 2: Error message with exception details */
-			$this->log(sprintf(__('%1$s error: %2$s', 'backupplus'), "Dropbox/Curl", $e->getMessage().' ('.get_class($e).') (line: '.$e->getLine().', file: '.$e->getFile()).')', 'error');
+			$this->log( sprintf( __( '%1$s error: %2$s', 'backupplus' ), 'Dropbox/Curl', $e->getMessage() . ' (' . get_class( $e ) . ') (line: ' . $e->getLine() . ', file: ' . $e->getFile() ) . ')', 'error' );
 			return false;
 		}
 
-		if ($deauthenticate) return true;
-		
-		$storage = new BackupPlus_Dropbox_API($oauth, $root);
-		
-		$this->set_storage($storage);
-		
+		if ( $deauthenticate ) {
+			return true;
+		}
+
+		$storage = new BackupPlus_Dropbox_API( $oauth, $root );
+
+		$this->set_storage( $storage );
+
 		return $storage;
 	}
 
@@ -1186,8 +1257,10 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 *
 	 * @return array
 	 */
-	public function configure_field_from_legacy($field, $template_properties, $field_name, $option) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Variable is not being used yet
-		if ('folder' === $field_name) $field = array();
+	public function configure_field_from_legacy( $field, $template_properties, $field_name, $option ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Variable is not being used yet
+		if ( 'folder' === $field_name ) {
+			$field = array();
+		}
 
 		return $field;
 	}

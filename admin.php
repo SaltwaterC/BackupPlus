@@ -7,14 +7,20 @@
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- we use the set_error_handler() function to provide a flexible way of handling PHP errors according to our needs; we centralises error handling in one place and customises certain errors based on their severity and context.
 // phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged -- some functions, like set_time_limit() and ini_set(), are used to temporarily change PHP configuration values based on the script's needs (e.g., processing large datasets or performing long operations).
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
-if (!class_exists('BackupPlus_Settings_Importer')) backupplus_try_include_file('includes/class-settings-importer.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_Settings_Importer' ) ) {
+	backupplus_try_include_file( 'includes/class-settings-importer.php', 'require_once' );
+}
 
 // Admin-area code lives here. This gets called in admin_menu, earlier than admin_init
 
 global $backupplus_admin;
-if (!is_a($backupplus_admin, 'BackupPlus_Admin')) $backupplus_admin = new BackupPlus_Admin();
+if ( ! is_a( $backupplus_admin, 'BackupPlus_Admin' ) ) {
+	$backupplus_admin = new BackupPlus_Admin();
+}
 $GLOBALS['backupplus_admin'] = $backupplus_admin;
 
 class BackupPlus_Admin {
@@ -25,8 +31,8 @@ class BackupPlus_Admin {
 
 	private $backups_instance_ids;
 
-	private $auth_instance_ids = array();
-	private $auth_notice_callbacks = array();
+	private $auth_instance_ids      = array();
+	private $auth_notice_callbacks  = array();
 	private $provider_admin_notices = array();
 
 
@@ -37,11 +43,11 @@ class BackupPlus_Admin {
 	private $storage_service_without_addons_settings;
 
 	private $storage_module_option_errors = '';
-	
+
 	private $no_settings_warning = false;
 
 	private $restore_in_progress_jobdata = array();
-	
+
 	private $entities_to_restore = array();
 
 	/**
@@ -50,16 +56,16 @@ class BackupPlus_Admin {
 	public function __construct() {
 		$this->admin_init();
 	}
-	
+
 	/**
 	 * Get the path to the UI templates directory
 	 *
 	 * @return String - a filesystem directory path
 	 */
 	public function get_templates_dir() {
-		return apply_filters('backupplus_templates_dir', BackupPlus_Manipulation_Functions::wp_normalize_path(BACKUPPLUS_DIR.'/templates'));
+		return apply_filters( 'backupplus_templates_dir', BackupPlus_Manipulation_Functions::wp_normalize_path( BACKUPPLUS_DIR . '/templates' ) );
 	}
-	
+
 	/**
 	 * Initialises self::$template_directories
 	 */
@@ -69,274 +75,299 @@ class BackupPlus_Admin {
 
 		$templates_dir = $this->get_templates_dir();
 
-		if ($dh = opendir($templates_dir)) {
-			while (($file = readdir($dh)) !== false) {
-				if ('.' == $file || '..' == $file) continue;
-				if (is_dir($templates_dir.'/'.$file)) {
-					$template_directories[$file] = $templates_dir.'/'.$file;
+		if ( $dh = opendir( $templates_dir ) ) {
+			while ( ( $file = readdir( $dh ) ) !== false ) {
+				if ( '.' == $file || '..' == $file ) {
+					continue;
+				}
+				if ( is_dir( $templates_dir . '/' . $file ) ) {
+					$template_directories[ $file ] = $templates_dir . '/' . $file;
 				}
 			}
-			closedir($dh);
+			closedir( $dh );
 		}
 
 		// This is the optimal hook for most extensions to hook into
-		$this->template_directories = apply_filters('backupplus_template_directories', $template_directories);
-
+		$this->template_directories = apply_filters( 'backupplus_template_directories', $template_directories );
 	}
 
 	/**
 	 * Output, or return, the results of running a template (from the 'templates' directory, unless a filter over-rides it). Templates are run with $backupplus, $backupplus_admin and $wpdb set.
 	 *
-	 * @param String  $path					  - path to the template
+	 * @param String  $path                   - path to the template
 	 * @param Boolean $return_instead_of_echo - by default, the template is echo-ed; set this to instead return it
-	 * @param Array	  $extract_these		  - variables to inject into the template's run context
+	 * @param Array   $extract_these          - variables to inject into the template's run context
 	 *
 	 * @return Void|String
 	 */
-	public function include_template($path, $return_instead_of_echo = false, $extract_these = array()) {
-		if ($return_instead_of_echo) ob_start();
+	public function include_template( $path, $return_instead_of_echo = false, $extract_these = array() ) {
+		if ( $return_instead_of_echo ) {
+			ob_start();
+		}
 
-		if (preg_match('#^([^/]+)/(.*)$#', $path, $matches)) {
+		if ( preg_match( '#^([^/]+)/(.*)$#', $path, $matches ) ) {
 			$prefix = $matches[1];
 			$suffix = $matches[2];
-			if (isset($this->template_directories[$prefix])) {
-				$template_file = $this->template_directories[$prefix].'/'.$suffix;
+			if ( isset( $this->template_directories[ $prefix ] ) ) {
+				$template_file = $this->template_directories[ $prefix ] . '/' . $suffix;
 			}
 		}
 
-		if (!isset($template_file)) $template_file = BACKUPPLUS_DIR.'/templates/'.$path;
+		if ( ! isset( $template_file ) ) {
+			$template_file = BACKUPPLUS_DIR . '/templates/' . $path;
+		}
 
-		$template_file = apply_filters('backupplus_template', $template_file, $path);
+		$template_file = apply_filters( 'backupplus_template', $template_file, $path );
 
-		do_action('backupplus_before_template', $path, $template_file, $return_instead_of_echo, $extract_these);
+		do_action( 'backupplus_before_template', $path, $template_file, $return_instead_of_echo, $extract_these );
 
-		if (!file_exists($template_file)) {
-			BackupPlus_Manipulation_Functions::error_log("BackupPlus: template not found: $template_file");
-			echo esc_html(__('Error:', 'backupplus').' '.__('template not found', 'backupplus').' ('.$path.')');
+		if ( ! file_exists( $template_file ) ) {
+			BackupPlus_Manipulation_Functions::error_log( "BackupPlus: template not found: $template_file" );
+			echo esc_html( __( 'Error:', 'backupplus' ) . ' ' . __( 'template not found', 'backupplus' ) . ' (' . $path . ')' );
 		} else {
-			extract($extract_these);
+			extract( $extract_these );
 			global $backupplus, $wpdb;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
-			$backupplus_admin = $this;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
+			$backupplus_admin            = $this;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
 			$GLOBALS['backupplus_admin'] = $backupplus_admin;
 			include $template_file;
 		}
 
-		do_action('backupplus_after_template', $path, $template_file, $return_instead_of_echo, $extract_these);
+		do_action( 'backupplus_after_template', $path, $template_file, $return_instead_of_echo, $extract_these );
 
-		if ($return_instead_of_echo) return ob_get_clean();
+		if ( $return_instead_of_echo ) {
+			return ob_get_clean();
+		}
 	}
-	
+
 	/**
 	 * Add actions for any needed dashboard notices for remote storage services
 	 *
 	 * @param String|Array $services - a list of services, or single service
 	 */
-	private function setup_all_admin_notices_global($services) {
-		
+	private function setup_all_admin_notices_global( $services ) {
+
 		global $backupplus;
 
-		$all_services = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids($backupplus->get_canonical_service_list());
-		$available_services = (array) $backupplus->just_one($backupplus->get_canonical_service_list());
-		
-		$this->storage_service_without_settings = array();
-		$this->storage_service_with_partial_settings = array();
+		$all_services       = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( $backupplus->get_canonical_service_list() );
+		$available_services = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+
+		$this->storage_service_without_settings        = array();
+		$this->storage_service_with_partial_settings   = array();
 		$this->storage_service_without_addons_settings = array();
-		$this->auth_instance_ids = array();
-		
-		foreach ($all_services as $method => $sinfo) {
-			
-			if (empty($sinfo['object']) || empty($sinfo['instance_settings']) || !is_callable(array($sinfo['object'], 'options_exist'))) continue;
-			foreach ($sinfo['instance_settings'] as $opt) {
-				if (!$sinfo['object']->options_exist($opt)) {
-					if (isset($opt['auth_in_progress'])) {
-						if (!is_a($sinfo['object'], 'BackupPlus_BackupModule_AddonNotYetPresent') && in_array($method, $available_services)) {
-							$this->storage_service_with_partial_settings[$method] = $backupplus->backup_methods[$method];
-						} else {
-							$this->storage_service_without_addons_settings[$method] = $backupplus->backup_methods[$method];
-						}
-					} else {
-						if (is_a($sinfo['object'], 'BackupPlus_BackupModule_AddonNotYetPresent')) {
-							$this->storage_service_without_addons_settings[$method] = $backupplus->backup_methods[$method];
-						} elseif (in_array($method, $available_services)) {
-							$this->storage_service_without_settings[] = $backupplus->backup_methods[$method];
-						}
-					}
-				}
-			}
-		}
+		$this->auth_instance_ids                       = array();
 
-		if (!empty($this->storage_service_without_addons_settings)) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_without_addons'));
-		}
+		foreach ( $all_services as $method => $sinfo ) {
 
-		foreach (array_intersect((array) $services, $available_services) as $method) {
-			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($method);
-			if (is_wp_error($provider) || is_a($provider, 'BackupPlus_BackupModule_AddonNotYetPresent')) continue;
-			if (!$provider->supports_feature('multi_options')) continue;
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format($method);
-			if (is_wp_error($settings)) {
-				$this->storage_module_option_errors .= $backupplus->backup_methods[$method]." (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
+			if ( empty( $sinfo['object'] ) || empty( $sinfo['instance_settings'] ) || ! is_callable( array( $sinfo['object'], 'options_exist' ) ) ) {
 				continue;
 			}
-			foreach ($settings['settings'] ?? array() as $instance_id => $storage_options) {
-				if ($provider->authentication_required($storage_options)) {
-					if (!isset($this->auth_instance_ids[$method])) $this->auth_instance_ids[$method] = array();
-					if (!in_array($instance_id, $this->auth_instance_ids[$method], true)) $this->auth_instance_ids[$method][] = $instance_id;
-					if (!isset($this->auth_notice_callbacks[$method])) {
-						$this->auth_notice_callbacks[$method] = function() use ($method) { $this->get_method_auth_link($method); };
+			foreach ( $sinfo['instance_settings'] as $opt ) {
+				if ( ! $sinfo['object']->options_exist( $opt ) ) {
+					if ( isset( $opt['auth_in_progress'] ) ) {
+						if ( ! is_a( $sinfo['object'], 'BackupPlus_BackupModule_AddonNotYetPresent' ) && in_array( $method, $available_services ) ) {
+							$this->storage_service_with_partial_settings[ $method ] = $backupplus->backup_methods[ $method ];
+						} else {
+							$this->storage_service_without_addons_settings[ $method ] = $backupplus->backup_methods[ $method ];
+						}
+					} else {
+						if ( is_a( $sinfo['object'], 'BackupPlus_BackupModule_AddonNotYetPresent' ) ) {
+							$this->storage_service_without_addons_settings[ $method ] = $backupplus->backup_methods[ $method ];
+						} elseif ( in_array( $method, $available_services ) ) {
+							$this->storage_service_without_settings[] = $backupplus->backup_methods[ $method ];
+						}
 					}
-					if (false === has_action('all_admin_notices', $this->auth_notice_callbacks[$method])) {
-						add_action('all_admin_notices', $this->auth_notice_callbacks[$method]);
-					}
-				}
-				foreach ($provider->get_admin_notices($storage_options) as $notice) {
-					$key = $method.':'.md5(serialize($notice));
-					if (!isset($this->provider_admin_notices[$key])) {
-						$this->provider_admin_notices[$key] = function() use ($notice) { $this->show_admin_warning($notice['message'], $notice['class']); };
-					}
-					if (false === has_action('all_admin_notices', $this->provider_admin_notices[$key])) add_action('all_admin_notices', $this->provider_admin_notices[$key]);
 				}
 			}
 		}
 
-		if ($this->disk_space_check(1048576*35) === false) add_action('all_admin_notices', array($this, 'show_admin_warning_diskspace'));
-
-		if (!empty($this->storage_service_with_partial_settings)) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_with_partial_settings'));
+		if ( ! empty( $this->storage_service_without_addons_settings ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_if_remote_storage_without_addons' ) );
 		}
 
-		if (!empty($this->storage_service_without_settings)) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_setting_are_empty'));
+		foreach ( array_intersect( (array) $services, $available_services ) as $method ) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object( $method );
+			if ( is_wp_error( $provider ) || is_a( $provider, 'BackupPlus_BackupModule_AddonNotYetPresent' ) ) {
+				continue;
+			}
+			if ( ! $provider->supports_feature( 'multi_options' ) ) {
+				continue;
+			}
+			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format( $method );
+			if ( is_wp_error( $settings ) ) {
+				$this->storage_module_option_errors .= $backupplus->backup_methods[ $method ] . ' (' . $settings->get_error_code() . '): ' . $settings->get_error_message();
+				add_action( 'all_admin_notices', array( $this, 'show_admin_warning_multiple_storage_options' ) );
+				$backupplus->log_wp_error( $settings, true, true );
+				continue;
+			}
+			foreach ( $settings['settings'] ?? array() as $instance_id => $storage_options ) {
+				if ( $provider->authentication_required( $storage_options ) ) {
+					if ( ! isset( $this->auth_instance_ids[ $method ] ) ) {
+						$this->auth_instance_ids[ $method ] = array();
+					}
+					if ( ! in_array( $instance_id, $this->auth_instance_ids[ $method ], true ) ) {
+						$this->auth_instance_ids[ $method ][] = $instance_id;
+					}
+					if ( ! isset( $this->auth_notice_callbacks[ $method ] ) ) {
+						$this->auth_notice_callbacks[ $method ] = function () use ( $method ) {
+							$this->get_method_auth_link( $method );
+						};
+					}
+					if ( false === has_action( 'all_admin_notices', $this->auth_notice_callbacks[ $method ] ) ) {
+						add_action( 'all_admin_notices', $this->auth_notice_callbacks[ $method ] );
+					}
+				}
+				foreach ( $provider->get_admin_notices( $storage_options ) as $notice ) {
+					$key = $method . ':' . md5( serialize( $notice ) );
+					if ( ! isset( $this->provider_admin_notices[ $key ] ) ) {
+						$this->provider_admin_notices[ $key ] = function () use ( $notice ) {
+							$this->show_admin_warning( $notice['message'], $notice['class'] );
+						};
+					}
+					if ( false === has_action( 'all_admin_notices', $this->provider_admin_notices[ $key ] ) ) {
+						add_action( 'all_admin_notices', $this->provider_admin_notices[ $key ] );
+					}
+				}
+			}
 		}
 
-		if ($backupplus->is_restricted_hosting('only_one_backup_per_month')) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_one_backup_per_month'));
+		if ( $this->disk_space_check( 1048576 * 35 ) === false ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_diskspace' ) );
 		}
 
-		if (!$backupplus->phpseclib_requirements_met()) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_phpseclib'));
+		if ( ! empty( $this->storage_service_with_partial_settings ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_if_remote_storage_with_partial_settings' ) );
 		}
 
+		if ( ! empty( $this->storage_service_without_settings ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_if_remote_storage_setting_are_empty' ) );
+		}
+
+		if ( $backupplus->is_restricted_hosting( 'only_one_backup_per_month' ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_one_backup_per_month' ) );
+		}
+
+		if ( ! $backupplus->phpseclib_requirements_met() ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_phpseclib' ) );
+		}
 	}
-	
-	private function setup_all_admin_notices_udonly($service, $override = false) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Filter use
+
+	private function setup_all_admin_notices_udonly( $service, $override = false ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Filter use
 		global $backupplus;
 
-		if (BackupPlus_Options::get_backupplus_option('backupplus_debug_mode')) {
-			@ini_set('display_errors', 1);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-			if (defined('E_DEPRECATED')) {
-				@error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PHPCompatibility.Constants.NewConstants.e_deprecatedFound, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
+		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
+			@ini_set( 'display_errors', 1 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			if ( defined( 'E_DEPRECATED' ) ) {
+				@error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PHPCompatibility.Constants.NewConstants.e_deprecatedFound, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
 			} else {
-				@error_reporting(E_ALL & ~E_NOTICE);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
+				@error_reporting( E_ALL & ~E_NOTICE );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
 			}
-			add_action('all_admin_notices', array($this, 'show_admin_debug_warning'));
+			add_action( 'all_admin_notices', array( $this, 'show_admin_debug_warning' ) );
 		}
 
-		if (null === BackupPlus_Options::get_backupplus_option('backupplus_interval')) {
-			add_action('all_admin_notices', array($this, 'show_admin_nosettings_warning'));
+		if ( null === BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_nosettings_warning' ) );
 			$this->no_settings_warning = true;
 		}
 
 		// Avoid false positives, by attempting to raise the limit (as happens when we actually do a backup)
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		$max_execution_time = (int) ini_get('max_execution_time');
-		if ($max_execution_time>0 && $max_execution_time<20) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_execution_time'));
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}       $max_execution_time = (int) ini_get( 'max_execution_time' );
+		if ( $max_execution_time > 0 && $max_execution_time < 20 ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_execution_time' ) );
 		}
 
 		// LiteSpeed has a generic problem with terminating cron jobs
-		$server_software = BackupPlus_Manipulation_Functions::fetch_superglobal('server', 'SERVER_SOFTWARE', '', false, 'string', null);
-		if (false == BackupPlus_Options::get_backupplus_option('backupplus_dismiss_admin_warning_litespeed') && isset($server_software) && strpos($server_software, 'LiteSpeed') !== false) {
-			if (!is_file(ABSPATH.'.htaccess') || !preg_match('/noabort/i', file_get_contents(ABSPATH.'.htaccess'))) {
-				add_action('all_admin_notices', array($this, 'show_admin_warning_litespeed'));
+		$server_software = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'SERVER_SOFTWARE', '', false, 'string', null );
+		if ( false == BackupPlus_Options::get_backupplus_option( 'backupplus_dismiss_admin_warning_litespeed' ) && isset( $server_software ) && strpos( $server_software, 'LiteSpeed' ) !== false ) {
+			if ( ! is_file( ABSPATH . '.htaccess' ) || ! preg_match( '/noabort/i', file_get_contents( ABSPATH . '.htaccess' ) ) ) {
+				add_action( 'all_admin_notices', array( $this, 'show_admin_warning_litespeed' ) );
 			}
 		}
 
 		$binzip = $backupplus->find_working_bin_zip();
 
-		if (false == BackupPlus_Options::get_backupplus_option('backupplus_dismiss_admin_warning_pclzip') && empty($binzip) && ((defined('BACKUPPLUS_PREFERPCLZIP') && BACKUPPLUS_PREFERPCLZIP == true) || !class_exists('ZipArchive') || (!extension_loaded('zip') && !method_exists('ZipArchive', 'AddFile')))) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_pclzip'));
+		if ( false == BackupPlus_Options::get_backupplus_option( 'backupplus_dismiss_admin_warning_pclzip' ) && empty( $binzip ) && ( ( defined( 'BACKUPPLUS_PREFERPCLZIP' ) && BACKUPPLUS_PREFERPCLZIP == true ) || ! class_exists( 'ZipArchive' ) || ( ! extension_loaded( 'zip' ) && ! method_exists( 'ZipArchive', 'AddFile' ) ) ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_pclzip' ) );
 		}
 
-		if (version_compare($backupplus->get_wordpress_version(), '3.2', '<')) add_action('all_admin_notices', array($this, 'show_admin_warning_wordpressversion'));
-		
+		if ( version_compare( $backupplus->get_wordpress_version(), '3.2', '<' ) ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_wordpressversion' ) );
+		}
 
-		if (!$backupplus->phpseclib_requirements_met()) {
-			add_action('all_admin_notices', array($this, 'show_admin_warning_phpseclib'));
+		if ( ! $backupplus->phpseclib_requirements_met() ) {
+			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_phpseclib' ) );
 		}
 	}
-	
+
 	/**
 	 * Used to output the information for the next scheduled backup.
 	 * moved to function for the ajax saves
 	 */
 	public function next_scheduled_backups_output() {
 		// UNIX timestamp
-		$next_scheduled_backup = wp_next_scheduled('backupplus_backup');
-		if ($next_scheduled_backup) {
+		$next_scheduled_backup = wp_next_scheduled( 'backupplus_backup' );
+		if ( $next_scheduled_backup ) {
 			// Convert to GMT
-			$next_scheduled_backup_gmt = gmdate('Y-m-d H:i:s', $next_scheduled_backup);
+			$next_scheduled_backup_gmt = gmdate( 'Y-m-d H:i:s', $next_scheduled_backup );
 			// Convert to blog time zone
-			$next_scheduled_backup = get_date_from_gmt($next_scheduled_backup_gmt, 'D, F j, Y H:i');
+			$next_scheduled_backup = get_date_from_gmt( $next_scheduled_backup_gmt, 'D, F j, Y H:i' );
 			// $next_scheduled_backup = date_i18n('D, F j, Y H:i', $next_scheduled_backup);
 		} else {
-			$next_scheduled_backup = __('Nothing currently scheduled', 'backupplus');
-			$files_not_scheduled = true;
+			$next_scheduled_backup = __( 'Nothing currently scheduled', 'backupplus' );
+			$files_not_scheduled   = true;
 		}
-		
-		$next_scheduled_backup_database = wp_next_scheduled('backupplus_backup_database');
-		if (BackupPlus_Options::get_backupplus_option('backupplus_interval_database', BackupPlus_Options::get_backupplus_option('backupplus_interval')) == BackupPlus_Options::get_backupplus_option('backupplus_interval')) {
-			if (isset($files_not_scheduled)) {
+
+		$next_scheduled_backup_database = wp_next_scheduled( 'backupplus_backup_database' );
+		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) == BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) {
+			if ( isset( $files_not_scheduled ) ) {
 				$next_scheduled_backup_database = $next_scheduled_backup;
-				$database_not_scheduled = true;
+				$database_not_scheduled         = true;
 			} else {
-				$next_scheduled_backup_database = __("At the same time as the files backup", 'backupplus');
+				$next_scheduled_backup_database           = __( 'At the same time as the files backup', 'backupplus' );
 				$next_scheduled_backup_database_same_time = true;
 			}
 		} else {
-			if ($next_scheduled_backup_database) {
+			if ( $next_scheduled_backup_database ) {
 				// Convert to GMT
-				$next_scheduled_backup_database_gmt = gmdate('Y-m-d H:i:s', $next_scheduled_backup_database);
+				$next_scheduled_backup_database_gmt = gmdate( 'Y-m-d H:i:s', $next_scheduled_backup_database );
 				// Convert to blog time zone
-				$next_scheduled_backup_database = get_date_from_gmt($next_scheduled_backup_database_gmt, 'D, F j, Y H:i');
+				$next_scheduled_backup_database = get_date_from_gmt( $next_scheduled_backup_database_gmt, 'D, F j, Y H:i' );
 				// $next_scheduled_backup_database = date_i18n('D, F j, Y H:i', $next_scheduled_backup_database);
 			} else {
-				$next_scheduled_backup_database = __('Nothing currently scheduled', 'backupplus');
-				$database_not_scheduled = true;
+				$next_scheduled_backup_database = __( 'Nothing currently scheduled', 'backupplus' );
+				$database_not_scheduled         = true;
 			}
 		}
-		
-		if (isset($files_not_scheduled) && isset($database_not_scheduled)) {
-		?>
-			<span class="not-scheduled"><?php esc_html_e('Nothing currently scheduled', 'backupplus'); ?></span>
-		<?php
+
+		if ( isset( $files_not_scheduled ) && isset( $database_not_scheduled ) ) {
+			?>
+			<span class="not-scheduled"><?php esc_html_e( 'Nothing currently scheduled', 'backupplus' ); ?></span>
+			<?php
 		} else {
-			echo empty($next_scheduled_backup_database_same_time) ? esc_html__('Files', 'backupplus') : esc_html__('Files and database', 'backupplus');
+			echo empty( $next_scheduled_backup_database_same_time ) ? esc_html__( 'Files', 'backupplus' ) : esc_html__( 'Files and database', 'backupplus' );
 			?>
 			: 
 			<span class="backupplus_all-files">
 				<?php
-					echo esc_html($next_scheduled_backup);
+					echo esc_html( $next_scheduled_backup );
 				?>
 			</span>
 			<?php
-			if (empty($next_scheduled_backup_database_same_time)) {
-				esc_html_e('Database', 'backupplus');
-			?>
+			if ( empty( $next_scheduled_backup_database_same_time ) ) {
+				esc_html_e( 'Database', 'backupplus' );
+				?>
 			: 
 			<span class="backupplus_all-files">
 				<?php
-				echo esc_html($next_scheduled_backup_database);
+				echo esc_html( $next_scheduled_backup_database );
 				?>
 			</span>
-			<?php
+				<?php
 			}
 		}
-		
 	}
-	
+
 	/**
 	 * Used to output the information for the next scheduled  file backup.
 	 * moved to function for the ajax saves
@@ -344,28 +375,32 @@ class BackupPlus_Admin {
 	 * @param Boolean $return_instead_of_echo Whether to return or echo the results. N.B. More than just the results to echo will be returned
 	 * @return Void|String If $return_instead_of_echo parameter is true, It returns html string
 	 */
-	public function next_scheduled_files_backups_output($return_instead_of_echo = false) {
-		if ($return_instead_of_echo) ob_start();
+	public function next_scheduled_files_backups_output( $return_instead_of_echo = false ) {
+		if ( $return_instead_of_echo ) {
+			ob_start();
+		}
 		// UNIX timestamp
-		$next_scheduled_backup = wp_next_scheduled('backupplus_backup');
-		if ($next_scheduled_backup) {
+		$next_scheduled_backup = wp_next_scheduled( 'backupplus_backup' );
+		if ( $next_scheduled_backup ) {
 			// Convert to blog time zone. wp_date() (WP 5.3+) also performs locale translation.
-			$next_scheduled_backup = function_exists('wp_date') ? wp_date('D, F j, Y H:i', $next_scheduled_backup) : get_date_from_gmt(gmdate('Y-m-d H:i:s', $next_scheduled_backup), 'D, F j, Y H:i');
-			$files_not_scheduled = false;
+			$next_scheduled_backup = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next_scheduled_backup ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next_scheduled_backup ), 'D, F j, Y H:i' );
+			$files_not_scheduled   = false;
 		} else {
-			$next_scheduled_backup = __('Nothing currently scheduled', 'backupplus');
-			$files_not_scheduled = true;
+			$next_scheduled_backup = __( 'Nothing currently scheduled', 'backupplus' );
+			$files_not_scheduled   = true;
 		}
-		
-		if ($files_not_scheduled) {
-			echo '<span>'.esc_html($next_scheduled_backup).'</span>';
+
+		if ( $files_not_scheduled ) {
+			echo '<span>' . esc_html( $next_scheduled_backup ) . '</span>';
 		} else {
-			echo '<span class="backupplus_next_scheduled_date_time">'.esc_html($next_scheduled_backup).'</span>';
+			echo '<span class="backupplus_next_scheduled_date_time">' . esc_html( $next_scheduled_backup ) . '</span>';
 		}
-		
-		if ($return_instead_of_echo) return ob_get_clean();
+
+		if ( $return_instead_of_echo ) {
+			return ob_get_clean();
+		}
 	}
-	
+
 	/**
 	 * Used to output the information for the next scheduled database backup.
 	 * moved to function for the ajax saves
@@ -373,108 +408,115 @@ class BackupPlus_Admin {
 	 * @param Boolean $return_instead_of_echo Whether to return or echo the results. N.B. More than just the results to echo will be returned
 	 * @return Void|String If $return_instead_of_echo parameter is true, It returns html string
 	 */
-	public function next_scheduled_database_backups_output($return_instead_of_echo = false) {
-		if ($return_instead_of_echo) ob_start();
-		
-		$next_scheduled_backup_database = wp_next_scheduled('backupplus_backup_database');
-		if ($next_scheduled_backup_database) {
+	public function next_scheduled_database_backups_output( $return_instead_of_echo = false ) {
+		if ( $return_instead_of_echo ) {
+			ob_start();
+		}
+
+		$next_scheduled_backup_database = wp_next_scheduled( 'backupplus_backup_database' );
+		if ( $next_scheduled_backup_database ) {
 			// Convert to GMT
-			$next_scheduled_backup_database_gmt = gmdate('Y-m-d H:i:s', $next_scheduled_backup_database);
+			$next_scheduled_backup_database_gmt = gmdate( 'Y-m-d H:i:s', $next_scheduled_backup_database );
 			// Convert to blog time zone. wp_date() (WP 5.3+) also performs locale translation.
-			$next_scheduled_backup_database = function_exists('wp_date') ? wp_date('D, F j, Y H:i', $next_scheduled_backup_database) : get_date_from_gmt($next_scheduled_backup_database_gmt, 'D, F j, Y H:i');
-			$database_not_scheduled = false;
+			$next_scheduled_backup_database = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next_scheduled_backup_database ) : get_date_from_gmt( $next_scheduled_backup_database_gmt, 'D, F j, Y H:i' );
+			$database_not_scheduled         = false;
 		} else {
-			$next_scheduled_backup_database = __('Nothing currently scheduled', 'backupplus');
-			$database_not_scheduled = true;
+			$next_scheduled_backup_database = __( 'Nothing currently scheduled', 'backupplus' );
+			$database_not_scheduled         = true;
 		}
-		
-		if ($database_not_scheduled) {
-			echo '<span>'.esc_html($next_scheduled_backup_database).'</span>';
+
+		if ( $database_not_scheduled ) {
+			echo '<span>' . esc_html( $next_scheduled_backup_database ) . '</span>';
 		} else {
-			echo '<span class="backupplus_next_scheduled_date_time">'.esc_html($next_scheduled_backup_database).'</span>';
+			echo '<span class="backupplus_next_scheduled_date_time">' . esc_html( $next_scheduled_backup_database ) . '</span>';
 		}
-		
-		if ($return_instead_of_echo) return ob_get_clean();
+
+		if ( $return_instead_of_echo ) {
+			return ob_get_clean();
+		}
 	}
-	
+
 	/**
 	 * Run upon the WP admin_init action
 	 */
 	private function admin_init() {
-		add_action('admin_init', array($this, 'maybe_download_backup_from_email'));
+		add_action( 'admin_init', array( $this, 'maybe_download_backup_from_email' ) );
 
-		add_action('admin_head', array($this, 'admin_head'));
-		add_filter((is_multisite() ? 'network_admin_' : '').'plugin_action_links', array($this, 'plugin_action_links'), 10, 2);
-		add_filter('plugin_row_meta', array($this, 'change_plugin_author_link'), 10, 3);
-		add_action('wp_ajax_backupplus_download_backup', array($this, 'backupplus_download_backup'));
-		add_action('wp_ajax_backupplus_ajax', array($this, 'backupplus_ajax_handler'));
-		add_action('wp_ajax_backupplus_ajaxrestore', array($this, 'backupplus_ajaxrestore'));
-		add_action('wp_ajax_nopriv_backupplus_ajaxrestore', array($this, 'backupplus_ajaxrestore'));
-		add_action('wp_ajax_backupplus_ajaxrestore_continue', array($this, 'backupplus_ajaxrestore'));
-		add_action('wp_ajax_nopriv_backupplus_ajaxrestore_continue', array($this, 'backupplus_ajaxrestore'));
-		
-		add_action('wp_ajax_plupload_action', array($this, 'plupload_action'));
-		add_action('wp_ajax_plupload_action2', array($this, 'plupload_action2'));
+		add_action( 'admin_head', array( $this, 'admin_head' ) );
+		add_filter( ( is_multisite() ? 'network_admin_' : '' ) . 'plugin_action_links', array( $this, 'plugin_action_links' ), 10, 2 );
+		add_filter( 'plugin_row_meta', array( $this, 'change_plugin_author_link' ), 10, 3 );
+		add_action( 'wp_ajax_backupplus_download_backup', array( $this, 'backupplus_download_backup' ) );
+		add_action( 'wp_ajax_backupplus_ajax', array( $this, 'backupplus_ajax_handler' ) );
+		add_action( 'wp_ajax_backupplus_ajaxrestore', array( $this, 'backupplus_ajaxrestore' ) );
+		add_action( 'wp_ajax_nopriv_backupplus_ajaxrestore', array( $this, 'backupplus_ajaxrestore' ) );
+		add_action( 'wp_ajax_backupplus_ajaxrestore_continue', array( $this, 'backupplus_ajaxrestore' ) );
+		add_action( 'wp_ajax_nopriv_backupplus_ajaxrestore_continue', array( $this, 'backupplus_ajaxrestore' ) );
 
-		add_action('wp_before_admin_bar_render', array($this, 'wp_before_admin_bar_render'));
+		add_action( 'wp_ajax_plupload_action', array( $this, 'plupload_action' ) );
+		add_action( 'wp_ajax_plupload_action2', array( $this, 'plupload_action2' ) );
+
+		add_action( 'wp_before_admin_bar_render', array( $this, 'wp_before_admin_bar_render' ) );
 
 		// Add a new Ajax action for saving settings
-		add_action('wp_ajax_backupplus_savesettings', array($this, 'backupplus_ajax_savesettings'));
-		
-		// Ajax for settings import and export
-		add_action('wp_ajax_backupplus_importsettings', array($this, 'backupplus_ajax_importsettings'));
+		add_action( 'wp_ajax_backupplus_savesettings', array( $this, 'backupplus_ajax_savesettings' ) );
 
-		add_filter('heartbeat_received', array($this, 'process_status_in_heartbeat'), 10, 2);
+		// Ajax for settings import and export
+		add_action( 'wp_ajax_backupplus_importsettings', array( $this, 'backupplus_ajax_importsettings' ) );
+
+		add_filter( 'heartbeat_received', array( $this, 'process_status_in_heartbeat' ), 10, 2 );
 
 		// BackupPlus templates
 		$this->register_template_directories();
-		
+
 		global $backupplus, $pagenow;
-		add_filter('backupplus_dirlist_others', array($backupplus, 'backup_others_dirlist'));
-		add_filter('backupplus_dirlist_uploads', array($backupplus, 'backup_uploads_dirlist'));
+		add_filter( 'backupplus_dirlist_others', array( $backupplus, 'backup_others_dirlist' ) );
+		add_filter( 'backupplus_dirlist_uploads', array( $backupplus, 'backup_uploads_dirlist' ) );
 
 		// First, the checks that are on all (admin) pages:
 
-		$service = BackupPlus_Options::get_backupplus_option('backupplus_service');
+		$service = BackupPlus_Options::get_backupplus_option( 'backupplus_service' );
 
-		if (BackupPlus_Options::user_can_manage()) {
+		if ( BackupPlus_Options::user_can_manage() ) {
 
 			$this->print_restore_in_progress_box_if_needed();
 
 			// Moved out for use with Ajax saving
-			$this->setup_all_admin_notices_global($service);
-		}
-		
-		// New-install admin tour
-		if (!defined('BACKUPPLUS_ENABLE_TOUR') || BACKUPPLUS_ENABLE_TOUR) {
-			backupplus_try_include_file('includes/backupplus-tour.php', 'include_once');
+			$this->setup_all_admin_notices_global( $service );
 		}
 
-		$udp_saved_version = BackupPlus_Options::get_backupplus_option('backupplus_version');
-		if (!$udp_saved_version || $udp_saved_version != $backupplus->version) {
-			if (!$udp_saved_version) {
+		// New-install admin tour
+		if ( ! defined( 'BACKUPPLUS_ENABLE_TOUR' ) || BACKUPPLUS_ENABLE_TOUR ) {
+			backupplus_try_include_file( 'includes/backupplus-tour.php', 'include_once' );
+		}
+
+		$udp_saved_version = BackupPlus_Options::get_backupplus_option( 'backupplus_version' );
+		if ( ! $udp_saved_version || $udp_saved_version != $backupplus->version ) {
+			if ( ! $udp_saved_version ) {
 				// udp was newly installed, or upgraded from an older version
-				do_action('backupplus_newly_installed', $backupplus->version);
+				do_action( 'backupplus_newly_installed', $backupplus->version );
 			} else {
 				// udp was updated or downgraded
-				do_action('backupplus_version_changed', $udp_saved_version, $backupplus->version);
+				do_action( 'backupplus_version_changed', $udp_saved_version, $backupplus->version );
 			}
-			BackupPlus_Options::update_backupplus_option('backupplus_version', $backupplus->version);
+			BackupPlus_Options::update_backupplus_option( 'backupplus_version', $backupplus->version );
 		}
 
-		if (BackupPlus_Options::admin_page() != $pagenow || empty($_REQUEST['page']) || 'backupplus' != $_REQUEST['page']) {
-			if (BackupPlus_Options::user_can_manage()) add_action('admin_print_footer_scripts', array($this, 'print_phpseclib_notice_scripts'));
+		if ( BackupPlus_Options::admin_page() != $pagenow || empty( $_REQUEST['page'] ) || 'backupplus' != $_REQUEST['page'] ) {
+			if ( BackupPlus_Options::user_can_manage() ) {
+				add_action( 'admin_print_footer_scripts', array( $this, 'print_phpseclib_notice_scripts' ) );
+			}
 			return;
 		}
 
 		// Next, the actions that only come on the BackupPlus page
-		$this->setup_all_admin_notices_udonly($service);
+		$this->setup_all_admin_notices_udonly( $service );
 
-
-		add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'), 99999);
-		$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
-		if (isset($_POST['action']) && 'backupplus_wipesettings' === $_POST['action'] && isset($post_nonce) && BackupPlus_Options::user_can_manage()) {
-			if (wp_verify_nonce($post_nonce, 'backupplus-wipe-setting-nonce')) $this->wipe_settings();
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 99999 );
+		$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'nonce' );
+		if ( isset( $_POST['action'] ) && 'backupplus_wipesettings' === $_POST['action'] && isset( $post_nonce ) && BackupPlus_Options::user_can_manage() ) {
+			if ( wp_verify_nonce( $post_nonce, 'backupplus-wipe-setting-nonce' ) ) {
+				$this->wipe_settings();
+			}
 		}
 	}
 
@@ -484,46 +526,48 @@ class BackupPlus_Admin {
 	 * @param string   $title    Text to use for the title of the modal
 	 * @param callable $callback Callable function to output the contents of the backupplus_inpage_prebackup element - i.e. what shows in the modal before a backup begins.
 	 */
-	public function add_backup_scaffolding($title, $callback) {
+	public function add_backup_scaffolding( $title, $callback ) {
 		$this->admin_enqueue_scripts();
 		?>
 		<script>
 		// TODO: This is not the best way.
-		var backupplus_credentialtest_nonce='<?php echo esc_js(wp_create_nonce('backupplus-credentialtest-nonce'));?>';
+		var backupplus_credentialtest_nonce='<?php echo esc_js( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>';
 		</script>
 		<div id="backupplus-poplog ">
 			<pre id="backupplus-poplog-content" style="white-space: pre-wrap;"></pre>
 		</div>
 		
-		<div id="backupplus-backupnow-inpage-modal" title="BackupPlus - <?php echo esc_attr($title); ?>">
+		<div id="backupplus-backupnow-inpage-modal" title="BackupPlus - <?php echo esc_attr( $title ); ?>">
 
 			<div id="backupplus_inpage_prebackup" style="float:left; clear:both;">
-				<?php call_user_func($callback); ?>
+				<?php call_user_func( $callback ); ?>
 			</div>
 
 			<div id="backupplus_inpage_backup">
 
-				<h2><?php echo esc_html($title);?></h2>
+				<h2><?php echo esc_html( $title ); ?></h2>
 
 				<div id="backupplus_backup_started" class="updated" style="display:none; max-width: 560px; font-size:100%; line-height: 100%; padding:6px; clear:left;"></div>
 
-				<?php $this->render_active_jobs_and_log_table(true, false); ?>
+				<?php $this->render_active_jobs_and_log_table( true, false ); ?>
 
 			</div>
 
 		</div>
 		<?php
 	}
-	
+
 	/**
 	 * Called via the ajax_restore actions to prepare the restore over AJAX
 	 *
 	 * @return void
 	 */
 	public function backupplus_ajaxrestore() {
-		$request_action = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'action');
-		$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
-		if ('backupplus_ajaxrestore' === $request_action && (empty($request_nonce) || !wp_verify_nonce($request_nonce, 'backupplus-credentialtest-nonce'))) die('Security Check');
+		$request_action = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'action' );
+		$request_nonce  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
+		if ( 'backupplus_ajaxrestore' === $request_action && ( empty( $request_nonce ) || ! wp_verify_nonce( $request_nonce, 'backupplus-credentialtest-nonce' ) ) ) {
+			die( 'Security Check' );
+		}
 		$this->prepare_restore();
 		die();
 	}
@@ -533,45 +577,50 @@ class BackupPlus_Admin {
 	 */
 	public function wp_before_admin_bar_render() {
 		global $wp_admin_bar;
-		
-		if (!BackupPlus_Options::user_can_manage()) return;
-		
-		if (defined('BACKUPPLUS_ADMINBAR_DISABLE') && BACKUPPLUS_ADMINBAR_DISABLE) return;
 
-		if (false == apply_filters('backupplus_settings_page_render', true)) return;
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
+
+		if ( defined( 'BACKUPPLUS_ADMINBAR_DISABLE' ) && BACKUPPLUS_ADMINBAR_DISABLE ) {
+			return;
+		}
+
+		if ( false == apply_filters( 'backupplus_settings_page_render', true ) ) {
+			return;
+		}
 
 		$option_location = BackupPlus_Options::admin_page_url();
-		
+
 		$args = array(
-			'id' => 'backupplus_admin_node',
-			'title' => apply_filters('backupplus_admin_node_title', 'BackupPlus')
+			'id'    => 'backupplus_admin_node',
+			'title' => apply_filters( 'backupplus_admin_node_title', 'BackupPlus' ),
 		);
-		$wp_admin_bar->add_node($args);
-		
+		$wp_admin_bar->add_node( $args );
+
 		$args = array(
-			'id' => 'backupplus_admin_node_status',
-			'title' => str_ireplace('Back Up', 'Backup', __('Backup', 'backupplus')).' / '.__('Restore', 'backupplus'),
+			'id'     => 'backupplus_admin_node_status',
+			'title'  => str_ireplace( 'Back Up', 'Backup', __( 'Backup', 'backupplus' ) ) . ' / ' . __( 'Restore', 'backupplus' ),
 			'parent' => 'backupplus_admin_node',
-			'href' => $option_location.'?page=backupplus&tab=backups'
+			'href'   => $option_location . '?page=backupplus&tab=backups',
 		);
-		$wp_admin_bar->add_node($args);
-		
+		$wp_admin_bar->add_node( $args );
+
 		$args = array(
-			'id' => 'backupplus_admin_node_settings',
-			'title' => __('Settings', 'backupplus'),
+			'id'     => 'backupplus_admin_node_settings',
+			'title'  => __( 'Settings', 'backupplus' ),
 			'parent' => 'backupplus_admin_node',
-			'href' => $option_location.'?page=backupplus&tab=settings'
+			'href'   => $option_location . '?page=backupplus&tab=settings',
 		);
-		$wp_admin_bar->add_node($args);
-		
+		$wp_admin_bar->add_node( $args );
+
 		$args = array(
-			'id' => 'backupplus_admin_node_expert_content',
-			'title' => __('Advanced Tools', 'backupplus'),
+			'id'     => 'backupplus_admin_node_expert_content',
+			'title'  => __( 'Advanced Tools', 'backupplus' ),
 			'parent' => 'backupplus_admin_node',
-			'href' => $option_location.'?page=backupplus&tab=expert'
+			'href'   => $option_location . '?page=backupplus&tab=expert',
 		);
-		$wp_admin_bar->add_node($args);
-		
+		$wp_admin_bar->add_node( $args );
 	}
 
 	/**
@@ -579,32 +628,30 @@ class BackupPlus_Admin {
 	 */
 	private function ensure_sufficient_jquery_and_enqueue() {
 		global $backupplus;
-		
-		$enqueue_version = $backupplus->use_unminified_scripts() ? $backupplus->version.'.'.time() : $backupplus->version;
-		$min_or_not = $backupplus->use_unminified_scripts() ? '' : '.min';
-		$backupplus_min_or_not = $backupplus->get_backupplus_file_version();
-		$admin_common_script = 'includes/backupplus-admin-common'.$backupplus_min_or_not.'.js';
+
+		$enqueue_version              = $backupplus->use_unminified_scripts() ? $backupplus->version . '.' . time() : $backupplus->version;
+		$min_or_not                   = $backupplus->use_unminified_scripts() ? '' : '.min';
+		$backupplus_min_or_not        = $backupplus->get_backupplus_file_version();
+		$admin_common_script          = 'includes/backupplus-admin-common' . $backupplus_min_or_not . '.js';
 		$admin_common_enqueue_version = $enqueue_version;
-		if (!file_exists(BACKUPPLUS_DIR.'/'.$admin_common_script)) {
+		if ( ! file_exists( BACKUPPLUS_DIR . '/' . $admin_common_script ) ) {
 			$admin_common_script = 'includes/backupplus-admin-common.js';
-			if (!$backupplus->use_unminified_scripts()) {
-				$admin_common_enqueue_version = $backupplus->version.'.'.filemtime(BACKUPPLUS_DIR.'/'.$admin_common_script);
+			if ( ! $backupplus->use_unminified_scripts() ) {
+				$admin_common_enqueue_version = $backupplus->version . '.' . filemtime( BACKUPPLUS_DIR . '/' . $admin_common_script );
 			}
 		}
 
-		
-		if (version_compare($backupplus->get_wordpress_version(), '3.3', '<')) {
+		if ( version_compare( $backupplus->get_wordpress_version(), '3.3', '<' ) ) {
 			// Require a newer jQuery (3.2.1 has 1.6.1, so we go for something not too much newer). We use .on() in a way that is incompatible with < 1.7
-			wp_deregister_script('jquery');
-			$jquery_enqueue_version = $backupplus->use_unminified_scripts() ? '1.7.2'.'.'.time() : '1.7.2';
-			wp_register_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery'.$min_or_not.'.js', false, $jquery_enqueue_version, false); // phpcs:ignore PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent -- The external jQuery script is only loaded on WordPress versions below 3.3
-			wp_enqueue_script('jquery');
+			wp_deregister_script( 'jquery' );
+			$jquery_enqueue_version = $backupplus->use_unminified_scripts() ? '1.7.2' . '.' . time() : '1.7.2';
+			wp_register_script( 'jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery' . $min_or_not . '.js', false, $jquery_enqueue_version, false ); // phpcs:ignore PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent -- The external jQuery script is only loaded on WordPress versions below 3.3
+			wp_enqueue_script( 'jquery' );
 			// No plupload until 3.3
-			wp_enqueue_script('backupplus-admin-common', BACKUPPLUS_URL.'/'.$admin_common_script, array('jquery', 'jquery-ui-dialog', 'jquery-ui-core', 'jquery-ui-accordion'), $admin_common_enqueue_version, true);
+			wp_enqueue_script( 'backupplus-admin-common', BACKUPPLUS_URL . '/' . $admin_common_script, array( 'jquery', 'jquery-ui-dialog', 'jquery-ui-core', 'jquery-ui-accordion' ), $admin_common_enqueue_version, true );
 		} else {
-			wp_enqueue_script('backupplus-admin-common', BACKUPPLUS_URL.'/'.$admin_common_script, array('jquery', 'jquery-ui-dialog', 'jquery-ui-core', 'jquery-ui-accordion', 'plupload-all'), $admin_common_enqueue_version);
+			wp_enqueue_script( 'backupplus-admin-common', BACKUPPLUS_URL . '/' . $admin_common_script, array( 'jquery', 'jquery-ui-dialog', 'jquery-ui-core', 'jquery-ui-accordion', 'plupload-all' ), $admin_common_enqueue_version );
 		}
-		
 	}
 
 	/**
@@ -613,319 +660,337 @@ class BackupPlus_Admin {
 	public function admin_enqueue_scripts() {
 
 		global $backupplus, $wp_locale;
-		
+
 		// This should not happen, but is an extra protection in case it does.
-		if (!BackupPlus_Options::user_can_manage()) return;
-		
-		$enqueue_version = $backupplus->use_unminified_scripts() ? $backupplus->version.'.'.time() : $backupplus->version;
-		$min_or_not = $backupplus->use_unminified_scripts() ? '' : '.min';
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
+
+		$enqueue_version       = $backupplus->use_unminified_scripts() ? $backupplus->version . '.' . time() : $backupplus->version;
+		$min_or_not            = $backupplus->use_unminified_scripts() ? '' : '.min';
 		$backupplus_min_or_not = $backupplus->get_backupplus_file_version();
 
 		// Defeat other plugins/themes which dump their jQuery UI CSS onto our settings page
-		if (!wp_style_is('jquery-ui', 'done')) {
-			wp_dequeue_style('jquery-ui');
-			wp_deregister_style('jquery-ui');
+		if ( ! wp_style_is( 'jquery-ui', 'done' ) ) {
+			wp_dequeue_style( 'jquery-ui' );
+			wp_deregister_style( 'jquery-ui' );
 		}
-		$jquery_ui_version = version_compare($backupplus->get_wordpress_version(), '5.6', '>=') ? '1.12.1' : '1.11.4';
-		$jquery_ui_css_enqueue_version = $backupplus->use_unminified_scripts() ? $jquery_ui_version.'.0'.'.'.time() : $jquery_ui_version.'.0';
-		wp_enqueue_style('backupplus-jquery-ui', BACKUPPLUS_URL."/includes/jquery-ui.custom-v$jquery_ui_version$backupplus_min_or_not.css", array(), $jquery_ui_css_enqueue_version);
-	
-		wp_enqueue_style('backupplus-admin-css', BACKUPPLUS_URL.'/css/backupplus-admin'.$backupplus_min_or_not.'.css', array(), $enqueue_version);
-		wp_enqueue_style('backupplus-decryption-css', BACKUPPLUS_URL.'/css/backupplus-decryption.css', array('backupplus-admin-css'), $enqueue_version);
-		wp_enqueue_script('backupplus-age-keygen', BACKUPPLUS_URL.'/js/backupplus-age-keygen.js', array(), $enqueue_version, true);
-		wp_localize_script('backupplus-age-keygen', 'backupplus_age_keygen', array(
-			'added' => __('Public recipient added. Click Save Changes to save it and enable age encryption.', 'backupplus'),
-			'failed' => __('Could not generate an age key. Try again in a modern browser over HTTPS or localhost.', 'backupplus'),
-			'unsupported' => __('Local age key generation requires HTTPS (or localhost) and a modern browser with Web Crypto.', 'backupplus'),
-			'limit' => __('You can save at most 100 recipient entries. Remove an entry before generating another key.', 'backupplus'),
-		));
-		wp_enqueue_script('backupplus-decryption', BACKUPPLUS_URL.'/includes/backupplus-decryption.js', array(), $enqueue_version, true);
-		wp_localize_script('backupplus-decryption', 'backupplus_decryption', array(
-			'worker' => BACKUPPLUS_URL.'/js/backupplus-decryption-worker.js?ver='.rawurlencode($enqueue_version),
-			'decrypting' => __('Decrypting locally:', 'backupplus'),
-			'download' => __('Download', 'backupplus'),
-			'complete' => __('Decryption complete. Download your archives, then clear the files to remove temporary browser copies.', 'backupplus'),
-			'cancelled' => __('Decryption cancelled. Temporary output and keys have been cleared.', 'backupplus'),
-			'legacy' => __('Legacy encryption: integrity cannot be verified. Check the downloaded archive before use.', 'backupplus'),
-			'errors' => array(
-				'CLEANUP_FAILED' => __('Temporary browser files could not be removed. Close other decryption tabs and clear files again, or clear this site’s browser storage.', 'backupplus'),
-				'STORAGE_FAILED' => __('Browser storage is full or unavailable. Free local space and try again.', 'backupplus'),
-				'DECRYPT_FAILED' => __('Unable to decrypt. Check the passphrase or identity and that the archive is complete and unmodified.', 'backupplus'),
-				'UNSUPPORTED_KEY' => __('Unsupported private key format or cipher. Use a native age identity, an OpenSSH RSA/Ed25519 key (unencrypted or bcrypt/aes256-ctr), or a PEM key (unencrypted or PBES2/PBKDF2/AES-CBC).', 'backupplus'),
-				'SECURE_CONTEXT' => __('Local decryption requires HTTPS (or localhost), Web Crypto and Web Workers in a modern browser.', 'backupplus'),
-				'MEMORY_LIMIT' => __('This browser cannot stage large files locally. Allow private browser storage or use a browser with Origin Private File System support. Files above 128 MiB require that storage.', 'backupplus'),
-				'WORKER_FAILED' => __('The local decryption worker could not run. Check browser storage, memory and site policy, then try again.', 'backupplus'),
-			),
-		));
+		$jquery_ui_version             = version_compare( $backupplus->get_wordpress_version(), '5.6', '>=' ) ? '1.12.1' : '1.11.4';
+		$jquery_ui_css_enqueue_version = $backupplus->use_unminified_scripts() ? $jquery_ui_version . '.0' . '.' . time() : $jquery_ui_version . '.0';
+		wp_enqueue_style( 'backupplus-jquery-ui', BACKUPPLUS_URL . "/includes/jquery-ui.custom-v$jquery_ui_version$backupplus_min_or_not.css", array(), $jquery_ui_css_enqueue_version );
+
+		wp_enqueue_style( 'backupplus-admin-css', BACKUPPLUS_URL . '/css/backupplus-admin' . $backupplus_min_or_not . '.css', array(), $enqueue_version );
+		wp_enqueue_style( 'backupplus-decryption-css', BACKUPPLUS_URL . '/css/backupplus-decryption.css', array( 'backupplus-admin-css' ), $enqueue_version );
+		wp_enqueue_script( 'backupplus-age-keygen', BACKUPPLUS_URL . '/js/backupplus-age-keygen.js', array(), $enqueue_version, true );
+		wp_localize_script(
+			'backupplus-age-keygen',
+			'backupplus_age_keygen',
+			array(
+				'added'       => __( 'Public recipient added. Click Save Changes to save it and enable age encryption.', 'backupplus' ),
+				'failed'      => __( 'Could not generate an age key. Try again in a modern browser over HTTPS or localhost.', 'backupplus' ),
+				'unsupported' => __( 'Local age key generation requires HTTPS (or localhost) and a modern browser with Web Crypto.', 'backupplus' ),
+				'limit'       => __( 'You can save at most 100 recipient entries. Remove an entry before generating another key.', 'backupplus' ),
+			)
+		);
+		wp_enqueue_script( 'backupplus-decryption', BACKUPPLUS_URL . '/includes/backupplus-decryption.js', array(), $enqueue_version, true );
+		wp_localize_script(
+			'backupplus-decryption',
+			'backupplus_decryption',
+			array(
+				'worker'     => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
+				'decrypting' => __( 'Decrypting locally:', 'backupplus' ),
+				'download'   => __( 'Download', 'backupplus' ),
+				'complete'   => __( 'Decryption complete. Download your archives, then clear the files to remove temporary browser copies.', 'backupplus' ),
+				'cancelled'  => __( 'Decryption cancelled. Temporary output and keys have been cleared.', 'backupplus' ),
+				'legacy'     => __( 'Legacy encryption: integrity cannot be verified. Check the downloaded archive before use.', 'backupplus' ),
+				'errors'     => array(
+					'CLEANUP_FAILED'  => __( 'Temporary browser files could not be removed. Close other decryption tabs and clear files again, or clear this site’s browser storage.', 'backupplus' ),
+					'STORAGE_FAILED'  => __( 'Browser storage is full or unavailable. Free local space and try again.', 'backupplus' ),
+					'DECRYPT_FAILED'  => __( 'Unable to decrypt. Check the passphrase or identity and that the archive is complete and unmodified.', 'backupplus' ),
+					'UNSUPPORTED_KEY' => __( 'Unsupported private key format or cipher. Use a native age identity, an OpenSSH RSA/Ed25519 key (unencrypted or bcrypt/aes256-ctr), or a PEM key (unencrypted or PBES2/PBKDF2/AES-CBC).', 'backupplus' ),
+					'SECURE_CONTEXT'  => __( 'Local decryption requires HTTPS (or localhost), Web Crypto and Web Workers in a modern browser.', 'backupplus' ),
+					'MEMORY_LIMIT'    => __( 'This browser cannot stage large files locally. Allow private browser storage or use a browser with Origin Private File System support. Files above 128 MiB require that storage.', 'backupplus' ),
+					'WORKER_FAILED'   => __( 'The local decryption worker could not run. Check browser storage, memory and site policy, then try again.', 'backupplus' ),
+				),
+			)
+		);
 		// add_filter('style_loader_tag', array($this, 'style_loader_tag'), 10, 2);
 
 		$this->ensure_sufficient_jquery_and_enqueue();
-		$jquery_blockui_enqueue_version = $backupplus->use_unminified_scripts() ? '2.71.0'.'.'.time() : '2.71.0';
-		wp_enqueue_script('jquery-blockui', BACKUPPLUS_URL.'/includes/blockui/jquery.blockUI'.$min_or_not.'.js', array('jquery'), $jquery_blockui_enqueue_version);
-	
-		wp_enqueue_script('jquery-labelauty', BACKUPPLUS_URL.'/includes/labelauty/jquery-labelauty'.$backupplus_min_or_not.'.js', array('jquery'), $enqueue_version);
-		wp_enqueue_style('jquery-labelauty', BACKUPPLUS_URL.'/includes/labelauty/jquery-labelauty'.$backupplus_min_or_not.'.css', array(), $enqueue_version);
-		$serialize_js_enqueue_version = $backupplus->use_unminified_scripts() ? '3.2.0'.'.'.time() : '3.2.0';
-		wp_enqueue_script('jquery.serializeJSON', BACKUPPLUS_URL.'/includes/jquery.serializeJSON/jquery.serializejson'.$min_or_not.'.js', array('jquery'), $serialize_js_enqueue_version);
-		wp_enqueue_script('handlebars', BACKUPPLUS_URL.'/includes/handlebars/handlebars'.$min_or_not.'.js', array(), $enqueue_version);
+		$jquery_blockui_enqueue_version = $backupplus->use_unminified_scripts() ? '2.71.0' . '.' . time() : '2.71.0';
+		wp_enqueue_script( 'jquery-blockui', BACKUPPLUS_URL . '/includes/blockui/jquery.blockUI' . $min_or_not . '.js', array( 'jquery' ), $jquery_blockui_enqueue_version );
+
+		wp_enqueue_script( 'jquery-labelauty', BACKUPPLUS_URL . '/includes/labelauty/jquery-labelauty' . $backupplus_min_or_not . '.js', array( 'jquery' ), $enqueue_version );
+		wp_enqueue_style( 'jquery-labelauty', BACKUPPLUS_URL . '/includes/labelauty/jquery-labelauty' . $backupplus_min_or_not . '.css', array(), $enqueue_version );
+		$serialize_js_enqueue_version = $backupplus->use_unminified_scripts() ? '3.2.0' . '.' . time() : '3.2.0';
+		wp_enqueue_script( 'jquery.serializeJSON', BACKUPPLUS_URL . '/includes/jquery.serializeJSON/jquery.serializejson' . $min_or_not . '.js', array( 'jquery' ), $serialize_js_enqueue_version );
+		wp_enqueue_script( 'handlebars', BACKUPPLUS_URL . '/includes/handlebars/handlebars' . $min_or_not . '.js', array(), $enqueue_version );
 		$this->enqueue_jstree();
 
-		$jqueryui_dialog_extended_version = $backupplus->use_unminified_scripts() ? '1.0.4'.'.'.time() : '1.0.4';
-		wp_enqueue_script('jquery-ui.dialog.extended', BACKUPPLUS_URL.'/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended'.$backupplus_min_or_not.'.js', array('jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog'), $jqueryui_dialog_extended_version);
+		$jqueryui_dialog_extended_version = $backupplus->use_unminified_scripts() ? '1.0.4' . '.' . time() : '1.0.4';
+		wp_enqueue_script( 'jquery-ui.dialog.extended', BACKUPPLUS_URL . '/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended' . $backupplus_min_or_not . '.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog' ), $jqueryui_dialog_extended_version );
 
 		$day_selector = '';
-		for ($day_index = 0; $day_index <= 6; $day_index++) {
+		for ( $day_index = 0; $day_index <= 6; $day_index++ ) {
 			// $selected = ($opt == $day_index) ? 'selected="selected"' : '';
-			$selected = '';
-			$day_selector .= "\n\t<option value='" . $day_index . "' $selected>" . $wp_locale->get_weekday($day_index) . '</option>';
+			$selected      = '';
+			$day_selector .= "\n\t<option value='" . $day_index . "' $selected>" . $wp_locale->get_weekday( $day_index ) . '</option>';
 		}
 
 		$mday_selector = '';
-		for ($mday_index = 1; $mday_index <= 28; $mday_index++) {
+		for ( $mday_index = 1; $mday_index <= 28; $mday_index++ ) {
 			// $selected = ($opt == $mday_index) ? 'selected="selected"' : '';
-			$selected = '';
+			$selected       = '';
 			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
 		}
 		$remote_storage_options_and_templates = BackupPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
-		$backup_methods = $backupplus->backup_methods;
-		$provider_script_data = array();
-		foreach (array_keys($backup_methods) as $method) {
-			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($method);
-			if (!is_wp_error($provider)) $provider_script_data = array_merge($provider_script_data, $provider->get_admin_script_data());
+		$backup_methods                       = $backupplus->backup_methods;
+		$provider_script_data                 = array();
+		foreach ( array_keys( $backup_methods ) as $method ) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object( $method );
+			if ( ! is_wp_error( $provider ) ) {
+				$provider_script_data = array_merge( $provider_script_data, $provider->get_admin_script_data() );
+			}
 		}
-		do_action('backupplus_admin_enqueue_scripts');
+		do_action( 'backupplus_admin_enqueue_scripts' );
 		$main_tabs = $this->get_main_tabs_array();
 
-
 		$hosting_company = $backupplus->get_hosting_info();
-		$tab = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'tab', '', false, 'string', null);
-		wp_localize_script('backupplus-admin-common', 'backupplus_i18n', array_merge($provider_script_data, array(
-			'tab' => (empty($tab) || !preg_match('/^[a-z]+$/', $tab)) ? 'backups' : $tab,
-			'sendonlyonwarnings' => __('Send a report only when there are warnings/errors', 'backupplus'),
-			'wholebackup' => __('When email storage method is enabled, and an email address is entered, also send the backup', 'backupplus'),
-			/* translators: %s: Typical mail server size limit in megabytes */
-			'emailsizelimits' => esc_attr(sprintf(__('Be aware that mail servers tend to have size limits; typically around %s Mb; backups larger than any limits will likely not arrive.', 'backupplus'), '10-20')),
-			'rescanning' => __('Rescanning (looking for backups that you have uploaded manually into the internal backup store)...', 'backupplus'),
-			'dbbackup' => __('Only email the database backup', 'backupplus'),
-			'rescanningremote' => __('Rescanning remote and local storage for backup sets...', 'backupplus'),
-			'enteremailhere' => esc_attr(__('To send to more than one address, separate each address with a comma.', 'backupplus')),
-			'excludedeverything' => __('If you exclude both the database and the files, then you have excluded everything!', 'backupplus'),
-			'nofileschosen' => __('You have chosen to backup files, but no file entities have been selected', 'backupplus'),
-			'notableschosen' => __('You have chosen to backup a database, but no tables have been selected', 'backupplus'),
-			'nocloudserviceschosen' => __('You have chosen to send this backup to remote storage, but no remote storage locations have been selected', 'backupplus'),
-			'restore_proceeding' => __('The restore operation has begun.', 'backupplus').' '.__('Do not close your browser until it reports itself as having finished.', 'backupplus'),
-			'unexpectedresponse' => __('Unexpected response:', 'backupplus'),
-			'servererrorcode' => __('The web server returned an error code (try again, or check your web server logs)', 'backupplus'),
-			'newuserpass' => __("The new user's RackSpace console password is (this will not be shown again):", 'backupplus'),
-			'trying' => __('Trying...', 'backupplus'),
-			'fetching' => __('Fetching...', 'backupplus'),
-			'calculating' => __('calculating...', 'backupplus'),
-			'begunlooking' => __('Begun looking for this entity', 'backupplus'),
-			'stilldownloading' => __('Some files are still downloading or being processed - please wait.', 'backupplus'),
-			'processing' => __('Processing files - please wait...', 'backupplus'),
-			'emptyresponse' => __('Error: the server sent an empty response.', 'backupplus'),
-			'warnings' => __('Warnings:', 'backupplus'),
-			'errors' => __('Errors:', 'backupplus'),
-			'jsonnotunderstood' => __('Error: the server sent us a response which we did not understand.', 'backupplus'),
-			'errordata' => __('Error data:', 'backupplus'),
-			'error' => __('Error:', 'backupplus'),
-			'errornocolon' => __('Error', 'backupplus'),
-			'existing_backups' => __('Existing backups', 'backupplus'),
-			'fileready' => __('File ready.', 'backupplus'),
-			'filesize' => __('File size', 'backupplus'),
-			'actions' => __('Actions', 'backupplus'),
-			'deletefromserver' => __('Delete from your web server', 'backupplus'),
-			'downloadtocomputer' => __('Download to your computer', 'backupplus'),
-			'browse_contents' => __('Browse contents', 'backupplus'),
-			'notunderstood' => __('Download error: the server sent us a response which we did not understand.', 'backupplus'),
-			'requeststart' => __('Requesting start of backup...', 'backupplus'),
-			'phpinfo' => __('PHP information', 'backupplus'),
-			'delete_old_dirs' => __('Delete Old Directories', 'backupplus'),
-			'raw' => __('Raw backup history', 'backupplus'),
-			'notarchive' => __('This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus').' '.__('However, BackupPlus and UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern.', 'backupplus'),
-			'notarchive2' => '<p>'.__('This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus').'</p>',
-			'makesure' => __('(make sure that you were trying to upload a zip file previously created by BackupPlus or UpdraftPlus)', 'backupplus'),
-			'uploaderror' => __('Upload error:', 'backupplus'),
-			'notdba' => __('Use a BackupPlus encrypted archive ending in .gz.crypt or .zip.crypt.', 'backupplus'),
-			'uploaderr' => __('Upload error', 'backupplus'),
-			'followlink' => __('Decrypt and download the backup archive to your computer.', 'backupplus'),
-			'thiskey' => __('This decryption key will be attempted:', 'backupplus'),
-			'unknownresp' => __('Unknown server response:', 'backupplus'),
-			'ukrespstatus' => __('Unknown server response status:', 'backupplus'),
-			'uploaded' => __('The file was uploaded.', 'backupplus'),
-			// One of the translators has erroneously changed "Backup" into "Back up" (which means, "reverse" !)
-			'backupnow' => str_ireplace('Back Up', 'Backup', __('Backup Now', 'backupplus')),
-			'cancel' => __('Cancel', 'backupplus'),
-			'deletebutton' => __('Delete', 'backupplus'),
-			'createbutton' => __('Create', 'backupplus'),
-			'uploadbutton' => __('Upload', 'backupplus'),
-			'youdidnotselectany' => __('You did not select any components to restore.', 'backupplus').' '.__('Please select at least one, and then try again.', 'backupplus'),
-			'restoreactivitylogfullscreen' => __('Full-screen', 'backupplus'),
-			'restoreactivitylogscreenexit' => __('Exit full-screen', 'backupplus'),
-			'proceedwithupdate' => __('Proceed with update', 'backupplus'),
-			'close' => __('Close', 'backupplus'),
-			'restore' => __('Restore', 'backupplus'),
-			'downloadlogfile' => __('Download log file', 'backupplus'),
-			'automaticbackupbeforeupdate' => __('Automatic backup before update', 'backupplus'),
-			'unsavedsettings' => __('You have made changes to your settings, and not saved.', 'backupplus'),
-			'saving' => __('Saving...', 'backupplus'),
-			'connect' => __('Connect', 'backupplus'),
-			'connecting' => __('Connecting...', 'backupplus'),
-			'disconnect' => __('Disconnect', 'backupplus'),
-			'disconnecting' => __('Disconnecting...', 'backupplus'),
-			'counting' => __('Counting...', 'backupplus'),
-			'updatequotacount' => __('Update quota count', 'backupplus'),
-			// 'resetting' => __('Resetting...', 'backupplus'),
-			'download' => _x('Download', '(verb)', 'backupplus'),
-			'browse_download_link' => apply_filters('backupplus_browse_download_link', ''),
-			'unsavedsettingsbackup' => __('You have made changes to your settings, and not saved.', 'backupplus')."\n".__('You should save your changes to ensure that they are used for making your backup.', 'backupplus'),
-			'unsaved_settings_export' => __('You have made changes to your settings, and not saved.', 'backupplus')."\n".__('Your export file will be of your displayed settings, not your saved ones.', 'backupplus'),
-			'dayselector' => $day_selector,
-			'mdayselector' => $mday_selector,
-			'day' => __('day', 'backupplus'),
-			'inthemonth' => __('in the month', 'backupplus'),
-			'days' => __('day(s)', 'backupplus'),
-			'hours' => __('hour(s)', 'backupplus'),
-			'weeks' => __('week(s)', 'backupplus'),
-			'forbackupsolderthan' => __('For backups older than', 'backupplus'),
-			'ud_url' => BACKUPPLUS_URL,
-			'processing' => __('Processing...', 'backupplus'),
-			'loading' => __('Loading...', 'backupplus'),
-			'pleasefillinrequired' => __('Please fill in the required information.', 'backupplus'),
-			/* translators: %s: Settings type */
-			'test_settings' => __('Test %s Settings', 'backupplus'),
-			/* translators: %s: Settings type */
-			'testing_settings' => __('Testing %s Settings...', 'backupplus'),
-			/* translators: %s: Settings type */
-			'settings_test_result' => __('%s settings test result:', 'backupplus'),
-			'nothing_yet_logged' => __('Nothing yet logged', 'backupplus'),
-			'import_select_file' => __('You have not yet selected a file to import.', 'backupplus'),
-			'import_invalid_json_file' => __('Error: The chosen file is corrupt.', 'backupplus').' '.__('Please choose a valid BackupPlus or UpdraftPlus export file.', 'backupplus'),
-			'import_skipped_settings' => __('These settings were skipped because this BackupPlus build does not support them:', 'backupplus'),
-			'backupplus_settings_url' => BackupPlus_Options::admin_page_url().'?page=backupplus',
-			'network_site_url' => network_site_url(),
-			'importing' => __('Importing...', 'backupplus'),
-			'importing_data_from' => __('This will import data from:', 'backupplus'),
-			'exported_on' => __('Which was exported on:', 'backupplus'),
-			'continue_import' => __('Do you want to carry out the import?', 'backupplus'),
-			'complete' => __('Complete', 'backupplus'),
-			'backup_complete' => __('The backup has finished running', 'backupplus'),
-			'backup_aborted' => __('The backup was aborted', 'backupplus'),
-			'remote_delete_limit' => defined('BACKUPPLUS_REMOTE_DELETE_LIMIT') ? BACKUPPLUS_REMOTE_DELETE_LIMIT : 25, // this used to be number of files but now the value of this constant is in seconds
-			'remote_files_deleted' => __('remote files deleted', 'backupplus'),
-			'http_code' => __('HTTP code:', 'backupplus'),
-			'makesure2' => __('The file failed to upload.', 'backupplus').' '.__('Please check the following:', 'backupplus')."\n\n - ".__('Any settings in your .htaccess or web.config file that affects the maximum upload or post size.', 'backupplus')."\n - ".__('The available memory on the server.', 'backupplus')."\n - ".__('That you are attempting to upload a zip file previously created by BackupPlus or UpdraftPlus.', 'backupplus')."\n\n".__('Further information may be found in the browser JavaScript console, and the server PHP error logs.', 'backupplus'),
-			'zip_file_contents' => __('Browsing zip file', 'backupplus'),
-			'zip_file_contents_info' => __('Select a file to view information about it', 'backupplus'),
-			'search' => __('Search', 'backupplus'),
-			'download_timeout' => __('Unable to download file.', 'backupplus').' '.__('This could be caused by a timeout.', 'backupplus').' '.__('It would be best to download the zip to your computer.', 'backupplus'),
-			'loading_log_file' => __('Loading log file', 'backupplus'),
-			'backupplus_version' => $backupplus->version,
-			'credential_export_omissions' => BackupPlus_Credential_Storage::export_omitted_options(),
-			'export_settings_file_name' => 'backupplus-settings-'.sanitize_title(get_bloginfo('name')).'.json',
-			// For remote storage handlebarsjs template
-			'remote_storage_options' => $remote_storage_options_and_templates['options'],
-			'remote_storage_templates' => $remote_storage_options_and_templates['templates'],
-			'remote_storage_partial_templates' => $remote_storage_options_and_templates['partial_templates'],
-			'remote_storage_methods' => $backup_methods,
-			'instance_enabled' => __('Currently enabled', 'backupplus'),
-			'instance_disabled' => __('Currently disabled', 'backupplus'),
-			'local_upload_started' => __('Local backup upload has started; please check the log file to see the upload progress', 'backupplus'),
-			'local_upload_error' => __('You must select at least one remote storage destination to upload this backup set to.', 'backupplus'),
-			'already_uploaded' => __('(already uploaded)', 'backupplus'),
-			'onedrive_folder_url_warning' => __('Please specify the Microsoft OneDrive folder name, not the URL.', 'backupplus'),
-			'main_tabs_keys' => array_keys($main_tabs),
-			'current_clean_url' => esc_url(BackupPlus::get_current_clean_url()),
-			'exclude_rule_remove_conformation_msg' => __('Are you sure you want to remove this exclusion rule?', 'backupplus'),
-			'exclude_select_file_or_folder_msg' => __('Please select a file/folder which you would like to exclude', 'backupplus'),
-			'exclude_select_folder_wildcards_msg' => __('Please select a folder in which the files/directories you would like to exclude are located', 'backupplus'),
-			'exclude_type_ext_msg' => __('Please enter a file extension, like zip', 'backupplus'),
-			'exclude_ext_error_msg' => __('Please enter a valid file extension', 'backupplus'),
-			'exclude_type_prefix_msg' => __('Please enter characters that begin the filename which you would like to exclude', 'backupplus'),
-			'exclude_prefix_error_msg' => __('Please enter a valid file name prefix', 'backupplus'),
-			'exclude_contain_error_msg' => __('Please enter part of the file name', 'backupplus'),
-			'duplicate_exclude_rule_error_msg' => __('The exclusion rule which you are trying to add already exists', 'backupplus'),
-			'files_new_backup' => __('Include your files in the backup', 'backupplus'),
-			'files_incremental_backup' => __('File backup options', 'backupplus'),
-			'ajax_restore_invalid_response' => __('HTML was detected in the response.', 'backupplus').' '.__('You may have a security module on your webserver blocking the restoration operation.', 'backupplus'),
-			'emptyrestorepath' => __('You have not selected a restore path for your chosen backups', 'backupplus'),
-			'credentials' => __('credentials', 'backupplus'),
-			'username' => __('Username', 'backupplus'),
-			'password' => __('Password', 'backupplus'),
-			/* translators: %d: Seconds ago */
-			'last_activity' => __('last activity: %d seconds ago', 'backupplus'),
-			/* translators: %d: Seconds until resumption */
-			'no_recent_activity' => __('no recent activity; will offer resumption after: %d seconds', 'backupplus'),
-			/* translators: 1: the total number of files already restored, 2: the total number of files to be restored */
-			'restore_files_progress' => __('Restoring %1$s files out of %2$s', 'backupplus'),
-			/* translators: %s: Database table name */
-			'restore_db_table_progress' => __('Restoring table: %s', 'backupplus'),
-			/* translators: %s: Stored routine name */
-			'restore_db_stored_routine_progress' => __('Restoring stored routine: %s', 'backupplus'),
-			'finished' => __('Finished', 'backupplus'),
-			'begun' => __('Begun', 'backupplus'),
-			'maybe_downloading_entities' => __('Downloading backup files if needed', 'backupplus'),
-			'preparing_backup_files' => __('Preparing backup files', 'backupplus'),
-			'ajax_restore_contact_failed' => __('Attempts by the browser to contact the website failed.', 'backupplus'),
-			'ajax_restore_error' => __('Restore error:', 'backupplus'),
-			'ajax_restore_404_detected' => '<div class="notice notice-warning" style="margin: 0px; padding: 5px;"><p><span class="dashicons dashicons-warning"></span> <strong>'. __('Warning:', 'backupplus') . '</strong></p><p>' . __('Attempts by the browser to access some pages have returned a "not found (404)" error.', 'backupplus').' '.__('This could mean that your .htaccess file has incorrect contents, is missing, or that your webserver is missing an equivalent mechanism.', 'backupplus'). '</p><p>'.__('Missing pages:', 'backupplus').'</p><ul class="backupplus_missing_pages"></ul></div>',
-			'delete_error_log_prompt' => __('Please check the error log for more details', 'backupplus'),
-			'existing_backups_limit' => defined('BACKUPPLUS_EXISTING_BACKUPS_LIMIT') ? BACKUPPLUS_EXISTING_BACKUPS_LIMIT : 100,
-			'remote_scan_warning' => __('Warning: if you continue, you will add all backups stored in the configured remote storage directory (whichever site they were created by).', 'backupplus'),
-			'hosting_restriction_one_backup_permonth' => __("You have reached the monthly limit for the number of backups you can create at this time.", 'backupplus').' '.
-				__('Your hosting provider only allows you to take one backup per month.', 'backupplus').' '.
-				/* translators: %s: Hosting provider name */
-				sprintf(__("Please contact your hosting company (%s) if you require further support.", 'backupplus'), $hosting_company['name']),
-			'hosting_restriction_one_incremental_perday' => __("You have reached the daily limit for the number of incremental backups you can create at this time.", 'backupplus').' '.
-				__("Your hosting provider only allows you to take one incremental backup per day.", 'backupplus').' '.
-				/* translators: %s: Hosting provider name */
-				sprintf(__("Please contact your hosting company (%s) if you require further support.", 'backupplus'), $hosting_company['name']),
-			'hosting_restriction' => $backupplus->is_hosting_backup_limit_reached(),
-			'conditional_logic' => array(
-				'day_of_the_week_options' => $backupplus->list_days_of_the_week(),
-				'logic_options' => array(
-					array(
-						'label' => __('on every backup', 'backupplus'),
-						'value' => '',
+		$tab             = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'tab', '', false, 'string', null );
+		wp_localize_script(
+			'backupplus-admin-common',
+			'backupplus_i18n',
+			array_merge(
+				$provider_script_data,
+				array(
+					'tab'                                  => ( empty( $tab ) || ! preg_match( '/^[a-z]+$/', $tab ) ) ? 'backups' : $tab,
+					'sendonlyonwarnings'                   => __( 'Send a report only when there are warnings/errors', 'backupplus' ),
+					'wholebackup'                          => __( 'When email storage method is enabled, and an email address is entered, also send the backup', 'backupplus' ),
+					/* translators: %s: Typical mail server size limit in megabytes */
+					'emailsizelimits'                      => esc_attr( sprintf( __( 'Be aware that mail servers tend to have size limits; typically around %s Mb; backups larger than any limits will likely not arrive.', 'backupplus' ), '10-20' ) ),
+					'rescanning'                           => __( 'Rescanning (looking for backups that you have uploaded manually into the internal backup store)...', 'backupplus' ),
+					'dbbackup'                             => __( 'Only email the database backup', 'backupplus' ),
+					'rescanningremote'                     => __( 'Rescanning remote and local storage for backup sets...', 'backupplus' ),
+					'enteremailhere'                       => esc_attr( __( 'To send to more than one address, separate each address with a comma.', 'backupplus' ) ),
+					'excludedeverything'                   => __( 'If you exclude both the database and the files, then you have excluded everything!', 'backupplus' ),
+					'nofileschosen'                        => __( 'You have chosen to backup files, but no file entities have been selected', 'backupplus' ),
+					'notableschosen'                       => __( 'You have chosen to backup a database, but no tables have been selected', 'backupplus' ),
+					'nocloudserviceschosen'                => __( 'You have chosen to send this backup to remote storage, but no remote storage locations have been selected', 'backupplus' ),
+					'restore_proceeding'                   => __( 'The restore operation has begun.', 'backupplus' ) . ' ' . __( 'Do not close your browser until it reports itself as having finished.', 'backupplus' ),
+					'unexpectedresponse'                   => __( 'Unexpected response:', 'backupplus' ),
+					'servererrorcode'                      => __( 'The web server returned an error code (try again, or check your web server logs)', 'backupplus' ),
+					'newuserpass'                          => __( "The new user's RackSpace console password is (this will not be shown again):", 'backupplus' ),
+					'trying'                               => __( 'Trying...', 'backupplus' ),
+					'fetching'                             => __( 'Fetching...', 'backupplus' ),
+					'calculating'                          => __( 'calculating...', 'backupplus' ),
+					'begunlooking'                         => __( 'Begun looking for this entity', 'backupplus' ),
+					'stilldownloading'                     => __( 'Some files are still downloading or being processed - please wait.', 'backupplus' ),
+					'processing'                           => __( 'Processing files - please wait...', 'backupplus' ),
+					'emptyresponse'                        => __( 'Error: the server sent an empty response.', 'backupplus' ),
+					'warnings'                             => __( 'Warnings:', 'backupplus' ),
+					'errors'                               => __( 'Errors:', 'backupplus' ),
+					'jsonnotunderstood'                    => __( 'Error: the server sent us a response which we did not understand.', 'backupplus' ),
+					'errordata'                            => __( 'Error data:', 'backupplus' ),
+					'error'                                => __( 'Error:', 'backupplus' ),
+					'errornocolon'                         => __( 'Error', 'backupplus' ),
+					'existing_backups'                     => __( 'Existing backups', 'backupplus' ),
+					'fileready'                            => __( 'File ready.', 'backupplus' ),
+					'filesize'                             => __( 'File size', 'backupplus' ),
+					'actions'                              => __( 'Actions', 'backupplus' ),
+					'deletefromserver'                     => __( 'Delete from your web server', 'backupplus' ),
+					'downloadtocomputer'                   => __( 'Download to your computer', 'backupplus' ),
+					'browse_contents'                      => __( 'Browse contents', 'backupplus' ),
+					'notunderstood'                        => __( 'Download error: the server sent us a response which we did not understand.', 'backupplus' ),
+					'requeststart'                         => __( 'Requesting start of backup...', 'backupplus' ),
+					'phpinfo'                              => __( 'PHP information', 'backupplus' ),
+					'delete_old_dirs'                      => __( 'Delete Old Directories', 'backupplus' ),
+					'raw'                                  => __( 'Raw backup history', 'backupplus' ),
+					'notarchive'                           => __( 'This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus' ) . ' ' . __( 'However, BackupPlus and UpdraftPlus archives are standard zip/SQL files - so if you are sure that your file has the right format, then you can rename it to match that pattern.', 'backupplus' ),
+					'notarchive2'                          => '<p>' . __( 'This filename does not match a BackupPlus or UpdraftPlus backup archive. Expected backup_(time)_(site name)_(code)_(type).zip or .gz, optionally followed by .crypt.', 'backupplus' ) . '</p>',
+					'makesure'                             => __( '(make sure that you were trying to upload a zip file previously created by BackupPlus or UpdraftPlus)', 'backupplus' ),
+					'uploaderror'                          => __( 'Upload error:', 'backupplus' ),
+					'notdba'                               => __( 'Use a BackupPlus encrypted archive ending in .gz.crypt or .zip.crypt.', 'backupplus' ),
+					'uploaderr'                            => __( 'Upload error', 'backupplus' ),
+					'followlink'                           => __( 'Decrypt and download the backup archive to your computer.', 'backupplus' ),
+					'thiskey'                              => __( 'This decryption key will be attempted:', 'backupplus' ),
+					'unknownresp'                          => __( 'Unknown server response:', 'backupplus' ),
+					'ukrespstatus'                         => __( 'Unknown server response status:', 'backupplus' ),
+					'uploaded'                             => __( 'The file was uploaded.', 'backupplus' ),
+					// One of the translators has erroneously changed "Backup" into "Back up" (which means, "reverse" !)
+					'backupnow'                            => str_ireplace( 'Back Up', 'Backup', __( 'Backup Now', 'backupplus' ) ),
+					'cancel'                               => __( 'Cancel', 'backupplus' ),
+					'deletebutton'                         => __( 'Delete', 'backupplus' ),
+					'createbutton'                         => __( 'Create', 'backupplus' ),
+					'uploadbutton'                         => __( 'Upload', 'backupplus' ),
+					'youdidnotselectany'                   => __( 'You did not select any components to restore.', 'backupplus' ) . ' ' . __( 'Please select at least one, and then try again.', 'backupplus' ),
+					'restoreactivitylogfullscreen'         => __( 'Full-screen', 'backupplus' ),
+					'restoreactivitylogscreenexit'         => __( 'Exit full-screen', 'backupplus' ),
+					'proceedwithupdate'                    => __( 'Proceed with update', 'backupplus' ),
+					'close'                                => __( 'Close', 'backupplus' ),
+					'restore'                              => __( 'Restore', 'backupplus' ),
+					'downloadlogfile'                      => __( 'Download log file', 'backupplus' ),
+					'automaticbackupbeforeupdate'          => __( 'Automatic backup before update', 'backupplus' ),
+					'unsavedsettings'                      => __( 'You have made changes to your settings, and not saved.', 'backupplus' ),
+					'saving'                               => __( 'Saving...', 'backupplus' ),
+					'connect'                              => __( 'Connect', 'backupplus' ),
+					'connecting'                           => __( 'Connecting...', 'backupplus' ),
+					'disconnect'                           => __( 'Disconnect', 'backupplus' ),
+					'disconnecting'                        => __( 'Disconnecting...', 'backupplus' ),
+					'counting'                             => __( 'Counting...', 'backupplus' ),
+					'updatequotacount'                     => __( 'Update quota count', 'backupplus' ),
+					// 'resetting' => __('Resetting...', 'backupplus'),
+					'download'                             => _x( 'Download', '(verb)', 'backupplus' ),
+					'browse_download_link'                 => apply_filters( 'backupplus_browse_download_link', '' ),
+					'unsavedsettingsbackup'                => __( 'You have made changes to your settings, and not saved.', 'backupplus' ) . "\n" . __( 'You should save your changes to ensure that they are used for making your backup.', 'backupplus' ),
+					'unsaved_settings_export'              => __( 'You have made changes to your settings, and not saved.', 'backupplus' ) . "\n" . __( 'Your export file will be of your displayed settings, not your saved ones.', 'backupplus' ),
+					'dayselector'                          => $day_selector,
+					'mdayselector'                         => $mday_selector,
+					'day'                                  => __( 'day', 'backupplus' ),
+					'inthemonth'                           => __( 'in the month', 'backupplus' ),
+					'days'                                 => __( 'day(s)', 'backupplus' ),
+					'hours'                                => __( 'hour(s)', 'backupplus' ),
+					'weeks'                                => __( 'week(s)', 'backupplus' ),
+					'forbackupsolderthan'                  => __( 'For backups older than', 'backupplus' ),
+					'ud_url'                               => BACKUPPLUS_URL,
+					'processing'                           => __( 'Processing...', 'backupplus' ),
+					'loading'                              => __( 'Loading...', 'backupplus' ),
+					'pleasefillinrequired'                 => __( 'Please fill in the required information.', 'backupplus' ),
+					/* translators: %s: Settings type */
+					'test_settings'                        => __( 'Test %s Settings', 'backupplus' ),
+					/* translators: %s: Settings type */
+					'testing_settings'                     => __( 'Testing %s Settings...', 'backupplus' ),
+					/* translators: %s: Settings type */
+					'settings_test_result'                 => __( '%s settings test result:', 'backupplus' ),
+					'nothing_yet_logged'                   => __( 'Nothing yet logged', 'backupplus' ),
+					'import_select_file'                   => __( 'You have not yet selected a file to import.', 'backupplus' ),
+					'import_invalid_json_file'             => __( 'Error: The chosen file is corrupt.', 'backupplus' ) . ' ' . __( 'Please choose a valid BackupPlus or UpdraftPlus export file.', 'backupplus' ),
+					'import_skipped_settings'              => __( 'These settings were skipped because this BackupPlus build does not support them:', 'backupplus' ),
+					'backupplus_settings_url'              => BackupPlus_Options::admin_page_url() . '?page=backupplus',
+					'network_site_url'                     => network_site_url(),
+					'importing'                            => __( 'Importing...', 'backupplus' ),
+					'importing_data_from'                  => __( 'This will import data from:', 'backupplus' ),
+					'exported_on'                          => __( 'Which was exported on:', 'backupplus' ),
+					'continue_import'                      => __( 'Do you want to carry out the import?', 'backupplus' ),
+					'complete'                             => __( 'Complete', 'backupplus' ),
+					'backup_complete'                      => __( 'The backup has finished running', 'backupplus' ),
+					'backup_aborted'                       => __( 'The backup was aborted', 'backupplus' ),
+					'remote_delete_limit'                  => defined( 'BACKUPPLUS_REMOTE_DELETE_LIMIT' ) ? BACKUPPLUS_REMOTE_DELETE_LIMIT : 25, // this used to be number of files but now the value of this constant is in seconds
+					'remote_files_deleted'                 => __( 'remote files deleted', 'backupplus' ),
+					'http_code'                            => __( 'HTTP code:', 'backupplus' ),
+					'makesure2'                            => __( 'The file failed to upload.', 'backupplus' ) . ' ' . __( 'Please check the following:', 'backupplus' ) . "\n\n - " . __( 'Any settings in your .htaccess or web.config file that affects the maximum upload or post size.', 'backupplus' ) . "\n - " . __( 'The available memory on the server.', 'backupplus' ) . "\n - " . __( 'That you are attempting to upload a zip file previously created by BackupPlus or UpdraftPlus.', 'backupplus' ) . "\n\n" . __( 'Further information may be found in the browser JavaScript console, and the server PHP error logs.', 'backupplus' ),
+					'zip_file_contents'                    => __( 'Browsing zip file', 'backupplus' ),
+					'zip_file_contents_info'               => __( 'Select a file to view information about it', 'backupplus' ),
+					'search'                               => __( 'Search', 'backupplus' ),
+					'download_timeout'                     => __( 'Unable to download file.', 'backupplus' ) . ' ' . __( 'This could be caused by a timeout.', 'backupplus' ) . ' ' . __( 'It would be best to download the zip to your computer.', 'backupplus' ),
+					'loading_log_file'                     => __( 'Loading log file', 'backupplus' ),
+					'backupplus_version'                   => $backupplus->version,
+					'credential_export_omissions'          => BackupPlus_Credential_Storage::export_omitted_options(),
+					'export_settings_file_name'            => 'backupplus-settings-' . sanitize_title( get_bloginfo( 'name' ) ) . '.json',
+					// For remote storage handlebarsjs template
+					'remote_storage_options'               => $remote_storage_options_and_templates['options'],
+					'remote_storage_templates'             => $remote_storage_options_and_templates['templates'],
+					'remote_storage_partial_templates'     => $remote_storage_options_and_templates['partial_templates'],
+					'remote_storage_methods'               => $backup_methods,
+					'instance_enabled'                     => __( 'Currently enabled', 'backupplus' ),
+					'instance_disabled'                    => __( 'Currently disabled', 'backupplus' ),
+					'local_upload_started'                 => __( 'Local backup upload has started; please check the log file to see the upload progress', 'backupplus' ),
+					'local_upload_error'                   => __( 'You must select at least one remote storage destination to upload this backup set to.', 'backupplus' ),
+					'already_uploaded'                     => __( '(already uploaded)', 'backupplus' ),
+					'onedrive_folder_url_warning'          => __( 'Please specify the Microsoft OneDrive folder name, not the URL.', 'backupplus' ),
+					'main_tabs_keys'                       => array_keys( $main_tabs ),
+					'current_clean_url'                    => esc_url( BackupPlus::get_current_clean_url() ),
+					'exclude_rule_remove_conformation_msg' => __( 'Are you sure you want to remove this exclusion rule?', 'backupplus' ),
+					'exclude_select_file_or_folder_msg'    => __( 'Please select a file/folder which you would like to exclude', 'backupplus' ),
+					'exclude_select_folder_wildcards_msg'  => __( 'Please select a folder in which the files/directories you would like to exclude are located', 'backupplus' ),
+					'exclude_type_ext_msg'                 => __( 'Please enter a file extension, like zip', 'backupplus' ),
+					'exclude_ext_error_msg'                => __( 'Please enter a valid file extension', 'backupplus' ),
+					'exclude_type_prefix_msg'              => __( 'Please enter characters that begin the filename which you would like to exclude', 'backupplus' ),
+					'exclude_prefix_error_msg'             => __( 'Please enter a valid file name prefix', 'backupplus' ),
+					'exclude_contain_error_msg'            => __( 'Please enter part of the file name', 'backupplus' ),
+					'duplicate_exclude_rule_error_msg'     => __( 'The exclusion rule which you are trying to add already exists', 'backupplus' ),
+					'files_new_backup'                     => __( 'Include your files in the backup', 'backupplus' ),
+					'files_incremental_backup'             => __( 'File backup options', 'backupplus' ),
+					'ajax_restore_invalid_response'        => __( 'HTML was detected in the response.', 'backupplus' ) . ' ' . __( 'You may have a security module on your webserver blocking the restoration operation.', 'backupplus' ),
+					'emptyrestorepath'                     => __( 'You have not selected a restore path for your chosen backups', 'backupplus' ),
+					'credentials'                          => __( 'credentials', 'backupplus' ),
+					'username'                             => __( 'Username', 'backupplus' ),
+					'password'                             => __( 'Password', 'backupplus' ),
+					/* translators: %d: Seconds ago */
+					'last_activity'                        => __( 'last activity: %d seconds ago', 'backupplus' ),
+					/* translators: %d: Seconds until resumption */
+					'no_recent_activity'                   => __( 'no recent activity; will offer resumption after: %d seconds', 'backupplus' ),
+					/* translators: 1: the total number of files already restored, 2: the total number of files to be restored */
+					'restore_files_progress'               => __( 'Restoring %1$s files out of %2$s', 'backupplus' ),
+					/* translators: %s: Database table name */
+					'restore_db_table_progress'            => __( 'Restoring table: %s', 'backupplus' ),
+					/* translators: %s: Stored routine name */
+					'restore_db_stored_routine_progress'   => __( 'Restoring stored routine: %s', 'backupplus' ),
+					'finished'                             => __( 'Finished', 'backupplus' ),
+					'begun'                                => __( 'Begun', 'backupplus' ),
+					'maybe_downloading_entities'           => __( 'Downloading backup files if needed', 'backupplus' ),
+					'preparing_backup_files'               => __( 'Preparing backup files', 'backupplus' ),
+					'ajax_restore_contact_failed'          => __( 'Attempts by the browser to contact the website failed.', 'backupplus' ),
+					'ajax_restore_error'                   => __( 'Restore error:', 'backupplus' ),
+					'ajax_restore_404_detected'            => '<div class="notice notice-warning" style="margin: 0px; padding: 5px;"><p><span class="dashicons dashicons-warning"></span> <strong>' . __( 'Warning:', 'backupplus' ) . '</strong></p><p>' . __( 'Attempts by the browser to access some pages have returned a "not found (404)" error.', 'backupplus' ) . ' ' . __( 'This could mean that your .htaccess file has incorrect contents, is missing, or that your webserver is missing an equivalent mechanism.', 'backupplus' ) . '</p><p>' . __( 'Missing pages:', 'backupplus' ) . '</p><ul class="backupplus_missing_pages"></ul></div>',
+					'delete_error_log_prompt'              => __( 'Please check the error log for more details', 'backupplus' ),
+					'existing_backups_limit'               => defined( 'BACKUPPLUS_EXISTING_BACKUPS_LIMIT' ) ? BACKUPPLUS_EXISTING_BACKUPS_LIMIT : 100,
+					'remote_scan_warning'                  => __( 'Warning: if you continue, you will add all backups stored in the configured remote storage directory (whichever site they were created by).', 'backupplus' ),
+					'hosting_restriction_one_backup_permonth' => __( 'You have reached the monthly limit for the number of backups you can create at this time.', 'backupplus' ) . ' ' .
+							__( 'Your hosting provider only allows you to take one backup per month.', 'backupplus' ) . ' ' .
+							/* translators: %s: Hosting provider name */
+							sprintf( __( 'Please contact your hosting company (%s) if you require further support.', 'backupplus' ), $hosting_company['name'] ),
+					'hosting_restriction_one_incremental_perday' => __( 'You have reached the daily limit for the number of incremental backups you can create at this time.', 'backupplus' ) . ' ' .
+							__( 'Your hosting provider only allows you to take one incremental backup per day.', 'backupplus' ) . ' ' .
+							/* translators: %s: Hosting provider name */
+							sprintf( __( 'Please contact your hosting company (%s) if you require further support.', 'backupplus' ), $hosting_company['name'] ),
+					'hosting_restriction'                  => $backupplus->is_hosting_backup_limit_reached(),
+					'conditional_logic'                    => array(
+						'day_of_the_week_options' => $backupplus->list_days_of_the_week(),
+						'logic_options'           => array(
+							array(
+								'label' => __( 'on every backup', 'backupplus' ),
+								'value' => '',
+							),
+							array(
+								'label' => __( 'if any of the following conditions are matched:', 'backupplus' ),
+								'value' => 'any',
+							),
+							array(
+								'label' => __( 'if all of the following conditions are matched:', 'backupplus' ),
+								'value' => 'all',
+							),
+						),
+						'operand_options'         => array(
+							array(
+								'label' => __( 'Day of the week', 'backupplus' ),
+								'value' => 'day_of_the_week',
+							),
+							array(
+								'label' => __( 'Day of the month', 'backupplus' ),
+								'value' => 'day_of_the_month',
+							),
+						),
+						'operator_options'        => array(
+							array(
+								'label' => __( 'is', 'backupplus' ),
+								'value' => 'is',
+							),
+							array(
+								'label' => __( 'is not', 'backupplus' ),
+								'value' => 'is_not',
+							),
+						),
 					),
-					array(
-						'label' => __('if any of the following conditions are matched:', 'backupplus'),
-						'value' => 'any',
-					),
-					array(
-						'label' => __('if all of the following conditions are matched:', 'backupplus'),
-						'value' => 'all',
-					),
-				),
-				'operand_options' => array(
-					array(
-						'label' => __('Day of the week', 'backupplus'),
-						'value' => 'day_of_the_week',
-					),
-					array(
-						'label' => __('Day of the month', 'backupplus'),
-						'value' => 'day_of_the_month',
-					),
-				),
-				'operator_options' => array(
-					array(
-						'label' => __('is', 'backupplus'),
-						'value' => 'is',
-					),
-					array(
-						'label' => __('is not', 'backupplus'),
-						'value' => 'is_not',
-					),
+					'php_max_input_vars_detected_warning'  => __( 'The number of restore options that will be sent exceeds the configured maximum in your PHP configuration (max_input_vars).', 'backupplus' ) . ' ' . __( 'If you proceed with the restoration then some of the restore options will be lost and you may get unexpected results.', 'backupplus' ) . ' ' . __( 'See the browser console log for more information.', 'backupplus' ),
+					'expired_tokens'                       => __( 'This is usually caused by your dashboard page having been open a long time, and the included security tokens having since expired.', 'backupplus' ),
+					'reload_page'                          => __( 'Therefore, please reload the page.', 'backupplus' ),
+					'save_changes'                         => __( 'Save Changes', 'backupplus' ),
+					'close'                                => __( 'Close', 'backupplus' ),
 				)
-			),
-			'php_max_input_vars_detected_warning' => __('The number of restore options that will be sent exceeds the configured maximum in your PHP configuration (max_input_vars).', 'backupplus').' '.__('If you proceed with the restoration then some of the restore options will be lost and you may get unexpected results.', 'backupplus').' '.__('See the browser console log for more information.', 'backupplus'),
-			'expired_tokens' => __('This is usually caused by your dashboard page having been open a long time, and the included security tokens having since expired.', 'backupplus'),
-			'reload_page' => __('Therefore, please reload the page.', 'backupplus'),
-			'save_changes' => __('Save Changes', 'backupplus'),
-			'close' => __('Close', 'backupplus'),
-		)));
+			)
+		);
 	}
-	
+
 	/**
 	 * Run upon the WP admin_head action
 	 */
@@ -933,58 +998,60 @@ class BackupPlus_Admin {
 
 		global $pagenow;
 
-		if (BackupPlus_Options::admin_page() != $pagenow || !isset($_REQUEST['page']) || 'backupplus' != $_REQUEST['page'] || !BackupPlus_Options::user_can_manage()) return;
+		if ( BackupPlus_Options::admin_page() != $pagenow || ! isset( $_REQUEST['page'] ) || 'backupplus' != $_REQUEST['page'] || ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
 
-		$chunk_size = min(wp_max_upload_size()-1024, 1048576*2);
+		$chunk_size = min( wp_max_upload_size() - 1024, 1048576 * 2 );
 
 		// The multiple_queues argument is ignored in plupload 2.x (WP3.9+) - http://make.wordpress.org/core/2014/04/11/plupload-2-x-in-wordpress-3-9/
 		// max_file_size is also in filters as of plupload 2.x, but in its default position is still supported for backwards-compatibility. Likewise, our use of filters.extensions below is supported by a backwards-compatibility option (the current way is filters.mime-types.extensions
 
 		$plupload_init = array(
-			'runtimes' => 'html5,flash,silverlight,html4',
-			'browse_button' => 'plupload-browse-button',
-			'container' => 'plupload-upload-ui',
-			'drop_element' => 'backupplus-navtab-backups-content',
-			'file_data_name' => 'async-upload',
-			'multiple_queues' => true,
-			'max_file_size' => '100Gb',
-			'chunk_size' => $chunk_size.'b',
-			'url' => admin_url('admin-ajax.php', 'relative'),
-			'multipart' => true,
-			'multi_selection' => true,
+			'runtimes'         => 'html5,flash,silverlight,html4',
+			'browse_button'    => 'plupload-browse-button',
+			'container'        => 'plupload-upload-ui',
+			'drop_element'     => 'backupplus-navtab-backups-content',
+			'file_data_name'   => 'async-upload',
+			'multiple_queues'  => true,
+			'max_file_size'    => '100Gb',
+			'chunk_size'       => $chunk_size . 'b',
+			'url'              => admin_url( 'admin-ajax.php', 'relative' ),
+			'multipart'        => true,
+			'multi_selection'  => true,
 			'urlstream_upload' => true,
 			// additional post data to send to our ajax hook
 			'multipart_params' => array(
-				'_ajax_nonce' => wp_create_nonce('backupplus-uploader'),
-				'action' => 'plupload_action'
-			)
+				'_ajax_nonce' => wp_create_nonce( 'backupplus-uploader' ),
+				'action'      => 'plupload_action',
+			),
 		);
 
 		// WP 3.9 updated to plupload 2.0 - https://core.trac.wordpress.org/ticket/25663
-		if (is_file(ABSPATH.WPINC.'/js/plupload/Moxie.swf')) {
-			$plupload_init['flash_swf_url'] = includes_url('js/plupload/Moxie.swf');
+		if ( is_file( ABSPATH . WPINC . '/js/plupload/Moxie.swf' ) ) {
+			$plupload_init['flash_swf_url'] = includes_url( 'js/plupload/Moxie.swf' );
 		} else {
-			$plupload_init['flash_swf_url'] = includes_url('js/plupload/plupload.flash.swf');
+			$plupload_init['flash_swf_url'] = includes_url( 'js/plupload/plupload.flash.swf' );
 		}
 
-		if (is_file(ABSPATH.WPINC.'/js/plupload/Moxie.xap')) {
-			$plupload_init['silverlight_xap_url'] = includes_url('js/plupload/Moxie.xap');
+		if ( is_file( ABSPATH . WPINC . '/js/plupload/Moxie.xap' ) ) {
+			$plupload_init['silverlight_xap_url'] = includes_url( 'js/plupload/Moxie.xap' );
 		} else {
-			$plupload_init['silverlight_xap_url'] = includes_url('js/plupload/plupload.silverlight.swf');
+			$plupload_init['silverlight_xap_url'] = includes_url( 'js/plupload/plupload.silverlight.swf' );
 		}
 
 		?>
 		<script type="text/javascript">
-			var backupplus_credentialtest_nonce = '<?php echo esc_js(wp_create_nonce('backupplus-credentialtest-nonce'));?>';
-			var backupplus_settings_nonce = '<?php echo esc_js(wp_create_nonce('backupplus-settings-nonce'));?>';
-			var backupplus_siteurl = '<?php echo esc_js(site_url('', 'relative'));?>';
-			var backupplus_plupload_config = <?php echo json_encode($plupload_init); ?>;
-			var backupplus_download_nonce = '<?php echo esc_js(wp_create_nonce('backupplus_download'));?>';
-			var backupplus_accept_archivename = <?php echo esc_js(apply_filters('backupplus_accept_archivename_js', "[]"));?>;
+			var backupplus_credentialtest_nonce = '<?php echo esc_js( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>';
+			var backupplus_settings_nonce = '<?php echo esc_js( wp_create_nonce( 'backupplus-settings-nonce' ) ); ?>';
+			var backupplus_siteurl = '<?php echo esc_js( site_url( '', 'relative' ) ); ?>';
+			var backupplus_plupload_config = <?php echo json_encode( $plupload_init ); ?>;
+			var backupplus_download_nonce = '<?php echo esc_js( wp_create_nonce( 'backupplus_download' ) ); ?>';
+			var backupplus_accept_archivename = <?php echo esc_js( apply_filters( 'backupplus_accept_archivename_js', '[]' ) ); ?>;
 			<?php
 				$overdue = $this->howmany_overdue_crons();
-				if ($overdue >= 4) {
-					?>
+			if ( $overdue >= 4 ) {
+				?>
 					jQuery(function() {
 						setTimeout(function(){ backupplus_check_overduecrons(); }, 11000);
 					});
@@ -1000,14 +1067,18 @@ class BackupPlus_Admin {
 	 *
 	 * @return Integer|Boolean - true or false to indicate if available; of -1 if the result is unknown
 	 */
-	private function disk_space_check($space) {
+	private function disk_space_check( $space ) {
 		// Allow checking by some other means (user request)
-		if (null !== ($filtered_result = apply_filters('backupplus_disk_space_check', null, $space))) return $filtered_result;
+		if ( null !== ( $filtered_result = apply_filters( 'backupplus_disk_space_check', null, $space ) ) ) {
+			return $filtered_result;
+		}
 		global $backupplus;
-		$backupplus_dir = $backupplus->backups_dir_location();
-		$disk_free_space = function_exists('disk_free_space') ? @disk_free_space($backupplus_dir) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		if (false == $disk_free_space) return -1;
-		return ($disk_free_space > $space) ? true : false;
+		$backupplus_dir  = $backupplus->backups_dir_location();
+		$disk_free_space = function_exists( 'disk_free_space' ) ? @disk_free_space( $backupplus_dir ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		if ( false == $disk_free_space ) {
+			return -1;
+		}
+		return ( $disk_free_space > $space ) ? true : false;
 	}
 
 	/**
@@ -1017,11 +1088,11 @@ class BackupPlus_Admin {
 	 * @param  String $file  File name (relative to the plugin directory)
 	 * @return Array filtered results
 	 */
-	public function plugin_action_links($links, $file) {
+	public function plugin_action_links( $links, $file ) {
 		global $backupplus;
-		if (is_array($links) && BACKUPPLUS_PLUGIN_SLUG == $file) {
-			$settings_link = '<a href="'.esc_url(BackupPlus_Options::admin_page_url()).'?page=backupplus" class="js-backupplus-settings">'.__("Settings", "backupplus").'</a>';
-			array_unshift($links, $settings_link);
+		if ( is_array( $links ) && BACKUPPLUS_PLUGIN_SLUG == $file ) {
+			$settings_link = '<a href="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus" class="js-backupplus-settings">' . __( 'Settings', 'backupplus' ) . '</a>';
+			array_unshift( $links, $settings_link );
 		}
 		return $links;
 	}
@@ -1034,10 +1105,10 @@ class BackupPlus_Admin {
 	 * @param  array  $plugin_data - An array of plugin data
 	 * @return array - filtered plugin's metadata
 	 */
-	public function change_plugin_author_link($plugin_meta, $plugin_file, $plugin_data) {
-		if (BACKUPPLUS_PLUGIN_SLUG === $plugin_file) {
+	public function change_plugin_author_link( $plugin_meta, $plugin_file, $plugin_data ) {
+		if ( BACKUPPLUS_PLUGIN_SLUG === $plugin_file ) {
 			/* translators: %s: Original plugin authors. */
-			$plugin_meta[1] = sprintf(__('By %s', 'backupplus'), $plugin_data['Author']);
+			$plugin_meta[1] = sprintf( __( 'By %s', 'backupplus' ), $plugin_data['Author'] );
 		}
 		return $plugin_meta;
 	}
@@ -1048,89 +1119,105 @@ class BackupPlus_Admin {
 	 * @param String $message the HTML for the message (already escaped)
 	 * @param String $class   CSS class to use for the div
 	 */
-	public function show_plugin_page_admin_warning($message, $class = 'updated') {
+	public function show_plugin_page_admin_warning( $message, $class = 'updated' ) {
 
 		global $pagenow, $plugin_page;
 
-		if (BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page) return;
+		if ( BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page ) {
+			return;
+		}
 
-		$this->show_admin_warning($message, $class);
+		$this->show_admin_warning( $message, $class );
 	}
 
 	/**
 	 * Paint a div for a dashboard warning
 	 *
 	 * @param String $message - the HTML for the message (already escaped)
-	 * @param String $class	  - CSS class to use for the div
+	 * @param String $class   - CSS class to use for the div
 	 */
-	public function show_admin_warning($message, $class = 'updated') {
-		echo '<div class="backupplusmessage '.esc_attr($class).'"><p>'.$message.'</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- As the docblock says, the $message param should be already escaped before passing it to this method
+	public function show_admin_warning( $message, $class = 'updated' ) {
+		echo '<div class="backupplusmessage ' . esc_attr( $class ) . '"><p>' . $message . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- As the docblock says, the $message param should be already escaped before passing it to this method
 	}
 
 	public function show_admin_warning_multiple_storage_options() {
-		$this->show_admin_warning('<strong>BackupPlus:</strong> '.__('An error occurred when fetching storage module options: ', 'backupplus').htmlspecialchars($this->storage_module_option_errors), 'error');
+		$this->show_admin_warning( '<strong>BackupPlus:</strong> ' . __( 'An error occurred when fetching storage module options: ', 'backupplus' ) . htmlspecialchars( $this->storage_module_option_errors ), 'error' );
 	}
 
 	public function show_admin_warning_unwritable() {
 		// One of the translators has erroneously changed "Backup" into "Back up" (which means, "reverse" !)
-		$unwritable_mess = htmlspecialchars(str_ireplace('Back Up', 'Backup', __("The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option).", 'backupplus')));
-		$this->show_admin_warning($unwritable_mess, "error");
+		$unwritable_mess = htmlspecialchars( str_ireplace( 'Back Up', 'Backup', __( "The 'Backup Now' button is disabled as your backup directory is not writable (go to the 'Settings' tab and find the relevant option).", 'backupplus' ) ) );
+		$this->show_admin_warning( $unwritable_mess, 'error' );
 	}
-	
+
 	public function show_admin_nosettings_warning() {
-		$this->show_admin_warning('<strong>'.__('Welcome to BackupPlus!', 'backupplus').'</strong> '.__('To make a backup, press the Backup Now button. To change what is backed up, configure schedules, or set up remote storage, go to the Settings tab.', 'backupplus').' <a href="'.esc_url(add_query_arg(array('page' => 'backupplus', 'tab' => 'settings'), BackupPlus_Options::admin_page_url())).'">'.__('Open Settings', 'backupplus').'</a>', 'updated notice is-dismissible');
+		$this->show_admin_warning(
+			'<strong>' . __( 'Welcome to BackupPlus!', 'backupplus' ) . '</strong> ' . __( 'To make a backup, press the Backup Now button. To change what is backed up, configure schedules, or set up remote storage, go to the Settings tab.', 'backupplus' ) . ' <a href="' . esc_url(
+				add_query_arg(
+					array(
+						'page' => 'backupplus',
+						'tab'  => 'settings',
+					),
+					BackupPlus_Options::admin_page_url()
+				)
+			) . '">' . __(
+				'Open Settings',
+				'backupplus'
+			) . '</a>',
+			'updated notice is-dismissible'
+		);
 	}
 
 	public function show_admin_warning_execution_time() {
 		$this->show_admin_warning(
-			'<strong>'.__('Warning', 'backupplus').':</strong> '.
+			'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 			/* translators: 1: Max execution time, 2: Recommended value */
-			sprintf(__('The amount of time allowed for WordPress plugins to run is very low (%1$s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %2$s seconds or more)', 'backupplus'), (int) @ini_get('max_execution_time'), 90)// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			sprintf( __( 'The amount of time allowed for WordPress plugins to run is very low (%1$s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %2$s seconds or more)', 'backupplus' ), (int) @ini_get( 'max_execution_time' ), 90 )// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		);
 	}
 
 	public function show_admin_warning_disabledcron() {
-		$ret = '<div class="backupplusmessage updated"><p>';
-		$ret .= '<strong>'.__('Warning', 'backupplus').':</strong> '.__('The scheduler is disabled in your WordPress install, via the DISABLE_WP_CRON setting.', 'backupplus').' '.__('No backups can run (even &quot;Backup Now&quot;) unless either you have set up a facility to call the scheduler manually, or until it is enabled.', 'backupplus');
+		$ret  = '<div class="backupplusmessage updated"><p>';
+		$ret .= '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . __( 'The scheduler is disabled in your WordPress install, via the DISABLE_WP_CRON setting.', 'backupplus' ) . ' ' . __( 'No backups can run (even &quot;Backup Now&quot;) unless either you have set up a facility to call the scheduler manually, or until it is enabled.', 'backupplus' );
 		$ret .= '</p></div>';
 		return $ret;
 	}
 
 	public function show_admin_warning_diskspace() {
 		$this->show_admin_warning(
-			'<strong>'.__('Warning', 'backupplus').':</strong> '.
+			'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 			/* translators: %s: Free disk space */
-			sprintf(__('You have less than %s of free disk space on the disk which BackupPlus is configured to use to create backups.', 'backupplus'), '35 MB').' '.
-			__('BackupPlus could well run out of space.', 'backupplus').' '.
-			__('Contact the operator of your server (e.g. your web hosting company) to resolve this issue.', 'backupplus')
+			sprintf( __( 'You have less than %s of free disk space on the disk which BackupPlus is configured to use to create backups.', 'backupplus' ), '35 MB' ) . ' ' .
+			__( 'BackupPlus could well run out of space.', 'backupplus' ) . ' ' .
+			__( 'Contact the operator of your server (e.g. your web hosting company) to resolve this issue.', 'backupplus' )
 		);
 	}
 
 	public function show_admin_warning_wordpressversion() {
 		$this->show_admin_warning(
-			'<strong>'.__('Warning', 'backupplus').':</strong> '.
+			'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 			/* translators: %s: Minimum supported WordPress version */
-			sprintf(__('BackupPlus does not officially support versions of WordPress before %s.', 'backupplus'), '3.2').' '.
-			__('It may work for you, but if it does not, then please be aware that no support is available until you upgrade WordPress.', 'backupplus')
+			sprintf( __( 'BackupPlus does not officially support versions of WordPress before %s.', 'backupplus' ), '3.2' ) . ' ' .
+			__( 'It may work for you, but if it does not, then please be aware that no support is available until you upgrade WordPress.', 'backupplus' )
 		);
 	}
 
 	public function show_admin_warning_litespeed() {
 		$this->show_admin_warning(
-			'<strong>'.__('Warning', 'backupplus').':</strong> '.
+			'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 			/* translators: %s: Web server name */
-			sprintf(__('Your website is hosted using the %s web server.', 'backupplus'), 'LiteSpeed').' '.
-			__('If backups fail, check the server error log and PHP execution limits.', 'backupplus'),
+			sprintf( __( 'Your website is hosted using the %s web server.', 'backupplus' ), 'LiteSpeed' ) . ' ' .
+			__( 'If backups fail, check the server error log and PHP execution limits.', 'backupplus' ),
 			'updated admin-warning-litespeed notice is-dismissible'
 		);
 	}
 
 	public function show_admin_warning_pclzip() {
-		$this->show_admin_warning('<strong>'.__('Warning', 'backupplus').':</strong> '.__('Neither the PHP zip module nor a zip executable are available on your webserver.', 'backupplus').' '.__('Consequently, BackupPlus will use a built-in zip module (PclZip); this is significantly slower.', 'backupplus').' '.__('To get faster backups, ask your web hosting provider how to turn on the PHP zip module on your hosting.', 'backupplus'), 'updated admin-warning-pclzip notice is-dismissible');
+		$this->show_admin_warning( '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . __( 'Neither the PHP zip module nor a zip executable are available on your webserver.', 'backupplus' ) . ' ' . __( 'Consequently, BackupPlus will use a built-in zip module (PclZip); this is significantly slower.', 'backupplus' ) . ' ' . __( 'To get faster backups, ask your web hosting provider how to turn on the PHP zip module on your hosting.', 'backupplus' ), 'updated admin-warning-pclzip notice is-dismissible' );
 	}
 
 	public function show_admin_debug_warning() {
-		$this->show_admin_warning('<strong>'.__('Notice', 'backupplus').':</strong> '.__('BackupPlus\'s debug mode is on.', 'backupplus').' '.__('You may see debugging notices on this page not just from BackupPlus, but from any other plugin installed.', 'backupplus').' '.__('Please try to make sure that the notice you are seeing is from BackupPlus before you raise a support request.', 'backupplus').'</a>');
+		$this->show_admin_warning( '<strong>' . __( 'Notice', 'backupplus' ) . ':</strong> ' . __( 'BackupPlus\'s debug mode is on.', 'backupplus' ) . ' ' . __( 'You may see debugging notices on this page not just from BackupPlus, but from any other plugin installed.', 'backupplus' ) . ' ' . __( 'Please try to make sure that the notice you are seeing is from BackupPlus before you raise a support request.', 'backupplus' ) . '</a>' );
 	}
 
 	/**
@@ -1139,13 +1226,19 @@ class BackupPlus_Admin {
 	public function show_admin_warning_phpseclib() {
 		global $backupplus, $pagenow, $plugin_page;
 		static $printed = false;
-		if ($printed) return;
-		$dismissible = (BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page) && (!isset($_REQUEST['action']) || 'backupplus_savesettings' !== $_REQUEST['action']);
-		$class = '';
+		if ( $printed ) {
+			return;
+		}
+		$dismissible = ( BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page ) && ( ! isset( $_REQUEST['action'] ) || 'backupplus_savesettings' !== $_REQUEST['action'] );
+		$class       = '';
 		// Suppress only when dismissed for the minimum recommended version (previously was boolean `true`), so older dismissals re-show after a version bump.
-		if ($dismissible && BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION === BackupPlus_Options::get_backupplus_option('backupplus_dismiss_phpseclib_notice', false)) return;
-		if ($dismissible) $class = 'ud-phpseclib-notice is-dismissible';
-		$this->show_admin_warning('<strong>'.__('Warning', 'backupplus').':</strong> '.$backupplus->get_phpseclib_warning_msg(), "notice notice-warning $class");
+		if ( $dismissible && BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION === BackupPlus_Options::get_backupplus_option( 'backupplus_dismiss_phpseclib_notice', false ) ) {
+			return;
+		}
+		if ( $dismissible ) {
+			$class = 'ud-phpseclib-notice is-dismissible';
+		}
+		$this->show_admin_warning( '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . $backupplus->get_phpseclib_warning_msg(), "notice notice-warning $class" );
 		$printed = true;
 	}
 
@@ -1156,13 +1249,13 @@ class BackupPlus_Admin {
 	 *
 	 * @return String
 	 */
-	public function show_admin_warning_overdue_crons($howmany) {
-		$ret = '<div class="backupplusmessage updated"><p>';
-		$ret .= '<strong>'.__('Warning', 'backupplus').':</strong> '.
+	public function show_admin_warning_overdue_crons( $howmany ) {
+		$ret  = '<div class="backupplusmessage updated"><p>';
+		$ret .= '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 		/* translators: %d: Number of overdue scheduled tasks */
-		sprintf(__('WordPress has a number (%d) of scheduled tasks which are overdue.', 'backupplus'), $howmany).' '.
-		__('Unless this is a development site, this means that the scheduler in your WordPress install is not working properly.', 'backupplus').' '.
-		__('Check that WordPress cron is enabled and that your server can run scheduled tasks.', 'backupplus');
+		sprintf( __( 'WordPress has a number (%d) of scheduled tasks which are overdue.', 'backupplus' ), $howmany ) . ' ' .
+		__( 'Unless this is a development site, this means that the scheduler in your WordPress install is not working properly.', 'backupplus' ) . ' ' .
+		__( 'Check that WordPress cron is enabled and that your server can run scheduled tasks.', 'backupplus' );
 		$ret .= '</p></div>';
 		return $ret;
 	}
@@ -1172,17 +1265,19 @@ class BackupPlus_Admin {
 	 *
 	 * @param  String $method - the remote storage method
 	 */
-	public function get_method_auth_link($method) {
-		$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($method));
+	public function get_method_auth_link( $method ) {
+		$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( array( $method ) );
 
-		if (empty($storage_objects_and_ids[$method]['object'])) return;
-		$object = $storage_objects_and_ids[$method]['object'];
+		if ( empty( $storage_objects_and_ids[ $method ]['object'] ) ) {
+			return;
+		}
+		$object = $storage_objects_and_ids[ $method ]['object'];
 
-		foreach ($this->auth_instance_ids[$method] ?? array() as $instance_id) {
-			
-			$object->set_instance_id($instance_id);
+		foreach ( $this->auth_instance_ids[ $method ] ?? array() as $instance_id ) {
 
-			$this->show_admin_warning('<strong>'.__('BackupPlus notice:', 'backupplus').'</strong> '.$object->get_authentication_link(false, false), 'updated backupplus_authenticate_'.$method);
+			$object->set_instance_id( $instance_id );
+
+			$this->show_admin_warning( '<strong>' . __( 'BackupPlus notice:', 'backupplus' ) . '</strong> ' . $object->get_authentication_link( false, false ), 'updated backupplus_authenticate_' . $method );
 		}
 	}
 
@@ -1190,43 +1285,55 @@ class BackupPlus_Admin {
 	 * Start a download of a backup. This method is called via the AJAX action backupplus_download_backup. May die instead of returning depending upon the mode in which it is called.
 	 */
 	public function backupplus_download_backup() {
-		
-		if (!BackupPlus_Options::user_can_manage()) die('Unauthorised.');
-		
+
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			die( 'Unauthorised.' );
+		}
+
 		try {
-			$global_wp_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', '_wpnonce');
-			if (empty($global_wp_nonce) || !wp_verify_nonce($global_wp_nonce, 'backupplus_download')) die('Unauthorised.');
-	
-			if (empty($_REQUEST['timestamp']) || !is_numeric($_REQUEST['timestamp']) || empty($_REQUEST['type'])) die;
-			$findex = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'findex');
-			$findexes = empty($findex) ? array(0) : $findex;
-			$stage = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'stage', '', false, 'string', 'sanitize_text_field');
-			$file_path = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'filepath', '', false, 'string', null);
-			
-			$type = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'type', '', false, 'string', null);
+			$global_wp_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', '_wpnonce' );
+			if ( empty( $global_wp_nonce ) || ! wp_verify_nonce( $global_wp_nonce, 'backupplus_download' ) ) {
+				die( 'Unauthorised.' );
+			}
+
+			if ( empty( $_REQUEST['timestamp'] ) || ! is_numeric( $_REQUEST['timestamp'] ) || empty( $_REQUEST['type'] ) ) {
+				die;
+			}
+			$findex    = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'findex' );
+			$findexes  = empty( $findex ) ? array( 0 ) : $findex;
+			$stage     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'stage', '', false, 'string', 'sanitize_text_field' );
+			$file_path = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'filepath', '', false, 'string', null );
+
+			$type = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'type', '', false, 'string', null );
 			// This call may not actually return, depending upon what mode it is called in
-			$result = $this->do_backupplus_download_backup($findexes, $type, (int) $_REQUEST['timestamp'], $stage, false, $file_path);
-			
+			$result = $this->do_backupplus_download_backup( $findexes, $type, (int) $_REQUEST['timestamp'], $stage, false, $file_path );
+
 			// Some browsers ignore Connection: close and Content-Length after a response is sent, then read subsequent output as part of the response.
-			if (empty($result['already_closed'])) echo json_encode($result);
-		} catch (Exception $e) {
-			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during download backup. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
-		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download backup. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
+			if ( empty( $result['already_closed'] ) ) {
+				echo json_encode( $result );
+			}
+		} catch ( Exception $e ) {
+			$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during download backup. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
+		} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+			$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during download backup. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
 		}
 		die();
 	}
-	
+
 	/**
 	 * Ensure that a specified backup is present, downloading if necessary (or delete it, if the parameters so indicate). N.B. This function may die(), depending on the request being made in $stage
 	 *
@@ -1239,168 +1346,188 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - summary of the results. May also just die.
 	 */
-	public function do_backupplus_download_backup($findexes, $type, $timestamp, $stage, $close_connection_callable = false, $file_path = '') {
+	public function do_backupplus_download_backup( $findexes, $type, $timestamp, $stage, $close_connection_callable = false, $file_path = '' ) {
 
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}
 		global $backupplus;
-		
-		if (!is_array($findexes)) $findexes = array($findexes);
+
+		if ( ! is_array( $findexes ) ) {
+			$findexes = array( $findexes );
+		}
 
 		$connection_closed = false;
 
 		// Check that it is a known entity type; if not, die
-		if ('db' != substr($type, 0, 2)) {
-			$backupable_entities = $backupplus->get_backupable_file_entities(true);
-			foreach ($backupable_entities as $t => $info) {
-				if ($type == $t) $type_match = true;
+		if ( 'db' != substr( $type, 0, 2 ) ) {
+			$backupable_entities = $backupplus->get_backupable_file_entities( true );
+			foreach ( $backupable_entities as $t => $info ) {
+				if ( $type == $t ) {
+					$type_match = true;
+				}
 			}
-			if (empty($type_match)) return array('result' => 'error', 'code' => 'no_such_type');
+			if ( empty( $type_match ) ) {
+				return array(
+					'result' => 'error',
+					'code'   => 'no_such_type',
+				);
+			}
 		}
 
-		$debug_mode = BackupPlus_Options::get_backupplus_option('backupplus_debug_mode');
+		$debug_mode = BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' );
 
 		// Retrieve the information from our backup history
 		$backup_history = BackupPlus_Backup_History::get_history();
 
-		foreach ($findexes as $findex) {
+		foreach ( $findexes as $findex ) {
 			// This is a bit ugly; these variables get placed back into $_POST (where they may possibly have come from), so that BackupPlus::log() can detect exactly where to log the download status.
-			$_POST['findex'] = $findex;
-			$_POST['type'] = $type;
+			$_POST['findex']    = $findex;
+			$_POST['type']      = $type;
 			$_POST['timestamp'] = (int) $timestamp;
 
 			// We already know that no possible entities have an MD5 clash (even after 2 characters)
 			// Also, there's nothing enforcing a requirement that nonces are hexadecimal
-			$job_nonce = dechex($timestamp).$findex.substr(md5($type), 0, 3);
+			$job_nonce = dechex( $timestamp ) . $findex . substr( md5( $type ), 0, 3 );
 
 			// You need a nonce before you can set job data. And we certainly don't yet have one.
-			$backupplus->backup_time_nonce($job_nonce);
+			$backupplus->backup_time_nonce( $job_nonce );
 
 			// Set the job type before logging, as there can be different logging destinations
-			$backupplus->jobdata_set('job_type', 'download');
-			$backupplus->jobdata_set('job_time_ms', $backupplus->job_time_ms);
+			$backupplus->jobdata_set( 'job_type', 'download' );
+			$backupplus->jobdata_set( 'job_time_ms', $backupplus->job_time_ms );
 
 			// Base name
-			$file = $backup_history[$timestamp][$type];
+			$file = $backup_history[ $timestamp ][ $type ];
 
 			// Deal with multi-archive sets
-			if (is_array($file)) $file = $file[$findex];
-
-			if (false !== strpos($file_path, '..')) {
-				BackupPlus_Manipulation_Functions::error_log("BackupPlus_Admin::do_backupplus_download_backup : invalid file_path: $file_path");
-				return array('result' => __('Error: invalid path', 'backupplus'));
+			if ( is_array( $file ) ) {
+				$file = $file[ $findex ];
 			}
 
-			if (!empty($file_path)) $file = $file_path;
+			if ( false !== strpos( $file_path, '..' ) ) {
+				BackupPlus_Manipulation_Functions::error_log( "BackupPlus_Admin::do_backupplus_download_backup : invalid file_path: $file_path" );
+				return array( 'result' => __( 'Error: invalid path', 'backupplus' ) );
+			}
+
+			if ( ! empty( $file_path ) ) {
+				$file = $file_path;
+			}
 
 			// Where it should end up being downloaded to
-			$fullpath = $backupplus->backups_dir_location().'/'.$file;
+			$fullpath = $backupplus->backups_dir_location() . '/' . $file;
 
-			if (!empty($file_path) && strpos(realpath($fullpath), realpath($backupplus->backups_dir_location())) === false) {
-				BackupPlus_Manipulation_Functions::error_log("BackupPlus_Admin::do_backupplus_download_backup : invalid fullpath: $fullpath");
-				return array('result' => __('Error: invalid path', 'backupplus'));
+			if ( ! empty( $file_path ) && strpos( realpath( $fullpath ), realpath( $backupplus->backups_dir_location() ) ) === false ) {
+				BackupPlus_Manipulation_Functions::error_log( "BackupPlus_Admin::do_backupplus_download_backup : invalid fullpath: $fullpath" );
+				return array( 'result' => __( 'Error: invalid path', 'backupplus' ) );
 			}
 
-			if (2 == $stage) {
-				$backupplus->spool_file($fullpath);
+			if ( 2 == $stage ) {
+				$backupplus->spool_file( $fullpath );
 				// We only want to remove if it was a temp file from the zip browser
-				if (!empty($file_path)) @unlink($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				// Do not return - we do not want the caller to add any output
+				if ( ! empty( $file_path ) ) {
+					@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				}               // Do not return - we do not want the caller to add any output
 				die;
 			}
 
-			if ('delete' == $stage) {
-				@unlink($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				$backupplus->log("The file has been deleted ($file)");
-				return array('result' => 'deleted');
+			if ( 'delete' == $stage ) {
+				@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				$backupplus->log( "The file has been deleted ($file)" );
+				return array( 'result' => 'deleted' );
 			}
 
 			// TODO: FIXME: Failed downloads may leave log files forever (though they are small)
-			if ($debug_mode) $backupplus->logfile_open($backupplus->nonce);
+			if ( $debug_mode ) {
+				$backupplus->logfile_open( $backupplus->nonce );
+			}
 
-			$error_levels = version_compare(PHP_VERSION, '8.4.0', '>=') ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler(array($backupplus, 'php_error'), $error_levels);
+			$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
+			set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
 
-			$backupplus->log("Requested to obtain file: timestamp=$timestamp, type=$type, index=$findex");
+			$backupplus->log( "Requested to obtain file: timestamp=$timestamp, type=$type, index=$findex" );
 
-			$itext = empty($findex) ? '' : $findex;
-			$known_size = isset($backup_history[$timestamp][$type.$itext.'-size']) ? $backup_history[$timestamp][$type.$itext.'-size'] : 0;
+			$itext      = empty( $findex ) ? '' : $findex;
+			$known_size = isset( $backup_history[ $timestamp ][ $type . $itext . '-size' ] ) ? $backup_history[ $timestamp ][ $type . $itext . '-size' ] : 0;
 
-			$services = isset($backup_history[$timestamp]['service']) ? $backup_history[$timestamp]['service'] : false;
-			
-			$services = $backupplus->get_canonical_service_list($services);
-			
-			$backupplus->jobdata_set('service', $services);
+			$services = isset( $backup_history[ $timestamp ]['service'] ) ? $backup_history[ $timestamp ]['service'] : false;
+
+			$services = $backupplus->get_canonical_service_list( $services );
+
+			$backupplus->jobdata_set( 'service', $services );
 
 			// Fetch it from the cloud, if we have not already got it
 
 			$needs_downloading = false;
 
-			if (!file_exists($fullpath) && empty($services)) {
-				$backupplus->log('This file does not exist locally, and there is no remote storage for this file.');
-			} elseif (!file_exists($fullpath)) {
+			if ( ! file_exists( $fullpath ) && empty( $services ) ) {
+				$backupplus->log( 'This file does not exist locally, and there is no remote storage for this file.' );
+			} elseif ( ! file_exists( $fullpath ) ) {
 				// If the file doesn't exist and they're using one of the cloud options, fetch it down from the cloud.
 				$needs_downloading = true;
-				$backupplus->log('File does not yet exist locally - needs downloading');
-			} elseif (is_array($services) && 1 == count($services) && 'email' == $services[0]) {
-				$backupplus->log(__('The email protocol does not allow a remote backup to be retrieved from an email that has been sent.', 'backupplus').' '.__('Therefore, please download the attachment from the original backup email and upload it using the "Upload backup files" facility in the "Existing Backups" tab.', 'backupplus'), 'error');
-				$backupplus->jobdata_set('dlfile_'.$timestamp.'_'.$type.'_'.$findex, 'failed');
-				$backupplus->jobdata_set('dlerrors_'.$timestamp.'_'.$type.'_'.$findex, $backupplus->errors);
-				return array('result' => 'error', 'code' => 'no_email_download');
-			} elseif ($known_size > 0 && filesize($fullpath) < $known_size) {
-				$backupplus->log("The file was found locally (".filesize($fullpath).") but did not match the size in the backup history ($known_size) - will resume downloading");
+				$backupplus->log( 'File does not yet exist locally - needs downloading' );
+			} elseif ( is_array( $services ) && 1 == count( $services ) && 'email' == $services[0] ) {
+				$backupplus->log( __( 'The email protocol does not allow a remote backup to be retrieved from an email that has been sent.', 'backupplus' ) . ' ' . __( 'Therefore, please download the attachment from the original backup email and upload it using the "Upload backup files" facility in the "Existing Backups" tab.', 'backupplus' ), 'error' );
+				$backupplus->jobdata_set( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex, 'failed' );
+				$backupplus->jobdata_set( 'dlerrors_' . $timestamp . '_' . $type . '_' . $findex, $backupplus->errors );
+				return array(
+					'result' => 'error',
+					'code'   => 'no_email_download',
+				);
+			} elseif ( $known_size > 0 && filesize( $fullpath ) < $known_size ) {
+				$backupplus->log( 'The file was found locally (' . filesize( $fullpath ) . ") but did not match the size in the backup history ($known_size) - will resume downloading" );
 				$needs_downloading = true;
-			} elseif ($known_size > 0 && filesize($fullpath) > $known_size) {
-				$backupplus->log("The file was found locally (".filesize($fullpath).") but the size is larger than what is recorded in the backup history ($known_size) - will try to continue but if errors are encountered then check that the backup is correct");
-			} elseif ($known_size > 0) {
-				$backupplus->log('The file was found locally and matched the recorded size from the backup history ('.round($known_size/1024, 1).' KB)');
+			} elseif ( $known_size > 0 && filesize( $fullpath ) > $known_size ) {
+				$backupplus->log( 'The file was found locally (' . filesize( $fullpath ) . ") but the size is larger than what is recorded in the backup history ($known_size) - will try to continue but if errors are encountered then check that the backup is correct" );
+			} elseif ( $known_size > 0 ) {
+				$backupplus->log( 'The file was found locally and matched the recorded size from the backup history (' . round( $known_size / 1024, 1 ) . ' KB)' );
 			} else {
-				$backupplus->log('No file size was found recorded in the backup history. We will assume the local one is complete.');
-				$known_size = filesize($fullpath);
+				$backupplus->log( 'No file size was found recorded in the backup history. We will assume the local one is complete.' );
+				$known_size = filesize( $fullpath );
 			}
-			
-			// The AJAX responder that updates on progress wants to see this
-			$backupplus->jobdata_set('dlfile_'.$timestamp.'_'.$type.'_'.$findex, "downloading:$known_size:$fullpath");
 
-			if ($needs_downloading) {
+			// The AJAX responder that updates on progress wants to see this
+			$backupplus->jobdata_set( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex, "downloading:$known_size:$fullpath" );
+
+			if ( $needs_downloading ) {
 
 				// Update the "last modified" time to dissuade any other instances from thinking that no downloaders are active
-				@touch($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+				@touch( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 				$msg = array(
-					'result' => 'needs_download',
+					'result'  => 'needs_download',
 					'request' => array(
-						'type' => $type,
+						'type'      => $type,
 						'timestamp' => $timestamp,
-						'findex' => $findex
-					)
+						'findex'    => $findex,
+					),
 				);
-			
-				if ($close_connection_callable && is_callable($close_connection_callable) && !$connection_closed) {
+
+				if ( $close_connection_callable && is_callable( $close_connection_callable ) && ! $connection_closed ) {
 					$connection_closed = true;
-					call_user_func($close_connection_callable, $msg);
-				} elseif (!$connection_closed) {
+					call_user_func( $close_connection_callable, $msg );
+				} elseif ( ! $connection_closed ) {
 					$connection_closed = true;
-					$backupplus->close_browser_connection(json_encode($msg));
+					$backupplus->close_browser_connection( json_encode( $msg ) );
 				}
-				BackupPlus_Storage_Methods_Interface::get_remote_file($services, $file, $timestamp);
+				BackupPlus_Storage_Methods_Interface::get_remote_file( $services, $file, $timestamp );
 				$needs_downloading = false;
 			}
 
 			// Now, be ready to spool the thing to the browser
-			if (is_file($fullpath) && is_readable($fullpath) && !$needs_downloading) {
+			if ( is_file( $fullpath ) && is_readable( $fullpath ) && ! $needs_downloading ) {
 
 				// That message is then picked up by the AJAX listener
-				$backupplus->jobdata_set('dlfile_'.$timestamp.'_'.$type.'_'.$findex, 'downloaded:'.filesize($fullpath).":$fullpath");
+				$backupplus->jobdata_set( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex, 'downloaded:' . filesize( $fullpath ) . ":$fullpath" );
 
 				$result = 'downloaded';
-				
-			} elseif ($needs_downloading) {
 
-				$backupplus->jobdata_set('dlfile_'.$timestamp.'_'.$type.'_'.$findex, 'failed');
-				$backupplus->jobdata_set('dlerrors_'.$timestamp.'_'.$type.'_'.$findex, $backupplus->errors);
-				$backupplus->log('Remote fetch failed. File '.$fullpath.' did not exist or was unreadable. If you delete local backups then remote retrieval may have failed.');
-				
+			} elseif ( $needs_downloading ) {
+
+				$backupplus->jobdata_set( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex, 'failed' );
+				$backupplus->jobdata_set( 'dlerrors_' . $timestamp . '_' . $type . '_' . $findex, $backupplus->errors );
+				$backupplus->log( 'Remote fetch failed. File ' . $fullpath . ' did not exist or was unreadable. If you delete local backups then remote retrieval may have failed.' );
+
 				$result = 'download_failed';
 			} else {
 				$result = 'no_local_file';
@@ -1408,12 +1535,18 @@ class BackupPlus_Admin {
 
 			restore_error_handler();
 
-			if ($debug_mode) @fclose($backupplus->logfile_handle);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-			if (!$debug_mode) @unlink($backupplus->logfile_name);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			if ( $debug_mode ) {
+				@fclose( $backupplus->logfile_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			}           if ( ! $debug_mode ) {
+				@unlink( $backupplus->logfile_name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			}
 		}
 
 		// The browser connection was possibly already closed, but not necessarily
-		return array('result' => $result, 'already_closed' => $connection_closed);
+		return array(
+			'result'         => $result,
+			'already_closed' => $connection_closed,
+		);
 	}
 
 	/**
@@ -1421,155 +1554,180 @@ class BackupPlus_Admin {
 	 *
 	 * @param  Mixed $msg The data to be JSON encoded and sent back
 	 */
-	public function _backupplus_background_operation_started($msg) {
+	public function _backupplus_background_operation_started( $msg ) {
 		global $backupplus;
 		// The extra spaces are because of a bug seen on one server in handling of non-ASCII characters; see HS#11739
-		$backupplus->close_browser_connection(json_encode($msg).'        ');
+		$backupplus->close_browser_connection( json_encode( $msg ) . '        ' );
 	}
-	
+
 	public function backupplus_ajax_handler() {
-		$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
-		$subaction = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'subaction');
+		$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
+		$subaction     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'subaction' );
 
-		$nonce = empty($request_nonce) ? '' : $request_nonce;
+		$nonce = empty( $request_nonce ) ? '' : $request_nonce;
 
-		if (!wp_verify_nonce($nonce, 'backupplus-credentialtest-nonce') || empty($subaction)) die('Security check');
+		if ( ! wp_verify_nonce( $nonce, 'backupplus-credentialtest-nonce' ) || empty( $subaction ) ) {
+			die( 'Security check' );
+		}
 
 		// Mitigation in case the nonce leaked to an unauthorised user
-		if ('dismissautobackup' == $subaction) {
-			if (!current_user_can('update_plugins') && !current_user_can('update_themes')) return;
-		} elseif ('dismissexpiry' == $subaction || 'dismissdashnotice' == $subaction) {
-			if (!current_user_can('update_plugins')) return;
+		if ( 'dismissautobackup' == $subaction ) {
+			if ( ! current_user_can( 'update_plugins' ) && ! current_user_can( 'update_themes' ) ) {
+				return;
+			}
+		} elseif ( 'dismissexpiry' == $subaction || 'dismissdashnotice' == $subaction ) {
+			if ( ! current_user_can( 'update_plugins' ) ) {
+				return;
+			}
 		} else {
-			if (!BackupPlus_Options::user_can_manage()) return;
+			if ( ! BackupPlus_Options::user_can_manage() ) {
+				return;
+			}
 		}
-		
-		// All others use _POST
-		$data_in_get = array('get_log', 'get_fragment');
-		
-		// BackupPlus_WPAdmin_Commands extends BackupPlus_Commands - i.e. all commands are in there
-		if (!class_exists('BackupPlus_WPAdmin_Commands')) backupplus_try_include_file('includes/class-wpadmin-commands.php', 'include_once');
-		$commands = new BackupPlus_WPAdmin_Commands($this);
-		
-		if (method_exists($commands, $subaction)) {
 
-			$data = in_array($subaction, $data_in_get) ? $_GET : $_POST;
-			
+		// All others use _POST
+		$data_in_get = array( 'get_log', 'get_fragment' );
+
+		// BackupPlus_WPAdmin_Commands extends BackupPlus_Commands - i.e. all commands are in there
+		if ( ! class_exists( 'BackupPlus_WPAdmin_Commands' ) ) {
+			backupplus_try_include_file( 'includes/class-wpadmin-commands.php', 'include_once' );
+		}
+		$commands = new BackupPlus_WPAdmin_Commands( $this );
+
+		if ( method_exists( $commands, $subaction ) ) {
+
+			$data = in_array( $subaction, $data_in_get ) ? $_GET : $_POST;
+
 			// Undo WP's slashing of GET/POST data
-			$data = BackupPlus_Manipulation_Functions::wp_unslash($data);
-			
+			$data = BackupPlus_Manipulation_Functions::wp_unslash( $data );
+
 			// TODO: Once all commands come through here and through backupplus_send_command(), the data should always come from this attribute (once backupplus_send_command() is modified appropriately).
-			if (isset($data['action_data'])) $data = $data['action_data'];
+			if ( isset( $data['action_data'] ) ) {
+				$data = $data['action_data'];
+			}
 			try {
-				$results = call_user_func(array($commands, $subaction), $data);
-			} catch (Exception $e) {
-				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during '.$subaction.' subaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+				$results = call_user_func( array( $commands, $subaction ), $data );
+			} catch ( Exception $e ) {
+				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during ' . $subaction . ' subaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 				die;
-			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during '.$subaction.' subaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during ' . $subaction . ' subaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 				die;
 			}
-			if (is_wp_error($results)) {
+			if ( is_wp_error( $results ) ) {
 				$results = array(
-					'result' => false,
-					'error_code' => $results->get_error_code(),
+					'result'        => false,
+					'error_code'    => $results->get_error_code(),
 					'error_message' => $results->get_error_message(),
-					'error_data' => $results->get_error_data(),
+					'error_data'    => $results->get_error_data(),
 				);
 			}
-			
-			if (is_string($results)) {
+
+			if ( is_string( $results ) ) {
 				// A handful of legacy methods, and some which are directly the source for iframes, for which JSON is not appropriate.
 				echo $results; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped --the escaping should take place at the time the caller of this ajax handler receives a response from its request possibly after calling wp_remote_*() or JS jQuery.ajax()
 			} else {
-				echo json_encode($results);
+				echo json_encode( $results );
 			}
 			die;
 		}
-		
+
 		// Below are all the commands not ported over into class-commands.php or class-wpadmin-commands.php
-		$request_subsubaction = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'subsubaction');
-		if ('activejobs_list' == $subaction) {
+		$request_subsubaction = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'subsubaction' );
+		if ( 'activejobs_list' == $subaction ) {
 			try {
 				// N.B. Also called from autobackup.php
 				// TODO: This should go into BackupPlus_Commands, once the add-ons have been ported to use backupplus_send_command()
-				echo json_encode($this->get_activejobs_list(BackupPlus_Manipulation_Functions::wp_unslash($_GET)));
-			} catch (Exception $e) {
-				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
-			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+				echo json_encode( $this->get_activejobs_list( BackupPlus_Manipulation_Functions::wp_unslash( $_GET ) ) );
+			} catch ( Exception $e ) {
+				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during get active job list. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
+			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during get active job list. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 			}
-			
-		} elseif ('httpget' == $subaction) {
+		} elseif ( 'httpget' == $subaction ) {
 			try {
 				// httpget
-				$curl = empty($_REQUEST['curl']) ? false : true;
-				$request_uri = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'uri');
-				echo $this->http_get(BackupPlus_Manipulation_Functions::wp_unslash($request_uri), $curl); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- It's not HTML content; the output is in JSON format which can't be escaped
-			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during http get. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
-			} catch (Exception $e) {
-				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during http get. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+				$curl        = empty( $_REQUEST['curl'] ) ? false : true;
+				$request_uri = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'uri' );
+				echo $this->http_get( BackupPlus_Manipulation_Functions::wp_unslash( $request_uri ), $curl ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- It's not HTML content; the output is in JSON format which can't be escaped
+			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during http get. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
+			} catch ( Exception $e ) {
+				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during http get. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 			}
-			 
-		} elseif ('doaction' == $subaction && !empty($request_subsubaction) && 'backupplus_' == substr($request_subsubaction, 0, 8)) {
+		} elseif ( 'doaction' == $subaction && ! empty( $request_subsubaction ) && 'backupplus_' == substr( $request_subsubaction, 0, 8 ) ) {
 			$subsubaction = $request_subsubaction;
 			try {
 					// These generally echo and die - they will need further work to port to one of the command classes.
-				do_action(BackupPlus_Manipulation_Functions::wp_unslash($subsubaction), $_REQUEST);
-			} catch (Exception $e) {
-				$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during doaction subaction with '.$subsubaction.' subsubaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+				do_action( BackupPlus_Manipulation_Functions::wp_unslash( $subsubaction ), $_REQUEST );
+			} catch ( Exception $e ) {
+				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during doaction subaction with ' . $subsubaction . ' subsubaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 				die;
-			} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during doaction subaction with '.$subsubaction.' subsubaction. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
-				echo json_encode(array(
-					'fatal_error' => true,
-					'fatal_error_message' => $log_message
-				));
+			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during doaction subaction with ' . $subsubaction . ' subsubaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
+				echo json_encode(
+					array(
+						'fatal_error'         => true,
+						'fatal_error_message' => $log_message,
+					)
+				);
 				die;
 			}
 		}
-		
-		die;
 
+		die;
 	}
-	
+
 	/**
 	 * Run a credentials test for the indicated remote storage module
 	 *
@@ -1577,53 +1735,65 @@ class BackupPlus_Admin {
 	 * @param Boolean $return_instead_of_echo Whether to return or echo the results. N.B. More than just the results to echo will be returned
 	 * @return Array|Void - the results, if they are being returned (rather than echoed). Keys: 'output' (the output), 'data' (other data)
 	 */
-	public function do_credentials_test($test_settings, $return_instead_of_echo = false) {
-	
-		$method = (!empty($test_settings['method']) && preg_match("/^[a-z0-9]+$/", $test_settings['method'])) ? $test_settings['method'] : "";
-		
+	public function do_credentials_test( $test_settings, $return_instead_of_echo = false ) {
+
+		$method = ( ! empty( $test_settings['method'] ) && preg_match( '/^[a-z0-9]+$/', $test_settings['method'] ) ) ? $test_settings['method'] : '';
+
 		$this->logged = array();
 		// TODO: Add action for WP HTTP SSL stuff
-		$error_levels = version_compare(PHP_VERSION, '8.4.0', '>=') ? E_ALL : E_ALL & ~E_STRICT;
-		set_error_handler(array($this, 'get_php_errors'), $error_levels);
-		
-		$obj = BackupPlus_Storage_Provider_Factory::create($method, false);
+		$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
+		set_error_handler( array( $this, 'get_php_errors' ), $error_levels );
 
-		$ret = '';
+		$obj = BackupPlus_Storage_Provider_Factory::create( $method, false );
+
+		$ret  = '';
 		$data = null;
-		
+
 		// TODO: Add action for WP HTTP SSL stuff
-		if (is_wp_error($obj)) {
-			$ret = esc_html($obj->get_error_message());
-			$data = array('success' => false);
-			if (!$return_instead_of_echo) echo $ret;
-		} elseif (is_callable(array($obj, 'credentials_test'))) {
-			$obj->set_connection_status(false);
-			if ($return_instead_of_echo) ob_start();
-			$data = $obj->credentials_test($test_settings);
-			if ($return_instead_of_echo) $ret .= ob_get_clean();
+		if ( is_wp_error( $obj ) ) {
+			$ret  = esc_html( $obj->get_error_message() );
+			$data = array( 'success' => false );
+			if ( ! $return_instead_of_echo ) {
+				echo $ret;
+			}
+		} elseif ( is_callable( array( $obj, 'credentials_test' ) ) ) {
+			$obj->set_connection_status( false );
+			if ( $return_instead_of_echo ) {
+				ob_start();
+			}
+			$data = $obj->credentials_test( $test_settings );
+			if ( $return_instead_of_echo ) {
+				$ret .= ob_get_clean();
+			}
 		}
 
-		if (!is_wp_error($obj) && $obj->is_connection_successful()) {
-			if (is_array($data)) {
+		if ( ! is_wp_error( $obj ) && $obj->is_connection_successful() ) {
+			if ( is_array( $data ) ) {
 				$data['success'] = true;
 			} else {
-				$data = array('success' => true);
+				$data = array( 'success' => true );
 			}
 		}
-		
-		if (count($this->logged) >0) {
-			$ret .= "\n\n".esc_html__('Messages:', 'backupplus')."\n";
-			foreach ($this->logged as $err) {
+
+		if ( count( $this->logged ) > 0 ) {
+			$ret .= "\n\n" . esc_html__( 'Messages:', 'backupplus' ) . "\n";
+			foreach ( $this->logged as $err ) {
 				$ret .= "* $err\n";
 			}
-			if (!$return_instead_of_echo) echo $ret; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all remote storage which provide credentials testing have already escaped their own output; so no escape late here
+			if ( ! $return_instead_of_echo ) {
+				echo $ret; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all remote storage which provide credentials testing have already escaped their own output; so no escape late here
+			}
 		}
 		restore_error_handler();
-		
-		if ($return_instead_of_echo) return array('output' => $ret, 'data' => $data);
-		
+
+		if ( $return_instead_of_echo ) {
+			return array(
+				'output' => $ret,
+				'data'   => $data,
+			);
+		}
 	}
-	
+
 	/**
 	 * Delete a backup set, whilst respecting limits on how much to delete in one go
 	 *
@@ -1631,200 +1801,228 @@ class BackupPlus_Admin {
 	 * @param Array $opts - deletion options; with keys backup_timestamp, delete_remote, [remote_delete_limit]
 	 * @return Array - as from remove_backup_set_cleanup()
 	 */
-	public function delete_set($opts) {
-		
+	public function delete_set( $opts ) {
+
 		global $backupplus;
 
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		
-		$backups = BackupPlus_Backup_History::get_history();
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}
+		$backups    = BackupPlus_Backup_History::get_history();
 		$timestamps = (string) $opts['backup_timestamp'];
 
-		$remote_delete_limit = (isset($opts['remote_delete_limit']) && $opts['remote_delete_limit'] > 0) ? (int) $opts['remote_delete_limit'] : PHP_INT_MAX;
-		$processed_instance_ids = !empty($opts['processed_instance_ids']) && is_array($opts['processed_instance_ids']) ? $opts['processed_instance_ids'] : array();
-		$is_continuation = $opts['is_continuation'];
-		
-		$timestamps = explode(',', $timestamps);
+		$remote_delete_limit    = ( isset( $opts['remote_delete_limit'] ) && $opts['remote_delete_limit'] > 0 ) ? (int) $opts['remote_delete_limit'] : PHP_INT_MAX;
+		$processed_instance_ids = ! empty( $opts['processed_instance_ids'] ) && is_array( $opts['processed_instance_ids'] ) ? $opts['processed_instance_ids'] : array();
+		$is_continuation        = $opts['is_continuation'];
+
+		$timestamps         = explode( ',', $timestamps );
 		$deleted_timestamps = '';
-		$delete_remote = empty($opts['delete_remote']) ? false : true;
+		$delete_remote      = empty( $opts['delete_remote'] ) ? false : true;
 
 		// You need a nonce before you can set job data. And we certainly don't yet have one.
 		$backupplus->backup_time_nonce();
 		// Set the job type before logging, as there can be different logging destinations
-		$backupplus->jobdata_set('job_type', 'delete');
-		$backupplus->jobdata_set('job_time_ms', $backupplus->job_time_ms);
+		$backupplus->jobdata_set( 'job_type', 'delete' );
+		$backupplus->jobdata_set( 'job_time_ms', $backupplus->job_time_ms );
 
-		if (BackupPlus_Options::get_backupplus_option('backupplus_debug_mode')) {
-			$backupplus->logfile_open($backupplus->nonce);
-			$error_levels = version_compare(PHP_VERSION, '8.4.0', '>=') ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler(array($backupplus, 'php_error'), $error_levels);
+		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
+			$backupplus->logfile_open( $backupplus->nonce );
+			$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
+			set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
 		}
 
-		$backupplus_dir = $backupplus->backups_dir_location();
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$backupplus_dir      = $backupplus->backups_dir_location();
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
-		$local_deleted = 0;
+		$local_deleted  = 0;
 		$remote_deleted = 0;
-		$sets_removed = 0;
-		
-		$deletion_errors = array();
-		$timestamps_list = implode(',', $timestamps);
+		$sets_removed   = 0;
 
-		if (!$is_continuation) {
-			foreach ($timestamps as $i => $timestamp) {
-				unset($backups[$timestamp]['instance_file_deletions_error']);
+		$deletion_errors = array();
+		$timestamps_list = implode( ',', $timestamps );
+
+		if ( ! $is_continuation ) {
+			foreach ( $timestamps as $i => $timestamp ) {
+				unset( $backups[ $timestamp ]['instance_file_deletions_error'] );
 			}
 		}
 
-		foreach ($timestamps as $i => $timestamp) {
+		foreach ( $timestamps as $i => $timestamp ) {
 
-			if (!isset($backups[$timestamp])) {
-				return array('result' => 'error', 'message' => __('Backup set not found', 'backupplus'));
+			if ( ! isset( $backups[ $timestamp ] ) ) {
+				return array(
+					'result'  => 'error',
+					'message' => __( 'Backup set not found', 'backupplus' ),
+				);
 			}
 
-			$nonce = isset($backups[$timestamp]['nonce']) ? $backups[$timestamp]['nonce'] : '';
+			$nonce = isset( $backups[ $timestamp ]['nonce'] ) ? $backups[ $timestamp ]['nonce'] : '';
 
 			$delete_from_service = array();
 
-			if ($delete_remote) {
+			if ( $delete_remote ) {
 				// Locate backup set
-				if (isset($backups[$timestamp]['service'])) {
+				if ( isset( $backups[ $timestamp ]['service'] ) ) {
 					// Convert to an array so that there is no uncertainty about how to process it
-					$services = is_string($backups[$timestamp]['service']) ? array($backups[$timestamp]['service']) : $backups[$timestamp]['service'];
-					if (is_array($services)) {
-						foreach ($services as $service) {
-							if (is_string($service) && 'none' != $service && 'email' != $service) $delete_from_service[] = $service;
+					$services = is_string( $backups[ $timestamp ]['service'] ) ? array( $backups[ $timestamp ]['service'] ) : $backups[ $timestamp ]['service'];
+					if ( is_array( $services ) ) {
+						foreach ( $services as $service ) {
+							if ( is_string( $service ) && 'none' != $service && 'email' != $service ) {
+								$delete_from_service[] = $service;
+							}
 						}
 					}
 				}
 			}
 
-			$delete_from_service = array_unique($delete_from_service); // it's possible that the same service was added more than one thus deleting already-done files over and over, we've seen a case when using SFTP service with two instance IDs and when rescanning remote storage will make two SFTP services appearing in the associated raw backup history
+			$delete_from_service = array_unique( $delete_from_service ); // it's possible that the same service was added more than one thus deleting already-done files over and over, we've seen a case when using SFTP service with two instance IDs and when rescanning remote storage will make two SFTP services appearing in the associated raw backup history
 
 			$files_to_delete = array();
-			foreach ($backupable_entities as $key => $ent) {
-				if (isset($backups[$timestamp][$key])) {
-					$files_to_delete[$key] = $backups[$timestamp][$key];
+			foreach ( $backupable_entities as $key => $ent ) {
+				if ( isset( $backups[ $timestamp ][ $key ] ) ) {
+					$files_to_delete[ $key ] = $backups[ $timestamp ][ $key ];
 				}
 			}
 			// Delete DB
-			foreach ($backups[$timestamp] as $key => $value) {
-				if ('db' == strtolower(substr($key, 0, 2)) && '-size' != substr($key, -5, 5)) {
-					$files_to_delete[$key] = $backups[$timestamp][$key];
+			foreach ( $backups[ $timestamp ] as $key => $value ) {
+				if ( 'db' == strtolower( substr( $key, 0, 2 ) ) && '-size' != substr( $key, -5, 5 ) ) {
+					$files_to_delete[ $key ] = $backups[ $timestamp ][ $key ];
 				}
 			}
 
 			// Also delete the log
-			if ($nonce && !BackupPlus_Options::get_backupplus_option('backupplus_debug_mode')) {
+			if ( $nonce && ! BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
 				$files_to_delete['log'] = "log.$nonce.txt";
 			}
-			
+
 			$backupplus->register_wp_http_option_hooks();
 
-			$start_time_for_file_deletions = microtime(true);
+			$start_time_for_file_deletions = microtime( true );
 
-			foreach ($files_to_delete as $key => $files) {
+			foreach ( $files_to_delete as $key => $files ) {
 
-				if (is_string($files)) $files = array($files);
-
-				foreach ($files as $file) {
-					if (is_file($backupplus_dir.'/'.$file) && @unlink($backupplus_dir.'/'.$file)) $local_deleted++;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				if ( is_string( $files ) ) {
+					$files = array( $files );
 				}
 
-				if ('log' != $key && count($delete_from_service) > 0) {
+				foreach ( $files as $file ) {
+					if ( is_file( $backupplus_dir . '/' . $file ) && @unlink( $backupplus_dir . '/' . $file ) ) {
+						++$local_deleted;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					}
+				}
 
-					$entity_total_files = count($files);
+				if ( 'log' != $key && count( $delete_from_service ) > 0 ) {
+
+					$entity_total_files     = count( $files );
 					$entity_total_instances = 0;
-					$entity_remote_deleted = 0;
+					$entity_remote_deleted  = 0;
 
-					$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids($delete_from_service);
+					$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( $delete_from_service );
 
-					foreach ($delete_from_service as $service) {
-					
-						if ('email' == $service || 'none' == $service || !$service) continue;
+					foreach ( $delete_from_service as $service ) {
+
+						if ( 'email' == $service || 'none' == $service || ! $service ) {
+							continue;
+						}
 
 						$deleted = -1;
 
-						if (empty($storage_objects_and_ids[$service]['object'])) continue;
-						$remote_obj = $storage_objects_and_ids[$service]['object'];
+						if ( empty( $storage_objects_and_ids[ $service ]['object'] ) ) {
+							continue;
+						}
+						$remote_obj = $storage_objects_and_ids[ $service ]['object'];
 
-						$instance_settings = $storage_objects_and_ids[$service]['instance_settings'];
-						$this->backups_instance_ids = empty($backups[$timestamp]['service_instance_ids'][$service]) ? array() : $backups[$timestamp]['service_instance_ids'][$service];
+						$instance_settings          = $storage_objects_and_ids[ $service ]['instance_settings'];
+						$this->backups_instance_ids = empty( $backups[ $timestamp ]['service_instance_ids'][ $service ] ) ? array() : $backups[ $timestamp ]['service_instance_ids'][ $service ];
 
-						if (empty($instance_settings)) continue;
-						
-						uksort($instance_settings, array($this, 'instance_ids_sort'));
+						if ( empty( $instance_settings ) ) {
+							continue;
+						}
 
-						foreach ($instance_settings as $instance_id => $options) {
+						uksort( $instance_settings, array( $this, 'instance_ids_sort' ) );
 
-							if (in_array($timestamp.'-'.$instance_id.'-'.$key, $processed_instance_ids)) continue; // see the unset($backups[$timestamp]['instance_file_deletions_error']); few lines below to see why we use this
+						foreach ( $instance_settings as $instance_id => $options ) {
 
-							$entity_total_instances++;
+							if ( in_array( $timestamp . '-' . $instance_id . '-' . $key, $processed_instance_ids ) ) {
+								continue; // see the unset($backups[$timestamp]['instance_file_deletions_error']); few lines below to see why we use this
+							}
 
-							$remote_obj->set_options($options, false, $instance_id);
+							++$entity_total_instances;
 
-							foreach ($files as $file) {
-								$hashed_file = md5($instance_id.$file);
-								if (isset($backups[$timestamp]['instance_file_deletions_done']) && in_array($hashed_file, $backups[$timestamp]['instance_file_deletions_done'])) continue;
-								if ($is_continuation && isset($backups[$timestamp]['instance_file_deletions_error']) && in_array($hashed_file, $backups[$timestamp]['instance_file_deletions_error'])) continue; // if it's a continuation then we don't want to retry deleting the same file over and over
-								$deleted = $remote_obj->delete($file);
-								
-								if (true === $deleted) {
-									$backups[$timestamp]['instance_file_deletions_done'][] = $hashed_file;
-									$remote_deleted++;
-									$entity_remote_deleted++;
+							$remote_obj->set_options( $options, false, $instance_id );
+
+							foreach ( $files as $file ) {
+								$hashed_file = md5( $instance_id . $file );
+								if ( isset( $backups[ $timestamp ]['instance_file_deletions_done'] ) && in_array( $hashed_file, $backups[ $timestamp ]['instance_file_deletions_done'] ) ) {
+									continue;
+								}
+								if ( $is_continuation && isset( $backups[ $timestamp ]['instance_file_deletions_error'] ) && in_array( $hashed_file, $backups[ $timestamp ]['instance_file_deletions_error'] ) ) {
+									continue; // if it's a continuation then we don't want to retry deleting the same file over and over
+								}
+								$deleted = $remote_obj->delete( $file );
+
+								if ( true === $deleted ) {
+									$backups[ $timestamp ]['instance_file_deletions_done'][] = $hashed_file;
+									++$remote_deleted;
+									++$entity_remote_deleted;
 								} else {
 									// Handle abstracted error codes/return fail status. Including handle array/objects returned
-									if (is_object($deleted) || is_array($deleted)) $deleted = false;
-									
-									if (!array_key_exists($instance_id, $deletion_errors)) {
-										$deletion_errors[$instance_id] = array('error_code' => $deleted, 'service' => $service);
+									if ( is_object( $deleted ) || is_array( $deleted ) ) {
+										$deleted = false;
 									}
-									$backups[$timestamp]['instance_file_deletions_error'][] = $hashed_file;
+
+									if ( ! array_key_exists( $instance_id, $deletion_errors ) ) {
+										$deletion_errors[ $instance_id ] = array(
+											'error_code' => $deleted,
+											'service'    => $service,
+										);
+									}
+									$backups[ $timestamp ]['instance_file_deletions_error'][] = $hashed_file;
 								}
-								if (floor(microtime(true)-$start_time_for_file_deletions) >= $remote_delete_limit) {
-									return $this->remove_backup_set_cleanup(false, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps_list, $deleted_timestamps, $deletion_errors, $processed_instance_ids);
+								if ( floor( microtime( true ) - $start_time_for_file_deletions ) >= $remote_delete_limit ) {
+									return $this->remove_backup_set_cleanup( false, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps_list, $deleted_timestamps, $deletion_errors, $processed_instance_ids );
 								}
 							}
-							$processed_instance_ids[] = $timestamp.'-'.$instance_id.'-'.$key;
+							$processed_instance_ids[] = $timestamp . '-' . $instance_id . '-' . $key;
 						}
 					}
-					if ($entity_total_files * $entity_total_instances === $entity_remote_deleted) {
-						unset($backups[$timestamp][$key]);
-						for ($file_index=1; $file_index < $entity_total_files; $file_index++) {
-							unset($backups[$timestamp][$key.$file_index.'-size']);
-							if (isset($backups[$timestamp]['checksums']) && is_array($backups[$timestamp]['checksums'])) {
-								foreach (array_keys($backups[$timestamp]['checksums']) as $algo) {
-									unset($backups[$timestamp]['checksums'][$algo][$key.$file_index]);
+					if ( $entity_total_files * $entity_total_instances === $entity_remote_deleted ) {
+						unset( $backups[ $timestamp ][ $key ] );
+						for ( $file_index = 1; $file_index < $entity_total_files; $file_index++ ) {
+							unset( $backups[ $timestamp ][ $key . $file_index . '-size' ] );
+							if ( isset( $backups[ $timestamp ]['checksums'] ) && is_array( $backups[ $timestamp ]['checksums'] ) ) {
+								foreach ( array_keys( $backups[ $timestamp ]['checksums'] ) as $algo ) {
+									unset( $backups[ $timestamp ]['checksums'][ $algo ][ $key . $file_index ] );
 								}
 							}
 						}
-						unset($backups[$timestamp][$key.'-size']);
-						if (isset($backups[$timestamp]['checksums']) && is_array($backups[$timestamp]['checksums'])) {
-							foreach (array_keys($backups[$timestamp]['checksums']) as $algo) {
-								unset($backups[$timestamp]['checksums'][$algo][$key."0"]);
+						unset( $backups[ $timestamp ][ $key . '-size' ] );
+						if ( isset( $backups[ $timestamp ]['checksums'] ) && is_array( $backups[ $timestamp ]['checksums'] ) ) {
+							foreach ( array_keys( $backups[ $timestamp ]['checksums'] ) as $algo ) {
+								unset( $backups[ $timestamp ]['checksums'][ $algo ][ $key . '0' ] );
 							}
 						}
 					}
 				}
 			}
 
-			if (empty($backups[$timestamp]['instance_file_deletions_error'])) {
-				unset($backups[$timestamp]);
-				unset($timestamps[$i]);
-				if ('' != $deleted_timestamps) $deleted_timestamps .= ',';
+			if ( empty( $backups[ $timestamp ]['instance_file_deletions_error'] ) ) {
+				unset( $backups[ $timestamp ] );
+				unset( $timestamps[ $i ] );
+				if ( '' != $deleted_timestamps ) {
+					$deleted_timestamps .= ',';
+				}
 				$deleted_timestamps .= $timestamp;
-				$timestamps_list = implode(',', $timestamps);
-				$sets_removed++;
+				$timestamps_list     = implode( ',', $timestamps );
+				++$sets_removed;
 			} else {
 				// we already have $processed_instance_ids variable that stores all already-done instances and it's going to be used during the continuation as long as it gets returned to the JS caller
 				// so we unset the instance_file_deletions_error variable to prevent backup history from swelling
-				unset($backups[$timestamp]['instance_file_deletions_error']);
+				unset( $backups[ $timestamp ]['instance_file_deletions_error'] );
 			}
 		}
 
-		return $this->remove_backup_set_cleanup(true, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps_list, $deleted_timestamps, $deletion_errors);
-
+		return $this->remove_backup_set_cleanup( true, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps_list, $deleted_timestamps, $deletion_errors );
 	}
 
 	/**
@@ -1834,19 +2032,21 @@ class BackupPlus_Admin {
 	 * @param  String $b - the second instance id
 	 * @return Integer   - returns an integer to indicate what position the $b value should be moved in
 	 */
-	public function instance_ids_sort($a, $b) {
-		if (in_array($a, $this->backups_instance_ids)) {
-			if (in_array($b, $this->backups_instance_ids)) return 0;
+	public function instance_ids_sort( $a, $b ) {
+		if ( in_array( $a, $this->backups_instance_ids ) ) {
+			if ( in_array( $b, $this->backups_instance_ids ) ) {
+				return 0;
+			}
 			return -1;
 		}
-		return in_array($b, $this->backups_instance_ids) ? 1 : 0;
+		return in_array( $b, $this->backups_instance_ids ) ? 1 : 0;
 	}
 
 	/**
 	 * Called by self::delete_set() to finish up before returning (whether the complete deletion is finished or not)
 	 *
 	 * @param Boolean $delete_complete        - whether the whole set is now gone (i.e. last round)
-	 * @param Array	  $backups                - the backup history
+	 * @param Array   $backups                - the backup history
 	 * @param Integer $local_deleted          - how many backup archives were deleted from local storage
 	 * @param Integer $remote_deleted         - how many backup archives were deleted from remote storage
 	 * @param Integer $sets_removed           - how many complete sets were removed
@@ -1857,16 +2057,16 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - information on the status, suitable for returning to the UI
 	 */
-	public function remove_backup_set_cleanup($delete_complete, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps, $deleted_timestamps, $deletion_errors = array(), $processed_instance_ids = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $deletion_errors was used below but the code has been commented out.  Can both be removed?
+	public function remove_backup_set_cleanup( $delete_complete, $backups, $local_deleted, $remote_deleted, $sets_removed, $timestamps, $deleted_timestamps, $deletion_errors = array(), $processed_instance_ids = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $deletion_errors was used below but the code has been commented out.  Can both be removed?
 
 		global $backupplus;
 
-		$backupplus->register_wp_http_option_hooks(false);
+		$backupplus->register_wp_http_option_hooks( false );
 
-		BackupPlus_Backup_History::save_history($backups);
+		BackupPlus_Backup_History::save_history( $backups );
 
-		$backupplus->log("Local files deleted: $local_deleted. Remote files deleted: $remote_deleted");
-		
+		$backupplus->log( "Local files deleted: $local_deleted. Remote files deleted: $remote_deleted" );
+
 		/*
 		Disable until next release
 		$error_messages = array();
@@ -1905,23 +2105,42 @@ class BackupPlus_Admin {
 			}
 		}
 		*/
-		
+
 		// $error_message_string = implode("\n", $error_messages);
 		$error_message_string = '';
 
-		if ($delete_complete) {
-			$set_message = __('Backup sets removed:', 'backupplus');
-			$local_message = __('Local files deleted:', 'backupplus');
-			$remote_message = __('Remote files deleted:', 'backupplus');
+		if ( $delete_complete ) {
+			$set_message    = __( 'Backup sets removed:', 'backupplus' );
+			$local_message  = __( 'Local files deleted:', 'backupplus' );
+			$remote_message = __( 'Remote files deleted:', 'backupplus' );
 
-			if (BackupPlus_Options::get_backupplus_option('backupplus_debug_mode')) {
+			if ( BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
 				restore_error_handler();
 			}
-			
-			return array('result' => 'success', 'set_message' => $set_message, 'local_message' => $local_message, 'remote_message' => $remote_message, 'backup_sets' => $sets_removed, 'backup_local' => $local_deleted, 'backup_remote' => $remote_deleted, 'deleted_timestamps' => $deleted_timestamps, 'error_messages' => $error_message_string);
+
+			return array(
+				'result'             => 'success',
+				'set_message'        => $set_message,
+				'local_message'      => $local_message,
+				'remote_message'     => $remote_message,
+				'backup_sets'        => $sets_removed,
+				'backup_local'       => $local_deleted,
+				'backup_remote'      => $remote_deleted,
+				'deleted_timestamps' => $deleted_timestamps,
+				'error_messages'     => $error_message_string,
+			);
 		} else {
-		
-			return array('result' => 'continue', 'backup_local' => $local_deleted, 'backup_remote' => $remote_deleted, 'backup_sets' => $sets_removed, 'timestamps' => $timestamps, 'deleted_timestamps' => $deleted_timestamps, 'error_messages' => $error_message_string, 'processed_instance_ids' => $processed_instance_ids);
+
+			return array(
+				'result'                 => 'continue',
+				'backup_local'           => $local_deleted,
+				'backup_remote'          => $remote_deleted,
+				'backup_sets'            => $sets_removed,
+				'timestamps'             => $timestamps,
+				'deleted_timestamps'     => $deleted_timestamps,
+				'error_messages'         => $error_message_string,
+				'processed_instance_ids' => $processed_instance_ids,
+			);
 		}
 	}
 
@@ -1935,54 +2154,62 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - the information requested
 	 */
-	public function get_history_status($rescan, $remotescan, $debug = false, $backup_count = 0) {
-	
+	public function get_history_status( $rescan, $remotescan, $debug = false, $backup_count = 0 ) {
+
 		global $backupplus;
 
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-	
-		if ($rescan) $messages = BackupPlus_Backup_History::rebuild($remotescan, false, $debug);
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}
+		if ( $rescan ) {
+			$messages = BackupPlus_Backup_History::rebuild( $remotescan, false, $debug );
+		}
 		$backup_history = BackupPlus_Backup_History::get_history();
-		$output = BackupPlus_Backup_History::existing_backup_table($backup_history, $backup_count);
-		
+		$output         = BackupPlus_Backup_History::existing_backup_table( $backup_history, $backup_count );
+
 		$data = array();
 
-		if (!empty($messages) && is_array($messages)) {
+		if ( ! empty( $messages ) && is_array( $messages ) ) {
 			$noutput = '';
-			foreach ($messages as $msg) {
-				if (is_string($msg)) {
-					$noutput .= '<li><em>'.$msg.'</em></li>';
+			foreach ( $messages as $msg ) {
+				if ( is_string( $msg ) ) {
+					$noutput .= '<li><em>' . $msg . '</em></li>';
 				} else {
-					if (empty($msg['code']) || 'file-listing' != $msg['code']) {
-						$noutput .= '<li>'.(empty($msg['desc']) ? '' : $msg['desc'].': ').'<em>'.$msg['message'].'</em></li>';
+					if ( empty( $msg['code'] ) || 'file-listing' != $msg['code'] ) {
+						$noutput .= '<li>' . ( empty( $msg['desc'] ) ? '' : $msg['desc'] . ': ' ) . '<em>' . $msg['message'] . '</em></li>';
 					}
-					if (!empty($msg['data'])) {
-						$key = $msg['method'].'-'.$msg['service_instance_id'];
-						$data[$key] = $msg['data'];
+					if ( ! empty( $msg['data'] ) ) {
+						$key          = $msg['method'] . '-' . $msg['service_instance_id'];
+						$data[ $key ] = $msg['data'];
 					}
 				}
 			}
-			if ($noutput) {
-				$output = '<div style="margin-left: 100px; margin-top: 10px;"><ul style="list-style: disc inside;">'.$noutput.'</ul></div>'.$output;
+			if ( $noutput ) {
+				$output = '<div style="margin-left: 100px; margin-top: 10px;"><ul style="list-style: disc inside;">' . $noutput . '</ul></div>' . $output;
 			}
 		}
-		
-		$logs_exist = (false !== strpos($output, 'downloadlog'));
-		if (!$logs_exist) {
+
+		$logs_exist = ( false !== strpos( $output, 'downloadlog' ) );
+		if ( ! $logs_exist ) {
 			list($mod_time, $log_file, $nonce) = $backupplus->last_modified_log();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
-			if ($mod_time) $logs_exist = true;
+			if ( $mod_time ) {
+				$logs_exist = true;
+			}
 		}
-		
-		return apply_filters('backupplus_get_history_status_result', array(
-			'n' => __('Existing backups', 'backupplus').' <span class="backupplus_existing_backups_count">'.count($backup_history).'</span>',
-			't' => $output,  // table
-			'data' => $data,
-			'cksum' => md5($output),
-			'logs_exist' => $logs_exist,
-			'web_server_disk_space' => BackupPlus_Filesystem_Functions::web_server_disk_space(true),
-		));
+
+		return apply_filters(
+			'backupplus_get_history_status_result',
+			array(
+				'n'                     => __( 'Existing backups', 'backupplus' ) . ' <span class="backupplus_existing_backups_count">' . count( $backup_history ) . '</span>',
+				't'                     => $output,  // table
+				'data'                  => $data,
+				'cksum'                 => md5( $output ),
+				'logs_exist'            => $logs_exist,
+				'web_server_disk_space' => BackupPlus_Filesystem_Functions::web_server_disk_space( true ),
+			)
+		);
 	}
-	
+
 	/**
 	 * Stop an active backup job
 	 *
@@ -1990,38 +2217,51 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - information on the outcome of the attempt
 	 */
-	public function activejobs_delete($job_id) {
-			
-		if (preg_match("/^[0-9a-f]{12}$/", $job_id)) {
-		
+	public function activejobs_delete( $job_id ) {
+
+		if ( preg_match( '/^[0-9a-f]{12}$/', $job_id ) ) {
+
 			global $backupplus;
-			$cron = get_option('cron', array());
+			$cron = get_option( 'cron', array() );
 
-			$jobdata = $backupplus->jobdata_getarray($job_id);
-			
+			$jobdata = $backupplus->jobdata_getarray( $job_id );
+
 			$backupplus_dir = $backupplus->backups_dir_location();
-			if (file_exists($backupplus_dir.'/log.'.$job_id.'.txt')) touch($backupplus_dir.'/deleteflag-'.$job_id.'.txt');
-			
-			foreach ($cron as $time => $job) {
-				if (!isset($job['backupplus_backup_resume'])) continue;
-				foreach ($job['backupplus_backup_resume'] as $hook => $info) {
-					if (isset($info['args'][1]) && $info['args'][1] == $job_id) {
-						$args = $cron[$time]['backupplus_backup_resume'][$hook]['args'];
-						wp_unschedule_event($time, 'backupplus_backup_resume', $args);
+			if ( file_exists( $backupplus_dir . '/log.' . $job_id . '.txt' ) ) {
+				touch( $backupplus_dir . '/deleteflag-' . $job_id . '.txt' );
+			}
 
-						if (!class_exists('BackupPlus_Semaphore_3_0')) backupplus_try_include_file('includes/class-backupplus-semaphore.php', 'include_once');
-						
-						$backupplus_semaphore = new BackupPlus_Semaphore_3_0('udp_backupjob_'.$job_id);
+			foreach ( $cron as $time => $job ) {
+				if ( ! isset( $job['backupplus_backup_resume'] ) ) {
+					continue;
+				}
+				foreach ( $job['backupplus_backup_resume'] as $hook => $info ) {
+					if ( isset( $info['args'][1] ) && $info['args'][1] == $job_id ) {
+						$args = $cron[ $time ]['backupplus_backup_resume'][ $hook ]['args'];
+						wp_unschedule_event( $time, 'backupplus_backup_resume', $args );
+
+						if ( ! class_exists( 'BackupPlus_Semaphore_3_0' ) ) {
+							backupplus_try_include_file( 'includes/class-backupplus-semaphore.php', 'include_once' );
+						}
+
+						$backupplus_semaphore = new BackupPlus_Semaphore_3_0( 'udp_backupjob_' . $job_id );
 						$backupplus_semaphore->delete();
-						
-						return array('ok' => 'Y', 'c' => 'deleted', 'm' => __('Job deleted', 'backupplus'));
+
+						return array(
+							'ok' => 'Y',
+							'c'  => 'deleted',
+							'm'  => __( 'Job deleted', 'backupplus' ),
+						);
 					}
 				}
 			}
 		}
 
-		return array('ok' => 'N', 'c' => 'not_found', 'm' => __('Could not find that job - perhaps it has already finished?', 'backupplus'));
-
+		return array(
+			'ok' => 'N',
+			'c'  => 'not_found',
+			'm'  => __( 'Could not find that job - perhaps it has already finished?', 'backupplus' ),
+		);
 	}
 
 	/**
@@ -2032,28 +2272,28 @@ class BackupPlus_Admin {
 	 * @param  array $downloaders Array of Items to download
 	 * @return array
 	 */
-	public function get_download_statuses($downloaders) {
+	public function get_download_statuses( $downloaders ) {
 		global $backupplus;
 		$download_status = array();
-		foreach ($downloaders as $downloader) {
+		foreach ( $downloaders as $downloader ) {
 			// prefix, timestamp, entity, index
-			if (preg_match('/^([^,]+),(\d+),([-a-z]+|db[0-9]+),(\d+)$/', $downloader, $matches)) {
-				$findex = (empty($matches[4])) ? '0' : $matches[4];
-				$backupplus->nonce = dechex($matches[2]).$findex.substr(md5($matches[3]), 0, 3);
+			if ( preg_match( '/^([^,]+),(\d+),([-a-z]+|db[0-9]+),(\d+)$/', $downloader, $matches ) ) {
+				$findex            = ( empty( $matches[4] ) ) ? '0' : $matches[4];
+				$backupplus->nonce = dechex( $matches[2] ) . $findex . substr( md5( $matches[3] ), 0, 3 );
 				$backupplus->jobdata_reset();
-				$status = $this->download_status($matches[2], $matches[3], $matches[4]);
-				if (is_array($status)) {
-					$status['base'] = $matches[1];
+				$status = $this->download_status( $matches[2], $matches[3], $matches[4] );
+				if ( is_array( $status ) ) {
+					$status['base']      = $matches[1];
 					$status['timestamp'] = $matches[2];
-					$status['what'] = $matches[3];
-					$status['findex'] = $findex;
-					$download_status[] = $status;
+					$status['what']      = $matches[3];
+					$status['findex']    = $findex;
+					$download_status[]   = $status;
 				}
 			}
 		}
 		return $download_status;
 	}
-	
+
 	/**
 	 * Get, as HTML output, a list of active jobs
 	 *
@@ -2061,185 +2301,200 @@ class BackupPlus_Admin {
 	 *
 	 * @return String
 	 */
-	public function get_activejobs_list($request) {
+	public function get_activejobs_list( $request ) {
 
 		global $backupplus;
-	
-		$download_status = empty($request['downloaders']) ? array() : $this->get_download_statuses(explode(':', $request['downloaders']));
 
-		if (!empty($request['oneshot'])) {
-			$job_id = get_site_option('backupplus_oneshotnonce', false);
+		$download_status = empty( $request['downloaders'] ) ? array() : $this->get_download_statuses( explode( ':', $request['downloaders'] ) );
+
+		if ( ! empty( $request['oneshot'] ) ) {
+			$job_id = get_site_option( 'backupplus_oneshotnonce', false );
 			// print_active_job() for one-shot jobs that aren't in cron
-			$active_jobs = (false === $job_id) ? '' : $this->print_active_job($job_id, true);
-		} elseif (!empty($request['thisjobonly'])) {
+			$active_jobs = ( false === $job_id ) ? '' : $this->print_active_job( $job_id, true );
+		} elseif ( ! empty( $request['thisjobonly'] ) ) {
 			// print_active_jobs() is for resumable jobs where we want the cron info to be included in the output
-			$active_jobs = $this->print_active_jobs($request['thisjobonly']);
+			$active_jobs = $this->print_active_jobs( $request['thisjobonly'] );
 		} else {
 			$active_jobs = $this->print_active_jobs();
 		}
 		$logupdate_array = array();
-		if (!empty($request['log_fetch'])) {
-			if (isset($request['log_nonce'])) {
-				$log_nonce = $request['log_nonce'];
-				$log_pointer = isset($request['log_pointer']) ? absint($request['log_pointer']) : 0;
-				$logupdate_array = $this->fetch_log($log_nonce, $log_pointer);
+		if ( ! empty( $request['log_fetch'] ) ) {
+			if ( isset( $request['log_nonce'] ) ) {
+				$log_nonce       = $request['log_nonce'];
+				$log_pointer     = isset( $request['log_pointer'] ) ? absint( $request['log_pointer'] ) : 0;
+				$logupdate_array = $this->fetch_log( $log_nonce, $log_pointer );
 			}
 		}
 		$res = array(
 			// We allow the front-end to decide what to do if there's nothing logged - we used to (up to 1.11.29) send a pre-defined message
-			'l' => htmlspecialchars(BackupPlus_Options::get_backupplus_lastmessage()),
-			'j' => $active_jobs,
-			'ds' => $download_status,
-			'u' => $logupdate_array,
-			'automatic_updates' => $backupplus->is_automatic_updating_enabled()
+			'l'                 => htmlspecialchars( BackupPlus_Options::get_backupplus_lastmessage() ),
+			'j'                 => $active_jobs,
+			'ds'                => $download_status,
+			'u'                 => $logupdate_array,
+			'automatic_updates' => $backupplus->is_automatic_updating_enabled(),
 		);
 
 		$res['hosting_restriction'] = $backupplus->is_hosting_backup_limit_reached();
 
 		return $res;
 	}
-	
+
 	/**
 	 * Start a new backup
 	 *
-	 * @param Array			   $request
+	 * @param Array            $request
 	 * @param Boolean|Callable $close_connection_callable
 	 */
-	public function request_backupnow($request, $close_connection_callable = false) {
+	public function request_backupnow( $request, $close_connection_callable = false ) {
 		global $backupplus;
 
 		$abort_before_booting = false;
-		$backupnow_nocloud = !empty($request['backupnow_nocloud']);
-		
-		$request['incremental'] = !empty($request['incremental']);
+		$backupnow_nocloud    = ! empty( $request['backupnow_nocloud'] );
 
-		$entities = !empty($request['onlythisfileentity']) ? explode(',', $request['onlythisfileentity']) : array();
+		$request['incremental'] = ! empty( $request['incremental'] );
+
+		$entities = ! empty( $request['onlythisfileentity'] ) ? explode( ',', $request['onlythisfileentity'] ) : array();
 
 		$remote_storage_instances = array();
 
 		// if only_these_cloud_services is not an array then all connected remote storage locations are being backed up to and we don't need to do this
-		if (!empty($request['only_these_cloud_services']) && is_array($request['only_these_cloud_services'])) {
+		if ( ! empty( $request['only_these_cloud_services'] ) && is_array( $request['only_these_cloud_services'] ) ) {
 			$remote_storage_locations = $request['only_these_cloud_services'];
-			
-			foreach ($remote_storage_locations as $key => $value) {
+
+			foreach ( $remote_storage_locations as $key => $value ) {
 				/*
 					This name key inside the value array is the remote storage method name prefixed by 31 characters (backupplus_include_remote_service_) so we need to remove them to get the actual name, then the value key inside the value array has the instance id.
 				*/
-				$remote_storage_instances[substr($value['name'], 31)][$key] = $value['value'];
+				$remote_storage_instances[ substr( $value['name'], 31 ) ][ $key ] = $value['value'];
 			}
 		}
 
-		$incremental = $request['incremental'] ? apply_filters('backupplus_prepare_incremental_run', false, $entities) : false;
+		$incremental = $request['incremental'] ? apply_filters( 'backupplus_prepare_incremental_run', false, $entities ) : false;
 
 		// The call to backup_time_nonce() allows us to know the nonce in advance, and return it
 		$nonce = $backupplus->backup_time_nonce();
 
 		$msg = array(
 			'nonce' => $nonce,
-			'm' => apply_filters('backupplus_backupnow_start_message', '<strong>'.__('Start backup', 'backupplus').':</strong> '.htmlspecialchars(__('OK.', 'backupplus').' '.__('You should soon see activity in the "Last log message" field below.', 'backupplus')), $nonce)
+			'm'     => apply_filters( 'backupplus_backupnow_start_message', '<strong>' . __( 'Start backup', 'backupplus' ) . ':</strong> ' . htmlspecialchars( __( 'OK.', 'backupplus' ) . ' ' . __( 'You should soon see activity in the "Last log message" field below.', 'backupplus' ) ), $nonce ),
 		);
 
-		if (!empty($request['backup_nonce']) && 'current' != $request['backup_nonce']) $msg['nonce'] = $request['backup_nonce'];
+		if ( ! empty( $request['backup_nonce'] ) && 'current' != $request['backup_nonce'] ) {
+			$msg['nonce'] = $request['backup_nonce'];
+		}
 
-		if (!empty($request['incremental']) && !$incremental) {
-			$msg = array(
-				'error' => __('No suitable backup set (that already contains a full backup of all the requested file component types) was found, to add increments to.', 'backupplus').' '.__('Aborting this backup.', 'backupplus')
+		if ( ! empty( $request['incremental'] ) && ! $incremental ) {
+			$msg                  = array(
+				'error' => __( 'No suitable backup set (that already contains a full backup of all the requested file component types) was found, to add increments to.', 'backupplus' ) . ' ' . __( 'Aborting this backup.', 'backupplus' ),
 			);
 			$abort_before_booting = true;
 		}
 
-		if ($close_connection_callable && is_callable($close_connection_callable)) {
-			call_user_func($close_connection_callable, $msg);
+		if ( $close_connection_callable && is_callable( $close_connection_callable ) ) {
+			call_user_func( $close_connection_callable, $msg );
 		} else {
-			$backupplus->close_browser_connection(json_encode($msg));
+			$backupplus->close_browser_connection( json_encode( $msg ) );
 		}
 
-		if ($abort_before_booting) die;
-		
-		$options = array('nocloud' => $backupnow_nocloud, 'use_nonce' => $nonce);
-		if (!empty($request['onlythisfileentity']) && is_string($request['onlythisfileentity'])) {
+		if ( $abort_before_booting ) {
+			die;
+		}
+
+		$options = array(
+			'nocloud'   => $backupnow_nocloud,
+			'use_nonce' => $nonce,
+		);
+		if ( ! empty( $request['onlythisfileentity'] ) && is_string( $request['onlythisfileentity'] ) ) {
 			// Something to see in the 'last log' field when it first appears, before the backup actually starts
-			$backupplus->log(__('Start backup', 'backupplus'));
-			$options['restrict_files_to_override'] = explode(',', $request['onlythisfileentity']);
+			$backupplus->log( __( 'Start backup', 'backupplus' ) );
+			$options['restrict_files_to_override'] = explode( ',', $request['onlythisfileentity'] );
 		}
 
-		if ($request['incremental'] && !$incremental) {
-			$backupplus->log('An incremental backup was requested but no suitable backup found to add increments to; will proceed with a new backup');
+		if ( $request['incremental'] && ! $incremental ) {
+			$backupplus->log( 'An incremental backup was requested but no suitable backup found to add increments to; will proceed with a new backup' );
 			$request['incremental'] = false;
 		}
 
-		if (!empty($request['extradata'])) $options['extradata'] = $request['extradata'];
+		if ( ! empty( $request['extradata'] ) ) {
+			$options['extradata'] = $request['extradata'];
+		}
 
-		if (!empty($remote_storage_instances)) $options['remote_storage_instances'] = $remote_storage_instances;
-		
-		$options['always_keep'] = !empty($request['always_keep']);
+		if ( ! empty( $remote_storage_instances ) ) {
+			$options['remote_storage_instances'] = $remote_storage_instances;
+		}
 
-		$event = empty($request['backupnow_nofiles']) ? (empty($request['backupnow_nodb']) ? 'backupplus_backupnow_backup_all' : 'backupplus_backupnow_backup') : 'backupplus_backupnow_backup_database';
-		
-		do_action($event, apply_filters('backupplus_backupnow_options', $options, $request));
+		$options['always_keep'] = ! empty( $request['always_keep'] );
+
+		$event = empty( $request['backupnow_nofiles'] ) ? ( empty( $request['backupnow_nodb'] ) ? 'backupplus_backupnow_backup_all' : 'backupplus_backupnow_backup' ) : 'backupplus_backupnow_backup_database';
+
+		do_action( $event, apply_filters( 'backupplus_backupnow_options', $options, $request ) );
 	}
-	
+
 	/**
 	 * Get the contents of a log file
 	 *
-	 * @param String  $backup_nonce	 - the backup id; or empty, for the most recently modified
-	 * @param Integer $log_pointer	 - the byte count to fetch from
+	 * @param String  $backup_nonce  - the backup id; or empty, for the most recently modified
+	 * @param Integer $log_pointer   - the byte count to fetch from
 	 * @param String  $output_format - the format to return in; allowed as 'html' (which will escape HTML entities in what is returned) and 'raw'
 	 *
 	 * @return String
 	 */
-	public function fetch_log($backup_nonce = '', $log_pointer = 0, $output_format = 'html') {
+	public function fetch_log( $backup_nonce = '', $log_pointer = 0, $output_format = 'html' ) {
 		global $backupplus;
 
-		if (empty($backup_nonce)) {
+		if ( empty( $backup_nonce ) ) {
 			list($mod_time, $log_file, $nonce) = $backupplus->last_modified_log();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
 		} else {
 			$nonce = $backup_nonce;
 		}
 
-		if (!preg_match('/^[0-9a-f]+$/', $nonce)) die('Security check');
-		
+		if ( ! preg_match( '/^[0-9a-f]+$/', $nonce ) ) {
+			die( 'Security check' );
+		}
+
 		$log_content = '';
 		$new_pointer = $log_pointer;
-		
-		if (!empty($nonce)) {
+
+		if ( ! empty( $nonce ) ) {
 			$backupplus_dir = $backupplus->backups_dir_location();
 
-			$potential_log_file = $backupplus_dir."/log.".$nonce.".txt";
+			$potential_log_file = $backupplus_dir . '/log.' . $nonce . '.txt';
 
-			if (is_readable($potential_log_file)) {
-				
+			if ( is_readable( $potential_log_file ) ) {
+
 				$templog_array = array();
-				$log_file = fopen($potential_log_file, "r");
-				if ($log_pointer > 0) fseek($log_file, $log_pointer);
-				
-				while (($buffer = fgets($log_file, 4096)) !== false) {
+				$log_file      = fopen( $potential_log_file, 'r' );
+				if ( $log_pointer > 0 ) {
+					fseek( $log_file, $log_pointer );
+				}
+
+				while ( ( $buffer = fgets( $log_file, 4096 ) ) !== false ) {
 					$templog_array[] = $buffer;
 				}
-				if (!feof($log_file)) {
-					$templog_array[] = __('Error: unexpected file read fail', 'backupplus');
+				if ( ! feof( $log_file ) ) {
+					$templog_array[] = __( 'Error: unexpected file read fail', 'backupplus' );
 				}
-				
-				$new_pointer = ftell($log_file);
-				$log_content = implode("", $templog_array);
 
-				
+				$new_pointer = ftell( $log_file );
+				$log_content = implode( '', $templog_array );
+
 			} else {
-				$log_content .= __('The log file could not be read.', 'backupplus');
+				$log_content .= __( 'The log file could not be read.', 'backupplus' );
 			}
-
 		} else {
-			$log_content .= __('The log file could not be read.', 'backupplus');
+			$log_content .= __( 'The log file could not be read.', 'backupplus' );
 		}
-		
-		if ('html' == $output_format) $log_content = htmlspecialchars($log_content);
-		
+
+		if ( 'html' == $output_format ) {
+			$log_content = htmlspecialchars( $log_content );
+		}
+
 		$ret_array = array(
-			'log' => $log_content,
-			'nonce' => $nonce,
-			'pointer' => $new_pointer
+			'log'     => $log_content,
+			'nonce'   => $nonce,
+			'pointer' => $new_pointer,
 		);
-		
+
 		return $ret_array;
 	}
 
@@ -2250,69 +2505,78 @@ class BackupPlus_Admin {
 	 */
 	public function howmany_overdue_crons() {
 		$how_many_overdue = 0;
-		if (function_exists('_get_cron_array') || (is_file(ABSPATH.WPINC.'/cron.php') && include_once(ABSPATH.WPINC.'/cron.php') && function_exists('_get_cron_array'))) {
+		if ( function_exists( '_get_cron_array' ) || ( is_file( ABSPATH . WPINC . '/cron.php' ) && include_once ABSPATH . WPINC . '/cron.php' && function_exists( '_get_cron_array' ) ) ) {
 			$crons = _get_cron_array();
-			if (is_array($crons)) {
+			if ( is_array( $crons ) ) {
 				$timenow = time();
-				foreach ($crons as $jt => $job) {
-					if ($jt < $timenow) $how_many_overdue++;
+				foreach ( $crons as $jt => $job ) {
+					if ( $jt < $timenow ) {
+						++$how_many_overdue;
+					}
 				}
 			}
 		}
 		return $how_many_overdue;
 	}
 
-	public function get_php_errors($errno, $errstr, $errfile, $errline) {
+	public function get_php_errors( $errno, $errstr, $errfile, $errline ) {
 		global $backupplus;
-		if (0 == error_reporting()) return true; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to get the current PHP error level.
-		$logline = $backupplus->php_error_to_logline($errno, $errstr, $errfile, $errline);
-		if (false !== $logline) $this->logged[] = $logline;
+		if ( 0 == error_reporting() ) {
+			return true; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to get the current PHP error level.
+		}       $logline = $backupplus->php_error_to_logline( $errno, $errstr, $errfile, $errline );
+		if ( false !== $logline ) {
+			$this->logged[] = $logline;
+		}
 		// Don't pass it up the chain (since it's going to be output to the user always)
 		return true;
 	}
 
-	private function download_status($timestamp, $type, $findex) {
+	private function download_status( $timestamp, $type, $findex ) {
 		global $backupplus;
-		$response = array('m' => $backupplus->jobdata_get('dlmessage_'.$timestamp.'_'.$type.'_'.$findex).'<br>');
-		if ($file = $backupplus->jobdata_get('dlfile_'.$timestamp.'_'.$type.'_'.$findex)) {
-			if ('failed' == $file) {
-				$response['e'] = __('Download failed', 'backupplus').'<br>';
+		$response = array( 'm' => $backupplus->jobdata_get( 'dlmessage_' . $timestamp . '_' . $type . '_' . $findex ) . '<br>' );
+		if ( $file = $backupplus->jobdata_get( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex ) ) {
+			if ( 'failed' == $file ) {
+				$response['e']      = __( 'Download failed', 'backupplus' ) . '<br>';
 				$response['failed'] = true;
-				$errs = $backupplus->jobdata_get('dlerrors_'.$timestamp.'_'.$type.'_'.$findex);
-				if (is_array($errs) && !empty($errs)) {
+				$errs               = $backupplus->jobdata_get( 'dlerrors_' . $timestamp . '_' . $type . '_' . $findex );
+				if ( is_array( $errs ) && ! empty( $errs ) ) {
 					$response['e'] .= '<ul class="disc">';
-					foreach ($errs as $err) {
-						if (is_array($err)) {
-							$response['e'] .= '<li>'.htmlspecialchars($err['message']).'</li>';
+					foreach ( $errs as $err ) {
+						if ( is_array( $err ) ) {
+							$response['e'] .= '<li>' . htmlspecialchars( $err['message'] ) . '</li>';
 						} else {
-							$response['e'] .= '<li>'.htmlspecialchars($err).'</li>';
+							$response['e'] .= '<li>' . htmlspecialchars( $err ) . '</li>';
 						}
 					}
 					$response['e'] .= '</ul>';
 				}
-			} elseif (preg_match('/^downloaded:(\d+):(.*)$/', $file, $matches) && file_exists($matches[2])) {
+			} elseif ( preg_match( '/^downloaded:(\d+):(.*)$/', $file, $matches ) && file_exists( $matches[2] ) ) {
 				$response['p'] = 100;
 				$response['f'] = $matches[2];
 				$response['s'] = (int) $matches[1];
 				$response['t'] = (int) $matches[1];
-				$response['m'] = __('File ready.', 'backupplus');
-				if ('db' != substr($type, 0, 2)) $response['can_show_contents'] = true;
-			} elseif (preg_match('/^downloading:(\d+):(.*)$/', $file, $matches) && file_exists($matches[2])) {
+				$response['m'] = __( 'File ready.', 'backupplus' );
+				if ( 'db' != substr( $type, 0, 2 ) ) {
+					$response['can_show_contents'] = true;
+				}
+			} elseif ( preg_match( '/^downloading:(\d+):(.*)$/', $file, $matches ) && file_exists( $matches[2] ) ) {
 				// Convert to bytes
 				$response['f'] = $matches[2];
-				$total_size = (int) max($matches[1], 1);
-				$cur_size = filesize($matches[2]);
+				$total_size    = (int) max( $matches[1], 1 );
+				$cur_size      = filesize( $matches[2] );
 				$response['s'] = $cur_size;
-				$file_age = time() - filemtime($matches[2]);
-				if ($file_age > 20) $response['a'] = time() - filemtime($matches[2]);
-				$response['t'] = $total_size;
-				$response['m'] .= __("Download in progress", 'backupplus').' ('.round($cur_size/1024).' / '.round(($total_size/1024)).' KB)';
-				$response['p'] = round(100*$cur_size/$total_size);
+				$file_age      = time() - filemtime( $matches[2] );
+				if ( $file_age > 20 ) {
+					$response['a'] = time() - filemtime( $matches[2] );
+				}
+				$response['t']  = $total_size;
+				$response['m'] .= __( 'Download in progress', 'backupplus' ) . ' (' . round( $cur_size / 1024 ) . ' / ' . round( ( $total_size / 1024 ) ) . ' KB)';
+				$response['p']  = round( 100 * $cur_size / $total_size );
 			} else {
-				$response['m'] .= __('No local copy present.', 'backupplus');
-				$response['p'] = 0;
-				$response['s'] = 0;
-				$response['t'] = 1;
+				$response['m'] .= __( 'No local copy present.', 'backupplus' );
+				$response['p']  = 0;
+				$response['s']  = 0;
+				$response['t']  = 1;
 			}
 		}
 		return $response;
@@ -2325,10 +2589,12 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - filtered array
 	 */
-	public function upload_dir($uploads) {
+	public function upload_dir( $uploads ) {
 		global $backupplus;
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if (is_writable($backupplus_dir)) $uploads['path'] = $backupplus_dir;
+		if ( is_writable( $backupplus_dir ) ) {
+			$uploads['path'] = $backupplus_dir;
+		}
 		return $uploads;
 	}
 
@@ -2341,13 +2607,13 @@ class BackupPlus_Admin {
 	 *
 	 * @return String
 	 */
-	public function unique_filename_callback($dir, $name, $ext) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
-		return $name.$ext;
+	public function unique_filename_callback( $dir, $name, $ext ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
+		return $name . $ext;
 	}
 
-	public function sanitize_file_name($filename) {
+	public function sanitize_file_name( $filename ) {
 		// WordPress 3.4.2 on multisite (at least) adds in an unwanted underscore
-		return preg_replace('/-db(.*)\.gz_\.crypt$/', '-db$1.gz.crypt', $filename);
+		return preg_replace( '/-db(.*)\.gz_\.crypt$/', '-db$1.gz.crypt', $filename );
 	}
 
 	/**
@@ -2356,165 +2622,184 @@ class BackupPlus_Admin {
 	public function plupload_action() {
 
 		global $backupplus;
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-
-		if (!BackupPlus_Options::user_can_manage()) return;
-			check_ajax_referer('backupplus-uploader');
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
+			check_ajax_referer( 'backupplus-uploader' );
 
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if (!@BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir)) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+		if ( ! @BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 			echo json_encode(
 				array(
 					'e' => sprintf(
 						/* translators: %s: Backup directory path */
-						__("Backup directory (%s) is not writable, or does not exist.", 'backupplus'),
+						__( 'Backup directory (%s) is not writable, or does not exist.', 'backupplus' ),
 						$backupplus_dir
-					).' '.__('You will find more information about this in the Settings section.', 'backupplus')
+					) . ' ' . __( 'You will find more information about this in the Settings section.', 'backupplus' ),
 				)
 			);
 			exit;
 		}
-		
-		add_filter('upload_dir', array($this, 'upload_dir'));
-		add_filter('sanitize_file_name', array($this, 'sanitize_file_name'));
+
+		add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
+		add_filter( 'sanitize_file_name', array( $this, 'sanitize_file_name' ) );
 		// handle file upload
 
-		$farray = array('test_form' => true, 'action' => 'plupload_action');
+		$farray = array(
+			'test_form' => true,
+			'action'    => 'plupload_action',
+		);
 
 		$farray['test_type'] = false;
-		$farray['ext'] = 'x-gzip';
-		$farray['type'] = 'application/octet-stream';
+		$farray['ext']       = 'x-gzip';
+		$farray['type']      = 'application/octet-stream';
 
-		if (!isset($_POST['chunks'])) {
-			$farray['unique_filename_callback'] = array($this, 'unique_filename_callback');
+		if ( ! isset( $_POST['chunks'] ) ) {
+			$farray['unique_filename_callback'] = array( $this, 'unique_filename_callback' );
 		}
-		$file = BackupPlus_Manipulation_Functions::fetch_superglobal('files', 'async-upload', array(), false, 'array');
-		$status = wp_handle_upload($file, $farray);
-		remove_filter('upload_dir', array($this, 'upload_dir'));
-		remove_filter('sanitize_file_name', array($this, 'sanitize_file_name'));
-		$post_name = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'name');
-		$final_file = isset($post_name) ? basename($post_name) : basename($status['file']);
+		$file   = BackupPlus_Manipulation_Functions::fetch_superglobal( 'files', 'async-upload', array(), false, 'array' );
+		$status = wp_handle_upload( $file, $farray );
+		remove_filter( 'upload_dir', array( $this, 'upload_dir' ) );
+		remove_filter( 'sanitize_file_name', array( $this, 'sanitize_file_name' ) );
+		$post_name  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'name' );
+		$final_file = isset( $post_name ) ? basename( $post_name ) : basename( $status['file'] );
 
-		if (isset($status['error'])) {
-			echo json_encode(array('e' => $status['error']));
+		if ( isset( $status['error'] ) ) {
+			echo json_encode( array( 'e' => $status['error'] ) );
 			exit;
 		}
 
 		// If this was the chunk, then we should instead be concatenating onto the final file
-		$chunk = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'chunk');
-		if (isset($_POST['chunks']) && isset($chunk) && preg_match('/^[0-9]+$/', $chunk)) {
-			
-			if (!rename($status['file'], $backupplus_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp')) {
-				@unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+		$chunk = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'chunk' );
+		if ( isset( $_POST['chunks'] ) && isset( $chunk ) && preg_match( '/^[0-9]+$/', $chunk ) ) {
+
+			if ( ! rename( $status['file'], $backupplus_dir . '/' . $final_file . '.' . $chunk . '.zip.tmp' ) ) {
+				@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 				echo json_encode(
 					array(
 						'e' => sprintf(
 							/* translators: %s: Error message */
-							__('Error: %s', 'backupplus'),
-							__('This file could not be uploaded', 'backupplus')
-						)
+							__( 'Error: %s', 'backupplus' ),
+							__( 'This file could not be uploaded', 'backupplus' )
+						),
 					)
 				);
 				exit;
 			}
-			
-			$status['file'] = $backupplus_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp';
+
+			$status['file'] = $backupplus_dir . '/' . $final_file . '.' . $chunk . '.zip.tmp';
 
 		}
 
 		$response = array();
-		if (!isset($_POST['chunks']) || (isset($chunk) && preg_match('/^[0-9]+$/', $chunk) && $chunk == $_POST['chunks']-1) && isset($final_file)) {
-			if (!preg_match('/^log\.[a-f0-9]{12}\.txt/i', $final_file) && !preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $final_file, $matches)) {
-				$accept = apply_filters('backupplus_accept_archivename', array());
-				if (is_array($accept)) {
-					foreach ($accept as $acc) {
-						if (preg_match('/'.$acc['pattern'].'/i', $final_file)) {
+		if ( ! isset( $_POST['chunks'] ) || ( isset( $chunk ) && preg_match( '/^[0-9]+$/', $chunk ) && $chunk == $_POST['chunks'] - 1 ) && isset( $final_file ) ) {
+			if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/i', $final_file ) && ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $final_file, $matches ) ) {
+				$accept = apply_filters( 'backupplus_accept_archivename', array() );
+				if ( is_array( $accept ) ) {
+					foreach ( $accept as $acc ) {
+						if ( preg_match( '/' . $acc['pattern'] . '/i', $final_file ) ) {
 							/* translators: %s: Backup tool name */
-							$response['dm'] = sprintf(__('This backup was created by %s, and can be imported.', 'backupplus'), $acc['desc']);
+							$response['dm'] = sprintf( __( 'This backup was created by %s, and can be imported.', 'backupplus' ), $acc['desc'] );
 						}
 					}
 				}
-				if (empty($response['dm'])) {
-					if (isset($status['file'])) @unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-					echo json_encode(
+				if ( empty( $response['dm'] ) ) {
+					if ( isset( $status['file'] ) ) {
+						@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					}                   echo json_encode(
 						array(
 							'e' => sprintf(
 								/* translators: %s: Error message */
-								__('Error: %s', 'backupplus'),
-								__('Bad filename format - this does not look like a file created by BackupPlus or UpdraftPlus', 'backupplus')
-							)
+								__( 'Error: %s', 'backupplus' ),
+								__( 'Bad filename format - this does not look like a file created by BackupPlus or UpdraftPlus', 'backupplus' )
+							),
 						)
 					);
 					exit;
 				}
 			} else {
-				$backupable_entities = $backupplus->get_backupable_file_entities(true);
-				$type = isset($matches[3]) ? $matches[3] : '';
-				if (!preg_match('/^log\.[a-f0-9]{12}\.txt/', $final_file) && 'db' != $type && !isset($backupable_entities[$type])) {
-					if (isset($status['file'])) @unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-					echo json_encode(
+				$backupable_entities = $backupplus->get_backupable_file_entities( true );
+				$type                = isset( $matches[3] ) ? $matches[3] : '';
+				if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/', $final_file ) && 'db' != $type && ! isset( $backupable_entities[ $type ] ) ) {
+					if ( isset( $status['file'] ) ) {
+						@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+					}                   echo json_encode(
 						array(
 							'e' => sprintf(
 								/* translators: %s: Error message */
-								__('Error: %s', 'backupplus'),
+								__( 'Error: %s', 'backupplus' ),
 								sprintf(
 									/* translators: %s: Object type */
-									__('This looks like a file created by BackupPlus or UpdraftPlus, but this install does not know about this type of object: %s.', 'backupplus'),
-									htmlspecialchars($type)
-								).' '.
-								__('This backup component was created by an extension that is not installed here.', 'backupplus')
-							)
+									__( 'This looks like a file created by BackupPlus or UpdraftPlus, but this install does not know about this type of object: %s.', 'backupplus' ),
+									htmlspecialchars( $type )
+								) . ' ' .
+								__( 'This backup component was created by an extension that is not installed here.', 'backupplus' )
+							),
 						)
 					);
 					exit;
 				}
 			}
-			
+
 			// Final chunk? If so, then stich it all back together
-			if (isset($_POST['chunk']) && $_POST['chunk'] == $_POST['chunks']-1 && !empty($final_file)) {
-				if ($wh = fopen($backupplus_dir.'/'.$final_file, 'wb')) {
-					for ($i = 0; $i < $_POST['chunks']; $i++) {
-						$rf = $backupplus_dir.'/'.$final_file.'.'.$i.'.zip.tmp';
-						if ($rh = fopen($rf, 'rb+')) {
+			if ( isset( $_POST['chunk'] ) && $_POST['chunk'] == $_POST['chunks'] - 1 && ! empty( $final_file ) ) {
+				if ( $wh = fopen( $backupplus_dir . '/' . $final_file, 'wb' ) ) {
+					for ( $i = 0; $i < $_POST['chunks']; $i++ ) {
+						$rf = $backupplus_dir . '/' . $final_file . '.' . $i . '.zip.tmp';
+						if ( $rh = fopen( $rf, 'rb+' ) ) {
 
 							// April 1st 2020 - Due to a bug during uploads to Dropbox some backups had string "null" appended to the end which caused warnings, this removes the string "null" from these backups
-							fseek($rh, -4, SEEK_END);
-							$data = fgets($rh, 5);
-							
+							fseek( $rh, -4, SEEK_END );
+							$data = fgets( $rh, 5 );
+
 							// Authenticated archives must survive upload byte-for-byte.
-							if (!BackupPlus_Encryption::is_file_encrypted($final_file) && "null" === $data) {
-								ftruncate($rh, filesize($rf) - 4);
+							if ( ! BackupPlus_Encryption::is_file_encrypted( $final_file ) && 'null' === $data ) {
+								ftruncate( $rh, filesize( $rf ) - 4 );
 							}
 
-							fseek($rh, 0, SEEK_SET);
-							
-							while ($line = fread($rh, 524288)) {
-								fwrite($wh, $line);
+							fseek( $rh, 0, SEEK_SET );
+
+							while ( $line = fread( $rh, 524288 ) ) {
+								fwrite( $wh, $line );
 							}
-							fclose($rh);
-							@unlink($rf);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+							fclose( $rh );
+							@unlink( $rf );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 						}
 					}
-					fclose($wh);
-					$status['file'] = $backupplus_dir.'/'.$final_file;
-					if ('.tar' == substr($final_file, -4, 4)) {
-						if (file_exists($status['file'].'.gz')) unlink($status['file'].'.gz');
-						if (file_exists($status['file'].'.bz2')) unlink($status['file'].'.bz2');
-					} elseif ('.tar.gz' == substr($final_file, -7, 7)) {
-						if (file_exists(substr($status['file'], 0, strlen($status['file'])-3))) unlink(substr($status['file'], 0, strlen($status['file'])-3));
-						if (file_exists(substr($status['file'], 0, strlen($status['file'])-3).'.bz2')) unlink(substr($status['file'], 0, strlen($status['file'])-3).'.bz2');
-					} elseif ('.tar.bz2' == substr($final_file, -8, 8)) {
-						if (file_exists(substr($status['file'], 0, strlen($status['file'])-4))) unlink(substr($status['file'], 0, strlen($status['file'])-4));
-						if (file_exists(substr($status['file'], 0, strlen($status['file'])-4).'.gz')) unlink(substr($status['file'], 0, strlen($status['file'])-3).'.gz');
+					fclose( $wh );
+					$status['file'] = $backupplus_dir . '/' . $final_file;
+					if ( '.tar' == substr( $final_file, -4, 4 ) ) {
+						if ( file_exists( $status['file'] . '.gz' ) ) {
+							unlink( $status['file'] . '.gz' );
+						}
+						if ( file_exists( $status['file'] . '.bz2' ) ) {
+							unlink( $status['file'] . '.bz2' );
+						}
+					} elseif ( '.tar.gz' == substr( $final_file, -7, 7 ) ) {
+						if ( file_exists( substr( $status['file'], 0, strlen( $status['file'] ) - 3 ) ) ) {
+							unlink( substr( $status['file'], 0, strlen( $status['file'] ) - 3 ) );
+						}
+						if ( file_exists( substr( $status['file'], 0, strlen( $status['file'] ) - 3 ) . '.bz2' ) ) {
+							unlink( substr( $status['file'], 0, strlen( $status['file'] ) - 3 ) . '.bz2' );
+						}
+					} elseif ( '.tar.bz2' == substr( $final_file, -8, 8 ) ) {
+						if ( file_exists( substr( $status['file'], 0, strlen( $status['file'] ) - 4 ) ) ) {
+							unlink( substr( $status['file'], 0, strlen( $status['file'] ) - 4 ) );
+						}
+						if ( file_exists( substr( $status['file'], 0, strlen( $status['file'] ) - 4 ) . '.gz' ) ) {
+							unlink( substr( $status['file'], 0, strlen( $status['file'] ) - 3 ) . '.gz' );
+						}
 					}
 				}
 			}
-			
 		}
 
 		// send the uploaded file url in response
 		$response['m'] = $status['url'];
-		echo json_encode($response);
+		echo json_encode( $response );
 		exit;
 	}
 
@@ -2523,76 +2808,87 @@ class BackupPlus_Admin {
 	 */
 	public function plupload_action2() {
 
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		global $backupplus;
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}       global $backupplus;
 
-		if (!BackupPlus_Options::user_can_manage()) return;
-			check_ajax_referer('backupplus-uploader');
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
+			check_ajax_referer( 'backupplus-uploader' );
 
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if (!is_writable($backupplus_dir)) exit;
+		if ( ! is_writable( $backupplus_dir ) ) {
+			exit;
+		}
 
-		add_filter('upload_dir', array($this, 'upload_dir'));
-		add_filter('sanitize_file_name', array($this, 'sanitize_file_name'));
+		add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
+		add_filter( 'sanitize_file_name', array( $this, 'sanitize_file_name' ) );
 		// handle file upload
 
-		$farray = array('test_form' => true, 'action' => 'plupload_action2');
+		$farray = array(
+			'test_form' => true,
+			'action'    => 'plupload_action2',
+		);
 
 		$farray['test_type'] = false;
-		$farray['ext'] = 'crypt';
-		$farray['type'] = 'application/octet-stream';
+		$farray['ext']       = 'crypt';
+		$farray['type']      = 'application/octet-stream';
 
-		if (isset($_POST['chunks'])) {
+		if ( isset( $_POST['chunks'] ) ) {
 			// $farray['ext'] = 'zip';
 			// $farray['type'] = 'application/zip';
 		} else {
-			$farray['unique_filename_callback'] = array($this, 'unique_filename_callback');
+			$farray['unique_filename_callback'] = array( $this, 'unique_filename_callback' );
 		}
-		$file = BackupPlus_Manipulation_Functions::fetch_superglobal('files', 'async-upload', array(), false, 'array');
-		$status = wp_handle_upload($file, $farray);
-		remove_filter('upload_dir', array($this, 'upload_dir'));
-		remove_filter('sanitize_file_name', array($this, 'sanitize_file_name'));
+		$file   = BackupPlus_Manipulation_Functions::fetch_superglobal( 'files', 'async-upload', array(), false, 'array' );
+		$status = wp_handle_upload( $file, $farray );
+		remove_filter( 'upload_dir', array( $this, 'upload_dir' ) );
+		remove_filter( 'sanitize_file_name', array( $this, 'sanitize_file_name' ) );
 
-		if (isset($status['error'])) die('ERROR: '.wp_kses_post($status['error']));
+		if ( isset( $status['error'] ) ) {
+			die( 'ERROR: ' . wp_kses_post( $status['error'] ) );
+		}
 
 		// If this was the chunk, then we should instead be concatenating onto the final file
-		$chunk = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'chunk');
-		if (isset($_POST['chunks']) && isset($chunk) && preg_match('/^[0-9]+$/', $chunk)) {
-			$post_name = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'name');
-			$final_file = basename($post_name);
-			rename($status['file'], $backupplus_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp');
-			$status['file'] = $backupplus_dir.'/'.$final_file.'.'.$chunk.'.zip.tmp';
+		$chunk = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'chunk' );
+		if ( isset( $_POST['chunks'] ) && isset( $chunk ) && preg_match( '/^[0-9]+$/', $chunk ) ) {
+			$post_name  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'name' );
+			$final_file = basename( $post_name );
+			rename( $status['file'], $backupplus_dir . '/' . $final_file . '.' . $chunk . '.zip.tmp' );
+			$status['file'] = $backupplus_dir . '/' . $final_file . '.' . $chunk . '.zip.tmp';
 		}
 
-		if (!isset($_POST['chunks']) || (isset($chunk) && $chunk == $_POST['chunks']-1)) {
-			if (!preg_match('/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-(?:db[0-9]*\.gz|[\-a-z]+[0-9]*\.zip)\.crypt$/i', $final_file)) {
+		if ( ! isset( $_POST['chunks'] ) || ( isset( $chunk ) && $chunk == $_POST['chunks'] - 1 ) ) {
+			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-(?:db[0-9]*\.gz|[\-a-z]+[0-9]*\.zip)\.crypt$/i', $final_file ) ) {
 
-				@unlink($status['file']);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				echo 'ERROR:'.wp_kses_post(__('Bad filename format - this does not look like an encrypted backup archive created by BackupPlus or UpdraftPlus', 'backupplus'));
+				@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				echo 'ERROR:' . wp_kses_post( __( 'Bad filename format - this does not look like an encrypted backup archive created by BackupPlus or UpdraftPlus', 'backupplus' ) );
 				exit;
 			}
-			
+
 			// Final chunk? If so, then stich it all back together
-			if (isset($chunk) && $chunk == $_POST['chunks']-1 && isset($final_file)) {
-				if ($wh = fopen($backupplus_dir.'/'.$final_file, 'wb')) {
-					for ($i=0; $i<$_POST['chunks']; $i++) {
-						$rf = $backupplus_dir.'/'.$final_file.'.'.$i.'.zip.tmp';
-						if ($rh = fopen($rf, 'rb')) {
-							while ($line = fread($rh, 524288)) {
-								fwrite($wh, $line);
+			if ( isset( $chunk ) && $chunk == $_POST['chunks'] - 1 && isset( $final_file ) ) {
+				if ( $wh = fopen( $backupplus_dir . '/' . $final_file, 'wb' ) ) {
+					for ( $i = 0; $i < $_POST['chunks']; $i++ ) {
+						$rf = $backupplus_dir . '/' . $final_file . '.' . $i . '.zip.tmp';
+						if ( $rh = fopen( $rf, 'rb' ) ) {
+							while ( $line = fread( $rh, 524288 ) ) {
+								fwrite( $wh, $line );
 							}
-							fclose($rh);
-							@unlink($rf);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+							fclose( $rh );
+							@unlink( $rf );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 						}
 					}
-					fclose($wh);
+					fclose( $wh );
 				}
 			}
-			
 		}
 
 		// send the uploaded file url in response
-		if (isset($final_file)) echo 'OK:'.wp_kses_post($final_file);
+		if ( isset( $final_file ) ) {
+			echo 'OK:' . wp_kses_post( $final_file );
+		}
 		exit;
 	}
 
@@ -2600,14 +2896,14 @@ class BackupPlus_Admin {
 	 * Include the settings header template
 	 */
 	public function settings_header() {
-		$this->include_template('wp-admin/settings/header.php');
+		$this->include_template( 'wp-admin/settings/header.php' );
 	}
 
 	/**
 	 * Include the settings footer template
 	 */
 	public function settings_footer() {
-		$this->include_template('wp-admin/settings/footer.php');
+		$this->include_template( 'wp-admin/settings/footer.php' );
 	}
 
 	/**
@@ -2615,68 +2911,76 @@ class BackupPlus_Admin {
 	 */
 	public function settings_output() {
 
-		if (false == ($render = apply_filters('backupplus_settings_page_render', true))) {
-			do_action('backupplus_settings_page_render_abort', $render);
+		if ( false == ( $render = apply_filters( 'backupplus_settings_page_render', true ) ) ) {
+			do_action( 'backupplus_settings_page_render_abort', $render );
 			return;
 		}
 
-		do_action('backupplus_settings_page_init');
+		do_action( 'backupplus_settings_page_init' );
 
 		global $backupplus;
 
 		/**
 		 * We use request here because the initial restore is triggered by a POSTed form. we then may need to obtain credential for the WP_Filesystem. to do this WP outputs a form, but we don't pass our parameters via that. So the values are passed back in as GET parameters.
 		 */
-		if (isset($_REQUEST['action']) && (('backupplus_restore' == $_REQUEST['action'] && isset($_REQUEST['backup_timestamp'])) || ('backupplus_restore_continue' == $_REQUEST['action'] && !empty($_REQUEST['job_id'])))) {
-			
-			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
-			if (empty($request_nonce) || !wp_verify_nonce($request_nonce, 'backupplus-credentialtest-nonce')) die('Security Check');
-			
+		if ( isset( $_REQUEST['action'] ) && ( ( 'backupplus_restore' == $_REQUEST['action'] && isset( $_REQUEST['backup_timestamp'] ) ) || ( 'backupplus_restore_continue' == $_REQUEST['action'] && ! empty( $_REQUEST['job_id'] ) ) ) ) {
+
+			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
+			if ( empty( $request_nonce ) || ! wp_verify_nonce( $request_nonce, 'backupplus-credentialtest-nonce' ) ) {
+				die( 'Security Check' );
+			}
+
 			$this->prepare_restore();
 			return;
 		}
 
-		if (isset($_REQUEST['action']) && 'backupplus_delete_old_dirs' == $_REQUEST['action']) {
-			$delete_old_dirs_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'backupplus_delete_old_dirs_nonce');
-			$nonce = empty($delete_old_dirs_nonce) ? '' : $delete_old_dirs_nonce;
-			if (!wp_verify_nonce($nonce, 'backupplus-credentialtest-nonce')) die('Security check');
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_delete_old_dirs' == $_REQUEST['action'] ) {
+			$delete_old_dirs_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'backupplus_delete_old_dirs_nonce' );
+			$nonce                 = empty( $delete_old_dirs_nonce ) ? '' : $delete_old_dirs_nonce;
+			if ( ! wp_verify_nonce( $nonce, 'backupplus-credentialtest-nonce' ) ) {
+				die( 'Security check' );
+			}
 			$this->delete_old_dirs_go();
 			return;
 		}
-		$request_subaction = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'subaction');
-		if (!empty($_REQUEST['action']) && 'backupplus_broadcastaction' == $_REQUEST['action'] && !empty($request_subaction)) {
-			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
-			$nonce = (empty($request_nonce)) ? "" : $request_nonce;
-			if (!wp_verify_nonce($nonce, 'backupplus-credentialtest-nonce')) die('Security check');
-			do_action($request_subaction);
+		$request_subaction = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'subaction' );
+		if ( ! empty( $_REQUEST['action'] ) && 'backupplus_broadcastaction' == $_REQUEST['action'] && ! empty( $request_subaction ) ) {
+			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
+			$nonce         = ( empty( $request_nonce ) ) ? '' : $request_nonce;
+			if ( ! wp_verify_nonce( $nonce, 'backupplus-credentialtest-nonce' ) ) {
+				die( 'Security check' );
+			}
+			do_action( $request_subaction );
 			return;
 		}
-		$error = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'error');
-		$error_description = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'error_description');
-		if (isset($error)) {
+		$error             = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'error' );
+		$error_description = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'error_description' );
+		if ( isset( $error ) ) {
 			// This is used by Microsoft OneDrive authorisation failures (May 15). I am not sure what may have been using the 'error' GET parameter otherwise - but it is harmless. June 2024: also now used for insufficient Google Drive permissions upon return from auth.backupplusplus.com.
-			if (!empty($error_description)) {
-				$this->show_admin_warning(htmlspecialchars($error_description).' ('.htmlspecialchars($error).')', 'error');
+			if ( ! empty( $error_description ) ) {
+				$this->show_admin_warning( htmlspecialchars( $error_description ) . ' (' . htmlspecialchars( $error ) . ')', 'error' );
 			} else {
-				$this->show_admin_warning(htmlspecialchars($error), 'error');
+				$this->show_admin_warning( htmlspecialchars( $error ), 'error' );
 			}
 		}
-		$message = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'message');
-		if (isset($message)) $this->show_admin_warning(htmlspecialchars($message));
-		$global_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('get', 'nonce');
-		if (isset($_GET['action']) && 'backupplus_create_backup_dir' == $_GET['action'] && isset($global_nonce) && wp_verify_nonce($global_nonce, 'create_backup_dir')) {
+		$message = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'message' );
+		if ( isset( $message ) ) {
+			$this->show_admin_warning( htmlspecialchars( $message ) );
+		}
+		$global_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'nonce' );
+		if ( isset( $_GET['action'] ) && 'backupplus_create_backup_dir' == $_GET['action'] && isset( $global_nonce ) && wp_verify_nonce( $global_nonce, 'create_backup_dir' ) ) {
 			$created = $this->create_backup_dir();
-			if (is_wp_error($created)) {
-				echo '<p>'.esc_html__('Backup directory could not be created', 'backupplus').'...<br>';
+			if ( is_wp_error( $created ) ) {
+				echo '<p>' . esc_html__( 'Backup directory could not be created', 'backupplus' ) . '...<br>';
 				echo '<ul class="disc">';
-				foreach ($created->get_error_messages() as $msg) {
-					echo '<li>'.esc_html($msg).'</li>';
+				foreach ( $created->get_error_messages() as $msg ) {
+					echo '<li>' . esc_html( $msg ) . '</li>';
 				}
 				echo '</ul></p>';
-			} elseif (false !== $created) {
-				echo '<p>'.esc_html__('Backup directory successfully created.', 'backupplus').'</p><br>';
+			} elseif ( false !== $created ) {
+				echo '<p>' . esc_html__( 'Backup directory successfully created.', 'backupplus' ) . '</p><br>';
 			}
-			echo '<b>'.esc_html__('Actions', 'backupplus').':</b> <a href="'.esc_url(BackupPlus_Options::admin_page_url().'?page=backupplus').'">'.esc_html__('Return to BackupPlus configuration', 'backupplus').'</a>';
+			echo '<b>' . esc_html__( 'Actions', 'backupplus' ) . ':</b> <a href="' . esc_url( BackupPlus_Options::admin_page_url() . '?page=backupplus' ) . '">' . esc_html__( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>';
 			return;
 		}
 
@@ -2688,12 +2992,12 @@ class BackupPlus_Admin {
 
 			<div id="backupplus-hidethis">
 			<p>
-			<strong><?php esc_html_e('Warning:', 'backupplus'); ?> <?php esc_html_e("If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site.", 'backupplus'); ?></strong>
+			<strong><?php esc_html_e( 'Warning:', 'backupplus' ); ?> <?php esc_html_e( 'If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site.', 'backupplus' ); ?></strong>
 
-			<?php if (false !== strpos(basename(BACKUPPLUS_URL), ' ')) { ?>
-				<strong><?php echo esc_html(__('The BackupPlus directory in wp-content/plugins has white-space in it; WordPress does not like this.', 'backupplus').' '.__('You should rename the directory to wp-content/plugins/backupplus to fix this problem.', 'backupplus'));?></strong>
+			<?php if ( false !== strpos( basename( BACKUPPLUS_URL ), ' ' ) ) { ?>
+				<strong><?php echo esc_html( __( 'The BackupPlus directory in wp-content/plugins has white-space in it; WordPress does not like this.', 'backupplus' ) . ' ' . __( 'You should rename the directory to wp-content/plugins/backupplus to fix this problem.', 'backupplus' ) ); ?></strong>
 			<?php } else { ?>
-				<?php esc_html_e('Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts.', 'backupplus'); ?>
+				<?php esc_html_e( 'Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts.', 'backupplus' ); ?>
 			<?php } ?>
 			</p>
 			</div>
@@ -2703,59 +3007,71 @@ class BackupPlus_Admin {
 			$include_deleteform_div = true;
 
 			// Opens a div, which needs closing later
-			if (isset($_GET['backupplus_restore_success'])) {
+			if ( isset( $_GET['backupplus_restore_success'] ) ) {
 
-				if (get_template() === 'optimizePressTheme' || is_plugin_active('optimizePressPlugin') || is_plugin_active_for_network('optimizePressPlugin')) {
-					$this->show_admin_warning("<a href='https://optimizepress.zendesk.com/hc/en-us/articles/203699826-Update-URL-References-after-moving-domain' target='_blank'>" . __("OptimizePress 2.0 encodes its contents, so search/replace does not work.", "backupplus") . ' ' . __("To fix this problem go here.", "backupplus") . "</a>", "notice notice-warning");
+				if ( get_template() === 'optimizePressTheme' || is_plugin_active( 'optimizePressPlugin' ) || is_plugin_active_for_network( 'optimizePressPlugin' ) ) {
+					$this->show_admin_warning( "<a href='https://optimizepress.zendesk.com/hc/en-us/articles/203699826-Update-URL-References-after-moving-domain' target='_blank'>" . __( 'OptimizePress 2.0 encodes its contents, so search/replace does not work.', 'backupplus' ) . ' ' . __( 'To fix this problem go here.', 'backupplus' ) . '</a>', 'notice notice-warning' );
 				}
-				echo "<div class=\"updated backup-restored\"><span><strong>".esc_html__('Your backup has been restored.', 'backupplus').'</strong></span><br>';
+				echo '<div class="updated backup-restored"><span><strong>' . esc_html__( 'Your backup has been restored.', 'backupplus' ) . '</strong></span><br>';
 				// Unnecessary - will be advised of this below
 				// if (2 == $_GET['backupplus_restore_success']) echo ' '.__('Your old (themes, uploads, plugins, whatever) directories have been retained with "-old" appended to their name. Remove them when you are satisfied that the backup worked properly.');
 				$include_deleteform_div = false;
 
 			}
 
-			if ($this->scan_old_dirs(true)) $this->print_delete_old_dirs_form(true, $include_deleteform_div);
-
-			// Close the div opened by the earlier section
-			if (isset($_GET['backupplus_restore_success'])) echo '</div>';
-
-			if (!$backupplus->memory_check(64)) {
-				// HS8390 - A case where BackupPlus::memory_check_current() returns -1
-				$memory_check_current = $backupplus->memory_check_current();
-				if ($memory_check_current > 0) {
-				?>
-					<div class="updated memory-limit"><?php echo esc_html(__('Your PHP memory limit (set by your web hosting company) is very low.', 'backupplus').' '.__('BackupPlus attempted to raise it but was unsuccessful.', 'backupplus').' '.__('This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary).', 'backupplus').' '.__('Current limit is:', 'backupplus').' '.$backupplus->memory_check_current()); ?> MB</div>
-				<?php }
+			if ( $this->scan_old_dirs( true ) ) {
+				$this->print_delete_old_dirs_form( true, $include_deleteform_div );
 			}
 
+			// Close the div opened by the earlier section
+			if ( isset( $_GET['backupplus_restore_success'] ) ) {
+				echo '</div>';
+			}
 
-			if (!empty($backupplus->errors)) {
+			if ( ! $backupplus->memory_check( 64 ) ) {
+				// HS8390 - A case where BackupPlus::memory_check_current() returns -1
+				$memory_check_current = $backupplus->memory_check_current();
+				if ( $memory_check_current > 0 ) {
+					?>
+					<div class="updated memory-limit"><?php echo esc_html( __( 'Your PHP memory limit (set by your web hosting company) is very low.', 'backupplus' ) . ' ' . __( 'BackupPlus attempted to raise it but was unsuccessful.', 'backupplus' ) . ' ' . __( 'This plugin may struggle with a memory limit of less than 64 Mb  - especially if you have very large files uploaded (though on the other hand, many sites will be successful with a 32Mb limit - your experience may vary).', 'backupplus' ) . ' ' . __( 'Current limit is:', 'backupplus' ) . ' ' . $backupplus->memory_check_current() ); ?> MB</div>
+					<?php
+				}
+			}
+
+			if ( ! empty( $backupplus->errors ) ) {
 				echo '<div class="error backupplus_list_errors">';
 				$backupplus->list_errors();
 				echo '</div>';
 			}
 
 			$backup_history = BackupPlus_Backup_History::get_history();
-			if (empty($backup_history)) {
+			if ( empty( $backup_history ) ) {
 				BackupPlus_Backup_History::rebuild();
 				$backup_history = BackupPlus_Backup_History::get_history();
 			}
 
-			$tabflag = 'backups';
+			$tabflag   = 'backups';
 			$main_tabs = $this->get_main_tabs_array();
-			$tab = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'tab');
-			if (isset($tab)) {
-				$request_tab = sanitize_text_field($tab);
-				$valid_tabflags = array_keys($main_tabs);
-				if (in_array($request_tab, $valid_tabflags)) {
+			$tab       = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'tab' );
+			if ( isset( $tab ) ) {
+				$request_tab    = sanitize_text_field( $tab );
+				$valid_tabflags = array_keys( $main_tabs );
+				if ( in_array( $request_tab, $valid_tabflags ) ) {
 					$tabflag = $request_tab;
 				} else {
 					$tabflag = 'backups';
 				}
 			}
-			
-			$this->include_template('wp-admin/settings/tab-bar.php', false, array('main_tabs' => $main_tabs, 'backup_history' => $backup_history, 'tabflag' => $tabflag));
+
+			$this->include_template(
+				'wp-admin/settings/tab-bar.php',
+				false,
+				array(
+					'main_tabs'      => $main_tabs,
+					'backup_history' => $backup_history,
+					'tabflag'        => $tabflag,
+				)
+			);
 		?>
 		
 		<div id="backupplus-poplog ">
@@ -2763,50 +3079,94 @@ class BackupPlus_Admin {
 		</div>
 		
 		<?php
-			$this->include_template('wp-admin/settings/delete-and-restore-modals.php');
+			$this->include_template( 'wp-admin/settings/delete-and-restore-modals.php' );
 		?>
 		
-		<div id="backupplus-navtab-backups-content" <?php if ('backups' != $tabflag) echo 'class="backupplus-hidden"'; ?> style="<?php if ('backups' != $tabflag) echo 'display:none;'; ?>">
+		<div id="backupplus-navtab-backups-content" 
+		<?php
+		if ( 'backups' != $tabflag ) {
+			echo 'class="backupplus-hidden"';}
+		?>
+		style="
+		<?php
+		if ( 'backups' != $tabflag ) {
+			echo 'display:none;';}
+		?>
+">
 			<?php
-				$user_agent = BackupPlus_Manipulation_Functions::fetch_superglobal('server', 'HTTP_USER_AGENT', '');
-				$is_opera = (false !== strpos($user_agent, 'Opera') || false !== strpos($user_agent, 'OPR/'));
-				$this->include_template('wp-admin/settings/tab-backups.php', false, array(
-					'backup_history' => $backup_history,
-					'options' => array(
-						'include_uploader' => true,
-						'include_opera_warning' => false,
-						'will_immediately_calculate_disk_space' => true,
-						'include_whitespace_warning' => true,
-						'include_header' => false,
-						'include_opera_warning' => $is_opera
-					),
-					'backupplus_tab_backups' => array()
-				));
-				$this->include_template('wp-admin/settings/upload-backups-modal.php');
+				$user_agent = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'HTTP_USER_AGENT', '' );
+				$is_opera   = ( false !== strpos( $user_agent, 'Opera' ) || false !== strpos( $user_agent, 'OPR/' ) );
+				$this->include_template(
+					'wp-admin/settings/tab-backups.php',
+					false,
+					array(
+						'backup_history'         => $backup_history,
+						'options'                => array(
+							'include_uploader'           => true,
+							'include_opera_warning'      => false,
+							'will_immediately_calculate_disk_space' => true,
+							'include_whitespace_warning' => true,
+							'include_header'             => false,
+							'include_opera_warning'      => $is_opera,
+						),
+						'backupplus_tab_backups' => array(),
+					)
+				);
+				$this->include_template( 'wp-admin/settings/upload-backups-modal.php' );
 			?>
 		</div>
 		
-		<div id="backupplus-navtab-settings-content" <?php if ('settings' != $tabflag) echo 'class="backupplus-hidden"'; ?> style="<?php if ('settings' != $tabflag) echo 'display:none;'; ?>">
-			<h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Backup Contents And Schedule', 'backupplus');?></h2>
+		<div id="backupplus-navtab-settings-content" 
+		<?php
+		if ( 'settings' != $tabflag ) {
+			echo 'class="backupplus-hidden"';}
+		?>
+		style="
+		<?php
+		if ( 'settings' != $tabflag ) {
+			echo 'display:none;';}
+		?>
+">
+			<h2 class="backupplus_settings_sectionheading"><?php esc_html_e( 'Backup Contents And Schedule', 'backupplus' ); ?></h2>
 			<?php BackupPlus_Options::options_form_begin(); ?>
 				<?php $this->settings_formcontents(); ?>
 			</form>
 		</div>
 
-		<div id="backupplus-navtab-expert-content"<?php if ('expert' != $tabflag) echo ' class="backupplus-hidden"'; ?> style="<?php if ('expert' != $tabflag) echo 'display:none;'; ?>">
+		<div id="backupplus-navtab-expert-content"
+		<?php
+		if ( 'expert' != $tabflag ) {
+			echo ' class="backupplus-hidden"';}
+		?>
+		style="
+		<?php
+		if ( 'expert' != $tabflag ) {
+			echo 'display:none;';}
+		?>
+">
 			<?php $this->settings_advanced_tools(); ?>
 		</div>
 
-		<div id="backupplus-navtab-decryption-content"<?php if ('decryption' != $tabflag) echo ' class="backupplus-hidden"'; ?> style="<?php if ('decryption' != $tabflag) echo 'display:none;'; ?>">
-			<?php $this->include_template('wp-admin/settings/tab-decryption.php'); ?>
+		<div id="backupplus-navtab-decryption-content"
+		<?php
+		if ( 'decryption' != $tabflag ) {
+			echo ' class="backupplus-hidden"';}
+		?>
+		style="
+		<?php
+		if ( 'decryption' != $tabflag ) {
+			echo 'display:none;';}
+		?>
+">
+			<?php $this->include_template( 'wp-admin/settings/tab-decryption.php' ); ?>
 		</div>
 
 		<?php
-		do_action('backupplus_after_main_tab_content', $tabflag);
+		do_action( 'backupplus_after_main_tab_content', $tabflag );
 		// settings_header() opens a div
 		$this->settings_footer();
 	}
-	
+
 	/**
 	 * Get main tabs array
 	 *
@@ -2814,14 +3174,14 @@ class BackupPlus_Admin {
 	 */
 	private function get_main_tabs_array() {
 		$main_tabs = array(
-			'backups' => __('Backup / Restore', 'backupplus'),
-			'settings' => __('Settings', 'backupplus'),
-			'expert' => __('Advanced Tools', 'backupplus'),
-			'decryption' => __('Decryption', 'backupplus'),
+			'backups'    => __( 'Backup / Restore', 'backupplus' ),
+			'settings'   => __( 'Settings', 'backupplus' ),
+			'expert'     => __( 'Advanced Tools', 'backupplus' ),
+			'decryption' => __( 'Decryption', 'backupplus' ),
 		);
 
-		$main_tabs = apply_filters('backupplus_main_tabs', $main_tabs);
-		unset($main_tabs['migrate']);
+		$main_tabs = apply_filters( 'backupplus_main_tabs', $main_tabs );
+		unset( $main_tabs['migrate'] );
 
 		return $main_tabs;
 	}
@@ -2833,15 +3193,15 @@ class BackupPlus_Admin {
 		global $backupplus;
 		$check_restore_progress = $backupplus->check_restore_progress();
 		// Check to see if the restore is still in progress
-		if (is_array($check_restore_progress) && true == $check_restore_progress['status']) {
+		if ( is_array( $check_restore_progress ) && true == $check_restore_progress['status'] ) {
 
-			$restore_jobdata = $check_restore_progress['restore_jobdata'];
-			$restore_jobdata['jobid'] = $check_restore_progress['restore_in_progress'];
+			$restore_jobdata                   = $check_restore_progress['restore_jobdata'];
+			$restore_jobdata['jobid']          = $check_restore_progress['restore_in_progress'];
 			$this->restore_in_progress_jobdata = $restore_jobdata;
 
-			add_action('all_admin_notices', array($this, 'show_admin_restore_in_progress_notice'));
-			add_action('admin_print_footer_scripts', array($this, 'print_unfinished_restoration_dialog_scripts'));
-			add_action('admin_print_styles', array($this, 'print_unfinished_restoration_dialog_styles'));
+			add_action( 'all_admin_notices', array( $this, 'show_admin_restore_in_progress_notice' ) );
+			add_action( 'admin_print_footer_scripts', array( $this, 'print_unfinished_restoration_dialog_scripts' ) );
+			add_action( 'admin_print_styles', array( $this, 'print_unfinished_restoration_dialog_styles' ) );
 		}
 	}
 
@@ -2852,21 +3212,27 @@ class BackupPlus_Admin {
 	 *
 	 * @return WP_Error|string - can return a string containing html or a WP_Error
 	 */
-	public function get_restore_resume_notice($job_id) {
+	public function get_restore_resume_notice( $job_id ) {
 		global $backupplus;
 
-		if (empty($job_id)) return new WP_Error('missing_parameter', 'Missing parameters.');
-		
-		$restore_jobdata = $backupplus->jobdata_getarray($job_id);
+		if ( empty( $job_id ) ) {
+			return new WP_Error( 'missing_parameter', 'Missing parameters.' );
+		}
 
-		if (!is_array($restore_jobdata) || empty($restore_jobdata)) return new WP_Error('missing_jobdata', 'Job data not found.');
+		$restore_jobdata = $backupplus->jobdata_getarray( $job_id );
 
-		$restore_jobdata['jobid'] = $job_id;
+		if ( ! is_array( $restore_jobdata ) || empty( $restore_jobdata ) ) {
+			return new WP_Error( 'missing_jobdata', 'Job data not found.' );
+		}
+
+		$restore_jobdata['jobid']          = $job_id;
 		$this->restore_in_progress_jobdata = $restore_jobdata;
 
-		$html = $this->show_admin_restore_in_progress_notice(true);
+		$html = $this->show_admin_restore_in_progress_notice( true );
 
-		if (empty($html)) return new WP_Error('job_aborted', 'Job aborted.');
+		if ( empty( $html ) ) {
+			return new WP_Error( 'job_aborted', 'Job aborted.' );
+		}
 
 		return $html;
 	}
@@ -2879,46 +3245,50 @@ class BackupPlus_Admin {
 	 *
 	 * @return void|string - can return a string containing html or echo the html to page
 	 */
-	public function show_admin_restore_in_progress_notice($return_instead_of_echo = false) {
-	
-		if (isset($_REQUEST['action']) && 'backupplus_restore_abort' === $_REQUEST['action'] && !empty($_REQUEST['job_id']) && is_string($_REQUEST['job_id'])) {
-			
-			if (empty($this->restore_in_progress_jobdata) || !is_array($this->restore_in_progress_jobdata) || !isset($this->restore_in_progress_jobdata['jobid']) || $this->restore_in_progress_jobdata['jobid'] != $_REQUEST['job_id']) {
+	public function show_admin_restore_in_progress_notice( $return_instead_of_echo = false ) {
+
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_restore_abort' === $_REQUEST['action'] && ! empty( $_REQUEST['job_id'] ) && is_string( $_REQUEST['job_id'] ) ) {
+
+			if ( empty( $this->restore_in_progress_jobdata ) || ! is_array( $this->restore_in_progress_jobdata ) || ! isset( $this->restore_in_progress_jobdata['jobid'] ) || $this->restore_in_progress_jobdata['jobid'] != $_REQUEST['job_id'] ) {
 				$html = 'Job ID not found.<br>';
 			} else {
 				$html = '';
-				delete_site_option('backupplus_restore_in_progress');
+				delete_site_option( 'backupplus_restore_in_progress' );
 			}
-			if ($return_instead_of_echo) return $html;
+			if ( $return_instead_of_echo ) {
+				return $html;
+			}
 			echo $html;
 			return;
 		}
-	
-		$restore_jobdata = $this->restore_in_progress_jobdata;
-		$seconds_ago = time() - (int) $restore_jobdata['job_time_ms'];
-		$minutes_ago = floor($seconds_ago/60);
-		$seconds_ago = $seconds_ago - $minutes_ago*60;
-		/* translators: 1: Minutes, 2: Seconds */
-		$time_ago = sprintf(__('%1$s minutes, %2$s seconds', 'backupplus'), $minutes_ago, $seconds_ago);
 
-		$html = '<div class="updated show_admin_restore_in_progress_notice"><div class="backupplus_admin_restore_dialog">';
-		$html .= '<span class="unfinished-restoration"><strong>BackupPlus: '.__('Unfinished restoration', 'backupplus').'</strong></span><br>';
+		$restore_jobdata = $this->restore_in_progress_jobdata;
+		$seconds_ago     = time() - (int) $restore_jobdata['job_time_ms'];
+		$minutes_ago     = floor( $seconds_ago / 60 );
+		$seconds_ago     = $seconds_ago - $minutes_ago * 60;
+		/* translators: 1: Minutes, 2: Seconds */
+		$time_ago = sprintf( __( '%1$s minutes, %2$s seconds', 'backupplus' ), $minutes_ago, $seconds_ago );
+
+		$html  = '<div class="updated show_admin_restore_in_progress_notice"><div class="backupplus_admin_restore_dialog">';
+		$html .= '<span class="unfinished-restoration"><strong>BackupPlus: ' . __( 'Unfinished restoration', 'backupplus' ) . '</strong></span><br>';
 		/* translators: %s: Time ago */
-		$html .= '<p>'.sprintf(__('You have an unfinished restoration operation, begun %s ago.', 'backupplus'), $time_ago).'</p>';
-		$html .= '<form method="post" action="'.esc_url(BackupPlus_Options::admin_page_url()).'?page=backupplus">';
-		$html .= wp_nonce_field('backupplus-credentialtest-nonce', 'nonce');
+		$html .= '<p>' . sprintf( __( 'You have an unfinished restoration operation, begun %s ago.', 'backupplus' ), $time_ago ) . '</p>';
+		$html .= '<form method="post" action="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus">';
+		$html .= wp_nonce_field( 'backupplus-credentialtest-nonce', 'nonce' );
 		$html .= '<input id="backupplus_restore_continue_action" type="hidden" name="action" value="backupplus_restore_continue">';
 		$html .= '<input type="hidden" name="backupplus_ajax_restore" value="continue_ajax_restore">';
-		$html .= '<input type="hidden" name="job_id" value="'.esc_attr($restore_jobdata['jobid']).'">';
-		$html .= '<button id="backupplus_restore_resume" type="submit" class="button-primary">'.__('Continue restoration', 'backupplus').'</button>';
-		$html .= '<button id="backupplus_restore_abort" class="button-secondary">'.__('Dismiss', 'backupplus').'</button>';
+		$html .= '<input type="hidden" name="job_id" value="' . esc_attr( $restore_jobdata['jobid'] ) . '">';
+		$html .= '<button id="backupplus_restore_resume" type="submit" class="button-primary">' . __( 'Continue restoration', 'backupplus' ) . '</button>';
+		$html .= '<button id="backupplus_restore_abort" class="button-secondary">' . __( 'Dismiss', 'backupplus' ) . '</button>';
 		$html .= '</form></div></div>';
 
-		if ($return_instead_of_echo) return $html;
+		if ( $return_instead_of_echo ) {
+			return $html;
+		}
 
-		add_filter('wp_kses_allowed_html', array($this, 'kses_allow_input_tags_on_unfinished_restoration_dialog'));
-		echo wp_kses_post($html);
-		remove_filter('wp_kses_allowed_html', array($this, 'kses_allow_input_tags_on_unfinished_restoration_dialog'));
+		add_filter( 'wp_kses_allowed_html', array( $this, 'kses_allow_input_tags_on_unfinished_restoration_dialog' ) );
+		echo wp_kses_post( $html );
+		remove_filter( 'wp_kses_allowed_html', array( $this, 'kses_allow_input_tags_on_unfinished_restoration_dialog' ) );
 	}
 
 	/**
@@ -2928,9 +3298,9 @@ class BackupPlus_Admin {
 	 * @return String
 	 */
 	public function backupnow_modal_contents() {
-		return $this->include_template('wp-admin/settings/backupnow-modal.php', true);
+		return $this->include_template( 'wp-admin/settings/backupnow-modal.php', true );
 	}
-	
+
 	/**
 	 * Also used by the auto-backups add-on
 	 *
@@ -2938,41 +3308,41 @@ class BackupPlus_Admin {
 	 * @param  Boolean $print_active_jobs Whether to include currently active jobs
 	 * @return String - the HTML output
 	 */
-	public function render_active_jobs_and_log_table($wide_format = false, $print_active_jobs = true) {
+	public function render_active_jobs_and_log_table( $wide_format = false, $print_active_jobs = true ) {
 		global $backupplus;
-	?>
+		?>
 		<div id="backupplus_activejobs_table">
-			<?php $active_jobs = ($print_active_jobs) ? $this->print_active_jobs() : '';?>
-			<div id="backupplus_activejobsrow" class="<?php
-				if (!$active_jobs && !$wide_format) {
-					echo 'hidden';
-				}
-				if ($wide_format) {
-					echo ".minimum-height";
-				}
+			<?php $active_jobs = ( $print_active_jobs ) ? $this->print_active_jobs() : ''; ?>
+			<div id="backupplus_activejobsrow" class="
+			<?php
+			if ( ! $active_jobs && ! $wide_format ) {
+				echo 'hidden';
+			}
+			if ( $wide_format ) {
+				echo '.minimum-height';
+			}
 			?>
 				<div id="backupplus_activejobs" class="<?php echo $wide_format ? 'wide-format' : ''; ?>">
-					<?php echo wp_kses_post($active_jobs); ?>
+					<?php echo wp_kses_post( $active_jobs ); ?>
 				</div>
 			</div>
 			<div id="backupplus_lastlogmessagerow">
-				<?php if ($wide_format) {
+				<?php
+				if ( $wide_format ) {
 					// Hide for now - too ugly
 					?>
-					<div class="last-message"><strong><?php esc_html_e('Last log message', 'backupplus');?>:</strong><br>
-						<span id="backupplus_lastlogcontainer"><?php echo wp_kses_post(BackupPlus_Options::get_backupplus_lastmessage()); ?></span><br>
+					<div class="last-message"><strong><?php esc_html_e( 'Last log message', 'backupplus' ); ?>:</strong><br>
+						<span id="backupplus_lastlogcontainer"><?php echo wp_kses_post( BackupPlus_Options::get_backupplus_lastmessage() ); ?></span><br>
 						<?php $this->most_recently_modified_log_link(); ?>
 					</div>
 				<?php } else { ?>
 					<div>
-						<strong><?php esc_html_e('Last log message', 'backupplus');?>:</strong>
-						<span id="backupplus_lastlogcontainer"><?php echo wp_kses_post(BackupPlus_Options::get_backupplus_lastmessage()); ?></span><br>
+						<strong><?php esc_html_e( 'Last log message', 'backupplus' ); ?>:</strong>
+						<span id="backupplus_lastlogcontainer"><?php echo wp_kses_post( BackupPlus_Options::get_backupplus_lastmessage() ); ?></span><br>
 						<?php $this->most_recently_modified_log_link(); ?>
 					</div>
 				<?php } ?>
 			</div>
-			<?php
-		?>
 		</div>
 		<?php
 	}
@@ -2984,40 +3354,56 @@ class BackupPlus_Admin {
 
 		global $backupplus;
 		list($mod_time, $log_file, $nonce) = $backupplus->last_modified_log();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
-		
+
 		?>
-			<a href="?page=backupplus&amp;action=downloadlatestmodlog&amp;wpnonce=<?php echo esc_attr(wp_create_nonce('backupplus_download')); ?>" <?php if (!$mod_time) echo 'style="display:none;"'; ?> class="backupplus-log-link" onclick="event.preventDefault(); backupplus_popuplog('');"><?php esc_html_e('Download most recently modified log file', 'backupplus');?></a>
+			<a href="?page=backupplus&amp;action=downloadlatestmodlog&amp;wpnonce=<?php echo esc_attr( wp_create_nonce( 'backupplus_download' ) ); ?>" 
+			<?php
+			if ( ! $mod_time ) {
+				echo 'style="display:none;"';}
+			?>
+			class="backupplus-log-link" onclick="event.preventDefault(); backupplus_popuplog('');"><?php esc_html_e( 'Download most recently modified log file', 'backupplus' ); ?></a>
 		<?php
 	}
-	
-	public function settings_downloading_and_restoring($backup_history = array(), $return_result = false, $options = array()) {
-		return $this->include_template('wp-admin/settings/downloading-and-restoring.php', $return_result, array('backup_history' => $backup_history, 'options' => $options));
+
+	public function settings_downloading_and_restoring( $backup_history = array(), $return_result = false, $options = array() ) {
+		return $this->include_template(
+			'wp-admin/settings/downloading-and-restoring.php',
+			$return_result,
+			array(
+				'backup_history' => $backup_history,
+				'options'        => $options,
+			)
+		);
 	}
-	
+
 	/**
 	 * Renders take backup content
 	 */
 	public function take_backup_content() {
 		global $backupplus;
-		$backupplus_dir = $backupplus->backups_dir_location();
-		$backup_disabled = BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir) ? '' : 'disabled="disabled"';
+		$backupplus_dir  = $backupplus->backups_dir_location();
+		$backup_disabled = BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ? '' : 'disabled="disabled"';
 		// wp_date() is WP 5.3+, but performs translation into the site locale
-		$current_time = function_exists('wp_date') ? wp_date('D, F j, Y H:i') : get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'D, F j, Y H:i');
-		$this->include_template('wp-admin/settings/take-backup.php', false, array(
-			'backup_disabled' => $backup_disabled,
-			'current_time' => $current_time,
-			'active_jobs' => $this->print_active_jobs(),
-		));
+		$current_time = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i' ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s' ), 'D, F j, Y H:i' );
+		$this->include_template(
+			'wp-admin/settings/take-backup.php',
+			false,
+			array(
+				'backup_disabled' => $backup_disabled,
+				'current_time'    => $current_time,
+				'active_jobs'     => $this->print_active_jobs(),
+			)
+		);
 	}
 
 	/**
 	 * Output a table row using the backupplus_debugrow class
 	 *
-	 * @param String $head	  - header cell contents
+	 * @param String $head    - header cell contents
 	 * @param String $content - content cell contents
 	 */
-	public function settings_debugrow($head, $content) {
-		echo "<tr class=\"backupplus_debugrow\"><th>".wp_kses_post($head)."</th><td>".wp_kses($content, $this->kses_allow_tags())."</td></tr>";
+	public function settings_debugrow( $head, $content ) {
+		echo '<tr class="backupplus_debugrow"><th>' . wp_kses_post( $head ) . '</th><td>' . wp_kses( $content, $this->kses_allow_tags() ) . '</td></tr>';
 	}
 
 	/**
@@ -3026,256 +3412,274 @@ class BackupPlus_Admin {
 	 * @param array $options Options for the site info (e.g. suppress_plugins_for_debugging)
 	 * @return array Site information data
 	 */
-	public function get_site_info_data($options = array()) {
+	public function get_site_info_data( $options = array() ) {
 		global $backupplus, $wpdb;
-		
-		$site_info_data = array();
-		
-		// Server information
-		if (function_exists('php_uname')) {
-			// It appears (Mar 2015) that some mod_security distributions block the output of the string el6.x86_64 in PHP output, on the silly assumption that only hackers are interested in knowing what environment PHP is running on.
-			$uname_info = @php_uname('s').' '.@php_uname('n').' ';// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
-			$release_name = @php_uname('r');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-			if (preg_match('/^(.*)\.(x86_64|[3456]86)$/', $release_name, $matches)) {
-				$release_name = $matches[1].' ';
+		$site_info_data = array();
+
+		// Server information
+		if ( function_exists( 'php_uname' ) ) {
+			// It appears (Mar 2015) that some mod_security distributions block the output of the string el6.x86_64 in PHP output, on the silly assumption that only hackers are interested in knowing what environment PHP is running on.
+			$uname_info = @php_uname( 's' ) . ' ' . @php_uname( 'n' ) . ' ';// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+
+			$release_name = @php_uname( 'r' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			if ( preg_match( '/^(.*)\.(x86_64|[3456]86)$/', $release_name, $matches ) ) {
+				$release_name = $matches[1] . ' ';
 			} else {
 				$release_name = '';
 			}
 
 			// In case someone does something similar with just the processor type string
-			$mtype = @php_uname('m');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-			if ('x86_64' == $mtype) {
+			$mtype = @php_uname( 'm' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			if ( 'x86_64' == $mtype ) {
 				$mtype = '64-bit';
-			} elseif (preg_match('/^i([3456]86)$/', $mtype, $matches)) {
+			} elseif ( preg_match( '/^i([3456]86)$/', $mtype, $matches ) ) {
 				$mtype = $matches[1];
 			}
 
-			$uname_info .= $release_name.$mtype.' '.@php_uname('v');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			$uname_info .= $release_name . $mtype . ' ' . @php_uname( 'v' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		} else {
 			$uname_info = PHP_OS;
 		}
-		
-		$web_server = BackupPlus_Manipulation_Functions::fetch_superglobal('server', 'SERVER_SOFTWARE', '');
+
+		$web_server                   = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'SERVER_SOFTWARE', '' );
 		$site_info_data['web_server'] = array(
-			'label' => __('Web server:', 'backupplus'),
-			'value' => htmlspecialchars($web_server).' ('.htmlspecialchars($uname_info).')'
+			'label' => __( 'Web server:', 'backupplus' ),
+			'value' => htmlspecialchars( $web_server ) . ' (' . htmlspecialchars( $uname_info ) . ')',
 		);
 
 		// WordPress paths
-		$site_info_data['abspath'] = array(
+		$site_info_data['abspath']        = array(
 			'label' => 'ABSPATH:',
-			'value' => htmlspecialchars(ABSPATH)
+			'value' => htmlspecialchars( ABSPATH ),
 		);
 		$site_info_data['wp_content_dir'] = array(
 			'label' => 'WP_CONTENT_DIR:',
-			'value' => htmlspecialchars(WP_CONTENT_DIR)
+			'value' => htmlspecialchars( WP_CONTENT_DIR ),
 		);
-		$site_info_data['wp_plugin_dir'] = array(
+		$site_info_data['wp_plugin_dir']  = array(
 			'label' => 'WP_PLUGIN_DIR:',
-			'value' => htmlspecialchars(WP_PLUGIN_DIR)
+			'value' => htmlspecialchars( WP_PLUGIN_DIR ),
 		);
-		$site_info_data['table_prefix'] = array(
-			'label' => __('Table prefix:', 'backupplus'),
-			'value' => htmlspecialchars($backupplus->get_table_prefix())
+		$site_info_data['table_prefix']   = array(
+			'label' => __( 'Table prefix:', 'backupplus' ),
+			'value' => htmlspecialchars( $backupplus->get_table_prefix() ),
 		);
-		
+
 		// Disk space
 		$site_info_data['disk_space'] = array(
-			'label' => __('Web-server disk space in use by BackupPlus', 'backupplus').':',
-			'value' => '<span class="backupplus_diskspaceused">'.BackupPlus_Filesystem_Functions::get_disk_space_used('backupplus').'</span> <a class="backupplus_diskspaceused_update" href="'.esc_url(BackupPlus::get_current_clean_url()).'">'.__('refresh', 'backupplus').'</a>',
-			'is_html' => true
+			'label'   => __( 'Web-server disk space in use by BackupPlus', 'backupplus' ) . ':',
+			'value'   => '<span class="backupplus_diskspaceused">' . BackupPlus_Filesystem_Functions::get_disk_space_used( 'backupplus' ) . '</span> <a class="backupplus_diskspaceused_update" href="' . esc_url( BackupPlus::get_current_clean_url() ) . '">' . __( 'refresh', 'backupplus' ) . '</a>',
+			'is_html' => true,
 		);
 
 		// Memory usage
-		$peak_memory_usage = memory_get_peak_usage(true)/1048576;
-		$memory_usage = memory_get_usage(true)/1048576;
-		$site_info_data['peak_memory'] = array(
-			'label' => __('Peak memory usage', 'backupplus').':',
-			'value' => $peak_memory_usage.' MB'
+		$peak_memory_usage                = memory_get_peak_usage( true ) / 1048576;
+		$memory_usage                     = memory_get_usage( true ) / 1048576;
+		$site_info_data['peak_memory']    = array(
+			'label' => __( 'Peak memory usage', 'backupplus' ) . ':',
+			'value' => $peak_memory_usage . ' MB',
 		);
 		$site_info_data['current_memory'] = array(
-			'label' => __('Current memory usage', 'backupplus').':',
-			'value' => $memory_usage.' MB'
+			'label' => __( 'Current memory usage', 'backupplus' ) . ':',
+			'value' => $memory_usage . ' MB',
 		);
-		$site_info_data['memory_limit'] = array(
-			'label' => __('Memory limit', 'backupplus').':',
-			'value' => htmlspecialchars(ini_get('memory_limit'))
+		$site_info_data['memory_limit']   = array(
+			'label' => __( 'Memory limit', 'backupplus' ) . ':',
+			'value' => htmlspecialchars( ini_get( 'memory_limit' ) ),
 		);
-		
+
 		// PHP version
 		$site_info_data['php_version'] = array(
 			/* translators: %s: String 'PHP' */
-			'label' => sprintf(__('%s version:', 'backupplus'), 'PHP'),
-			'value' => htmlspecialchars(phpversion()).' - <a href="admin-ajax.php?page=backupplus&amp;action=backupplus_ajax&amp;subaction=phpinfo&amp;nonce='.wp_create_nonce('backupplus-credentialtest-nonce').'" id="backupplus-phpinfo">'.__('show PHP information (phpinfo)', 'backupplus').'</a>',
-			'is_html' => true
+			'label'   => sprintf( __( '%s version:', 'backupplus' ), 'PHP' ),
+			'value'   => htmlspecialchars( phpversion() ) . ' - <a href="admin-ajax.php?page=backupplus&amp;action=backupplus_ajax&amp;subaction=phpinfo&amp;nonce=' . wp_create_nonce( 'backupplus-credentialtest-nonce' ) . '" id="backupplus-phpinfo">' . __( 'show PHP information (phpinfo)', 'backupplus' ) . '</a>',
+			'is_html' => true,
 		);
-		
+
 		// Database version
-		$db_version = $wpdb->get_var('SELECT VERSION()');
+		$db_version = $wpdb->get_var( 'SELECT VERSION()' );
 		// WPDB::db_version() uses mysqli_get_server_info() ; see: https://github.com/joomla/joomla-cms/issues/9062
-		if ('' == $db_version) $db_version = $wpdb->db_version();
-		
+		if ( '' == $db_version ) {
+			$db_version = $wpdb->db_version();
+		}
+
 		$site_info_data['mysql_version'] = array(
 			/* translators: %s: String 'MySQL' */
-			'label' => sprintf(__('%s version:', 'backupplus'), 'MySQL'),
-			'value' => htmlspecialchars($db_version)
+			'label' => sprintf( __( '%s version:', 'backupplus' ), 'MySQL' ),
+			'value' => htmlspecialchars( $db_version ),
 		);
-		
+
 		// Database packet size
-		$mysql_max_packet_size = round($backupplus->max_packet_size(false, false)/1048576, 1);
+		$mysql_max_packet_size              = round( $backupplus->max_packet_size( false, false ) / 1048576, 1 );
 		$site_info_data['mysql_max_packet'] = array(
-			'label' => __('Database maximum packet size:', 'backupplus'),
-			'value' => $mysql_max_packet_size.' MB'
+			'label' => __( 'Database maximum packet size:', 'backupplus' ),
+			'value' => $mysql_max_packet_size . ' MB',
 		);
-		
+
 		// SQL mode
-		$sql_mode = $wpdb->get_var('SELECT @@GLOBAL.sql_mode');
-		$sql_mode = !empty($sql_mode) ? htmlspecialchars($sql_mode) : '-';
+		$sql_mode                   = $wpdb->get_var( 'SELECT @@GLOBAL.sql_mode' );
+		$sql_mode                   = ! empty( $sql_mode ) ? htmlspecialchars( $sql_mode ) : '-';
 		$site_info_data['sql_mode'] = array(
-			'label' => __('Current SQL mode:', 'backupplus'),
-			'value' => $sql_mode
+			'label' => __( 'Current SQL mode:', 'backupplus' ),
+			'value' => $sql_mode,
 		);
-		
+
 		// Curl version
-		if (function_exists('curl_version') && function_exists('curl_exec')) {
-			$cv = curl_version();
-			$cvs = $cv['version'].' / SSL: '.$cv['ssl_version'].' / libz: '.$cv['libz_version'];
+		if ( function_exists( 'curl_version' ) && function_exists( 'curl_exec' ) ) {
+			$cv  = curl_version();
+			$cvs = $cv['version'] . ' / SSL: ' . $cv['ssl_version'] . ' / libz: ' . $cv['libz_version'];
 		} else {
-			$cvs = __('Not installed', 'backupplus').' ('.__('required for some remote storage providers', 'backupplus').')';
+			$cvs = __( 'Not installed', 'backupplus' ) . ' (' . __( 'required for some remote storage providers', 'backupplus' ) . ')';
 		}
 		$site_info_data['curl_version'] = array(
 			/* translators: %s: String 'Curl' */
-			'label' => sprintf(__('%s version:', 'backupplus'), 'Curl'),
-			'value' => htmlspecialchars($cvs)
+			'label' => sprintf( __( '%s version:', 'backupplus' ), 'Curl' ),
+			'value' => htmlspecialchars( $cvs ),
 		);
-		
+
 		// OpenSSL version
 		$site_info_data['openssl_version'] = array(
 			/* translators: %s: String 'OpenSSL' */
-			'label' => sprintf(__('%s version:', 'backupplus'), 'OpenSSL'),
-			'value' => defined('OPENSSL_VERSION_TEXT') ? OPENSSL_VERSION_TEXT : '-'
+			'label' => sprintf( __( '%s version:', 'backupplus' ), 'OpenSSL' ),
+			'value' => defined( 'OPENSSL_VERSION_TEXT' ) ? OPENSSL_VERSION_TEXT : '-',
 		);
-		
+
 		// MCrypt
 		$site_info_data['mcrypt'] = array(
 			'label' => 'MCrypt:',
-			'value' => function_exists('mcrypt_encrypt') ? __('Yes') : __('No') // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
+			'value' => function_exists( 'mcrypt_encrypt' ) ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
 		);
-		
+
 		// ZipArchive
-		if (version_compare(PHP_VERSION, '5.2.0', '>=') && extension_loaded('zip')) {
-			$ziparchive_exists = __('Yes', 'backupplus');
+		if ( version_compare( PHP_VERSION, '5.2.0', '>=' ) && extension_loaded( 'zip' ) ) {
+			$ziparchive_exists = __( 'Yes', 'backupplus' );
 		} else {
 			// First do class_exists, because method_exists still sometimes segfaults due to a rare PHP bug
-			$ziparchive_exists = (class_exists('ZipArchive') && method_exists('ZipArchive', 'addFile')) ? __('Yes', 'backupplus') : __('No', 'backupplus');
+			$ziparchive_exists = ( class_exists( 'ZipArchive' ) && method_exists( 'ZipArchive', 'addFile' ) ) ? __( 'Yes', 'backupplus' ) : __( 'No', 'backupplus' );
 		}
 		$site_info_data['ziparchive'] = array(
 			'label' => 'ZipArchive::addFile:',
-			'value' => $ziparchive_exists
+			'value' => $ziparchive_exists,
 		);
-		
+
 		// Zip executable
-		$binzip = $backupplus->find_working_bin_zip(false, false);
+		$binzip                           = $backupplus->find_working_bin_zip( false, false );
 		$site_info_data['zip_executable'] = array(
-			'label' => __('zip executable found:', 'backupplus'),
-			'value' => ((is_string($binzip)) ? __('Yes').': '.$binzip : __('No')) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
+			'label' => __( 'zip executable found:', 'backupplus' ),
+			'value' => ( ( is_string( $binzip ) ) ? __( 'Yes' ) . ': ' . $binzip : __( 'No' ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
 		);
-		
+
 		// Free disk space
 		$hosting_bytes_free = $backupplus->get_hosting_disk_quota_free();
-		if (is_array($hosting_bytes_free)) {
-			$perc = round(100*$hosting_bytes_free[1]/(max($hosting_bytes_free[2], 1)), 1);
+		if ( is_array( $hosting_bytes_free ) ) {
+			$perc                              = round( 100 * $hosting_bytes_free[1] / ( max( $hosting_bytes_free[2], 1 ) ), 1 );
 			$site_info_data['free_disk_space'] = array(
-				'label' => __('Free disk space in account:', 'backupplus'),
+				'label' => __( 'Free disk space in account:', 'backupplus' ),
 				/* translators: 1: String 'Free disk space MB', 2: Free disk space in percentage */
-				'value' => sprintf(__('%1$s (%2$s used)', 'backupplus'), round($hosting_bytes_free[3]/1048576, 1)." MB", "$perc %")
+				'value' => sprintf( __( '%1$s (%2$s used)', 'backupplus' ), round( $hosting_bytes_free[3] / 1048576, 1 ) . ' MB', "$perc %" ),
 			);
 		}
-		
+
 		// Apache modules
-		if (function_exists('apache_get_modules')) {
-			$apache_info = '';
+		if ( function_exists( 'apache_get_modules' ) ) {
+			$apache_info    = '';
 			$apache_modules = apache_get_modules();
-			if (is_array($apache_modules)) {
-				sort($apache_modules, SORT_STRING);
-				foreach ($apache_modules as $mod) {
-					if (0 === strpos($mod, 'mod_')) {
-						$apache_info .= ', '.substr($mod, 4);
+			if ( is_array( $apache_modules ) ) {
+				sort( $apache_modules, SORT_STRING );
+				foreach ( $apache_modules as $mod ) {
+					if ( 0 === strpos( $mod, 'mod_' ) ) {
+						$apache_info .= ', ' . substr( $mod, 4 );
 					} else {
-						$apache_info .= ', '.$mod;
+						$apache_info .= ', ' . $mod;
 					}
 				}
 			}
-			$apache_info = substr($apache_info, 2);
+			$apache_info                      = substr( $apache_info, 2 );
 			$site_info_data['apache_modules'] = array(
-				'label' => __('Apache modules', 'backupplus').':',
-				'value' => $apache_info
+				'label' => __( 'Apache modules', 'backupplus' ) . ':',
+				'value' => $apache_info,
 			);
 		}
-		
+
 		// Debugging plugins
-		if (empty($options['suppress_plugins_for_debugging'])) {
+		if ( empty( $options['suppress_plugins_for_debugging'] ) ) {
 			$site_info_data['debugging_plugins'] = array(
-				'label' => __('Install debugging plugins:', 'backupplus'),
-				'value' => '<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-crontrol'), 'install-plugin_wp-crontrol').'">WP Crontrol</a> | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=query-monitor'), 'install-plugin_query-monitor').'">Query Monitor</a> | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=sql-executioner'), 'install-plugin_sql-executioner').'">SQL Executioner</a> | <a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-file-manager'), 'install-plugin_wp-file-manager').'">WP Filemanager</a>',
-				'is_html' => true
+				'label'   => __( 'Install debugging plugins:', 'backupplus' ),
+				'value'   => '<a href="' . wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-crontrol' ), 'install-plugin_wp-crontrol' ) . '">WP Crontrol</a> | <a href="' . wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=query-monitor' ), 'install-plugin_query-monitor' ) . '">Query Monitor</a> | <a href="' . wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=sql-executioner' ), 'install-plugin_sql-executioner' ) . '">SQL Executioner</a> | <a href="' . wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-file-manager' ), 'install-plugin_wp-file-manager' ) . '">WP Filemanager</a>',
+				'is_html' => true,
 			);
 		}
 
 		// HTTP Get test
 		$site_info_data['http_get'] = array(
-			'label' => "HTTP Get: ",
-			'value' => '<input id="backupplus_httpget_uri" type="text" class="call-action"> <a href="'.esc_url(BackupPlus::get_current_clean_url()).'" id="backupplus_httpget_go">'.__('Fetch', 'backupplus').'</a> <a href="'.esc_url(BackupPlus::get_current_clean_url()).'" id="backupplus_httpget_gocurl">'.__('Fetch', 'backupplus').' (Curl)</a><p id="backupplus_httpget_results"></p>',
-			'is_html' => true
+			'label'   => 'HTTP Get: ',
+			'value'   => '<input id="backupplus_httpget_uri" type="text" class="call-action"> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_httpget_go">' . __( 'Fetch', 'backupplus' ) . '</a> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_httpget_gocurl">' . __( 'Fetch', 'backupplus' ) . ' (Curl)</a><p id="backupplus_httpget_results"></p>',
+			'is_html' => true,
 		);
 
 		// Call WordPress action
 		$site_info_data['wp_action'] = array(
-			'label' => __("Call WordPress action:", 'backupplus'),
-			'value' => '<input id="backupplus_callwpaction" type="text" class="call-action"> <a href="'.esc_url(BackupPlus::get_current_clean_url()).'" id="backupplus_callwpaction_go">'.__('Call', 'backupplus').'</a><div id="backupplus_callwpaction_results"></div>',
-			'is_html' => true
+			'label'   => __( 'Call WordPress action:', 'backupplus' ),
+			'value'   => '<input id="backupplus_callwpaction" type="text" class="call-action"> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_callwpaction_go">' . __( 'Call', 'backupplus' ) . '</a><div id="backupplus_callwpaction_results"></div>',
+			'is_html' => true,
 		);
 
 		// Raw backup history and rescan
 		$site_info_data['raw_backup'] = array(
-			'label' => '',
-			'value' => '<a href="admin-ajax.php?page=backupplus&amp;action=backupplus_ajax&amp;subaction=backuphistoryraw&amp;nonce='.wp_create_nonce('backupplus-credentialtest-nonce').'" id="backupplus-rawbackuphistory">'.__('Show raw backup and file list', 'backupplus').'</a><br><a id="backupplus-remote-rescan-debug" href="#">'.__('Rescan remote storage', 'backupplus').' - '.__('log results to console', 'backupplus').'</a>',
-			'is_html' => true
+			'label'   => '',
+			'value'   => '<a href="admin-ajax.php?page=backupplus&amp;action=backupplus_ajax&amp;subaction=backuphistoryraw&amp;nonce=' . wp_create_nonce( 'backupplus-credentialtest-nonce' ) . '" id="backupplus-rawbackuphistory">' . __( 'Show raw backup and file list', 'backupplus' ) . '</a><br><a id="backupplus-remote-rescan-debug" href="#">' . __( 'Rescan remote storage', 'backupplus' ) . ' - ' . __( 'log results to console', 'backupplus' ) . '</a>',
+			'is_html' => true,
 		);
-		
+
 		return $site_info_data;
 	}
 
-	public function settings_advanced_tools($return_instead_of_echo = false, $pass_through = array()) {
-		$options = isset($pass_through['options']) ? $pass_through['options'] : array();
-		$site_info_data = $this->get_site_info_data($options);
+	public function settings_advanced_tools( $return_instead_of_echo = false, $pass_through = array() ) {
+		$options                        = isset( $pass_through['options'] ) ? $pass_through['options'] : array();
+		$site_info_data                 = $this->get_site_info_data( $options );
 		$pass_through['site_info_data'] = $site_info_data;
 
-		return $this->include_template('wp-admin/advanced/advanced-tools.php', $return_instead_of_echo, $pass_through);
+		return $this->include_template( 'wp-admin/advanced/advanced-tools.php', $return_instead_of_echo, $pass_through );
 	}
 
 	/**
 	 * Paint the HTML for the form for deleting old directories
 	 *
 	 * @param Boolean $include_blurb - whether to include explanatory text
-	 * @param Boolean $include_div	 - whether to wrap inside a div tag
+	 * @param Boolean $include_div   - whether to wrap inside a div tag
 	 */
-	public function print_delete_old_dirs_form($include_blurb = true, $include_div = true) {
-		if ($include_blurb) {
-			if ($include_div) {
+	public function print_delete_old_dirs_form( $include_blurb = true, $include_div = true ) {
+		if ( $include_blurb ) {
+			if ( $include_div ) {
 				echo '<div id="backupplus_delete_old_dirs_pagediv" class="updated delete-old-directories">';
 			}
-			echo '<p>'.esc_html(__('Your WordPress install has old folders from its state before you restored/migrated (technical information: these are suffixed with -old).', 'backupplus').' '.__('You should press this button to delete them as soon as you have verified that the restoration worked.', 'backupplus')).'</p>';
+			echo '<p>' . esc_html( __( 'Your WordPress install has old folders from its state before you restored/migrated (technical information: these are suffixed with -old).', 'backupplus' ) . ' ' . __( 'You should press this button to delete them as soon as you have verified that the restoration worked.', 'backupplus' ) ) . '</p>';
 		}
 		?>
-		<form method="post" action="<?php echo esc_url(add_query_arg(array('error' => false, 'backupplus_restore_success' => false, 'action' => false, 'page' => 'backupplus'), BackupPlus_Options::admin_page_url())); ?>">
-			<?php wp_nonce_field('backupplus-credentialtest-nonce', 'backupplus_delete_old_dirs_nonce'); ?>
+		<form method="post" action="
+		<?php
+		echo esc_url(
+			add_query_arg(
+				array(
+					'error'                      => false,
+					'backupplus_restore_success' => false,
+					'action'                     => false,
+					'page'                       => 'backupplus',
+				),
+				BackupPlus_Options::admin_page_url()
+			)
+		);
+		?>
+									">
+			<?php wp_nonce_field( 'backupplus-credentialtest-nonce', 'backupplus_delete_old_dirs_nonce' ); ?>
 			<input type="hidden" name="action" value="backupplus_delete_old_dirs">
-			<input type="submit" class="button-primary" value="<?php echo esc_attr(__('Delete old folders', 'backupplus'));?>">
+			<input type="submit" class="button-primary" value="<?php echo esc_attr( __( 'Delete old folders', 'backupplus' ) ); ?>">
 		</form>
 		<?php
-		if ($include_blurb && $include_div) echo '</div>';
+		if ( $include_blurb && $include_div ) {
+			echo '</div>';
+		}
 	}
 
 	/**
@@ -3285,19 +3689,25 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array|Boolean - the requested information, or false if it was not found. Format differs depending on whether info on all jobs, or a single job, was requested.
 	 */
-	public function get_cron($job_id = false) {
-	
-		$cron = get_option('cron');
-		if (!is_array($cron)) $cron = array();
-		if (false === $job_id) return $cron;
+	public function get_cron( $job_id = false ) {
 
-		foreach ($cron as $time => $job) {
-			if (!isset($job['backupplus_backup_resume'])) continue;
-			foreach ($job['backupplus_backup_resume'] as $info) {
-				if (isset($info['args'][1]) && $job_id == $info['args'][1]) {
+		$cron = get_option( 'cron' );
+		if ( ! is_array( $cron ) ) {
+			$cron = array();
+		}
+		if ( false === $job_id ) {
+			return $cron;
+		}
+
+		foreach ( $cron as $time => $job ) {
+			if ( ! isset( $job['backupplus_backup_resume'] ) ) {
+				continue;
+			}
+			foreach ( $job['backupplus_backup_resume'] as $info ) {
+				if ( isset( $info['args'][1] ) && $job_id == $info['args'][1] ) {
 					global $backupplus;
-					$jobdata = $backupplus->jobdata_getarray($job_id);
-					return is_array($jobdata) ? array($time, $jobdata) : false;
+					$jobdata = $backupplus->jobdata_getarray( $job_id );
+					return is_array( $jobdata ) ? array( $time, $jobdata ) : false;
 				}
 			}
 		}
@@ -3310,31 +3720,33 @@ class BackupPlus_Admin {
 	 *
 	 * @return String - the HTML
 	 */
-	private function print_active_jobs($this_job_only = false) {
+	private function print_active_jobs( $this_job_only = false ) {
 		$cron = $this->get_cron();
-		$ret = '';
+		$ret  = '';
 
-		foreach ($cron as $time => $job) {
-			if (!isset($job['backupplus_backup_resume'])) continue;
-			foreach ($job['backupplus_backup_resume'] as $info) {
-				if (isset($info['args'][1])) {
+		foreach ( $cron as $time => $job ) {
+			if ( ! isset( $job['backupplus_backup_resume'] ) ) {
+				continue;
+			}
+			foreach ( $job['backupplus_backup_resume'] as $info ) {
+				if ( isset( $info['args'][1] ) ) {
 					$job_id = $info['args'][1];
-					if (false === $this_job_only || $job_id == $this_job_only) {
-						$ret .= $this->print_active_job($job_id, false, $time, $info['args'][0]);
+					if ( false === $this_job_only || $job_id == $this_job_only ) {
+						$ret .= $this->print_active_job( $job_id, false, $time, $info['args'][0] );
 					}
 				}
 			}
 		}
 		// A value for $this_job_only implies that output is required
-		if (false !== $this_job_only && !$ret) {
-			$ret = $this->print_active_job($this_job_only);
-			if ('' == $ret) {
+		if ( false !== $this_job_only && ! $ret ) {
+			$ret = $this->print_active_job( $this_job_only );
+			if ( '' == $ret ) {
 				global $backupplus;
-				$log_file = $backupplus->get_logfile_name($this_job_only);
+				$log_file = $backupplus->get_logfile_name( $this_job_only );
 				// if the file exists, the backup was booted. Check if the information about completion is found in the log, or if it was modified at least 2 minutes ago.
-				if (file_exists($log_file) && ($backupplus->found_backup_complete_in_logfile($this_job_only) || (time() - filemtime($log_file)) > 120)) {
+				if ( file_exists( $log_file ) && ( $backupplus->found_backup_complete_in_logfile( $this_job_only ) || ( time() - filemtime( $log_file ) ) > 120 ) ) {
 					// The presence of the exact ID matters to the front-end - indicates that the backup job has at least begun
-					$ret = '<div class="active-jobs backupplus_finished" id="backupplus-jobid-"'.$this_job_only.'><em>'.__('The backup has finished running', 'backupplus').'</em> - <a class="backupplus-log-link" data-jobid="'.$this_job_only.'">'.__('View Log', 'backupplus').'</a></div>';
+					$ret = '<div class="active-jobs backupplus_finished" id="backupplus-jobid-"' . $this_job_only . '><em>' . __( 'The backup has finished running', 'backupplus' ) . '</em> - <a class="backupplus-log-link" data-jobid="' . $this_job_only . '">' . __( 'View Log', 'backupplus' ) . '</a></div>';
 				}
 			}
 		}
@@ -3345,227 +3757,250 @@ class BackupPlus_Admin {
 	/**
 	 * Print the HTML for a particular job
 	 *
-	 * @param String		  $job_id		   - the job identifier/nonce
-	 * @param Boolean		  $is_oneshot	   - whether this backup should be 'one shot', i.e. no resumptions
+	 * @param String          $job_id          - the job identifier/nonce
+	 * @param Boolean         $is_oneshot      - whether this backup should be 'one shot', i.e. no resumptions
 	 * @param Boolean|Integer $time
-	 * @param Integer		  $next_resumption
+	 * @param Integer         $next_resumption
 	 *
 	 * @return String
 	 */
-	private function print_active_job($job_id, $is_oneshot = false, $time = false, $next_resumption = false) {
+	private function print_active_job( $job_id, $is_oneshot = false, $time = false, $next_resumption = false ) {
 
 		$ret = '';
-		
+
 		global $backupplus;
-		$jobdata = $backupplus->jobdata_getarray($job_id);
+		$jobdata = $backupplus->jobdata_getarray( $job_id );
 
-		if (false == apply_filters('backupplus_print_active_job_continue', true, $is_oneshot, $next_resumption, $jobdata)) return '';
+		if ( false == apply_filters( 'backupplus_print_active_job_continue', true, $is_oneshot, $next_resumption, $jobdata ) ) {
+			return '';
+		}
 
-		if (!isset($jobdata['backup_time'])) return '';
+		if ( ! isset( $jobdata['backup_time'] ) ) {
+			return '';
+		}
 
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
-		$began_at = isset($jobdata['backup_time']) ? get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $jobdata['backup_time']), 'D, F j, Y H:i') : '?';
+		$began_at = isset( $jobdata['backup_time'] ) ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $jobdata['backup_time'] ), 'D, F j, Y H:i' ) : '?';
 
-		$backup_label = !empty($jobdata['label']) ? $jobdata['label'] : '';
+		$backup_label = ! empty( $jobdata['label'] ) ? $jobdata['label'] : '';
 
-		$jobstatus = empty($jobdata['jobstatus']) ? 'unknown' : $jobdata['jobstatus'];
-		$stage = 0;
-		switch ($jobstatus) {
+		$jobstatus = empty( $jobdata['jobstatus'] ) ? 'unknown' : $jobdata['jobstatus'];
+		$stage     = 0;
+		switch ( $jobstatus ) {
 			// Stage 0
 			case 'begun':
-			$curstage = __('Backup begun', 'backupplus');
+				$curstage = __( 'Backup begun', 'backupplus' );
 				break;
 			// Stage 1
 			case 'filescreating':
-			$stage = 1;
-			$curstage = __('Creating file backup zips', 'backupplus');
-			if (!empty($jobdata['filecreating_substatus']) && isset($backupable_entities[$jobdata['filecreating_substatus']['e']]['description'])) {
-			
-				$sdescrip = preg_replace('/ \(.*\)$/', '', $backupable_entities[$jobdata['filecreating_substatus']['e']]['description']);
-				if (strlen($sdescrip) > 20 && isset($jobdata['filecreating_substatus']['e']) && is_array($jobdata['filecreating_substatus']['e']) && isset($backupable_entities[$jobdata['filecreating_substatus']['e']]['shortdescription'])) $sdescrip = $backupable_entities[$jobdata['filecreating_substatus']['e']]['shortdescription'];
-				$curstage .= ' ('.$sdescrip.')';
-				if (isset($jobdata['filecreating_substatus']['i']) && isset($jobdata['filecreating_substatus']['t'])) {
-					$stage = min(2, 1 + ($jobdata['filecreating_substatus']['i']/max($jobdata['filecreating_substatus']['t'], 1)));
+				$stage    = 1;
+				$curstage = __( 'Creating file backup zips', 'backupplus' );
+				if ( ! empty( $jobdata['filecreating_substatus'] ) && isset( $backupable_entities[ $jobdata['filecreating_substatus']['e'] ]['description'] ) ) {
+
+					$sdescrip = preg_replace( '/ \(.*\)$/', '', $backupable_entities[ $jobdata['filecreating_substatus']['e'] ]['description'] );
+					if ( strlen( $sdescrip ) > 20 && isset( $jobdata['filecreating_substatus']['e'] ) && is_array( $jobdata['filecreating_substatus']['e'] ) && isset( $backupable_entities[ $jobdata['filecreating_substatus']['e'] ]['shortdescription'] ) ) {
+						$sdescrip = $backupable_entities[ $jobdata['filecreating_substatus']['e'] ]['shortdescription'];
+					}
+					$curstage .= ' (' . $sdescrip . ')';
+					if ( isset( $jobdata['filecreating_substatus']['i'] ) && isset( $jobdata['filecreating_substatus']['t'] ) ) {
+						$stage = min( 2, 1 + ( $jobdata['filecreating_substatus']['i'] / max( $jobdata['filecreating_substatus']['t'], 1 ) ) );
+					}
 				}
-			}
 				break;
 			case 'filescreated':
-			$stage = 2;
-			$curstage = __('Created file backup zips', 'backupplus');
+				$stage    = 2;
+				$curstage = __( 'Created file backup zips', 'backupplus' );
 				break;
 			// Stage 4
 			case 'partialclouduploading':
 			case 'clouduploading':
-				$stage = 'clouduploading' == $jobstatus ? 4 : 2;
-				$curstage = __('Uploading files to remote storage', 'backupplus');
-				if (isset($jobdata['uploading_substatus']['t']) && isset($jobdata['uploading_substatus']['i'])) {
-					$t = max((int) $jobdata['uploading_substatus']['t'], 1);
-					$i = min($jobdata['uploading_substatus']['i']/$t, 1);
-					$p = min($jobdata['uploading_substatus']['p'], 1);
-					$pd = $i + $p/$t;
+				$stage    = 'clouduploading' == $jobstatus ? 4 : 2;
+				$curstage = __( 'Uploading files to remote storage', 'backupplus' );
+				if ( isset( $jobdata['uploading_substatus']['t'] ) && isset( $jobdata['uploading_substatus']['i'] ) ) {
+					$t     = max( (int) $jobdata['uploading_substatus']['t'], 1 );
+					$i     = min( $jobdata['uploading_substatus']['i'] / $t, 1 );
+					$p     = min( $jobdata['uploading_substatus']['p'], 1 );
+					$pd    = $i + $p / $t;
 					$stage = 'clouduploading' == $jobstatus ? $stage + $pd : $stage;
 					/* translators: 1: File number, 2: Total files */
-					$curstage .= ' ('.floor(100*$pd).'%, '.sprintf(__('file %1$d of %2$d', 'backupplus'), (int) $jobdata['uploading_substatus']['i']+1, $t).')';
+					$curstage .= ' (' . floor( 100 * $pd ) . '%, ' . sprintf( __( 'file %1$d of %2$d', 'backupplus' ), (int) $jobdata['uploading_substatus']['i'] + 1, $t ) . ')';
 				}
 				break;
 			case 'pruning':
-			$stage = 5;
-			$curstage = __('Pruning old backup sets', 'backupplus');
+				$stage    = 5;
+				$curstage = __( 'Pruning old backup sets', 'backupplus' );
 				break;
 			case 'resumingforerrors':
-			$stage = -1;
-			$curstage = __('Waiting until scheduled time to retry because of errors', 'backupplus');
+				$stage    = -1;
+				$curstage = __( 'Waiting until scheduled time to retry because of errors', 'backupplus' );
 				break;
 			// Stage 6
 			case 'finished':
-			$stage = 6;
-			$curstage = __('Backup finished', 'backupplus');
+				$stage    = 6;
+				$curstage = __( 'Backup finished', 'backupplus' );
 				break;
 			default:
-			// Database creation and encryption occupies the space from 2 to 4. Databases are created then encrypted, then the next database is created/encrypted, etc.
-			if ('dbcreated' == substr($jobstatus, 0, 9)) {
-				$jobstatus = 'dbcreated';
-				$whichdb = substr($jobstatus, 9);
-				if (!is_numeric($whichdb)) $whichdb = 0;
-				$howmanydbs = max((empty($jobdata['backup_database']) || !is_array($jobdata['backup_database'])) ? 1 : count($jobdata['backup_database']), 1);
-				$perdbspace = 2/$howmanydbs;
+				// Database creation and encryption occupies the space from 2 to 4. Databases are created then encrypted, then the next database is created/encrypted, etc.
+				if ( 'dbcreated' == substr( $jobstatus, 0, 9 ) ) {
+					$jobstatus = 'dbcreated';
+					$whichdb   = substr( $jobstatus, 9 );
+					if ( ! is_numeric( $whichdb ) ) {
+						$whichdb = 0;
+					}
+					$howmanydbs = max( ( empty( $jobdata['backup_database'] ) || ! is_array( $jobdata['backup_database'] ) ) ? 1 : count( $jobdata['backup_database'] ), 1 );
+					$perdbspace = 2 / $howmanydbs;
 
-				$stage = min(4, 2 + ($whichdb+2)*$perdbspace);
+					$stage = min( 4, 2 + ( $whichdb + 2 ) * $perdbspace );
 
-				$curstage = __('Created database backup', 'backupplus');
+					$curstage = __( 'Created database backup', 'backupplus' );
 
-			} elseif ('dbcreating' == substr($jobstatus, 0, 10)) {
-				$whichdb = substr($jobstatus, 10);
-				if (!is_numeric($whichdb)) $whichdb = 0;
-				$howmanydbs = (empty($jobdata['backup_database']) || !is_array($jobdata['backup_database'])) ? 1 : count($jobdata['backup_database']);
-				$perdbspace = 2/$howmanydbs;
-				$jobstatus = 'dbcreating';
+				} elseif ( 'dbcreating' == substr( $jobstatus, 0, 10 ) ) {
+					$whichdb = substr( $jobstatus, 10 );
+					if ( ! is_numeric( $whichdb ) ) {
+						$whichdb = 0;
+					}
+					$howmanydbs = ( empty( $jobdata['backup_database'] ) || ! is_array( $jobdata['backup_database'] ) ) ? 1 : count( $jobdata['backup_database'] );
+					$perdbspace = 2 / $howmanydbs;
+					$jobstatus  = 'dbcreating';
 
-				$stage = min(4, 2 + $whichdb*$perdbspace);
+					$stage = min( 4, 2 + $whichdb * $perdbspace );
 
-				$curstage = __('Creating database backup', 'backupplus');
-				if (!empty($jobdata['dbcreating_substatus']['t'])) {
-					/* translators: %s: Table name */
-					$curstage .= ' ('.sprintf(__('table: %s', 'backupplus'), $jobdata['dbcreating_substatus']['t']).')';
-					if (!empty($jobdata['dbcreating_substatus']['i']) && !empty($jobdata['dbcreating_substatus']['a'])) {
-						$substage = max(0.001, ($jobdata['dbcreating_substatus']['i'] / max($jobdata['dbcreating_substatus']['a'], 1)));
-						$stage += $substage * $perdbspace * 0.5;
+					$curstage = __( 'Creating database backup', 'backupplus' );
+					if ( ! empty( $jobdata['dbcreating_substatus']['t'] ) ) {
+						/* translators: %s: Table name */
+						$curstage .= ' (' . sprintf( __( 'table: %s', 'backupplus' ), $jobdata['dbcreating_substatus']['t'] ) . ')';
+						if ( ! empty( $jobdata['dbcreating_substatus']['i'] ) && ! empty( $jobdata['dbcreating_substatus']['a'] ) ) {
+							$substage = max( 0.001, ( $jobdata['dbcreating_substatus']['i'] / max( $jobdata['dbcreating_substatus']['a'], 1 ) ) );
+							$stage   += $substage * $perdbspace * 0.5;
+						}
+					}
+				} elseif ( 'dbencrypting' == substr( $jobstatus, 0, 12 ) ) {
+					$whichdb = substr( $jobstatus, 12 );
+					if ( ! is_numeric( $whichdb ) ) {
+						$whichdb = 0;
+					}
+					$howmanydbs = ( empty( $jobdata['backup_database'] ) || ! is_array( $jobdata['backup_database'] ) ) ? 1 : count( $jobdata['backup_database'] );
+					$perdbspace = 2 / $howmanydbs;
+					$stage      = min( 4, 2 + $whichdb * $perdbspace + $perdbspace * 0.5 );
+					$jobstatus  = 'dbencrypting';
+					$curstage   = __( 'Encrypting database', 'backupplus' );
+				} elseif ( 'dbencrypted' == substr( $jobstatus, 0, 11 ) ) {
+					$whichdb = substr( $jobstatus, 11 );
+					if ( ! is_numeric( $whichdb ) ) {
+						$whichdb = 0;
+					}
+					$howmanydbs = ( empty( $jobdata['backup_database'] ) || ! is_array( $jobdata['backup_database'] ) ) ? 1 : count( $jobdata['backup_database'] );
+					$jobstatus  = 'dbencrypted';
+					$perdbspace = 2 / $howmanydbs;
+					$stage      = min( 4, 2 + $whichdb * $perdbspace + $perdbspace );
+					$curstage   = __( 'Encrypted database', 'backupplus' );
+				} else {
+					$curstage = __( 'Unknown', 'backupplus' );
+				}
+		}
+
+		$runs_started     = empty( $jobdata['runs_started'] ) ? array() : $jobdata['runs_started'];
+		$time_passed      = empty( $jobdata['run_times'] ) ? array() : $jobdata['run_times'];
+		$last_checkin_ago = -1;
+		if ( is_array( $time_passed ) ) {
+			foreach ( $time_passed as $run => $passed ) {
+				if ( isset( $runs_started[ $run ] ) ) {
+					$time_ago = microtime( true ) - ( $runs_started[ $run ] + $time_passed[ $run ] );
+					if ( $time_ago < $last_checkin_ago || -1 == $last_checkin_ago ) {
+						$last_checkin_ago = $time_ago;
 					}
 				}
-			} elseif ('dbencrypting' == substr($jobstatus, 0, 12)) {
-				$whichdb = substr($jobstatus, 12);
-				if (!is_numeric($whichdb)) $whichdb = 0;
-				$howmanydbs = (empty($jobdata['backup_database']) || !is_array($jobdata['backup_database'])) ? 1 : count($jobdata['backup_database']);
-				$perdbspace = 2/$howmanydbs;
-				$stage = min(4, 2 + $whichdb*$perdbspace + $perdbspace*0.5);
-				$jobstatus = 'dbencrypting';
-				$curstage = __('Encrypting database', 'backupplus');
-			} elseif ('dbencrypted' == substr($jobstatus, 0, 11)) {
-				$whichdb = substr($jobstatus, 11);
-				if (!is_numeric($whichdb)) $whichdb = 0;
-				$howmanydbs = (empty($jobdata['backup_database']) || !is_array($jobdata['backup_database'])) ? 1 : count($jobdata['backup_database']);
-				$jobstatus = 'dbencrypted';
-				$perdbspace = 2/$howmanydbs;
-				$stage = min(4, 2 + $whichdb*$perdbspace + $perdbspace);
-				$curstage = __('Encrypted database', 'backupplus');
-			} else {
-				$curstage = __('Unknown', 'backupplus');
 			}
 		}
 
-		$runs_started = empty($jobdata['runs_started']) ? array() : $jobdata['runs_started'];
-		$time_passed = empty($jobdata['run_times']) ? array() : $jobdata['run_times'];
-		$last_checkin_ago = -1;
-		if (is_array($time_passed)) {
-			foreach ($time_passed as $run => $passed) {
-				if (isset($runs_started[$run])) {
-					$time_ago = microtime(true) - ($runs_started[$run] + $time_passed[$run]);
-					if ($time_ago < $last_checkin_ago || -1 == $last_checkin_ago) $last_checkin_ago = $time_ago;
-				}
-			}
-		}
-
-		$next_res_after = (int) $time-time();
-		if ($is_oneshot) {
+		$next_res_after = (int) $time - time();
+		if ( $is_oneshot ) {
 			$next_res_txt = '';
 		} else {
 			/* translators: %d: Resumption count */
-			$next_res_txt = sprintf(__('next resumption: %d', 'backupplus'), $next_resumption).
+			$next_res_txt = sprintf( __( 'next resumption: %d', 'backupplus' ), $next_resumption ) .
 							/* translators: %s: Seconds until resumption */
-							($next_resumption ? ' '.sprintf(__('(after %ss)', 'backupplus'), $next_res_after) : '').' ';
+							( $next_resumption ? ' ' . sprintf( __( '(after %ss)', 'backupplus' ), $next_res_after ) : '' ) . ' ';
 		}
 
 		/* translators: %s: Last activity */
-		$last_activity_txt = ($last_checkin_ago >= 0) ? sprintf(__('last activity: %ss ago', 'backupplus'), floor($last_checkin_ago)).' ' : '';
+		$last_activity_txt = ( $last_checkin_ago >= 0 ) ? sprintf( __( 'last activity: %ss ago', 'backupplus' ), floor( $last_checkin_ago ) ) . ' ' : '';
 
-		if (($last_checkin_ago < 50 && $next_res_after>30) || $is_oneshot) {
+		if ( ( $last_checkin_ago < 50 && $next_res_after > 30 ) || $is_oneshot ) {
 			$show_inline_info = $last_activity_txt;
-			$title_info = $next_res_txt;
+			$title_info       = $next_res_txt;
 		} else {
 			$show_inline_info = $next_res_txt;
-			$title_info = $last_activity_txt;
+			$title_info       = $last_activity_txt;
 		}
-		
+
 		$ret .= '<div class="backupplus_row">';
-		
+
 		$ret .= '<div class="backupplus_col"><div class="backupplus_jobtimings next-resumption"';
 
-		if (!empty($jobdata['is_autobackup'])) $ret .= ' isautobackup';
+		if ( ! empty( $jobdata['is_autobackup'] ) ) {
+			$ret .= ' isautobackup';
+		}
 
 		/* translators: %s: Job ID */
-		$ret .= ' data-jobid="'.$job_id.'" data-lastactivity="'.(int) $last_checkin_ago.'" data-nextresumption="'.$next_resumption.'" data-nextresumptionafter="'.$next_res_after.'" title="'.esc_attr(sprintf(__('Job ID: %s', 'backupplus'), $job_id)).$title_info.'">'.(!empty($backup_label) ? esc_html($backup_label) : $began_at).
+		$ret .= ' data-jobid="' . $job_id . '" data-lastactivity="' . (int) $last_checkin_ago . '" data-nextresumption="' . $next_resumption . '" data-nextresumptionafter="' . $next_res_after . '" title="' . esc_attr( sprintf( __( 'Job ID: %s', 'backupplus' ), $job_id ) ) . $title_info . '">' . ( ! empty( $backup_label ) ? esc_html( $backup_label ) : $began_at ) .
 		'</div></div>';
 
 		$ret .= '<div class="backupplus_col backupplus_progress_container">';
 			// Existence of the 'backupplus-jobid-(id)' id is checked for in other places, so do not modify this
-			$ret .= '<div class="job-id" id="backupplus-jobid-"'.$job_id.'>';
-	
-			$ret .= apply_filters('backupplus_printjob_beforewarnings', '', $jobdata, $job_id);
-	
-			if (!empty($jobdata['warnings']) && is_array($jobdata['warnings'])) {
-				$ret .= '<ul class="disc">';
-				foreach ($jobdata['warnings'] as $warning) {
-					/* translators: %s: Warning message */
-					$ret .= '<li>'.sprintf(__('Warning: %s', 'backupplus'), make_clickable(htmlspecialchars($warning))).'</li>';
-				}
-				$ret .= '</ul>';
+			$ret .= '<div class="job-id" id="backupplus-jobid-"' . $job_id . '>';
+
+			$ret .= apply_filters( 'backupplus_printjob_beforewarnings', '', $jobdata, $job_id );
+
+		if ( ! empty( $jobdata['warnings'] ) && is_array( $jobdata['warnings'] ) ) {
+			$ret .= '<ul class="disc">';
+			foreach ( $jobdata['warnings'] as $warning ) {
+				/* translators: %s: Warning message */
+				$ret .= '<li>' . sprintf( __( 'Warning: %s', 'backupplus' ), make_clickable( htmlspecialchars( $warning ) ) ) . '</li>';
 			}
-	
+			$ret .= '</ul>';
+		}
+
 			$ret .= '<div class="curstage">';
 			// $ret .= '<span class="curstage-info">'.htmlspecialchars($curstage).'</span>';
-			$ret .= htmlspecialchars($curstage);
+			$ret .= htmlspecialchars( $curstage );
 			// we need to add this data-progress attribute in order to be able to update the progress bar in UDC
 
-			$ret .= '<div class="backupplus_percentage" data-info="'.esc_attr($curstage).'" data-progress="'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'" style="height: 100%; width:'.(($stage>0) ? (ceil((100/6)*$stage)) : '0').'%"></div>';
+			$ret .= '<div class="backupplus_percentage" data-info="' . esc_attr( $curstage ) . '" data-progress="' . ( ( $stage > 0 ) ? ( ceil( ( 100 / 6 ) * $stage ) ) : '0' ) . '" style="height: 100%; width:' . ( ( $stage > 0 ) ? ( ceil( ( 100 / 6 ) * $stage ) ) : '0' ) . '%"></div>';
 			$ret .= '</div></div>';
-	
-			$ret .= '<div class="backupplus_last_activity">';
-			
-			$ret .= $show_inline_info;
-			if (!empty($show_inline_info)) $ret .= ' - ';
 
-			$file_nonce = empty($jobdata['file_nonce']) ? $job_id : $jobdata['file_nonce'];
-			
-			$ret .= '<a data-fileid="'.$file_nonce.'" data-jobid="'.$job_id.'" href="'.BackupPlus_Options::admin_page_url().'?page=backupplus&action=downloadlog&backupplus_backup_nonce='.$file_nonce.'" class="backupplus-log-link">'.__('show log', 'backupplus').'</a>';
-				if (!$is_oneshot) $ret .=' - <a href="#" data-jobid="'.$job_id.'" title="'.esc_attr(__('Note: the progress bar below is based on stages, NOT time.', 'backupplus').' '.__('Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal.', 'backupplus')).'" class="backupplus_jobinfo_delete">'.__('stop', 'backupplus').'</a>';
+			$ret .= '<div class="backupplus_last_activity">';
+
+			$ret .= $show_inline_info;
+		if ( ! empty( $show_inline_info ) ) {
+			$ret .= ' - ';
+		}
+
+			$file_nonce = empty( $jobdata['file_nonce'] ) ? $job_id : $jobdata['file_nonce'];
+
+			$ret .= '<a data-fileid="' . $file_nonce . '" data-jobid="' . $job_id . '" href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&action=downloadlog&backupplus_backup_nonce=' . $file_nonce . '" class="backupplus-log-link">' . __( 'show log', 'backupplus' ) . '</a>';
+		if ( ! $is_oneshot ) {
+			$ret .= ' - <a href="#" data-jobid="' . $job_id . '" title="' . esc_attr( __( 'Note: the progress bar below is based on stages, NOT time.', 'backupplus' ) . ' ' . __( 'Do not stop the backup simply because it seems to have remained in the same place for a while - that is normal.', 'backupplus' ) ) . '" class="backupplus_jobinfo_delete">' . __( 'stop', 'backupplus' ) . '</a>';
+		}
 			$ret .= '</div>';
-		
+
 		$ret .= '</div></div>';
 
 		return $ret;
-
 	}
 
-	private function delete_old_dirs_go($show_return = true) {
-		echo $show_return ? '<h1>BackupPlus - '.esc_html__('Remove old folders', 'backupplus').'</h1>' : '<h2>'.esc_html__('Remove old directories', 'backupplus').'</h2>';
+	private function delete_old_dirs_go( $show_return = true ) {
+		echo $show_return ? '<h1>BackupPlus - ' . esc_html__( 'Remove old folders', 'backupplus' ) . '</h1>' : '<h2>' . esc_html__( 'Remove old directories', 'backupplus' ) . '</h2>';
 
-		if ($this->delete_old_dirs()) {
-			echo '<p>'.esc_html__('Old folders successfully removed.', 'backupplus').'</p><br>';
+		if ( $this->delete_old_dirs() ) {
+			echo '<p>' . esc_html__( 'Old folders successfully removed.', 'backupplus' ) . '</p><br>';
 		} else {
-			echo '<p>'.esc_html__('Old folder removal failed for some reason.', 'backupplus').' '.esc_html__('You may want to do this manually.', 'backupplus').'</p><br>';
+			echo '<p>' . esc_html__( 'Old folder removal failed for some reason.', 'backupplus' ) . ' ' . esc_html__( 'You may want to do this manually.', 'backupplus' ) . '</p><br>';
 		}
-		if ($show_return) echo '<b>'.esc_html__('Actions', 'backupplus').':</b> <a href="'.esc_url(BackupPlus_Options::admin_page_url()).'?page=backupplus">'.esc_html__('Return to BackupPlus configuration', 'backupplus').'</a>';
+		if ( $show_return ) {
+			echo '<b>' . esc_html__( 'Actions', 'backupplus' ) . ':</b> <a href="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus">' . esc_html__( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>';
+		}
 	}
 
 	/**
@@ -3575,90 +4010,95 @@ class BackupPlus_Admin {
 	 */
 	private function delete_old_dirs() {
 		global $wp_filesystem, $backupplus;
-		$credentials = request_filesystem_credentials(wp_nonce_url(BackupPlus_Options::admin_page_url()."?page=backupplus&action=backupplus_delete_old_dirs", 'backupplus-credentialtest-nonce', 'backupplus_delete_old_dirs_nonce'));
-		$wpfs = WP_Filesystem($credentials);
-		if (!empty($wp_filesystem->errors) && $wp_filesystem->errors->get_error_code()) {
-			foreach ($wp_filesystem->errors->get_error_messages() as $message) show_message($message);
+		$credentials = request_filesystem_credentials( wp_nonce_url( BackupPlus_Options::admin_page_url() . '?page=backupplus&action=backupplus_delete_old_dirs', 'backupplus-credentialtest-nonce', 'backupplus_delete_old_dirs_nonce' ) );
+		$wpfs        = WP_Filesystem( $credentials );
+		if ( ! empty( $wp_filesystem->errors ) && $wp_filesystem->errors->get_error_code() ) {
+			foreach ( $wp_filesystem->errors->get_error_messages() as $message ) {
+				show_message( $message );
+			}
 			exit;
 		}
-		if (!$wpfs) exit;
-		
+		if ( ! $wpfs ) {
+			exit;
+		}
+
 		// From WP_CONTENT_DIR - which contains 'themes'
-		$ret = $this->delete_old_dirs_dir($wp_filesystem->wp_content_dir());
+		$ret = $this->delete_old_dirs_dir( $wp_filesystem->wp_content_dir() );
 
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if ($backupplus_dir) {
-			$ret4 = $backupplus_dir ? $this->delete_old_dirs_dir($backupplus_dir, false) : true;
+		if ( $backupplus_dir ) {
+			$ret4 = $backupplus_dir ? $this->delete_old_dirs_dir( $backupplus_dir, false ) : true;
 		} else {
 			$ret4 = true;
 		}
 
-		$plugs = untrailingslashit($wp_filesystem->wp_plugins_dir());
-		if ($wp_filesystem->is_dir($plugs.'-old')) {
-			echo "<strong>".esc_html__('Delete', 'backupplus').": </strong>plugins-old: ";
-			if (!$wp_filesystem->delete($plugs.'-old', true)) {
+		$plugs = untrailingslashit( $wp_filesystem->wp_plugins_dir() );
+		if ( $wp_filesystem->is_dir( $plugs . '-old' ) ) {
+			echo '<strong>' . esc_html__( 'Delete', 'backupplus' ) . ': </strong>plugins-old: ';
+			if ( ! $wp_filesystem->delete( $plugs . '-old', true ) ) {
 				$ret3 = false;
-				echo "<strong>".esc_html__('Failed', 'backupplus')."</strong><br>";
-				echo esc_html($backupplus->log_permission_failure_message($wp_filesystem->wp_content_dir(), 'Delete '.$plugs.'-old'));
+				echo '<strong>' . esc_html__( 'Failed', 'backupplus' ) . '</strong><br>';
+				echo esc_html( $backupplus->log_permission_failure_message( $wp_filesystem->wp_content_dir(), 'Delete ' . $plugs . '-old' ) );
 			} else {
 				$ret3 = true;
-				echo "<strong>".esc_html__('OK', 'backupplus')."</strong><br>";
+				echo '<strong>' . esc_html__( 'OK', 'backupplus' ) . '</strong><br>';
 			}
 		} else {
 			$ret3 = true;
 		}
 
 		$ret2 = true;
-		if ($wp_filesystem->is_file(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
-			echo "<strong>".esc_html__('Delete', 'backupplus').": </strong>wp-config-pre-ud-restore-backup.php: ";
+		if ( $wp_filesystem->is_file( ABSPATH . 'wp-config-pre-ud-restore-backup.php' ) ) {
+			echo '<strong>' . esc_html__( 'Delete', 'backupplus' ) . ': </strong>wp-config-pre-ud-restore-backup.php: ';
 
-			if ($wp_filesystem->delete(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
-				echo "<strong>".esc_html__('OK', 'backupplus')."</strong><br>";
+			if ( $wp_filesystem->delete( ABSPATH . 'wp-config-pre-ud-restore-backup.php' ) ) {
+				echo '<strong>' . esc_html__( 'OK', 'backupplus' ) . '</strong><br>';
 			} else {
 				$ret2 = false;
-				echo "<strong>".esc_html__('Failed', 'backupplus')."</strong><br>";
+				echo '<strong>' . esc_html__( 'Failed', 'backupplus' ) . '</strong><br>';
 			}
 		}
-
 
 		return $ret && $ret2 && $ret3 && $ret4;
 	}
 
-	private function delete_old_dirs_dir($dir, $wpfs = true) {
+	private function delete_old_dirs_dir( $dir, $wpfs = true ) {
 
-		$dir = trailingslashit($dir);
+		$dir = trailingslashit( $dir );
 
 		global $wp_filesystem, $backupplus;
 
-		if ($wpfs) {
-			$list = $wp_filesystem->dirlist($dir);
+		if ( $wpfs ) {
+			$list = $wp_filesystem->dirlist( $dir );
 		} else {
-			$list = scandir($dir);
+			$list = scandir( $dir );
 		}
-		if (!is_array($list)) return false;
+		if ( ! is_array( $list ) ) {
+			return false;
+		}
 
 		$ret = true;
-		foreach ($list as $item) {
-			$name = (is_array($item)) ? $item['name'] : $item;
-			if ("-old" == substr($name, -4, 4)) {
+		foreach ( $list as $item ) {
+			$name = ( is_array( $item ) ) ? $item['name'] : $item;
+			if ( '-old' == substr( $name, -4, 4 ) ) {
 				// recursively delete
-				print "<strong>".esc_html__('Delete', 'backupplus').": </strong>".esc_html(basename($dir).'/'.$name).": ";
+				print '<strong>' . esc_html__( 'Delete', 'backupplus' ) . ': </strong>' . esc_html( basename( $dir ) . '/' . $name ) . ': ';
 
-				if ($wpfs) {
-					if (!$wp_filesystem->delete($dir.$name, true)) {
+				if ( $wpfs ) {
+					if ( ! $wp_filesystem->delete( $dir . $name, true ) ) {
 						$ret = false;
-						echo "<strong>".esc_html__('Failed', 'backupplus')."</strong><br>";
-						echo wp_kses_post($backupplus->log_permission_failure_message($dir, 'Delete '.$dir.$name));
+						echo '<strong>' . esc_html__( 'Failed', 'backupplus' ) . '</strong><br>';
+						echo wp_kses_post( $backupplus->log_permission_failure_message( $dir, 'Delete ' . $dir . $name ) );
 					} else {
-						echo "<strong>".esc_html__('OK', 'backupplus')."</strong><br>";
+						echo '<strong>' . esc_html__( 'OK', 'backupplus' ) . '</strong><br>';
 					}
 				} else {
-					if (BackupPlus_Filesystem_Functions::remove_local_directory($dir.$name)) {
-						echo "<strong>".esc_html__('OK', 'backupplus')."</strong><br>";
+					if ( BackupPlus_Filesystem_Functions::remove_local_directory( $dir . $name ) ) {
+						echo '<strong>' . esc_html__( 'OK', 'backupplus' ) . '</strong><br>';
 					} else {
 						$ret = false;
-						echo "<strong>".esc_html__('Failed', 'backupplus')."</strong><br>";
-						echo wp_kses_post($backupplus->log_permission_failure_message($dir, 'Delete '.$dir.$name));
+						echo '<strong>' . esc_html__( 'Failed', 'backupplus' ) . '</strong><br>';
+						echo wp_kses_post( $backupplus->log_permission_failure_message( $dir, 'Delete ' . $dir . $name ) );
 					}
 				}
 			}
@@ -3675,50 +4115,54 @@ class BackupPlus_Admin {
 
 		global $wp_filesystem, $backupplus;
 
-		if (false === ($credentials = request_filesystem_credentials(BackupPlus_Options::admin_page().'?page=backupplus&action=backupplus_create_backup_dir&nonce='.wp_create_nonce('create_backup_dir')))) {
+		if ( false === ( $credentials = request_filesystem_credentials( BackupPlus_Options::admin_page() . '?page=backupplus&action=backupplus_create_backup_dir&nonce=' . wp_create_nonce( 'create_backup_dir' ) ) ) ) {
 			return false;
 		}
 
-		if (!WP_Filesystem($credentials)) {
+		if ( ! WP_Filesystem( $credentials ) ) {
 			// our credentials were no good, ask the user for them again
-			request_filesystem_credentials(BackupPlus_Options::admin_page().'?page=backupplus&action=backupplus_create_backup_dir&nonce='.wp_create_nonce('create_backup_dir'), '', true);
+			request_filesystem_credentials( BackupPlus_Options::admin_page() . '?page=backupplus&action=backupplus_create_backup_dir&nonce=' . wp_create_nonce( 'create_backup_dir' ), '', true );
 			return false;
 		}
 
 		$backupplus_dir = $backupplus->backups_dir_location();
 
-		$default_backup_dir = $wp_filesystem->find_folder(dirname($backupplus_dir)).basename($backupplus_dir);
+		$default_backup_dir = $wp_filesystem->find_folder( dirname( $backupplus_dir ) ) . basename( $backupplus_dir );
 
-		$backupplus_dir = ($backupplus_dir) ? $wp_filesystem->find_folder(dirname($backupplus_dir)).basename($backupplus_dir) : $default_backup_dir;
+		$backupplus_dir = ( $backupplus_dir ) ? $wp_filesystem->find_folder( dirname( $backupplus_dir ) ) . basename( $backupplus_dir ) : $default_backup_dir;
 
-		if (!$wp_filesystem->is_dir($default_backup_dir) && !$wp_filesystem->mkdir($default_backup_dir, 0775)) {
-			$wperr = new WP_Error;
-			if ($wp_filesystem->errors->get_error_code()) {
-				foreach ($wp_filesystem->errors->get_error_messages() as $message) {
-					$wperr->add('mkdir_error', $message);
+		if ( ! $wp_filesystem->is_dir( $default_backup_dir ) && ! $wp_filesystem->mkdir( $default_backup_dir, 0775 ) ) {
+			$wperr = new WP_Error();
+			if ( $wp_filesystem->errors->get_error_code() ) {
+				foreach ( $wp_filesystem->errors->get_error_messages() as $message ) {
+					$wperr->add( 'mkdir_error', $message );
 				}
 				return $wperr;
 			} else {
-				return new WP_Error('mkdir_error', __('The request to the filesystem to create the directory failed.', 'backupplus'));
+				return new WP_Error( 'mkdir_error', __( 'The request to the filesystem to create the directory failed.', 'backupplus' ) );
 			}
 		}
 
-		if ($wp_filesystem->is_dir($default_backup_dir)) {
+		if ( $wp_filesystem->is_dir( $default_backup_dir ) ) {
 
-			if (BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir)) return true;
+			if ( BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ) {
+				return true;
+			}
 
-			@$wp_filesystem->chmod($default_backup_dir, 0775);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
-			if (BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir)) return true;
+			@$wp_filesystem->chmod( $default_backup_dir, 0775 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			if ( BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ) {
+				return true;
+			}
 
-			@$wp_filesystem->chmod($default_backup_dir, 0777);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			@$wp_filesystem->chmod( $default_backup_dir, 0777 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 
-			if (BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir)) {
-				echo '<p>'.esc_html__('The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it.', 'backupplus').' '.esc_html__('You should check with your hosting provider that this will not cause any problems', 'backupplus').'</p>';
+			if ( BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ) {
+				echo '<p>' . esc_html__( 'The folder was created, but we had to change its file permissions to 777 (world-writable) to be able to write to it.', 'backupplus' ) . ' ' . esc_html__( 'You should check with your hosting provider that this will not cause any problems', 'backupplus' ) . '</p>';
 				return true;
 			} else {
-				@$wp_filesystem->chmod($default_backup_dir, 0775);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
-				$show_dir = (0 === strpos($default_backup_dir, ABSPATH)) ? substr($default_backup_dir, strlen(ABSPATH)) : $default_backup_dir;
-				return new WP_Error('writable_error', __('The folder exists, but your webserver does not have permission to write to it.', 'backupplus').' '.__('You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory.', 'backupplus').' ('.$show_dir.')');
+				@$wp_filesystem->chmod( $default_backup_dir, 0775 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+				$show_dir = ( 0 === strpos( $default_backup_dir, ABSPATH ) ) ? substr( $default_backup_dir, strlen( ABSPATH ) ) : $default_backup_dir;
+				return new WP_Error( 'writable_error', __( 'The folder exists, but your webserver does not have permission to write to it.', 'backupplus' ) . ' ' . __( 'You will need to consult with your web hosting provider to find out how to set permissions for a WordPress plugin to write to the directory.', 'backupplus' ) . ' (' . $show_dir . ')' );
 			}
 		}
 
@@ -3731,33 +4175,45 @@ class BackupPlus_Admin {
 	 * @param  Boolean $print_as_comment Echo information in an HTML comment
 	 * @return Boolean
 	 */
-	private function scan_old_dirs($print_as_comment = false) {
+	private function scan_old_dirs( $print_as_comment = false ) {
 		global $backupplus;
-		$dirs = scandir(untrailingslashit(WP_CONTENT_DIR));
-		if (!is_array($dirs)) $dirs = array();
-		foreach ($dirs as $dir) {
-			if (preg_match('/-old$/', $dir)) {
-				if ($print_as_comment) echo '<!--'.esc_html($dir).'-->';
+		$dirs = scandir( untrailingslashit( WP_CONTENT_DIR ) );
+		if ( ! is_array( $dirs ) ) {
+			$dirs = array();
+		}
+		foreach ( $dirs as $dir ) {
+			if ( preg_match( '/-old$/', $dir ) ) {
+				if ( $print_as_comment ) {
+					echo '<!--' . esc_html( $dir ) . '-->';
+				}
 				return true;
 			}
 		}
 		$backups_dir_location = $backupplus->backups_dir_location();
-		$dirs = @scandir($backups_dir_location);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		if (!is_array($dirs)) $dirs = array();
-		foreach ($dirs as $dir) {
-			if (preg_match('/-old$/', $dir)) {
-				if ($print_as_comment) echo '<!--'.esc_html($dir).'-->';
+		$dirs                 = @scandir( $backups_dir_location );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		if ( ! is_array( $dirs ) ) {
+			$dirs = array();
+		}
+		foreach ( $dirs as $dir ) {
+			if ( preg_match( '/-old$/', $dir ) ) {
+				if ( $print_as_comment ) {
+					echo '<!--' . esc_html( $dir ) . '-->';
+				}
 				return true;
 			}
 		}
 		// No need to scan ABSPATH - we don't backup there
-		if (is_dir(untrailingslashit(WP_PLUGIN_DIR).'-old')) {
-			if ($print_as_comment) echo '<!--'.esc_html(untrailingslashit(WP_PLUGIN_DIR).'-old').'-->';
+		if ( is_dir( untrailingslashit( WP_PLUGIN_DIR ) . '-old' ) ) {
+			if ( $print_as_comment ) {
+				echo '<!--' . esc_html( untrailingslashit( WP_PLUGIN_DIR ) . '-old' ) . '-->';
+			}
 			return true;
 		}
 
-		if (is_file(ABSPATH.'wp-config-pre-ud-restore-backup.php')) {
-			if ($print_as_comment) echo '<!--'.esc_html(ABSPATH.'wp-config-pre-ud-restore-backup.php').'-->';
+		if ( is_file( ABSPATH . 'wp-config-pre-ud-restore-backup.php' ) ) {
+			if ( $print_as_comment ) {
+				echo '<!--' . esc_html( ABSPATH . 'wp-config-pre-ud-restore-backup.php' ) . '-->';
+			}
 			return true;
 		}
 
@@ -3771,11 +4227,11 @@ class BackupPlus_Admin {
 	 * @param String $header   the table header content
 	 * @param String $contents the table contents
 	 */
-	public function storagemethod_row($method, $header, $contents) {
+	public function storagemethod_row( $method, $header, $contents ) {
 		?>
-			<tr class="backupplusmethod <?php echo esc_attr($method);?>">
-				<th><?php echo wp_kses_post($header);?></th>
-				<td><?php echo wp_kses_post($contents);?></td>
+			<tr class="backupplusmethod <?php echo esc_attr( $method ); ?>">
+				<th><?php echo wp_kses_post( $header ); ?></th>
+				<td><?php echo wp_kses_post( $contents ); ?></td>
 			</tr>
 		<?php
 	}
@@ -3787,15 +4243,15 @@ class BackupPlus_Admin {
 	 * @param  string $header   the table header content
 	 * @param  string $contents the table contents
 	 */
-	public function storagemethod_row_multi($classes, $header, $contents) {
+	public function storagemethod_row_multi( $classes, $header, $contents ) {
 		?>
-			<tr class="<?php echo esc_attr($classes);?>">
-				<th><?php echo wp_kses_post($header);?></th>
-				<td><?php echo wp_kses_post($contents);?></td>
+			<tr class="<?php echo esc_attr( $classes ); ?>">
+				<th><?php echo wp_kses_post( $header ); ?></th>
+				<td><?php echo wp_kses_post( $contents ); ?></td>
 			</tr>
 		<?php
 	}
-	
+
 	/**
 	 * Returns html for a storage method using the parameters passed in, this version of the method is compatible with multi storage options
 	 * DEV NOTE: please don't use this method in a handlebars template, but write the HTML code directly in the template. Also, this method might be no longer available in future releases
@@ -3805,10 +4261,10 @@ class BackupPlus_Admin {
 	 * @param  string $contents the table contents
 	 * @return string handlebars html template
 	 */
-	public function get_storagemethod_row_multi_configuration_template($classes, $header, $contents) {
-		return '<tr class="'.esc_attr($classes).'">
-					<th>'.$header.'</th>
-					<td>'.$contents.'</td>
+	public function get_storagemethod_row_multi_configuration_template( $classes, $header, $contents ) {
+		return '<tr class="' . esc_attr( $classes ) . '">
+					<th>' . $header . '</th>
+					<td>' . $contents . '</td>
 				</tr>';
 	}
 
@@ -3821,36 +4277,36 @@ class BackupPlus_Admin {
 
 		global $backupplus;
 
-		$backupplus_last_backup = BackupPlus_Options::get_backupplus_option('backupplus_last_backup');
+		$backupplus_last_backup = BackupPlus_Options::get_backupplus_option( 'backupplus_last_backup' );
 
-		if ($backupplus_last_backup) {
+		if ( $backupplus_last_backup ) {
 
 			// Convert to GMT, then to blog time
 			$backup_time = (int) $backupplus_last_backup['backup_time'];
 
-			$print_time = get_date_from_gmt(gmdate('Y-m-d H:i:s', $backup_time), 'D, F j, Y H:i');
+			$print_time = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $backup_time ), 'D, F j, Y H:i' );
 
-			if (empty($backupplus_last_backup['backup_time_incremental'])) {
-				$last_backup_text = "<span style=\"color:".(($backupplus_last_backup['success']) ? 'green' : 'black').";\">".$print_time.'</span>';
+			if ( empty( $backupplus_last_backup['backup_time_incremental'] ) ) {
+				$last_backup_text = '<span style="color:' . ( ( $backupplus_last_backup['success'] ) ? 'green' : 'black' ) . ';">' . $print_time . '</span>';
 			} else {
-				$inc_time = get_date_from_gmt(gmdate('Y-m-d H:i:s', $backupplus_last_backup['backup_time_incremental']), 'D, F j, Y H:i');
+				$inc_time = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $backupplus_last_backup['backup_time_incremental'] ), 'D, F j, Y H:i' );
 				/* translators: %s: Time of backup. */
-				$last_backup_text = "<span style=\"color:".(($backupplus_last_backup['success']) ? 'green' : 'black').";\">$inc_time</span> (".sprintf(__('incremental backup; base backup: %s', 'backupplus'), $print_time).')';
+				$last_backup_text = '<span style="color:' . ( ( $backupplus_last_backup['success'] ) ? 'green' : 'black' ) . ";\">$inc_time</span> (" . sprintf( __( 'incremental backup; base backup: %s', 'backupplus' ), $print_time ) . ')';
 			}
 
 			$last_backup_text .= '<br>';
 
 			// Show errors + warnings
-			if (is_array($backupplus_last_backup['errors'])) {
-				foreach ($backupplus_last_backup['errors'] as $err) {
-					$level = (is_array($err)) ? $err['level'] : 'error';
-					$message = (is_array($err)) ? $err['message'] : $err;
-					$last_backup_text .= ('warning' == $level) ? "<span style=\"color:orange;\">" : "<span style=\"color:red;\">";
-					if ('warning' == $level) {
+			if ( is_array( $backupplus_last_backup['errors'] ) ) {
+				foreach ( $backupplus_last_backup['errors'] as $err ) {
+					$level             = ( is_array( $err ) ) ? $err['level'] : 'error';
+					$message           = ( is_array( $err ) ) ? $err['message'] : $err;
+					$last_backup_text .= ( 'warning' == $level ) ? '<span style="color:orange;">' : '<span style="color:red;">';
+					if ( 'warning' == $level ) {
 						/* translators: %s: Warning message. */
-						$message = sprintf(__("Warning: %s", 'backupplus'), make_clickable(htmlspecialchars($message)));
+						$message = sprintf( __( 'Warning: %s', 'backupplus' ), make_clickable( htmlspecialchars( $message ) ) );
 					} else {
-						$message = htmlspecialchars($message);
+						$message = htmlspecialchars( $message );
 					}
 					$last_backup_text .= $message;
 					$last_backup_text .= '</span><br>';
@@ -3858,19 +4314,19 @@ class BackupPlus_Admin {
 			}
 
 			// Link log
-			if (!empty($backupplus_last_backup['backup_nonce'])) {
+			if ( ! empty( $backupplus_last_backup['backup_nonce'] ) ) {
 				$backupplus_dir = $backupplus->backups_dir_location();
 
-				$potential_log_file = $backupplus_dir."/log.".$backupplus_last_backup['backup_nonce'].".txt";
-				if (is_readable($potential_log_file)) $last_backup_text .= "<a href=\"?page=backupplus&action=downloadlog&backupplus_backup_nonce=".$backupplus_last_backup['backup_nonce']."\" class=\"backupplus-log-link\" onclick=\"event.preventDefault(); backupplus_popuplog('".$backupplus_last_backup['backup_nonce']."');\">".__('Download log file', 'backupplus')."</a>";
+				$potential_log_file = $backupplus_dir . '/log.' . $backupplus_last_backup['backup_nonce'] . '.txt';
+				if ( is_readable( $potential_log_file ) ) {
+					$last_backup_text .= '<a href="?page=backupplus&action=downloadlog&backupplus_backup_nonce=' . $backupplus_last_backup['backup_nonce'] . "\" class=\"backupplus-log-link\" onclick=\"event.preventDefault(); backupplus_popuplog('" . $backupplus_last_backup['backup_nonce'] . "');\">" . __( 'Download log file', 'backupplus' ) . '</a>';
+				}
 			}
-
 		} else {
-			$last_backup_text = "<span style=\"color:blue;\">".__('No backup has been completed', 'backupplus')."</span>";
+			$last_backup_text = '<span style="color:blue;">' . __( 'No backup has been completed', 'backupplus' ) . '</span>';
 		}
 
 		return $last_backup_text;
-
 	}
 
 	/**
@@ -3880,38 +4336,40 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - keys are used as identifiers in the UI drop-down; values are user-displayed text describing the interval
 	 */
-	public function get_intervals($what_for = 'db') {
+	public function get_intervals( $what_for = 'db' ) {
 		global $backupplus;
 
 		$intervals = wp_get_schedules();
 
-		if ($backupplus->is_restricted_hosting('only_one_backup_per_month')) {
-			$intervals = array_intersect_key($intervals, array('monthly' => array()));
+		if ( $backupplus->is_restricted_hosting( 'only_one_backup_per_month' ) ) {
+			$intervals = array_intersect_key( $intervals, array( 'monthly' => array() ) );
 		} else {
-			if ('db' != $what_for) unset($intervals['everyhour']);
+			if ( 'db' != $what_for ) {
+				unset( $intervals['everyhour'] );
+			}
 		}
-		$intervals = array_intersect_key(backupplus_list_cron_schedules(), $intervals); // update schedule descriptions for the UI of the backup schedule drop-down and rearrange schedule order
+		$intervals = array_intersect_key( backupplus_list_cron_schedules(), $intervals ); // update schedule descriptions for the UI of the backup schedule drop-down and rearrange schedule order
 
-		foreach ($intervals as $interval => $data) {
-			$intervals[$interval] = $data['display'];
+		foreach ( $intervals as $interval => $data ) {
+			$intervals[ $interval ] = $data['display'];
 		}
 
-		$intervals = array('manual' => _x('Manual', 'i.e. Non-automatic', 'backupplus')) + $intervals;
+		$intervals = array( 'manual' => _x( 'Manual', 'i.e. Non-automatic', 'backupplus' ) ) + $intervals;
 
-		return apply_filters('backupplus_backup_intervals', $intervals, $what_for);
+		return apply_filters( 'backupplus_backup_intervals', $intervals, $what_for );
 	}
-	
-	public function really_writable_message($really_is_writable, $backupplus_dir) {
-		if ($really_is_writable) {
-			$dir_info = '<span style="color:green;">'.__('Backup directory specified is writable, which is good.', 'backupplus').'</span>';
+
+	public function really_writable_message( $really_is_writable, $backupplus_dir ) {
+		if ( $really_is_writable ) {
+			$dir_info = '<span style="color:green;">' . __( 'Backup directory specified is writable, which is good.', 'backupplus' ) . '</span>';
 		} else {
 			$dir_info = '<span style="color:red;">';
-			if (!is_dir($backupplus_dir)) {
-				$dir_info .= __('Backup directory specified does not exist.', 'backupplus');
+			if ( ! is_dir( $backupplus_dir ) ) {
+				$dir_info .= __( 'Backup directory specified does not exist.', 'backupplus' );
 			} else {
-				$dir_info .= __('Backup directory specified exists, but is not writable.', 'backupplus');
+				$dir_info .= __( 'Backup directory specified exists, but is not writable.', 'backupplus' );
 			}
-			$dir_info .= '<span class="backupplus-directory-not-writable-blurb"><span class="directory-permissions"><a class="backupplus_create_backup_dir" href="'.BackupPlus_Options::admin_page_url().'?page=backupplus&action=backupplus_create_backup_dir&nonce='.wp_create_nonce('create_backup_dir').'">'.__('Follow this link to attempt to create the directory and set the permissions', 'backupplus').'</a></span>, '.__('or, to reset this option', 'backupplus').' <a href="'.esc_url(BackupPlus::get_current_clean_url()).'" class="backupplus_backup_dir_reset">'.__('press here', 'backupplus').'</a>. '.__('If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process.', 'backupplus').'</span>';
+			$dir_info .= '<span class="backupplus-directory-not-writable-blurb"><span class="directory-permissions"><a class="backupplus_create_backup_dir" href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&action=backupplus_create_backup_dir&nonce=' . wp_create_nonce( 'create_backup_dir' ) . '">' . __( 'Follow this link to attempt to create the directory and set the permissions', 'backupplus' ) . '</a></span>, ' . __( 'or, to reset this option', 'backupplus' ) . ' <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" class="backupplus_backup_dir_reset">' . __( 'press here', 'backupplus' ) . '</a>. ' . __( 'If that is unsuccessful check the permissions on your server or change it to another directory that is writable by your web server process.', 'backupplus' ) . '</span>';
 		}
 		return $dir_info;
 	}
@@ -3921,11 +4379,15 @@ class BackupPlus_Admin {
 	 *
 	 * @param Array $options current options (passed on to the template)
 	 */
-	public function settings_formcontents($options = array()) {
-		$this->include_template('wp-admin/settings/form-contents.php', false, array(
-			'options' => $options
-		));
-		$this->include_template('wp-admin/settings/exclude-modal.php', false);
+	public function settings_formcontents( $options = array() ) {
+		$this->include_template(
+			'wp-admin/settings/form-contents.php',
+			false,
+			array(
+				'options' => $options,
+			)
+		);
+		$this->include_template( 'wp-admin/settings/exclude-modal.php', false );
 	}
 
 	/**
@@ -3937,26 +4399,28 @@ class BackupPlus_Admin {
 	 * @param mixed   $active_service     Single or multiple Active remote storage location.
 	 * @return void Display script for showing/hide active remote storages.
 	 */
-	public function get_settings_js($method_objects, $really_is_writable, $backupplus_dir, $active_service) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
+	public function get_settings_js( $method_objects, $really_is_writable, $backupplus_dir, $active_service ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
 
 		global $backupplus;
 		?>
 		jQuery(function() {
 			<?php
-			if (!$really_is_writable) echo "jQuery('.backupdirrow').show();\n";
-			if (!empty($active_service)) {
-				if (is_array($active_service)) {
-					foreach ($active_service as $serv) {
-						echo "jQuery('.".esc_js($serv)."').show();\n";
+			if ( ! $really_is_writable ) {
+				echo "jQuery('.backupdirrow').show();\n";
+			}
+			if ( ! empty( $active_service ) ) {
+				if ( is_array( $active_service ) ) {
+					foreach ( $active_service as $serv ) {
+						echo "jQuery('." . esc_js( $serv ) . "').show();\n";
 					}
 				} else {
-					echo "jQuery('.".esc_js($active_service)."').show();\n";
+					echo "jQuery('." . esc_js( $active_service ) . "').show();\n";
 				}
 			} else {
 				echo "jQuery('.none').show();\n";
 			}
-			foreach ($method_objects as $object) {
-				if (is_callable(array($object, 'config_print_javascript_onready'))) {
+			foreach ( $method_objects as $object ) {
+				if ( is_callable( array( $object, 'config_print_javascript_onready' ) ) ) {
 					$object->config_print_javascript_onready();
 				}
 			}
@@ -3964,117 +4428,127 @@ class BackupPlus_Admin {
 		});
 		<?php
 	}
-	
+
 	/**
 	 * Return or display the HTML for the files selector widget
 	 *
-	 * @param  String		  $prefix                 Prefix for the ID
-	 * @param  Boolean		  $show_exclusion_options True or False for exclusion options
+	 * @param  String         $prefix                 Prefix for the ID
+	 * @param  Boolean        $show_exclusion_options True or False for exclusion options
 	 * @param  Boolean|String $include_more           $include_more can be (bool) or (string)"sometimes"
 	 * @param  Boolean        $echo_instead_of_return Pass true to display instead of return.
 	 *
 	 * @return String
 	 */
-	public function files_selector_widgetry($prefix = '', $show_exclusion_options = true, $include_more = true, $echo_instead_of_return = false) {
+	public function files_selector_widgetry( $prefix = '', $show_exclusion_options = true, $include_more = true, $echo_instead_of_return = false ) {
 
-		if (!$echo_instead_of_return) ob_start();
+		if ( ! $echo_instead_of_return ) {
+			ob_start();
+		}
 		global $backupplus;
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
-		if (!function_exists('get_mu_plugins')) include_once(ABSPATH.'wp-admin/includes/plugin.php');
+		if ( ! function_exists( 'get_mu_plugins' ) ) {
+			include_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
 		$mu_plugins = get_mu_plugins();
 
 		// The true (default value if non-existent) here has the effect of forcing a default of on.
-		$include_more_paths = BackupPlus_Options::get_backupplus_option('backupplus_include_more_path');
-		foreach ($backupable_entities as $key => $info) {
-			$included = (BackupPlus_Options::get_backupplus_option("backupplus_include_$key", apply_filters("backupplus_defaultoption_include_".$key, true))) ? 'checked="checked"' : "";
-			if ('others' == $key || 'uploads' == $key) {
+		$include_more_paths = BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path' );
+		foreach ( $backupable_entities as $key => $info ) {
+			$included = ( BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", apply_filters( 'backupplus_defaultoption_include_' . $key, true ) ) ) ? 'checked="checked"' : '';
+			if ( 'others' == $key || 'uploads' == $key ) {
 
-				$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="'.$key.'"' : '';
-			
+				$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="' . $key . '"' : '';
+
 				/* translators: %s: Server path. */
-				echo '<label '.(('others' == $key) ? 'title="'.esc_attr(sprintf(__('Your wp-content directory server path: %s', 'backupplus'), WP_CONTENT_DIR)).'" ' : '').' for=""'.esc_attr($prefix.'backupplus_include_'.$key).' class="backupplus_checkbox"><input class="backupplus_include_entity" id=""'.esc_attr($prefix.'backupplus_include_'.$key).' '.wp_kses($data_toggle_exclude_field, array()).' type="checkbox" name="backupplus_include_'.esc_attr($key).'" value="1" '.wp_kses($included, array()).'> '.
-							esc_html(('others' == $key) ? __('Any other directories found inside wp-content', 'backupplus') : $info['description']).
+				echo '<label ' . ( ( 'others' == $key ) ? 'title="' . esc_attr( sprintf( __( 'Your wp-content directory server path: %s', 'backupplus' ), WP_CONTENT_DIR ) ) . '" ' : '' ) . ' for=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' class="backupplus_checkbox"><input class="backupplus_include_entity" id=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' ' . wp_kses( $data_toggle_exclude_field, array() ) . ' type="checkbox" name="backupplus_include_' . esc_attr( $key ) . '" value="1" ' . wp_kses( $included, array() ) . '> ' .
+							esc_html( ( 'others' == $key ) ? __( 'Any other directories found inside wp-content', 'backupplus' ) : $info['description'] ) .
 						'</label>';
-				
-				if ($show_exclusion_options) {
-					$include_exclude = BackupPlus_Options::get_backupplus_option('backupplus_include_'.$key.'_exclude', ('others' == $key) ? BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE : BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE);
 
-					$display = ($included) ? 'class"backupplus_exclude_container' : 'class"backupplus-hidden backupplus_exclude_container style="display:none;"';
-					$exclude_container_class = $prefix.'backupplus_include_'.$key.'_exclude';
+				if ( $show_exclusion_options ) {
+					$include_exclude = BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . $key . '_exclude', ( 'others' == $key ) ? BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE : BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE );
+
+					$display                  = ( $included ) ? 'class"backupplus_exclude_container' : 'class"backupplus-hidden backupplus_exclude_container style="display:none;"';
+					$exclude_container_class  = $prefix . 'backupplus_include_' . $key . '_exclude';
 					$exclude_container_class .= '_container';
 
-					echo '<div id=""'.esc_attr($exclude_container_class).' '.wp_kses($display, array()).">";
+					echo '<div id=""' . esc_attr( $exclude_container_class ) . ' ' . wp_kses( $display, array() ) . '>';
 
-					echo '<label class="backupplus-exclude-label" for=""'.esc_attr($prefix.'backupplus_include_'.$key.'_exclude').'>'.esc_html(__('Exclude these from', 'backupplus').' '.$info['description']).':</label> <span class="backupplus-fs-italic">'.esc_html__('(the asterisk character matches zero or more characters)', 'backupplus').'</span>';
+					echo '<label class="backupplus-exclude-label" for=""' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '>' . esc_html( __( 'Exclude these from', 'backupplus' ) . ' ' . $info['description'] ) . ':</label> <span class="backupplus-fs-italic">' . esc_html__( '(the asterisk character matches zero or more characters)', 'backupplus' ) . '</span>';
 
-					echo '<input type="hidden" id=""'.esc_attr($prefix.'backupplus_include_'.$key.'_exclude').' name="'.esc_attr('backupplus_include_'.$key.'_exclude').'" value="'.esc_attr($include_exclude).'" />';
-					
+					echo '<input type="hidden" id=""' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . ' name="' . esc_attr( 'backupplus_include_' . $key . '_exclude' ) . '" value="' . esc_attr( $include_exclude ) . '" />';
+
 						global $backupplus;
 						$backupable_file_entities = $backupplus->get_backupable_file_entities();
 
-					if ('uploads' == $key) {
-						$path = BackupPlus_Manipulation_Functions::wp_normalize_path($backupable_file_entities['uploads']);
-					} elseif ('others' == $key) {
-						$path = BackupPlus_Manipulation_Functions::wp_normalize_path($backupable_file_entities['others']);
+					if ( 'uploads' == $key ) {
+						$path = BackupPlus_Manipulation_Functions::wp_normalize_path( $backupable_file_entities['uploads'] );
+					} elseif ( 'others' == $key ) {
+						$path = BackupPlus_Manipulation_Functions::wp_normalize_path( $backupable_file_entities['others'] );
 					}
 					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
-					echo $this->include_template('wp-admin/settings/file-backup-exclude.php', true, array(
-						'key' => $key,
-						'include_exclude' => $include_exclude,
-						'path' => $path,
-						'show_exclusion_options' => $show_exclusion_options,
-					));
+					echo $this->include_template(
+						'wp-admin/settings/file-backup-exclude.php',
+						true,
+						array(
+							'key'                    => $key,
+							'include_exclude'        => $include_exclude,
+							'path'                   => $path,
+							'show_exclusion_options' => $show_exclusion_options,
+						)
+					);
 					// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo '</div>';
 				}
-
 			} else {
 
-				if ('more' != $key || true === $include_more || ('sometimes' === $include_more && !empty($include_more_paths))) {
-				
-					$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="'.$key.'"' : '';
-					
+				if ( 'more' != $key || true === $include_more || ( 'sometimes' === $include_more && ! empty( $include_more_paths ) ) ) {
+
+					$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="' . $key . '"' : '';
+
 					$force_disabled = '';
-					if ('mu-plugins' == $key && !$mu_plugins) {
-						$force_disabled = 'data-force_disabled="1"';
-						$info['description'] .= ' ('.__('none present', 'backupplus').')';
+					if ( 'mu-plugins' == $key && ! $mu_plugins ) {
+						$force_disabled       = 'data-force_disabled="1"';
+						$info['description'] .= ' (' . __( 'none present', 'backupplus' ) . ')';
 					}
-				
-					echo '<label for=""'.esc_attr($prefix.'backupplus_include_'.$key).' '.((isset($info['htmltitle'])) ? ' title="'.esc_attr($info['htmltitle']).'"' : '').' class="backupplus_checkbox"><input class="backupplus_include_entity "'.wp_kses($data_toggle_exclude_field, array()).' id=""'.esc_attr($prefix.'backupplus_include_'.$key).' type="checkbox" name="'.esc_attr('backupplus_include_'.$key).'" value="1" '.wp_kses($included.' '.$force_disabled, array()).'>'.esc_html($info['description']);
+
+					echo '<label for=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' ' . ( ( isset( $info['htmltitle'] ) ) ? ' title="' . esc_attr( $info['htmltitle'] ) . '"' : '' ) . ' class="backupplus_checkbox"><input class="backupplus_include_entity "' . wp_kses( $data_toggle_exclude_field, array() ) . ' id=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' type="checkbox" name="' . esc_attr( 'backupplus_include_' . $key ) . '" value="1" ' . wp_kses( $included . ' ' . $force_disabled, array() ) . '>' . esc_html( $info['description'] );
 
 					echo '</label>';
 					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
-					echo apply_filters("backupplus_config_option_include_$key", '', $prefix, false);
+					echo apply_filters( "backupplus_config_option_include_$key", '', $prefix, false );
 					// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 				}
 			}
 		}
 
-		if (!$echo_instead_of_return) return ob_get_clean();
+		if ( ! $echo_instead_of_return ) {
+			return ob_get_clean();
+		}
 	}
 
 	/**
 	 * Output or echo HTML for an error condition relating to a remote storage method
 	 *
-	 * @param String  $text		  - the text of the message; this should already be escaped (no more is done)
+	 * @param String  $text       - the text of the message; this should already be escaped (no more is done)
 	 * @param String  $extraclass - a CSS class for the resulting DOM node
-	 * @param Integer $echo		  - if set, then the results will be echoed as well as returned
+	 * @param Integer $echo       - if set, then the results will be echoed as well as returned
 	 *
 	 * @return String - the results
 	 */
-	public function show_double_warning($text, $extraclass = '', $echo = true) {
+	public function show_double_warning( $text, $extraclass = '', $echo = true ) {
 
-		$ret = "<div class=\"error backupplusmethod $extraclass\"><p>$text</p></div>";
+		$ret  = "<div class=\"error backupplusmethod $extraclass\"><p>$text</p></div>";
 		$ret .= "<div class=\"notice error below-h2\"><p>$text</p></div>";
 
-		if ($echo) echo wp_kses_post($ret);
+		if ( $echo ) {
+			echo wp_kses_post( $ret );
+		}
 		return $ret;
-
 	}
 
-	public function optionfilter_split_every($value) {
-		return max(absint($value), BACKUPPLUS_SPLIT_MIN);
+	public function optionfilter_split_every( $value ) {
+		return max( absint( $value ), BACKUPPLUS_SPLIT_MIN );
 	}
 
 	/**
@@ -4086,37 +4560,38 @@ class BackupPlus_Admin {
 	 * @param Boolean $echo_instead_of_return whether the result should be echoed or returned
 	 * @return String                         any resulting message, if $echo_instead_of_return was set
 	 */
-	public function curl_check($service, $has_fallback = false, $extraclass = '', $echo_instead_of_return = true) {
+	public function curl_check( $service, $has_fallback = false, $extraclass = '', $echo_instead_of_return = true ) {
 
 		$ret = '';
 
 		// Check requirements
-		if (!function_exists("curl_init") || !function_exists('curl_exec')) {
+		if ( ! function_exists( 'curl_init' ) || ! function_exists( 'curl_exec' ) ) {
 			$ret .= $this->show_double_warning(
-				'<strong>'.__('Warning', 'backupplus').':</strong> '.
+				'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 				/* translators: 1: Service name, 2: Required module. */
-				sprintf(__('Your web server\'s PHP installation does not included a <strong>required</strong> (for %1$s) module (%2$s).', 'backupplus'), $service, 'Curl').' '.
-				__("Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus').' ',
+				sprintf( __( 'Your web server\'s PHP installation does not included a <strong>required</strong> (for %1$s) module (%2$s).', 'backupplus' ), $service, 'Curl' ) . ' ' .
+				__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ) . ' ',
 				$extraclass,
 				false
 			);
 		} else {
-			$curl_version = curl_version();
-			$curl_ssl_supported= ($curl_version['features'] & CURL_VERSION_SSL);
-			if (!$curl_ssl_supported) {
-				if ($has_fallback) {
-					$ret .= '<p><strong>'.__('Warning', 'backupplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'backupplus').' '.
+			$curl_version       = curl_version();
+			$curl_ssl_supported = ( $curl_version['features'] & CURL_VERSION_SSL );
+			if ( ! $curl_ssl_supported ) {
+				if ( $has_fallback ) {
+					$ret .= '<p><strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . __( "Your web server's PHP/Curl installation does not support https access.", 'backupplus' ) . ' ' .
 							/* translators: %s: Service Name. */
-							sprintf(__("Communications with %s will be unencrypted.", 'backupplus'), $service)
-								.' '.__("Ask your web host to install cURL with SSL support to enable encrypted communications.", 'backupplus').'</p>';
+							sprintf( __( 'Communications with %s will be unencrypted.', 'backupplus' ), $service )
+								. ' ' . __( 'Ask your web host to install cURL with SSL support to enable encrypted communications.', 'backupplus' ) . '</p>';
 				} else {
-					$ret .= $this->show_double_warning('<p><strong>'.__('Warning', 'backupplus').':</strong> '.__("Your web server's PHP/Curl installation does not support https access.", 'backupplus').' '
+					$ret .= $this->show_double_warning(
+						'<p><strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . __( "Your web server's PHP/Curl installation does not support https access.", 'backupplus' ) . ' '
 								/* translators: %s: Service Name. */
-								.sprintf(__("We cannot access %s without this support.", 'backupplus'), $service)
-								.' '.__("Please contact your web hosting provider's support.", 'backupplus').' '
+								. sprintf( __( 'We cannot access %s without this support.', 'backupplus' ), $service )
+								. ' ' . __( "Please contact your web hosting provider's support.", 'backupplus' ) . ' '
 								/* translators: %s: Service Name. */
-								.sprintf(__('%s requires Curl+https.', 'backupplus'), $service)
-								.' '.__("Please do not file any support requests; there is no alternative.", 'backupplus').'</p>',
+								. sprintf( __( '%s requires Curl+https.', 'backupplus' ), $service )
+								. ' ' . __( 'Please do not file any support requests; there is no alternative.', 'backupplus' ) . '</p>',
 						$extraclass,
 						false
 					);
@@ -4124,13 +4599,13 @@ class BackupPlus_Admin {
 			} else {
 				$ret .= '<p><em>'
 							/* translators: %s: Service Name. */
-							.sprintf(__("Good news: Your site's communications with %s can be encrypted.", 'backupplus'), $service)
-							.' '.__("If you see any errors to do with encryption, then look in the 'Expert Settings' for more help.", 'backupplus')
-						.'</em></p>';
+							. sprintf( __( "Good news: Your site's communications with %s can be encrypted.", 'backupplus' ), $service )
+							. ' ' . __( "If you see any errors to do with encryption, then look in the 'Expert Settings' for more help.", 'backupplus' )
+						. '</em></p>';
 			}
 		}
-		if ($echo_instead_of_return) {
-			echo wp_kses_post($ret);
+		if ( $echo_instead_of_return ) {
+			echo wp_kses_post( $ret );
 		} else {
 			return $ret;
 		}
@@ -4139,85 +4614,99 @@ class BackupPlus_Admin {
 	/**
 	 * Get backup information in HTML format for a specific backup
 	 *
-	 * @param Array		 $backup_history all backups history
-	 * @param String	 $key		     backup timestamp
-	 * @param String	 $nonce			 backup nonce (job ID)
-	 * @param Array|Null $job_data		 if an array, then use this as the job data (if null, then it will be fetched directly)
+	 * @param Array      $backup_history all backups history
+	 * @param String     $key            backup timestamp
+	 * @param String     $nonce          backup nonce (job ID)
+	 * @param Array|Null $job_data       if an array, then use this as the job data (if null, then it will be fetched directly)
 	 *
 	 * @return string HTML-formatted backup information
 	 */
-	public function raw_backup_info($backup_history, $key, $nonce, $job_data = null) {
+	public function raw_backup_info( $backup_history, $key, $nonce, $job_data = null ) {
 
 		global $backupplus;
 
-		$backup = $backup_history[$key];
+		$backup = $backup_history[ $key ];
 
-		$pretty_date = get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $key), 'M d, Y G:i');
+		$pretty_date = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $key ), 'M d, Y G:i' );
 
 		$rawbackup = "<h2 title=\"$key\">$pretty_date</h2>";
 
-		if (!empty($backup['label'])) $rawbackup .= '<span class="raw-backup-info">'.$backup['label'].'</span>';
+		if ( ! empty( $backup['label'] ) ) {
+			$rawbackup .= '<span class="raw-backup-info">' . $backup['label'] . '</span>';
+		}
 
-		if (null === $job_data) $job_data = empty($nonce) ? array() : $backupplus->jobdata_getarray($nonce);
-		
+		if ( null === $job_data ) {
+			$job_data = empty( $nonce ) ? array() : $backupplus->jobdata_getarray( $nonce );
+		}
+
 		$rawbackup .= '<hr>';
-		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="'.$key.'" '.(empty($backup['always_keep']) ? '' : 'checked ').'><label for="always_keep_this_backup">'.__('Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus').'</label>';
+		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="' . $key . '" ' . ( empty( $backup['always_keep'] ) ? '' : 'checked ' ) . '><label for="always_keep_this_backup">' . __( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ) . '</label>';
 
 		$rawbackup .= '<hr><p>';
 
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
 		$checksums = $backupplus->which_checksums();
 
-		foreach ($backupable_entities as $type => $info) {
-			if (!isset($backup[$type])) continue;
+		foreach ( $backupable_entities as $type => $info ) {
+			if ( ! isset( $backup[ $type ] ) ) {
+				continue;
+			}
 
-			$rawbackup .= $backupplus->printfile($info['description'], $backup, $type, $checksums, $job_data, true);
+			$rawbackup .= $backupplus->printfile( $info['description'], $backup, $type, $checksums, $job_data, true );
 		}
 
 		$total_size = 0;
-		foreach ($backup as $ekey => $files) {
-			if ('db' == strtolower(substr($ekey, 0, 2)) && '-size' != substr($ekey, -5, 5)) {
-				$rawbackup .= $backupplus->printfile(__('Database', 'backupplus'), $backup, $ekey, $checksums, $job_data, true);
+		foreach ( $backup as $ekey => $files ) {
+			if ( 'db' == strtolower( substr( $ekey, 0, 2 ) ) && '-size' != substr( $ekey, -5, 5 ) ) {
+				$rawbackup .= $backupplus->printfile( __( 'Database', 'backupplus' ), $backup, $ekey, $checksums, $job_data, true );
 			}
-			if (!isset($backupable_entities[$ekey]) && ('db' != substr($ekey, 0, 2) || '-size' == substr($ekey, -5, 5))) continue;
-			if (is_string($files)) $files = array($files);
-			foreach ($files as $findex => $file) {
-				$size_key = (0 == $findex) ? $ekey.'-size' : $ekey.$findex.'-size';
-				$total_size = (false === $total_size || !isset($backup[$size_key]) || !is_numeric($backup[$size_key])) ? false : $total_size + $backup[$size_key];
+			if ( ! isset( $backupable_entities[ $ekey ] ) && ( 'db' != substr( $ekey, 0, 2 ) || '-size' == substr( $ekey, -5, 5 ) ) ) {
+				continue;
+			}
+			if ( is_string( $files ) ) {
+				$files = array( $files );
+			}
+			foreach ( $files as $findex => $file ) {
+				$size_key   = ( 0 == $findex ) ? $ekey . '-size' : $ekey . $findex . '-size';
+				$total_size = ( false === $total_size || ! isset( $backup[ $size_key ] ) || ! is_numeric( $backup[ $size_key ] ) ) ? false : $total_size + $backup[ $size_key ];
 			}
 		}
 
-		$services = empty($backup['service']) ? array('none') : $backup['service'];
-		if (!is_array($services)) $services = array('none');
+		$services = empty( $backup['service'] ) ? array( 'none' ) : $backup['service'];
+		if ( ! is_array( $services ) ) {
+			$services = array( 'none' );
+		}
 
-		$rawbackup .= '<strong>'.__('Uploaded to:', 'backupplus').'</strong> ';
+		$rawbackup .= '<strong>' . __( 'Uploaded to:', 'backupplus' ) . '</strong> ';
 
 		$show_services = '';
-		foreach ($services as $serv) {
-			if ('none' == $serv || '' == $serv) {
+		foreach ( $services as $serv ) {
+			if ( 'none' == $serv || '' == $serv ) {
 				$add_none = true;
-			} elseif (isset($backupplus->backup_methods[$serv])) {
-				$show_services .= $show_services ? ', '.$backupplus->backup_methods[$serv] : $backupplus->backup_methods[$serv];
+			} elseif ( isset( $backupplus->backup_methods[ $serv ] ) ) {
+				$show_services .= $show_services ? ', ' . $backupplus->backup_methods[ $serv ] : $backupplus->backup_methods[ $serv ];
 			} else {
-				$show_services .= $show_services ? ', '.$serv : $serv;
+				$show_services .= $show_services ? ', ' . $serv : $serv;
 			}
 		}
-		if ('' == $show_services && $add_none) $show_services .= __('None', 'backupplus');
+		if ( '' == $show_services && $add_none ) {
+			$show_services .= __( 'None', 'backupplus' );
+		}
 
 		$rawbackup .= $show_services;
 
-		if (false !== $total_size) {
-			$rawbackup .= '</p><strong>'.__('Total backup size:', 'backupplus').'</strong> '.BackupPlus_Manipulation_Functions::convert_numeric_size_to_text($total_size).'<p>';
-		}
-		
-		$rawbackup .= '</p><hr><p><pre>'.print_r($backup, true).'</pre></p>';
-
-		if (!empty($job_data) && is_array($job_data)) {
-			$rawbackup .= '<p><pre>'.htmlspecialchars(print_r($job_data, true)).'</pre></p>';
+		if ( false !== $total_size ) {
+			$rawbackup .= '</p><strong>' . __( 'Total backup size:', 'backupplus' ) . '</strong> ' . BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_size ) . '<p>';
 		}
 
-		return esc_attr($rawbackup);
+		$rawbackup .= '</p><hr><p><pre>' . print_r( $backup, true ) . '</pre></p>';
+
+		if ( ! empty( $job_data ) && is_array( $job_data ) ) {
+			$rawbackup .= '<p><pre>' . htmlspecialchars( print_r( $job_data, true ) ) . '</pre></p>';
+		}
+
+		return esc_attr( $rawbackup );
 	}
 
 	/**
@@ -4230,26 +4719,26 @@ class BackupPlus_Admin {
 	 * @param array  $accept          Accepted archive names.
 	 * @return void - Display download button for DB backup.
 	 */
-	private function download_db_button($bkey, $key, $esc_pretty_date, $backup, $accept = array()) {
+	private function download_db_button( $bkey, $key, $esc_pretty_date, $backup, $accept = array() ) {
 
-		if (!empty($backup['meta_foreign']) && isset($accept[$backup['meta_foreign']])) {
-			$desc_source = $accept[$backup['meta_foreign']]['desc'];
+		if ( ! empty( $backup['meta_foreign'] ) && isset( $accept[ $backup['meta_foreign'] ] ) ) {
+			$desc_source = $accept[ $backup['meta_foreign'] ]['desc'];
 		} else {
-			$desc_source = __('unknown source', 'backupplus');
+			$desc_source = __( 'unknown source', 'backupplus' );
 		}
 
-		if ('db' == $bkey) {
-			if (empty($backup['meta_foreign'])) {
-				$dbt = esc_attr(__('Database', 'backupplus'));
+		if ( 'db' == $bkey ) {
+			if ( empty( $backup['meta_foreign'] ) ) {
+				$dbt = esc_attr( __( 'Database', 'backupplus' ) );
 			} else {
 				/* translators: %s: Database Source. */
-				$dbt = esc_attr(sprintf(__('Database (created by %s)', 'backupplus'), $desc_source));
+				$dbt = esc_attr( sprintf( __( 'Database (created by %s)', 'backupplus' ), $desc_source ) );
 			}
 		} else {
-			$dbt = __('External database', 'backupplus').' ('.substr($bkey, 2).')';
+			$dbt = __( 'External database', 'backupplus' ) . ' (' . substr( $bkey, 2 ) . ')';
 		}
 
-		$this->download_button($bkey, $key, 0, null, '', $dbt, $esc_pretty_date, '0');
+		$this->download_button( $bkey, $key, 0, null, '', $dbt, $esc_pretty_date, '0' );
 	}
 
 	/**
@@ -4262,67 +4751,79 @@ class BackupPlus_Admin {
 	 * @param String  $esc_pretty_date Escaped pretty date
 	 * @return Void - Display download buttons in existing backups table
 	 */
-	public function download_buttons($backup, $key, $accept, &$entities, $esc_pretty_date) {
+	public function download_buttons( $backup, $key, $accept, &$entities, $esc_pretty_date ) {
 		global $backupplus;
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
 		$first_entity = true;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- template
 
-		foreach ($backupable_entities as $type => $info) {
-			if (!empty($backup['meta_foreign']) && 'wpcore' != $type) continue;
+		foreach ( $backupable_entities as $type => $info ) {
+			if ( ! empty( $backup['meta_foreign'] ) && 'wpcore' != $type ) {
+				continue;
+			}
 
 			$ide = '';
-			
-			if (empty($backup['meta_foreign'])) {
-				$sdescrip = preg_replace('/ \(.*\)$/', '', $info['description']);
-				if (strlen($sdescrip) > 20 && isset($info['shortdescription'])) $sdescrip = $info['shortdescription'];
+
+			if ( empty( $backup['meta_foreign'] ) ) {
+				$sdescrip = preg_replace( '/ \(.*\)$/', '', $info['description'] );
+				if ( strlen( $sdescrip ) > 20 && isset( $info['shortdescription'] ) ) {
+					$sdescrip = $info['shortdescription'];
+				}
 			} else {
 				$info['description'] = 'WordPress';
 
-				if (isset($accept[$backup['meta_foreign']])) {
-					$desc_source = $accept[$backup['meta_foreign']]['desc'];
+				if ( isset( $accept[ $backup['meta_foreign'] ] ) ) {
+					$desc_source = $accept[ $backup['meta_foreign'] ]['desc'];
 					/* translators: %s: Backup Source. */
-					$ide .= sprintf(__('Backup created by: %s.', 'backupplus'), $accept[$backup['meta_foreign']]['desc']).' ';
+					$ide .= sprintf( __( 'Backup created by: %s.', 'backupplus' ), $accept[ $backup['meta_foreign'] ]['desc'] ) . ' ';
 				} else {
-					$desc_source = __('unknown source', 'backupplus');
+					$desc_source = __( 'unknown source', 'backupplus' );
 					/* translators: %s: Unknown Source. */
-					$ide .= __('Backup created by unknown source (%s) - cannot be restored.', 'backupplus').' ';
+					$ide .= __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ) . ' ';
 				}
 
 				/* translators: %s: Backup Source. */
-				$sdescrip = (empty($accept[$backup['meta_foreign']]['separatedb'])) ? sprintf(__('Files and database WordPress backup (created by %s)', 'backupplus'), $desc_source) : sprintf(__('Files backup (created by %s)', 'backupplus'), $desc_source);
+				$sdescrip = ( empty( $accept[ $backup['meta_foreign'] ]['separatedb'] ) ) ? sprintf( __( 'Files and database WordPress backup (created by %s)', 'backupplus' ), $desc_source ) : sprintf( __( 'Files backup (created by %s)', 'backupplus' ), $desc_source );
 			}
-			if (isset($backup[$type])) {
-				if (!is_array($backup[$type])) $backup[$type] = array($backup[$type]);
-				$howmanyinset = count($backup[$type]);
+			if ( isset( $backup[ $type ] ) ) {
+				if ( ! is_array( $backup[ $type ] ) ) {
+					$backup[ $type ] = array( $backup[ $type ] );
+				}
+				$howmanyinset   = count( $backup[ $type ] );
 				$expected_index = 0;
-				$index_missing = false;
-				$set_contents = '';
-				$entities .= "/$type=";
-				$whatfiles = $backup[$type];
-				ksort($whatfiles);
+				$index_missing  = false;
+				$set_contents   = '';
+				$entities      .= "/$type=";
+				$whatfiles      = $backup[ $type ];
+				ksort( $whatfiles );
 				$total_file_size = 0;
-				foreach ($whatfiles as $findex => $bfile) {
-					$set_contents .= ('' == $set_contents) ? $findex : ",$findex";
-					if ($findex != $expected_index) $index_missing = true;
-					$expected_index++;
+				foreach ( $whatfiles as $findex => $bfile ) {
+					$set_contents .= ( '' == $set_contents ) ? $findex : ",$findex";
+					if ( $findex != $expected_index ) {
+						$index_missing = true;
+					}
+					++$expected_index;
 
-					if ($howmanyinset > 0) {
-						if (!empty($backup[$type.(($findex > 0) ? $findex : '')."-size"]) && $findex < $howmanyinset) $total_file_size += $backup[$type.(($findex > 0) ? $findex : '')."-size"];
+					if ( $howmanyinset > 0 ) {
+						if ( ! empty( $backup[ $type . ( ( $findex > 0 ) ? $findex : '' ) . '-size' ] ) && $findex < $howmanyinset ) {
+							$total_file_size += $backup[ $type . ( ( $findex > 0 ) ? $findex : '' ) . '-size' ];
+						}
 					}
 				}
 
-				$ide .= __('Press here to download or browse', 'backupplus').' '.strtolower($info['description']);
+				$ide .= __( 'Press here to download or browse', 'backupplus' ) . ' ' . strtolower( $info['description'] );
 				/* translators: 1: Archive count, 2: Total size.*/
-				$ide .= ' '.sprintf(__('(%1$d archive(s) in set, total %2$s).', 'backupplus'), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
-				if ($index_missing) $ide .= ' '.__('You are missing one or more archives from this multi-archive set.', 'backupplus');
+				$ide .= ' ' . sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size ) );
+				if ( $index_missing ) {
+					$ide .= ' ' . __( 'You are missing one or more archives from this multi-archive set.', 'backupplus' );
+				}
 
-				$entities .= $set_contents.'/';
-				if (!empty($backup['meta_foreign'])) {
+				$entities .= $set_contents . '/';
+				if ( ! empty( $backup['meta_foreign'] ) ) {
 					$entities .= '/plugins=0//themes=0//uploads=0//others=0/';
 				}
 
-				$this->download_button($type, $key, 0, null, $ide, $sdescrip, $esc_pretty_date, $set_contents);
+				$this->download_button( $type, $key, 0, null, $ide, $sdescrip, $esc_pretty_date, $set_contents );
 			}
 		}
 	}
@@ -4333,135 +4834,152 @@ class BackupPlus_Admin {
 	 * @param Array $backup_history the backup history.
 	 * @return Array An array of download button data from the passed in backup history.
 	 */
-	public function get_download_buttons_data($backup_history) {
+	public function get_download_buttons_data( $backup_history ) {
 		global $backupplus;
-		
-		$accept = apply_filters('backupplus_accept_archivename', array());
-		if (!is_array($accept)) $accept = array();
 
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
+		$accept = apply_filters( 'backupplus_accept_archivename', array() );
+		if ( ! is_array( $accept ) ) {
+			$accept = array();
+		}
+
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
 		$button_data = array();
 
-		foreach ($backup_history as $key => $backup) {
-			$button_data[$key] = array(
+		foreach ( $backup_history as $key => $backup ) {
+			$button_data[ $key ] = array(
 				'downloads' => array(),
 			);
-			
+
 			// https://core.trac.wordpress.org/ticket/25331 explains why the following line is wrong
 			// $pretty_date = date_i18n('Y-m-d G:i',$key);
 			// Convert to blog time zone
 			// $pretty_date = get_date_from_gmt(gmdate('Y-m-d H:i:s', (int)$key), 'Y-m-d G:i');
-			$pretty_date = get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $key), 'M d, Y G:i');
-			
-			if (empty($backup['meta_foreign']) || !empty($accept[$backup['meta_foreign']]['separatedb'])) {
+			$pretty_date = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $key ), 'M d, Y G:i' );
 
-				if (isset($backup['db'])) {
+			if ( empty( $backup['meta_foreign'] ) || ! empty( $accept[ $backup['meta_foreign'] ]['separatedb'] ) ) {
+
+				if ( isset( $backup['db'] ) ) {
 					$entities = '/db=0/';
 
 					// Set a flag according to whether or not $backup['db'] ends in .crypt, then pick this up in the display of the decrypt field.
-					$db = is_array($backup['db']) ? $backup['db'][0] : $backup['db'];
-					if (BackupPlus_Encryption::is_file_encrypted($db)) $entities .= '/dbcrypted=1/';
-					$button_data[$key]['downloads']['db'] = array(
-						'pretty_date' => $pretty_date,
-						'entities' => $entities,
+					$db = is_array( $backup['db'] ) ? $backup['db'][0] : $backup['db'];
+					if ( BackupPlus_Encryption::is_file_encrypted( $db ) ) {
+						$entities .= '/dbcrypted=1/';
+					}
+					$button_data[ $key ]['downloads']['db'] = array(
+						'pretty_date'  => $pretty_date,
+						'entities'     => $entities,
 						'set_contents' => '0',
-						'title' => __('Database', 'backupplus'),
+						'title'        => __( 'Database', 'backupplus' ),
 					);
 				}
 
 				// External databases
-				foreach ($backup as $bkey => $binfo) {
-					if ('db' == $bkey || 'db' != substr($bkey, 0, 2) || '-size' == substr($bkey, -5, 5)) continue;
-					$entities = '/'.$bkey.'=0/';
-					$button_data[$key]['downloads'][$bkey] = array(
-						'pretty_date' => $pretty_date,
-						'entities' => $entities,
+				foreach ( $backup as $bkey => $binfo ) {
+					if ( 'db' == $bkey || 'db' != substr( $bkey, 0, 2 ) || '-size' == substr( $bkey, -5, 5 ) ) {
+						continue;
+					}
+					$entities                                  = '/' . $bkey . '=0/';
+					$button_data[ $key ]['downloads'][ $bkey ] = array(
+						'pretty_date'  => $pretty_date,
+						'entities'     => $entities,
 						'set_contents' => '0',
-						'title' => __('External database', 'backupplus').' ('.substr($bkey, 2).')',
+						'title'        => __( 'External database', 'backupplus' ) . ' (' . substr( $bkey, 2 ) . ')',
 					);
 				}
-
 			} else {
 				// Foreign without separate db
-				$entities = '/db=0/meta_foreign=1/';
-				$button_data[$key]['downloads']['db'] = array(
-					'pretty_date' => $pretty_date,
-					'entities' => $entities,
+				$entities                               = '/db=0/meta_foreign=1/';
+				$button_data[ $key ]['downloads']['db'] = array(
+					'pretty_date'  => $pretty_date,
+					'entities'     => $entities,
 					'set_contents' => '0',
-					'title' => __('Database', 'backupplus'),
+					'title'        => __( 'Database', 'backupplus' ),
 				);
 			}
 
-			if (!empty($backup['meta_foreign']) && !empty($accept[$backup['meta_foreign']]) && !empty($accept[$backup['meta_foreign']]['separatedb'])) {
-				$entities = '/db=0/meta_foreign=2/';
-				$button_data[$key]['downloads']['db'] = array(
-					'pretty_date' => $pretty_date,
-					'entities' => $entities,
+			if ( ! empty( $backup['meta_foreign'] ) && ! empty( $accept[ $backup['meta_foreign'] ] ) && ! empty( $accept[ $backup['meta_foreign'] ]['separatedb'] ) ) {
+				$entities                               = '/db=0/meta_foreign=2/';
+				$button_data[ $key ]['downloads']['db'] = array(
+					'pretty_date'  => $pretty_date,
+					'entities'     => $entities,
 					'set_contents' => '0',
-					'title' => __('Database', 'backupplus'),
+					'title'        => __( 'Database', 'backupplus' ),
 				);
 			}
 
-			foreach ($backupable_entities as $type => $info) {
-				if (!empty($backup['meta_foreign']) && 'wpcore' != $type) continue;
+			foreach ( $backupable_entities as $type => $info ) {
+				if ( ! empty( $backup['meta_foreign'] ) && 'wpcore' != $type ) {
+					continue;
+				}
 
 				$ide = '';
-				
-				if (empty($backup['meta_foreign'])) {
-					$sdescrip = preg_replace('/ \(.*\)$/', '', $info['description']);
-					if (strlen($sdescrip) > 20 && isset($info['shortdescription'])) $sdescrip = $info['shortdescription'];
+
+				if ( empty( $backup['meta_foreign'] ) ) {
+					$sdescrip = preg_replace( '/ \(.*\)$/', '', $info['description'] );
+					if ( strlen( $sdescrip ) > 20 && isset( $info['shortdescription'] ) ) {
+						$sdescrip = $info['shortdescription'];
+					}
 				} else {
 					$info['description'] = 'WordPress';
 
-					if (isset($accept[$backup['meta_foreign']])) {
-						$desc_source = $accept[$backup['meta_foreign']]['desc'];
+					if ( isset( $accept[ $backup['meta_foreign'] ] ) ) {
+						$desc_source = $accept[ $backup['meta_foreign'] ]['desc'];
 						/* translators: %s: Backup Source. */
-						$ide .= sprintf(__('Backup created by: %s.', 'backupplus'), $accept[$backup['meta_foreign']]['desc']).' ';
+						$ide .= sprintf( __( 'Backup created by: %s.', 'backupplus' ), $accept[ $backup['meta_foreign'] ]['desc'] ) . ' ';
 					} else {
-						$desc_source = __('unknown source', 'backupplus');
+						$desc_source = __( 'unknown source', 'backupplus' );
 						/* translators: %s: Unknown Source. */
-						$ide .= __('Backup created by unknown source (%s) - cannot be restored.', 'backupplus').' ';
+						$ide .= __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ) . ' ';
 					}
 
 					/* translators: %s: Backup Source. */
-					$sdescrip = (empty($accept[$backup['meta_foreign']]['separatedb'])) ? sprintf(__('Files and database WordPress backup (created by %s)', 'backupplus'), $desc_source) : sprintf(__('Files backup (created by %s)', 'backupplus'), $desc_source);
+					$sdescrip = ( empty( $accept[ $backup['meta_foreign'] ]['separatedb'] ) ) ? sprintf( __( 'Files and database WordPress backup (created by %s)', 'backupplus' ), $desc_source ) : sprintf( __( 'Files backup (created by %s)', 'backupplus' ), $desc_source );
 				}
-				if (isset($backup[$type])) {
-					if (!is_array($backup[$type])) $backup[$type] = array($backup[$type]);
-					$howmanyinset = count($backup[$type]);
+				if ( isset( $backup[ $type ] ) ) {
+					if ( ! is_array( $backup[ $type ] ) ) {
+						$backup[ $type ] = array( $backup[ $type ] );
+					}
+					$howmanyinset   = count( $backup[ $type ] );
 					$expected_index = 0;
-					$index_missing = false;
-					$set_contents = '';
-					$entities = "/$type=";
-					$whatfiles = $backup[$type];
-					ksort($whatfiles);
+					$index_missing  = false;
+					$set_contents   = '';
+					$entities       = "/$type=";
+					$whatfiles      = $backup[ $type ];
+					ksort( $whatfiles );
 					$total_file_size = 0;
-					foreach ($whatfiles as $findex => $bfile) {
-						$set_contents .= ('' == $set_contents) ? $findex : ",$findex";
-						if ($findex != $expected_index) $index_missing = true;
-						$expected_index++;
+					foreach ( $whatfiles as $findex => $bfile ) {
+						$set_contents .= ( '' == $set_contents ) ? $findex : ",$findex";
+						if ( $findex != $expected_index ) {
+							$index_missing = true;
+						}
+						++$expected_index;
 
-						if ($howmanyinset > 0) {
-							if (!empty($backup[$type.(($findex > 0) ? $findex : '')."-size"]) && $findex < $howmanyinset) $total_file_size += $backup[$type.(($findex > 0) ? $findex : '')."-size"];
+						if ( $howmanyinset > 0 ) {
+							if ( ! empty( $backup[ $type . ( ( $findex > 0 ) ? $findex : '' ) . '-size' ] ) && $findex < $howmanyinset ) {
+								$total_file_size += $backup[ $type . ( ( $findex > 0 ) ? $findex : '' ) . '-size' ];
+							}
 						}
 					}
 
-					$ide .= __('Press here to download or browse', 'backupplus').' '.strtolower($info['description']);
+					$ide .= __( 'Press here to download or browse', 'backupplus' ) . ' ' . strtolower( $info['description'] );
 					/* translators: 1: Archive count, 2: Total size.*/
-					$ide .= ' '.sprintf(__('(%1$d archive(s) in set, total %2$s).', 'backupplus'), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text($total_file_size));
-					if ($index_missing) $ide .= ' '.__('You are missing one or more archives from this multi-archive set.', 'backupplus');
+					$ide .= ' ' . sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size ) );
+					if ( $index_missing ) {
+						$ide .= ' ' . __( 'You are missing one or more archives from this multi-archive set.', 'backupplus' );
+					}
 
-					$entities .= $set_contents.'/';
-					if (!empty($backup['meta_foreign'])) {
+					$entities .= $set_contents . '/';
+					if ( ! empty( $backup['meta_foreign'] ) ) {
 						$entities .= '/plugins=0//themes=0//uploads=0//others=0/';
 					}
-					$button_data[$key]['downloads'][$type] = array(
-						'pretty_date' => $pretty_date,
-						'entities' => $entities,
+					$button_data[ $key ]['downloads'][ $type ] = array(
+						'pretty_date'  => $pretty_date,
+						'entities'     => $entities,
 						'set_contents' => $set_contents,
-						'title' => $sdescrip,
-						'ide' => $ide,
+						'title'        => $sdescrip,
+						'ide'          => $ide,
 					);
 				}
 			}
@@ -4481,16 +4999,16 @@ class BackupPlus_Admin {
 	 * @param bool   $simple_format Whether to display simple format or not. Default false.
 	 * @return string - Return HTML for date label.
 	 */
-	public function date_label($pretty_date, $key, $backup, $jobdata, $nonce, $simple_format = false) {
+	public function date_label( $pretty_date, $key, $backup, $jobdata, $nonce, $simple_format = false ) {
 
-		$pretty_date = $simple_format ? $pretty_date : '<div class="clear-right">'.$pretty_date.'</div>';
+		$pretty_date = $simple_format ? $pretty_date : '<div class="clear-right">' . $pretty_date . '</div>';
 
-		$ret = apply_filters('backupplus_showbackup_date', $pretty_date, $backup, $jobdata, (int) $key, $simple_format);
-		if (is_array($jobdata) && !empty($jobdata['resume_interval']) && (empty($jobdata['jobstatus']) || 'finished' != $jobdata['jobstatus'])) {
-			if ($simple_format) {
-				$ret .= ' '.__('(Not finished)', 'backupplus');
+		$ret = apply_filters( 'backupplus_showbackup_date', $pretty_date, $backup, $jobdata, (int) $key, $simple_format );
+		if ( is_array( $jobdata ) && ! empty( $jobdata['resume_interval'] ) && ( empty( $jobdata['jobstatus'] ) || 'finished' != $jobdata['jobstatus'] ) ) {
+			if ( $simple_format ) {
+				$ret .= ' ' . __( '(Not finished)', 'backupplus' );
 			} else {
-				$ret .= apply_filters('backupplus_msg_unfinishedbackup', "<br><span title=\"".esc_attr(__('If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes.', 'backupplus'))."\">".__('(Not finished)', 'backupplus').'</span>', $jobdata, $nonce);
+				$ret .= apply_filters( 'backupplus_msg_unfinishedbackup', '<br><span title="' . esc_attr( __( 'If you are seeing more backups than you expect, then it is probably because the deletion of old backup sets does not happen until a fresh backup completes.', 'backupplus' ) ) . '">' . __( '(Not finished)', 'backupplus' ) . '</span>', $jobdata, $nonce );
 			}
 		}
 		return $ret;
@@ -4509,14 +5027,13 @@ class BackupPlus_Admin {
 	 * @param string $set_contents     Custom data attribute called set.
 	 * @return void - Display download button for backups.
 	 */
-	public function download_button($type, $backup_timestamp, $findex, $info, $title, $pdescrip, $esc_pretty_date, $set_contents) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
-	
-		$wp_nonce = wp_create_nonce('backupplus_download');
-		
+	public function download_button( $type, $backup_timestamp, $findex, $info, $title, $pdescrip, $esc_pretty_date, $set_contents ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
+
+		$wp_nonce = wp_create_nonce( 'backupplus_download' );
+
 		// backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async)
-			echo '<button data-wp_nonce="'.esc_attr($wp_nonce).'" data-backup_timestamp="'.esc_attr($backup_timestamp).'" data-what="'.esc_attr($type).'" data-set_contents="'.esc_attr($set_contents).'" data-prettydate="'.esc_attr($esc_pretty_date).'" type="button" class="button backupplus_download_button '.esc_attr("uddownloadform_{$type}_{$backup_timestamp}_{$findex}").'" title="'.esc_attr($title).'">'.esc_html($pdescrip).'</button>';
+			echo '<button data-wp_nonce="' . esc_attr( $wp_nonce ) . '" data-backup_timestamp="' . esc_attr( $backup_timestamp ) . '" data-what="' . esc_attr( $type ) . '" data-set_contents="' . esc_attr( $set_contents ) . '" data-prettydate="' . esc_attr( $esc_pretty_date ) . '" type="button" class="button backupplus_download_button ' . esc_attr( "uddownloadform_{$type}_{$backup_timestamp}_{$findex}" ) . '" title="' . esc_attr( $title ) . '">' . esc_html( $pdescrip ) . '</button>';
 		// onclick="'."return backupplus_downloader('uddlstatus_', '$backup_timestamp', '$type', '.ud_downloadstatus', '$set_contents', '$esc_pretty_date', true)".'"
-		
 	}
 
 	/**
@@ -4528,19 +5045,19 @@ class BackupPlus_Admin {
 	 * @param string $entities    Entities backed-up in this backup.
 	 * @return void - Display 'Restore' button.
 	 */
-	public function restore_button($backup, $key, $pretty_date, $entities = '') {
+	public function restore_button( $backup, $key, $pretty_date, $entities = '' ) {
 		?>
 		<div class="restore-button">
 		<?php
 
-		if ($entities) {
+		if ( $entities ) {
 			$show_data = $pretty_date;
-			if (isset($backup['native']) && false == $backup['native']) {
-				$show_data .= ' '.__('(backup set imported from remote location)', 'backupplus');
+			if ( isset( $backup['native'] ) && false == $backup['native'] ) {
+				$show_data .= ' ' . __( '(backup set imported from remote location)', 'backupplus' );
 			}
 			?>
-			<button data-showdata="<?php echo esc_attr($show_data);?>" data-backup_timestamp="<?php echo esc_attr($key);?>" data-entities="<?php echo esc_attr($entities);?>" title="<?php esc_attr_e('After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus');?>" type="button" class="button button-primary choose-components-button">
-				<?php esc_html_e('Restore', 'backupplus');?>
+			<button data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
+				<?php esc_html_e( 'Restore', 'backupplus' ); ?>
 			</button>
 			<?php
 		}
@@ -4552,65 +5069,77 @@ class BackupPlus_Admin {
 	/**
 	 * Display HTML for the 'Upload' button for a particular backup in the 'Existing backups' tab
 	 *
-	 * @param Integer	 $backup_time - backup timestamp (epoch time)
-	 * @param String	 $nonce       - backup nonce
-	 * @param Array		 $backup      - backup information array
-	 * @param Null|Array $jobdata	  - if not null, then use as the job data instead of fetching
+	 * @param Integer    $backup_time - backup timestamp (epoch time)
+	 * @param String     $nonce       - backup nonce
+	 * @param Array      $backup      - backup information array
+	 * @param Null|Array $jobdata     - if not null, then use as the job data instead of fetching
 	 *
 	 * @return Void - Display 'Upload' button in existing backup table.
 	 */
-	public function upload_button($backup_time, $nonce, $backup, $jobdata = null) {
+	public function upload_button( $backup_time, $nonce, $backup, $jobdata = null ) {
 		global $backupplus;
 
 		// Check the job is not still running.
-		if (null === $jobdata) $jobdata = $backupplus->jobdata_getarray($nonce);
-		
-		if (!empty($jobdata) && 'finished' != $jobdata['jobstatus']) return '';
+		if ( null === $jobdata ) {
+			$jobdata = $backupplus->jobdata_getarray( $nonce );
+		}
+
+		if ( ! empty( $jobdata ) && 'finished' != $jobdata['jobstatus'] ) {
+			return '';
+		}
 
 		// Check that the user has remote storage setup.
-		$services = (array) $backupplus->just_one($backupplus->get_canonical_service_list());
-		if (empty($services)) return '';
+		$services = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+		if ( empty( $services ) ) {
+			return '';
+		}
 
 		$show_upload = false;
 
 		// Check that the backup has not already been sent to remote storage before.
-		if (empty($backup['service']) || array('none') == $backup['service'] || array('') == $backup['service'] || 'none' == $backup['service']) {
+		if ( empty( $backup['service'] ) || array( 'none' ) == $backup['service'] || array( '' ) == $backup['service'] || 'none' == $backup['service'] ) {
 			$show_upload = true;
-		// If it has been uploaded then check if there are any new remote storage options that it has not yet been sent to.
-		} elseif (!empty($backup['service']) && array('none') != $backup['service'] && array('') != $backup['service'] && 'none' != $backup['service']) {
-			
-			foreach ($services as $key => $value) {
-				if (is_string($backup['service'])) $backup['service'] = array($backup['service']);
-				if (in_array($value, $backup['service'])) unset($services[$key]);
+			// If it has been uploaded then check if there are any new remote storage options that it has not yet been sent to.
+		} elseif ( ! empty( $backup['service'] ) && array( 'none' ) != $backup['service'] && array( '' ) != $backup['service'] && 'none' != $backup['service'] ) {
+
+			foreach ( $services as $key => $value ) {
+				if ( is_string( $backup['service'] ) ) {
+					$backup['service'] = array( $backup['service'] );
+				}
+				if ( in_array( $value, $backup['service'] ) ) {
+					unset( $services[ $key ] );
+				}
 			}
 
-			if (!empty($services)) $show_upload = true;
+			if ( ! empty( $services ) ) {
+				$show_upload = true;
+			}
 		}
 
-		if ($show_upload) {
-			
-			$backup_local = $this->check_backup_is_complete($backup, false, true);
+		if ( $show_upload ) {
 
-			if ($backup_local) {
-				$service_list = '';
+			$backup_local = $this->check_backup_is_complete( $backup, false, true );
+
+			if ( $backup_local ) {
+				$service_list         = '';
 				$service_list_display = '';
-				$is_first_service = true;
-				
-				foreach ($services as $key => $service) {
-					if (!$is_first_service) {
-						$service_list .= ',';
+				$is_first_service     = true;
+
+				foreach ( $services as $key => $service ) {
+					if ( ! $is_first_service ) {
+						$service_list         .= ',';
 						$service_list_display .= ', ';
 					}
-					$service_list .= $service;
-					$service_list_display .= $backupplus->backup_methods[$service];
+					$service_list         .= $service;
+					$service_list_display .= $backupplus->backup_methods[ $service ];
 
 					$is_first_service = false;
 				}
 
 				?>
 				<div class="backupplus-upload">
-					<button data-nonce="<?php echo esc_attr($nonce);?>" data-key="<?php echo esc_attr($backup_time);?>" data-services="<?php echo esc_attr($service_list);?>" title="<?php echo esc_attr(__('After pressing this button, you can select where to upload your backup from a list of your currently saved remote storage locations', 'backupplus').' ('.$service_list_display.')');?>" type="button" class="button button-primary backupplus-upload-link">
-						<?php esc_html_e('Upload', 'backupplus');?>
+					<button data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" data-services="<?php echo esc_attr( $service_list ); ?>" title="<?php echo esc_attr( __( 'After pressing this button, you can select where to upload your backup from a list of your currently saved remote storage locations', 'backupplus' ) . ' (' . $service_list_display . ')' ); ?>" type="button" class="button button-primary backupplus-upload-link">
+						<?php esc_html_e( 'Upload', 'backupplus' ); ?>
 					</button>
 				</div>
 				<?php
@@ -4624,19 +5153,19 @@ class BackupPlus_Admin {
 	 * Display HTML for the 'Delete' button for a particular backup in the 'Existing backups' tab
 	 *
 	 * @param Integer $backup_time - backup timestamp (epoch time)
-	 * @param String  $nonce	   - backup nonce
-	 * @param Array	  $backup	   - backup information array
+	 * @param String  $nonce       - backup nonce
+	 * @param Array   $backup      - backup information array
 	 *
 	 * @return Void - Display delete button for backup.
 	 */
-	public function delete_button($backup_time, $nonce, $backup) {
+	public function delete_button( $backup_time, $nonce, $backup ) {
 		global $backupplus;
-		$services = $backupplus->get_canonical_service_list($backup['service']);
-		$sval = array_diff($services, array('email')) ? 1 : 0;
+		$services = $backupplus->get_canonical_service_list( $backup['service'] );
+		$sval     = array_diff( $services, array( 'email' ) ) ? 1 : 0;
 		?>
-		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr($sval);?>">
-			<a data-hasremote="<?php echo esc_attr($sval);?>" data-nonce="<?php echo esc_attr($nonce);?>" data-key="<?php echo esc_attr($backup_time);?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url(BackupPlus::get_current_clean_url());?>" title="<?php esc_attr_e('Delete this backup set', 'backupplus');?>">
-				<?php esc_html_e('Delete', 'backupplus');?>
+		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr( $sval ); ?>">
+			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
+				<?php esc_html_e( 'Delete', 'backupplus' ); ?>
 			</a>
 		</div>
 		<?php
@@ -4648,16 +5177,16 @@ class BackupPlus_Admin {
 	 * @param array $backup Backup instance.
 	 * @return void - Display 'View Log' button.
 	 */
-	public function log_button($backup) {
+	public function log_button( $backup ) {
 		global $backupplus;
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if (isset($backup['nonce']) && preg_match("/^[0-9a-f]{12}$/", $backup['nonce']) && is_readable($backupplus_dir.'/log.'.$backup['nonce'].'.txt')) {
+		if ( isset( $backup['nonce'] ) && preg_match( '/^[0-9a-f]{12}$/', $backup['nonce'] ) && is_readable( $backupplus_dir . '/log.' . $backup['nonce'] . '.txt' ) ) {
 			$nval = $backup['nonce'];
-			$url = BackupPlus_Options::admin_page()."?page=backupplus&action=downloadlog&amp;backupplus_backup_nonce=$nval";
+			$url  = BackupPlus_Options::admin_page() . "?page=backupplus&action=downloadlog&amp;backupplus_backup_nonce=$nval";
 			?>
 			<div style="clear:none;" class="backupplus-viewlogdiv">
-					<a class="button no-decoration backupplus-log-link" href="<?php echo esc_attr($url);?>" data-jobid="<?php echo esc_attr($nval);?>">
-						<?php esc_html_e('View Log', 'backupplus');?>
+					<a class="button no-decoration backupplus-log-link" href="<?php echo esc_attr( $url ); ?>" data-jobid="<?php echo esc_attr( $nval ); ?>">
+						<?php esc_html_e( 'View Log', 'backupplus' ); ?>
 					</a>
 					<!--
 					<form action="$url" method="get">
@@ -4683,37 +5212,45 @@ class BackupPlus_Admin {
 	 *
 	 * @return boolean - returns true if the backup is complete and if specified is found on the local system otherwise false
 	 */
-	public function check_backup_is_complete($backup, $full_backup, $local) {
+	public function check_backup_is_complete( $backup, $full_backup, $local ) {
 
 		global $backupplus;
 
-		if (empty($backup)) return false;
+		if ( empty( $backup ) ) {
+			return false;
+		}
 
-		$entities = $backupplus->get_backupable_file_entities(true, true);
+		$entities = $backupplus->get_backupable_file_entities( true, true );
 
 		// Add the database to the entities array ready to loop over
 		$entities['db'] = '';
 
-		foreach ($entities as $key => $info) {
-			if (!BackupPlus_Options::get_backupplus_option("backupplus_include_$key", false)) {
-				unset($entities[$key]);
+		foreach ( $entities as $key => $info ) {
+			if ( ! BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", false ) ) {
+				unset( $entities[ $key ] );
 			}
 		}
-		
-		$backupplus_dir = trailingslashit($backupplus->backups_dir_location());
 
-		foreach ($entities as $type => $info) {
+		$backupplus_dir = trailingslashit( $backupplus->backups_dir_location() );
 
-			if ($full_backup) {
-				if (BackupPlus_Options::get_backupplus_option("backupplus_include_$type", false) && !isset($backup[$type])) return false;
+		foreach ( $entities as $type => $info ) {
+
+			if ( $full_backup ) {
+				if ( BackupPlus_Options::get_backupplus_option( "backupplus_include_$type", false ) && ! isset( $backup[ $type ] ) ) {
+					return false;
+				}
 			}
 
-			if (!isset($backup[$type])) return false;
+			if ( ! isset( $backup[ $type ] ) ) {
+				return false;
+			}
 
-			if ($local) {
+			if ( $local ) {
 				// Cast this to an array so that a warning is not thrown when we encounter a Database.
-				foreach ((array) $backup[$type] as $value) {
-					if (!file_exists($backupplus_dir . DIRECTORY_SEPARATOR . $value)) return false;
+				foreach ( (array) $backup[ $type ] as $value ) {
+					if ( ! file_exists( $backupplus_dir . DIRECTORY_SEPARATOR . $value ) ) {
+						return false;
+					}
 				}
 			}
 		}
@@ -4729,52 +5266,55 @@ class BackupPlus_Admin {
 	 *
 	 * @return array         - the modified jobdata
 	 */
-	public function upload_local_backup_jobdata($jobdata, $options) {
+	public function upload_local_backup_jobdata( $jobdata, $options ) {
 		global $backupplus;
 
-		if (!is_array($jobdata)) return $jobdata;
-		
+		if ( ! is_array( $jobdata ) ) {
+			return $jobdata;
+		}
+
 		$backup_history = BackupPlus_Backup_History::get_history();
-		$services = !empty($options['services']) ? $options['services'] : array();
-		$backup = $backup_history[$options['use_timestamp']];
+		$services       = ! empty( $options['services'] ) ? $options['services'] : array();
+		$backup         = $backup_history[ $options['use_timestamp'] ];
 
 		/*
 			The initial job data is not set up in a key value array instead it is set up so key "x" is the name of the key and then key "y" is the value.
 			e.g array[0] = 'backup_name' array[1] = 'my_backup'
 		*/
-		$jobstatus_key = array_search('jobstatus', $jobdata) + 1;
-		$backup_time_key = array_search('backup_time', $jobdata) + 1;
-		$backup_database_key = array_search('backup_database', $jobdata) + 1;
-		$backup_files_key = array_search('backup_files', $jobdata) + 1;
-		$service_key = array_search('service', $jobdata) + 1;
+		$jobstatus_key       = array_search( 'jobstatus', $jobdata ) + 1;
+		$backup_time_key     = array_search( 'backup_time', $jobdata ) + 1;
+		$backup_database_key = array_search( 'backup_database', $jobdata ) + 1;
+		$backup_files_key    = array_search( 'backup_files', $jobdata ) + 1;
+		$service_key         = array_search( 'service', $jobdata ) + 1;
 
-		$db_backups = $jobdata[$backup_database_key];
-		$db_backup_info = $backupplus->update_database_jobdata($db_backups, $backup);
-		$file_backups = $backupplus->update_files_jobdata($backup);
-		
+		$db_backups     = $jobdata[ $backup_database_key ];
+		$db_backup_info = $backupplus->update_database_jobdata( $db_backups, $backup );
+		$file_backups   = $backupplus->update_files_jobdata( $backup );
+
 		// Next we need to build the services array using the remote storage destinations the user has selected to upload this backup set to
 		$selected_services = array();
-		if (is_array($services)) {
-			foreach ($services as $storage_info) {
+		if ( is_array( $services ) ) {
+			foreach ( $services as $storage_info ) {
 				$selected_services[] = $storage_info['value'];
 			}
 		} else {
-			$selected_services = array($services);
+			$selected_services = array( $services );
 		}
-		
-		$jobdata[$jobstatus_key] = 'clouduploading';
-		$jobdata[$backup_time_key] = $options['use_timestamp'];
-		$jobdata[$backup_files_key] = 'finished';
-		$jobdata[] = 'backup_files_array';
-		$jobdata[] = $file_backups;
-		$jobdata[] = 'blog_name';
-		$jobdata[] = $db_backup_info['blog_name'];
-		$jobdata[$backup_database_key] = $db_backup_info['db_backups'];
-		$jobdata[] = 'local_upload';
-		$jobdata[] = true;
-		if (!empty($selected_services)) $jobdata[$service_key] = $selected_services;
-		
-		
+
+		$jobdata[ $jobstatus_key ]       = 'clouduploading';
+		$jobdata[ $backup_time_key ]     = $options['use_timestamp'];
+		$jobdata[ $backup_files_key ]    = 'finished';
+		$jobdata[]                       = 'backup_files_array';
+		$jobdata[]                       = $file_backups;
+		$jobdata[]                       = 'blog_name';
+		$jobdata[]                       = $db_backup_info['blog_name'];
+		$jobdata[ $backup_database_key ] = $db_backup_info['db_backups'];
+		$jobdata[]                       = 'local_upload';
+		$jobdata[]                       = true;
+		if ( ! empty( $selected_services ) ) {
+			$jobdata[ $service_key ] = $selected_services;
+		}
+
 		return $jobdata;
 	}
 
@@ -4787,13 +5327,13 @@ class BackupPlus_Admin {
 	 *
 	 * @return string             - the new filename or the original if the blog name from the job data is not set
 	 */
-	public function upload_local_backup_name($backup_name, $use_time, $blog_name) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
+	public function upload_local_backup_name( $backup_name, $use_time, $blog_name ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
 		global $backupplus;
 
-		$backup_blog_name = $backupplus->jobdata_get('blog_name', '');
+		$backup_blog_name = $backupplus->jobdata_get( 'blog_name', '' );
 
-		if ('' != $blog_name && '' != $backup_blog_name) {
-			return str_replace($blog_name, $backup_blog_name, $backup_name);
+		if ( '' != $blog_name && '' != $backup_blog_name ) {
+			return str_replace( $blog_name, $backup_blog_name, $backup_name );
 		}
 
 		return $backup_name;
@@ -4808,31 +5348,41 @@ class BackupPlus_Admin {
 	public function prepare_restore() {
 
 		global $backupplus;
-		$request_job_id = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'job_id');
+		$request_job_id = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'job_id' );
 		// on restore start job_id is empty but if we needed file system permissions or this is a resumption then we have already started a job so reuse it
-		$restore_job_id = empty($request_job_id) ? false : stripslashes($request_job_id);
-		
-		if (false !== $restore_job_id && !preg_match('/^[0-9a-f]+$/', $restore_job_id)) die('Invalid request (restore_job_id).');
+		$restore_job_id = empty( $request_job_id ) ? false : stripslashes( $request_job_id );
 
-		if (isset($_REQUEST['action']) && 'backupplus_ajaxrestore_continue' === $_REQUEST['action']) { // unlike backupplus_ajaxrestore which requires nonce to start a new restoration, backupplus_ajaxrestore_continue doesn't require nonces at all so additional checks are required
-			$restore_in_progress = get_site_option('backupplus_restore_in_progress');
-			if (empty($restore_in_progress) || !$restore_job_id || $restore_job_id !== $restore_in_progress) die; // continuation requires a job ID, and if it's not presented then just abort without showing anything
+		if ( false !== $restore_job_id && ! preg_match( '/^[0-9a-f]+$/', $restore_job_id ) ) {
+			die( 'Invalid request (restore_job_id).' );
+		}
+
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_ajaxrestore_continue' === $_REQUEST['action'] ) { // unlike backupplus_ajaxrestore which requires nonce to start a new restoration, backupplus_ajaxrestore_continue doesn't require nonces at all so additional checks are required
+			$restore_in_progress = get_site_option( 'backupplus_restore_in_progress' );
+			if ( empty( $restore_in_progress ) || ! $restore_job_id || $restore_job_id !== $restore_in_progress ) {
+				die; // continuation requires a job ID, and if it's not presented then just abort without showing anything
+			}
 		}
 
 		// Set up nonces, log files etc.
-		$backupplus->initiate_restore_job($restore_job_id);
-		
+		$backupplus->initiate_restore_job( $restore_job_id );
+
 		// If this is the start of a restore then get the restore data from the posted data and put it into jobdata.
-		if (isset($_REQUEST['action']) && 'backupplus_restore' == $_REQUEST['action']) {
-			
-			if (empty($restore_job_id)) {
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_restore' == $_REQUEST['action'] ) {
+
+			if ( empty( $restore_job_id ) ) {
 				$jobdata_to_save = array();
-				foreach ($_REQUEST as $key => $value) {
-					if (in_array($key, array('backupplus_age_identity', 'backupplus_age_key_passphrase'), true)) continue;
-					if (false !== strpos($key, 'backupplus_') || 'backup_timestamp' == $key || 'meta_foreign' == $key) {
-						if ('backupplus_restorer_restore_options' == $key) parse_str(stripslashes($value), $value);
-						if (is_array($value)) unset($value['backupplus_age_identity'], $value['backupplus_age_key_passphrase']);
-						$jobdata_to_save[$key] = $value;
+				foreach ( $_REQUEST as $key => $value ) {
+					if ( in_array( $key, array( 'backupplus_age_identity', 'backupplus_age_key_passphrase' ), true ) ) {
+						continue;
+					}
+					if ( false !== strpos( $key, 'backupplus_' ) || 'backup_timestamp' == $key || 'meta_foreign' == $key ) {
+						if ( 'backupplus_restorer_restore_options' == $key ) {
+							parse_str( stripslashes( $value ), $value );
+						}
+						if ( is_array( $value ) ) {
+							unset( $value['backupplus_age_identity'], $value['backupplus_age_key_passphrase'] );
+						}
+						$jobdata_to_save[ $key ] = $value;
 					}
 				}
 
@@ -4842,149 +5392,155 @@ class BackupPlus_Admin {
 					'themes',
 				);
 
-				foreach ($selective_restore_types as $type) {
-					if (isset($jobdata_to_save['backupplus_restorer_restore_options']['backupplus_restore_'.$type.'_options']) && !empty($jobdata_to_save['backupplus_restorer_restore_options']['backupplus_restore_'.$type.'_options'])) {
-					
-						$restore_entities_options = $jobdata_to_save['backupplus_restorer_restore_options']['backupplus_restore_'.$type.'_options'];
-						
+				foreach ( $selective_restore_types as $type ) {
+					if ( isset( $jobdata_to_save['backupplus_restorer_restore_options'][ 'backupplus_restore_' . $type . '_options' ] ) && ! empty( $jobdata_to_save['backupplus_restorer_restore_options'][ 'backupplus_restore_' . $type . '_options' ] ) ) {
+
+						$restore_entities_options = $jobdata_to_save['backupplus_restorer_restore_options'][ 'backupplus_restore_' . $type . '_options' ];
+
 						$include_unspecified_entities = false;
-						$entities_to_restore = array();
-						$entities_to_skip = array();
-	
-						foreach ($restore_entities_options as $entity) {
-							if ('udp_all_other_'.$type == $entity) {
+						$entities_to_restore          = array();
+						$entities_to_skip             = array();
+
+						foreach ( $restore_entities_options as $entity ) {
+							if ( 'udp_all_other_' . $type == $entity ) {
 								$include_unspecified_entities = true;
-							} elseif (substr($entity, 0, strlen('udp-skip-'.$type)) == 'udp-skip-'.$type) {
-								$entities_to_skip[] = substr($entity, strlen('udp-skip-'.$type) + 1);
+							} elseif ( substr( $entity, 0, strlen( 'udp-skip-' . $type ) ) == 'udp-skip-' . $type ) {
+								$entities_to_skip[] = substr( $entity, strlen( 'udp-skip-' . $type ) + 1 );
 							} else {
 								$entities_to_restore[] = $entity;
 							}
 						}
-	
-						$jobdata_to_save['backupplus_restorer_restore_options']['include_unspecified_'.$type] = $include_unspecified_entities;
-						$jobdata_to_save['backupplus_restorer_restore_options'][$type.'_to_restore'] = $entities_to_restore;
-						$jobdata_to_save['backupplus_restorer_restore_options'][$type.'_to_skip'] = $entities_to_skip;
-						unset($jobdata_to_save['backupplus_restorer_restore_options']['backupplus_restore_'.$type.'_options']);
+
+						$jobdata_to_save['backupplus_restorer_restore_options'][ 'include_unspecified_' . $type ] = $include_unspecified_entities;
+						$jobdata_to_save['backupplus_restorer_restore_options'][ $type . '_to_restore' ]          = $entities_to_restore;
+						$jobdata_to_save['backupplus_restorer_restore_options'][ $type . '_to_skip' ]             = $entities_to_skip;
+						unset( $jobdata_to_save['backupplus_restorer_restore_options'][ 'backupplus_restore_' . $type . '_options' ] );
 					}
 				}
 
-				$backupplus->jobdata_set_multi($jobdata_to_save);
+				$backupplus->jobdata_set_multi( $jobdata_to_save );
 
 				// Use a site option, as otherwise on multisite when all the array of options is updated via BackupPlus_Options::update_site_option(), it will over-write any restored UD options from the backup
-				update_site_option('backupplus_restore_in_progress', $backupplus->nonce);
+				update_site_option( 'backupplus_restore_in_progress', $backupplus->nonce );
 			}
 		}
 
 		// If this is the start of an ajax restore then end execution here so it can then be booted over ajax
-		if (isset($_REQUEST['backupplus_ajax_restore']) && 'start_ajax_restore' == $_REQUEST['backupplus_ajax_restore']) {
+		if ( isset( $_REQUEST['backupplus_ajax_restore'] ) && 'start_ajax_restore' == $_REQUEST['backupplus_ajax_restore'] ) {
 			// return to prevent any more code from running
 			return $this->prepare_ajax_restore();
 
-		} elseif (isset($_REQUEST['backupplus_ajax_restore']) && 'continue_ajax_restore' == $_REQUEST['backupplus_ajax_restore']) {
+		} elseif ( isset( $_REQUEST['backupplus_ajax_restore'] ) && 'continue_ajax_restore' == $_REQUEST['backupplus_ajax_restore'] ) {
 			// If we enter here then in order to restore we needed to require the filesystem credentials we should save these before returning back to the browser and load them back after the AJAX call, this prevents us asking for the filesystem credentials again
 			$filesystem_credentials = array(
-				'hostname' => '',
-				'username' => '',
-				'password' => '',
+				'hostname'        => '',
+				'username'        => '',
+				'password'        => '',
 				'connection_type' => '',
-				'upgrade' => '',
+				'upgrade'         => '',
 			);
 
 			$credentials_found = false;
 
-			foreach ($_REQUEST as $key => $value) {
-				if (array_key_exists($key, $filesystem_credentials)) {
-					$filesystem_credentials[$key] = stripslashes($value);
-					$credentials_found = true;
+			foreach ( $_REQUEST as $key => $value ) {
+				if ( array_key_exists( $key, $filesystem_credentials ) ) {
+					$filesystem_credentials[ $key ] = stripslashes( $value );
+					$credentials_found              = true;
 				}
 			}
 
-			if ($credentials_found) $backupplus->jobdata_set('filesystem_credentials', $filesystem_credentials);
+			if ( $credentials_found ) {
+				$backupplus->jobdata_set( 'filesystem_credentials', $filesystem_credentials );
+			}
 
 			// return to prevent any more code from running
 			return $this->prepare_ajax_restore();
 		}
 
-		if (!empty($_REQUEST['backupplus_ajax_restore'])) add_filter('backupplus_logline', array($this, 'backupplus_logline'), 10, 5);
-		
-		$is_continuation = ('backupplus_ajaxrestore_continue' == $_REQUEST['action']) ? true : false;
+		if ( ! empty( $_REQUEST['backupplus_ajax_restore'] ) ) {
+			add_filter( 'backupplus_logline', array( $this, 'backupplus_logline' ), 10, 5 );
+		}
 
-		if ($is_continuation) {
-			$restore_in_progress = get_site_option('backupplus_restore_in_progress');
-			if ($restore_in_progress != $_REQUEST['job_id']) {
+		$is_continuation = ( 'backupplus_ajaxrestore_continue' == $_REQUEST['action'] ) ? true : false;
+
+		if ( $is_continuation ) {
+			$restore_in_progress = get_site_option( 'backupplus_restore_in_progress' );
+			if ( $restore_in_progress != $_REQUEST['job_id'] ) {
 				$abort_restore_already = true;
-				$backupplus->log(__('Sufficient information about the in-progress restoration operation could not be found.', 'backupplus') . ' (job_id_mismatch)', 'error', 'job_id_mismatch');
+				$backupplus->log( __( 'Sufficient information about the in-progress restoration operation could not be found.', 'backupplus' ) . ' (job_id_mismatch)', 'error', 'job_id_mismatch' );
 			} else {
-				$restore_jobdata = $backupplus->jobdata_getarray($restore_in_progress);
-				if (is_array($restore_jobdata) && isset($restore_jobdata['job_type']) && 'restore' == $restore_jobdata['job_type'] && isset($restore_jobdata['second_loop_entities']) && !empty($restore_jobdata['second_loop_entities']) && isset($restore_jobdata['job_time_ms']) && isset($restore_jobdata['backup_timestamp'])) {
-					$backup_timestamp = $restore_jobdata['backup_timestamp'];
-					$continuation_data = $restore_jobdata;
+				$restore_jobdata = $backupplus->jobdata_getarray( $restore_in_progress );
+				if ( is_array( $restore_jobdata ) && isset( $restore_jobdata['job_type'] ) && 'restore' == $restore_jobdata['job_type'] && isset( $restore_jobdata['second_loop_entities'] ) && ! empty( $restore_jobdata['second_loop_entities'] ) && isset( $restore_jobdata['job_time_ms'] ) && isset( $restore_jobdata['backup_timestamp'] ) ) {
+					$backup_timestamp                             = $restore_jobdata['backup_timestamp'];
+					$continuation_data                            = $restore_jobdata;
 					$continuation_data['backupplus_ajax_restore'] = 'continue_ajax_restore';
 				} else {
 					$abort_restore_already = true;
-					$backupplus->log(__('Sufficient information about the in-progress restoration operation could not be found.', 'backupplus') . ' (job_id_nojobdata)', 'error', 'job_id_nojobdata');
+					$backupplus->log( __( 'Sufficient information about the in-progress restoration operation could not be found.', 'backupplus' ) . ' (job_id_nojobdata)', 'error', 'job_id_nojobdata' );
 				}
 			}
-		} elseif (isset($_REQUEST['backupplus_ajax_restore']) && 'do_ajax_restore' == $_REQUEST['backupplus_ajax_restore']) {
-			$backup_timestamp = $backupplus->jobdata_get('backup_timestamp');
-			$continuation_data = array('backupplus_ajax_restore' => 'do_ajax_restore');
+		} elseif ( isset( $_REQUEST['backupplus_ajax_restore'] ) && 'do_ajax_restore' == $_REQUEST['backupplus_ajax_restore'] ) {
+			$backup_timestamp  = $backupplus->jobdata_get( 'backup_timestamp' );
+			$continuation_data = array( 'backupplus_ajax_restore' => 'do_ajax_restore' );
 		} else {
-			$backup_timestamp = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'backup_timestamp', 0, false, 'integer', 'intval');
+			$backup_timestamp  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'backup_timestamp', 0, false, 'integer', 'intval' );
 			$continuation_data = null;
 		}
 
-		$filesystem_credentials = $backupplus->jobdata_get('filesystem_credentials', array());
+		$filesystem_credentials = $backupplus->jobdata_get( 'filesystem_credentials', array() );
 
-		if (!empty($filesystem_credentials)) {
+		if ( ! empty( $filesystem_credentials ) ) {
 			$continuation_data['backupplus_ajax_restore'] = 'continue_ajax_restore';
 			// If the filesystem credentials are not empty then we now need to load these back into $_POST so that WP_Filesystem can access them
-			foreach ($filesystem_credentials as $key => $value) {
-				$_POST[$key] = $value;
+			foreach ( $filesystem_credentials as $key => $value ) {
+				$_POST[ $key ] = $value;
 			}
 		}
 
-		if (empty($abort_restore_already)) {
-			$backup_success = $this->restore_backup($backup_timestamp, $continuation_data);
+		if ( empty( $abort_restore_already ) ) {
+			$backup_success = $this->restore_backup( $backup_timestamp, $continuation_data );
 		} else {
 			$backup_success = false;
 		}
 
-		if (empty($backupplus->errors) && true === $backup_success) {
+		if ( empty( $backupplus->errors ) && true === $backup_success ) {
 			// TODO: Deal with the case of some of the work having been deferred
 			echo '<p class="backupplus_restore_successful"><strong>';
-			$backupplus->log_e('Restore successful!');
+			$backupplus->log_e( 'Restore successful!' );
 			echo '</strong></p>';
-			$backupplus->log('Restore successful');
+			$backupplus->log( 'Restore successful' );
 			$s_val = 1;
-			if (!empty($this->entities_to_restore) && is_array($this->entities_to_restore)) {
-				foreach ($this->entities_to_restore as $v) {
-					if ('db' != $v) $s_val = 2;
+			if ( ! empty( $this->entities_to_restore ) && is_array( $this->entities_to_restore ) ) {
+				foreach ( $this->entities_to_restore as $v ) {
+					if ( 'db' != $v ) {
+						$s_val = 2;
+					}
 				}
 			}
-			echo '<strong>'.esc_html__('Actions', 'backupplus').':</strong> <a href="'.esc_url(BackupPlus_Options::admin_page_url().'?page=backupplus&backupplus_restore_success='.$s_val).'">'.esc_html__('Return to BackupPlus configuration', 'backupplus').'</a>';
+			echo '<strong>' . esc_html__( 'Actions', 'backupplus' ) . ':</strong> <a href="' . esc_url( BackupPlus_Options::admin_page_url() . '?page=backupplus&backupplus_restore_success=' . $s_val ) . '">' . esc_html__( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>';
 			return;
 
-		} elseif (is_wp_error($backup_success)) {
+		} elseif ( is_wp_error( $backup_success ) ) {
 			echo '<p class="backupplus_restore_error">';
-			$backupplus->log_e('Restore failed...');
+			$backupplus->log_e( 'Restore failed...' );
 			echo '</p>';
-			$backupplus->log_wp_error($backup_success);
-			$backupplus->log('Restore failed');
+			$backupplus->log_wp_error( $backup_success );
+			$backupplus->log( 'Restore failed' );
 			echo '<div class="backupplus_restore_errors">';
 			$backupplus->list_errors();
 			echo '</div>';
-			echo '<strong>'.esc_html__('Actions', 'backupplus').':</strong> <a href="'.esc_url(BackupPlus_Options::admin_page_url().'?page=backupplus').'">'.esc_html__('Return to BackupPlus configuration', 'backupplus').'</a>';
+			echo '<strong>' . esc_html__( 'Actions', 'backupplus' ) . ':</strong> <a href="' . esc_url( BackupPlus_Options::admin_page_url() . '?page=backupplus' ) . '">' . esc_html__( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>';
 			return;
-		} elseif (false === $backup_success) {
+		} elseif ( false === $backup_success ) {
 			// This means, "not yet - but stay on the page because we may be able to do it later, e.g. if the user types in the requested information"
 			echo '<p class="backupplus_restore_error">';
-			$backupplus->log_e('Restore failed...');
+			$backupplus->log_e( 'Restore failed...' );
 			echo '</p>';
-			$backupplus->log("Restore failed");
+			$backupplus->log( 'Restore failed' );
 			echo '<div class="backupplus_restore_errors">';
 			$backupplus->list_errors();
 			echo '</div>';
-			echo '<strong>' . esc_html__('Actions', 'backupplus') . ':</strong> <a href="' . esc_url(BackupPlus_Options::admin_page_url()) . '?page=backupplus">' . esc_html__('Return to BackupPlus configuration', 'backupplus') . '</a>';
+			echo '<strong>' . esc_html__( 'Actions', 'backupplus' ) . ':</strong> <a href="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus">' . esc_html__( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>';
 			return;
 		}
 	}
@@ -4997,70 +5553,74 @@ class BackupPlus_Admin {
 	private function prepare_ajax_restore() {
 		global $backupplus;
 
-		$debug = $backupplus->use_unminified_scripts();
-		$enqueue_version = $debug ? $backupplus->version . '.' . time() : $backupplus->version;
-		$backupplus_min_or_not = $backupplus->get_backupplus_file_version();
-		$request_action = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'action');
-		$backupplus_ajax_restore = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'backupplus_ajax_restore');
-		$ajax_action = isset($backupplus_ajax_restore) && 'continue_ajax_restore' == $backupplus_ajax_restore && 'backupplus_restore' != $request_action ? 'backupplus_ajaxrestore_continue' : 'backupplus_ajaxrestore';
+		$debug                   = $backupplus->use_unminified_scripts();
+		$enqueue_version         = $debug ? $backupplus->version . '.' . time() : $backupplus->version;
+		$backupplus_min_or_not   = $backupplus->get_backupplus_file_version();
+		$request_action          = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'action' );
+		$backupplus_ajax_restore = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'backupplus_ajax_restore' );
+		$ajax_action             = isset( $backupplus_ajax_restore ) && 'continue_ajax_restore' == $backupplus_ajax_restore && 'backupplus_restore' != $request_action ? 'backupplus_ajaxrestore_continue' : 'backupplus_ajaxrestore';
 
 		// get the entities info
-		$jobdata = $backupplus->jobdata_getarray($backupplus->nonce);
+		$jobdata            = $backupplus->jobdata_getarray( $backupplus->nonce );
 		$restore_components = $jobdata['backupplus_restore'];
-		usort($restore_components, array('BackupPlus_Manipulation_Functions', 'sort_restoration_entities'));
+		usort( $restore_components, array( 'BackupPlus_Manipulation_Functions', 'sort_restoration_entities' ) );
 
-		$backupable_entities = $backupplus->get_backupable_file_entities(true, true);
-		$pretty_date = get_date_from_gmt(gmdate('Y-m-d H:i:s', (int) $jobdata['backup_timestamp']), 'M d, Y G:i');
+		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
+		$pretty_date         = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $jobdata['backup_timestamp'] ), 'M d, Y G:i' );
 
-		wp_enqueue_script('backupplus-admin-restore', BACKUPPLUS_URL . '/js/backupplus-admin-restore' . $backupplus_min_or_not . '.js', array(), $enqueue_version);
+		wp_enqueue_script( 'backupplus-admin-restore', BACKUPPLUS_URL . '/js/backupplus-admin-restore' . $backupplus_min_or_not . '.js', array(), $enqueue_version );
 
-		$backupplus->log("Restore setup, now closing connection and starting restore over AJAX.");
+		$backupplus->log( 'Restore setup, now closing connection and starting restore over AJAX.' );
 
 		echo '<div class="backupplus_restore_container">';
 		echo '<div class="error" id="backupplus-restore-hidethis">';
-		echo '<p><strong>'.esc_html__('Warning: If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site.', 'backupplus').' '.esc_html__('This may prevent the restore procedure from being able to proceed.', 'backupplus').'</strong>';
-		echo ' '.esc_html__('Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts.', 'backupplus').'</p>';
+		echo '<p><strong>' . esc_html__( 'Warning: If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site.', 'backupplus' ) . ' ' . esc_html__( 'This may prevent the restore procedure from being able to proceed.', 'backupplus' ) . '</strong>';
+		echo ' ' . esc_html__( 'Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts.', 'backupplus' ) . '</p>';
 		echo '</div>';
-		echo '<div class="backupplus_restore_main--header">'.esc_html__('BackupPlus Restoration', 'backupplus').' - '.esc_html__('Backup', 'backupplus').' '.esc_html($pretty_date).'</div>';
+		echo '<div class="backupplus_restore_main--header">' . esc_html__( 'BackupPlus Restoration', 'backupplus' ) . ' - ' . esc_html__( 'Backup', 'backupplus' ) . ' ' . esc_html( $pretty_date ) . '</div>';
 		echo '<div class="backupplus_restore_main">';
-		
-		if ($debug) echo '<input type="hidden" id="backupplus_ajax_restore_debug" name="backupplus_ajax_restore_debug" value="1">';
-		echo '<input type="hidden" id="backupplus_ajax_restore_job_id" name="backupplus_restore_job_id" value="' . esc_attr($backupplus->nonce) . '">';
-		echo '<input type="hidden" id="backupplus_ajax_restore_action" name="backupplus_restore_action" value="' . esc_attr($ajax_action) . '">';
+
+		if ( $debug ) {
+			echo '<input type="hidden" id="backupplus_ajax_restore_debug" name="backupplus_ajax_restore_debug" value="1">';
+		}
+		echo '<input type="hidden" id="backupplus_ajax_restore_job_id" name="backupplus_restore_job_id" value="' . esc_attr( $backupplus->nonce ) . '">';
+		echo '<input type="hidden" id="backupplus_ajax_restore_action" name="backupplus_restore_action" value="' . esc_attr( $ajax_action ) . '">';
 		echo '<div id="backupplus_ajax_restore_progress" style="display: none;"></div>';
 
 		echo '<div class="backupplus_restore_main--components">';
 		/* translators: %s: Operation nonce */
-		echo '<p>'.esc_html(sprintf(__('The restore operation has begun (%s).', 'backupplus'), $backupplus->nonce)).' '.
-		esc_html__('Do not close this page until it reports itself as having finished.', 'backupplus').'</p>';
-		echo '<h2>'.esc_html__('Restoration progress:', 'backupplus').'</h2>';
+		echo '<p>' . esc_html( sprintf( __( 'The restore operation has begun (%s).', 'backupplus' ), $backupplus->nonce ) ) . ' ' .
+		esc_html__( 'Do not close this page until it reports itself as having finished.', 'backupplus' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Restoration progress:', 'backupplus' ) . '</h2>';
 		echo '	<div class="backupplus_restore_result"><span class="dashicons"></span><pan class="backupplus_restore_result--text"></span></div>';
 		echo '	<ul class="backupplus_restore_components_list">';
-		echo '<li data-component="verifying" class="active"><span class="backupplus_component--description">'.esc_html__('Verifying', 'backupplus').'</span><span class="backupplus_component--progress"></span></li>';
-		foreach ($restore_components as $restore_component) {
+		echo '<li data-component="verifying" class="active"><span class="backupplus_component--description">' . esc_html__( 'Verifying', 'backupplus' ) . '</span><span class="backupplus_component--progress"></span></li>';
+		foreach ( $restore_components as $restore_component ) {
 			// Set Database description
-			if ('db' == $restore_component && !isset($backupable_entities[$restore_component]['description'])) $backupable_entities[$restore_component]['description'] = __('Database', 'backupplus');
-			if (!isset($backupable_entities[$restore_component])) {
-				die('Abort: invalid data');
+			if ( 'db' == $restore_component && ! isset( $backupable_entities[ $restore_component ]['description'] ) ) {
+				$backupable_entities[ $restore_component ]['description'] = __( 'Database', 'backupplus' );
 			}
-			echo '<li data-component="'.esc_attr($restore_component).'"><span class="backupplus_component--description">'.(isset($backupable_entities[$restore_component]['description']) ? esc_html($backupable_entities[$restore_component]['description']) : esc_html($restore_component)).'</span><span class="backupplus_component--progress"></span></li>';
+			if ( ! isset( $backupable_entities[ $restore_component ] ) ) {
+				die( 'Abort: invalid data' );
+			}
+			echo '<li data-component="' . esc_attr( $restore_component ) . '"><span class="backupplus_component--description">' . ( isset( $backupable_entities[ $restore_component ]['description'] ) ? esc_html( $backupable_entities[ $restore_component ]['description'] ) : esc_html( $restore_component ) ) . '</span><span class="backupplus_component--progress"></span></li>';
 		}
-		echo '<li data-component="cleaning"><span class="backupplus_component--description">'.esc_html__('Cleaning', 'backupplus').'</span><span class="backupplus_component--progress"></span></li>';
-		echo '<li data-component="finished"><span class="backupplus_component--description">'.esc_html__('Finished', 'backupplus').'</span><span class="backupplus_component--progress"></span></li>';
+		echo '<li data-component="cleaning"><span class="backupplus_component--description">' . esc_html__( 'Cleaning', 'backupplus' ) . '</span><span class="backupplus_component--progress"></span></li>';
+		echo '<li data-component="finished"><span class="backupplus_component--description">' . esc_html__( 'Finished', 'backupplus' ) . '</span><span class="backupplus_component--progress"></span></li>';
 		echo '	</ul>'; // end ul.backupplus_restore_components_list
 		// Provide download link for the log file
-		echo '<p><a target="_blank" href="?action=downloadlog&page=backupplus&backupplus_backup_nonce='.esc_attr($backupplus->nonce).'">'.esc_html__('Follow this link to download the log file for this restoration (needed for any support requests).', 'backupplus').'</a></p>';
+		echo '<p><a target="_blank" href="?action=downloadlog&page=backupplus&backupplus_backup_nonce=' . esc_attr( $backupplus->nonce ) . '">' . esc_html__( 'Follow this link to download the log file for this restoration (needed for any support requests).', 'backupplus' ) . '</a></p>';
 		echo '</div>'; // end .backupplus_restore_main--components
 		echo '<div class="backupplus_restore_main--activity">';
-		echo '<h2 class="backupplus_restore_main--activity-title">'.esc_html__('Activity log', 'backupplus').' <i id="activity-full-log" title="'.esc_html__('Full-screen', 'backupplus').'" class="dashicons dashicons-fullscreen-alt" style="float: right; cursor: pointer; margin-left: 7px;"></i> <span id="backupplus_ajax_restore_last_activity"></span></h2>';
+		echo '<h2 class="backupplus_restore_main--activity-title">' . esc_html__( 'Activity log', 'backupplus' ) . ' <i id="activity-full-log" title="' . esc_html__( 'Full-screen', 'backupplus' ) . '" class="dashicons dashicons-fullscreen-alt" style="float: right; cursor: pointer; margin-left: 7px;"></i> <span id="backupplus_ajax_restore_last_activity"></span></h2>';
 		echo '	<div id="backupplus_ajax_restore_output"></div>';
 		echo '</div>'; // end .backupplus_restore_main--activity
 		echo '
 			<div class="backupplus-restore--footer">
 				<ul class="backupplus-restore--stages">
-					<li><span>1. '.esc_html__('Component selection', 'backupplus').'</span></li>
-					<li><span>2. '.esc_html__('Verifications', 'backupplus').'</span></li>
-					<li class="active"><span>3. '.esc_html__('Restoration', 'backupplus').'</span></li>
+					<li><span>1. ' . esc_html__( 'Component selection', 'backupplus' ) . '</span></li>
+					<li><span>2. ' . esc_html__( 'Verifications', 'backupplus' ) . '</span></li>
+					<li class="active"><span>3. ' . esc_html__( 'Restoration', 'backupplus' ) . '</span></li>
 				</ul>
 			</div>';
 		echo '</div>'; // end .backupplus_restore_main
@@ -5074,187 +5634,200 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array - the entities to restore built from the restore jobdata
 	 */
-	private function get_entities_to_restore_from_jobdata($backup_set) {
+	private function get_entities_to_restore_from_jobdata( $backup_set ) {
 
 		global $backupplus;
 
-		$backupplus_restore = $backupplus->jobdata_get('backupplus_restore');
+		$backupplus_restore = $backupplus->jobdata_get( 'backupplus_restore' );
 
-		if (empty($backupplus_restore) || (!is_array($backupplus_restore))) $backupplus_restore = array();
+		if ( empty( $backupplus_restore ) || ( ! is_array( $backupplus_restore ) ) ) {
+			$backupplus_restore = array();
+		}
 
 		$entities_to_restore = array();
-		$foreign_known = apply_filters('backupplus_accept_archivename', array());
+		$foreign_known       = apply_filters( 'backupplus_accept_archivename', array() );
 
-		foreach ($backupplus_restore as $entity) {
-			if (empty($backup_set['meta_foreign'])) {
-				$entities_to_restore[$entity] = $entity;
+		foreach ( $backupplus_restore as $entity ) {
+			if ( empty( $backup_set['meta_foreign'] ) ) {
+				$entities_to_restore[ $entity ] = $entity;
 			} else {
-				if ('db' == $entity && !empty($foreign_known[$backup_set['meta_foreign']]) && !empty($foreign_known[$backup_set['meta_foreign']]['separatedb'])) {
-					$entities_to_restore[$entity] = 'db';
+				if ( 'db' == $entity && ! empty( $foreign_known[ $backup_set['meta_foreign'] ] ) && ! empty( $foreign_known[ $backup_set['meta_foreign'] ]['separatedb'] ) ) {
+					$entities_to_restore[ $entity ] = 'db';
 				} else {
-					$entities_to_restore[$entity] = 'wpcore';
+					$entities_to_restore[ $entity ] = 'wpcore';
 				}
 			}
 		}
 
 		return $entities_to_restore;
 	}
-	
+
 	/**
 	 * Processes the jobdata to build an array of restoration options
 	 *
 	 * @return Array - the restore options built from the restore jobdata
 	 */
 	private function get_restore_options_from_jobdata() {
-	
+
 		global $backupplus;
 
-		$restore_options = $backupplus->jobdata_get('backupplus_restorer_restore_options');
-		if (!is_array($restore_options)) $restore_options = array();
-		$age_ticket = $backupplus->jobdata_get('backupplus_age_ticket', '');
-		if ('' !== $age_ticket) {
-			try { BackupPlus_Age_Restore::claim($age_ticket, $backupplus->jobdata_get('backup_timestamp'), $backupplus->nonce); }
-			catch (Exception $e) { wp_die(esc_html__('The prepared encrypted restore has expired or belongs to another restore. Prepare the archives again.', 'backupplus')); }
-			$restore_options['backupplus_age_ticket'] = $age_ticket;
+		$restore_options = $backupplus->jobdata_get( 'backupplus_restorer_restore_options' );
+		if ( ! is_array( $restore_options ) ) {
+			$restore_options = array();
 		}
-		$backupplus_encryptionphrase = $backupplus->jobdata_get('backupplus_encryptionphrase');
-		$include_wpconfig = $backupplus->jobdata_get('backupplus_restorer_wpcore_includewpconfig');
+		$age_ticket = $backupplus->jobdata_get( 'backupplus_age_ticket', '' );
+		if ( '' !== $age_ticket ) {
+			try {
+				BackupPlus_Age_Restore::claim( $age_ticket, $backupplus->jobdata_get( 'backup_timestamp' ), $backupplus->nonce ); } catch ( Exception $e ) {
+				wp_die( esc_html__( 'The prepared encrypted restore has expired or belongs to another restore. Prepare the archives again.', 'backupplus' ) ); }
+				$restore_options['backupplus_age_ticket'] = $age_ticket;
+		}
+		$backupplus_encryptionphrase = $backupplus->jobdata_get( 'backupplus_encryptionphrase' );
+		$include_wpconfig            = $backupplus->jobdata_get( 'backupplus_restorer_wpcore_includewpconfig' );
 
-		$restore_options['backupplus_encryptionphrase'] = empty($backupplus_encryptionphrase) ? '' : $backupplus_encryptionphrase;
-		
-		$restore_options['backupplus_restorer_wpcore_includewpconfig'] = !empty($include_wpconfig);
-		
-		$restore_options['backupplus_incremental_restore_point'] = empty($restore_options['backupplus_incremental_restore_point']) ? -1 : (int) $restore_options['backupplus_incremental_restore_point'];
-		
+		$restore_options['backupplus_encryptionphrase'] = empty( $backupplus_encryptionphrase ) ? '' : $backupplus_encryptionphrase;
+
+		$restore_options['backupplus_restorer_wpcore_includewpconfig'] = ! empty( $include_wpconfig );
+
+		$restore_options['backupplus_incremental_restore_point'] = empty( $restore_options['backupplus_incremental_restore_point'] ) ? -1 : (int) $restore_options['backupplus_incremental_restore_point'];
+
 		return $restore_options;
 	}
-	
+
 	/**
 	 * Carry out the restore process within the WP admin dashboard, using data from $_POST
 	 *
-	 * @param  Integer	  $timestamp         Identifying the backup to be restored
+	 * @param  Integer    $timestamp         Identifying the backup to be restored
 	 * @param  Array|null $continuation_data For continuing a multi-stage restore; this is the saved jobdata for the job; in this method the keys used are second_loop_entities, restore_options; but it is also passed on to BackupPlus_Restorer::perform_restore()
 	 * @return Boolean|WP_Error - a WP_Error indicates a terminal failure; false indicates not-yet complete (not necessarily terminal); true indicates complete.
 	 */
-	private function restore_backup($timestamp, $continuation_data = null) {
+	private function restore_backup( $timestamp, $continuation_data = null ) {
 
 		global $backupplus, $backupplus_restorer;
 
-		$second_loop_entities = empty($continuation_data['second_loop_entities']) ? array() : $continuation_data['second_loop_entities'];
+		$second_loop_entities = empty( $continuation_data['second_loop_entities'] ) ? array() : $continuation_data['second_loop_entities'];
 
 		// If this is a resumption and we still need to restore the database we should rebuild the backup history to ensure the database is in there.
-		if (!empty($second_loop_entities['db'])) BackupPlus_Backup_History::rebuild();
-		
-		$backup_set = BackupPlus_Backup_History::get_history($timestamp);
+		if ( ! empty( $second_loop_entities['db'] ) ) {
+			BackupPlus_Backup_History::rebuild();
+		}
 
-		if (empty($backup_set)) {
-			echo '<p>'.esc_html__('This backup does not exist in the backup history - restoration aborted.', 'backupplus').' '.esc_html__('Timestamp:', 'backupplus').' '.esc_html($timestamp).'</p><br>';
-			return new WP_Error('does_not_exist', __('Backup does not exist in the backup history', 'backupplus')." ($timestamp)");
+		$backup_set = BackupPlus_Backup_History::get_history( $timestamp );
+
+		if ( empty( $backup_set ) ) {
+			echo '<p>' . esc_html__( 'This backup does not exist in the backup history - restoration aborted.', 'backupplus' ) . ' ' . esc_html__( 'Timestamp:', 'backupplus' ) . ' ' . esc_html( $timestamp ) . '</p><br>';
+			return new WP_Error( 'does_not_exist', __( 'Backup does not exist in the backup history', 'backupplus' ) . " ($timestamp)" );
 		}
 
 		$backup_set['timestamp'] = $timestamp;
 
 		$url_parameters = array(
 			'backup_timestamp' => $timestamp,
-			'job_id' => $backupplus->nonce
+			'job_id'           => $backupplus->nonce,
 		);
 
-		if (!empty($continuation_data['backupplus_ajax_restore'])) {
+		if ( ! empty( $continuation_data['backupplus_ajax_restore'] ) ) {
 			$url_parameters['backupplus_ajax_restore'] = 'continue_ajax_restore';
-			$backupplus->output_to_browser(''); // Start timer
+			$backupplus->output_to_browser( '' ); // Start timer
 			// Force output buffering off so that we get log lines sent to the browser as they come not all at once at the end of the ajax restore
 			// zlib creates an output buffer, and waits for the entire page to be generated before it can send it to the client try to turn it off
-			@ini_set("zlib.output_compression", '0');// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@ini_set( 'zlib.output_compression', '0' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 			// Turn off PHP output buffering for NGINX
-			header('X-Accel-Buffering: no');
-			header('Content-Encoding: none');
-			while (ob_get_level()) {
+			header( 'X-Accel-Buffering: no' );
+			header( 'Content-Encoding: none' );
+			while ( ob_get_level() ) {
 				ob_end_flush();
 			}
-			if (version_compare(PHP_VERSION, '8.0.0', '>=')) {
+			if ( version_compare( PHP_VERSION, '8.0.0', '>=' ) ) {
 				$flush = true; // PHP 8.0.0 or newer, use bool
 			} else {
 				$flush = 1; // PHP older than 8.0.0, use int
 			}
-			ob_implicit_flush($flush);
+			ob_implicit_flush( $flush );
 		}
 
-		$backupplus->log("Ensuring WP_Filesystem is setup for a restore");
-		
+		$backupplus->log( 'Ensuring WP_Filesystem is setup for a restore' );
+
 		// This will print HTML and die() if necessary
-		BackupPlus_Filesystem_Functions::ensure_wp_filesystem_set_up_for_restore($url_parameters);
+		BackupPlus_Filesystem_Functions::ensure_wp_filesystem_set_up_for_restore( $url_parameters );
 
-		$backupplus->log("WP_Filesystem is setup and ready for a restore");
+		$backupplus->log( 'WP_Filesystem is setup and ready for a restore' );
 
-		$entities_to_restore = $this->get_entities_to_restore_from_jobdata($backup_set);
+		$entities_to_restore = $this->get_entities_to_restore_from_jobdata( $backup_set );
 
-		if (empty($entities_to_restore)) {
-			$restore_jobdata = $backupplus->jobdata_getarray($backupplus->nonce);
-			echo '<p>'.esc_html__('ABORT: Could not find the information on which entities to restore.', 'backupplus').'</p><p>'.esc_html__('If making a request for support, please include this information:', 'backupplus').' '.count($restore_jobdata).' : '.esc_html(serialize($restore_jobdata)).'</p>';
-			return new WP_Error('missing_info', 'Backup information not found');
+		if ( empty( $entities_to_restore ) ) {
+			$restore_jobdata = $backupplus->jobdata_getarray( $backupplus->nonce );
+			echo '<p>' . esc_html__( 'ABORT: Could not find the information on which entities to restore.', 'backupplus' ) . '</p><p>' . esc_html__( 'If making a request for support, please include this information:', 'backupplus' ) . ' ' . count( $restore_jobdata ) . ' : ' . esc_html( serialize( $restore_jobdata ) ) . '</p>';
+			return new WP_Error( 'missing_info', 'Backup information not found' );
 		}
 
 		// This is used in painting the admin page after a successful restore
 		$this->entities_to_restore = $entities_to_restore;
 
-		$error_levels = version_compare(PHP_VERSION, '8.4.0', '>=') ? E_ALL : E_ALL & ~E_STRICT;
+		$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
 		// This will be removed by BackupPlus_Restorer::post_restore_clean_up()
-		set_error_handler(array($backupplus, 'php_error'), $error_levels);
+		set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
 
 		// Set $restore_options, either from the continuation data, or from $_POST
-		if (!empty($continuation_data['restore_options'])) {
+		if ( ! empty( $continuation_data['restore_options'] ) ) {
 			$restore_options = $continuation_data['restore_options'];
 		} else {
 			// Gather the restore options into one place - code after here should read the options
 			$restore_options = $this->get_restore_options_from_jobdata();
-			$backupplus->jobdata_set('restore_options', $restore_options);
+			$backupplus->jobdata_set( 'restore_options', $restore_options );
 		}
-			
-		add_action('backupplus_restoration_title', array($this, 'restoration_title'));
 
-		$backupplus->log_restore_update(array('type' => 'state', 'stage' => 'started', 'data' => array()));
-		
+		add_action( 'backupplus_restoration_title', array( $this, 'restoration_title' ) );
+
+		$backupplus->log_restore_update(
+			array(
+				'type'  => 'state',
+				'stage' => 'started',
+				'data'  => array(),
+			)
+		);
+
 		// We use a single object for each entity, because we want to store information about the backup set
-		$backupplus_restorer = new BackupPlus_Restorer(new BackupPlus_Restorer_Skin, $backup_set, false, $restore_options, $continuation_data);
-		
-		$restore_result = $backupplus_restorer->perform_restore($entities_to_restore, $restore_options);
-		
-		$backupplus_restorer->post_restore_clean_up($restore_result);
-		
-		$sval = (true === $restore_result) ? 1 : 0;
+		$backupplus_restorer = new BackupPlus_Restorer( new BackupPlus_Restorer_Skin(), $backup_set, false, $restore_options, $continuation_data );
 
-		$pages = get_pages(array('number' => 2));
+		$restore_result = $backupplus_restorer->perform_restore( $entities_to_restore, $restore_options );
+
+		$backupplus_restorer->post_restore_clean_up( $restore_result );
+
+		$sval = ( true === $restore_result ) ? 1 : 0;
+
+		$pages     = get_pages( array( 'number' => 2 ) );
 		$page_urls = array(
 			'home' => get_home_url(),
 		);
 
-		foreach ($pages as $page_info) {
-			$page_urls[$page_info->post_name] = get_page_link($page_info->ID);
+		foreach ( $pages as $page_info ) {
+			$page_urls[ $page_info->post_name ] = get_page_link( $page_info->ID );
 		}
 
 		$backupplus->log_restore_update(
 			array(
-				'type' => 'state',
+				'type'  => 'state',
 				'stage' => 'finished',
-				'data' => array(
+				'data'  => array(
 					'actions' => array(
-						__('Return to BackupPlus configuration', 'backupplus') => BackupPlus_Options::admin_page_url() . '?page=backupplus&backupplus_restore_success=' . $sval
+						__( 'Return to BackupPlus configuration', 'backupplus' ) => BackupPlus_Options::admin_page_url() . '?page=backupplus&backupplus_restore_success=' . $sval,
 					),
-					'urls' => $page_urls,
-				)
+					'urls'    => $page_urls,
+				),
 			)
 		);
 
 		return $restore_result;
 	}
-	
+
 	/**
 	 * Called when the restore process wants to print a title
 	 *
 	 * @param String $title - title
 	 */
-	public function restoration_title($title) {
-		echo '<h2>'.esc_html($title).'</h2>';
+	public function restoration_title( $title ) {
+		echo '<h2>' . esc_html( $title ) . '</h2>';
 	}
 
 	/**
@@ -5270,18 +5843,20 @@ class BackupPlus_Admin {
 	 *
 	 * @return String|Boolean - the filtered value. If set to false, then BackupPlus::log() will stop processing the log line.
 	 */
-	public function backupplus_logline($line, $nonce, $level, $uniq_id, $destination) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the method is used as a WP filter.
-	
-		if ('progress' != $destination || (defined('WP_CLI') && WP_CLI) || false === $line || false === strpos($line, 'RINFO:')) return $line;
+	public function backupplus_logline( $line, $nonce, $level, $uniq_id, $destination ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the method is used as a WP filter.
+
+		if ( 'progress' != $destination || ( defined( 'WP_CLI' ) && WP_CLI ) || false === $line || false === strpos( $line, 'RINFO:' ) ) {
+			return $line;
+		}
 
 		global $backupplus;
 
-		$backupplus->output_to_browser($line);
+		$backupplus->output_to_browser( $line );
 
 		// Indicate that we have completely handled all logging needed
 		return false;
 	}
-	
+
 	/**
 	 * Ensure that what is returned is an array. Used as a WP options filter.
 	 *
@@ -5289,139 +5864,171 @@ class BackupPlus_Admin {
 	 *
 	 * @return Array
 	 */
-	public function return_array($input) {
-		return is_array($input) ? $input : array();
+	public function return_array( $input ) {
+		return is_array( $input ) ? $input : array();
 	}
-	
+
 	/**
 	 * Called upon the WP action wp_ajax_backupplus_savesettings. Will die().
 	 */
 	public function backupplus_ajax_savesettings() {
 		try {
-			$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
-			if (empty($_POST) || empty($_POST['subaction']) || 'savesettings' != $_POST['subaction'] || !isset($post_nonce) || !is_user_logged_in() || !BackupPlus_Options::user_can_manage() || !wp_verify_nonce($post_nonce, 'backupplus-settings-nonce')) die('Security check');
-			$post_settings = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'settings');
-			if (empty($post_settings) || !is_string($post_settings)) die('Invalid data');
-	
-			parse_str(stripslashes($post_settings), $posted_settings);
+			$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'nonce' );
+			if ( empty( $_POST ) || empty( $_POST['subaction'] ) || 'savesettings' != $_POST['subaction'] || ! isset( $post_nonce ) || ! is_user_logged_in() || ! BackupPlus_Options::user_can_manage() || ! wp_verify_nonce( $post_nonce, 'backupplus-settings-nonce' ) ) {
+				die( 'Security check' );
+			}
+			$post_settings = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'settings' );
+			if ( empty( $post_settings ) || ! is_string( $post_settings ) ) {
+				die( 'Invalid data' );
+			}
+
+			parse_str( stripslashes( $post_settings ), $posted_settings );
 			// We now have $posted_settings as an array
-			$backupplus_version = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'backupplus_version');
-			if (!empty($backupplus_version)) $posted_settings['backupplus_version'] = $backupplus_version;
-			
-			echo json_encode($this->save_settings($posted_settings));
-		} catch (Exception $e) {
-			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during save settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
-		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during save settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
+			$backupplus_version = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'backupplus_version' );
+			if ( ! empty( $backupplus_version ) ) {
+				$posted_settings['backupplus_version'] = $backupplus_version;
+			}
+
+			echo json_encode( $this->save_settings( $posted_settings ) );
+		} catch ( Exception $e ) {
+			$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during save settings. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
+		} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+			$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during save settings. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
 		}
 		die;
 	}
-	
+
 	public function backupplus_ajax_importsettings() {
 		try {
-			$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('post', 'nonce');
-			if (empty($_POST) || empty($_POST['subaction']) || 'importsettings' != $_POST['subaction'] || !isset($post_nonce) || !is_user_logged_in() || !BackupPlus_Options::user_can_manage() || !wp_verify_nonce($post_nonce, 'backupplus-settings-nonce')) die('Security check');
-			 
-			if (empty($_POST['settings']) || !is_string($_POST['settings'])) die('Invalid data');
-	
-			$this->import_settings($_POST);
-		} catch (Exception $e) {
-			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during import settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
-		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during import settings. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
-			echo json_encode(array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
-			));
+			$post_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'nonce' );
+			if ( empty( $_POST ) || empty( $_POST['subaction'] ) || 'importsettings' != $_POST['subaction'] || ! isset( $post_nonce ) || ! is_user_logged_in() || ! BackupPlus_Options::user_can_manage() || ! wp_verify_nonce( $post_nonce, 'backupplus-settings-nonce' ) ) {
+				die( 'Security check' );
+			}
+
+			if ( empty( $_POST['settings'] ) || ! is_string( $_POST['settings'] ) ) {
+				die( 'Invalid data' );
+			}
+
+			$this->import_settings( $_POST );
+		} catch ( Exception $e ) {
+			$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during import settings. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
+		} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+			$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during import settings. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
+			echo json_encode(
+				array(
+					'fatal_error'         => true,
+					'fatal_error_message' => $log_message,
+				)
+			);
 		}
 	}
-	
+
 	/**
 	 * This method handles the imported json settings it will convert them into a readable format for the existing save settings function, it will also update some of the options to match the new remote storage options format (Apr 2017)
 	 *
 	 * @param  Array $settings               - The settings from the imported json file
 	 * @param  Bool  $return_instead_of_echo - Whether to return the result instead of echoing it
 	 */
-	public function import_settings($settings, $return_instead_of_echo = false) {
+	public function import_settings( $settings, $return_instead_of_echo = false ) {
 		global $backupplus;
 
-		if (!isset($settings['settings']) || !is_string($settings['settings'])) {
+		if ( ! isset( $settings['settings'] ) || ! is_string( $settings['settings'] ) ) {
 			$posted_settings = array();
 		} else {
-			$posted_settings = BackupPlus_Settings_Importer::parse_settings_payload($settings['settings']);
+			$posted_settings = BackupPlus_Settings_Importer::parse_settings_payload( $settings['settings'] );
 		}
-		if (empty($posted_settings) || !is_array($posted_settings)) {
+		if ( empty( $posted_settings ) || ! is_array( $posted_settings ) ) {
 			$response = array(
-				'saved' => false,
-				'error_message' => __('The export did not contain any settings to import.', 'backupplus'),
+				'saved'         => false,
+				'error_message' => __( 'The export did not contain any settings to import.', 'backupplus' ),
 			);
-			if ($return_instead_of_echo) return $response;
-			echo json_encode($response);
+			if ( $return_instead_of_echo ) {
+				return $response;
+			}
+			echo json_encode( $response );
 			die;
 		}
 
-		$known_services = array_keys($backupplus->backup_methods);
+		$known_services     = array_keys( $backupplus->backup_methods );
 		$available_services = array();
-		foreach ($known_services as $service) {
-			$storage_object = BackupPlus_Storage_Methods_Interface::get_storage_object($service);
-			if (is_wp_error($storage_object) || is_a($storage_object, 'BackupPlus_BackupModule_AddonNotYetPresent')) continue;
-			$posted_settings = $storage_object->normalize_imported_settings($posted_settings);
+		foreach ( $known_services as $service ) {
+			$storage_object = BackupPlus_Storage_Methods_Interface::get_storage_object( $service );
+			if ( is_wp_error( $storage_object ) || is_a( $storage_object, 'BackupPlus_BackupModule_AddonNotYetPresent' ) ) {
+				continue;
+			}
+			$posted_settings      = $storage_object->normalize_imported_settings( $posted_settings );
 			$available_services[] = $service;
 		}
-		$normalized = BackupPlus_Settings_Importer::normalize_legacy_settings($posted_settings, $known_services, $backupplus->get_settings_keys(), $available_services);
+		$normalized      = BackupPlus_Settings_Importer::normalize_legacy_settings( $posted_settings, $known_services, $backupplus->get_settings_keys(), $available_services );
 		$posted_settings = $normalized['settings'];
 
 		// Convert flat provider options to the structured option used by current modules.
-		foreach ($known_services as $service) {
-			if ('email' === $service) continue;
-			$backupplus_key = 'backupplus_'.$service;
-			if (!isset($posted_settings[$backupplus_key])) continue;
-			$storage_options = $posted_settings[$backupplus_key];
-			if (is_array($storage_options) && empty($storage_options['settings'])) {
-				$storage_options = BackupPlus_Storage_Methods_Interface::wrap_remote_storage_options($storage_options);
+		foreach ( $known_services as $service ) {
+			if ( 'email' === $service ) {
+				continue;
 			}
-			$posted_settings[$backupplus_key] = $storage_options;
+			$backupplus_key = 'backupplus_' . $service;
+			if ( ! isset( $posted_settings[ $backupplus_key ] ) ) {
+				continue;
+			}
+			$storage_options = $posted_settings[ $backupplus_key ];
+			if ( is_array( $storage_options ) && empty( $storage_options['settings'] ) ) {
+				$storage_options = BackupPlus_Storage_Methods_Interface::wrap_remote_storage_options( $storage_options );
+			}
+			$posted_settings[ $backupplus_key ] = $storage_options;
 		}
 
-		if (!empty($settings['backupplus_version'])) $posted_settings['backupplus_version'] = $settings['backupplus_version'];
+		if ( ! empty( $settings['backupplus_version'] ) ) {
+			$posted_settings['backupplus_version'] = $settings['backupplus_version'];
+		}
 
-		$allowed_settings = array_flip($backupplus->get_settings_keys());
+		$allowed_settings = array_flip( $backupplus->get_settings_keys() );
 		$skipped_settings = $normalized['skipped_settings'];
-		$metadata_keys = array('backupplus_version', 'updraftplus_version', 'updraft_version');
-		foreach (array_keys($posted_settings) as $key) {
-			if (in_array($key, $metadata_keys, true) || isset($allowed_settings[$key])) continue;
+		$metadata_keys    = array( 'backupplus_version', 'updraftplus_version', 'updraft_version' );
+		foreach ( array_keys( $posted_settings ) as $key ) {
+			if ( in_array( $key, $metadata_keys, true ) || isset( $allowed_settings[ $key ] ) ) {
+				continue;
+			}
 			$skipped_settings[] = $key;
-			unset($posted_settings[$key]);
+			unset( $posted_settings[ $key ] );
 		}
-		$skipped_settings = array_values(array_unique($skipped_settings));
+		$skipped_settings = array_values( array_unique( $skipped_settings ) );
 
-		$response = $this->save_settings($posted_settings);
-		if (!empty($skipped_settings)) $response['import_skipped_settings'] = $skipped_settings;
+		$response = $this->save_settings( $posted_settings );
+		if ( ! empty( $skipped_settings ) ) {
+			$response['import_skipped_settings'] = $skipped_settings;
+		}
 
-		if ($return_instead_of_echo) {
+		if ( $return_instead_of_echo ) {
 			return $response;
 		} else {
-			echo json_encode($response);
+			echo json_encode( $response );
 			die;
 		}
 	}
-	
+
 	/**
 	 * This function will get a list of remote storage methods with valid connection details and create a HTML list of checkboxes
 	 *
@@ -5431,38 +6038,45 @@ class BackupPlus_Admin {
 		global $backupplus;
 
 		$active_remote_storage_list = '';
-		$active_remote_storages = $this->get_active_remote_storages();
+		$active_remote_storages     = $this->get_active_remote_storages();
 
-		foreach ($active_remote_storages as $instance => $remote_storage) {
-			$method = $remote_storage['method'];
-			$label = $remote_storage['label'];
-			$checked = !empty($remote_storage['enabled']) ? 'checked="checked"' : '';
+		foreach ( $active_remote_storages as $instance => $remote_storage ) {
+			$method  = $remote_storage['method'];
+			$label   = $remote_storage['label'];
+			$checked = ! empty( $remote_storage['enabled'] ) ? 'checked="checked"' : '';
 
-			if ('email' == $method) {
-				$active_remote_storage_list .= '<input class="backupplus_remote_service_entity" id="'.esc_attr($method).'backupplus_service" checked="checked" type="checkbox" name="backupplus_include_remote_service_'. esc_attr($method) . '" value=""> <label for="'.esc_attr($method).'backupplus_service">'.esc_html($backupplus->backup_methods[$method]).'</label><br>';
+			if ( 'email' == $method ) {
+				$active_remote_storage_list .= '<input class="backupplus_remote_service_entity" id="' . esc_attr( $method ) . 'backupplus_service" checked="checked" type="checkbox" name="backupplus_include_remote_service_' . esc_attr( $method ) . '" value=""> <label for="' . esc_attr( $method ) . 'backupplus_service">' . esc_html( $backupplus->backup_methods[ $method ] ) . '</label><br>';
 			} else {
-				$active_remote_storage_list .= '<input class="backupplus_remote_service_entity" id="'.esc_attr($method).'backupplus_service_'.esc_attr($instance).'" ' . esc_attr($checked) . ' type="checkbox" name="backupplus_include_remote_service_'. esc_attr($method) . '" value="'.esc_attr($instance).'"> <label for="'.esc_attr($method).'backupplus_service_'.esc_attr($instance).'">'.esc_html($label).'</label><br>';
+				$active_remote_storage_list .= '<input class="backupplus_remote_service_entity" id="' . esc_attr( $method ) . 'backupplus_service_' . esc_attr( $instance ) . '" ' . esc_attr( $checked ) . ' type="checkbox" name="backupplus_include_remote_service_' . esc_attr( $method ) . '" value="' . esc_attr( $instance ) . '"> <label for="' . esc_attr( $method ) . 'backupplus_service_' . esc_attr( $instance ) . '">' . esc_html( $label ) . '</label><br>';
 			}
 		}
 
-		$service = $backupplus->just_one(BackupPlus_Options::get_backupplus_option('backupplus_service'));
-		if (is_string($service)) $service = array($service);
-		if (!is_array($service)) $service = array();
+		$service = $backupplus->just_one( BackupPlus_Options::get_backupplus_option( 'backupplus_service' ) );
+		if ( is_string( $service ) ) {
+			$service = array( $service );
+		}
+		if ( ! is_array( $service ) ) {
+			$service = array();
+		}
 
-		$no_remote_configured = (empty($service) || array('none') === $service || array('') === $service) ? true : false;
+		$no_remote_configured = ( empty( $service ) || array( 'none' ) === $service || array( '' ) === $service ) ? true : false;
 
-		if ($no_remote_configured && empty($active_remote_storage_list)) {
-			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>'.
+		if ( $no_remote_configured && empty( $active_remote_storage_list ) ) {
+			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>' .
 			/* translators: %s: "settings" which is the name of a tab on which remote storage settings are configured */
-			sprintf(__("Backup won't be sent to any remote storage - none has been saved in the %s", 'backupplus'), '<a href="'.BackupPlus_Options::admin_page_url().'?page=backupplus&amp;tab=settings" id="backupplus_backupnow_gotosettings">'.
-			__('settings', 'backupplus')).'</a></em>';
+			sprintf(
+				__( "Backup won't be sent to any remote storage - none has been saved in the %s", 'backupplus' ),
+				'<a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings" id="backupplus_backupnow_gotosettings">' .
+				__( 'settings', 'backupplus' )
+			) . '</a></em>';
 		}
 
-		if (empty($active_remote_storage_list)) {
-			$active_remote_storage_list = '<p>'.__('No remote storage locations with valid options found.', 'backupplus').'</p>';
+		if ( empty( $active_remote_storage_list ) ) {
+			$active_remote_storage_list = '<p>' . __( 'No remote storage locations with valid options found.', 'backupplus' ) . '</p>';
 		}
 
-		return '<input type="checkbox" id="backupnow_includecloud" checked="checked"> <label for="backupnow_includecloud">'.__("Send this backup to remote storage", 'backupplus').'</label> (<a href="'.esc_url(BackupPlus::get_current_clean_url()).'" id="backupnow_includecloud_showmoreoptions">...</a>)<br><div id="backupnow_includecloud_moreoptions" class="backupplus-hidden" style="display:none;"><em>'. __('The following remote storage options are configured.', 'backupplus').'</em><br>'.$active_remote_storage_list.'</div>';
+		return '<input type="checkbox" id="backupnow_includecloud" checked="checked"> <label for="backupnow_includecloud">' . __( 'Send this backup to remote storage', 'backupplus' ) . '</label> (<a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupnow_includecloud_showmoreoptions">...</a>)<br><div id="backupnow_includecloud_moreoptions" class="backupplus-hidden" style="display:none;"><em>' . __( 'The following remote storage options are configured.', 'backupplus' ) . '</em><br>' . $active_remote_storage_list . '</div>';
 	}
 
 	/**
@@ -5474,49 +6088,51 @@ class BackupPlus_Admin {
 		global $backupplus;
 
 		$active_instances = array();
-		$services = (array) $backupplus->just_one($backupplus->get_canonical_service_list());
-		$all_services = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids($services);
+		$services         = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+		$all_services     = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( $services );
 
-		foreach ($all_services as $method => $sinfo) {
-			if ('email' == $method) {
-				$possible_emails = $backupplus->just_one_email(BackupPlus_Options::get_backupplus_option('backupplus_email'));
-				if (!empty($possible_emails)) {
+		foreach ( $all_services as $method => $sinfo ) {
+			if ( 'email' == $method ) {
+				$possible_emails = $backupplus->just_one_email( BackupPlus_Options::get_backupplus_option( 'backupplus_email' ) );
+				if ( ! empty( $possible_emails ) ) {
 					$active_instances['email'] = array(
-						'label' => $backupplus->backup_methods[$method],
-						'method' => $method,
+						'label'   => $backupplus->backup_methods[ $method ],
+						'method'  => $method,
 						'enabled' => true, // We hardcode this as true -- legacy logic, its always checked.
 					);
 				}
-			} elseif (empty($sinfo['object']) || empty($sinfo['instance_settings']) || !is_callable(array($sinfo['object'], 'options_exist'))) {
+			} elseif ( empty( $sinfo['object'] ) || empty( $sinfo['instance_settings'] ) || ! is_callable( array( $sinfo['object'], 'options_exist' ) ) ) {
 				continue;
 			}
 
 			$instance_count = 1;
-			foreach ($sinfo['instance_settings'] as $instance => $opt) {
-				if ($sinfo['object']->options_exist($opt)) {
-					$instance_count_label = (1 == $instance_count) ? '' : ' ('.$instance_count.')';
-					$label = empty($opt['instance_label']) ? $sinfo['object']->get_description() . $instance_count_label : $opt['instance_label'];
-					if (!isset($opt['instance_enabled'])) $opt['instance_enabled'] = 1;
-					$active_instances[$instance] = array(
-						'label' => $label,
-						'method' => $method,
-						'enabled' => !empty($opt['instance_enabled']),
+			foreach ( $sinfo['instance_settings'] as $instance => $opt ) {
+				if ( $sinfo['object']->options_exist( $opt ) ) {
+					$instance_count_label = ( 1 == $instance_count ) ? '' : ' (' . $instance_count . ')';
+					$label                = empty( $opt['instance_label'] ) ? $sinfo['object']->get_description() . $instance_count_label : $opt['instance_label'];
+					if ( ! isset( $opt['instance_enabled'] ) ) {
+						$opt['instance_enabled'] = 1;
+					}
+					$active_instances[ $instance ] = array(
+						'label'   => $label,
+						'method'  => $method,
+						'enabled' => ! empty( $opt['instance_enabled'] ),
 					);
-					$instance_count++;
+					++$instance_count;
 				}
 			}
 		}
 
 		return $active_instances;
 	}
-	
+
 	/**
 	 * This method works through the passed in settings array and saves the settings to the database clearing old data and setting up a return array with content to update the page via ajax
 	 *
 	 * @param  array $settings An array of settings taking from the admin page ready to be saved to the database
 	 * @return array           An array response containing the status of the update along with content to be used to update the admin page.
 	 */
-	public function save_settings($settings) {
+	public function save_settings( $settings ) {
 
 		global $backupplus;
 
@@ -5525,21 +6141,21 @@ class BackupPlus_Admin {
 
 		$more_files_path_updated = false;
 
-		if (isset($settings['backupplus_version']) && $backupplus->version == $settings['backupplus_version']) {
+		if ( isset( $settings['backupplus_version'] ) && $backupplus->version == $settings['backupplus_version'] ) {
 
-			$return_array = array('saved' => true);
+			$return_array = array( 'saved' => true );
 
-			$add_to_post_keys = array('backupplus_interval', 'backupplus_interval_database', 'backupplus_interval_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db');
+			$add_to_post_keys = array( 'backupplus_interval', 'backupplus_interval_database', 'backupplus_interval_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db' );
 
 			// If database and files are on same schedule, override the db day/time settings
-			if (isset($settings['backupplus_interval_database']) && isset($settings['backupplus_interval_database']) && $settings['backupplus_interval_database'] == $settings['backupplus_interval'] && isset($settings['backupplus_starttime_files'])) {
+			if ( isset( $settings['backupplus_interval_database'] ) && isset( $settings['backupplus_interval_database'] ) && $settings['backupplus_interval_database'] == $settings['backupplus_interval'] && isset( $settings['backupplus_starttime_files'] ) ) {
 				$settings['backupplus_starttime_db'] = $settings['backupplus_starttime_files'];
-				$settings['backupplus_startday_db'] = $settings['backupplus_startday_files'];
+				$settings['backupplus_startday_db']  = $settings['backupplus_startday_files'];
 			}
-			foreach ($add_to_post_keys as $key) {
+			foreach ( $add_to_post_keys as $key ) {
 				// For add-ons that look at $_POST to find saved settings, add the relevant keys to $_POST so that they find them there
-				if (isset($settings[$key])) {
-					$_POST[$key] = $settings[$key];
+				if ( isset( $settings[ $key ] ) ) {
+					$_POST[ $key ] = $settings[ $key ];
 				}
 			}
 
@@ -5547,50 +6163,56 @@ class BackupPlus_Admin {
 			$more_files_path_updated = false;
 
 			// i.e. If an option has been set, or if it was currently active in the settings
-			if (isset($settings['backupplus_include_more_path']) || BackupPlus_Options::get_backupplus_option('backupplus_include_more_path')) {
+			if ( isset( $settings['backupplus_include_more_path'] ) || BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path' ) ) {
 				$more_files_path_updated = true;
 			}
 
 			// Wipe the extra retention rules, as they are not saved correctly if the last one is deleted
-			BackupPlus_Options::update_backupplus_option('backupplus_retain_extrarules', array());
-			BackupPlus_Options::update_backupplus_option('backupplus_email', array());
-			BackupPlus_Options::update_backupplus_option('backupplus_report_warningsonly', array());
-			BackupPlus_Options::update_backupplus_option('backupplus_report_wholebackup', array());
-			BackupPlus_Options::update_backupplus_option('backupplus_extradbs', array());
-			BackupPlus_Options::update_backupplus_option('backupplus_include_more_path', array());
+			BackupPlus_Options::update_backupplus_option( 'backupplus_retain_extrarules', array() );
+			BackupPlus_Options::update_backupplus_option( 'backupplus_email', array() );
+			BackupPlus_Options::update_backupplus_option( 'backupplus_report_warningsonly', array() );
+			BackupPlus_Options::update_backupplus_option( 'backupplus_report_wholebackup', array() );
+			BackupPlus_Options::update_backupplus_option( 'backupplus_extradbs', array() );
+			BackupPlus_Options::update_backupplus_option( 'backupplus_include_more_path', array() );
 
 			$relevant_keys = $backupplus->get_settings_keys();
 
-			if (isset($settings['backupplus_auto_updates']) && in_array('backupplus_auto_updates', $relevant_keys)) {
-				$backupplus->set_automatic_updates($settings['backupplus_auto_updates']);
-				unset($settings['backupplus_auto_updates']); // unset the key and its value to prevent being processed the second time
+			if ( isset( $settings['backupplus_auto_updates'] ) && in_array( 'backupplus_auto_updates', $relevant_keys ) ) {
+				$backupplus->set_automatic_updates( $settings['backupplus_auto_updates'] );
+				unset( $settings['backupplus_auto_updates'] ); // unset the key and its value to prevent being processed the second time
 			}
 
-			if (method_exists('BackupPlus_Options', 'mass_options_update')) {
+			if ( method_exists( 'BackupPlus_Options', 'mass_options_update' ) ) {
 				$original_settings = $settings;
-				$settings = BackupPlus_Options::mass_options_update($settings);
-				$mass_updated = true;
+				$settings          = BackupPlus_Options::mass_options_update( $settings );
+				$mass_updated      = true;
 			}
 
-			foreach ($settings as $key => $value) {
+			foreach ( $settings as $key => $value ) {
 
-				if (in_array($key, $relevant_keys)) {
-					if ('backupplus_service' == $key && is_array($value)) {
-						foreach ($value as $subkey => $subvalue) {
-							if ('0' == $subvalue) unset($value[$subkey]);
+				if ( in_array( $key, $relevant_keys ) ) {
+					if ( 'backupplus_service' == $key && is_array( $value ) ) {
+						foreach ( $value as $subkey => $subvalue ) {
+							if ( '0' == $subvalue ) {
+								unset( $value[ $subkey ] );
+							}
 						}
 					}
 
 					// This flag indicates that either the stored database option was changed, or that the supplied option was changed before being stored. It isn't comprehensive - it's only used to update some UI elements with invalid input.
-					$updated = empty($mass_updated) ? (is_string($value) && BackupPlus_Options::get_backupplus_option($key) != $value) : (is_string($value) && (!isset($original_settings[$key]) || $original_settings[$key] != $value));
+					$updated = empty( $mass_updated ) ? ( is_string( $value ) && BackupPlus_Options::get_backupplus_option( $key ) != $value ) : ( is_string( $value ) && ( ! isset( $original_settings[ $key ] ) || $original_settings[ $key ] != $value ) );
 
-					if (empty($mass_updated)) BackupPlus_Options::update_backupplus_option($key, $value);
+					if ( empty( $mass_updated ) ) {
+						BackupPlus_Options::update_backupplus_option( $key, $value );
+					}
 
 					// Add information on what has changed to array to loop through to update links etc.
 					// Restricting to strings for now, to prevent any unintended leakage (since this is just used for UI updating)
-					if ($updated) {
-						$value = BackupPlus_Options::get_backupplus_option($key);
-						if (is_string($value)) $return_array['changed'][$key] = $value;
+					if ( $updated ) {
+						$value = BackupPlus_Options::get_backupplus_option( $key );
+						if ( is_string( $value ) ) {
+							$return_array['changed'][ $key ] = $value;
+						}
 					}
 					// @codingStandardsIgnoreLine
 				} else {
@@ -5602,54 +6224,58 @@ class BackupPlus_Admin {
 			}
 		} else {
 			$return_array = array(
-				'saved' => false,
+				'saved'         => false,
 				'error_message' => sprintf(
 					/* translators: %s: BackupPlus version */
-					__('BackupPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded.', 'backupplus'),
+					__( 'BackupPlus seems to have been updated to version (%s), which is different to the version running when this settings page was loaded.', 'backupplus' ),
 					$backupplus->version
-				).' '.__('Please reload the settings page before trying to save settings.', 'backupplus')
+				) . ' ' . __( 'Please reload the settings page before trying to save settings.', 'backupplus' ),
 			);
 		}
 
 		// Checking for various possible messages
-		$backupplus_dir = $backupplus->backups_dir_location(false);
-		$really_is_writable = BackupPlus_Filesystem_Functions::really_is_writable($backupplus_dir);
-		$dir_info = $this->really_writable_message($really_is_writable, $backupplus_dir);
-		$button_title = esc_attr(__('This button is disabled because your backup directory is not writable (see the settings).', 'backupplus'));
+		$backupplus_dir     = $backupplus->backups_dir_location( false );
+		$really_is_writable = BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir );
+		$dir_info           = $this->really_writable_message( $really_is_writable, $backupplus_dir );
+		$button_title       = esc_attr( __( 'This button is disabled because your backup directory is not writable (see the settings).', 'backupplus' ) );
 
 		$return_array['backup_now_message'] = $this->backup_now_remote_message();
 
-		$return_array['backup_dir'] = array('writable' => $really_is_writable, 'message' => $dir_info, 'button_title' => $button_title);
+		$return_array['backup_dir'] = array(
+			'writable'     => $really_is_writable,
+			'message'      => $dir_info,
+			'button_title' => $button_title,
+		);
 
 		// Check if $more_files_path_updated is true, is so then there's a change and we should update the backup modal
-		if ($more_files_path_updated) {
-			$return_array['backupplus_include_more_path'] = $this->files_selector_widgetry('backupnow_files_', false, 'sometimes');
+		if ( $more_files_path_updated ) {
+			$return_array['backupplus_include_more_path'] = $this->files_selector_widgetry( 'backupnow_files_', false, 'sometimes' );
 		}
 
 		// Because of the single AJAX call, we need to remove the existing UD messages from the 'all_admin_notices' action
-		remove_all_actions('all_admin_notices');
+		remove_all_actions( 'all_admin_notices' );
 
 		// Moving from 2 to 1 ajax call
 		ob_start();
 
-		$service = BackupPlus_Options::get_backupplus_option('backupplus_service');
+		$service = BackupPlus_Options::get_backupplus_option( 'backupplus_service' );
 
-		$this->setup_all_admin_notices_global($service);
-		$this->setup_all_admin_notices_udonly($service);
+		$this->setup_all_admin_notices_global( $service );
+		$this->setup_all_admin_notices_udonly( $service );
 
-		do_action('all_admin_notices');
+		do_action( 'all_admin_notices' );
 
-		if (!$really_is_writable) { // Check if writable
+		if ( ! $really_is_writable ) { // Check if writable
 			$this->show_admin_warning_unwritable();
 		}
 
-		if ($return_array['saved']) { //
-			$this->show_admin_warning(__('Your settings have been saved.', 'backupplus'), 'updated fade');
+		if ( $return_array['saved'] ) { //
+			$this->show_admin_warning( __( 'Your settings have been saved.', 'backupplus' ), 'updated fade' );
 		} else {
-			if (isset($return_array['error_message'])) {
-				$this->show_admin_warning($return_array['error_message'], 'error');
+			if ( isset( $return_array['error_message'] ) ) {
+				$this->show_admin_warning( $return_array['error_message'], 'error' );
 			} else {
-				$this->show_admin_warning(__('Your settings failed to save.', 'backupplus').' '.__('Please refresh the settings page and try again', 'backupplus'), 'error');
+				$this->show_admin_warning( __( 'Your settings failed to save.', 'backupplus' ) . ' ' . __( 'Please refresh the settings page and try again', 'backupplus' ), 'error' );
 			}
 		}
 
@@ -5658,19 +6284,17 @@ class BackupPlus_Admin {
 		ob_clean();
 
 		// Backup schedule output
-		$this->next_scheduled_backups_output('line');
+		$this->next_scheduled_backups_output( 'line' );
 
 		$scheduled_output = ob_get_clean();
 
-		$return_array['messages'] = $messages_output;
-		$return_array['scheduled'] = $scheduled_output;
-		$return_array['files_scheduled'] = $this->next_scheduled_files_backups_output(true);
-		$return_array['database_scheduled'] = $this->next_scheduled_database_backups_output(true);
-
+		$return_array['messages']           = $messages_output;
+		$return_array['scheduled']          = $scheduled_output;
+		$return_array['files_scheduled']    = $this->next_scheduled_files_backups_output( true );
+		$return_array['database_scheduled'] = $this->next_scheduled_database_backups_output( true );
 
 		// Add the updated options to the return message, so we can update on screen
 		return $return_array;
-
 	}
 
 	/**
@@ -5681,35 +6305,38 @@ class BackupPlus_Admin {
 	 *                $instance_id - Remote storage instance id
 	 * @return array An array response containing the status of the authentication
 	 */
-	public function auth_remote_method($data) {
+	public function auth_remote_method( $data ) {
 		global $backupplus;
-		
+
 		$response = array();
-		
-		if (isset($data['remote_method']) && isset($data['instance_id'])) {
+
+		if ( isset( $data['remote_method'] ) && isset( $data['instance_id'] ) ) {
 			$response['result'] = 'success';
-			$remote_method = $data['remote_method'];
-			$instance_id = $data['instance_id'];
-			
-			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($remote_method));
-			
+			$remote_method      = $data['remote_method'];
+			$instance_id        = $data['instance_id'];
+
+			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( array( $remote_method ) );
+
 			try {
-				if (empty($storage_objects_and_ids[$remote_method]['object'])) {
-					return array('result' => 'error', 'message' => __('Remote storage provider is unavailable.', 'backupplus'));
+				if ( empty( $storage_objects_and_ids[ $remote_method ]['object'] ) ) {
+					return array(
+						'result'  => 'error',
+						'message' => __( 'Remote storage provider is unavailable.', 'backupplus' ),
+					);
 				}
-				$storage_objects_and_ids[$remote_method]['object']->authenticate_storage($instance_id);
-			} catch (Exception $e) {
-				$response['result'] = 'error';
-				$response['message'] = $backupplus->backup_methods[$remote_method] . ' ' . __('authentication error', 'backupplus') . ' ' . $e->getMessage();
+				$storage_objects_and_ids[ $remote_method ]['object']->authenticate_storage( $instance_id );
+			} catch ( Exception $e ) {
+				$response['result']  = 'error';
+				$response['message'] = $backupplus->backup_methods[ $remote_method ] . ' ' . __( 'authentication error', 'backupplus' ) . ' ' . $e->getMessage();
 			}
 		} else {
-			$response['result'] = 'error';
-			$response['message'] = __('Remote storage method and instance id are required for authentication.', 'backupplus');
+			$response['result']  = 'error';
+			$response['message'] = __( 'Remote storage method and instance id are required for authentication.', 'backupplus' );
 		}
 
 		return $response;
 	}
-	
+
 	/**
 	 * Deauthenticate remote storage instance
 	 *
@@ -5718,58 +6345,67 @@ class BackupPlus_Admin {
 	 *                $instance_id - Remote storage instance id
 	 * @return array An array response containing the status of the deauthentication
 	 */
-	public function deauth_remote_method($data) {
+	public function deauth_remote_method( $data ) {
 		global $backupplus;
-		
+
 		$response = array();
-		
-		if (isset($data['remote_method']) && isset($data['instance_id'])) {
+
+		if ( isset( $data['remote_method'] ) && isset( $data['instance_id'] ) ) {
 			$response['result'] = 'success';
-			$remote_method = $data['remote_method'];
-			$instance_id = $data['instance_id'];
-			
-			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids(array($remote_method));
-			
+			$remote_method      = $data['remote_method'];
+			$instance_id        = $data['instance_id'];
+
+			$storage_objects_and_ids = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( array( $remote_method ) );
+
 			try {
-				if (empty($storage_objects_and_ids[$remote_method]['object'])) {
-					return array('result' => 'error', 'message' => __('Remote storage provider is unavailable.', 'backupplus'));
+				if ( empty( $storage_objects_and_ids[ $remote_method ]['object'] ) ) {
+					return array(
+						'result'  => 'error',
+						'message' => __( 'Remote storage provider is unavailable.', 'backupplus' ),
+					);
 				}
-				$storage_objects_and_ids[$remote_method]['object']->deauthenticate_storage($instance_id);
-			} catch (Exception $e) {
-				$response['result'] = 'error';
-				$response['message'] = $backupplus->backup_methods[$remote_method] . ' deauthentication error ' . $e->getMessage();
+				$storage_objects_and_ids[ $remote_method ]['object']->deauthenticate_storage( $instance_id );
+			} catch ( Exception $e ) {
+				$response['result']  = 'error';
+				$response['message'] = $backupplus->backup_methods[ $remote_method ] . ' deauthentication error ' . $e->getMessage();
 			}
 		} else {
-			$response['result'] = 'error';
+			$response['result']  = 'error';
 			$response['message'] = 'Remote storage method and instance id are required for deauthentication.';
 		}
 
 		return $response;
 	}
-	
+
 	/**
 	 * A method to remove BackupPlus settings from the options table.
 	 *
 	 * @return boolean
 	 */
 	public function wipe_settings() {
-		
+
 		global $backupplus;
 
 		$settings = $backupplus->get_settings_keys();
 
-		foreach ($settings as $s) BackupPlus_Options::delete_backupplus_option($s);
+		foreach ( $settings as $s ) {
+			BackupPlus_Options::delete_backupplus_option( $s );
+		}
 
-		if (is_multisite()) $backupplus->wipe_state_data(true, 'sitemeta');
-		$backupplus->wipe_state_data(true);
+		if ( is_multisite() ) {
+			$backupplus->wipe_state_data( true, 'sitemeta' );
+		}
+		$backupplus->wipe_state_data( true );
 
-		$site_options = array('backupplus_oneshotnonce');
-		foreach ($site_options as $s) delete_site_option($s);
+		$site_options = array( 'backupplus_oneshotnonce' );
+		foreach ( $site_options as $s ) {
+			delete_site_option( $s );
+		}
 
-		$backupplus->schedule_backup('manual');
-		$backupplus->schedule_backup_database('manual');
+		$backupplus->schedule_backup( 'manual' );
+		$backupplus->schedule_backup_database( 'manual' );
 
-		$this->show_admin_warning(__("Your settings have been wiped.", 'backupplus'));
+		$this->show_admin_warning( __( 'Your settings have been wiped.', 'backupplus' ) );
 
 		return true;
 	}
@@ -5777,18 +6413,20 @@ class BackupPlus_Admin {
 	/**
 	 * Used by the WP filter http_allowed_safe_ports_allow. It will include any found port as allowed.
 	 *
-	 * @param Array	 $ports
+	 * @param Array  $ports
 	 * @param String $host
 	 * @param String $url
 	 *
 	 * @return Array - filtered result
 	 */
-	public function http_allowed_safe_ports_allow($ports, $host, $url) {
-		$port = parse_url($url, PHP_URL_PORT);
-		if (is_integer($port)) $ports[] = $port;
+	public function http_allowed_safe_ports_allow( $ports, $host, $url ) {
+		$port = parse_url( $url, PHP_URL_PORT );
+		if ( is_integer( $port ) ) {
+			$ports[] = $port;
+		}
 		return $ports;
 	}
-	
+
 	/**
 	 * http_get will allow the HTTP Fetch execute available in advanced tools
 	 *
@@ -5797,83 +6435,86 @@ class BackupPlus_Admin {
 	 *
 	 * @return String - JSON encoded results
 	 */
-	public function http_get($uri = '', $curl = false) {
+	public function http_get( $uri = '', $curl = false ) {
 
-		if (!preg_match('/^https?:/', $uri)) return json_encode(array('e' => 'Non-http(s) URL specified'));
-	
+		if ( ! preg_match( '/^https?:/', $uri ) ) {
+			return json_encode( array( 'e' => 'Non-http(s) URL specified' ) );
+		}
+
 		// It is only internal destinations that we check for here - non-standard ports on Internet destinations are not of concern
-		add_filter('http_allowed_safe_ports', array($this, 'http_allowed_safe_ports_allow'), 10, 3);
-		
+		add_filter( 'http_allowed_safe_ports', array( $this, 'http_allowed_safe_ports_allow' ), 10, 3 );
+
 		$url_allowed = true;
-		
-		if (function_exists('wp_http_validate_url') && !wp_http_validate_url($uri) && (!defined('BACKUPPLUS_ALLOW_GET_UNSAFE_URLS') || !BACKUPPLUS_ALLOW_GET_UNSAFE_URLS)) {
+
+		if ( function_exists( 'wp_http_validate_url' ) && ! wp_http_validate_url( $uri ) && ( ! defined( 'BACKUPPLUS_ALLOW_GET_UNSAFE_URLS' ) || ! BACKUPPLUS_ALLOW_GET_UNSAFE_URLS ) ) {
 			// This debugging tool is available as an administrator tool (on multisite, super-administrator). Theoretically, in the case of a malicious administrator on a heavily (non-default) locked-down site, the server administrator might not wish to allow the (super-)administrator to access local network addresses. He really should block that at a network/firewall level; if trying at the PHP level, then there are many likely loopholes. But if he has blocked the administrator from being able to write to all of these executable locations, then this both a) indicates intent and b) blocks off a trivial route through which the administrator could run arbitrary code anyway (which would render any other attempts moot). So, we test it to indicate that intent, and to avoid pointless blocking of what is already possible through other routes.
-			
+
 			$url_allowed = false;
 
 			global $backupplus;
-			$entity_dirs = $backupplus->get_backupable_file_entities(false);
-			
-			$dirs = array_values(array_intersect_key($entity_dirs, array_flip(array('plugins', 'themes', 'mu-plugins'))));
+			$entity_dirs = $backupplus->get_backupable_file_entities( false );
 
-			foreach ($dirs as $dir) {
-				if (file_exists($dir) && BackupPlus_Filesystem_Functions::really_is_writable($dir)) {
+			$dirs = array_values( array_intersect_key( $entity_dirs, array_flip( array( 'plugins', 'themes', 'mu-plugins' ) ) ) );
+
+			foreach ( $dirs as $dir ) {
+				if ( file_exists( $dir ) && BackupPlus_Filesystem_Functions::really_is_writable( $dir ) ) {
 					$url_allowed = true;
 					break;
 				}
 			}
-			
 		}
-		
-		remove_filter('http_allowed_safe_ports', array($this, 'http_allowed_safe_ports_allow'), 10, 3);
-		
-		if (!$url_allowed) {
-			return json_encode(array('e' => 'Because it uses an internal host, and because this WordPress install is locked-down, you must enable the constant BACKUPPLUS_ALLOW_GET_UNSAFE_URLS before the given URL can be fetched.'));
+
+		remove_filter( 'http_allowed_safe_ports', array( $this, 'http_allowed_safe_ports_allow' ), 10, 3 );
+
+		if ( ! $url_allowed ) {
+			return json_encode( array( 'e' => 'Because it uses an internal host, and because this WordPress install is locked-down, you must enable the constant BACKUPPLUS_ALLOW_GET_UNSAFE_URLS before the given URL can be fetched.' ) );
 		}
-		
-		if ($curl) {
-			if (!function_exists('curl_exec')) {
-				return json_encode(array('e' => 'No Curl installed'));
+
+		if ( $curl ) {
+			if ( ! function_exists( 'curl_exec' ) ) {
+				return json_encode( array( 'e' => 'No Curl installed' ) );
 				die;
 			}
 			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $uri);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_FAILONERROR, true);
-			curl_setopt($ch, CURLOPT_HEADER, false);
-			curl_setopt($ch, CURLOPT_VERBOSE, true);
-			curl_setopt($ch, CURLOPT_STDERR, $output = fopen('php://temp', "w+"));
-			$response = curl_exec($ch);
-			$error = curl_error($ch);
-			$getinfo = curl_getinfo($ch);
-			if (version_compare(PHP_VERSION, '8.0', '<')) {
-				curl_close($ch);
+			curl_setopt( $ch, CURLOPT_URL, $uri );
+			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+			curl_setopt( $ch, CURLOPT_FAILONERROR, true );
+			curl_setopt( $ch, CURLOPT_HEADER, false );
+			curl_setopt( $ch, CURLOPT_VERBOSE, true );
+			curl_setopt( $ch, CURLOPT_STDERR, $output = fopen( 'php://temp', 'w+' ) );
+			$response = curl_exec( $ch );
+			$error    = curl_error( $ch );
+			$getinfo  = curl_getinfo( $ch );
+			if ( version_compare( PHP_VERSION, '8.0', '<' ) ) {
+				curl_close( $ch );
 			} else {
-				unset($ch); // On PHP 8+, curl_close() is a no-op (deprecated in 8.5); unset the handle instead.
+				unset( $ch ); // On PHP 8+, curl_close() is a no-op (deprecated in 8.5); unset the handle instead.
 			}
-			rewind($output);
-			$verb = stream_get_contents($output);
+			rewind( $output );
+			$verb = stream_get_contents( $output );
 
 			$resp = array();
-			if (false === $response) {
-				$resp['e'] = htmlspecialchars($error);
+			if ( false === $response ) {
+				$resp['e'] = htmlspecialchars( $error );
 			}
-			$resp['r'] = (empty($response)) ? '' : htmlspecialchars(substr($response, 0, 2048));
+			$resp['r'] = ( empty( $response ) ) ? '' : htmlspecialchars( substr( $response, 0, 2048 ) );
 
-			if (!empty($verb)) $resp['r'] = htmlspecialchars($verb)."\n\n".$resp['r'];
+			if ( ! empty( $verb ) ) {
+				$resp['r'] = htmlspecialchars( $verb ) . "\n\n" . $resp['r'];
+			}
 
-			return json_encode($resp);
+			return json_encode( $resp );
 		} else {
-			$response = wp_remote_get($uri, array('timeout' => 10));
-			if (is_wp_error($response)) {
-				return json_encode(array('e' => htmlspecialchars($response->get_error_message())));
+			$response = wp_remote_get( $uri, array( 'timeout' => 10 ) );
+			if ( is_wp_error( $response ) ) {
+				return json_encode( array( 'e' => htmlspecialchars( $response->get_error_message() ) ) );
 			}
 			return json_encode(
 				array(
-					'r' => wp_remote_retrieve_response_code($response).': '.htmlspecialchars(substr(wp_remote_retrieve_body($response), 0, 2048)),
-					'code' => wp_remote_retrieve_response_code($response),
-					'html_response' => htmlspecialchars(substr(wp_remote_retrieve_body($response), 0, 2048)),
-					'response' => $response
+					'r'             => wp_remote_retrieve_response_code( $response ) . ': ' . htmlspecialchars( substr( wp_remote_retrieve_body( $response ), 0, 2048 ) ),
+					'code'          => wp_remote_retrieve_response_code( $response ),
+					'html_response' => htmlspecialchars( substr( wp_remote_retrieve_body( $response ), 0, 2048 ) ),
+					'response'      => $response,
 				)
 			);
 		}
@@ -5886,67 +6527,69 @@ class BackupPlus_Admin {
 	 *
 	 * @return String
 	 */
-	public function show_raw_backups($no_pre_tags = false) {
+	public function show_raw_backups( $no_pre_tags = false ) {
 		global $backupplus;
-		
+
 		$response = array();
-		
-		$response['html'] = '<h3 id="ud-debuginfo-rawbackups">'.__('Known backups (raw)', 'backupplus').'</h3><pre>';
+
+		$response['html'] = '<h3 id="ud-debuginfo-rawbackups">' . __( 'Known backups (raw)', 'backupplus' ) . '</h3><pre>';
 		ob_start();
 		$history = BackupPlus_Backup_History::get_history();
-		var_dump($history); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump -- we use the var_dump() to show the raw backup list in the advanced tools.
-		$response["html"] .= ob_get_clean();
+		var_dump( $history ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump -- we use the var_dump() to show the raw backup list in the advanced tools.
+		$response['html'] .= ob_get_clean();
 		$response['html'] .= '</pre>';
 
-		$response['html'] .= '<h3 id="ud-debuginfo-files">'.__('Files', 'backupplus').'</h3><pre>';
-		$backupplus_dir = $backupplus->backups_dir_location();
-		$raw_output = array();
-		$d = dir($backupplus_dir);
-		while (false !== ($entry = $d->read())) {
-			$fp = $backupplus_dir.'/'.$entry;
-			$mtime = filemtime($fp);
-			if (is_dir($fp)) {
+		$response['html'] .= '<h3 id="ud-debuginfo-files">' . __( 'Files', 'backupplus' ) . '</h3><pre>';
+		$backupplus_dir    = $backupplus->backups_dir_location();
+		$raw_output        = array();
+		$d                 = dir( $backupplus_dir );
+		while ( false !== ( $entry = $d->read() ) ) {
+			$fp    = $backupplus_dir . '/' . $entry;
+			$mtime = filemtime( $fp );
+			if ( is_dir( $fp ) ) {
 				$size = '       d';
-			} elseif (is_link($fp)) {
+			} elseif ( is_link( $fp ) ) {
 				$size = '       l';
-			} elseif (is_file($fp)) {
-				$size = sprintf("%8.1f", round(filesize($fp)/1024, 1)).' '.gmdate('r', $mtime);
+			} elseif ( is_file( $fp ) ) {
+				$size = sprintf( '%8.1f', round( filesize( $fp ) / 1024, 1 ) ) . ' ' . gmdate( 'r', $mtime );
 			} else {
 				$size = '       ?';
 			}
-			if (preg_match('/^log\.(.*)\.txt$/', $entry, $lmatch)) $entry = '<a target="_top" href="?action=downloadlog&amp;page=backupplus&amp;backupplus_backup_nonce='.htmlspecialchars($lmatch[1]).'">'.$entry.'</a>';
-			$raw_output[$mtime] = empty($raw_output[$mtime]) ? sprintf("%s %s\n", $size, $entry) : $raw_output[$mtime].sprintf("%s %s\n", $size, $entry);
+			if ( preg_match( '/^log\.(.*)\.txt$/', $entry, $lmatch ) ) {
+				$entry = '<a target="_top" href="?action=downloadlog&amp;page=backupplus&amp;backupplus_backup_nonce=' . htmlspecialchars( $lmatch[1] ) . '">' . $entry . '</a>';
+			}
+			$raw_output[ $mtime ] = empty( $raw_output[ $mtime ] ) ? sprintf( "%s %s\n", $size, $entry ) : $raw_output[ $mtime ] . sprintf( "%s %s\n", $size, $entry );
 		}
 		@$d->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
-		krsort($raw_output, SORT_NUMERIC);
+		krsort( $raw_output, SORT_NUMERIC );
 
-		foreach ($raw_output as $line) {
+		foreach ( $raw_output as $line ) {
 			$response['html'] .= $line;
 		}
 
 		$response['html'] .= '</pre>';
 
-		$response['html'] .= '<h3 id="ud-debuginfo-options">'.__('Options (raw)', 'backupplus').'</h3>';
-		$opts = $backupplus->get_settings_keys();
-		asort($opts);
+		$response['html'] .= '<h3 id="ud-debuginfo-options">' . __( 'Options (raw)', 'backupplus' ) . '</h3>';
+		$opts              = $backupplus->get_settings_keys();
+		asort( $opts );
 		// <tr><th>'.__('Key', 'backupplus').'</th><th>'.__('Value', 'backupplus').'</th></tr>
 		$response['html'] .= '<table><thead></thead><tbody>';
-		foreach ($opts as $opt) {
-			$response['html'] .= '<tr><td>'.htmlspecialchars($opt).'</td><td>'.htmlspecialchars(print_r(BackupPlus_Options::get_backupplus_option($opt), true)).'</td>';
+		foreach ( $opts as $opt ) {
+			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( BackupPlus_Options::get_backupplus_option( $opt ), true ) ) . '</td>';
 		}
-		
+
 		// Get the option saved by yahnis-elsts/plugin-update-checker
-		$response['html'] .= '<tr><td>external_updates-backupplus</td><td><pre>'.htmlspecialchars(print_r(get_site_option('external_updates-backupplus'), true)).'</pre></td>';
-		
+		$response['html'] .= '<tr><td>external_updates-backupplus</td><td><pre>' . htmlspecialchars( print_r( get_site_option( 'external_updates-backupplus' ), true ) ) . '</pre></td>';
+
 		$response['html'] .= '</tbody></table>';
 
 		ob_start();
-		do_action('backupplus_showrawinfo');
+		do_action( 'backupplus_showrawinfo' );
 		$response['html'] .= ob_get_clean();
 
-		if (true == $no_pre_tags) {
-			$response['html'] = str_replace('<pre>', '', $response['html']);
-			$response['html'] = str_replace('</pre>', '', $response['html']);
+		if ( true == $no_pre_tags ) {
+			$response['html'] = str_replace( '<pre>', '', $response['html'] );
+			$response['html'] = str_replace( '</pre>', '', $response['html'] );
 		}
 
 		return $response;
@@ -5955,62 +6598,66 @@ class BackupPlus_Admin {
 	/**
 	 * This will call any wp_action
 	 *
-	 * @param  Array|Null		$data                      The array of data with the values for wpaction
-	 * @param  Callable|Boolean	$close_connection_callable A callable to call to close the browser connection, or true for a default suitable for internal use, or false for none
+	 * @param  Array|Null       $data                      The array of data with the values for wpaction
+	 * @param  Callable|Boolean $close_connection_callable A callable to call to close the browser connection, or true for a default suitable for internal use, or false for none
 	 * @return Array - results
 	 */
-	public function call_wp_action($data = null, $close_connection_callable = false) {
+	public function call_wp_action( $data = null, $close_connection_callable = false ) {
 		global $backupplus;
 
 		ob_start();
 
 		$res = '<em>Request received: </em>';
 
-		if (preg_match('/^([^:]+)+:(.*)$/', $data['wpaction'], $matches)) {
+		if ( preg_match( '/^([^:]+)+:(.*)$/', $data['wpaction'], $matches ) ) {
 			$action = $matches[1];
-			if (null === ($args = json_decode($matches[2], true))) {
-				$res .= "The parameters (should be JSON) could not be decoded";
+			if ( null === ( $args = json_decode( $matches[2], true ) ) ) {
+				$res   .= 'The parameters (should be JSON) could not be decoded';
 				$action = false;
 			} else {
-				if (is_string($args)) $args = array($args);
-				$res .= "Will despatch action: ".htmlspecialchars($action).", parameters: ".htmlspecialchars(implode(',', $args));
+				if ( is_string( $args ) ) {
+					$args = array( $args );
+				}
+				$res .= 'Will despatch action: ' . htmlspecialchars( $action ) . ', parameters: ' . htmlspecialchars( implode( ',', $args ) );
 			}
 		} else {
 			$action = $data['wpaction'];
-			$res .= "Will despatch action: ".htmlspecialchars($action).", no parameters";
+			$res   .= 'Will despatch action: ' . htmlspecialchars( $action ) . ', no parameters';
 		}
 
 		ob_get_clean();
 
 		// Need to add this as the close browser should only work for UDP
-		if ($close_connection_callable) {
-			if (is_callable($close_connection_callable)) {
-				call_user_func($close_connection_callable, array('r' => $res));
+		if ( $close_connection_callable ) {
+			if ( is_callable( $close_connection_callable ) ) {
+				call_user_func( $close_connection_callable, array( 'r' => $res ) );
 			} else {
-				$backupplus->close_browser_connection(json_encode(array('r' => $res)));
+				$backupplus->close_browser_connection( json_encode( array( 'r' => $res ) ) );
 			}
 		}
 
-		if (!empty($action)) {
-			if (!empty($args)) {
+		if ( ! empty( $action ) ) {
+			if ( ! empty( $args ) ) {
 				ob_start();
-				$returned = do_action_ref_array($action, $args);
-				$output = ob_get_clean();
-				$res .= " - do_action_ref_array Trigger ";
+				$returned = do_action_ref_array( $action, $args );
+				$output   = ob_get_clean();
+				$res     .= ' - do_action_ref_array Trigger ';
 			} else {
 				ob_start();
-				do_action($action);
+				do_action( $action );
 				$output = ob_get_contents();
 				ob_end_clean();
-				$res .= " - do_action Trigger ";
+				$res .= ' - do_action Trigger ';
 			}
 		}
-		$response 				= array();
-		$response['response'] 	= $res;
-		$response['log'] 		= $output;
+		$response             = array();
+		$response['response'] = $res;
+		$response['log']      = $output;
 
 		// Check if response is empty
-		if (!empty($returned)) $response['status'] = $returned;
+		if ( ! empty( $returned ) ) {
+			$response['status'] = $returned;
+		}
 
 		return $response;
 	}
@@ -6022,16 +6669,18 @@ class BackupPlus_Admin {
 		global $backupplus;
 
 		static $already_enqueued = false;
-		if ($already_enqueued) return;
-		
-		$already_enqueued = true;
-		$jstree_enqueue_version = $backupplus->use_unminified_scripts() ? '3.3.12-rc.0'.'.'.time() : '3.3.12-rc.0';
-		$min_or_not = $backupplus->use_unminified_scripts() ? '' : '.min';
-		
-		wp_enqueue_script('jstree', BACKUPPLUS_URL.'/includes/jstree/jstree'.$min_or_not.'.js', array('jquery'), $jstree_enqueue_version);
-		wp_enqueue_style('jstree', BACKUPPLUS_URL.'/includes/jstree/themes/default/style'.$min_or_not.'.css', array(), $jstree_enqueue_version);
+		if ( $already_enqueued ) {
+			return;
+		}
+
+		$already_enqueued       = true;
+		$jstree_enqueue_version = $backupplus->use_unminified_scripts() ? '3.3.12-rc.0' . '.' . time() : '3.3.12-rc.0';
+		$min_or_not             = $backupplus->use_unminified_scripts() ? '' : '.min';
+
+		wp_enqueue_script( 'jstree', BACKUPPLUS_URL . '/includes/jstree/jstree' . $min_or_not . '.js', array( 'jquery' ), $jstree_enqueue_version );
+		wp_enqueue_style( 'jstree', BACKUPPLUS_URL . '/includes/jstree/themes/default/style' . $min_or_not . '.css', array(), $jstree_enqueue_version );
 	}
-	
+
 	/**
 	 * Detects byte-order mark at the start of common files and change waning message texts
 	 *
@@ -6039,53 +6688,58 @@ class BackupPlus_Admin {
 	 */
 	public function get_bom_warning_text() {
 		$files_to_check = array(
-			ABSPATH.'wp-config.php',
-			get_template_directory().DIRECTORY_SEPARATOR.'functions.php',
+			ABSPATH . 'wp-config.php',
+			get_template_directory() . DIRECTORY_SEPARATOR . 'functions.php',
 		);
-		if (is_child_theme()) {
-			$files_to_check[] = get_stylesheet_directory().DIRECTORY_SEPARATOR.'functions.php';
+		if ( is_child_theme() ) {
+			$files_to_check[] = get_stylesheet_directory() . DIRECTORY_SEPARATOR . 'functions.php';
 		}
 		$corrupted_files = array();
-		foreach ($files_to_check as $file) {
-			if (!file_exists($file)) continue;
-			if (false === ($fp = fopen($file, 'r'))) continue;
-			if (false === ($file_data = fread($fp, 8192)));
-			fclose($fp);
+		foreach ( $files_to_check as $file ) {
+			if ( ! file_exists( $file ) ) {
+				continue;
+			}
+			if ( false === ( $fp = fopen( $file, 'r' ) ) ) {
+				continue;
+			}
+			if ( false === ( $file_data = fread( $fp, 8192 ) ) ) {
+			}
+			fclose( $fp );
 			$substr_file_data = array();
-			for ($substr_length = 2; $substr_length <= 5; $substr_length++) {
-				$substr_file_data[$substr_length] = substr($file_data, 0, $substr_length);
+			for ( $substr_length = 2; $substr_length <= 5; $substr_length++ ) {
+				$substr_file_data[ $substr_length ] = substr( $file_data, 0, $substr_length );
 			}
 			// Detect UTF-7, UTF-8, UTF-16 (BE), UTF-16 (LE), UTF-32 (BE) & UTF-32 (LE) Byte order marks (BOM)
 			$bom_decimal_representations = array(
-				array(43, 47, 118, 56), // UTF-7 (Hexadecimal: 2B 2F 76 38)
-				array(43, 47, 118, 57), // UTF-7 (Hexadecimal: 2B 2F 76 39)
-				array(43, 47, 118, 43), // UTF-7 (Hexadecimal: 2B 2F 76 2B)
-				array(43, 47, 118, 47), // UTF-7 (Hexadecimal: 2B 2F 76 2F)
-				array(43, 47, 118, 56, 45), // UTF-7 (Hexadecimal: 2B 2F 76 38 2D)
-				array(239, 187, 191), // UTF-8 (Hexadecimal: 2B 2F 76 38 2D)
-				array(254, 255), // UTF-16 (BE) (Hexadecimal: FE FF)
-				array(255, 254), // UTF-16 (LE) (Hexadecimal: FF FE)
-				array(0, 0, 254, 255), // UTF-32 (BE) (Hexadecimal: 00 00 FE FF)
-				array(255, 254, 0, 0), // UTF-32 (LE) (Hexadecimal: FF FE 00 00)
+				array( 43, 47, 118, 56 ), // UTF-7 (Hexadecimal: 2B 2F 76 38)
+				array( 43, 47, 118, 57 ), // UTF-7 (Hexadecimal: 2B 2F 76 39)
+				array( 43, 47, 118, 43 ), // UTF-7 (Hexadecimal: 2B 2F 76 2B)
+				array( 43, 47, 118, 47 ), // UTF-7 (Hexadecimal: 2B 2F 76 2F)
+				array( 43, 47, 118, 56, 45 ), // UTF-7 (Hexadecimal: 2B 2F 76 38 2D)
+				array( 239, 187, 191 ), // UTF-8 (Hexadecimal: 2B 2F 76 38 2D)
+				array( 254, 255 ), // UTF-16 (BE) (Hexadecimal: FE FF)
+				array( 255, 254 ), // UTF-16 (LE) (Hexadecimal: FF FE)
+				array( 0, 0, 254, 255 ), // UTF-32 (BE) (Hexadecimal: 00 00 FE FF)
+				array( 255, 254, 0, 0 ), // UTF-32 (LE) (Hexadecimal: FF FE 00 00)
 			);
-			foreach ($bom_decimal_representations as $bom_decimal_representation) {
-				$no_of_chars = count($bom_decimal_representation);
-				array_unshift($bom_decimal_representation, 'C*');
-				$binary = call_user_func_array('pack', $bom_decimal_representation);
-				if ($binary == $substr_file_data[$no_of_chars]) {
+			foreach ( $bom_decimal_representations as $bom_decimal_representation ) {
+				$no_of_chars = count( $bom_decimal_representation );
+				array_unshift( $bom_decimal_representation, 'C*' );
+				$binary = call_user_func_array( 'pack', $bom_decimal_representation );
+				if ( $binary == $substr_file_data[ $no_of_chars ] ) {
 					$corrupted_files[] = $file;
 					break;
 				}
 			}
 		}
-		if (empty($corrupted_files)) {
+		if ( empty( $corrupted_files ) ) {
 			return false;
 		} else {
-			$corrupted_files_count = count($corrupted_files);
-			return '<strong>'.__('Warning', 'backupplus').':</strong> '.
+			$corrupted_files_count = count( $corrupted_files );
+			return '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 			/* translators: %s: List of corrupted files */
-			sprintf(_n('The file %s has a "byte order mark" (BOM) at its beginning.', 'The files %s have a "byte order mark" (BOM) at their beginning.', $corrupted_files_count, 'backupplus'), '<strong>'.implode('</strong>, <strong>', $corrupted_files).'</strong>').
-			' '.__('Remove the extra output from the listed files; even a blank line before the PHP opening tag can cause it.', 'backupplus');
+			sprintf( _n( 'The file %s has a "byte order mark" (BOM) at its beginning.', 'The files %s have a "byte order mark" (BOM) at their beginning.', $corrupted_files_count, 'backupplus' ), '<strong>' . implode( '</strong>, <strong>', $corrupted_files ) . '</strong>' ) .
+			' ' . __( 'Remove the extra output from the listed files; even a blank line before the PHP opening tag can cause it.', 'backupplus' );
 		}
 	}
 
@@ -6093,21 +6747,21 @@ class BackupPlus_Admin {
 	 * Show which remote storage settings are partially setup error, or if manual auth is supported show the manual auth UI
 	 */
 	public function show_admin_warning_if_remote_storage_with_partial_settings() {
-		if ((isset($_REQUEST['page']) && 'backupplus' == $_REQUEST['page']) || (defined('DOING_AJAX') && DOING_AJAX)) {
-			$enabled_services = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids(array_keys($this->storage_service_with_partial_settings));
-			foreach ($this->storage_service_with_partial_settings as $method => $method_name) {
-				if (empty($enabled_services[$method]['object']) || empty($enabled_services[$method]['instance_settings']) || !$enabled_services[$method]['object']->supports_feature('manual_authentication')) {
+		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+			$enabled_services = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( array_keys( $this->storage_service_with_partial_settings ) );
+			foreach ( $this->storage_service_with_partial_settings as $method => $method_name ) {
+				if ( empty( $enabled_services[ $method ]['object'] ) || empty( $enabled_services[ $method ]['instance_settings'] ) || ! $enabled_services[ $method ]['object']->supports_feature( 'manual_authentication' ) ) {
 					/* translators: %s: Remote storage method */
-					$this->show_admin_warning(sprintf(__('The following remote storage (%s) has only been partially configured, manual authorization is not supported with this remote storage, please try again and if the problem persists contact support.', 'backupplus'), $method), 'error');
+					$this->show_admin_warning( sprintf( __( 'The following remote storage (%s) has only been partially configured, manual authorization is not supported with this remote storage, please try again and if the problem persists contact support.', 'backupplus' ), $method ), 'error' );
 				} else {
-					$this->show_admin_warning($enabled_services[$method]['object']->get_manual_authorisation_template(), 'error');
+					$this->show_admin_warning( $enabled_services[ $method ]['object']->get_manual_authorisation_template(), 'error' );
 				}
 			}
 		} else {
 			$this->show_admin_warning(
 				/* translators: %s: List of storage services */
-				'BackupPlus: '.sprintf(__('The following remote storage (%s) has only been partially configured, if you are having problems you can try to manually authorise at the BackupPlus settings page.', 'backupplus'), implode(', ', $this->storage_service_with_partial_settings)).
-				' <a href="'.BackupPlus_Options::admin_page_url().'?page=backupplus&amp;tab=settings">'.__('Return to BackupPlus configuration', 'backupplus').'</a>',
+				'BackupPlus: ' . sprintf( __( 'The following remote storage (%s) has only been partially configured, if you are having problems you can try to manually authorise at the BackupPlus settings page.', 'backupplus' ), implode( ', ', $this->storage_service_with_partial_settings ) ) .
+				' <a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings">' . __( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>',
 				'error'
 			);
 		}
@@ -6117,14 +6771,14 @@ class BackupPlus_Admin {
 	 * Show remote storage settings are empty warning
 	 */
 	public function show_admin_warning_if_remote_storage_setting_are_empty() {
-		if ((isset($_REQUEST['page']) && 'backupplus' == $_REQUEST['page']) || (defined('DOING_AJAX') && DOING_AJAX)) {
+		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
 			/* translators: %s: List of storage services */
-			$this->show_admin_warning(sprintf(__('You have requested saving to remote storage (%s), but without entering any settings for that storage.', 'backupplus'), implode(', ', $this->storage_service_without_settings)), 'error');
+			$this->show_admin_warning( sprintf( __( 'You have requested saving to remote storage (%s), but without entering any settings for that storage.', 'backupplus' ), implode( ', ', $this->storage_service_without_settings ) ), 'error' );
 		} else {
 			$this->show_admin_warning(
 				/* translators: %s: List of storage services */
-				'BackupPlus: '.sprintf(__('You have requested saving to remote storage (%s), but without entering any settings for that storage.', 'backupplus'), implode(', ', $this->storage_service_without_settings)).
-				' <a href="'.BackupPlus_Options::admin_page_url().'?page=backupplus&amp;tab=settings">'.__('Return to BackupPlus configuration', 'backupplus').'</a>',
+				'BackupPlus: ' . sprintf( __( 'You have requested saving to remote storage (%s), but without entering any settings for that storage.', 'backupplus' ), implode( ', ', $this->storage_service_without_settings ) ) .
+				' <a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings">' . __( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>',
 				'error'
 			);
 		}
@@ -6135,19 +6789,21 @@ class BackupPlus_Admin {
 	 */
 	public function show_admin_warning_if_remote_storage_without_addons() {
 		$storage_service_without_addons = $this->storage_service_without_addons_settings;
-		$total_storage = count($storage_service_without_addons);
-		end($storage_service_without_addons);
-		if ($total_storage > 1) $storage_service_without_addons[key($storage_service_without_addons)] = __('and', 'backupplus').' '.$storage_service_without_addons[key($storage_service_without_addons)];
-		$storage_service_without_addons = implode(', ', $storage_service_without_addons);
+		$total_storage                  = count( $storage_service_without_addons );
+		end( $storage_service_without_addons );
+		if ( $total_storage > 1 ) {
+			$storage_service_without_addons[ key( $storage_service_without_addons ) ] = __( 'and', 'backupplus' ) . ' ' . $storage_service_without_addons[ key( $storage_service_without_addons ) ];
+		}
+		$storage_service_without_addons = implode( ', ', $storage_service_without_addons );
 
 		$notice = sprintf(
 			/* translators: 1: List of remote storage services, 2: Link to storage settings */
-			__('Some configured storage locations are unavailable in this installation, so backups to them will not run. This affects: %1$s. Review your destinations in the %2$s.', 'backupplus'),
+			__( 'Some configured storage locations are unavailable in this installation, so backups to them will not run. This affects: %1$s. Review your destinations in the %2$s.', 'backupplus' ),
 			$storage_service_without_addons,
-			'<a href="'.esc_url(BackupPlus_Options::admin_page_url()).'?page=backupplus&amp;tab=settings">'.__('BackupPlus settings', 'backupplus').'</a>'
+			'<a href="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus&amp;tab=settings">' . __( 'BackupPlus settings', 'backupplus' ) . '</a>'
 		);
 
-		$this->show_admin_warning($notice, 'error');
+		$this->show_admin_warning( $notice, 'error' );
 	}
 
 	/**
@@ -6158,35 +6814,37 @@ class BackupPlus_Admin {
 	 * @param array $response - Heartbeat response data to pass back to front end.
 	 * @param array $data     - Data received from the front end (unslashed).
 	 */
-	public function process_status_in_heartbeat($response, $data) {
-		
-		if (!BackupPlus_Options::user_can_manage() || !is_array($response) || empty($data['backupplus'])) return $response;
-		
+	public function process_status_in_heartbeat( $response, $data ) {
+
+		if ( ! BackupPlus_Options::user_can_manage() || ! is_array( $response ) || empty( $data['backupplus'] ) ) {
+			return $response;
+		}
+
 		try {
-			$response['backupplus'] = $this->get_activejobs_list(BackupPlus_Manipulation_Functions::wp_unslash($data['backupplus']));
-		} catch (Exception $e) {
-			$log_message = 'PHP Fatal Exception error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
+			$response['backupplus'] = $this->get_activejobs_list( BackupPlus_Manipulation_Functions::wp_unslash( $data['backupplus'] ) );
+		} catch ( Exception $e ) {
+			$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during get active job list. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
 			$response['backupplus'] = array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
+				'fatal_error'         => true,
+				'fatal_error_message' => $log_message,
 			);
-		} catch (Error $e) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-			$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during get active job list. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-			BackupPlus_Manipulation_Functions::error_log($log_message);
+		} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
+			$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during get active job list. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+			BackupPlus_Manipulation_Functions::error_log( $log_message );
 			$response['backupplus'] = array(
-				'fatal_error' => true,
-				'fatal_error_message' => $log_message
+				'fatal_error'         => true,
+				'fatal_error_message' => $log_message,
 			);
 		}
 
-		if (isset($data['backupplus']['backupplus_credentialtest_nonce'])) {
-			if (!wp_verify_nonce($data['backupplus']['backupplus_credentialtest_nonce'], 'backupplus-credentialtest-nonce')) {
-				$response['backupplus']['backupplus_credentialtest_nonce'] = wp_create_nonce('backupplus-credentialtest-nonce');
+		if ( isset( $data['backupplus']['backupplus_credentialtest_nonce'] ) ) {
+			if ( ! wp_verify_nonce( $data['backupplus']['backupplus_credentialtest_nonce'], 'backupplus-credentialtest-nonce' ) ) {
+				$response['backupplus']['backupplus_credentialtest_nonce'] = wp_create_nonce( 'backupplus-credentialtest-nonce' );
 			}
 		}
 
-		$response['backupplus']['time_now'] = get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'D, F j, Y H:i');
+		$response['backupplus']['time_now'] = get_date_from_gmt( gmdate( 'Y-m-d H:i:s' ), 'D, F j, Y H:i' );
 
 		return $response;
 	}
@@ -6200,13 +6858,13 @@ class BackupPlus_Admin {
 
 		$hosting_company = $backupplus->get_hosting_info();
 		/* translators: 1: Hosting company name, 2: Website link */
-		$txt1 = sprintf(__('Your website is hosted with %1$s (%2$s).', 'backupplus'), $hosting_company['name'], $hosting_company['website']);
+		$txt1 = sprintf( __( 'Your website is hosted with %1$s (%2$s).', 'backupplus' ), $hosting_company['name'], $hosting_company['website'] );
 		/* translators: %s: Hosting company name */
-		$txt2 = sprintf(__('%s permits BackupPlus to perform only one backup per month.', 'backupplus'), $hosting_company['name']).' '.
-			__('Thus, we recommend you choose a full backup when performing a manual backup and to use that option when creating a scheduled backup.', 'backupplus');
-		$txt3 = __('Due to the restriction, some settings can be automatically adjusted, disabled or not available.', 'backupplus');
+		$txt2 = sprintf( __( '%s permits BackupPlus to perform only one backup per month.', 'backupplus' ), $hosting_company['name'] ) . ' ' .
+			__( 'Thus, we recommend you choose a full backup when performing a manual backup and to use that option when creating a scheduled backup.', 'backupplus' );
+		$txt3 = __( 'Due to the restriction, some settings can be automatically adjusted, disabled or not available.', 'backupplus' );
 
-		$this->show_plugin_page_admin_warning('<strong>'.__('Warning', 'backupplus').':</strong> '.$txt1.' '.$txt2.' '.$txt3, 'update-nag notice notice-warning', true);
+		$this->show_plugin_page_admin_warning( '<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' . $txt1 . ' ' . $txt2 . ' ' . $txt3, 'update-nag notice notice-warning', true );
 	}
 
 	/**
@@ -6214,19 +6872,23 @@ class BackupPlus_Admin {
 	 */
 	public function maybe_download_backup_from_email() {
 		global $pagenow;
-		if (BackupPlus_Options::user_can_manage() && (!defined('DOING_AJAX') || !DOING_AJAX) && BackupPlus_Options::admin_page() === $pagenow && isset($_REQUEST['page']) && 'backupplus' === $_REQUEST['page'] && isset($_REQUEST['action']) && 'backupplus_download_backup' === $_REQUEST['action']) {
-			$findex = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'findex');
-			$findexes = empty($findex) ? array(0) : $findex;
-			$request_timestamp = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'timestamp');
-			$timestamp = empty($request_timestamp) ? '' : $request_timestamp;
-			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'nonce');
-			$nonce = empty($request_nonce) ? '' : $request_nonce;
-			$request_type = BackupPlus_Manipulation_Functions::fetch_superglobal('request', 'type');
-			$type = empty($request_type) ? '' : $request_type;
-			if (empty($timestamp) || empty($nonce) || empty($type)) wp_die(esc_html__('The download link is broken, you may have clicked the link from untrusted source', 'backupplus'), '', array('back_link' => true));
+		if ( BackupPlus_Options::user_can_manage() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && BackupPlus_Options::admin_page() === $pagenow && isset( $_REQUEST['page'] ) && 'backupplus' === $_REQUEST['page'] && isset( $_REQUEST['action'] ) && 'backupplus_download_backup' === $_REQUEST['action'] ) {
+			$findex            = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'findex' );
+			$findexes          = empty( $findex ) ? array( 0 ) : $findex;
+			$request_timestamp = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'timestamp' );
+			$timestamp         = empty( $request_timestamp ) ? '' : $request_timestamp;
+			$request_nonce     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
+			$nonce             = empty( $request_nonce ) ? '' : $request_nonce;
+			$request_type      = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'type' );
+			$type              = empty( $request_type ) ? '' : $request_type;
+			if ( empty( $timestamp ) || empty( $nonce ) || empty( $type ) ) {
+				wp_die( esc_html__( 'The download link is broken, you may have clicked the link from untrusted source', 'backupplus' ), '', array( 'back_link' => true ) );
+			}
 			$backup_history = BackupPlus_Backup_History::get_history();
-			if (!isset($backup_history[$timestamp]['nonce']) || $backup_history[$timestamp]['nonce'] !== $nonce) wp_die(esc_html__("The download link is broken or the backup file is no longer available", 'backupplus'), '', array('back_link' => true));
-			$this->do_backupplus_download_backup($findexes, $type, $timestamp, 2, false, '');
+			if ( ! isset( $backup_history[ $timestamp ]['nonce'] ) || $backup_history[ $timestamp ]['nonce'] !== $nonce ) {
+				wp_die( esc_html__( 'The download link is broken or the backup file is no longer available', 'backupplus' ), '', array( 'back_link' => true ) );
+			}
+			$this->do_backupplus_download_backup( $findexes, $type, $timestamp, 2, false, '' );
 			exit; // we don't need anything else but an exit
 		}
 	}
@@ -6237,7 +6899,9 @@ class BackupPlus_Admin {
 	public function print_phpseclib_notice_scripts() {
 		static $printed = false;
 
-		if ($printed) return;
+		if ( $printed ) {
+			return;
+		}
 		$printed = true;
 		?>
 	<script>
@@ -6249,7 +6913,7 @@ class BackupPlus_Admin {
 					data: {
 						action: 'backupplus_ajax',
 						subaction: 'dismiss_phpseclib_notice',
-						nonce: '<?php echo esc_js(wp_create_nonce('backupplus-credentialtest-nonce')); ?>',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>',
 					},
 					error: function(xhr, status, error_code) {
 						alert(error_code+':'+status);
@@ -6267,12 +6931,14 @@ class BackupPlus_Admin {
 	 * @param Array $allowed_html Allowed HTML elements
 	 * @return Array The filtered allowed HTML elements
 	 */
-	public function kses_allow_input_tags_on_unfinished_restoration_dialog($allowed_html) {
-		if (!isset($allowed_html['input'])) $allowed_html['input'] = array();
-		$allowed_html['input']['type'] = true;
-		$allowed_html['input']['name'] = true;
+	public function kses_allow_input_tags_on_unfinished_restoration_dialog( $allowed_html ) {
+		if ( ! isset( $allowed_html['input'] ) ) {
+			$allowed_html['input'] = array();
+		}
+		$allowed_html['input']['type']  = true;
+		$allowed_html['input']['name']  = true;
 		$allowed_html['input']['value'] = true;
-		$allowed_html['input']['id'] = true;
+		$allowed_html['input']['id']    = true;
 		return $allowed_html;
 	}
 
@@ -6286,7 +6952,7 @@ class BackupPlus_Admin {
 	 * @param array $css The array of currently allowed CSS properties.
 	 * @return array The modified array of allowed CSS properties including 'display'.
 	 */
-	public function kses_allow_style_display($css) {
+	public function kses_allow_style_display( $css ) {
 		$css[] = 'display';
 		return $css;
 	}
@@ -6306,87 +6972,87 @@ class BackupPlus_Admin {
 	 */
 	public function kses_allow_tags() {
 		return array(
-			'div' => array(
-				'id' => true,
+			'div'    => array(
+				'id'    => true,
 				'class' => true,
 				'style' => true,
 			),
-			'h3' => array(
+			'h3'     => array(
 				'style' => true,
 			),
-			'input' => array(
-				'id' => true,
-				'class' => true,
-				'type' => true,
-				'name' => true,
-				'value' => true,
-				'checked' => true,
-				'style' => true,
-				'min' => true,
-				'step' => true,
-				'title' => true,
-				'id' => true,
-				'placeholder' => true,
-				'disabled' => true,
-				'readonly' => true,
-				'required' => true,
-				'maxlength' => true,
-				'max' => true,
-				'pattern' => true,
-				'size' => true,
-				'data-*' => true,
-				'tabindex' => true,
+			'input'  => array(
+				'id'           => true,
+				'class'        => true,
+				'type'         => true,
+				'name'         => true,
+				'value'        => true,
+				'checked'      => true,
+				'style'        => true,
+				'min'          => true,
+				'step'         => true,
+				'title'        => true,
+				'id'           => true,
+				'placeholder'  => true,
+				'disabled'     => true,
+				'readonly'     => true,
+				'required'     => true,
+				'maxlength'    => true,
+				'max'          => true,
+				'pattern'      => true,
+				'size'         => true,
+				'data-*'       => true,
+				'tabindex'     => true,
 				'autocomplete' => true,
-				'autofocus' => true,
-				'width' => true,
-				'height' => true,
+				'autofocus'    => true,
+				'width'        => true,
+				'height'       => true,
 			),
 			'select' => array(
-				'id' => true,
+				'id'    => true,
 				'class' => true,
-				'name' => true,
+				'name'  => true,
 				'value' => true,
 				'style' => true,
 			),
 			'option' => array(
-				'value' => true,
+				'value'    => true,
 				'selected' => true,
 			),
-			'label' => array(
-				'id' => true,
+			'label'  => array(
+				'id'    => true,
 				'class' => true,
 				'style' => true,
-				'for' => true,
+				'for'   => true,
 			),
-			'br' => array(),
-			'em' => array(),
+			'br'     => array(),
+			'em'     => array(),
 			'strong' => array(),
-			'a' => array(
-				'id' => true,
-				'class' => true,
-				'style' => true,
-				'href' => true,
-				'target' => true,
-				'onclick' => true,
-				'data-type' => true,
+			'a'      => array(
+				'id'               => true,
+				'class'            => true,
+				'style'            => true,
+				'href'             => true,
+				'target'           => true,
+				'onclick'          => true,
+				'data-type'        => true,
 				'data-incremental' => true,
 			),
-			'span' => array(
-				'id' => true,
+			'span'   => array(
+				'id'    => true,
 				'class' => true,
 				'style' => true,
 			),
-			'img' => array(
-				'id' => true,
-				'class' => true,
-				'style' => true,
-				'src' => true,
-				'width' => true,
+			'img'    => array(
+				'id'     => true,
+				'class'  => true,
+				'style'  => true,
+				'src'    => true,
+				'width'  => true,
 				'height' => true,
-				'alt' => true,
+				'alt'    => true,
 			),
-			'p' => array(
-				'id' => true,
+			'p'      => array(
+				'id'    => true,
 				'class' => true,
 				'style' => true,
 			),

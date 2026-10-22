@@ -1,8 +1,10 @@
 <?php
 
-if (!defined('ABSPATH')) {
-	if ('cli' !== PHP_SAPI) die('No direct access allowed');
-	define('ABSPATH', __DIR__.'/');
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( 'cli' !== PHP_SAPI ) {
+		die( 'No direct access allowed' );
+	}
+	define( 'ABSPATH', __DIR__ . '/' );
 }
 // @codingStandardsIgnoreStart
 /*
@@ -34,25 +36,30 @@ gunzip output.sql.gz
  * @param String $key            Archive passphrase or age private identity
  * @param String $key_passphrase Passphrase for an encrypted private identity
  */
-function rijndael_decrypt_file($file, $key, $key_passphrase = '') {
+function rijndael_decrypt_file( $file, $key, $key_passphrase = '' ) {
 
-	require_once __DIR__.'/vendor/autoload.php';
-	require_once __DIR__.'/includes/class-backupplus-crypto.php';
-	require_once __DIR__.'/includes/class-backupplus-encryption.php';
-	$input = fopen($file, 'rb');
+	require_once __DIR__ . '/vendor/autoload.php';
+	require_once __DIR__ . '/includes/class-backupplus-crypto.php';
+	require_once __DIR__ . '/includes/class-backupplus-encryption.php';
+	$input  = fopen( $file, 'rb' );
 	$output = tmpfile();
-	if (false === $input || false === $output) {
-		if (is_resource($input)) fclose($input);
-		if (is_resource($output)) fclose($output);
-		throw new RuntimeException('Could not open decryption files.');
+	if ( false === $input || false === $output ) {
+		if ( is_resource( $input ) ) {
+			fclose( $input );
+		}
+		if ( is_resource( $output ) ) {
+			fclose( $output );
+		}
+		throw new RuntimeException( 'Could not open decryption files.' );
 	}
 	try {
-		BackupPlus_Encryption::decrypt_stream($input, $output, $key, $key_passphrase);
-		if (!fflush($output) || 0 !== fseek($output, 0)) throw new RuntimeException('Could not read decrypted file.');
-		fpassthru($output); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentional decrypted binary output
+		BackupPlus_Encryption::decrypt_stream( $input, $output, $key, $key_passphrase );
+		if ( ! fflush( $output ) || 0 !== fseek( $output, 0 ) ) {
+			throw new RuntimeException( 'Could not read decrypted file.' );
+		}
+		fpassthru( $output ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentional decrypted binary output
 	} finally {
-		fclose($input);
-		fclose($output);
+		fclose( $input );
+		fclose( $output );
 	}
-
 }

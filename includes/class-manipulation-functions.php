@@ -1,6 +1,8 @@
 <?php
 
-if (!defined('ABSPATH')) die('No direct access.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access.' );
+}
 
 /**
  * Here live manipulation functions that just transform input into output and do not perform any other activities
@@ -17,12 +19,14 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return String
 	 */
-	public static function str_lreplace($search, $replace, $subject, $case_sensitive = true) {
-		$pos = $case_sensitive ? strrpos($subject, $search) : strripos($subject, $search);
-		if (false !== $pos) $subject = substr_replace($subject, $replace, $pos, strlen($search));
+	public static function str_lreplace( $search, $replace, $subject, $case_sensitive = true ) {
+		$pos = $case_sensitive ? strrpos( $subject, $search ) : strripos( $subject, $search );
+		if ( false !== $pos ) {
+			$subject = substr_replace( $subject, $replace, $pos, strlen( $search ) );
+		}
 		return $subject;
 	}
-	
+
 	/**
 	 * Replace the first, and only the first, instance within a string
 	 *
@@ -32,9 +36,9 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return String - the filtered string
 	 */
-	public static function str_replace_once($needle, $replace, $haystack) {
-		$pos = strpos($haystack, $needle);
-		return (false !== $pos) ? substr_replace($haystack, $replace, $pos, strlen($needle)) : $haystack;
+	public static function str_replace_once( $needle, $replace, $haystack ) {
+		$pos = strpos( $haystack, $needle );
+		return ( false !== $pos ) ? substr_replace( $haystack, $replace, $pos, strlen( $needle ) ) : $haystack;
 	}
 
 	/**
@@ -44,8 +48,8 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return String - the altered string
 	 */
-	public static function strip_dirslash($string) {
-		return preg_replace('#/+(,|$)#', '$1', $string);
+	public static function strip_dirslash( $string ) {
+		return preg_replace( '#/+(,|$)#', '$1', $string );
 	}
 
 	/**
@@ -57,9 +61,11 @@ class BackupPlus_Manipulation_Functions {
 	 * @param Boolean      $force_unslash Strip slashes without checking whether wp_magic_quotes function and/or plugins_loaded action have already been called or not
 	 * @return String|Array Unslashed $value
 	 */
-	public static function wp_unslash($value, $force_unslash = true) {
-		if (!$force_unslash && (!did_action('plugins_loaded') || !isset($GLOBALS['wp_the_query']))) return $value;
-		return function_exists('wp_unslash') ? wp_unslash($value) : stripslashes_deep($value);
+	public static function wp_unslash( $value, $force_unslash = true ) {
+		if ( ! $force_unslash && ( ! did_action( 'plugins_loaded' ) || ! isset( $GLOBALS['wp_the_query'] ) ) ) {
+			return $value;
+		}
+		return function_exists( 'wp_unslash' ) ? wp_unslash( $value ) : stripslashes_deep( $value );
 	}
 
 	/**
@@ -81,33 +87,32 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return Mixed The superglobal or global variable value or null
 	 */
-	public static function fetch_superglobal($superglobal, $key, $default = null, $auto_unslash = false, $type = null, $sanitisation = null) {
+	public static function fetch_superglobal( $superglobal, $key, $default = null, $auto_unslash = false, $type = null, $sanitisation = null ) {
 
-		$superglobal = '_'.strtoupper($superglobal);
-		
+		$superglobal = '_' . strtoupper( $superglobal );
+
 		// N.B. Superglobals can only be dereferenced by variable variables in the global scope; this is why we have to use $GLOBALS
-		if (!is_array($GLOBALS[$superglobal]) || !isset($GLOBALS[$superglobal][$key])) {
+		if ( ! is_array( $GLOBALS[ $superglobal ] ) || ! isset( $GLOBALS[ $superglobal ][ $key ] ) ) {
 			$putative_return = $default;
 		} else {
-			$putative_return = (is_string($GLOBALS[$superglobal][$key]) || is_array($GLOBALS[$superglobal][$key])) && $auto_unslash ? self::wp_unslash($GLOBALS[$superglobal][$key], false) : $GLOBALS[$superglobal][$key];
-			if (null !== $sanitisation) {
-				$putative_return = call_user_func($sanitisation, $putative_return);
+			$putative_return = ( is_string( $GLOBALS[ $superglobal ][ $key ] ) || is_array( $GLOBALS[ $superglobal ][ $key ] ) ) && $auto_unslash ? self::wp_unslash( $GLOBALS[ $superglobal ][ $key ], false ) : $GLOBALS[ $superglobal ][ $key ];
+			if ( null !== $sanitisation ) {
+				$putative_return = call_user_func( $sanitisation, $putative_return );
 			}
-			if (null !== $type) {
-				if (strtolower(gettype($putative_return)) !== strtolower($type)) {
+			if ( null !== $type ) {
+				if ( strtolower( gettype( $putative_return ) ) !== strtolower( $type ) ) {
 					$putative_return = $default;
 				}
 			}
 		}
-		
-		if (null !== $type) {
-			if (strtolower(gettype($putative_return)) !== strtolower($type)) {
-				throw new Exception('fetch_superglobal() was unable to return any value of the required type '.$type, 255);// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
+
+		if ( null !== $type ) {
+			if ( strtolower( gettype( $putative_return ) ) !== strtolower( $type ) ) {
+				throw new Exception( 'fetch_superglobal() was unable to return any value of the required type ' . $type, 255 );// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 			}
 		}
-		
-		return $putative_return;
 
+		return $putative_return;
 	}
 
 	/**
@@ -120,20 +125,24 @@ class BackupPlus_Manipulation_Functions {
 	 */
 	public static function fetch_superglobal_array() {
 		$args = func_get_args();
-		if (empty($args)) return array();
+		if ( empty( $args ) ) {
+			return array();
+		}
 
 		$results = array();
-		foreach ($args as $arg) {
-			if (!is_array($arg) || count($arg) < 2) continue;
+		foreach ( $args as $arg ) {
+			if ( ! is_array( $arg ) || count( $arg ) < 2 ) {
+				continue;
+			}
 
 			$superglobal  = $arg[0];
-			$key = $arg[1];
-			$default = isset($arg[2]) ? $arg[2] : null;
-			$auto_unslash = isset($arg[3]) ? $arg[3] : false;
-			$type = isset($arg[4]) ? $arg[4] : null;
-			$sanitisation = isset($arg[5]) ? $arg[5] : null;
+			$key          = $arg[1];
+			$default      = isset( $arg[2] ) ? $arg[2] : null;
+			$auto_unslash = isset( $arg[3] ) ? $arg[3] : false;
+			$type         = isset( $arg[4] ) ? $arg[4] : null;
+			$sanitisation = isset( $arg[5] ) ? $arg[5] : null;
 
-			$results[$key] = self::fetch_superglobal($superglobal, $key, $default, $auto_unslash, $type, $sanitisation);
+			$results[ $key ] = self::fetch_superglobal( $superglobal, $key, $default, $auto_unslash, $type, $sanitisation );
 		}
 
 		return $results;
@@ -146,20 +155,20 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return Array|Boolean - the parsed values, or false if parsing failed
 	 */
-	public static function parse_filename($filename) {
-		if (preg_match('/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|zip\.crypt|gz|gz\.crypt)$/i', $filename, $matches)) {
+	public static function parse_filename( $filename ) {
+		if ( preg_match( '/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|zip\.crypt|gz|gz\.crypt)$/i', $filename, $matches ) ) {
 			return array(
-				'date' => strtotime($matches[1].' '.$matches[2]),
-				'nonce' => $matches[3],
-				'type' => $matches[4],
-				'index' => (empty($matches[5]) ? 0 : $matches[5]-1),
-				'extension' => $matches[6]
+				'date'      => strtotime( $matches[1] . ' ' . $matches[2] ),
+				'nonce'     => $matches[3],
+				'type'      => $matches[4],
+				'index'     => ( empty( $matches[5] ) ? 0 : $matches[5] - 1 ),
+				'extension' => $matches[6],
 			);
 		} else {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Convert a number of bytes into a suitable textual string
 	 *
@@ -167,15 +176,15 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return String - the resulting textual string
 	 */
-	public static function convert_numeric_size_to_text($size) {
-		if ($size > 1073741824) {
-			return round($size / 1073741824, 1).' GB';
-		} elseif ($size > 1048576) {
-			return round($size / 1048576, 1).' MB';
-		} elseif ($size > 1024) {
-			return round($size / 1024, 1).' KB';
+	public static function convert_numeric_size_to_text( $size ) {
+		if ( $size > 1073741824 ) {
+			return round( $size / 1073741824, 1 ) . ' GB';
+		} elseif ( $size > 1048576 ) {
+			return round( $size / 1048576, 1 ) . ' MB';
+		} elseif ( $size > 1024 ) {
+			return round( $size / 1024, 1 ) . ' KB';
 		} else {
-			return round($size, 1).' B';
+			return round( $size, 1 ) . ' B';
 		}
 	}
 
@@ -185,32 +194,36 @@ class BackupPlus_Manipulation_Functions {
 	 * @param  string $a_name - the table name
 	 * @return string - the quoted table name
 	 */
-	public static function backquote($a_name) {
-		if (!empty($a_name) && '*' != $a_name) {
-			if (is_array($a_name)) {
+	public static function backquote( $a_name ) {
+		if ( ! empty( $a_name ) && '*' != $a_name ) {
+			if ( is_array( $a_name ) ) {
 				$result = array();
-				foreach ($a_name as $key => $val) {
-					$result[$key] = '`'.$val.'`';
+				foreach ( $a_name as $key => $val ) {
+					$result[ $key ] = '`' . $val . '`';
 				}
 				return $result;
 			} else {
-				return '`'.$a_name.'`';
+				return '`' . $a_name . '`';
 			}
 		} else {
 			return $a_name;
 		}
 	}
-	
+
 	/**
 	 * Remove empty (according to empty()) members of an array
 	 *
 	 * @param Array $list - input array
 	 * @return Array - pruned array
 	 */
-	public static function remove_empties($list) {
-		if (!is_array($list)) return $list;
-		foreach ($list as $ind => $entry) {
-			if (empty($entry)) unset($list[$ind]);
+	public static function remove_empties( $list ) {
+		if ( ! is_array( $list ) ) {
+			return $list;
+		}
+		foreach ( $list as $ind => $entry ) {
+			if ( empty( $entry ) ) {
+				unset( $list[ $ind ] );
+			}
 		}
 		return $list;
 	}
@@ -223,54 +236,68 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return Integer - sort result
 	 */
-	public static function sort_restoration_entities($a, $b) {
-		if ($a == $b) return 0;
+	public static function sort_restoration_entities( $a, $b ) {
+		if ( $a == $b ) {
+			return 0;
+		}
 		// Put the database first
 		// Put wpcore after plugins/uploads/themes (needed for restores of foreign all-in-one formats)
-		if ('db' == $a || 'wpcore' == $b) return -1;
-		if ('db' == $b || 'wpcore' == $a) return 1;
+		if ( 'db' == $a || 'wpcore' == $b ) {
+			return -1;
+		}
+		if ( 'db' == $b || 'wpcore' == $a ) {
+			return 1;
+		}
 		// After wpcore, next last is others
-		if ('others' == $b) return -1;
-		if ('others' == $a) return 1;
+		if ( 'others' == $b ) {
+			return -1;
+		}
+		if ( 'others' == $a ) {
+			return 1;
+		}
 		// And then uploads - this is only because we want to make sure uploads is after plugins, so that we know before we get to the uploads whether the version of UD which might have to unpack them can do this new-style or not.
-		if ('uploads' == $b) return -1;
-		if ('uploads' == $a) return 1;
-		return strcmp($a, $b);
+		if ( 'uploads' == $b ) {
+			return -1;
+		}
+		if ( 'uploads' == $a ) {
+			return 1;
+		}
+		return strcmp( $a, $b );
 	}
-	
+
 	/**
 	 * This options filter removes ABSPATH off the front of backupplus_dir, if it is given absolutely and contained within it
 	 *
 	 * @param  String $backupplus_dir Directory
 	 * @return String
 	 */
-	public static function prune_backupplus_dir_prefix($backupplus_dir) {
-		if ('/' == substr($backupplus_dir, 0, 1) || "\\" == substr($backupplus_dir, 0, 1) || preg_match('/^[a-zA-Z]:/', $backupplus_dir)) {
-			$wcd = trailingslashit(WP_CONTENT_DIR);
-			if (strpos($backupplus_dir, $wcd) === 0) {
-				$backupplus_dir = substr($backupplus_dir, strlen($wcd));
+	public static function prune_backupplus_dir_prefix( $backupplus_dir ) {
+		if ( '/' == substr( $backupplus_dir, 0, 1 ) || '\\' == substr( $backupplus_dir, 0, 1 ) || preg_match( '/^[a-zA-Z]:/', $backupplus_dir ) ) {
+			$wcd = trailingslashit( WP_CONTENT_DIR );
+			if ( strpos( $backupplus_dir, $wcd ) === 0 ) {
+				$backupplus_dir = substr( $backupplus_dir, strlen( $wcd ) );
 			}
 		}
 		return $backupplus_dir;
 	}
-	
-	public static function get_mime_type_from_filename($filename, $allow_gzip = true) {
-		if ('.zip' == substr($filename, -4, 4)) {
+
+	public static function get_mime_type_from_filename( $filename, $allow_gzip = true ) {
+		if ( '.zip' == substr( $filename, -4, 4 ) ) {
 			return 'application/zip';
-		} elseif ('.tar' == substr($filename, -4, 4)) {
+		} elseif ( '.tar' == substr( $filename, -4, 4 ) ) {
 			return 'application/x-tar';
-		} elseif ('.tar.gz' == substr($filename, -7, 7)) {
+		} elseif ( '.tar.gz' == substr( $filename, -7, 7 ) ) {
 			return 'application/x-tgz';
-		} elseif ('.tar.bz2' == substr($filename, -8, 8)) {
+		} elseif ( '.tar.bz2' == substr( $filename, -8, 8 ) ) {
 			return 'application/x-bzip-compressed-tar';
-		} elseif ($allow_gzip && '.gz' == substr($filename, -3, 3)) {
+		} elseif ( $allow_gzip && '.gz' == substr( $filename, -3, 3 ) ) {
 			// When we sent application/x-gzip as a content-type header to the browser, we found a case where the server compressed it a second time (since observed several times)
 			return 'application/x-gzip';
 		} else {
 			return 'application/octet-stream';
 		}
 	}
-	
+
 	/**
 	 * Filter the value to ensure it is between 1 and 9999
 	 *
@@ -278,9 +305,9 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return Integer
 	 */
-	public static function retain_range($input) {
+	public static function retain_range( $input ) {
 		$input = (int) $input;
-		return ($input > 0) ? min($input, 9999) : 1;
+		return ( $input > 0 ) ? min( $input, 9999 ) : 1;
 	}
 
 	/**
@@ -291,116 +318,116 @@ class BackupPlus_Manipulation_Functions {
 	 * @param boolean $match_until_first_numeric only match until first numeric occurrence
 	 * @return string matching str which will be best for replacement
 	 */
-	public static function get_matching_str_from_array_elems($str_arr1, $str_arr2, $match_until_first_numeric = true) {
+	public static function get_matching_str_from_array_elems( $str_arr1, $str_arr2, $match_until_first_numeric = true ) {
 		$matching_str = '';
-		if ($match_until_first_numeric) {
+		if ( $match_until_first_numeric ) {
 			$str_partial_arr = array();
-			foreach ($str_arr1 as $str1) {
-				$str1_str_length = strlen($str1);
-				$temp_str1_chars = str_split($str1);
+			foreach ( $str_arr1 as $str1 ) {
+				$str1_str_length  = strlen( $str1 );
+				$temp_str1_chars  = str_split( $str1 );
 				$temp_partial_str = '';
 				// The flag is for whether non-numeric character passed after numeric character occurrence in str1. For ex. str1 is utf8mb4, the flag wil be true when parsing m after utf8.
 				$numeric_char_pass_flag = false;
-				$char_position_in_str1 = 0;
-				while ($char_position_in_str1 < $str1_str_length) {
-					if ($numeric_char_pass_flag && !is_numeric($temp_str1_chars[$char_position_in_str1])) {
+				$char_position_in_str1  = 0;
+				while ( $char_position_in_str1 < $str1_str_length ) {
+					if ( $numeric_char_pass_flag && ! is_numeric( $temp_str1_chars[ $char_position_in_str1 ] ) ) {
 						break;
 					}
-					if (is_numeric($temp_str1_chars[$char_position_in_str1])) {
+					if ( is_numeric( $temp_str1_chars[ $char_position_in_str1 ] ) ) {
 						$numeric_char_pass_flag = true;
 					}
-					$temp_partial_str .= $temp_str1_chars[$char_position_in_str1];
-					$char_position_in_str1++;
+					$temp_partial_str .= $temp_str1_chars[ $char_position_in_str1 ];
+					++$char_position_in_str1;
 				}
 				$str_partial_arr[] = $temp_partial_str;
 			}
-			foreach ($str_partial_arr as $str_partial) {
-				if (!empty($matching_str)) {
+			foreach ( $str_partial_arr as $str_partial ) {
+				if ( ! empty( $matching_str ) ) {
 					break;
 				}
-				foreach ($str_arr2 as $str2) {
-					if (0 === stripos($str2, $str_partial)) {
+				foreach ( $str_arr2 as $str2 ) {
+					if ( 0 === stripos( $str2, $str_partial ) ) {
 						$matching_str = $str2;
 						break;
 					}
 				}
 			}
 		} else {
-			$str1_partial_first_arr = array();
-			$str1_partial_first_arr = array();
+			$str1_partial_first_arr          = array();
+			$str1_partial_first_arr          = array();
 			$str1_partial_start_n_middle_arr = array();
-			$str1_partial_middle_n_last_arr = array();
-			$str1_partial_last_arr = array();
-			foreach ($str_arr1 as $str1) {
-				$str1_partial_arr = explode('_', $str1);
-				$str1_parts_count = count($str1_partial_arr);
+			$str1_partial_middle_n_last_arr  = array();
+			$str1_partial_last_arr           = array();
+			foreach ( $str_arr1 as $str1 ) {
+				$str1_partial_arr         = explode( '_', $str1 );
+				$str1_parts_count         = count( $str1_partial_arr );
 				$str1_partial_first_arr[] = $str1_partial_arr[0];
-				$str1_last_part_index = $str1_parts_count - 1;
-				if ($str1_last_part_index > 0) {
-					$str1_partial_last_arr[] = $str1_partial_arr[$str1_last_part_index];
-					$str1_partial_start_n_middle_arr[] = substr($str1, 0, stripos($str1, '_'));
-					$str1_partial_middle_n_last_arr[] = substr($str1, stripos($str1, '_') + 1);
+				$str1_last_part_index     = $str1_parts_count - 1;
+				if ( $str1_last_part_index > 0 ) {
+					$str1_partial_last_arr[]           = $str1_partial_arr[ $str1_last_part_index ];
+					$str1_partial_start_n_middle_arr[] = substr( $str1, 0, stripos( $str1, '_' ) );
+					$str1_partial_middle_n_last_arr[]  = substr( $str1, stripos( $str1, '_' ) + 1 );
 				}
 			}
-			for ($case_no = 1; $case_no <= 5; $case_no++) {
-				if (!empty($matching_str)) {
+			for ( $case_no = 1; $case_no <= 5; $case_no++ ) {
+				if ( ! empty( $matching_str ) ) {
 					break;
 				}
-				foreach ($str_arr2 as $str2) {
-					switch ($case_no) {
+				foreach ( $str_arr2 as $str2 ) {
+					switch ( $case_no ) {
 						// Case 1: Both Start and End match
 						case 1:
-						$str2_partial_arr = explode('_', $str2);
-						$str2_first_part = $str2_partial_arr[0];
-						$str2_parts_count = count($str2_partial_arr);
-						$str2_last_part_index = $str2_parts_count - 1;
-						if ($str2_last_part_index > 0) {
-								$str2_last_part = $str2_partial_arr[$str2_last_part_index];
-						} else {
+							$str2_partial_arr     = explode( '_', $str2 );
+							$str2_first_part      = $str2_partial_arr[0];
+							$str2_parts_count     = count( $str2_partial_arr );
+							$str2_last_part_index = $str2_parts_count - 1;
+							if ( $str2_last_part_index > 0 ) {
+								$str2_last_part = $str2_partial_arr[ $str2_last_part_index ];
+							} else {
 														$str2_last_part = '';
-						}
-						if (!empty($str2_last_part) && !empty($str1_partial_last_arr) && in_array($str2_first_part, $str1_partial_first_arr) && in_array($str2_last_part, $str1_partial_last_arr)) {
+							}
+							if ( ! empty( $str2_last_part ) && ! empty( $str1_partial_last_arr ) && in_array( $str2_first_part, $str1_partial_first_arr ) && in_array( $str2_last_part, $str1_partial_last_arr ) ) {
 								$matching_str = $str2;
-						}
+							}
 							break;
 						// Case 2: Start Middle Match
 						case 2:
-						$str2_partial_first_n_middle_parts = substr($str2, 0, stripos($str2, '_'));
-						if (in_array($str2_partial_first_n_middle_parts, $str1_partial_start_n_middle_arr)) {
+							$str2_partial_first_n_middle_parts = substr( $str2, 0, stripos( $str2, '_' ) );
+							if ( in_array( $str2_partial_first_n_middle_parts, $str1_partial_start_n_middle_arr ) ) {
 								$matching_str = $str2;
-						}
+							}
 							break;
 						// Case 3: End Middle Match
 						case 3:
-						$str2_partial_middle_n_last_parts = stripos($str2, '_') !== false ? substr($str2, stripos($str2, '_') + 1) : '';
-						if (!empty($str2_partial_middle_n_last_parts) && in_array($str2_partial_middle_n_last_parts, $str1_partial_middle_n_last_arr)) {
+							$str2_partial_middle_n_last_parts = stripos( $str2, '_' ) !== false ? substr( $str2, stripos( $str2, '_' ) + 1 ) : '';
+							if ( ! empty( $str2_partial_middle_n_last_parts ) && in_array( $str2_partial_middle_n_last_parts, $str1_partial_middle_n_last_arr ) ) {
 								$matching_str = $str2;
-						}
+							}
 							break;
 						// Case 4: Start Match (low possibilities)
 						case 4:
-						$str2_partial_arr = explode('_', $str2);
-						$str2_first_part = $str2_partial_arr[0];
-						if (in_array($str2_first_part, $str1_partial_first_arr)) {
+							$str2_partial_arr = explode( '_', $str2 );
+							$str2_first_part  = $str2_partial_arr[0];
+							if ( in_array( $str2_first_part, $str1_partial_first_arr ) ) {
 								$matching_str = $str2;
-						}
+							}
 							break;
 						// Case 5: End Match (low possibilities)
 						case 5:
-						$str2_partial_arr = explode('_', $str2);
-						$str2_parts_count = count($str2_partial_arr);
-						$str2_last_part_index = $str2_parts_count - 1;
-						if ($str2_last_part_index > 0) {
-								$str2_last_part = $str2_partial_arr[$str2_last_part_index];
-						} else {
+							$str2_partial_arr     = explode( '_', $str2 );
+							$str2_parts_count     = count( $str2_partial_arr );
+							$str2_last_part_index = $str2_parts_count - 1;
+							if ( $str2_last_part_index > 0 ) {
+								$str2_last_part = $str2_partial_arr[ $str2_last_part_index ];
+							} else {
 														$str2_last_part = '';
-						}
-						if (!empty($str2_last_part) && in_array($str2_last_part, $str1_partial_last_arr)) {
+							}
+							if ( ! empty( $str2_last_part ) && in_array( $str2_last_part, $str1_partial_last_arr ) ) {
 								$matching_str = $str2;
-						}
+							}
 							break;
 					}
-					if (!empty($matching_str)) {
+					if ( ! empty( $matching_str ) ) {
 						break;
 					}
 				}
@@ -408,7 +435,7 @@ class BackupPlus_Manipulation_Functions {
 		}
 		return $matching_str;
 	}
-	
+
 	/**
 	 * Produce a normalised version of a URL, useful for comparisons. This may produce a URL that does not actually reference the same location; its purpose is only to use in comparisons of two URLs that *both* go through this function.
 	 *
@@ -416,15 +443,21 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return String - normalised
 	 */
-	public static function normalise_url($url) {
-		$parsed_descrip_url = parse_url($url);
-		if (is_array($parsed_descrip_url)) {
-			if (preg_match('/^www\./i', $parsed_descrip_url['host'], $matches)) $parsed_descrip_url['host'] = substr($parsed_descrip_url['host'], 4);
-			$normalised_descrip_url = 'http://'.strtolower($parsed_descrip_url['host']);
-			if (!empty($parsed_descrip_url['port'])) $normalised_descrip_url .= ':'.$parsed_descrip_url['port'];
-			if (!empty($parsed_descrip_url['path'])) $normalised_descrip_url .= untrailingslashit($parsed_descrip_url['path']);
+	public static function normalise_url( $url ) {
+		$parsed_descrip_url = parse_url( $url );
+		if ( is_array( $parsed_descrip_url ) ) {
+			if ( preg_match( '/^www\./i', $parsed_descrip_url['host'], $matches ) ) {
+				$parsed_descrip_url['host'] = substr( $parsed_descrip_url['host'], 4 );
+			}
+			$normalised_descrip_url = 'http://' . strtolower( $parsed_descrip_url['host'] );
+			if ( ! empty( $parsed_descrip_url['port'] ) ) {
+				$normalised_descrip_url .= ':' . $parsed_descrip_url['port'];
+			}
+			if ( ! empty( $parsed_descrip_url['path'] ) ) {
+				$normalised_descrip_url .= untrailingslashit( $parsed_descrip_url['path'] );
+			}
 		} else {
-			$normalised_descrip_url = untrailingslashit($url);
+			$normalised_descrip_url = untrailingslashit( $url );
 		}
 		return $normalised_descrip_url;
 	}
@@ -440,14 +473,16 @@ class BackupPlus_Manipulation_Functions {
 	 * @param string $path Path to normalize.
 	 * @return string Normalized path.
 	 */
-	public static function wp_normalize_path($path) {
+	public static function wp_normalize_path( $path ) {
 		// wp_normalize_path is not present before WP 3.9
-		if (function_exists('wp_normalize_path')) return wp_normalize_path($path);
+		if ( function_exists( 'wp_normalize_path' ) ) {
+			return wp_normalize_path( $path );
+		}
 		// Taken from WP 4.6
-		$path = str_replace('\\', '/', $path);
-		$path = preg_replace('|(?<=.)/+|', '/', $path);
-		if (':' === substr($path, 1, 1)) {
-			$path = ucfirst($path);
+		$path = str_replace( '\\', '/', $path );
+		$path = preg_replace( '|(?<=.)/+|', '/', $path );
+		if ( ':' === substr( $path, 1, 1 ) ) {
+			$path = ucfirst( $path );
 		}
 		return $path;
 	}
@@ -455,29 +490,31 @@ class BackupPlus_Manipulation_Functions {
 	/**
 	 * Given a set of times, find details about the maximum
 	 *
-	 * @param Array	  $time_passed - a list of times passed, with numerical indexes
-	 * @param Integer $upto		   - last index to consider
+	 * @param Array   $time_passed - a list of times passed, with numerical indexes
+	 * @param Integer $upto        - last index to consider
 	 * @param Integer $first_run   - first index to consider
 	 *
 	 * @return Array - a list with entries, in order: maximum time, list in string format, how many run times were found
 	 */
-	public static function max_time_passed($time_passed, $upto, $first_run) {
-		$max_time = 0;
-		$timings_string = "";
+	public static function max_time_passed( $time_passed, $upto, $first_run ) {
+		$max_time        = 0;
+		$timings_string  = '';
 		$run_times_known = 0;
-		for ($i = $first_run; $i <= $upto; $i++) {
+		for ( $i = $first_run; $i <= $upto; $i++ ) {
 			$timings_string .= "$i:";
-			if (isset($time_passed[$i])) {
-				$timings_string .= round($time_passed[$i], 1).' ';
-				$run_times_known++;
-				if ($time_passed[$i] > $max_time) $max_time = round($time_passed[$i]);
+			if ( isset( $time_passed[ $i ] ) ) {
+				$timings_string .= round( $time_passed[ $i ], 1 ) . ' ';
+				++$run_times_known;
+				if ( $time_passed[ $i ] > $max_time ) {
+					$max_time = round( $time_passed[ $i ] );
+				}
 			} else {
 				$timings_string .= '? ';
 			}
 		}
-		return array($max_time, $timings_string, $run_times_known);
+		return array( $max_time, $timings_string, $run_times_known );
 	}
-	
+
 	/**
 	 * Determine if a given string ends with a given substring.
 	 *
@@ -485,8 +522,10 @@ class BackupPlus_Manipulation_Functions {
 	 * @param  string $needle   substring which should be checked at the end of the string
 	 * @return boolean Whether string ends with the substring or not
 	 */
-	public static function str_ends_with($haystack, $needle) {
-		if (substr($haystack, - strlen($needle)) == $needle) return true;
+	public static function str_ends_with( $haystack, $needle ) {
+		if ( substr( $haystack, - strlen( $needle ) ) == $needle ) {
+			return true;
+		}
 		return false;
 	}
 
@@ -496,12 +535,12 @@ class BackupPlus_Manipulation_Functions {
 	 * @param  string $length integer
 	 * @return string random string
 	 */
-	public static function generate_random_string($length = 2) {
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyz';
-		$characters_length = strlen($characters);
-		$random_string = '';
-		for ($i = 0; $i < $length; $i++) {
-			$random_string .= $characters[wp_rand(0, $characters_length - 1)];
+	public static function generate_random_string( $length = 2 ) {
+		$characters        = '0123456789abcdefghijklmnopqrstuvwxyz';
+		$characters_length = strlen( $characters );
+		$random_string     = '';
+		for ( $i = 0; $i < $length; $i++ ) {
+			$random_string .= $characters[ wp_rand( 0, $characters_length - 1 ) ];
 		}
 		return $random_string;
 	}
@@ -512,49 +551,51 @@ class BackupPlus_Manipulation_Functions {
 	 * @param string $ip_addr The IPv4 or IPv6 address to be anonymized.
 	 * @return string  The anonymized IP address.
 	 */
-	public static function wp_privacy_anonymize_ip($ip_addr) {
-		if (empty($ip_addr)) {
+	public static function wp_privacy_anonymize_ip( $ip_addr ) {
+		if ( empty( $ip_addr ) ) {
 			return '0.0.0.0';
 		}
-	
+
 		$ip_prefix = '';
-		$is_ipv6   = substr_count($ip_addr, ':') > 1;
-		$is_ipv4   = (3 === substr_count($ip_addr, '.'));
-	
-		if ($is_ipv6 && $is_ipv4) {
+		$is_ipv6   = substr_count( $ip_addr, ':' ) > 1;
+		$is_ipv4   = ( 3 === substr_count( $ip_addr, '.' ) );
+
+		if ( $is_ipv6 && $is_ipv4 ) {
 			$ip_prefix = '::ffff:';
-			$ip_addr   = preg_replace('/^\[?[0-9a-f:]*:/i', '', $ip_addr);
-			$ip_addr   = str_replace(']', '', $ip_addr);
+			$ip_addr   = preg_replace( '/^\[?[0-9a-f:]*:/i', '', $ip_addr );
+			$ip_addr   = str_replace( ']', '', $ip_addr );
 			$is_ipv6   = false;
 		}
-	
-		if ($is_ipv6) {
-			$percent       = strpos($ip_addr, '%');
-			$netmask       = 'ffff:ffff:ffff:ffff:0000:0000:0000:0000';
-	
-			if (preg_match('#\[(.*)\]#', $ip_addr, $matches)) $ip_addr = $matches[1];
-	
-			if (false !== $percent) {
-				$ip_addr = substr($ip_addr, 0, $percent);
+
+		if ( $is_ipv6 ) {
+			$percent = strpos( $ip_addr, '%' );
+			$netmask = 'ffff:ffff:ffff:ffff:0000:0000:0000:0000';
+
+			if ( preg_match( '#\[(.*)\]#', $ip_addr, $matches ) ) {
+				$ip_addr = $matches[1];
 			}
-	
-			if (preg_match('/[^0-9a-f:]/i', $ip_addr)) {
+
+			if ( false !== $percent ) {
+				$ip_addr = substr( $ip_addr, 0, $percent );
+			}
+
+			if ( preg_match( '/[^0-9a-f:]/i', $ip_addr ) ) {
 				return '::';
 			}
-	
-			if (function_exists('inet_pton') && function_exists('inet_ntop')) {
-				$ip_addr = inet_ntop(inet_pton($ip_addr) & inet_pton($netmask));
-				if (false === $ip_addr) {
+
+			if ( function_exists( 'inet_pton' ) && function_exists( 'inet_ntop' ) ) {
+				$ip_addr = inet_ntop( inet_pton( $ip_addr ) & inet_pton( $netmask ) );
+				if ( false === $ip_addr ) {
 					return '::';
 				}
 			}
-		} elseif ($is_ipv4) {
-			$last_octet_position = strrpos($ip_addr, '.');
-			$ip_addr             = substr($ip_addr, 0, $last_octet_position) . '.0';
+		} elseif ( $is_ipv4 ) {
+			$last_octet_position = strrpos( $ip_addr, '.' );
+			$ip_addr             = substr( $ip_addr, 0, $last_octet_position ) . '.0';
 		} else {
 			return '0.0.0.0';
 		}
-	
+
 		return $ip_prefix . $ip_addr;
 	}
 
@@ -565,8 +606,8 @@ class BackupPlus_Manipulation_Functions {
 	 * @param string $data Optional The data to be anonymized.
 	 * @return string The anonymous data for the requested type.
 	 */
-	public static function anonymize_data($type, $data = '') {
-		switch ($type) {
+	public static function anonymize_data( $type, $data = '' ) {
+		switch ( $type ) {
 			case 'email':
 				$anonymous = 'invalid@example.com';
 				break;
@@ -574,18 +615,18 @@ class BackupPlus_Manipulation_Functions {
 				$anonymous = 'https://invalid.example.com';
 				break;
 			case 'ip':
-				$anonymous = self::wp_privacy_anonymize_ip($data);
+				$anonymous = self::wp_privacy_anonymize_ip( $data );
 				break;
 			case 'date':
 				$anonymous = '0000-00-00 00:00:00';
 				break;
 			case 'text':
 				/* translators: Deleted text. */
-				$anonymous = __('[deleted]', 'backupplus');
+				$anonymous = __( '[deleted]', 'backupplus' );
 				break;
 			case 'longtext':
 				/* translators: Deleted long text. */
-				$anonymous = __('This content was deleted in order to anonymize it.', 'backupplus');
+				$anonymous = __( 'This content was deleted in order to anonymize it.', 'backupplus' );
 				break;
 			default:
 				$anonymous = '';
@@ -601,9 +642,9 @@ class BackupPlus_Manipulation_Functions {
 	 *
 	 * @return void
 	 */
-	public static function error_log($message) {
-		if ((defined('WP_DEBUG') && WP_DEBUG) || (class_exists('BackupPlus_Options') && BackupPlus_Options::get_backupplus_option('backupplus_debug_mode'))) {
-			error_log($message); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- error_log() is intentionally used to log the error when debug mode is enabled.
+	public static function error_log( $message ) {
+		if ( ( defined( 'WP_DEBUG' ) && WP_DEBUG ) || ( class_exists( 'BackupPlus_Options' ) && BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) ) {
+			error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- error_log() is intentionally used to log the error when debug mode is enabled.
 		}
 	}
 
@@ -616,11 +657,17 @@ class BackupPlus_Manipulation_Functions {
 	 *             1 if the URL is RFC 3986 percent-encoded (e.g., '%20'),
 	 *             2 if the URL appears to be encoded with a different encoding.
 	 */
-	public static function is_url_encoded($url) {
-		if (empty($url)) return 0;
-		$is_rfc3986_encoding = false !== strpos($url, '%20');
-		if ($is_rfc3986_encoding && rawurldecode($url) !== $url) return 1;
-		if ((urldecode($url) !== $url)) return 2;
+	public static function is_url_encoded( $url ) {
+		if ( empty( $url ) ) {
+			return 0;
+		}
+		$is_rfc3986_encoding = false !== strpos( $url, '%20' );
+		if ( $is_rfc3986_encoding && rawurldecode( $url ) !== $url ) {
+			return 1;
+		}
+		if ( ( urldecode( $url ) !== $url ) ) {
+			return 2;
+		}
 		return 0;
 	}
 }

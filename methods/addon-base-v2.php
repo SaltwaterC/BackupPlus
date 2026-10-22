@@ -1,6 +1,8 @@
 <?php
 
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
 /*
 Methods to define when extending this class (can use $this->storage and $this->options where relevant):
@@ -18,7 +20,9 @@ do_credentials_test_deletefile($testfile, $posted_settings)
 // Uses job options: Yes
 // Uses single-array storage: Yes
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 /**
  * Note that the naming of this class is historical. There is nothing inherent which restricts it to add-ons, or requires add-ons to use it. It is just an abstraction layer that results in needing to write less code for the storage module.
@@ -40,116 +44,121 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	 */
 	protected $test_button;
 
-	public function __construct($method, $description, $chunked = true, $test_button = true) {
+	public function __construct( $method, $description, $chunked = true, $test_button = true ) {
 
-		$this->method = $method;
+		$this->method      = $method;
 		$this->description = $description;
-		$this->chunked = $chunked;
+		$this->chunked     = $chunked;
 		$this->test_button = $test_button;
-
 	}
-	
+
 	/**
 	 * download method: takes a file name (base name), and removes it from the cloud storage
 	 *
 	 * @param  String $file specific file for being removed from cloud storage
 	 * @return Array
 	 */
-	public function download($file) {
-		return $this->download_file(false, $file);
+	public function download( $file ) {
+		return $this->download_file( false, $file );
 	}
-	
-	public function backup($backup_array) {
-		return $this->upload_files(null, $backup_array);
+
+	public function backup( $backup_array ) {
+		return $this->upload_files( null, $backup_array );
 	}
-	
-	public function delete($files, $method_obj = false, $sizeinfo = array()) {
-		return $this->delete_files(false, $files, $method_obj, $sizeinfo);
+
+	public function delete( $files, $method_obj = false, $sizeinfo = array() ) {
+		return $this->delete_files( false, $files, $method_obj, $sizeinfo );
 	}
-		
+
 	protected function required_configuration_keys() {
 	}
 
-	public function upload_files($ret, $backup_array) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from this class uses 2 arguments.
+	public function upload_files( $ret, $backup_array ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Unused parameter is present because the caller from this class uses 2 arguments.
 
 		global $backupplus;
 
 		$this->options = $this->get_options();
 
-		if (!$this->options_exist($this->options)) {
-			$this->log('No settings were found');
+		if ( ! $this->options_exist( $this->options ) ) {
+			$this->log( 'No settings were found' );
 			/* translators: %s: Description */
-			$this->log(sprintf(__('No %s settings were found', 'backupplus'), $this->description), 'error');
+			$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 			return false;
 		}
 
 		$storage = $this->bootstrap();
-		if (is_wp_error($storage)) return $backupplus->log_wp_error($storage, false, true);
+		if ( is_wp_error( $storage ) ) {
+			return $backupplus->log_wp_error( $storage, false, true );
+		}
 
-		$this->set_storage($storage);
+		$this->set_storage( $storage );
 
-		$backupplus_dir = trailingslashit($backupplus->backups_dir_location());
+		$backupplus_dir = trailingslashit( $backupplus->backups_dir_location() );
 
-		foreach ($backup_array as $file) {
-			$this->log("upload ".((!empty($this->options['ownername'])) ? '(account owner: '.$this->options['ownername'].')' : '').": attempt: $file");
+		foreach ( $backup_array as $file ) {
+			$this->log( 'upload ' . ( ( ! empty( $this->options['ownername'] ) ) ? '(account owner: ' . $this->options['ownername'] . ')' : '' ) . ": attempt: $file" );
 			try {
-				if ($this->do_upload($file, $backupplus_dir.$file)) {
-					$backupplus->uploaded_file($file);
+				if ( $this->do_upload( $file, $backupplus_dir . $file ) ) {
+					$backupplus->uploaded_file( $file );
 				} else {
 					$any_failures = true;
-					$this->log('ERROR: Failed to upload file: '.$file);
+					$this->log( 'ERROR: Failed to upload file: ' . $file );
 					$this->log(
-						__('Error', 'backupplus').': '.
-						$this->description.': '.
+						__( 'Error', 'backupplus' ) . ': ' .
+						$this->description . ': ' .
 						/* translators: %s: File name */
-						sprintf(__('Failed to upload %s', 'backupplus'), $file),
-					'error');
+						sprintf( __( 'Failed to upload %s', 'backupplus' ), $file ),
+						'error'
+					);
 				}
-			} catch (Exception $e) {
+			} catch ( Exception $e ) {
 				$any_failures = true;
-				$this->log('ERROR ('.get_class($e).'): '.$file.': Failed to upload file: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
+				$this->log( 'ERROR (' . get_class( $e ) . '): ' . $file . ': Failed to upload file: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 				$this->log(
-					__('Error', 'backupplus').': '.
-					$this->description.': '.
+					__( 'Error', 'backupplus' ) . ': ' .
+					$this->description . ': ' .
 					/* translators: %s: File name */
-					sprintf(__('Failed to upload %s', 'backupplus'), $file),
-				'error');
+					sprintf( __( 'Failed to upload %s', 'backupplus' ), $file ),
+					'error'
+				);
 			}
 		}
 
-		return (!empty($any_failures)) ? null : true;
-
+		return ( ! empty( $any_failures ) ) ? null : true;
 	}
 
-   /**
-	* This function lists the files found in the configured storage location
-	*
-	* @param String $match a substring to require
-	*
-	* @return Array|WP_Error - each file is represented by an array with entries 'name' and (optional) 'size'
-	*/
-	public function listfiles($match = 'backup_') {
+	/**
+	 * This function lists the files found in the configured storage location
+	 *
+	 * @param String $match a substring to require
+	 *
+	 * @return Array|WP_Error - each file is represented by an array with entries 'name' and (optional) 'size'
+	 */
+	public function listfiles( $match = 'backup_' ) {
 
 		try {
 
-			if (!method_exists($this, 'do_listfiles')) {
-				return new WP_Error('no_listing', 'This remote storage method does not support file listing');
+			if ( ! method_exists( $this, 'do_listfiles' ) ) {
+				return new WP_Error( 'no_listing', 'This remote storage method does not support file listing' );
 			}
 
 			$this->options = $this->get_options();
 			/* translators: %s: Description */
-			if (!$this->options_exist($this->options)) return new WP_Error('no_settings', sprintf(__('No %s settings were found', 'backupplus'), $this->description));
+			if ( ! $this->options_exist( $this->options ) ) {
+				return new WP_Error( 'no_settings', sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ) );
+			}
 
 			$storage = $this->bootstrap();
-			if (is_wp_error($storage)) return $storage;
+			if ( is_wp_error( $storage ) ) {
+				return $storage;
+			}
 
-			return $this->do_listfiles($match);
-			
-		} catch (Exception $e) {
-			$this->log('ERROR: Failed to list files: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
-			return new WP_Error('list_failed', $this->description.': '.__('failed to list files', 'backupplus'));
+			return $this->do_listfiles( $match );
+
+		} catch ( Exception $e ) {
+			$this->log( 'ERROR: Failed to list files: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
+			return new WP_Error( 'list_failed', $this->description . ': ' . __( 'failed to list files', 'backupplus' ) );
 		}
-
 	}
 
 	/**
@@ -160,135 +169,150 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	 *
 	 * @return - On success returns true, false or WordPress Error on failure
 	 */
-	public function delete_files($ret, $files) {
+	public function delete_files( $ret, $files ) {
 
 		global $backupplus;
 
-		if (is_string($files)) $files = array($files);
+		if ( is_string( $files ) ) {
+			$files = array( $files );
+		}
 
-		if (empty($files)) return true;
-		if (!method_exists($this, 'do_delete')) {
-			$this->log("Delete failed: this storage method does not allow deletions");
+		if ( empty( $files ) ) {
+			return true;
+		}
+		if ( ! method_exists( $this, 'do_delete' ) ) {
+			$this->log( 'Delete failed: this storage method does not allow deletions' );
 			return false;
 		}
 
 		$storage = $this->get_storage();
 
-		if (empty($storage)) {
+		if ( empty( $storage ) ) {
 
 			$this->options = $this->get_options();
-			if (!$this->options_exist($this->options)) {
-				$this->log('No settings were found');
+			if ( ! $this->options_exist( $this->options ) ) {
+				$this->log( 'No settings were found' );
 				/* translators: %s: Description */
-				$this->log(sprintf(__('No %s settings were found', 'backupplus'), $this->description), 'error');
+				$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 				return false;
 			}
 
 			$storage = $this->bootstrap();
-			if (is_wp_error($storage)) return $storage;
-
+			if ( is_wp_error( $storage ) ) {
+				return $storage;
+			}
 		}
 
 		$ret = true;
 
-		if ($this->supports_feature('multi_delete')) {
-			$backupplus->log("Delete remote files: ".implode(', ', $files));
+		if ( $this->supports_feature( 'multi_delete' ) ) {
+			$backupplus->log( 'Delete remote files: ' . implode( ', ', $files ) );
 			try {
-				$responses = $this->do_delete($files);
-				$ret = $this->process_multi_delete_responses($files, $responses);
-			} catch (Exception $e) {
-				$backupplus->log('ERROR:'.implode($files).': Failed to delete files: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
+				$responses = $this->do_delete( $files );
+				$ret       = $this->process_multi_delete_responses( $files, $responses );
+			} catch ( Exception $e ) {
+				$backupplus->log( 'ERROR:' . implode( $files ) . ': Failed to delete files: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 				$ret = false;
 			}
 			return $ret;
 		}
 
-		foreach ($files as $file) {
-			$this->log("Delete remote: $file");
+		foreach ( $files as $file ) {
+			$this->log( "Delete remote: $file" );
 			try {
-				$ret = $this->do_delete($file);
-				
-				if (true === $ret) {
-					$this->log("$file: Delete succeeded");
+				$ret = $this->do_delete( $file );
+
+				if ( true === $ret ) {
+					$this->log( "$file: Delete succeeded" );
 				} else {
-					$this->log("Delete failed");
+					$this->log( 'Delete failed' );
 				}
-			} catch (Exception $e) {
-				$this->log('ERROR: '.$file.': Failed to delete file: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
+			} catch ( Exception $e ) {
+				$this->log( 'ERROR: ' . $file . ': Failed to delete file: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 				$ret = false;
 			}
 		}
-		
+
 		return $ret;
-		
 	}
 
-	public function download_file($ret, $files) {
+	public function download_file( $ret, $files ) {
 
 		global $backupplus;
 
-		if (is_string($files)) $files = array($files);
+		if ( is_string( $files ) ) {
+			$files = array( $files );
+		}
 
-		if (empty($files)) return true;
-		if (!method_exists($this, 'do_download')) {
-			$this->log("Download failed: this storage method does not allow downloading");
-			$this->log(__('This storage method does not allow downloading', 'backupplus'), 'error');
+		if ( empty( $files ) ) {
+			return true;
+		}
+		if ( ! method_exists( $this, 'do_download' ) ) {
+			$this->log( 'Download failed: this storage method does not allow downloading' );
+			$this->log( __( 'This storage method does not allow downloading', 'backupplus' ), 'error' );
 			return false;
 		}
 
 		$this->options = $this->get_options();
-		if (!$this->options_exist($this->options)) {
-			$this->log('No settings were found');
+		if ( ! $this->options_exist( $this->options ) ) {
+			$this->log( 'No settings were found' );
 			/* translators: %s: Description */
-			$this->log(sprintf(__('No %s settings were found', 'backupplus'), $this->description), 'error');
+			$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 			return false;
 		}
 
 		try {
 			$storage = $this->bootstrap();
-			if (is_wp_error($storage)) return $backupplus->log_wp_error($storage, false, true);
-		} catch (Exception $e) {
+			if ( is_wp_error( $storage ) ) {
+				return $backupplus->log_wp_error( $storage, false, true );
+			}
+		} catch ( Exception $e ) {
 			$ret = false;
-			$this->log('ERROR: '.$files[0].': Failed to download file: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
+			$this->log( 'ERROR: ' . $files[0] . ': Failed to download file: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			$this->log(
-				__('Error', 'backupplus').': '.
-				$this->description.': '.
+				__( 'Error', 'backupplus' ) . ': ' .
+				$this->description . ': ' .
 				/* translators: %s: File name */
-				sprintf(__('Failed to download %s', 'backupplus'), $files[0]),
-			'error');
+				sprintf( __( 'Failed to download %s', 'backupplus' ), $files[0] ),
+				'error'
+			);
 		}
 
-		$ret = true;
-		$backupplus_dir = untrailingslashit($backupplus->backups_dir_location());
+		$ret            = true;
+		$backupplus_dir = untrailingslashit( $backupplus->backups_dir_location() );
 
-		foreach ($files as $file) {
+		foreach ( $files as $file ) {
 			try {
-				$fullpath = $backupplus_dir.'/'.$file;
-				$start_offset = file_exists($fullpath) ? filesize($fullpath) : 0;
+				$fullpath     = $backupplus_dir . '/' . $file;
+				$start_offset = file_exists( $fullpath ) ? filesize( $fullpath ) : 0;
 
-				if (false == $this->do_download($file, $fullpath, $start_offset)) {
+				if ( false == $this->do_download( $file, $fullpath, $start_offset ) ) {
 					$ret = false;
-					$this->log("error: failed to download: $file");
-					$this->log("$file: ".
+					$this->log( "error: failed to download: $file" );
+					$this->log(
+						"$file: " .
 						sprintf(
 							/* translators: %s: Description */
-							__("%s Error", 'backupplus'),
-						$this->description).": ".
-						__('Failed to download', 'backupplus'),
-					'error');
+							__( '%s Error', 'backupplus' ),
+							$this->description
+						) . ': ' .
+						__( 'Failed to download', 'backupplus' ),
+						'error'
+					);
 				}
-
-			} catch (Exception $e) {
+			} catch ( Exception $e ) {
 				$ret = false;
-				$this->log('ERROR: '.$file.': Failed to download file: '.$e->getMessage().' (code: '.$e->getCode().', line: '.$e->getLine().', file: '.$e->getFile().')');
+				$this->log( 'ERROR: ' . $file . ': Failed to download file: ' . $e->getMessage() . ' (code: ' . $e->getCode() . ', line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 				$this->log(
-					__('Error', 'backupplus').': '.
-					$this->description.': '.
+					__( 'Error', 'backupplus' ) . ': ' .
+					$this->description . ': ' .
 					sprintf(
 						/* translators: %s: File name */
-						__('Failed to download %s', 'backupplus'),
-					$file),
-				'error');
+						__( 'Failed to download %s', 'backupplus' ),
+						$file
+					),
+					'error'
+				);
 			}
 		}
 
@@ -303,11 +327,13 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	public function get_configuration_template() {
 		$template_str = '';
 
-		if (method_exists($this, 'do_get_configuration_template')) {
+		if ( method_exists( $this, 'do_get_configuration_template' ) ) {
 			$template_str .= $this->do_get_configuration_template();
 		}
-		if (!$this->test_button || (method_exists($this, 'should_print_test_button') && !$this->should_print_test_button())) return $template_str;
-		$template_str .= $this->get_test_button_html($this->description);
+		if ( ! $this->test_button || ( method_exists( $this, 'should_print_test_button' ) && ! $this->should_print_test_button() ) ) {
+			return $template_str;
+		}
+		$template_str .= $this->get_test_button_html( $this->description );
 		return $template_str;
 	}
 
@@ -317,9 +343,9 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	 * @param array $opts
 	 * @return Array - Modified handerbar template options
 	 */
-	public function transform_options_for_template($opts) {
-		if (method_exists($this, 'do_transform_options_for_template')) {
-			$opts = $this->do_transform_options_for_template($opts);
+	public function transform_options_for_template( $opts ) {
+		if ( method_exists( $this, 'do_transform_options_for_template' ) ) {
+			$opts = $this->do_transform_options_for_template( $opts );
 		}
 		return $opts;
 	}
@@ -327,10 +353,10 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	public function config_print_javascript_onready() {
 		$this->do_config_javascript();
 	}
-	
+
 	protected function do_config_javascript() {
 	}
-	
+
 	/**
 	 * Analyse the passed-in options to indicate whether something is configured or not.
 	 *
@@ -338,19 +364,27 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	 *
 	 * @return Boolean
 	 */
-	public function options_exist($opts) {
-		if (is_array($opts) && !empty($opts)) return true;
+	public function options_exist( $opts ) {
+		if ( is_array( $opts ) && ! empty( $opts ) ) {
+			return true;
+		}
 		return false;
 	}
 
-	public function bootstrap($opts = false, $connect = true) {
-		if (false === $opts) $opts = $this->options;
+	public function bootstrap( $opts = false, $connect = true ) {
+		if ( false === $opts ) {
+			$opts = $this->options;
+		}
 		$storage = $this->get_storage();
 		// Be careful of checking empty($opts) here - some storage methods may have no options until the OAuth token has been obtained
 		/* translators: %s: Description */
-		if ($connect && !$this->options_exist($opts)) return new WP_Error('no_settings', sprintf(__('No %s settings were found', 'backupplus'), $this->description));
-		if (!empty($storage) && !is_wp_error($storage)) return $storage;
-		return $this->do_bootstrap($opts, $connect);
+		if ( $connect && ! $this->options_exist( $opts ) ) {
+			return new WP_Error( 'no_settings', sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ) );
+		}
+		if ( ! empty( $storage ) && ! is_wp_error( $storage ) ) {
+			return $storage;
+		}
+		return $this->do_bootstrap( $opts, $connect );
 	}
 
 	/**
@@ -360,42 +394,41 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 	 *
 	 * @return Mixed - any data to return (gets logged in the browser eventually)
 	 */
-	public function credentials_test($posted_settings) {
-	
+	public function credentials_test( $posted_settings ) {
+
 		$required_test_parameters = $this->get_credentials_test_required_parameters();
 
-		foreach ($required_test_parameters as $param => $descrip) {
-			if (empty($posted_settings[$param])) {
+		foreach ( $required_test_parameters as $param => $descrip ) {
+			if ( empty( $posted_settings[ $param ] ) ) {
 				/* translators: %s: Description */
-				echo esc_html(sprintf(__("Failure: No %s was given.", 'backupplus'), $descrip))."\n";
+				echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), $descrip ) ) . "\n";
 				return;
 			}
 		}
 
-		$storage = $this->bootstrap($posted_settings);
-		
-		if (is_wp_error($storage)) {
-			echo esc_html__("Failed", 'backupplus').": ";
-			foreach ($storage->get_error_messages() as $msg) {
-				echo esc_html($msg) .'\n';
+		$storage = $this->bootstrap( $posted_settings );
+
+		if ( is_wp_error( $storage ) ) {
+			echo esc_html__( 'Failed', 'backupplus' ) . ': ';
+			foreach ( $storage->get_error_messages() as $msg ) {
+				echo esc_html( $msg ) . '\n';
 			}
 			return;
 		}
 
-		$testfile = md5(time().wp_rand()).'.txt';
-		
-		$test_results = $this->do_credentials_test($testfile, $posted_settings);
-		
-		$data = (is_array($test_results) && isset($test_results['data'])) ? $test_results['data'] : null;
-		
-		if ((is_array($test_results) && $test_results['result']) || (!is_array($test_results) && $test_results)) {
-			esc_html_e('Success', 'backupplus');
-			$this->do_credentials_test_deletefile($testfile, $posted_settings);
+		$testfile = md5( time() . wp_rand() ) . '.txt';
+
+		$test_results = $this->do_credentials_test( $testfile, $posted_settings );
+
+		$data = ( is_array( $test_results ) && isset( $test_results['data'] ) ) ? $test_results['data'] : null;
+
+		if ( ( is_array( $test_results ) && $test_results['result'] ) || ( ! is_array( $test_results ) && $test_results ) ) {
+			esc_html_e( 'Success', 'backupplus' );
+			$this->do_credentials_test_deletefile( $testfile, $posted_settings );
 		} else {
-			esc_html_e("Failed: We were not able to place a file in that directory - please check your credentials.", 'backupplus');
+			esc_html_e( 'Failed: We were not able to place a file in that directory - please check your credentials.', 'backupplus' );
 		}
 
 		return $data;
-		
 	}
 }

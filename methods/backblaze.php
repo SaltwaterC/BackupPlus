@@ -4,42 +4,22 @@
  * Provider ID: backblaze
  * Provider Class: BackupPlus_BackupModule_backblaze
  */
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
+require_once BACKUPPLUS_DIR . '/includes/class-remote-storage-module.php';
+require_once __DIR__ . '/backblaze/client.php';
 
-if (!defined('ABSPATH')) die('No direct access.');
-
-if (version_compare(phpversion(), '5.3.3', '>=')) {
-
-	if (class_exists('BackupPlus_Addons_RemoteStorage_backblaze')) {
-		class BackupPlus_BackupModule_backblaze extends BackupPlus_Addons_RemoteStorage_backblaze {
-			public function __construct() {
-				parent::__construct('backblaze', 'Backblaze', true, true);
-			}
-		}
-		
-	} else {
-	
-		backupplus_try_include_file('methods/addon-not-yet-present.php', 'include_once');
-		/**
-		 * N.B. BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
-		 */
-		class BackupPlus_BackupModule_backblaze extends BackupPlus_BackupModule_AddonNotYetPresent {
-			public function __construct() {
-				parent::__construct('backblaze', 'Backblaze', '5.3.3', 'backblaze.png');
-			}
-		}
-		
-	}
-	
-} else {
-
-	backupplus_try_include_file('methods/insufficient.php', 'include_once');
-	/**
-	 * N.B. BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule
-	 */
-	class BackupPlus_BackupModule_backblaze extends BackupPlus_BackupModule_insufficientphp {
-		public function __construct() {
-			parent::__construct('backblaze', 'Backblaze', '5.3.3', 'backblaze.png');
-		}
-	}
-	
+class BackupPlus_BackupModule_backblaze extends BackupPlus_Remote_Storage_Module {
+	protected $fields       = array(
+		'application_key_id' => array( 'Application key ID', '' ),
+		'application_key'    => array( 'Application key', '', 'password' ),
+		'bucketid'           => array( 'Bucket ID (not bucket name)', '' ),
+		'path'               => array( 'Folder prefix (optional)', '' ),
+	);
+	protected $instructions = 'Use a B2 application key with listFiles, readFiles, writeFiles and deleteFiles access to an existing bucket. Retention removes all versions of each selected backup.';
+	public function options_exist( $options ) {
+		return ! empty( $options['application_key_id'] ) && ! empty( $options['application_key'] ) && ! empty( $options['bucketid'] ); }
+	protected function create_client( $options ) {
+		return new BackupPlus_Backblaze_Client( $options ); }
 }

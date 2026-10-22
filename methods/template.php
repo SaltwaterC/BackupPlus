@@ -26,9 +26,13 @@
  * - Call $backupplus->log("my log message") to log things, which greatly helps debugging
  * - BackupPlus is licensed under the GPL version 3 or later. Any distributed combined work must be licensed in a way compatible with the GPL.
  */
-if (!defined('ABSPATH')) die('No direct access allowed.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 
@@ -38,7 +42,7 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 	 * @param  Array $backup_array Array of files (basenames) to sent to remote storage
 	 * @return Mixed - (boolean)false to indicate failure; otherwise, something to be passed back when deleting files
 	 */
-	public function backup($backup_array) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
+	public function backup( $backup_array ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 
 		global $backupplus;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 
@@ -50,7 +54,6 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 		// $backupplus->uploaded_file($file);
 
 		// }
-
 	}
 
 	/**
@@ -60,7 +63,7 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 	 *
 	 * @return Array - each file is represented by an array with entries 'name' and (optional) 'size'
 	 */
-	public function listfiles($match = 'backup_') {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
+	public function listfiles( $match = 'backup_' ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 		// This function needs to return an array of arrays. The keys for the sub-arrays are name (a path-less filename, i.e. a basename), (optional)size, and should be a list of matching files from the storage backend. A WP_Error object can also be returned; and the error code should be no_settings if that is relevant.
 		return array();
 	}
@@ -73,12 +76,13 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 	 * @param array  $sizeinfo Size information
 	 * @return Boolean - whether the operation succeeded or not
 	 */
-	public function delete($files, $data = false, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
+	public function delete( $files, $data = false, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 
 		global $backupplus;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 
-		if (is_string($files)) $files = array($files);
-
+		if ( is_string( $files ) ) {
+			$files = array( $files );
+		}
 	}
 
 	/**
@@ -89,15 +93,14 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 	 *
 	 * @return Boolean - success or failure state
 	 */
-	public function download($file) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
+	public function download( $file ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
 
 		global $backupplus;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- This is a template file and can be ignored
-
 	}
 
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates');
+		return array( 'multi_options', 'config_templates' );
 	}
 
 	/**
@@ -109,11 +112,11 @@ class BackupPlus_BackupModule_template extends BackupPlus_BackupModule {
 	public function get_configuration_template() {
 
 		ob_start();
-	
+
 		$classes = $this->get_css_classes();
-	
+
 		?>
-			<tr class="backupplusmethod <?php echo esc_attr($classes);?>">
+			<tr class="backupplusmethod <?php echo esc_attr( $classes ); ?>">
 				<th>My Method:</th>
 				<td>
 					

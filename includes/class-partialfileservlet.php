@@ -2,26 +2,28 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 // https://stackoverflow.com/questions/157318/resumable-downloads-when-using-php-to-send-the-file
 // User: DaveRandom
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
-if (!class_exists('BackupPlus_NonExistentFileException')):
-class BackupPlus_NonExistentFileException extends RuntimeException {}
+if ( ! class_exists( 'BackupPlus_NonExistentFileException' ) ) :
+	class BackupPlus_NonExistentFileException extends RuntimeException {}
 endif;
 
-if (!class_exists('BackupPlus_UnreadableFileException')):
-class BackupPlus_UnreadableFileException extends RuntimeException {}
+if ( ! class_exists( 'BackupPlus_UnreadableFileException' ) ) :
+	class BackupPlus_UnreadableFileException extends RuntimeException {}
 endif;
 
-if (!class_exists('BackupPlus_UnsatisfiableRangeException')):
-class BackupPlus_UnsatisfiableRangeException extends RuntimeException {}
+if ( ! class_exists( 'BackupPlus_UnsatisfiableRangeException' ) ) :
+	class BackupPlus_UnsatisfiableRangeException extends RuntimeException {}
 endif;
 
-if (!class_exists('BackupPlus_InvalidRangeHeaderException')):
-class BackupPlus_InvalidRangeHeaderException extends RuntimeException {}
+if ( ! class_exists( 'BackupPlus_InvalidRangeHeaderException' ) ) :
+	class BackupPlus_InvalidRangeHeaderException extends RuntimeException {}
 endif;
 
-class BackupPlus_RangeHeader
-{
+class BackupPlus_RangeHeader {
+
 	/**
 	 * The first byte in the file to send (0-indexed), a null value indicates the last
 	 * $end bytes
@@ -44,15 +46,14 @@ class BackupPlus_RangeHeader
 	 * @param string $header
 	 * @return BackupPlus_RangeHeader
 	 */
-	public static function createFromHeaderString($header)
-	{
-		if ($header === null) {
+	public static function createFromHeaderString( $header ) {
+		if ( $header === null ) {
 			return null;
 		}
-		if (!preg_match('/^\s*([A-Za-z]+)\s*=\s*(\d*)\s*-\s*(\d*)\s*(?:,|$)/', $header, $info)) {
-			throw new BackupPlus_InvalidRangeHeaderException('Invalid header format');
-		} else if (strtolower($info[1]) !== 'bytes') {
-			throw new BackupPlus_InvalidRangeHeaderException('Unknown range unit: ' . $info[1]); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
+		if ( ! preg_match( '/^\s*([A-Za-z]+)\s*=\s*(\d*)\s*-\s*(\d*)\s*(?:,|$)/', $header, $info ) ) {
+			throw new BackupPlus_InvalidRangeHeaderException( 'Invalid header format' );
+		} elseif ( strtolower( $info[1] ) !== 'bytes' ) {
+			throw new BackupPlus_InvalidRangeHeaderException( 'Unknown range unit: ' . $info[1] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 		}
 
 		return new self(
@@ -66,20 +67,19 @@ class BackupPlus_RangeHeader
 	 * @param int|null $lastByte
 	 * @throws BackupPlus_InvalidRangeHeaderException
 	 */
-	public function __construct($firstByte, $lastByte)
-	{
-		$this->firstByte = $firstByte === null ? $firstByte : (int)$firstByte;
-		$this->lastByte = $lastByte === null ? $lastByte : (int)$lastByte;
+	public function __construct( $firstByte, $lastByte ) {
+		$this->firstByte = $firstByte === null ? $firstByte : (int) $firstByte;
+		$this->lastByte  = $lastByte === null ? $lastByte : (int) $lastByte;
 
-		if ($this->firstByte === null && $this->lastByte === null) {
+		if ( $this->firstByte === null && $this->lastByte === null ) {
 			throw new BackupPlus_InvalidRangeHeaderException(
 				'Both start and end position specifiers empty'
 			);
-		} else if ($this->firstByte < 0 || $this->lastByte < 0) {
+		} elseif ( $this->firstByte < 0 || $this->lastByte < 0 ) {
 			throw new BackupPlus_InvalidRangeHeaderException(
 				'Position specifiers cannot be negative'
 			);
-		} else if ($this->lastByte !== null && $this->lastByte < $this->firstByte) {
+		} elseif ( $this->lastByte !== null && $this->lastByte < $this->firstByte ) {
 			throw new BackupPlus_InvalidRangeHeaderException(
 				'Last byte cannot be less than first byte'
 			);
@@ -93,15 +93,14 @@ class BackupPlus_RangeHeader
 	 * @return int
 	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
-	public function getStartPosition($fileSize)
-	{
-		$size = (int)$fileSize;
+	public function getStartPosition( $fileSize ) {
+		$size = (int) $fileSize;
 
-		if ($this->firstByte === null) {
-			return ($size - 1) - $this->lastByte;
+		if ( $this->firstByte === null ) {
+			return ( $size - 1 ) - $this->lastByte;
 		}
 
-		if ($size <= $this->firstByte) {
+		if ( $size <= $this->firstByte ) {
 			throw new BackupPlus_UnsatisfiableRangeException(
 				'Start position is after the end of the file'
 			);
@@ -117,15 +116,14 @@ class BackupPlus_RangeHeader
 	 * @return int
 	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
-	public function getEndPosition($fileSize)
-	{
-		$size = (int)$fileSize;
+	public function getEndPosition( $fileSize ) {
+		$size = (int) $fileSize;
 
-		if ($this->lastByte === null) {
+		if ( $this->lastByte === null ) {
 			return $size - 1;
 		}
 
-		if ($size <= $this->lastByte) {
+		if ( $size <= $this->lastByte ) {
 			throw new BackupPlus_UnsatisfiableRangeException(
 				'End position is after the end of the file'
 			);
@@ -141,11 +139,10 @@ class BackupPlus_RangeHeader
 	 * @return int
 	 * @throws BackupPlus_UnsatisfiableRangeException
 	 */
-	public function getLength($fileSize)
-	{
-		$size = (int)$fileSize;
+	public function getLength( $fileSize ) {
+		$size = (int) $fileSize;
 
-		return $this->getEndPosition($size) - $this->getStartPosition($size) + 1;
+		return $this->getEndPosition( $size ) - $this->getStartPosition( $size ) + 1;
 	}
 
 	/**
@@ -155,15 +152,14 @@ class BackupPlus_RangeHeader
 	 * @param int $fileSize
 	 * @return string
 	 */
-	public function getContentRangeHeader($fileSize)
-	{
-		return 'bytes ' . $this->getStartPosition($fileSize) . '-'
-			 . $this->getEndPosition($fileSize) . '/' . $fileSize;
+	public function getContentRangeHeader( $fileSize ) {
+		return 'bytes ' . $this->getStartPosition( $fileSize ) . '-'
+			. $this->getEndPosition( $fileSize ) . '/' . $fileSize;
 	}
 }
 
-class BackupPlus_PartialFileServlet
-{
+class BackupPlus_PartialFileServlet {
+
 	/**
 	 * The range header on which the data transmission will be based
 	 *
@@ -174,8 +170,7 @@ class BackupPlus_PartialFileServlet
 	/**
 	 * @param BackupPlus_RangeHeader $range Range header on which the transmission will be based
 	 */
-	public function __construct($range = null)
-	{
+	public function __construct( $range = null ) {
 		$this->range = $range;
 	}
 
@@ -187,16 +182,15 @@ class BackupPlus_PartialFileServlet
 	 * @param int $length Number of bytes to read
 	 * @param int $chunkSize Maximum bytes to read from the file in a single operation
 	 */
-	private function sendDataRange($fp, $start, $length, $chunkSize = 2097152)
-	{
-		if ($start > 0) {
-			fseek($fp, $start, SEEK_SET);
+	private function sendDataRange( $fp, $start, $length, $chunkSize = 2097152 ) {
+		if ( $start > 0 ) {
+			fseek( $fp, $start, SEEK_SET );
 		}
 
-		while ($length) {
-			$read = ($length > $chunkSize) ? $chunkSize : $length;
+		while ( $length ) {
+			$read    = ( $length > $chunkSize ) ? $chunkSize : $length;
 			$length -= $read;
-			echo fread($fp, $read); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Raw output intended.
+			echo fread( $fp, $read ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Raw output intended.
 		}
 	}
 
@@ -207,12 +201,11 @@ class BackupPlus_PartialFileServlet
 	 * @param int $contentLength
 	 * @param string $contentType
 	 */
-	private function sendDownloadHeaders($fileName, $contentLength, $contentType)
-	{
-		header('Content-Type: ' . $contentType);
-		header('Content-Length: ' . $contentLength);
-		header('Content-Disposition: attachment; filename="' . $fileName . '"');
-		header('Accept-Ranges: bytes');
+	private function sendDownloadHeaders( $fileName, $contentLength, $contentType ) {
+		header( 'Content-Type: ' . $contentType );
+		header( 'Content-Length: ' . $contentLength );
+		header( 'Content-Disposition: attachment; filename="' . $fileName . '"' );
+		header( 'Accept-Ranges: bytes' );
 	}
 
 	/**
@@ -221,48 +214,47 @@ class BackupPlus_PartialFileServlet
 	 * @param string $path Local file system path to serve
 	 * @param string $contentType MIME type of the data stream
 	 */
-	public function sendFile($path, $contentType = 'application/octet-stream')
-	{
+	public function sendFile( $path, $contentType = 'application/octet-stream' ) {
 		// Make sure the file exists and is a file, otherwise we are wasting our time
-		$localPath = realpath($path);
-		if ($localPath === false || !is_file($localPath)) {
+		$localPath = realpath( $path );
+		if ( $localPath === false || ! is_file( $localPath ) ) {
 			throw new BackupPlus_NonExistentFileException(
 				$path . ' does not exist or is not a file' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 			);
 		}
 
 		// Make sure we can open the file for reading
-		if (!$fp = fopen($localPath, 'r')) {
+		if ( ! $fp = fopen( $localPath, 'r' ) ) {
 			throw new BackupPlus_UnreadableFileException(
 				'Failed to open ' . $localPath . ' for reading' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
 			);
 		}
 
-		$fileSize = filesize($localPath);
+		$fileSize = filesize( $localPath );
 
-		if ($this->range == null) {
+		if ( $this->range == null ) {
 			// No range requested, just send the whole file
-			header('HTTP/1.1 200 OK');
-			$this->sendDownloadHeaders(basename($localPath), $fileSize, $contentType);
+			header( 'HTTP/1.1 200 OK' );
+			$this->sendDownloadHeaders( basename( $localPath ), $fileSize, $contentType );
 
-			fpassthru($fp);
+			fpassthru( $fp );
 		} else {
 			// Send the request range
-			header('HTTP/1.1 206 Partial Content');
-			header('Content-Range: ' . $this->range->getContentRangeHeader($fileSize));
+			header( 'HTTP/1.1 206 Partial Content' );
+			header( 'Content-Range: ' . $this->range->getContentRangeHeader( $fileSize ) );
 			$this->sendDownloadHeaders(
-				basename($localPath),
-				$this->range->getLength($fileSize),
+				basename( $localPath ),
+				$this->range->getLength( $fileSize ),
 				$contentType
 			);
 
 			$this->sendDataRange(
 				$fp,
-				$this->range->getStartPosition($fileSize),
-				$this->range->getLength($fileSize)
+				$this->range->getStartPosition( $fileSize ),
+				$this->range->getLength( $fileSize )
 			);
 		}
 
-		fclose($fp);
+		fclose( $fp );
 	}
 }

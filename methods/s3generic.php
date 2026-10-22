@@ -5,9 +5,11 @@
  * Provider Class: BackupPlus_BackupModule_s3generic
  */
 
-if (!defined('ABSPATH')) die('No direct access allowed.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
 
-backupplus_try_include_file('methods/s3generic/base.php', 'require_once');
+backupplus_try_include_file( 'methods/s3generic/base.php', 'require_once' );
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
@@ -15,72 +17,74 @@ backupplus_try_include_file('methods/s3generic/base.php', 'require_once');
 class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generic_base {
 
 	protected $provider_can_use_aws_sdk = false;
-	
+
 	protected $provider_has_regions = false;
-	
+
 	/**
 	 * Input and option field mappings with default values and supported contexts.
 	 *
 	 * @var array
 	 */
 	protected $input_option_field_mappings = array(
-		'accesskey' => array(
-			'default_value' => '',
+		'accesskey'           => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'access_key',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
-		'secretkey' => array(
-			'default_value' => '',
+		'secretkey'           => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'secret_key',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
-		'path' => array(
-			'default_value' => '',
+		'path'                => array(
+			'default_value'                   => '',
 			'template_property_input_mapping' => 'location',
-			'contexts' => array('option', 'input'),
+			'contexts'                        => array( 'option', 'input' ),
 		),
-		'endpoint' => array(
+		'endpoint'            => array(
 			'default_value' => '',
-			'contexts' => array('option', 'input'),
+			'contexts'      => array( 'option', 'input' ),
 		),
 		'bucket_access_style' => array(
 			'default_value' => 'path_style',
-			'contexts' => array('input'),
+			'contexts'      => array( 'input' ),
 		),
-		'signature_version' => array(
+		'signature_version'   => array(
 			'default_value' => 'v4',
-			'contexts' => array('input'),
+			'contexts'      => array( 'input' ),
 		),
 	);
 
 	/**
 	 * Given an S3 object, possibly set the region on it
 	 *
-	 * @param Object $obj		  - like BackupPlus_S3Generic
+	 * @param Object $obj         - like BackupPlus_S3Generic
 	 * @param String $region
 	 * @param String $bucket_name
 	 */
-	protected function set_region($obj, $region = '', $bucket_name = '') {
-		$config = $this->get_config();
-		$endpoint = ('' != $region && 'n/a' != $region) ? $region : $config['endpoint'];
-		if (!empty($endpoint)) {
-			$endpoint = preg_replace('/^(http|https):\/\//i', '', trim($endpoint));
+	protected function set_region( $obj, $region = '', $bucket_name = '' ) {
+		$config   = $this->get_config();
+		$endpoint = ( '' != $region && 'n/a' != $region ) ? $region : $config['endpoint'];
+		if ( ! empty( $endpoint ) ) {
+			$endpoint = preg_replace( '/^(http|https):\/\//i', '', trim( $endpoint ) );
 		}
-		$log_message = "Set endpoint (".get_class($obj)."): $endpoint";
+		$log_message        = 'Set endpoint (' . get_class( $obj ) . "): $endpoint";
 		$log_message_append = '';
-		if (is_string($endpoint) && preg_match('/^(.*):(\d+)$/', $endpoint, $matches)) {
-			$endpoint = $matches[1];
-			$port = $matches[2];
+		if ( is_string( $endpoint ) && preg_match( '/^(.*):(\d+)$/', $endpoint, $matches ) ) {
+			$endpoint           = $matches[1];
+			$port               = $matches[2];
 			$log_message_append = ", port=$port";
-			$obj->setPort($port);
+			$obj->setPort( $port );
 		}
 		// This provider requires domain-style access. In future it might be better to provide an option rather than hard-coding the knowledge.
-		if (is_string($endpoint) && preg_match('/\.aliyuncs\.com$/i', $endpoint)) {
-			$obj->useDNSBucketName(true, $bucket_name);
+		if ( is_string( $endpoint ) && preg_match( '/\.aliyuncs\.com$/i', $endpoint ) ) {
+			$obj->useDNSBucketName( true, $bucket_name );
 		}
 		global $backupplus;
-		if ($backupplus->backup_time) $this->log($log_message.$log_message_append);
-		$obj->setEndpoint($endpoint);
+		if ( $backupplus->backup_time ) {
+			$this->log( $log_message . $log_message_append );
+		}
+		$obj->setEndpoint( $endpoint );
 	}
 
 	/**
@@ -90,7 +94,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
+		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic' );
 	}
 
 	/**
@@ -100,11 +104,11 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 *
 	 * @return Array - an array of options
 	 */
-	protected function get_config($force_refresh = false) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Filter use
-		$opts = $this->get_options();
-		$opts['whoweare'] = 'S3';
-		$opts['whoweare_long'] = __('S3 (Compatible)', 'backupplus');
-		$opts['key'] = 's3generic';
+	protected function get_config( $force_refresh = false ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Filter use
+		$opts                  = $this->get_options();
+		$opts['whoweare']      = 'S3';
+		$opts['whoweare_long'] = __( 'S3 (Compatible)', 'backupplus' );
+		$opts['key']           = 's3generic';
 		return $opts;
 	}
 
@@ -167,9 +171,9 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 		</tr>
 		<?php
 		$partial_templates['s3generic_additional_configuration_bottom'] = ob_get_clean();
-		return wp_parse_args(apply_filters('backupplus_'.$this->get_id().'_partial_templates', $partial_templates), parent::get_partial_templates());
+		return wp_parse_args( apply_filters( 'backupplus_' . $this->get_id() . '_partial_templates', $partial_templates ), parent::get_partial_templates() );
 	}
-	
+
 	/**
 	 * Modifies handerbar template options
 	 * The function require because It should override parent class's BackupPlus_BackupModule_s3::transform_options_for_template() functionality with no operation.
@@ -177,23 +181,25 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 * @param array $opts
 	 * @return Array - Modified handerbar template options
 	 */
-	public function transform_options_for_template($opts) {
-		if (!empty($opts['instance_id']) && 'default' !== $opts['instance_id']) {
-			if (!isset($opts['signature_version'])) { // this check is to find out whether we're dealing with a pre-existing configuration or not
+	public function transform_options_for_template( $opts ) {
+		if ( ! empty( $opts['instance_id'] ) && 'default' !== $opts['instance_id'] ) {
+			if ( ! isset( $opts['signature_version'] ) ) { // this check is to find out whether we're dealing with a pre-existing configuration or not
 				$opts['signature_version'] = 'v2'; // the pre-existing S3-Compatible configurations before signature_version was introduced by default use SigV2, so we wan't to keep it that way as we don't want to break what's already working
-				$opts['signature_version'] = apply_filters('backupplus_s3_signature_version', $opts['signature_version'], false, $this);
-				if (!empty($opts['endpoint'])) {
-					if (preg_match('/\.(leviia|r2\.cloudflarestorage)\.com$/i', $opts['endpoint']) || (preg_match('/\.amazonaws\.com$/i', $opts['endpoint']) && !empty($opts['bucket_access_style']) && 'virtual_host_style' === $opts['bucket_access_style'])) {
+				$opts['signature_version'] = apply_filters( 'backupplus_s3_signature_version', $opts['signature_version'], false, $this );
+				if ( ! empty( $opts['endpoint'] ) ) {
+					if ( preg_match( '/\.(leviia|r2\.cloudflarestorage)\.com$/i', $opts['endpoint'] ) || ( preg_match( '/\.amazonaws\.com$/i', $opts['endpoint'] ) && ! empty( $opts['bucket_access_style'] ) && 'virtual_host_style' === $opts['bucket_access_style'] ) ) {
 						// due to the merge of S3-generic bucket access style MR on March 2021, if virtual-host bucket access style is selected, connecting to an amazonaws bucket location where the user doesn't have an access to it will throw an S3 InvalidRequest exception. It requires the signature to be set to version 4
 						$opts['signature_version'] = 'v4';
 					}
 				}
 			}
-			if (!$this->options_exist($opts)) $opts['signature_version'] = 'v4'; // if no pre-existing S3-Compatible configurations were setup, there would always be an initial instance id created with a blank configuration form (no access key, secret key, location, and endpoint), this initial instance id/form should use SigV4
+			if ( ! $this->options_exist( $opts ) ) {
+				$opts['signature_version'] = 'v4'; // if no pre-existing S3-Compatible configurations were setup, there would always be an initial instance id created with a blank configuration form (no access key, secret key, location, and endpoint), this initial instance id/form should use SigV4
+			}
 		}
 		return $opts;
 	}
-	
+
 	/**
 	 * Check whether options have been set up by the user, or not
 	 *
@@ -201,10 +207,10 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 *
 	 * @return Boolean
 	 */
-	public function options_exist($opts) {
-		return (parent::options_exist($opts) && !empty($opts['endpoint']));
+	public function options_exist( $opts ) {
+		return ( parent::options_exist( $opts ) && ! empty( $opts['endpoint'] ) );
 	}
-	
+
 	/**
 	 * Retrieve a list of template properties by taking all the persistent variables and methods of the parent class and combining them with the ones that are unique to this module, also the necessary HTML element attributes and texts which are also unique only to this backup module
 	 * NOTE: Please sanitise all strings that are required to be shown as HTML content on the frontend side (i.e. wp_kses()), or any other technique to prevent XSS attacks that could come via WP hooks
@@ -215,16 +221,16 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 		global $backupplus, $backupplus_admin;
 
 		$simplexmlelement_existence_label = '';
-		if (!apply_filters('backupplus_s3generic_simplexmlelement_exists', class_exists('SimpleXMLElement'))) {
+		if ( ! apply_filters( 'backupplus_s3generic_simplexmlelement_exists', class_exists( 'SimpleXMLElement' ) ) ) {
 			$simplexmlelement_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'backupplus').':</strong> '.
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 					/* translators: %s: Required module name */
-					sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'SimpleXMLElement').' '.
-					__("Please contact your web hosting provider's support.", 'backupplus').' '.
+					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
+					__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
 					/* translators: 1: Module name, 2: Required module name */
-					sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), $backupplus->backup_methods[$this->get_id()], 'SimpleXMLElement').' '.
-					__('Please do not file any support requests; there is no alternative.', 'backupplus'),
+					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ], 'SimpleXMLElement' ) . ' ' .
+					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->get_id(),
 					false
 				),
@@ -233,13 +239,13 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 		}
 
 		$xmlwriter_existence_label = '';
-		if (!apply_filters('backupplus_s3generic_xmlwriter_exists', 'BackupPlus_S3Generic_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
+		if ( ! apply_filters( 'backupplus_s3generic_xmlwriter_exists', 'BackupPlus_S3Generic_Compat' != $this->indicate_s3_class() || ! class_exists( 'XMLWriter' ) ) ) {
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
-					'<strong>'.__('Warning', 'backupplus').':</strong> '.
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
 					/* translators: %s: Required module name */
-					sprintf(__("Your web server's PHP installation does not include a required module (%s).", 'backupplus'), 'XMLWriter').' '.
-					__("Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus'),
+					sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
+					__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ),
 					$this->get_id(),
 					false
 				),
@@ -248,41 +254,41 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 		}
 
 		$properties = array(
-			'pre_template_opening_html' => esc_html__('S3-compatible storage is offered by providers such as DigitalOcean Spaces, Linode Object Storage, Cloudian, and others.', 'backupplus'),
-			'xmlwriter_existence_label' => $xmlwriter_existence_label,
-			'simplexmlelement_existence_label' => $simplexmlelement_existence_label,
-			'curl_existence_label' => wp_kses($backupplus_admin->curl_check($backupplus->backup_methods[$this->get_id()], true, $this->get_id().' hide-in-udc', false), $this->allowed_html_for_content_sanitisation()),
-			'ssl_certificates_errors_link_text' => esc_html__('If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus'),
+			'pre_template_opening_html'               => esc_html__( 'S3-compatible storage is offered by providers such as DigitalOcean Spaces, Linode Object Storage, Cloudian, and others.', 'backupplus' ),
+			'xmlwriter_existence_label'               => $xmlwriter_existence_label,
+			'simplexmlelement_existence_label'        => $simplexmlelement_existence_label,
+			'curl_existence_label'                    => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], true, $this->get_id() . ' hide-in-udc', false ), $this->allowed_html_for_content_sanitisation() ),
+			'ssl_certificates_errors_link_text'       => esc_html__( 'If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus' ),
 			/* translators: %s: Cloud storage provider */
-			'input_access_key_label' => sprintf(__('%s access key', 'backupplus'), 'S3'),
-			'input_access_key_placeholder' => __('Paste your access key here', 'backupplus'),
+			'input_access_key_label'                  => sprintf( __( '%s access key', 'backupplus' ), 'S3' ),
+			'input_access_key_placeholder'            => __( 'Paste your access key here', 'backupplus' ),
 			/* translators: %s: Cloud storage provider */
-			'input_secret_key_label' => sprintf(__('%s secret key', 'backupplus'), 'S3'),
-			'input_secret_key_placeholder' => __('Paste your secret key here', 'backupplus'),
-			'input_secret_key_type' => apply_filters('backupplus_admin_secret_field_type', 'password'),
+			'input_secret_key_label'                  => sprintf( __( '%s secret key', 'backupplus' ), 'S3' ),
+			'input_secret_key_placeholder'            => __( 'Paste your secret key here', 'backupplus' ),
+			'input_secret_key_type'                   => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
 			/* translators: %s: Cloud storage provider */
-			'input_location_label' => sprintf(__('%s location', 'backupplus'), 'S3'),
-			'input_location_title' => __('Enter only a bucket name or a bucket and path.', 'backupplus').' '.__('Examples: mybucket, mybucket/mypath', 'backupplus'),
-			'input_location_prefix' => 's3generic://',
+			'input_location_label'                    => sprintf( __( '%s location', 'backupplus' ), 'S3' ),
+			'input_location_title'                    => __( 'Enter only a bucket name or a bucket and path.', 'backupplus' ) . ' ' . __( 'Examples: mybucket, mybucket/mypath', 'backupplus' ),
+			'input_location_prefix'                   => 's3generic://',
 			/* translators: %s: Cloud storage provider */
-			'input_endpoint_label' => sprintf(__('%s end-point', 'backupplus'), 'S3'),
-			'input_endpoint_placeholder' => __('Example: sgp1.digitaloceanspaces.com', 'backupplus'),
-			'input_bucket_access_style_label' => __('Bucket access style', 'backupplus'),
-			'input_bucket_access_style_readmore' => esc_html__('Path style puts the bucket in the URL path; virtual-host style uses it in the hostname.', 'backupplus'),
+			'input_endpoint_label'                    => sprintf( __( '%s end-point', 'backupplus' ), 'S3' ),
+			'input_endpoint_placeholder'              => __( 'Example: sgp1.digitaloceanspaces.com', 'backupplus' ),
+			'input_bucket_access_style_label'         => __( 'Bucket access style', 'backupplus' ),
+			'input_bucket_access_style_readmore'      => esc_html__( 'Path style puts the bucket in the URL path; virtual-host style uses it in the hostname.', 'backupplus' ),
 			'input_bucket_access_style_option_labels' => array(
-				'path_style' => __('Path style', 'backupplus'),
-				'virtual_host_style' => __('Virtual-host style', 'backupplus'),
+				'path_style'         => __( 'Path style', 'backupplus' ),
+				'virtual_host_style' => __( 'Virtual-host style', 'backupplus' ),
 			),
-			'input_signature_version_label' => __('Signature version', 'backupplus'),
-			'input_signature_version_readmore' => wp_kses('<a aria-label="'.esc_attr__('Read more about signature version', 'backupplus').'" href="https://aws.amazon.com/blogs/aws/amazon-s3-update-sigv2-deprecation-period-extended-modified/" target="_blank"><em>'.__('(Read more)', 'backupplus').'</em></a>', $this->allowed_html_for_content_sanitisation()),
-			'input_signature_version_option_labels' => array(
-				'v4' => __('SigV4', 'backupplus'),
-				'v2' => __('SigV2', 'backupplus'),
+			'input_signature_version_label'           => __( 'Signature version', 'backupplus' ),
+			'input_signature_version_readmore'        => wp_kses( '<a aria-label="' . esc_attr__( 'Read more about signature version', 'backupplus' ) . '" href="https://aws.amazon.com/blogs/aws/amazon-s3-update-sigv2-deprecation-period-extended-modified/" target="_blank"><em>' . __( '(Read more)', 'backupplus' ) . '</em></a>', $this->allowed_html_for_content_sanitisation() ),
+			'input_signature_version_option_labels'   => array(
+				'v4' => __( 'SigV4', 'backupplus' ),
+				'v2' => __( 'SigV2', 'backupplus' ),
 			),
 			/* translators: %s: Backup method */
-			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $backupplus->backup_methods[$this->get_id()]),
+			'input_test_label'                        => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
-		return wp_parse_args($properties, $this->get_persistent_variables_and_methods());
+		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );
 	}
 
 	/**
@@ -291,20 +297,24 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 * @param Object $storage - S3 Name
 	 * @param String $bucket  - storage path
 	 * @param Array  $config  - configuration - may not be complete at this stage, so be careful about which properties are used
-	 *	 *
+	 *   *
 	 * @return Boolean true if currently processing s3generic remote storage that uses virtual-host style, false otherwise
 	 */
-	protected function maybe_use_dns_bucket_name($storage, $bucket, $config) {
+	protected function maybe_use_dns_bucket_name( $storage, $bucket, $config ) {
 
-		$signature_version = !empty($config['signature_version']) ? $config['signature_version'] : apply_filters('backupplus_s3_signature_version', 'v2', false, $this); // the 'v2' value used to be handled by the use_v4 class variable, but since the signature_version (dropdown) setting has been introduced then use_v4 class variable has been removed and is no longer needed
-		if (is_callable(array($storage, 'setSignatureVersion'))) $storage->setSignatureVersion($signature_version); // we don't prioritise the hardcoded endpoint if signature_version is set, which means users are aware of this new option and intentionally set this option and/or save the settings
-		if ((!empty($config['endpoint']) && preg_match('/\.(leviia|aliyuncs|r2\.cloudflarestorage)\.com$/i', $config['endpoint'])) || (!empty($config['bucket_access_style']) && 'virtual_host_style' === $config['bucket_access_style'])) {
+		$signature_version = ! empty( $config['signature_version'] ) ? $config['signature_version'] : apply_filters( 'backupplus_s3_signature_version', 'v2', false, $this ); // the 'v2' value used to be handled by the use_v4 class variable, but since the signature_version (dropdown) setting has been introduced then use_v4 class variable has been removed and is no longer needed
+		if ( is_callable( array( $storage, 'setSignatureVersion' ) ) ) {
+			$storage->setSignatureVersion( $signature_version ); // we don't prioritise the hardcoded endpoint if signature_version is set, which means users are aware of this new option and intentionally set this option and/or save the settings
+		}
+		if ( ( ! empty( $config['endpoint'] ) && preg_match( '/\.(leviia|aliyuncs|r2\.cloudflarestorage)\.com$/i', $config['endpoint'] ) ) || ( ! empty( $config['bucket_access_style'] ) && 'virtual_host_style' === $config['bucket_access_style'] ) ) {
 			// due to the recent merge of S3-generic bucket access style on March 2021, if virtual-host bucket access style is selected, connecting to an amazonaws bucket location where the user doesn't have an access to it will throw an S3 InvalidRequest exception. It requires the signature to be set to version 4
 			// Cloudflare R2 supports V4 only
-			if (empty($config['signature_version']) && preg_match('/\.(leviia|amazonaws|r2\.cloudflarestorage)\.com$/i', $config['endpoint'])) {
-				if (is_callable(array($storage, 'setSignatureVersion'))) $storage->setSignatureVersion('v4');
+			if ( empty( $config['signature_version'] ) && preg_match( '/\.(leviia|amazonaws|r2\.cloudflarestorage)\.com$/i', $config['endpoint'] ) ) {
+				if ( is_callable( array( $storage, 'setSignatureVersion' ) ) ) {
+					$storage->setSignatureVersion( 'v4' );
+				}
 			}
-			return $this->use_dns_bucket_name($storage, '');
+			return $this->use_dns_bucket_name( $storage, '' );
 		}
 		return false;
 	}
@@ -316,15 +326,15 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 *
 	 * @return Array filtered settings
 	 */
-	 public function options_filter($settings) {
-		$settings = parent::options_filter($settings);
-		if (!empty($settings['version']) && !empty($settings['settings'])) {
-			foreach ($settings['settings'] as $instance_id => $instance_settings) {
-				if (!empty($instance_settings['endpoint'])) {
-					$settings['settings'][$instance_id]['endpoint'] = preg_replace('/^(http|https):\/\//i', '', trim($instance_settings['endpoint']));
+	public function options_filter( $settings ) {
+		$settings = parent::options_filter( $settings );
+		if ( ! empty( $settings['version'] ) && ! empty( $settings['settings'] ) ) {
+			foreach ( $settings['settings'] as $instance_id => $instance_settings ) {
+				if ( ! empty( $instance_settings['endpoint'] ) ) {
+					$settings['settings'][ $instance_id ]['endpoint'] = preg_replace( '/^(http|https):\/\//i', '', trim( $instance_settings['endpoint'] ) );
 				}
 			}
 		}
 		return $settings;
-	 }
+	}
 }

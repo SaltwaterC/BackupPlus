@@ -1,6 +1,8 @@
 <?php
 // phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged -- some functions, like set_time_limit() and ini_set(), are used to temporarily change PHP configuration values based on the script's needs (e.g., processing large datasets or performing long operations).
-if (!defined('ABSPATH')) die('No access.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No access.' );
+}
 
 /**
  * A class for interfacing with storage methods.
@@ -15,10 +17,10 @@ class BackupPlus_Storage_Methods_Interface {
 	 *
 	 * @return Object|WP_Error - an instance of BackupPlus_BackupModule, or an error
 	 */
-	public static function get_storage_object($method) {
-		return BackupPlus_Storage_Provider_Factory::create($method);
+	public static function get_storage_object( $method ) {
+		return BackupPlus_Storage_Provider_Factory::create( $method );
 	}
-	
+
 	/**
 	 * This method will return an array of remote storage options and storage_templates.
 	 *
@@ -27,60 +29,62 @@ class BackupPlus_Storage_Methods_Interface {
 	public static function get_remote_storage_options_and_templates() {
 
 		global $backupplus;
-	
-		$storage_objects_and_ids = self::get_storage_objects_and_ids(array_keys($backupplus->backup_methods));
-		$options = array();
-		$templates = $partial_templates = array();
 
-		foreach ($storage_objects_and_ids as $method => $method_info) {
+		$storage_objects_and_ids = self::get_storage_objects_and_ids( array_keys( $backupplus->backup_methods ) );
+		$options                 = array();
+		$templates               = $partial_templates = array();
+
+		foreach ( $storage_objects_and_ids as $method => $method_info ) {
 
 			$object = $method_info['object'];
 
-			if (!$object->supports_feature('multi_options')) {
+			if ( ! $object->supports_feature( 'multi_options' ) ) {
 				ob_start();
-				do_action('backupplus_config_print_before_storage', $method, null);
-				do_action('backupplus_config_print_add_conditional_logic', $method, $object);
+				do_action( 'backupplus_config_print_before_storage', $method, null );
+				do_action( 'backupplus_config_print_add_conditional_logic', $method, $object );
 				$object->config_print();
-				$templates[$method] = ob_get_clean();
+				$templates[ $method ] = ob_get_clean();
 			} else {
-				$templates[$method] = $object->get_template();
+				$templates[ $method ] = $object->get_template();
 			}
 
-			if (is_callable(array($object, 'get_partial_templates'))) $partial_templates[$method] = $object->get_partial_templates();
+			if ( is_callable( array( $object, 'get_partial_templates' ) ) ) {
+				$partial_templates[ $method ] = $object->get_partial_templates();
+			}
 
-			if (isset($method_info['instance_settings'])) {
+			if ( isset( $method_info['instance_settings'] ) ) {
 				// Add the methods default settings so that we can add new instances
 				$method_info['instance_settings']['default'] = $object->get_default_options();
 
-				foreach ($method_info['instance_settings'] as $instance_id => $instance_options) {
+				foreach ( $method_info['instance_settings'] as $instance_id => $instance_options ) {
 
 					$opts_without_transform = $instance_options;
 
-					if ($object->supports_feature('multi_options')) {
+					if ( $object->supports_feature( 'multi_options' ) ) {
 						$opts_without_transform['instance_id'] = $instance_id;
 					}
 
-					$opts = $object->transform_options_for_template($opts_without_transform);
+					$opts = $object->transform_options_for_template( $opts_without_transform );
 
-					foreach ($object->filter_frontend_settings_keys() as $filter_frontend_settings_key) {
-						unset($opts[$filter_frontend_settings_key]);
+					foreach ( $object->filter_frontend_settings_keys() as $filter_frontend_settings_key ) {
+						unset( $opts[ $filter_frontend_settings_key ] );
 					}
 
-					$options[$method][$instance_id] = $opts;
+					$options[ $method ][ $instance_id ] = $opts;
 				}
 			}
 
 			// Get the list of template properties from the predefined storage method
-			$options[$method]['template_properties'] = $object->get_template_properties();
+			$options[ $method ]['template_properties'] = $object->get_template_properties();
 		}
 
 		return array(
-			'options' => $options,
-			'templates' => $templates,
+			'options'           => $options,
+			'templates'         => $templates,
 			'partial_templates' => $partial_templates,
 		);
 	}
-	
+
 	/**
 	 * This method will return an array of remote storage objects and instance settings of the currently connected remote storage services.
 	 *
@@ -90,78 +94,89 @@ class BackupPlus_Storage_Methods_Interface {
 	 *
 	 * @return Array - returns an array, with a key equal to each member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an BackupPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated instance IDs, with the values being the associated settings for the instance ID.
 	 */
-	public static function get_storage_objects_and_ids($services) {
-	
+	public static function get_storage_objects_and_ids( $services ) {
+
 		$storage_objects_and_ids = array();
 
 		// N.B. The $services can return any type of values (null, false, etc.) as mentioned from one of the comment found
 		// in the "save_backup_to_history" function above especially if upgrading from (very) old versions. Thus,
 		// here we're adding some check to make sure that we're receiving a non-empty array before iterating through
 		// all the backup services that the user has in store.
-		if (empty($services) || !is_array($services)) return $storage_objects_and_ids;
+		if ( empty( $services ) || ! is_array( $services ) ) {
+			return $storage_objects_and_ids;
+		}
 
-		foreach ($services as $method) {
+		foreach ( $services as $method ) {
 
-			if ('none' === $method || '' == $method) continue;
-		
-			$remote_storage = self::get_storage_object($method);
-		
-			if (is_a($remote_storage, 'BackupPlus_BackupModule')) {
-			
-				if (empty($storage_objects_and_ids[$method])) $storage_objects_and_ids[$method] = array();
-				
-				$storage_objects_and_ids[$method]['object'] = $remote_storage;
-				
-				if ($remote_storage->supports_feature('multi_options')) {
-				
-					$settings_from_db = BackupPlus_Options::get_backupplus_option('backupplus_'.$method);
-					
-					$settings = is_array($settings_from_db) ? $settings_from_db : array();
-				
-					if (!isset($settings['version'])) $settings = self::update_remote_storage_options_format($method);
-					
-					if (is_wp_error($settings)) {
-						if (!empty($settings_from_db)) BackupPlus_Manipulation_Functions::error_log("BackupPlus: failed to convert storage options format: $method");
-						$settings = array('settings' => array());
+			if ( 'none' === $method || '' == $method ) {
+				continue;
+			}
+
+			$remote_storage = self::get_storage_object( $method );
+
+			if ( is_a( $remote_storage, 'BackupPlus_BackupModule' ) ) {
+
+				if ( empty( $storage_objects_and_ids[ $method ] ) ) {
+					$storage_objects_and_ids[ $method ] = array();
+				}
+
+				$storage_objects_and_ids[ $method ]['object'] = $remote_storage;
+
+				if ( $remote_storage->supports_feature( 'multi_options' ) ) {
+
+					$settings_from_db = BackupPlus_Options::get_backupplus_option( 'backupplus_' . $method );
+
+					$settings = is_array( $settings_from_db ) ? $settings_from_db : array();
+
+					if ( ! isset( $settings['version'] ) ) {
+						$settings = self::update_remote_storage_options_format( $method );
 					}
 
-					if (empty($settings['settings'])) {
-					
+					if ( is_wp_error( $settings ) ) {
+						if ( ! empty( $settings_from_db ) ) {
+							BackupPlus_Manipulation_Functions::error_log( "BackupPlus: failed to convert storage options format: $method" );
+						}
+						$settings = array( 'settings' => array() );
+					}
+
+					if ( empty( $settings['settings'] ) ) {
+
 						// Try to recover by getting a default set of options for display
-						if (is_callable(array($remote_storage, 'get_default_options'))) {
-							$uuid = 's-'.md5(wp_rand().uniqid().microtime(true));
-							$settings['settings'] = array($uuid => $remote_storage->get_default_options());
+						if ( is_callable( array( $remote_storage, 'get_default_options' ) ) ) {
+							$uuid                 = 's-' . md5( wp_rand() . uniqid() . microtime( true ) );
+							$settings['settings'] = array( $uuid => $remote_storage->get_default_options() );
 						}
-						
+
 						// See: https://wordpress.org/support/topic/cannot-setup-connectionauthenticate-with-dropbox/
-						if (empty($settings['settings'])) {
+						if ( empty( $settings['settings'] ) ) {
 							// This can get sent to the browser, and break the page, if the user has configured that. However, it should now (1.13.6+) be impossible for this condition to occur, now that we only log it after getting some default options.
-							BackupPlus_Manipulation_Functions::error_log("BackupPlus: Warning: settings for $method are empty. A dummy field is usually needed so that something is saved.");
+							BackupPlus_Manipulation_Functions::error_log( "BackupPlus: Warning: settings for $method are empty. A dummy field is usually needed so that something is saved." );
 						}
-						
 					}
 
-					if (!empty($settings['settings'])) {
-						
-						if (!isset($storage_objects_and_ids[$method]['instance_settings'])) $storage_objects_and_ids[$method]['instance_settings'] = array();
-						
-						foreach ($settings['settings'] as $instance_id => $storage_options) {
-							$storage_objects_and_ids[$method]['instance_settings'][$instance_id] = $storage_options;
+					if ( ! empty( $settings['settings'] ) ) {
+
+						if ( ! isset( $storage_objects_and_ids[ $method ]['instance_settings'] ) ) {
+							$storage_objects_and_ids[ $method ]['instance_settings'] = array();
+						}
+
+						foreach ( $settings['settings'] as $instance_id => $storage_options ) {
+							$storage_objects_and_ids[ $method ]['instance_settings'][ $instance_id ] = $storage_options;
 						}
 					}
 				} else {
-					if (!isset($storage_objects_and_ids[$method]['instance_settings'])) $storage_objects_and_ids[$method]['instance_settings'] = $remote_storage->get_default_options();
+					if ( ! isset( $storage_objects_and_ids[ $method ]['instance_settings'] ) ) {
+						$storage_objects_and_ids[ $method ]['instance_settings'] = $remote_storage->get_default_options();
+					}
 				}
-
 			} else {
-				BackupPlus_Manipulation_Functions::error_log("BackupPlus: storage method not found: $method");
+				BackupPlus_Manipulation_Functions::error_log( "BackupPlus: storage method not found: $method" );
 			}
 		}
 
 		return $storage_objects_and_ids;
-		
 	}
-	
+
 	/**
 	 * This converts array-style options (i.e. late 2013-onwards) to
 	 * 2017-style multi-array-style options.
@@ -179,50 +194,77 @@ class BackupPlus_Storage_Methods_Interface {
 	 *
 	 * @returns Array|WP_Error - returns the new options, or a WP_Error if it failed
 	 */
-	public static function update_remote_storage_options_format($method) {
-	
+	public static function update_remote_storage_options_format( $method ) {
+
 		global $backupplus;
-	
+
 		// Prevent recursion
 		static $already_active = false;
-		
-		if ($already_active) return new WP_Error('recursion', 'self::update_remote_storage_options_format() was called in a loop. This is usually caused by an options filter failing to correctly process a "recursion" error code');
-	
-		if (!BackupPlus_Storage_Provider_Factory::has($method)) return new WP_Error('no_such_method', 'Remote storage method not found', $method);
-		
+
+		if ( $already_active ) {
+			return new WP_Error( 'recursion', 'self::update_remote_storage_options_format() was called in a loop. This is usually caused by an options filter failing to correctly process a "recursion" error code' );
+		}
+
+		if ( ! BackupPlus_Storage_Provider_Factory::has( $method ) ) {
+			return new WP_Error( 'no_such_method', 'Remote storage method not found', $method );
+		}
+
 		// Sanity/inconsistency check
 		$settings_keys = $backupplus->get_settings_keys();
-		
-		$method_key = 'backupplus_'.$method;
-		
-		if (!in_array($method_key, $settings_keys)) return new WP_Error('no_such_setting', 'Setting not found for this method', $method);
-	
-		$current_setting = BackupPlus_Options::get_backupplus_option($method_key, null);
-		if (null === $current_setting || '' == $current_setting) $current_setting = array();
-		
-		if (!is_array($current_setting) && false !== $current_setting) return new WP_Error('format_unrecognised', 'Settings format not recognised', array('method' => $method, 'current_setting' => $current_setting));
+
+		$method_key = 'backupplus_' . $method;
+
+		if ( ! in_array( $method_key, $settings_keys ) ) {
+			return new WP_Error( 'no_such_setting', 'Setting not found for this method', $method );
+		}
+
+		$current_setting = BackupPlus_Options::get_backupplus_option( $method_key, null );
+		if ( null === $current_setting || '' == $current_setting ) {
+			$current_setting = array();
+		}
+
+		if ( ! is_array( $current_setting ) && false !== $current_setting ) {
+			return new WP_Error(
+				'format_unrecognised',
+				'Settings format not recognised',
+				array(
+					'method'          => $method,
+					'current_setting' => $current_setting,
+				)
+			);
+		}
 
 		// Already converted?
-		if (isset($current_setting['version'])) return $current_setting;
-		if (empty($current_setting)) {
-			$remote_storage = self::get_storage_object($method);
-			if (is_wp_error($remote_storage)) return $remote_storage;
+		if ( isset( $current_setting['version'] ) ) {
+			return $current_setting;
+		}
+		if ( empty( $current_setting ) ) {
+			$remote_storage = self::get_storage_object( $method );
+			if ( is_wp_error( $remote_storage ) ) {
+				return $remote_storage;
+			}
 			$current_setting = $remote_storage->get_default_options();
 		}
-		$new_setting = self::wrap_remote_storage_options($current_setting);
-		
+		$new_setting = self::wrap_remote_storage_options( $current_setting );
+
 		$already_active = true;
-		$updated = BackupPlus_Options::update_backupplus_option($method_key, $new_setting);
+		$updated        = BackupPlus_Options::update_backupplus_option( $method_key, $new_setting );
 		$already_active = false;
-		
-		if ($updated) {
+
+		if ( $updated ) {
 			return $new_setting;
 		} else {
-			return new WP_Error('save_failed', 'Saving the options in the new format failed', array('method' => $method, 'current_setting' => $new_setting));
+			return new WP_Error(
+				'save_failed',
+				'Saving the options in the new format failed',
+				array(
+					'method'          => $method,
+					'current_setting' => $new_setting,
+				)
+			);
 		}
-	
 	}
-	
+
 	/**
 	 * This method will return an array of enabled remote storage objects and instance settings of the currently connected remote storage services.
 	 *
@@ -231,31 +273,37 @@ class BackupPlus_Storage_Methods_Interface {
 	 *
 	 * @uses self::get_storage_objects_and_ids()
 	 *
-	 * @return Array					- returns an array, with a key equal to only enabled service member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an BackupPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated enabled instance IDs, with the values being the associated settings for the enabled instance ID.
+	 * @return Array                    - returns an array, with a key equal to only enabled service member of the $services list passed in. The corresponding value is then an array with keys 'object', 'instance_settings'. The value for 'object' is an BackupPlus_BackupModule instance. The value for 'instance_settings' is an array keyed by associated enabled instance IDs, with the values being the associated settings for the enabled instance ID.
 	 */
-	public static function get_enabled_storage_objects_and_ids($services, $remote_storage_instances = array()) {
-		
-		$storage_objects_and_ids = self::get_storage_objects_and_ids($services);
-		
-		foreach ($storage_objects_and_ids as $method => $method_information) {
+	public static function get_enabled_storage_objects_and_ids( $services, $remote_storage_instances = array() ) {
 
-			if (!$method_information['object']->supports_feature('multi_options')) continue;
-			
-			foreach ($method_information['instance_settings'] as $instance_id => $instance_information) {
-				if (!isset($instance_information['instance_enabled'])) $instance_information['instance_enabled'] = 1;
-				if (!empty($remote_storage_instances) && isset($remote_storage_instances[$method]) && !in_array($instance_id, $remote_storage_instances[$method])) {
-					unset($storage_objects_and_ids[$method]['instance_settings'][$instance_id]);
-				} elseif (empty($remote_storage_instances) && empty($instance_information['instance_enabled'])) {
-					unset($storage_objects_and_ids[$method]['instance_settings'][$instance_id]);
+		$storage_objects_and_ids = self::get_storage_objects_and_ids( $services );
+
+		foreach ( $storage_objects_and_ids as $method => $method_information ) {
+
+			if ( ! $method_information['object']->supports_feature( 'multi_options' ) ) {
+				continue;
+			}
+
+			foreach ( $method_information['instance_settings'] as $instance_id => $instance_information ) {
+				if ( ! isset( $instance_information['instance_enabled'] ) ) {
+					$instance_information['instance_enabled'] = 1;
+				}
+				if ( ! empty( $remote_storage_instances ) && isset( $remote_storage_instances[ $method ] ) && ! in_array( $instance_id, $remote_storage_instances[ $method ] ) ) {
+					unset( $storage_objects_and_ids[ $method ]['instance_settings'][ $instance_id ] );
+				} elseif ( empty( $remote_storage_instances ) && empty( $instance_information['instance_enabled'] ) ) {
+					unset( $storage_objects_and_ids[ $method ]['instance_settings'][ $instance_id ] );
 				}
 			}
-			
-			if (empty($storage_objects_and_ids[$method]['instance_settings'])) unset($storage_objects_and_ids[$method]);
+
+			if ( empty( $storage_objects_and_ids[ $method ]['instance_settings'] ) ) {
+				unset( $storage_objects_and_ids[ $method ] );
+			}
 		}
-		
+
 		return $storage_objects_and_ids;
 	}
-	
+
 	/**
 	 * This method gets the remote storage information and objects and loops over each of them until we get a successful download of the passed in file.
 	 *
@@ -264,150 +312,157 @@ class BackupPlus_Storage_Methods_Interface {
 	 * @param  Integer $timestamp - the backup timestamp
 	 * @param  Boolean $restore   - a boolean to indicate if the caller of this method is a restore or not; if so, different messages are logged
 	 */
-	public static function get_remote_file($services, $file, $timestamp, $restore = false) {
-		
+	public static function get_remote_file( $services, $file, $timestamp, $restore = false ) {
+
 		global $backupplus;
 
 		$backup_history = BackupPlus_Backup_History::get_history();
-		
-		$fullpath = $backupplus->backups_dir_location().'/'.$file;
 
-		$storage_objects_and_ids = self::get_storage_objects_and_ids($services);
+		$fullpath = $backupplus->backups_dir_location() . '/' . $file;
+
+		$storage_objects_and_ids = self::get_storage_objects_and_ids( $services );
 
 		$is_downloaded = false;
 
 		$backupplus->register_wp_http_option_hooks();
 
-		foreach ($services as $service) {
+		foreach ( $services as $service ) {
 
-			if (empty($service) || 'none' == $service || $is_downloaded) continue;
-
-			if ($restore) {
-				$service_description = empty($backupplus->backup_methods[$service]) ? $service : $backupplus->backup_methods[$service];
-				$backupplus->log(__("File is not locally present - needs retrieving from remote storage", 'backupplus')." ($service_description)", 'notice-restore');
-			}
-
-			$object = $storage_objects_and_ids[$service]['object'];
-
-			if (!$object->supports_feature('multi_options')) {
-				BackupPlus_Manipulation_Functions::error_log("BackupPlus_Storage_Methods_Interface::get_remote_file(): Multi-options not supported by: ".$service);
+			if ( empty( $service ) || 'none' == $service || $is_downloaded ) {
 				continue;
 			}
-			
-			$instance_ids = $storage_objects_and_ids[$service]['instance_settings'];
-			$backups_instance_ids = isset($backup_history[$timestamp]['service_instance_ids'][$service]) ? $backup_history[$timestamp]['service_instance_ids'][$service] : array(false);
 
-			foreach ($backups_instance_ids as $instance_id) {
+			if ( $restore ) {
+				$service_description = empty( $backupplus->backup_methods[ $service ] ) ? $service : $backupplus->backup_methods[ $service ];
+				$backupplus->log( __( 'File is not locally present - needs retrieving from remote storage', 'backupplus' ) . " ($service_description)", 'notice-restore' );
+			}
 
-				if (isset($instance_ids[$instance_id])) {
-					$options = $instance_ids[$instance_id];
+			$object = $storage_objects_and_ids[ $service ]['object'];
+
+			if ( ! $object->supports_feature( 'multi_options' ) ) {
+				BackupPlus_Manipulation_Functions::error_log( 'BackupPlus_Storage_Methods_Interface::get_remote_file(): Multi-options not supported by: ' . $service );
+				continue;
+			}
+
+			$instance_ids         = $storage_objects_and_ids[ $service ]['instance_settings'];
+			$backups_instance_ids = isset( $backup_history[ $timestamp ]['service_instance_ids'][ $service ] ) ? $backup_history[ $timestamp ]['service_instance_ids'][ $service ] : array( false );
+
+			foreach ( $backups_instance_ids as $instance_id ) {
+
+				if ( isset( $instance_ids[ $instance_id ] ) ) {
+					$options = $instance_ids[ $instance_id ];
 				} else {
 					// If we didn't find a instance id match, it could be a new BackupPlus upgrade or a wipe settings with the same details entered so try the default options saved.
 					$options = $object->get_options();
 				}
 
-				$object->set_options($options, false, $instance_id);
+				$object->set_options( $options, false, $instance_id );
 
-				$download = self::download_file($file, $object);
+				$download = self::download_file( $file, $object );
 
-				if (is_readable($fullpath) && false !== $download) {
-					if ($restore) {
-						$backupplus->log(__('OK', 'backupplus'), 'notice-restore');
+				if ( is_readable( $fullpath ) && false !== $download ) {
+					if ( $restore ) {
+						$backupplus->log( __( 'OK', 'backupplus' ), 'notice-restore' );
 					} else {
 						clearstatcache();
-						$backupplus->log('Remote fetch was successful (file size: '.round(filesize($fullpath)/1024, 1).' KB)');
+						$backupplus->log( 'Remote fetch was successful (file size: ' . round( filesize( $fullpath ) / 1024, 1 ) . ' KB)' );
 						$is_downloaded = true;
 					}
 					break 2;
 				} else {
-					if ($restore) {
-						$backupplus->log(__('Error', 'backupplus'), 'notice-restore');
+					if ( $restore ) {
+						$backupplus->log( __( 'Error', 'backupplus' ), 'notice-restore' );
 					} else {
 						clearstatcache();
-						if (0 === @filesize($fullpath)) @unlink($fullpath);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-						$backupplus->log('Remote fetch failed');
+						if ( 0 === @filesize( $fullpath ) ) {
+							@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						}                       $backupplus->log( 'Remote fetch failed' );
 					}
 				}
 			}
 		}
-		$backupplus->register_wp_http_option_hooks(false);
+		$backupplus->register_wp_http_option_hooks( false );
 	}
-	
+
 	/**
 	 * Downloads a specified file into UD's directory
 	 *
-	 * @param String				   $file		   The basename of the file
+	 * @param String                   $file           The basename of the file
 	 * @param BackupPlus_BackupModule $service_object The object of the service to use to download with.
 	 *
 	 * @return Boolean - Whether the operation succeeded. Inherited from the storage module's download() method. N.B. At the time of writing it looks like not all modules necessarily return true upon success; but false can be relied upon for detecting failure.
 	 */
-	private static function download_file($file, $service_object) {
+	private static function download_file( $file, $service_object ) {
 
 		global $backupplus;
-	
-		if (function_exists('set_time_limit')) @set_time_limit(BACKUPPLUS_SET_TIME_LIMIT);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		}
 		$service = $service_object->get_id();
-		
-		$backupplus->log("Requested file from remote service: $service: $file");
 
-		if (method_exists($service_object, 'download')) {
-		
+		$backupplus->log( "Requested file from remote service: $service: $file" );
+
+		if ( method_exists( $service_object, 'download' ) ) {
+
 			try {
-				return $service_object->download($file);
-			} catch (Exception $e) {
-				$log_message = 'Exception ('.get_class($e).') occurred during download: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
+				return $service_object->download( $file );
+			} catch ( Exception $e ) {
+				$log_message = 'Exception (' . get_class( $e ) . ') occurred during download: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
 				// @codingStandardsIgnoreLine
-				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$backupplus->log($log_message);
+				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
+				$backupplus->log( $log_message );
 				/* translators: 1: Exception class, 2: Exception message. */
-				$message = sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage());
-				$backupplus->log($message, 'error');
+				$message = sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
+				$backupplus->log( $message, 'error' );
 				return false;
-			} catch (Error $e) { //phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
-				$log_message = 'PHP Fatal error ('.get_class($e).') has occurred during download. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-				BackupPlus_Manipulation_Functions::error_log($log_message);
+			} catch ( Error $e ) { //phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
+				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during download. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
+				BackupPlus_Manipulation_Functions::error_log( $log_message );
 				// @codingStandardsIgnoreLine
-				$log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
-				$backupplus->log($log_message);
+				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
+				$backupplus->log( $log_message );
 				/* translators: 1: Fatal error class, 2: Error message. */
-				$message = sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus'), get_class($e), $e->getMessage());
-				$backupplus->log($message, 'error');
+				$message = sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
+				$backupplus->log( $message, 'error' );
 				return false;
 			}
 		} else {
-			$backupplus->log("Automatic backup restoration is not available with the method: $service.");
-			$message = "$file: ".__('The backup archive for this file could not be found.', 'backupplus').' ';
+			$backupplus->log( "Automatic backup restoration is not available with the method: $service." );
+			$message = "$file: " . __( 'The backup archive for this file could not be found.', 'backupplus' ) . ' ';
 			/* translators: %s: Remote storage service name. */
-			$message .= sprintf(__('The remote storage method in use (%s) does not allow us to retrieve files.', 'backupplus'), $service).' ';
-			$message .= __("To perform any restoration using BackupPlus, you will need to obtain a copy of this file and place it inside BackupPlus's working folder", 'backupplus')." (".BackupPlus_Manipulation_Functions::prune_backupplus_dir_prefix($backupplus->backups_dir_location()).")";
-			$backupplus->log($message, 'error');
+			$message .= sprintf( __( 'The remote storage method in use (%s) does not allow us to retrieve files.', 'backupplus' ), $service ) . ' ';
+			$message .= __( "To perform any restoration using BackupPlus, you will need to obtain a copy of this file and place it inside BackupPlus's working folder", 'backupplus' ) . ' (' . BackupPlus_Manipulation_Functions::prune_backupplus_dir_prefix( $backupplus->backups_dir_location() ) . ')';
+			$backupplus->log( $message, 'error' );
 			return false;
 		}
-
 	}
-	
+
 	/**
 	 * This method will update the old style remote storage options to the new style (Apr 2017) if the user has imported a old style version of settings
 	 *
 	 * @param  Array $options - The remote storage options settings array
 	 * @return Array          - The updated remote storage options settings array
 	 */
-	public static function wrap_remote_storage_options($options) {
+	public static function wrap_remote_storage_options( $options ) {
 		// Already converted?
-		if (isset($options['version'])) return $options;
-		
+		if ( isset( $options['version'] ) ) {
+			return $options;
+		}
+
 		// Generate an instance id
 		$uuid = self::generate_instance_id();
-		
+
 		$new_setting = array(
 			'version' => 1,
 		);
-		
-		if (!is_array($options)) $options = array();
 
-		$new_setting['settings'] = array($uuid => $options);
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+
+		$new_setting['settings'] = array( $uuid => $options );
 
 		return $new_setting;
 	}
@@ -419,6 +474,6 @@ class BackupPlus_Storage_Methods_Interface {
 	 */
 	private static function generate_instance_id() {
 		// Cryptographic randomness not required. The prefix helps avoid potential for type-juggling issues.
-		return 's-'.md5(wp_rand().uniqid().microtime(true));
+		return 's-' . md5( wp_rand() . uniqid() . microtime( true ) );
 	}
 }

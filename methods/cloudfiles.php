@@ -5,7 +5,9 @@
  * Provider Class: BackupPlus_BackupModule_cloudfiles
  */
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Using the default PHP fopen() function instead of the WP Filesystem API.
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
 /**
  * Converted to job_options: yes
@@ -13,7 +15,9 @@ if (!defined('ABSPATH')) die('No direct access allowed');
  * Migration code for "new"-style options removed: Feb 2017 (created: Dec 2013)
  */
 
-if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
+if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
+	backupplus_try_include_file( 'methods/backup-module.php', 'require_once' );
+}
 
 /**
  * Old SDK
@@ -29,29 +33,36 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 	 * @param  Boolean $useservercerts
 	 * @return Array
 	 */
-	private function getCF($user, $apikey, $authurl, $useservercerts = false) {
-		
+	private function getCF( $user, $apikey, $authurl, $useservercerts = false ) {
+
 		$storage = $this->get_storage();
-		if (!empty($storage)) return $storage;
-		
-		if (!class_exists('BackupPlus_CF_Authentication')) backupplus_try_include_file('methods/cloudfiles/sdk/cloudfiles.php', 'include_once');
+		if ( ! empty( $storage ) ) {
+			return $storage;
+		}
 
-		if (!defined('BACKUPPLUS_SSL_DISABLEVERIFY')) define('BACKUPPLUS_SSL_DISABLEVERIFY', BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
+		if ( ! class_exists( 'BackupPlus_CF_Authentication' ) ) {
+			backupplus_try_include_file( 'methods/cloudfiles/sdk/cloudfiles.php', 'include_once' );
+		}
 
-		$auth = new BackupPlus_CF_Authentication($user, trim($apikey), null, $authurl);
+		if ( ! defined( 'BACKUPPLUS_SSL_DISABLEVERIFY' ) ) {
+			define( 'BACKUPPLUS_SSL_DISABLEVERIFY', BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' ) );
+		}
 
-		$this->log("authentication URL: $authurl");
+		$auth = new BackupPlus_CF_Authentication( $user, trim( $apikey ), null, $authurl );
+
+		$this->log( "authentication URL: $authurl" );
 
 		$auth->authenticate();
 
-		$storage = new BackupPlus_CF_Connection($auth);
+		$storage = new BackupPlus_CF_Connection( $auth );
 
-		if (!$useservercerts) $storage->ssl_use_cabundle(BACKUPPLUS_DIR.'/includes/cacert.pem');
+		if ( ! $useservercerts ) {
+			$storage->ssl_use_cabundle( BACKUPPLUS_DIR . '/includes/cacert.pem' );
+		}
 
-		$this->set_storage($storage);
-		
+		$this->set_storage( $storage );
+
 		return $storage;
-
 	}
 
 	/**
@@ -62,9 +73,9 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
+		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic' );
 	}
-	
+
 	/**
 	 * Check whether options have been set up by the user, or not
 	 *
@@ -72,201 +83,211 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 	 *
 	 * @return Boolean
 	 */
-	public function options_exist($opts) {
-		if (is_array($opts) && isset($opts['user']) && '' != $opts['user'] && !empty($opts['apikey'])) return true;
+	public function options_exist( $opts ) {
+		if ( is_array( $opts ) && isset( $opts['user'] ) && '' != $opts['user'] && ! empty( $opts['apikey'] ) ) {
+			return true;
+		}
 		return false;
 	}
 
-	public function backup($backup_array) {
+	public function backup( $backup_array ) {
 
 		global $backupplus;
 
 		$opts = $this->get_options();
 
-		$backupplus_dir = $backupplus->backups_dir_location().'/';
+		$backupplus_dir = $backupplus->backups_dir_location() . '/';
 
 		$container = $opts['path'];
 
 		try {
-			$storage = $this->getCF($opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'));
-			$container_object = $storage->create_container($container);
-		} catch (AuthenticationException $e) {
-			$this->log('authentication failed ('.$e->getMessage().')');
-			$this->log(__('authentication failed', 'backupplus').' ('.$e->getMessage().')', 'error');
+			$storage          = $this->getCF( $opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) );
+			$container_object = $storage->create_container( $container );
+		} catch ( AuthenticationException $e ) {
+			$this->log( 'authentication failed (' . $e->getMessage() . ')' );
+			$this->log( __( 'authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
-		} catch (NoSuchAccountException $s) {
-			$this->log('authentication failed ('.$e->getMessage().')');
-			$this->log(__('authentication failed', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( NoSuchAccountException $s ) {
+			$this->log( 'authentication failed (' . $e->getMessage() . ')' );
+			$this->log( __( 'authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
-		} catch (Exception $e) {
-			$this->log('error - failed to create and access the container ('.$e->getMessage().')');
-			$this->log(__('error - failed to create and access the container', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( Exception $e ) {
+			$this->log( 'error - failed to create and access the container (' . $e->getMessage() . ')' );
+			$this->log( __( 'error - failed to create and access the container', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
 
-		$chunk_size = 5*1024*1024;
+		$chunk_size = 5 * 1024 * 1024;
 
-		foreach ($backup_array as $file) {
+		foreach ( $backup_array as $file ) {
 
-			$fullpath = $backupplus_dir.$file;
-			$orig_file_size = filesize($fullpath);
+			$fullpath       = $backupplus_dir . $file;
+			$orig_file_size = filesize( $fullpath );
 
-// $cfpath = ($path == '') ? $file : "$path/$file";
-// $chunk_path = ($path == '') ? "chunk-do-not-delete-$file" : "$path/chunk-do-not-delete-$file";
-			$cfpath = $file;
+			// $cfpath = ($path == '') ? $file : "$path/$file";
+			// $chunk_path = ($path == '') ? "chunk-do-not-delete-$file" : "$path/chunk-do-not-delete-$file";
+			$cfpath     = $file;
 			$chunk_path = "chunk-do-not-delete-$file";
 
 			try {
-				$object = new BackupPlus_CF_Object($container_object, $cfpath);
-				$object->content_type = "application/zip";
+				$object               = new BackupPlus_CF_Object( $container_object, $cfpath );
+				$object->content_type = 'application/zip';
 
-				$uploaded_size = (isset($object->content_length)) ? $object->content_length : 0;
+				$uploaded_size = ( isset( $object->content_length ) ) ? $object->content_length : 0;
 
-				if ($uploaded_size <= $orig_file_size) {
+				if ( $uploaded_size <= $orig_file_size ) {
 
-					$fp = @fopen($fullpath, "rb");// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-					if (!$fp) {
-						$this->log("failed to open file: $fullpath");
-						$this->log("$file: ".__('Error: Failed to open local file', 'backupplus'), 'error');
+					$fp = @fopen( $fullpath, 'rb' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+					if ( ! $fp ) {
+						$this->log( "failed to open file: $fullpath" );
+						$this->log( "$file: " . __( 'Error: Failed to open local file', 'backupplus' ), 'error' );
 						return false;
 					}
 
-					$chunks = floor($orig_file_size / $chunk_size);
+					$chunks = floor( $orig_file_size / $chunk_size );
 					// There will be a remnant unless the file size was exactly on a 5MB boundary
-					if ($orig_file_size % $chunk_size > 0) $chunks++;
+					if ( $orig_file_size % $chunk_size > 0 ) {
+						++$chunks;
+					}
 
-					$this->log("upload: $file (chunks: $chunks) -> cloudfiles://$container/$cfpath ($uploaded_size)");
+					$this->log( "upload: $file (chunks: $chunks) -> cloudfiles://$container/$cfpath ($uploaded_size)" );
 
-					if ($chunks < 2) {
+					if ( $chunks < 2 ) {
 						try {
-							$object->load_from_filename($fullpath);
-							$this->log("regular upload: success");
-							$backupplus->uploaded_file($file);
-						} catch (Exception $e) {
-							$this->log("regular upload: failed ($file) (".$e->getMessage().")");
-							$this->log("$file: ".__('Error: Failed to upload', 'backupplus'), 'error');
+							$object->load_from_filename( $fullpath );
+							$this->log( 'regular upload: success' );
+							$backupplus->uploaded_file( $file );
+						} catch ( Exception $e ) {
+							$this->log( "regular upload: failed ($file) (" . $e->getMessage() . ')' );
+							$this->log( "$file: " . __( 'Error: Failed to upload', 'backupplus' ), 'error' );
 						}
 					} else {
 						$errors_so_far = 0;
-						for ($i = 1; $i <= $chunks; $i++) {
-							$upload_start = ($i-1)*$chunk_size;
+						for ( $i = 1; $i <= $chunks; $i++ ) {
+							$upload_start = ( $i - 1 ) * $chunk_size;
 							// The file size -1 equals the byte offset of the final byte
-							$upload_end = min($i*$chunk_size-1, $orig_file_size-1);
-							$upload_remotepath = $chunk_path."_$i";
+							$upload_end        = min( $i * $chunk_size - 1, $orig_file_size - 1 );
+							$upload_remotepath = $chunk_path . "_$i";
 							// Don't forget the +1; otherwise the last byte is omitted
-							$upload_size = $upload_end - $upload_start + 1;
-							$chunk_object = new BackupPlus_CF_Object($container_object, $upload_remotepath);
-							$chunk_object->content_type = "application/zip";
+							$upload_size                = $upload_end - $upload_start + 1;
+							$chunk_object               = new BackupPlus_CF_Object( $container_object, $upload_remotepath );
+							$chunk_object->content_type = 'application/zip';
 							// Without this, some versions of Curl add Expect: 100-continue, which results in Curl then giving this back: curl error: 55) select/poll returned error
 							// Didn't make the difference - instead we just check below for actual success even when Curl reports an error
 							// $chunk_object->headers = array('Expect' => '');
 
-							$remote_size = (isset($chunk_object->content_length)) ? $chunk_object->content_length : 0;
+							$remote_size = ( isset( $chunk_object->content_length ) ) ? $chunk_object->content_length : 0;
 
-							if ($remote_size >= $upload_size) {
-								$this->log("Chunk $i ($upload_start - $upload_end): already uploaded");
+							if ( $remote_size >= $upload_size ) {
+								$this->log( "Chunk $i ($upload_start - $upload_end): already uploaded" );
 							} else {
-								$this->log("Chunk $i ($upload_start - $upload_end): begin upload");
+								$this->log( "Chunk $i ($upload_start - $upload_end): begin upload" );
 								// Upload the chunk
-								fseek($fp, $upload_start);
+								fseek( $fp, $upload_start );
 								try {
-									$chunk_object->write($fp, $upload_size, false);
-									$backupplus->record_uploaded_chunk(round(100*$i/$chunks, 1), $i, $fullpath);
-								} catch (Exception $e) {
-									$this->log("chunk upload: error: ($file / $i) (".$e->getMessage().")");
+									$chunk_object->write( $fp, $upload_size, false );
+									$backupplus->record_uploaded_chunk( round( 100 * $i / $chunks, 1 ), $i, $fullpath );
+								} catch ( Exception $e ) {
+									$this->log( "chunk upload: error: ($file / $i) (" . $e->getMessage() . ')' );
 									// Experience shows that Curl sometimes returns a select/poll error (curl error 55) even when everything succeeded. Google seems to indicate that this is a known bug.
-									
-									$chunk_object = new BackupPlus_CF_Object($container_object, $upload_remotepath);
-									$chunk_object->content_type = "application/zip";
-									$remote_size = (isset($chunk_object->content_length)) ? $chunk_object->content_length : 0;
-									
-									if ($remote_size >= $upload_size) {
 
-										$this->log("$file: Chunk now exists; ignoring error (presuming it was an apparently known curl bug)");
+									$chunk_object               = new BackupPlus_CF_Object( $container_object, $upload_remotepath );
+									$chunk_object->content_type = 'application/zip';
+									$remote_size                = ( isset( $chunk_object->content_length ) ) ? $chunk_object->content_length : 0;
+
+									if ( $remote_size >= $upload_size ) {
+
+										$this->log( "$file: Chunk now exists; ignoring error (presuming it was an apparently known curl bug)" );
 
 									} else {
 
-										$this->log("$file: ".__('Error: Failed to upload', 'backupplus'), 'error');
-										$errors_so_far++;
-										if ($errors_so_far >=3) return false;
-
+										$this->log( "$file: " . __( 'Error: Failed to upload', 'backupplus' ), 'error' );
+										++$errors_so_far;
+										if ( $errors_so_far >= 3 ) {
+											return false;
+										}
 									}
-
 								}
 							}
 						}
-						if ($errors_so_far) return false;
+						if ( $errors_so_far ) {
+							return false;
+						}
 						// All chunks are uploaded - now upload the manifest
-						
+
 						try {
-							$object->manifest = $container."/".$chunk_path."_";
+							$object->manifest = $container . '/' . $chunk_path . '_';
 							// Put a zero-length file
-							$object->write("", 0, false);
+							$object->write( '', 0, false );
 							$object->sync_manifest();
-							$this->log("upload: success");
-							$backupplus->uploaded_file($file);
-// } catch (InvalidResponseException $e) {
-						} catch (Exception $e) {
-							$this->log('error - failed to re-assemble chunks ('.$e->getMessage().')');
-							$this->log(__('error - failed to re-assemble chunks', 'backupplus').' ('.$e->getMessage().')', 'error');
+							$this->log( 'upload: success' );
+							$backupplus->uploaded_file( $file );
+							// } catch (InvalidResponseException $e) {
+						} catch ( Exception $e ) {
+							$this->log( 'error - failed to re-assemble chunks (' . $e->getMessage() . ')' );
+							$this->log( __( 'error - failed to re-assemble chunks', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 							return false;
 						}
 					}
 				}
-
-			} catch (Exception $e) {
-				$this->log(__('error - failed to upload file', 'backupplus').' ('.$e->getMessage().')');
-				$this->log(__('error - failed to upload file', 'backupplus').' ('.$e->getMessage().')', 'error');
+			} catch ( Exception $e ) {
+				$this->log( __( 'error - failed to upload file', 'backupplus' ) . ' (' . $e->getMessage() . ')' );
+				$this->log( __( 'error - failed to upload file', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 				return false;
 			}
-
 		}
 
-		return array('cloudfiles_object' => $container_object, 'cloudfiles_orig_path' => $opts['path'], 'cloudfiles_container' => $container);
-
+		return array(
+			'cloudfiles_object'    => $container_object,
+			'cloudfiles_orig_path' => $opts['path'],
+			'cloudfiles_container' => $container,
+		);
 	}
 
-	public function listfiles($match = 'backup_') {
+	public function listfiles( $match = 'backup_' ) {
 
-		$opts = $this->get_options();
+		$opts      = $this->get_options();
 		$container = $opts['path'];
 
-		if (empty($opts['user']) || empty($opts['apikey'])) new WP_Error('no_settings', __('No settings were found', 'backupplus'));
+		if ( empty( $opts['user'] ) || empty( $opts['apikey'] ) ) {
+			new WP_Error( 'no_settings', __( 'No settings were found', 'backupplus' ) );
+		}
 
 		try {
-			$storage = $this->getCF($opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'));
-			$container_object = $storage->create_container($container);
-		} catch (Exception $e) {
+			$storage          = $this->getCF( $opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) );
+			$container_object = $storage->create_container( $container );
+		} catch ( Exception $e ) {
 			/* translators: %s: Authentication method */
-			return new WP_Error('no_access', sprintf(__('%s authentication failed', 'backupplus'), 'Cloud Files').' ('.$e->getMessage().')');
+			return new WP_Error( 'no_access', sprintf( __( '%s authentication failed', 'backupplus' ), 'Cloud Files' ) . ' (' . $e->getMessage() . ')' );
 		}
 
 		$results = array();
 
 		try {
-			$objects = $container_object->list_objects(0, null, $match);
-			foreach ($objects as $name) {
-				$result = array('name' => $name);
+			$objects = $container_object->list_objects( 0, null, $match );
+			foreach ( $objects as $name ) {
+				$result = array( 'name' => $name );
 				try {
-					$object = new BackupPlus_CF_Object($container_object, $name, true);
-					if (0 == $object->content_length) {
+					$object = new BackupPlus_CF_Object( $container_object, $name, true );
+					if ( 0 == $object->content_length ) {
 						$result = false;
 					} else {
 						$result['size'] = $object->content_length;
 					}
-				} catch (Exception $e) {
+				} catch ( Exception $e ) {
 					// Catch
 				}
-				if (is_array($result)) $results[] = $result;
+				if ( is_array( $result ) ) {
+					$results[] = $result;
+				}
 			}
-		} catch (Exception $e) {
-			return new WP_Error('cf_error', 'Cloud Files error ('.$e->getMessage().')');
+		} catch ( Exception $e ) {
+			return new WP_Error( 'cf_error', 'Cloud Files error (' . $e->getMessage() . ')' );
 		}
 
 		return $results;
-
 	}
-	
+
 	/**
 	 * Delete a single file from the service using the CloudFiles API
 	 *
@@ -275,59 +296,61 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 	 * @param Array $sizeinfo      - unused here
 	 * @return Boolean|String - either a boolean true or an error code string
 	 */
-	public function delete($files, $cloudfilesarr = false, $sizeinfo = array()) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $sizeinfo is unused
+	public function delete( $files, $cloudfilesarr = false, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $sizeinfo is unused
 
-		if (is_string($files)) $files =array($files);
+		if ( is_string( $files ) ) {
+			$files = array( $files );
+		}
 
-		if ($cloudfilesarr) {
+		if ( $cloudfilesarr ) {
 			$container_object = $cloudfilesarr['cloudfiles_object'];
-			$container = $cloudfilesarr['cloudfiles_container'];
+			$container        = $cloudfilesarr['cloudfiles_container'];
 		} else {
 			try {
-				$opts = $this->get_options();
-				$container = $opts['path'];
-				$storage = $this->getCF($opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'));
-				$container_object = $storage->create_container($container);
-			} catch (Exception $e) {
-				$this->log('authentication failed ('.$e->getMessage().')');
-				$this->log(__('authentication failed', 'backupplus').' ('.$e->getMessage().')', 'error');
+				$opts             = $this->get_options();
+				$container        = $opts['path'];
+				$storage          = $this->getCF( $opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) );
+				$container_object = $storage->create_container( $container );
+			} catch ( Exception $e ) {
+				$this->log( 'authentication failed (' . $e->getMessage() . ')' );
+				$this->log( __( 'authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 				return 'authentication_fail';
 			}
 		}
 
 		$ret = true;
-		foreach ($files as $file) {
+		foreach ( $files as $file ) {
 
 			$fpath = $file;
 
-			$this->log("Delete remote: container=$container, path=$fpath");
+			$this->log( "Delete remote: container=$container, path=$fpath" );
 
 			// We need to search for chunks
 			$chunk_path = "chunk-do-not-delete-$file";
 
 			try {
-				$objects = $container_object->list_objects(0, null, $chunk_path.'_');
-				foreach ($objects as $chunk) {
-					$this->log('Chunk to delete: '.$chunk);
-					$container_object->delete_object($chunk);
-					$this->log('Chunk deleted: '.$chunk);
+				$objects = $container_object->list_objects( 0, null, $chunk_path . '_' );
+				foreach ( $objects as $chunk ) {
+					$this->log( 'Chunk to delete: ' . $chunk );
+					$container_object->delete_object( $chunk );
+					$this->log( 'Chunk deleted: ' . $chunk );
 				}
-			} catch (Exception $e) {
-				$this->log('chunk delete failed: '.$e->getMessage());
+			} catch ( Exception $e ) {
+				$this->log( 'chunk delete failed: ' . $e->getMessage() );
 			}
 
 			try {
-				$container_object->delete_object($fpath);
-				$this->log('Deleted: '.$fpath);
-			} catch (Exception $e) {
-				$this->log('delete failed: '.$e->getMessage());
+				$container_object->delete_object( $fpath );
+				$this->log( 'Deleted: ' . $fpath );
+			} catch ( Exception $e ) {
+				$this->log( 'delete failed: ' . $e->getMessage() );
 				$ret = 'file_delete_error';
 			}
 		}
 		return $ret;
 	}
 
-	public function download($file) {
+	public function download( $file ) {
 
 		global $backupplus;
 		$backupplus_dir = $backupplus->backups_dir_location();
@@ -335,93 +358,92 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 		$opts = $this->get_options();
 
 		try {
-			$storage = $this->getCF($opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option('backupplus_ssl_useservercerts'));
-		} catch (AuthenticationException $e) {
-			$this->log('authentication failed ('.$e->getMessage().')');
-			$this->log(__('authentication failed', 'backupplus').' ('.$e->getMessage().')', 'error');
+			$storage = $this->getCF( $opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) );
+		} catch ( AuthenticationException $e ) {
+			$this->log( 'authentication failed (' . $e->getMessage() . ')' );
+			$this->log( __( 'authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
-		} catch (NoSuchAccountException $s) {
-			$this->log('authentication failed ('.$e->getMessage().')');
-			$this->log(__('authentication failed', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( NoSuchAccountException $s ) {
+			$this->log( 'authentication failed (' . $e->getMessage() . ')' );
+			$this->log( __( 'authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
-		} catch (Exception $e) {
-			$this->log('error - failed to create and access the container ('.$e->getMessage().')');
-			$this->log(__('error - failed to create and access the container', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( Exception $e ) {
+			$this->log( 'error - failed to create and access the container (' . $e->getMessage() . ')' );
+			$this->log( __( 'error - failed to create and access the container', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
 
-		$path = untrailingslashit($opts['path']);
+		$path = untrailingslashit( $opts['path'] );
 
 		$container = $path;
 
 		try {
-			$container_object = $storage->create_container($container);
-		} catch (Exception $e) {
-			$this->log('error - failed to create and access the container ('.$e->getMessage().')');
-			$this->log(__('error - failed to create and access the container', 'backupplus').' ('.$e->getMessage().')', 'error');
+			$container_object = $storage->create_container( $container );
+		} catch ( Exception $e ) {
+			$this->log( 'error - failed to create and access the container (' . $e->getMessage() . ')' );
+			$this->log( __( 'error - failed to create and access the container', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
 
 		$path = $file;
 
-		$this->log("download: cloudfiles://$container/$path");
+		$this->log( "download: cloudfiles://$container/$path" );
 
 		try {
 			// The third parameter causes an exception to be thrown if the object does not exist remotely
-			$object = new BackupPlus_CF_Object($container_object, $path, true);
-			
-			$fullpath = $backupplus_dir.'/'.$file;
+			$object = new BackupPlus_CF_Object( $container_object, $path, true );
 
-			$start_offset = (file_exists($fullpath)) ? filesize($fullpath) : 0;
+			$fullpath = $backupplus_dir . '/' . $file;
+
+			$start_offset = ( file_exists( $fullpath ) ) ? filesize( $fullpath ) : 0;
 
 			// Get file size from remote - see if we've already finished
 
 			$remote_size = $object->content_length;
 
-			if ($start_offset >= $remote_size) {
-				$this->log("file is already completely downloaded ($start_offset/$remote_size)");
+			if ( $start_offset >= $remote_size ) {
+				$this->log( "file is already completely downloaded ($start_offset/$remote_size)" );
 				return true;
 			}
 
 			// Some more remains to download - so let's do it
-			if (!$fh = fopen($fullpath, 'a')) {
-				$this->log("Error opening local file: $fullpath");
-				$this->log("$file: ".__('Error opening local file: Failed to download', 'backupplus'), 'error');
+			if ( ! $fh = fopen( $fullpath, 'a' ) ) {
+				$this->log( "Error opening local file: $fullpath" );
+				$this->log( "$file: " . __( 'Error opening local file: Failed to download', 'backupplus' ), 'error' );
 				return false;
 			}
 
 			$headers = array();
 			// If resuming, then move to the end of the file
-			if ($start_offset) {
-				$this->log("local file is already partially downloaded ($start_offset/$remote_size)");
-				fseek($fh, $start_offset);
+			if ( $start_offset ) {
+				$this->log( "local file is already partially downloaded ($start_offset/$remote_size)" );
+				fseek( $fh, $start_offset );
 				$headers['Range'] = "bytes=$start_offset-";
 			}
 
 			// Now send the request itself
 			try {
-				$object->stream($fh, $headers);
-			} catch (Exception $e) {
-				$this->log("Failed to download: $file (".$e->getMessage().")");
-				$this->log("$file: ".__('Error downloading remote file: Failed to download', 'backupplus').' ('.$e->getMessage().")", 'error');
+				$object->stream( $fh, $headers );
+			} catch ( Exception $e ) {
+				$this->log( "Failed to download: $file (" . $e->getMessage() . ')' );
+				$this->log( "$file: " . __( 'Error downloading remote file: Failed to download', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 				return false;
 			}
-			
+
 			// All-in-one-go method:
 			// $object->save_to_filename($fullpath);
 
-		} catch (NoSuchObjectException $e) {
-			$this->log('error - no such file exists. ('.$e->getMessage().')');
-			$this->log(__('Error - no such file exists.', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( NoSuchObjectException $e ) {
+			$this->log( 'error - no such file exists. (' . $e->getMessage() . ')' );
+			$this->log( __( 'Error - no such file exists.', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
-		} catch (Exception $e) {
-			$this->log('error - failed to download the file ('.$e->getMessage().')');
-			$this->log(__('Error - failed to download the file', 'backupplus').' ('.$e->getMessage().')', 'error');
+		} catch ( Exception $e ) {
+			$this->log( 'error - failed to download the file (' . $e->getMessage() . ')' );
+			$this->log( __( 'Error - failed to download the file', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
 
 		return true;
-
 	}
 
 	/**
@@ -433,33 +455,33 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 
 		global $backupplus_admin;
 
-		$classes = $this->get_css_classes(false);
-		
+		$classes = $this->get_css_classes( false );
+
 		?>
-		<tr class="<?php echo esc_attr($classes) . ' ' . 'cloudfiles_pre_config_container';?>">
+		<tr class="<?php echo esc_attr( $classes ) . ' ' . 'cloudfiles_pre_config_container'; ?>">
 			<td colspan="2">
-				<img alt="Rackspace Cloud Files" src="<?php echo esc_url(BACKUPPLUS_URL);?>/images/rackspacecloud-logo.png"><br>
+				<img alt="Rackspace Cloud Files" src="<?php echo esc_url( BACKUPPLUS_URL ); ?>/images/rackspacecloud-logo.png"><br>
 			<?php
 				// Check requirements.
 				global $backupplus_admin;
-				if (!function_exists('mb_substr')) {
-					$backupplus_admin->show_double_warning(
-						'<strong>'.__('Warning', 'backupplus').':</strong> '.
-						/* translators: %s: Missing PHP module */
-						sprintf(__('Your web server\'s PHP installation does not include a required module (%s).', 'backupplus'), 'mbstring').' '.
-						__('Please contact your web hosting provider\'s support.', 'backupplus').' '.
-						/* translators: 1: Module description, 2: Required module */
-						sprintf(__('BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus'), 'Cloud Files', 'mbstring').' '.
-						__('Please do not file any support requests; there is no alternative.', 'backupplus'),
-						'cloudfiles'
-					);
-				}
-				$backupplus_admin->curl_check('Rackspace Cloud Files', false, 'cloudfiles', false);
+			if ( ! function_exists( 'mb_substr' ) ) {
+				$backupplus_admin->show_double_warning(
+					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
+					/* translators: %s: Missing PHP module */
+					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
+					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
+					/* translators: 1: Module description, 2: Required module */
+					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), 'Cloud Files', 'mbstring' ) . ' ' .
+					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
+					'cloudfiles'
+				);
+			}
+				$backupplus_admin->curl_check( 'Rackspace Cloud Files', false, 'cloudfiles', false );
 			?>
 				<p>
 				<?php
-					echo wp_kses_post('Get your API key from your <a href="https://mycloud.rackspace.com/" target="_blank">Rackspace Cloud console</a> (<a href="http://www.rackspace.com/knowledge_center/article/rackspace-cloud-essentials-1-generating-your-api-key" target="_blank">read instructions here</a>), then pick a container name to use for storage.', 'backupplus');
-					echo ' '.esc_html__('This container will be created for you if it does not already exist.', 'backupplus');
+					echo wp_kses_post( 'Get your API key from your <a href="https://mycloud.rackspace.com/" target="_blank">Rackspace Cloud console</a> (<a href="http://www.rackspace.com/knowledge_center/article/rackspace-cloud-essentials-1-generating-your-api-key" target="_blank">read instructions here</a>), then pick a container name to use for storage.', 'backupplus' );
+					echo ' ' . esc_html__( 'This container will be created for you if it does not already exist.', 'backupplus' );
 				?>
 				</p>
 			</td>
@@ -474,19 +496,19 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 	 * @return String - the template, ready for substitutions to be carried out
 	 */
 	public function get_configuration_template() {
-		$classes = $this->get_css_classes();
+		$classes      = $this->get_css_classes();
 		$template_str = '
-		<tr class=""'.$classes.'>
-			<th>'.__('US or UK Cloud', 'backupplus').':</th>
+		<tr class=""' . $classes . '>
+			<th>' . __( 'US or UK Cloud', 'backupplus' ) . ':</th>
 			<td>
-				<select data-backupplus_settings_test="authurl" '.$this->output_settings_field_name_and_id('authurl', true).'>
-					<option {{#ifeq "https://auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://auth.api.rackspacecloud.com">'.__('US (default)', 'backupplus').'</option>
-					<option {{#ifeq "https://lon.auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://lon.auth.api.rackspacecloud.com">'.__('UK', 'backupplus').'</option>
+				<select data-backupplus_settings_test="authurl" ' . $this->output_settings_field_name_and_id( 'authurl', true ) . '>
+					<option {{#ifeq "https://auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://auth.api.rackspacecloud.com">' . __( 'US (default)', 'backupplus' ) . '</option>
+					<option {{#ifeq "https://lon.auth.api.rackspacecloud.com" authurl}}selected="selected"{{/ifeq}} value="https://lon.auth.api.rackspacecloud.com">' . __( 'UK', 'backupplus' ) . '</option>
 				</select>
 			</td>
 		</tr>
-		<input type="hidden" data-backupplus_settings_test="region" '.$this->output_settings_field_name_and_id('region', true).' value="">';
-			
+		<input type="hidden" data-backupplus_settings_test="region" ' . $this->output_settings_field_name_and_id( 'region', true ) . ' value="">';
+
 			/*
 			// Can put a message here if someone asks why region storage is not available (only available on new SDK)
 			<tr class="backupplusmethod cloudfiles">
@@ -496,115 +518,121 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 			</tr>
 			*/
 		$template_str .= '
-		<tr class="'.$classes.'">
-			<th>'.__('Cloud Files username', 'backupplus').':</th>
-			<td><input data-backupplus_settings_test="user" type="text" autocomplete="off" class="backupplus_input--wide" '.$this->output_settings_field_name_and_id('user', true).' value="{{user}}" /></td>
+		<tr class="' . $classes . '">
+			<th>' . __( 'Cloud Files username', 'backupplus' ) . ':</th>
+			<td><input data-backupplus_settings_test="user" type="text" autocomplete="off" class="backupplus_input--wide" ' . $this->output_settings_field_name_and_id( 'user', true ) . ' value="{{user}}" /></td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.__('Cloud Files API Key', 'backupplus').':</th>
-			<td><input data-backupplus_settings_test="apikey" type="'.apply_filters('backupplus_admin_secret_field_type', 'password').'" autocomplete="off" class="backupplus_input--wide" '.$this->output_settings_field_name_and_id('apikey', true).' value="{{apikey}}" />
+		<tr class="' . $classes . '">
+			<th>' . __( 'Cloud Files API Key', 'backupplus' ) . ':</th>
+			<td><input data-backupplus_settings_test="apikey" type="' . apply_filters( 'backupplus_admin_secret_field_type', 'password' ) . '" autocomplete="off" class="backupplus_input--wide" ' . $this->output_settings_field_name_and_id( 'apikey', true ) . ' value="{{apikey}}" />
 			</td>
 		</tr>
-		<tr class="'.$classes.'">
-			<th>'.apply_filters('backupplus_cloudfiles_location_description', __('Cloud Files Container', 'backupplus')).':</th>
-			<td><input data-backupplus_settings_test="path" type="text" class="backupplus_input--wide" '.$this->output_settings_field_name_and_id('path', true).' value="{{path}}" /></td>
+		<tr class="' . $classes . '">
+			<th>' . apply_filters( 'backupplus_cloudfiles_location_description', __( 'Cloud Files Container', 'backupplus' ) ) . ':</th>
+			<td><input data-backupplus_settings_test="path" type="text" class="backupplus_input--wide" ' . $this->output_settings_field_name_and_id( 'path', true ) . ' value="{{path}}" /></td>
 		</tr>';
-		$template_str .= $this->get_test_button_html(__('Cloud Files', 'backupplus'));
+		$template_str .= $this->get_test_button_html( __( 'Cloud Files', 'backupplus' ) );
 		return $template_str;
 	}
 
-/**
- * Modifies handerbar template options
- *
- * @param array $opts handerbar template options
- * @return Array - Modified handerbar template options
- */
-	public function transform_options_for_template($opts) {
-		$opts['apikey'] = trim($opts['apikey']);
-		$opts['authurl'] = isset($opts['authurl']) ? $opts['authurl'] : '';
+	/**
+	 * Modifies handerbar template options
+	 *
+	 * @param array $opts handerbar template options
+	 * @return Array - Modified handerbar template options
+	 */
+	public function transform_options_for_template( $opts ) {
+		$opts['apikey']  = trim( $opts['apikey'] );
+		$opts['authurl'] = isset( $opts['authurl'] ) ? $opts['authurl'] : '';
 		return $opts;
 	}
-	
+
 	/**
 	 * Perform a test of user-supplied credentials, and echo the result
 	 *
 	 * @param Array $posted_settings - settings to test
 	 */
-	public function credentials_test($posted_settings) {
+	public function credentials_test( $posted_settings ) {
 
-		if (empty($posted_settings['apikey'])) {
-			echo esc_html(sprintf(
+		if ( empty( $posted_settings['apikey'] ) ) {
+			echo esc_html(
+				sprintf(
 				/* translators: %s: API key */
-				__("Failure: No %s was given.", 'backupplus'),
-			__('API key', 'backupplus')));
+					__( 'Failure: No %s was given.', 'backupplus' ),
+					__( 'API key', 'backupplus' )
+				)
+			);
 			return;
 		}
 
-		if (empty($posted_settings['user'])) {
-			echo esc_html(sprintf(
+		if ( empty( $posted_settings['user'] ) ) {
+			echo esc_html(
+				sprintf(
 				/* translators: %s: Username */
-				__("Failure: No %s was given.", 'backupplus'),
-			__('Username', 'backupplus')));
+					__( 'Failure: No %s was given.', 'backupplus' ),
+					__( 'Username', 'backupplus' )
+				)
+			);
 			return;
 		}
 
-		$key = $posted_settings['apikey'];
-		$user = $posted_settings['user'];
-		$path = $posted_settings['path'];
-		$authurl = $posted_settings['authurl'];
+		$key            = $posted_settings['apikey'];
+		$user           = $posted_settings['user'];
+		$path           = $posted_settings['path'];
+		$authurl        = $posted_settings['authurl'];
 		$useservercerts = $posted_settings['useservercerts'];
-		$disableverify = $posted_settings['disableverify'];
+		$disableverify  = $posted_settings['disableverify'];
 
-		if (preg_match("#^([^/]+)/(.*)$#", $path, $bmatches)) {
+		if ( preg_match( '#^([^/]+)/(.*)$#', $path, $bmatches ) ) {
 			$container = $bmatches[1];
-			$path = $bmatches[2];
+			$path      = $bmatches[2];
 		} else {
 			$container = $path;
-			$path = "";
+			$path      = '';
 		}
 
-		if (empty($container)) {
-			esc_html_e("Failure: No container details were given.", 'backupplus');
+		if ( empty( $container ) ) {
+			esc_html_e( 'Failure: No container details were given.', 'backupplus' );
 			return;
 		}
 
-		define('BACKUPPLUS_SSL_DISABLEVERIFY', $disableverify);
+		define( 'BACKUPPLUS_SSL_DISABLEVERIFY', $disableverify );
 
 		try {
-			$storage = $this->getCF($user, $key, $authurl, $useservercerts);
-			$container_object = $storage->create_container($container);
-		} catch (AuthenticationException $e) {
-			echo esc_html(__('Cloud Files authentication failed', 'backupplus').' ('.$e->getMessage().')');
+			$storage          = $this->getCF( $user, $key, $authurl, $useservercerts );
+			$container_object = $storage->create_container( $container );
+		} catch ( AuthenticationException $e ) {
+			echo esc_html( __( 'Cloud Files authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')' );
 			return;
-		} catch (NoSuchAccountException $s) {
-			echo esc_html(__('Cloud Files authentication failed', 'backupplus').' ('.$e->getMessage().')');
+		} catch ( NoSuchAccountException $s ) {
+			echo esc_html( __( 'Cloud Files authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')' );
 			return;
-		} catch (Exception $e) {
-			echo esc_html(__('Cloud Files authentication failed', 'backupplus').' ('.$e->getMessage().')');
+		} catch ( Exception $e ) {
+			echo esc_html( __( 'Cloud Files authentication failed', 'backupplus' ) . ' (' . $e->getMessage() . ')' );
 			return;
 		}
 
-		$try_file = md5(wp_rand()).'.txt';
+		$try_file = md5( wp_rand() ) . '.txt';
 
 		try {
-			$object = $container_object->create_object($try_file);
-			$object->content_type = "text/plain";
-			$object->write('BackupPlus test file');
-		} catch (Exception $e) {
-			echo esc_html(__('Cloud Files error - we accessed the container, but failed to create a file within it', 'backupplus').' ('.$e->getMessage().')');
+			$object               = $container_object->create_object( $try_file );
+			$object->content_type = 'text/plain';
+			$object->write( 'BackupPlus test file' );
+		} catch ( Exception $e ) {
+			echo esc_html( __( 'Cloud Files error - we accessed the container, but failed to create a file within it', 'backupplus' ) . ' (' . $e->getMessage() . ')' );
 			return;
 		}
 
-		$this->set_connection_status(true);
-		echo esc_html(__('Success', 'backupplus').": ".__('We accessed the container, and were able to create files within it.', 'backupplus'));
+		$this->set_connection_status( true );
+		echo esc_html( __( 'Success', 'backupplus' ) . ': ' . __( 'We accessed the container, and were able to create files within it.', 'backupplus' ) );
 
-		@$container_object->delete_object($try_file);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+		@$container_object->delete_object( $try_file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 	}
 }
 
 // Moved to the bottom to fix a bug in some version or install of PHP which required BackupPlus_BackupModule_cloudfiles_oldsdk to be defined earlier in the file (despite the conditionality) - see HS#19911
-if (version_compare(PHP_VERSION, '5.3.3', '>=') && (!defined('BACKUPPLUS_CLOUDFILES_USEOLDSDK') || BACKUPPLUS_CLOUDFILES_USEOLDSDK != true)) {
-	backupplus_try_include_file('methods/cloudfiles/client.php', 'include_once');
+if ( version_compare( PHP_VERSION, '5.3.3', '>=' ) && ( ! defined( 'BACKUPPLUS_CLOUDFILES_USEOLDSDK' ) || BACKUPPLUS_CLOUDFILES_USEOLDSDK != true ) ) {
+	backupplus_try_include_file( 'methods/cloudfiles/client.php', 'include_once' );
 	class BackupPlus_BackupModule_cloudfiles extends BackupPlus_BackupModule_cloudfiles_opencloudsdk {
 	}
 } else {

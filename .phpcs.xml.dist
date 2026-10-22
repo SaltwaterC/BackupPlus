@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<ruleset name="BackupPlus">
+    <description>WordPress-style PHP formatting without code-quality or naming checks.</description>
+    <file>.</file>
+    <arg name="extensions" value="php" />
+    <arg value="s" />
+    <!-- Development dependencies, generated assets and bundled libraries. -->
+    <exclude-pattern>*/.cache/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/assets-src/*</exclude-pattern>
+    <exclude-pattern>*/css/*</exclude-pattern>
+    <exclude-pattern>*/js/*</exclude-pattern>
+    <exclude-pattern>*/methods/googledrive/Google/*</exclude-pattern>
+    <exclude-pattern>*/methods/dropbox/Dropbox2/*</exclude-pattern>
+    <exclude-pattern>*/methods/cloudfiles/sdk/*</exclude-pattern>
+    <exclude-pattern>*/methods/s3/S3.php</exclude-pattern>
+    <exclude-pattern>*/methods/s3/S3compat.php</exclude-pattern>
+    <exclude-pattern>*/methods/s3generic/S3.php</exclude-pattern>
+    <exclude-pattern>*/methods/s3generic/S3compat.php</exclude-pattern>
+    <exclude-pattern>*/methods/dreamobjects/S3.php</exclude-pattern>
+    <exclude-pattern>*/methods/dreamobjects/S3compat.php</exclude-pattern>
+    <arg name="tab-width" value="4" />
+    <arg name="warning-severity" value="5" />
+    <!-- Explicit formatting rules: keep comparisons, names, APIs and literal values unchanged. -->
+    <rule ref="PHPCSUtils" />
+    <rule ref="Generic.WhiteSpace.LanguageConstructSpacing" />
+    <rule ref="Universal.WhiteSpace.CommaSpacing" />
+    <rule ref="Universal.WhiteSpace.CommaSpacing.TooMuchSpaceAfterCommaBeforeTrailingComment">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.SpaceBeforeInFunctionDeclaration">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.TooMuchSpaceAfterInFunctionDeclaration">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.NoSpaceAfterInFunctionDeclaration">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.SpaceBeforeInClosureUse">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.TooMuchSpaceAfterInClosureUse">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.NoSpaceAfterInClosureUse">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.SpaceBeforeInFunctionCall">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.TooMuchSpaceAfterInFunctionCall">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.WhiteSpace.CommaSpacing.NoSpaceAfterInFunctionCall">
+        <severity>0</severity>
+    </rule>
+    <rule ref="WordPress.WhiteSpace.OperatorSpacing" />
+    <rule ref="Squiz.Strings.ConcatenationSpacing">
+        <properties>
+            <property name="spacing" value="1" />
+            <property name="ignoreNewlines" value="true" />
+        </properties>
+    </rule>
+    <rule ref="WordPress.WhiteSpace.ControlStructureSpacing" />
+    <rule ref="Generic.Functions.OpeningFunctionBraceKernighanRitchie">
+        <properties>
+            <property name="checkClosures" value="false" />
+        </properties>
+    </rule>
+    <rule ref="Generic.Functions.OpeningFunctionBraceKernighanRitchie.ContentAfterBrace">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration" />
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnSameLine">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.BraceSpacing">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.BraceIndent">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing">
+        <properties>
+            <property name="equalsSpacing" value="1" />
+            <property name="requiredSpacesAfterOpen" value="1" />
+            <property name="requiredSpacesBeforeClose" value="1" />
+        </properties>
+    </rule>
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing.SpacingAfterVariadic">
+        <severity>0</severity>
+    </rule>
+    <rule ref="PEAR.Functions.FunctionCallSignature">
+        <properties>
+            <property name="requiredSpacesAfterOpen" value="1" />
+            <property name="requiredSpacesBeforeClose" value="1" />
+            <property name="allowMultipleArguments" value="false" />
+        </properties>
+    </rule>
+    <rule ref="Generic.Functions.FunctionCallArgumentSpacing" />
+    <rule ref="Generic.Formatting.SpaceAfterCast" />
+    <rule ref="Squiz.WhiteSpace.CastSpacing" />
+    <rule ref="WordPress.WhiteSpace.CastStructureSpacing" />
+    <rule ref="WordPress.Arrays.ArrayKeySpacingRestrictions" />
+    <rule ref="Generic.WhiteSpace.ArbitraryParenthesesSpacing">
+        <properties>
+            <property name="spacing" value="1" />
+            <property name="ignoreNewlines" value="true" />
+        </properties>
+    </rule>
+    <rule ref="Generic.WhiteSpace.IncrementDecrementSpacing" />
+    <rule ref="WordPress.WhiteSpace.ObjectOperatorSpacing">
+        <properties>
+            <property name="ignoreNewlines" value="true" />
+        </properties>
+    </rule>
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="exact" value="false" />
+            <property name="indent" value="4" />
+            <property name="tabIndent" value="true" />
+            <property name="ignoreIndentationTokens" type="array">
+                <element value="T_HEREDOC" />
+                <element value="T_NOWDOC" />
+                <element value="T_INLINE_HTML" />
+            </property>
+        </properties>
+    </rule>
+    <rule ref="WordPress.Arrays.ArrayIndentation" />
+    <rule ref="Generic.WhiteSpace.DisallowSpaceIndent" />
+    <rule ref="Universal.WhiteSpace.PrecisionAlignment" />
+    <rule ref="WordPress.Arrays.ArrayDeclarationSpacing" />
+    <rule ref="NormalizedArrays.Arrays.ArrayBraceSpacing">
+        <properties>
+            <property name="spacesWhenEmpty" value="0" />
+            <property name="spacesSingleLine" value="1" />
+            <property name="spacesMultiLine" value="newline" />
+        </properties>
+    </rule>
+    <rule ref="NormalizedArrays.Arrays.CommaAfterLast" />
+    <rule ref="Universal.WhiteSpace.DisallowInlineTabs" />
+    <rule ref="Generic.Formatting.MultipleStatementAlignment">
+        <properties>
+            <property name="maxPadding" value="40" />
+        </properties>
+    </rule>
+    <rule ref="WordPress.Arrays.MultipleStatementAlignment">
+        <properties>
+            <property name="maxColumn" value="60" />
+        </properties>
+    </rule>
+    <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace" />
+    <rule ref="PSR2.Methods.FunctionClosingBrace" />
+    <rule ref="PSR12.Functions.NullableTypeDeclaration" />
+    <rule ref="PSR12.Functions.ReturnTypeDeclaration" />
+    <rule ref="Universal.Operators.TypeSeparatorSpacing" />
+    <rule ref="Generic.WhiteSpace.SpreadOperatorSpacingAfter" />
+    <rule ref="Universal.UseStatements.KeywordSpacing" />
+    <rule ref="Universal.UseStatements.KeywordSpacing.SpaceAfterUse">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.WhiteSpace.ScopeKeywordSpacing" />
+    <rule ref="Universal.WhiteSpace.AnonClassKeywordSpacing">
+        <properties>
+            <property name="spacing" value="0" />
+        </properties>
+    </rule>
+    <rule ref="Generic.Formatting.DisallowMultipleStatements" />
+    <rule ref="Generic.Files.LineEndings">
+        <properties>
+            <property name="eolChar" value="\n" />
+        </properties>
+    </rule>
+    <rule ref="PSR2.Files.EndFileNewline" />
+    <rule ref="Squiz.WhiteSpace.SemicolonSpacing" />
+    <rule ref="Generic.Classes.OpeningBraceSameLine" />
+    <!-- Preserve heredoc/nowdoc indentation as part of the literal string. -->
+    <rule ref="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsedHeredocCloser">
+        <severity>0</severity>
+    </rule>
+</ruleset>

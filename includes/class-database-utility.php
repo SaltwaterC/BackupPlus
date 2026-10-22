@@ -1,7 +1,9 @@
 <?php
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved -- Direct $wpdb query is required for this operation, legacy compatibility for very old PHP versions.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching -- some query operations need to always receive the most up-to-date or actual data directly from the database, reducing the risk of serving stale information.
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
 class BackupPlus_Database_Utility {
 
@@ -40,10 +42,10 @@ class BackupPlus_Database_Utility {
 	 * @param String $table_prefix_raw - the base table prefix
 	 * @param Object $dbhandle         - WPDB object
 	 */
-	public static function init($whichdb, $table_prefix_raw, $dbhandle) {
-		self::$whichdb = $whichdb;
+	public static function init( $whichdb, $table_prefix_raw, $dbhandle ) {
+		self::$whichdb          = $whichdb;
 		self::$table_prefix_raw = $table_prefix_raw;
-		self::$dbhandle = $dbhandle;
+		self::$dbhandle         = $dbhandle;
 	}
 
 	/**
@@ -54,77 +56,117 @@ class BackupPlus_Database_Utility {
 	 *
 	 * @return Integer - the sort result, according to the rules of PHP custom sorting functions
 	 */
-	public static function backup_db_sorttables($a_arr, $b_arr) {
-		$a = $a_arr['name'];
+	public static function backup_db_sorttables( $a_arr, $b_arr ) {
+		$a            = $a_arr['name'];
 		$a_table_type = $a_arr['type'];
-		$b = $b_arr['name'];
+		$b            = $b_arr['name'];
 		$b_table_type = $b_arr['type'];
-	
+
 		// Views must always go after tables (since they can depend upon them)
-		if ('VIEW' == $a_table_type && 'VIEW' != $b_table_type) return 1;
-		if ('VIEW' == $b_table_type && 'VIEW' != $a_table_type) return -1;
-	
-		if ('wp' != self::$whichdb) return strcmp($a, $b);
+		if ( 'VIEW' == $a_table_type && 'VIEW' != $b_table_type ) {
+			return 1;
+		}
+		if ( 'VIEW' == $b_table_type && 'VIEW' != $a_table_type ) {
+			return -1;
+		}
+
+		if ( 'wp' != self::$whichdb ) {
+			return strcmp( $a, $b );
+		}
 
 		global $backupplus;
-		if ($a == $b) return 0;
+		if ( $a == $b ) {
+			return 0;
+		}
 		$our_table_prefix = self::$table_prefix_raw;
-		if ($a == $our_table_prefix.'options') return -1;
-		if ($b == $our_table_prefix.'options') return 1;
-		if ($a == $our_table_prefix.'site') return -1;
-		if ($b == $our_table_prefix.'site') return 1;
-		if ($a == $our_table_prefix.'blogs') return -1;
-		if ($b == $our_table_prefix.'blogs') return 1;
-		if ($a == $our_table_prefix.'users') return -1;
-		if ($b == $our_table_prefix.'users') return 1;
-		if ($a == $our_table_prefix.'usermeta') return -1;
-		if ($b == $our_table_prefix.'usermeta') return 1;
+		if ( $a == $our_table_prefix . 'options' ) {
+			return -1;
+		}
+		if ( $b == $our_table_prefix . 'options' ) {
+			return 1;
+		}
+		if ( $a == $our_table_prefix . 'site' ) {
+			return -1;
+		}
+		if ( $b == $our_table_prefix . 'site' ) {
+			return 1;
+		}
+		if ( $a == $our_table_prefix . 'blogs' ) {
+			return -1;
+		}
+		if ( $b == $our_table_prefix . 'blogs' ) {
+			return 1;
+		}
+		if ( $a == $our_table_prefix . 'users' ) {
+			return -1;
+		}
+		if ( $b == $our_table_prefix . 'users' ) {
+			return 1;
+		}
+		if ( $a == $our_table_prefix . 'usermeta' ) {
+			return -1;
+		}
+		if ( $b == $our_table_prefix . 'usermeta' ) {
+			return 1;
+		}
 
-		if (empty($our_table_prefix)) return strcmp($a, $b);
+		if ( empty( $our_table_prefix ) ) {
+			return strcmp( $a, $b );
+		}
 
 		try {
-			$core_tables = array_merge(self::$dbhandle->tables, self::$dbhandle->global_tables, self::$dbhandle->ms_global_tables);
-		} catch (Exception $e) {
-			$backupplus->log($e->getMessage());
+			$core_tables = array_merge( self::$dbhandle->tables, self::$dbhandle->global_tables, self::$dbhandle->ms_global_tables );
+		} catch ( Exception $e ) {
+			$backupplus->log( $e->getMessage() );
 		}
-		
-		if (empty($core_tables)) $core_tables = array('terms', 'term_taxonomy', 'termmeta', 'term_relationships', 'commentmeta', 'comments', 'links', 'postmeta', 'posts', 'site', 'sitemeta', 'blogs', 'blogversions', 'blogmeta');
 
-		$na = BackupPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $a);
-		$nb = BackupPlus_Manipulation_Functions::str_replace_once($our_table_prefix, '', $b);
-		if (in_array($na, $core_tables) && !in_array($nb, $core_tables)) return -1;
-		if (!in_array($na, $core_tables) && in_array($nb, $core_tables)) return 1;
-		return strcmp($a, $b);
+		if ( empty( $core_tables ) ) {
+			$core_tables = array( 'terms', 'term_taxonomy', 'termmeta', 'term_relationships', 'commentmeta', 'comments', 'links', 'postmeta', 'posts', 'site', 'sitemeta', 'blogs', 'blogversions', 'blogmeta' );
+		}
+
+		$na = BackupPlus_Manipulation_Functions::str_replace_once( $our_table_prefix, '', $a );
+		$nb = BackupPlus_Manipulation_Functions::str_replace_once( $our_table_prefix, '', $b );
+		if ( in_array( $na, $core_tables ) && ! in_array( $nb, $core_tables ) ) {
+			return -1;
+		}
+		if ( ! in_array( $na, $core_tables ) && in_array( $nb, $core_tables ) ) {
+			return 1;
+		}
+		return strcmp( $a, $b );
 	}
 
 	/**
 	 * Detect if the table has a composite primary key (composed from multiple columns)
 	 *
-	 * @param String	  $table	- table to examine
+	 * @param String      $table    - table to examine
 	 * @param Object|Null $wpdb_obj - WPDB-like object (requires the get_results() method), or null to use the global default
 	 *
 	 * @return Boolean
 	 */
-	public static function table_has_composite_private_key($table, $wpdb_obj = null) {
-	
-		$wpdb = (null === $wpdb_obj) ? $GLOBALS['wpdb'] : $wpdb_obj;
-	
+	public static function table_has_composite_private_key( $table, $wpdb_obj = null ) {
+
+		$wpdb = ( null === $wpdb_obj ) ? $GLOBALS['wpdb'] : $wpdb_obj;
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DESCRIBE is a DDL command that cannot be parameterized; $table is a SQL identifier sanitized using backquote().
-		$table_structure = $wpdb->get_results("DESCRIBE ".BackupPlus_Manipulation_Functions::backquote($table));
-		if (!$table_structure) return false;
-		
+		$table_structure = $wpdb->get_results( 'DESCRIBE ' . BackupPlus_Manipulation_Functions::backquote( $table ) );
+		if ( ! $table_structure ) {
+			return false;
+		}
+
 		$primary_key_columns_found = 0;
-		
-		foreach ($table_structure as $struct) {
-			if (isset($struct->Key) && 'PRI' == $struct->Key) {
-				$primary_key_columns_found++;
-				if ($primary_key_columns_found > 1) return true;
+
+		foreach ( $table_structure as $struct ) {
+			if ( isset( $struct->Key ) && 'PRI' == $struct->Key ) {
+				++$primary_key_columns_found;
+				if ( $primary_key_columns_found > 1 ) {
+					return true;
+				}
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Set MySQL server system variable
 	 *
@@ -133,16 +175,18 @@ class BackupPlus_Database_Utility {
 	 * @param Resource|Object $db_handle The database link identifier(resource) given by mysqli_init or mysql_connect
 	 * @return Boolean Returns true on success, false otherwise
 	 */
-	public static function set_system_variable($variable, $value, $db_handle) {
+	public static function set_system_variable( $variable, $value, $db_handle ) {
 
-		$is_mysqli = is_a($db_handle, 'mysqli');
-		if (!is_resource($db_handle) && !$is_mysqli) return false;
+		$is_mysqli = is_a( $db_handle, 'mysqli' );
+		if ( ! is_resource( $db_handle ) && ! $is_mysqli ) {
+			return false;
+		}
 
 		$sql = "SET SESSION %s='%s'";
-		if ($is_mysqli) {
-			$res = @mysqli_query($db_handle, sprintf($sql, mysqli_real_escape_string($db_handle, $variable), mysqli_real_escape_string($db_handle, $value)));// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
+		if ( $is_mysqli ) {
+			$res = @mysqli_query( $db_handle, sprintf( $sql, mysqli_real_escape_string( $db_handle, $variable ), mysqli_real_escape_string( $db_handle, $value ) ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
 		} else {
-			$res = @mysql_query(sprintf($sql, mysql_real_escape_string($variable, $db_handle), mysql_real_escape_string($value, $db_handle)), $db_handle);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
+			$res = @mysql_query( sprintf( $sql, mysql_real_escape_string( $variable, $db_handle ), mysql_real_escape_string( $value, $db_handle ) ), $db_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
 		}
 
 		return $res;
@@ -155,28 +199,30 @@ class BackupPlus_Database_Utility {
 	 * @param Resource|Object $db_handle The database link identifier(resource) given by mysqli_init or mysql_connect
 	 * @return String|Boolean|Null Returns value of the system variable, false on query failure or null if there is no result for the corresponding variable
 	 */
-	public static function get_system_variable($variable, $db_handle) {
+	public static function get_system_variable( $variable, $db_handle ) {
 
-		$is_mysqli = is_a($db_handle, 'mysqli');
-		if (!is_resource($db_handle) && !$is_mysqli) return false;
+		$is_mysqli = is_a( $db_handle, 'mysqli' );
+		if ( ! is_resource( $db_handle ) && ! $is_mysqli ) {
+			return false;
+		}
 
 		$sql = 'SELECT @@SESSION.%s';
 
-		if ($is_mysqli) {
-			$res = @mysqli_query($db_handle, sprintf($sql, mysqli_real_escape_string($db_handle, $variable)));// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
+		if ( $is_mysqli ) {
+			$res = @mysqli_query( $db_handle, sprintf( $sql, mysqli_real_escape_string( $db_handle, $variable ) ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
 		} else {
-			$res = @mysql_query(sprintf($sql, mysql_real_escape_string($variable, $db_handle)), $db_handle);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
+			$res = @mysql_query( sprintf( $sql, mysql_real_escape_string( $variable, $db_handle ) ), $db_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
 		}
-		if (false === $res) {
+		if ( false === $res ) {
 			return $res;
 		}
-		if ($is_mysqli) {
+		if ( $is_mysqli ) {
 			// @codingStandardsIgnoreLine
-			$res = mysqli_fetch_array($res);// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_array -- direct mysql function used for low-level database operations outside of $wpdb.
-			return isset($res[0]) ? $res[0] : null;
+			$res = mysqli_fetch_array( $res );// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_array -- direct mysql function used for low-level database operations outside of $wpdb.
+			return isset( $res[0] ) ? $res[0] : null;
 		} else {
 			// @codingStandardsIgnoreLine
-			$res = mysql_result($res, 0);// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysql_result -- direct mysql function used for low-level database operations outside of $wpdb.
+			$res = mysql_result( $res, 0 );// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysql_result -- direct mysql function used for low-level database operations outside of $wpdb.
 			return false === $res ? null : $res;
 		}
 	}
@@ -188,101 +234,107 @@ class BackupPlus_Database_Utility {
 	 *
 	 * @return Boolean
 	 */
-	public static function sql_statement_is_finished($sql) {
-		
+	public static function sql_statement_is_finished( $sql ) {
+
 		$bracket_open_levels = 0;
-		
+
 		$open = false;
-		
+
 		$comment_open = false;
-		
+
 		$is_backslash_active = false;
-		
+
 		$rest_of_line_is_comment = false;
-		
+
 		$sequence = '';
-		
-		$sql_length = strlen($sql);
-		
-		for ($i = 0; $i < $sql_length; $i++) {
-			
+
+		$sql_length = strlen( $sql );
+
+		for ( $i = 0; $i < $sql_length; $i++ ) {
+
 			// if ($i > 0) echo "$char($i) : open=$open, sequence=$sequence, bracket_open_levels=$bracket_open_levels, is_backslash_active=$is_backslash_active,  comment_open=$comment_open, rest_of_line_is_comment=$rest_of_line_is_comment\n";
-			
-			$char = $sql[$i];
-			$char_before = $i > 0 ? $sql[$i-1] : false;
-			$char_after = $i < $sql_length-1 ? $sql[$i+1] : false;
-			
-			if ($rest_of_line_is_comment) {
-				if ("\n" === $char || "\r" === $char) $rest_of_line_is_comment = false;
+
+			$char        = $sql[ $i ];
+			$char_before = $i > 0 ? $sql[ $i - 1 ] : false;
+			$char_after  = $i < $sql_length - 1 ? $sql[ $i + 1 ] : false;
+
+			if ( $rest_of_line_is_comment ) {
+				if ( "\n" === $char || "\r" === $char ) {
+					$rest_of_line_is_comment = false;
+				}
 				continue;
 			}
-			
-			if ($is_backslash_active) {
+
+			if ( $is_backslash_active ) {
 				// Previous character was a backslash; thus, this character is to be treated literally
 				$is_backslash_active = false;
 				continue;
 			}
-			
-			if ('\\' == $char) {
+
+			if ( '\\' == $char ) {
 				$is_backslash_active = true;
 				continue;
 			}
-			
+
 			// N.B. Nested comments are not allowed in future MySQL - https://dev.mysql.com/doc/refman/8.4/en/comments.html
 			// Note that given the assumptions of this function, comment handling should not be necessary (only an admin attack could introduce comment-based confusion, where $open is false).
-			if (false === $open && $comment_open && (('*' === $char && '/' === $char_after) || ('*' === $char_before && '/' === $char))) {
+			if ( false === $open && $comment_open && ( ( '*' === $char && '/' === $char_after ) || ( '*' === $char_before && '/' === $char ) ) ) {
 				$comment_open = false;
 				continue;
 			}
-			
-			if ($comment_open) continue;
-			
-			if (false === $open && (('/' === $char && '*' === $char_after) || ('/' === $char_before && '*' === $char))) {
+
+			if ( $comment_open ) {
+				continue;
+			}
+
+			if ( false === $open && ( ( '/' === $char && '*' === $char_after ) || ( '/' === $char_before && '*' === $char ) ) ) {
 				$comment_open = true;
 				continue;
 			}
-			
+
 			// All further parsing of the line ends
-			if (false === $open && ('#' == $char || ('-' === $char && '-' === $char_after))) {
-				if ('#'  == $char || ($i < strlen($sql) - 2 && (' ' == $sql[$i+2] || ord($sql[$i+2]) < 32))) {
+			if ( false === $open && ( '#' == $char || ( '-' === $char && '-' === $char_after ) ) ) {
+				if ( '#' == $char || ( $i < strlen( $sql ) - 2 && ( ' ' == $sql[ $i + 2 ] || ord( $sql[ $i + 2 ] ) < 32 ) ) ) {
 					$rest_of_line_is_comment = true;
 					continue;
 				}
 			}
-			
-			if ('(' === $char && false === $open) {
-				$bracket_open_levels++;
+
+			if ( '(' === $char && false === $open ) {
+				++$bracket_open_levels;
 				continue;
 			}
-			
-			if (')' === $char && false === $open) {
+
+			if ( ')' === $char && false === $open ) {
 				// Immediate abort: a bracket that was never open has been closed
-				if ($bracket_open_levels < 1) return false;
-				$bracket_open_levels--;
+				if ( $bracket_open_levels < 1 ) {
+					return false;
+				}
+				--$bracket_open_levels;
 				continue;
 			}
-			
+
 			// Single quote, double quote or backtick. Inside this, the same character doubled means a literal. Otherwise, it closes the opened entity.
-			if (in_array($char, array("'", '"', '`'))) {
-				
+			if ( in_array( $char, array( "'", '"', '`' ) ) ) {
+
 				// Something other than the current entity is open; in this context, the entity has no special meaning
-				if ($char !== $open && false !== $open) {
+				if ( $char !== $open && false !== $open ) {
 					continue;
 				}
-				
+
 				// Nothing is open
-				if (false === $open) {
-					$open = $char;
+				if ( false === $open ) {
+					$open     = $char;
 					$sequence = '';
 					continue;
 				}
-				
+
 				// A doubled entity
-				if ($char === $open) {
-					if ($char === $char_after && '' === $sequence) {
+				if ( $char === $open ) {
+					if ( $char === $char_after && '' === $sequence ) {
 						// Another of the same entity is coming after: it's a literal
 						$sequence = $char;
-					} elseif ($char === $sequence) {
+					} elseif ( $char === $sequence ) {
 						// Here is the entity "after"
 						$sequence = '';
 					} else {
@@ -292,26 +344,34 @@ class BackupPlus_Database_Utility {
 				}
 				continue;
 			}
-			
 		}
-		
+
 		// echo "$char : open=$open, sequence=$sequence, bracket_open_levels=$bracket_open_levels, is_backslash_active=$is_backslash_active, comment_open=$comment_open, rest_of_line_is_comment=$rest_of_line_is_comment (END)\n";
-		
-		if ($is_backslash_active) return false;
-		
-		if (false !== $open) return false;
-		
-		if (0 !== $bracket_open_levels) return false;
-		
-		if ($comment_open) return false;
-		
+
+		if ( $is_backslash_active ) {
+			return false;
+		}
+
+		if ( false !== $open ) {
+			return false;
+		}
+
+		if ( 0 !== $bracket_open_levels ) {
+			return false;
+		}
+
+		if ( $comment_open ) {
+			return false;
+		}
+
 		// This condition should not be possible, as it is only set if we know that the next character will fulfil the condition to reset it to empty. However, the check is harmless.
-		if ('' !== $sequence) return false;
-		
+		if ( '' !== $sequence ) {
+			return false;
+		}
+
 		return true;
-		
 	}
-	
+
 	/**
 	 * Get a list of current SQL modes set, in upper case
 	 *
@@ -321,24 +381,23 @@ class BackupPlus_Database_Utility {
 	 *
 	 * @return Array|Boolean
 	 */
-	public static function get_sql_modes($db_handle = null) {
+	public static function get_sql_modes( $db_handle = null ) {
 
-		if (is_null($db_handle)) {
-			$modes = $GLOBALS['wpdb']->get_var('SELECT @@SESSION.sql_mode');
-		} elseif (is_a($db_handle, 'WPDB')) {
-			$modes = $db_handle->get_var('SELECT @@SESSION.sql_mode');
+		if ( is_null( $db_handle ) ) {
+			$modes = $GLOBALS['wpdb']->get_var( 'SELECT @@SESSION.sql_mode' );
+		} elseif ( is_a( $db_handle, 'WPDB' ) ) {
+			$modes = $db_handle->get_var( 'SELECT @@SESSION.sql_mode' );
 		} else {
-			$modes = call_user_func_array(array(__CLASS__, 'get_system_variable'), array('sql_mode', $db_handle));
+			$modes = call_user_func_array( array( __CLASS__, 'get_system_variable' ), array( 'sql_mode', $db_handle ) );
 		}
-		
-		if (is_scalar($modes) && !is_bool($modes)) {
-			return array_map('strtoupper', explode(',', $modes));
+
+		if ( is_scalar( $modes ) && ! is_bool( $modes ) ) {
+			return array_map( 'strtoupper', explode( ',', $modes ) );
 		}
-		
+
 		return false;
-		
 	}
-	
+
 	/**
 	 *
 	 * This function is adapted from the set_sql_mode() method in WordPress wpdb class but with a few modifications applied, this can be used to switch between different sets of SQL modes.
@@ -353,66 +412,69 @@ class BackupPlus_Database_Utility {
 	 * @see https://mariadb.com/kb/en/library/sql-mode/#strict-mode
 	 * @see https://mariadb.com/kb/en/library/sql-mode/#setting-sql_mode
 	 *
-	 * @param Array				   $modes		 - Optional. A list of SQL modes to set.
-	 * @param Array				   $remove_modes - modes to remove if they are currently active
-	 * @param Resource|Object|NULL $db_handle	 - Optional. If specified, it should either the valid database link identifier(resource) given by mysql(i) or null to instead use the global WPDB object, or a WPDB-compatible object.
+	 * @param Array                $modes        - Optional. A list of SQL modes to set.
+	 * @param Array                $remove_modes - modes to remove if they are currently active
+	 * @param Resource|Object|NULL $db_handle    - Optional. If specified, it should either the valid database link identifier(resource) given by mysql(i) or null to instead use the global WPDB object, or a WPDB-compatible object.
 	 *
 	 * @return Boolean|Null - true if no unwanted modes remain, false if some do, null if indeterminate.
 	 */
-	public static function set_sql_mode($modes = array(), $remove_modes = array(), $db_handle = null) {
+	public static function set_sql_mode( $modes = array(), $remove_modes = array(), $db_handle = null ) {
 
 		global $backupplus, $wpdb;
-		
-		$wpdb_handle_if_used = (null !== $db_handle && is_a($db_handle, 'WPDB')) ? $db_handle : $wpdb;
-		
+
+		$wpdb_handle_if_used = ( null !== $db_handle && is_a( $db_handle, 'WPDB' ) ) ? $db_handle : $wpdb;
+
 		// If any of these are set, they will be unset
-		$unwanted_modes = array_merge(array_map('strtoupper', $remove_modes), array(
-			'NO_ZERO_DATE',
-			'ONLY_FULL_GROUP_BY',
-			'TRADITIONAL',
-			'NO_BACKSLASH_ESCAPES',
-			// according to mariadb and mysql docs, strict mode can be one of these or both
-			'STRICT_TRANS_TABLES',
-			'STRICT_ALL_TABLES',
-		));
+		$unwanted_modes = array_merge(
+			array_map( 'strtoupper', $remove_modes ),
+			array(
+				'NO_ZERO_DATE',
+				'ONLY_FULL_GROUP_BY',
+				'TRADITIONAL',
+				'NO_BACKSLASH_ESCAPES',
+				// according to mariadb and mysql docs, strict mode can be one of these or both
+				'STRICT_TRANS_TABLES',
+				'STRICT_ALL_TABLES',
+			)
+		);
 
 		$initial_modes = self::get_sql_modes();
-		
-		if (!is_array($initial_modes)) {
-			$backupplus->log("Couldn't get the sql_mode value (".serialize($initial_modes)."); will not attempt any adjustment");
+
+		if ( ! is_array( $initial_modes ) ) {
+			$backupplus->log( "Couldn't get the sql_mode value (" . serialize( $initial_modes ) . '); will not attempt any adjustment' );
 			return null;
 		}
 
-		$modes = array_unique(array_merge($initial_modes, array_map('strtoupper', $modes)));
+		$modes = array_unique( array_merge( $initial_modes, array_map( 'strtoupper', $modes ) ) );
 
-		foreach ($modes as $i => $mode) {
-			if (in_array($mode, $unwanted_modes)) {
-				unset($modes[$i]);
+		foreach ( $modes as $i => $mode ) {
+			if ( in_array( $mode, $unwanted_modes ) ) {
+				unset( $modes[ $i ] );
 			}
 		}
 
-		$modes_str = implode(',', $modes);
+		$modes_str = implode( ',', $modes );
 
 		// We don't examine the return code, because we re-check status afterwards
-		if (is_null($db_handle) || is_a($db_handle, 'WPDB')) {
-			$wpdb_handle_if_used->query($wpdb_handle_if_used->prepare("SET SESSION sql_mode = %s", $modes_str));
+		if ( is_null( $db_handle ) || is_a( $db_handle, 'WPDB' ) ) {
+			$wpdb_handle_if_used->query( $wpdb_handle_if_used->prepare( 'SET SESSION sql_mode = %s', $modes_str ) );
 		} else {
-			call_user_func_array(array(__CLASS__, 'set_system_variable'), array('sql_mode', $modes_str, $db_handle));
+			call_user_func_array( array( __CLASS__, 'set_system_variable' ), array( 'sql_mode', $modes_str, $db_handle ) );
 		}
 
 		$after_modes = self::get_sql_modes();
-		
-		if (is_array($after_modes)) {
-			$remaining_unwanted_modes = array_intersect($after_modes, $unwanted_modes);
-			if (empty($remaining_unwanted_modes)) {
-				$backupplus->log("SQL compatibility mode is now: ".implode(',', $after_modes));
+
+		if ( is_array( $after_modes ) ) {
+			$remaining_unwanted_modes = array_intersect( $after_modes, $unwanted_modes );
+			if ( empty( $remaining_unwanted_modes ) ) {
+				$backupplus->log( 'SQL compatibility mode is now: ' . implode( ',', $after_modes ) );
 				return true;
 			}
-			
-			$backupplus->log("SQL compatibility mode has unwanted modes remaining: ".implode(', ', $unwanted_modes)." members present in: ".implode(', ', $after_modes));
+
+			$backupplus->log( 'SQL compatibility mode has unwanted modes remaining: ' . implode( ', ', $unwanted_modes ) . ' members present in: ' . implode( ', ', $after_modes ) );
 			return false;
 		}
-		
+
 		return null;
 	}
 
@@ -452,147 +514,151 @@ class BackupPlus_Database_Utility {
 	 *         "is_virtual" => true
 	 *     ]
 	 */
-	public static function get_generated_column_info($table_column_definition, $starting_offset) {
+	public static function get_generated_column_info( $table_column_definition, $starting_offset ) {
 
 		// check whether or not the column definition ($table_column_definition) is a generated column, if so then get all the column definitions
 		// https://regex101.com/r/Fy2Bkd/12
-		if (preg_match_all('/^\s*\`((?:[^`]|``)+)\`([^,\'"]+?)(?:((?:GENERATED\s*ALWAYS\s*)?AS\s*\(.+\))([\w\s]*)(COMMENT\s*(?:\'(?:[^\']|\'\')*\'|\"(?:[^"]|"")*\"))([\w\s]*)|((?:GENERATED\s*ALWAYS\s*)?AS\s*\(.+\)([\w\s]*)))/i', $table_column_definition, $column_definitions, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+		if ( preg_match_all( '/^\s*\`((?:[^`]|``)+)\`([^,\'"]+?)(?:((?:GENERATED\s*ALWAYS\s*)?AS\s*\(.+\))([\w\s]*)(COMMENT\s*(?:\'(?:[^\']|\'\')*\'|\"(?:[^"]|"")*\"))([\w\s]*)|((?:GENERATED\s*ALWAYS\s*)?AS\s*\(.+\)([\w\s]*)))/i', $table_column_definition, $column_definitions, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
 
-			if (empty($column_definitions)) return false;
+			if ( empty( $column_definitions ) ) {
+				return false;
+			}
 
 			/**
 			 * If the above preg_match_all function succeed, it returns an array with the following format:
 			 *
-			 *	Array(3) {
-			 *	[0]=> // 1st set of the matched/captured string
-			 *	array(6) {
-			 *		[0]=> // 1st index represents a full column definition
-			 *		array(2) {
-			 *			[0]=> string(131) ", `full_name` char(41) GENERATED ALWAYS AS (concat(`firstname`,'()`)(()',`lastname`)) VIRTUAL NOT NULL COMMENT 'fu(ll)'_name'' COLUMN_FORMAT DEFAULT"
-			 *			[1]=> int(541)
-			 *		}
-			 *		[1]=> // 2nd index represents a column name
-			 *		array(2) {
-			 *			[0]=> string(9) "full_name"
-			 *			[1]=> int(547)
-			 *		}
-			 *		[2]=> // 3rd index represents data type option that is captured before "generated always as"
-			 *		array(2) {
-			 *			[0]=> string(18) " char(41) "
-			 *			[1]=> int(555)
-			 *		}
-			 *		[3]=> // 4rd index represents data type option which is specific for "generated always as"
-			 *		array(2) {
-			 *			[0]=> string(18) "GENERATED ALWAYS AS (concat(`firstname`,'()`)(()',`lastname`))"
-			 *			[1]=> int(629) // this is the position or starting offset of the captured data type's option, this can later be used to help with the unsupported keyword replacement stuff among db server
-			 *		}
-			 *		[4]=> // 5th index represents data type option that is captured before COMMENT keyword and after "generated always as"
-			 *		array(2) {
-			 *			[0]=> string(13) " VIRTUAL NOT NULL " // this is the comment string that could be filled with any word even the reserved keyword (e.g. not null, virtual, stored, etc..)
-			 *			[1]=> int(656) // this is the position or starting offset of the captured data type's option, this can later be used to help with the unsupported keyword replacement stuff among db server
-			 *		}
-			 *		[5]=> // 6th index represents the comment
-			 *		array(2) {
-			 *			[0]=> string(2) "COMMENT 'fu(ll)'_name''"
-			 *			[1]=> int(670) // this is the position or starting offset of the captured comment's string
-			 *		}
-			 *		[6]=> // 7th index represents data type option that is captured after the COMMENT keyword
-			 *		array(2) {
-			 *			[0]=> string(2) "COLUMN_FORMAT DEFAULT"
-			 *			[1]=> int(670)
-			 *		}
-			 *	}
-			 *	array(8) { // 2nd set
-			 *		[0]=>
-			 *		array(2) {
-			 *			[0]=> string(95) ", `full_name6` char(41) GENERATED ALWAYS AS (concat(`firstname`,' ',`lastname2`))STORED NULL"
-			 *			[1]=> int(1121)
-			 *		}
-			 *		[1]=>
-			 *		array(2) {
-			 *			[0]=> string(10) "full_name6"
-			 *			[1]=> int(1127)
-			 *		}
-			 *		[2]=>
-			 *		array(2) {
-			 *			[0]=> string(0) " char(41) "
-			 *			[1]=> int(1139)
-			 *		}
-			 *		[3]=>
-			 *		array(2) {
-			 *			[0]=> string(0) ""
-			 *			[1]=> int(-1)
-			 *		}
-			 *		[4]=>
-			 *		array(2) {
-			 *			[0]=> string(0) ""
-			 *			[1]=> int(-1)
-			 *		}
-			 *		[5]=>
-			 *		array(2) {
-			 *			[0]=> string(0) "" // an empty string of this captured token indicates that the column definition doesn't have COMMENT keyword
-			 *			[1]=> int(-1)
-			 *		}
-			 *		[6]=>
-			 *		array(2) {
-			 *			[0]=> string(0) ""
-			 *			[1]=> int(-1)
-			 *		}
-			 *		[7]=> // 8th index will appear if there's no COMMENT keyword found in the column definition and it represents data type option that is specific for "generated always as"
-			 *		array(2) {
-			 *			[0]=> string(11) "GENERATED ALWAYS AS (concat(`firstname`,' ',`lastname2`))"
-			 *			[1]=> int(1205)
-			 *		}
-			 *		[8]=> // 9th index will appear if there's no COMMENT keyword found in the column definition and it represents the captured data type options
-			 *		array(2) {
-			 *			[0]=> string(11) "STORED NULL"
-			 *			[1]=> int(1270)
-			 *		}
-			 *	}
+			 *  Array(3) {
+			 *  [0]=> // 1st set of the matched/captured string
+			 *  array(6) {
+			 *      [0]=> // 1st index represents a full column definition
+			 *      array(2) {
+			 *          [0]=> string(131) ", `full_name` char(41) GENERATED ALWAYS AS (concat(`firstname`,'()`)(()',`lastname`)) VIRTUAL NOT NULL COMMENT 'fu(ll)'_name'' COLUMN_FORMAT DEFAULT"
+			 *          [1]=> int(541)
+			 *      }
+			 *      [1]=> // 2nd index represents a column name
+			 *      array(2) {
+			 *          [0]=> string(9) "full_name"
+			 *          [1]=> int(547)
+			 *      }
+			 *      [2]=> // 3rd index represents data type option that is captured before "generated always as"
+			 *      array(2) {
+			 *          [0]=> string(18) " char(41) "
+			 *          [1]=> int(555)
+			 *      }
+			 *      [3]=> // 4rd index represents data type option which is specific for "generated always as"
+			 *      array(2) {
+			 *          [0]=> string(18) "GENERATED ALWAYS AS (concat(`firstname`,'()`)(()',`lastname`))"
+			 *          [1]=> int(629) // this is the position or starting offset of the captured data type's option, this can later be used to help with the unsupported keyword replacement stuff among db server
+			 *      }
+			 *      [4]=> // 5th index represents data type option that is captured before COMMENT keyword and after "generated always as"
+			 *      array(2) {
+			 *          [0]=> string(13) " VIRTUAL NOT NULL " // this is the comment string that could be filled with any word even the reserved keyword (e.g. not null, virtual, stored, etc..)
+			 *          [1]=> int(656) // this is the position or starting offset of the captured data type's option, this can later be used to help with the unsupported keyword replacement stuff among db server
+			 *      }
+			 *      [5]=> // 6th index represents the comment
+			 *      array(2) {
+			 *          [0]=> string(2) "COMMENT 'fu(ll)'_name''"
+			 *          [1]=> int(670) // this is the position or starting offset of the captured comment's string
+			 *      }
+			 *      [6]=> // 7th index represents data type option that is captured after the COMMENT keyword
+			 *      array(2) {
+			 *          [0]=> string(2) "COLUMN_FORMAT DEFAULT"
+			 *          [1]=> int(670)
+			 *      }
+			 *  }
+			 *  array(8) { // 2nd set
+			 *      [0]=>
+			 *      array(2) {
+			 *          [0]=> string(95) ", `full_name6` char(41) GENERATED ALWAYS AS (concat(`firstname`,' ',`lastname2`))STORED NULL"
+			 *          [1]=> int(1121)
+			 *      }
+			 *      [1]=>
+			 *      array(2) {
+			 *          [0]=> string(10) "full_name6"
+			 *          [1]=> int(1127)
+			 *      }
+			 *      [2]=>
+			 *      array(2) {
+			 *          [0]=> string(0) " char(41) "
+			 *          [1]=> int(1139)
+			 *      }
+			 *      [3]=>
+			 *      array(2) {
+			 *          [0]=> string(0) ""
+			 *          [1]=> int(-1)
+			 *      }
+			 *      [4]=>
+			 *      array(2) {
+			 *          [0]=> string(0) ""
+			 *          [1]=> int(-1)
+			 *      }
+			 *      [5]=>
+			 *      array(2) {
+			 *          [0]=> string(0) "" // an empty string of this captured token indicates that the column definition doesn't have COMMENT keyword
+			 *          [1]=> int(-1)
+			 *      }
+			 *      [6]=>
+			 *      array(2) {
+			 *          [0]=> string(0) ""
+			 *          [1]=> int(-1)
+			 *      }
+			 *      [7]=> // 8th index will appear if there's no COMMENT keyword found in the column definition and it represents data type option that is specific for "generated always as"
+			 *      array(2) {
+			 *          [0]=> string(11) "GENERATED ALWAYS AS (concat(`firstname`,' ',`lastname2`))"
+			 *          [1]=> int(1205)
+			 *      }
+			 *      [8]=> // 9th index will appear if there's no COMMENT keyword found in the column definition and it represents the captured data type options
+			 *      array(2) {
+			 *          [0]=> string(11) "STORED NULL"
+			 *          [1]=> int(1270)
+			 *      }
+			 *  }
 			 *  }
 			 */
 
-			foreach ($column_definitions as $column_definition) {
-				$data_type_definition = (!empty($column_definition[4][0]) ? $column_definition[4][0] : '').(!empty($column_definition[6][0]) ? $column_definition[6][0] : '').(!empty($column_definition[8][0]) ? $column_definition[8][0] : '');
+			foreach ( $column_definitions as $column_definition ) {
+				$data_type_definition = ( ! empty( $column_definition[4][0] ) ? $column_definition[4][0] : '' ) . ( ! empty( $column_definition[6][0] ) ? $column_definition[6][0] : '' ) . ( ! empty( $column_definition[8][0] ) ? $column_definition[8][0] : '' );
 				// if no virtual, stored or persistent option is specified then it's virtual by default. It's not possible having two generated columns type in the column definition e.g fullname varchar(101) GENERATED ALWAYS AS (CONCAT(first_name,' ',last_name)) VIRTUAL STORED NOT NULL COMMENT 'comment text', both MySQL and MariaDB will produces an error
-				$is_virtual = preg_match('/\bvirtual\b/i', $data_type_definition) || (!preg_match('/\bstored\b/i', $data_type_definition) && !preg_match('/\bpersistent\b/i', $data_type_definition));
+				$is_virtual = preg_match( '/\bvirtual\b/i', $data_type_definition ) || ( ! preg_match( '/\bstored\b/i', $data_type_definition ) && ! preg_match( '/\bpersistent\b/i', $data_type_definition ) );
 
 				$fragment = array(
 					// full syntax of the column definition
-					"column_definition" => $column_definition[0][0],
+					'column_definition'           => $column_definition[0][0],
 					// the extracted column name
-					"column_name" => $column_definition[1][0],
+					'column_name'                 => $column_definition[1][0],
 					'column_data_type_definition' => array(),
-					"is_virtual" => $is_virtual,
+					'is_virtual'                  => $is_virtual,
 				);
-				if (!empty($column_definition[2])) {
-					$fragment['column_data_type_definition']['DATA_TYPE_TOKEN'] = $column_definition[2];
+				if ( ! empty( $column_definition[2] ) ) {
+					$fragment['column_data_type_definition']['DATA_TYPE_TOKEN']    = $column_definition[2];
 					$fragment['column_data_type_definition']['DATA_TYPE_TOKEN'][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition']['DATA_TYPE_TOKEN'][1];
 				}
-				if (!empty($column_definition[3])) {
+				if ( ! empty( $column_definition[3] ) ) {
 					$fragment['column_data_type_definition']['GENERATED_ALWAYS_TOKEN'] = $column_definition[3];
-					if (empty($fragment['column_data_type_definition'][1]) && !empty($column_definition[7][0])) $fragment['column_data_type_definition']['GENERATED_ALWAYS_TOKEN'] = $column_definition[7];
+					if ( empty( $fragment['column_data_type_definition'][1] ) && ! empty( $column_definition[7][0] ) ) {
+						$fragment['column_data_type_definition']['GENERATED_ALWAYS_TOKEN'] = $column_definition[7];
+					}
 					$fragment['column_data_type_definition']['GENERATED_ALWAYS_TOKEN'][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition']['GENERATED_ALWAYS_TOKEN'][1];
 				}
-				if (!empty($column_definition[4])) {
-					$fragment['column_data_type_definition'][2] = $column_definition[4];
+				if ( ! empty( $column_definition[4] ) ) {
+					$fragment['column_data_type_definition'][2]    = $column_definition[4];
 					$fragment['column_data_type_definition'][2][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition'][2][1];
 				}
-				if (!empty($column_definition[5])) {
-					$fragment['column_data_type_definition']['COMMENT_TOKEN'] = $column_definition[5];
+				if ( ! empty( $column_definition[5] ) ) {
+					$fragment['column_data_type_definition']['COMMENT_TOKEN']    = $column_definition[5];
 					$fragment['column_data_type_definition']['COMMENT_TOKEN'][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition']['COMMENT_TOKEN'][1];
 				}
-				if (!empty($column_definition[6])) {
-					$fragment['column_data_type_definition'][4] = $column_definition[6];
+				if ( ! empty( $column_definition[6] ) ) {
+					$fragment['column_data_type_definition'][4]    = $column_definition[6];
 					$fragment['column_data_type_definition'][4][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition'][4][1];
 				}
-				if (!empty($column_definition[8])) {
-					$fragment['column_data_type_definition'][5] = $column_definition[8];
+				if ( ! empty( $column_definition[8] ) ) {
+					$fragment['column_data_type_definition'][5]    = $column_definition[8];
 					$fragment['column_data_type_definition'][5][1] = (int) $starting_offset + (int) $fragment['column_data_type_definition'][5][1];
 				}
 			}
 		}
-		return isset($fragment) ? $fragment : false;
+		return isset( $fragment ) ? $fragment : false;
 	}
 
 	/**
@@ -614,18 +680,18 @@ class BackupPlus_Database_Utility {
 	 *         "is_virtual_index_supported" => false
 	 *     ]
 	 */
-	public static function is_generated_column_supported($engine = '') {
+	public static function is_generated_column_supported( $engine = '' ) {
 
 		global $table_prefix, $wpdb;
 
-		$random_table_name = $table_prefix.'backupplus_tmp_'.wp_rand(0, 9999999).md5(microtime(true));
-		
+		$random_table_name = $table_prefix . 'backupplus_tmp_' . wp_rand( 0, 9999999 ) . md5( microtime( true ) );
+
 		$drop_statement = "DROP TABLE IF EXISTS `$random_table_name`;";
 
 		// both mysql and mariadb support generated column, virtual is the default type and the other option type is called stored, mariadb has an alias for stored type which is called persistent, whereas mysql doesn't have such thing.
 		// MySQL supports NULL and NOT NULL constraints. On the other hand, MariaDB doesn't support it.
 		$sql = array(
-			"CREATE TABLE `$random_table_name` (`virtual_column` varchar(17) GENERATED ALWAYS AS ('virtual_column') VIRTUAL COMMENT 'virtual_column')".(!empty($engine) ? " ENGINE=$engine" : "").";",
+			"CREATE TABLE `$random_table_name` (`virtual_column` varchar(17) GENERATED ALWAYS AS ('virtual_column') VIRTUAL COMMENT 'virtual_column')" . ( ! empty( $engine ) ? " ENGINE=$engine" : '' ) . ';',
 			"ALTER TABLE `$random_table_name` ADD `persistent_column` VARCHAR(17) AS ('persistent_column') PERSISTENT COMMENT 'generated_column';",
 			"ALTER TABLE `$random_table_name` ADD `virtual_column_not_null` VARCHAR(17) AS ('virtual_column_not_null') VIRTUAL NOT NULL COMMENT 'virtual_column_not_null';",
 			// check if we can get through this: Error Code: 3105. The value specified for generated column 'generated_column' in table 'wp_generated_column_test' is not allowed.
@@ -637,23 +703,23 @@ class BackupPlus_Database_Utility {
 
 		$old_val = $wpdb->suppress_errors();
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP TABLE statement; $drop_statement uses an internally-generated table name and cannot be parameterized.
-		$wpdb->query($drop_statement);
+		$wpdb->query( $drop_statement );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE TABLE statement; these DDL statements cannot use $wpdb->prepare().
-		$is_generated_column_supported = $wpdb->query($sql[0]);
-		if ($is_generated_column_supported) {
+		$is_generated_column_supported = $wpdb->query( $sql[0] );
+		if ( $is_generated_column_supported ) {
 			$is_generated_column_supported = array(
-				'is_persistent_supported' => $wpdb->query($sql[1]), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
-				'is_not_null_supported' => $wpdb->query($sql[2]), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
-				'can_insert_ignore_to_generated_column' => (bool) $wpdb->query($sql[3]), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL INSERT IGNORE statement; cannot be parameterized.
-				'is_virtual_index_supported' => $wpdb->query($sql[4]) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE INDEX statement; cannot be parameterized.
+				'is_persistent_supported'               => $wpdb->query( $sql[1] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
+				'is_not_null_supported'                 => $wpdb->query( $sql[2] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
+				'can_insert_ignore_to_generated_column' => (bool) $wpdb->query( $sql[3] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL INSERT IGNORE statement; cannot be parameterized.
+				'is_virtual_index_supported'            => $wpdb->query( $sql[4] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE INDEX statement; cannot be parameterized.
 			);
 		} else {
 			$is_generated_column_supported = false;
 		}
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP TABLE statement; cannot be parameterized.
-		$wpdb->query($drop_statement);
-		$wpdb->suppress_errors($old_val);
-		
+		$wpdb->query( $drop_statement );
+		$wpdb->suppress_errors( $old_val );
+
 		return $is_generated_column_supported;
 	}
 
@@ -666,35 +732,35 @@ class BackupPlus_Database_Utility {
 	 * @param Array  $generated_columns the list of the available "generated columns"
 	 * @return Boolean|Null True if "generated columns" exist in the "insert into" statement, false otherwise, null on empty or unmatched insert statement
 	 */
-	public static function generated_columns_exist_in_the_statement($insert_statement, $generated_columns) {
+	public static function generated_columns_exist_in_the_statement( $insert_statement, $generated_columns ) {
 
 		$exist = null;
-		if (preg_match('/\s*insert.+?into(?:\s*`(?:[^`]|`)+?`|[^\(]+)(?:\s*\((.+?)\))?\s*values.+/i', $insert_statement, $matches)) {
+		if ( preg_match( '/\s*insert.+?into(?:\s*`(?:[^`]|`)+?`|[^\(]+)(?:\s*\((.+?)\))?\s*values.+/i', $insert_statement, $matches ) ) {
 			/**
 			 * the reqex above will search for matches of either the insert statement gives data based on the specified column names (i.e INSERT INTO `table_name`(`col1`,'col2`,`virtual_column`,`stored_column`,`col5`) values('1','2','3','4','5')) or not (i.e INSERT INTO `table_name` values('1',',2','3','4','5')), and if the above preg_match function succeed, it returns an array with the following format:
 			 *
-			 *	Array(2) {
-			 *		[0]=> "INSERT INTO `table_name`(`col1`,'col2`,`virtual_column`,`stored_column`,`col5`) values('1','2','3','4','5')"
-			*		[1]=> "`col1`,`col2`,`virtual_column`,`col4`,`stored_column`"
-			*	}
-			*	OR
-			*	Array(1) {
-			*		[0]=> "INSERT INTO `table_name` values('1','2','3','4','5')"
-			*	}
+			 *  Array(2) {
+			 *      [0]=> "INSERT INTO `table_name`(`col1`,'col2`,`virtual_column`,`stored_column`,`col5`) values('1','2','3','4','5')"
+			*       [1]=> "`col1`,`col2`,`virtual_column`,`col4`,`stored_column`"
+			*   }
+			*   OR
+			*   Array(1) {
+			*       [0]=> "INSERT INTO `table_name` values('1','2','3','4','5')"
+			*   }
 			*/
-			$columns = isset($matches[1]) ? preg_split('/\`\s*,\s*\`/', preg_replace('/\`((?:[^\`]|\`)+)\`/', "$1", trim($matches[1]))) : array();
+			$columns = isset( $matches[1] ) ? preg_split( '/\`\s*,\s*\`/', preg_replace( '/\`((?:[^\`]|\`)+)\`/', '$1', trim( $matches[1] ) ) ) : array();
 			/**
-			*	the preg_replace is used to remove the leading and trailing backtick, so that the string becomes: col1`,`col2`,`virtual_column`,`col4`,`stored_column
-			*	the preg_split is used to split all strings that match `,` pattern
-			*	Array(5) {
-			*		[0]=> string(5) "col1"
-			*		[1]=> string(4) "col2"
-			*		[2]=> string(14) "virtual_column"
-			*		[3]=> string(4) "col4"
-			*		[4]=> string(14) "stored_column"
-			*	}
+			*   the preg_replace is used to remove the leading and trailing backtick, so that the string becomes: col1`,`col2`,`virtual_column`,`col4`,`stored_column
+			*   the preg_split is used to split all strings that match `,` pattern
+			*   Array(5) {
+			*       [0]=> string(5) "col1"
+			*       [1]=> string(4) "col2"
+			*       [2]=> string(14) "virtual_column"
+			*       [3]=> string(4) "col4"
+			*       [4]=> string(14) "stored_column"
+			*   }
 			*/
-			$exist = (false == $columns) || (true == array_intersect($generated_columns, $columns));
+			$exist = ( false == $columns ) || ( true == array_intersect( $generated_columns, $columns ) );
 		}
 		return $exist;
 	}
@@ -714,51 +780,51 @@ class BackupPlus_Database_Utility {
 	 *         "is_function_creators_trusted" => false // the default value is false (MariaDB/MySQL)
 	 *     ]
 	 *
-	 *     OR a database error message, e.g. "Access denied for user 'root'@'localhost' to database 'wordpress'"
+	 *     OR a database error message, e.g. "Access denied for user 'root'@'localhost' to database 'WordPress'"
 	 */
 	public static function is_stored_routine_supported() {
 
 		global $wpdb;
 
 		$function_name = 'backupplus_test_stored_routine';
-		$sql = array(
-			"DROP_FUNCTION" => "DROP FUNCTION IF EXISTS ".$function_name,
+		$sql           = array(
+			'DROP_FUNCTION'                 => 'DROP FUNCTION IF EXISTS ' . $function_name,
 			// sql to check whether stored routines is supported
-			"CREATE_FUNCTION" => "CREATE FUNCTION ".$function_name."() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true",
+			'CREATE_FUNCTION'               => 'CREATE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
 			// sql to check whether create or replace syntax is supported
-			"CREATE_REPLACE_FUNCTION" => "CREATE OR REPLACE FUNCTION ".$function_name."() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true",
+			'CREATE_REPLACE_FUNCTION'       => 'CREATE OR REPLACE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
 			// sql to check whether if not exists syntax is supported (mariadb starting with 10.1.3)
-			"CREATE_FUNCTION_IF_NOT_EXISTS" => "CREATE FUNCTION IF NOT EXISTS ".$function_name."() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true",
+			'CREATE_FUNCTION_IF_NOT_EXISTS' => 'CREATE FUNCTION IF NOT EXISTS ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
 			// sql to check whether aggregate function is supported (mariadb starting with 10.3.3)
-			"CREATE_REPLACE_AGGREGATE" => "CREATE OR REPLACE AGGREGATE FUNCTION ".$function_name."() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA BEGIN RETURN true; FETCH GROUP NEXT ROW; END;"
+			'CREATE_REPLACE_AGGREGATE'      => 'CREATE OR REPLACE AGGREGATE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA BEGIN RETURN true; FETCH GROUP NEXT ROW; END;',
 		);
 
 		$old_val = $wpdb->suppress_errors();
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP FUNCTION statement; cannot be parameterized.
-		$wpdb->query($sql['DROP_FUNCTION']);
+		$wpdb->query( $sql['DROP_FUNCTION'] );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION statement; cannot be parameterized.
-		$is_stored_routine_supported = $wpdb->query($sql['CREATE_FUNCTION']);
-		if ($is_stored_routine_supported) {
-			$is_binary_logging_enabled = 1 == $wpdb->get_var('SELECT @@GLOBAL.log_bin');
+		$is_stored_routine_supported = $wpdb->query( $sql['CREATE_FUNCTION'] );
+		if ( $is_stored_routine_supported ) {
+			$is_binary_logging_enabled = 1 == $wpdb->get_var( 'SELECT @@GLOBAL.log_bin' );
 			// not sure why the log_bin variable cant be retrieved on mysql 5.0, seems like there's a bug on that version, so we use another alternative to check whether or not binary logging is enabled
-			$is_binary_logging_enabled = false === $is_binary_logging_enabled ? $wpdb->get_results("SHOW GLOBAL VARIABLES LIKE 'log_bin'", ARRAY_A) : $is_binary_logging_enabled;
-			$is_binary_logging_enabled = is_array($is_binary_logging_enabled) && isset($is_binary_logging_enabled[0]['Value']) && '' != $is_binary_logging_enabled[0]['Value'] ? $is_binary_logging_enabled[0]['Value'] : $is_binary_logging_enabled;
-			$is_binary_logging_enabled = is_string($is_binary_logging_enabled) && ('ON' === strtoupper($is_binary_logging_enabled) || '1' === $is_binary_logging_enabled) ? true : $is_binary_logging_enabled;
-			$is_binary_logging_enabled = is_string($is_binary_logging_enabled) && ('OFF' === strtoupper($is_binary_logging_enabled) || '0' === $is_binary_logging_enabled) ? false : $is_binary_logging_enabled;
+			$is_binary_logging_enabled   = false === $is_binary_logging_enabled ? $wpdb->get_results( "SHOW GLOBAL VARIABLES LIKE 'log_bin'", ARRAY_A ) : $is_binary_logging_enabled;
+			$is_binary_logging_enabled   = is_array( $is_binary_logging_enabled ) && isset( $is_binary_logging_enabled[0]['Value'] ) && '' != $is_binary_logging_enabled[0]['Value'] ? $is_binary_logging_enabled[0]['Value'] : $is_binary_logging_enabled;
+			$is_binary_logging_enabled   = is_string( $is_binary_logging_enabled ) && ( 'ON' === strtoupper( $is_binary_logging_enabled ) || '1' === $is_binary_logging_enabled ) ? true : $is_binary_logging_enabled;
+			$is_binary_logging_enabled   = is_string( $is_binary_logging_enabled ) && ( 'OFF' === strtoupper( $is_binary_logging_enabled ) || '0' === $is_binary_logging_enabled ) ? false : $is_binary_logging_enabled;
 			$is_stored_routine_supported = array(
-				'is_create_or_replace_supported' => $wpdb->query($sql['CREATE_REPLACE_FUNCTION']), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
-				'is_if_not_exists_function_supported' => $wpdb->query($sql['CREATE_FUNCTION_IF_NOT_EXISTS']), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
-				'is_aggregate_function_supported' => $wpdb->query($sql['CREATE_REPLACE_AGGREGATE']), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE AGGREGATE FUNCTION variant; cannot be parameterized.
-				'is_binary_logging_enabled' => $is_binary_logging_enabled,
-				'is_function_creators_trusted' => 1 == $wpdb->get_var('SELECT @@GLOBAL.log_bin_trust_function_creators'),
+				'is_create_or_replace_supported'      => $wpdb->query( $sql['CREATE_REPLACE_FUNCTION'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
+				'is_if_not_exists_function_supported' => $wpdb->query( $sql['CREATE_FUNCTION_IF_NOT_EXISTS'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
+				'is_aggregate_function_supported'     => $wpdb->query( $sql['CREATE_REPLACE_AGGREGATE'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE AGGREGATE FUNCTION variant; cannot be parameterized.
+				'is_binary_logging_enabled'           => $is_binary_logging_enabled,
+				'is_function_creators_trusted'        => 1 == $wpdb->get_var( 'SELECT @@GLOBAL.log_bin_trust_function_creators' ),
 			);
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP FUNCTION statement; cannot be parameterized.
-			$wpdb->query($sql['DROP_FUNCTION']);
+			$wpdb->query( $sql['DROP_FUNCTION'] );
 		} else {
 			/* translators: 1: Last database error, 2: SQL create function statement. */
-			$is_stored_routine_supported = new WP_Error('routine_creation_error', sprintf(__('An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'backupplus'), $wpdb->last_error.' -', $sql['CREATE_FUNCTION']));
+			$is_stored_routine_supported = new WP_Error( 'routine_creation_error', sprintf( __( 'An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'backupplus' ), $wpdb->last_error . ' -', $sql['CREATE_FUNCTION'] ) );
 		}
-		$wpdb->suppress_errors($old_val);
+		$wpdb->suppress_errors( $old_val );
 
 		return $is_stored_routine_supported;
 	}
@@ -772,7 +838,7 @@ class BackupPlus_Database_Utility {
 	 *
 	 *     [
 	 *         [
-	 *              "Db" => "wordpress",
+	 *              "Db" => "WordPress",
 	 *              "Name" => "_NextVal",
 	 *              "Type" => "FUNCTION",
 	 *              "Definer" => "root@localhost",
@@ -793,7 +859,7 @@ class BackupPlus_Database_Utility {
 	 *                  END"
 	 *         ],
 	 *         [
-	 *              "Db" => "wordpress",
+	 *              "Db" => "WordPress",
 	 *              "Name" => "CreateSequence",
 	 *              "Type" => "Procedure",
 	 *              "Definer" => "root@localhost",
@@ -825,26 +891,34 @@ class BackupPlus_Database_Utility {
 		$old_val = $wpdb->suppress_errors();
 		try {
 			/* translators: 1: Last database error, 2: Additional error details. */
-			$err_msg = __('An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'backupplus');
-			$function_status = $wpdb->get_results($wpdb->prepare('SHOW FUNCTION STATUS WHERE DB = %s', DB_NAME), ARRAY_A);
-			if (!empty($wpdb->last_error)) throw new Exception(sprintf($err_msg, $wpdb->last_error.' -', $wpdb->last_query), 0);
-			$procedure_status = $wpdb->get_results($wpdb->prepare('SHOW PROCEDURE STATUS WHERE DB = %s', DB_NAME), ARRAY_A);
-			if (!empty($wpdb->last_error)) throw new Exception(sprintf($err_msg, $wpdb->last_error.' -', $wpdb->last_query), 0);
-			$stored_routines = array_merge((array) $function_status, (array) $procedure_status);
-			foreach ((array) $stored_routines as $key => $routine) {
-				if (empty($routine['Name']) || empty($routine['Type'])) continue;
+			$err_msg         = __( 'An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'backupplus' );
+			$function_status = $wpdb->get_results( $wpdb->prepare( 'SHOW FUNCTION STATUS WHERE DB = %s', DB_NAME ), ARRAY_A );
+			if ( ! empty( $wpdb->last_error ) ) {
+				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
+			}
+			$procedure_status = $wpdb->get_results( $wpdb->prepare( 'SHOW PROCEDURE STATUS WHERE DB = %s', DB_NAME ), ARRAY_A );
+			if ( ! empty( $wpdb->last_error ) ) {
+				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
+			}
+			$stored_routines = array_merge( (array) $function_status, (array) $procedure_status );
+			foreach ( (array) $stored_routines as $key => $routine ) {
+				if ( empty( $routine['Name'] ) || empty( $routine['Type'] ) ) {
+					continue;
+				}
 				$routine_name = $routine['Name'];
 				// Since routine name can include backquotes and routine name is typically enclosed with backquotes as well, the backquote escaping for the routine name can be done by adding a leading backquote
-				$quoted_escaped_routine_name = BackupPlus_Manipulation_Functions::backquote(str_replace('`', '``', $routine_name));
-				$routine = $wpdb->get_results($wpdb->prepare('SHOW CREATE %1$s %2$s', $routine['Type'], $quoted_escaped_routine_name), ARRAY_A);// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQLPlaceholders.UnquotedComplexPlaceholder -- No direct schema change here; this is a false positive. We use the unquoted placeholders because they are used for identifiers (the routine name and type).
+				$quoted_escaped_routine_name = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $routine_name ) );
+				$routine                     = $wpdb->get_results( $wpdb->prepare( 'SHOW CREATE %1$s %2$s', $routine['Type'], $quoted_escaped_routine_name ), ARRAY_A );// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQLPlaceholders.UnquotedComplexPlaceholder -- No direct schema change here; this is a false positive. We use the unquoted placeholders because they are used for identifiers (the routine name and type).
 				/* translators: 1: Last database error, 2: Last executed SQL query. */
-				if (!empty($wpdb->last_error)) throw new Exception(sprintf(__('An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'backupplus'), $wpdb->last_error.' -', $wpdb->last_query), 1);
-				$stored_routines[$key] = array_merge($stored_routines[$key], $routine ? $routine[0] : array());
+				if ( ! empty( $wpdb->last_error ) ) {
+					throw new Exception( sprintf( __( 'An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'backupplus' ), $wpdb->last_error . ' -', $wpdb->last_query ), 1 );
+				}
+				$stored_routines[ $key ] = array_merge( $stored_routines[ $key ], $routine ? $routine[0] : array() );
 			}
-		} catch (Exception $ex) {
-			$stored_routines = new WP_Error(1 === $ex->getCode() ? 'routine_sql_error' : 'routine_status_error', $ex->getMessage());
+		} catch ( Exception $ex ) {
+			$stored_routines = new WP_Error( 1 === $ex->getCode() ? 'routine_sql_error' : 'routine_status_error', $ex->getMessage() );
 		}
-		$wpdb->suppress_errors($old_val);
+		$wpdb->suppress_errors( $old_val );
 
 		return $stored_routines;
 	}
@@ -856,8 +930,8 @@ class BackupPlus_Database_Utility {
 	 * @param String $text The raw text to be escaped. The input typed by the user should have no extra or deleted slashes.
 	 * @return String Text in the form of a LIKE phrase. The output is not SQL safe. Call wpdb::prepare() or wpdb::_real_escape() next.
 	 */
-	public static function esc_like($text) {
-		return function_exists('esc_like') ? esc_like($text) : addcslashes($text, '_%\\');
+	public static function esc_like( $text ) {
+		return function_exists( 'esc_like' ) ? esc_like( $text ) : addcslashes( $text, '_%\\' );
 	}
 
 	/**
@@ -867,29 +941,34 @@ class BackupPlus_Database_Utility {
 	 */
 	public static function get_install_activate_link_of_wp_optimize_plugin() {
 		// If WP-Optimize is activated, then return empty.
-		if (class_exists('WP_Optimize')) return '';
+		if ( class_exists( 'WP_Optimize' ) ) {
+			return '';
+		}
 
 		// Generally it is 'wp-optimize/wp-optimize.php',
 		// but we can't assume that the user hasn't renamed the plugin folder - with 3 million UDP users and 1 million AIOWPS, there will be some who have.
 		$wp_optimize_plugin_file_rel_to_plugins_dir = BackupPlus_Database_Utility::get_wp_optimize_plugin_file_rel_to_plugins_dir();
 
 		// If BackupPlus is installed but not activated, then return activate link.
-		if ($wp_optimize_plugin_file_rel_to_plugins_dir) {
-			$activate_url = add_query_arg(array(
-				'_wpnonce'    => wp_create_nonce('activate-plugin_'.$wp_optimize_plugin_file_rel_to_plugins_dir),
-				'action'      => 'activate',
-				'plugin'      => $wp_optimize_plugin_file_rel_to_plugins_dir,
-			), network_admin_url('plugins.php'));
+		if ( $wp_optimize_plugin_file_rel_to_plugins_dir ) {
+			$activate_url = add_query_arg(
+				array(
+					'_wpnonce' => wp_create_nonce( 'activate-plugin_' . $wp_optimize_plugin_file_rel_to_plugins_dir ),
+					'action'   => 'activate',
+					'plugin'   => $wp_optimize_plugin_file_rel_to_plugins_dir,
+				),
+				network_admin_url( 'plugins.php' )
+			);
 
 			// If is network admin then add to link network activation.
-			if (is_network_admin()) {
-				$activate_url = add_query_arg(array('networkwide' => 1), $activate_url);
+			if ( is_network_admin() ) {
+				$activate_url = add_query_arg( array( 'networkwide' => 1 ), $activate_url );
 			}
-			return sprintf('%s <a href="%s">%s</a>', __('WP-Optimize is installed but currently inactive.', 'backupplus'), $activate_url, __('Follow this link to activate the WP-Optimize plugin.', 'backupplus'));
+			return sprintf( '%s <a href="%s">%s</a>', __( 'WP-Optimize is installed but currently inactive.', 'backupplus' ), $activate_url, __( 'Follow this link to activate the WP-Optimize plugin.', 'backupplus' ) );
 		}
 
 		// If WP-Optimize is neither activated nor installed then return the installation link
-		return '<a href="'.wp_nonce_url(self_admin_url('update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-optimize'), 'install-plugin_wp-optimize').'">'.__('Follow this link to install the WP-Optimize plugin.', 'backupplus').'</a>';
+		return '<a href="' . wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&amp;backupplus_noautobackup=1&amp;plugin=wp-optimize' ), 'install-plugin_wp-optimize' ) . '">' . __( 'Follow this link to install the WP-Optimize plugin.', 'backupplus' ) . '</a>';
 	}
 
 	/**
@@ -898,29 +977,29 @@ class BackupPlus_Database_Utility {
 	 * @return String|false path to the WP-Optimize plugin file relative to the plugins directory
 	 */
 	public static function get_wp_optimize_plugin_file_rel_to_plugins_dir() {
-		if (!function_exists('get_plugins')) {
+		if ( ! function_exists( 'get_plugins' ) ) {
 			include_once ABSPATH . '/wp-admin/includes/plugin.php';
 		}
 
-		$installed_plugins = get_plugins();
-		$installed_plugins_keys = array_keys($installed_plugins);
-		foreach ($installed_plugins_keys as $plugin_file_rel_to_plugins_dir) {
-			$temp_plugin_file_name = substr($plugin_file_rel_to_plugins_dir, strpos($plugin_file_rel_to_plugins_dir, '/') + 1);
-			if ('wp-optimize.php' == $temp_plugin_file_name) {
+		$installed_plugins      = get_plugins();
+		$installed_plugins_keys = array_keys( $installed_plugins );
+		foreach ( $installed_plugins_keys as $plugin_file_rel_to_plugins_dir ) {
+			$temp_plugin_file_name = substr( $plugin_file_rel_to_plugins_dir, strpos( $plugin_file_rel_to_plugins_dir, '/' ) + 1 );
+			if ( 'wp-optimize.php' == $temp_plugin_file_name ) {
 				return $plugin_file_rel_to_plugins_dir;
 			}
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Safely escape and backquote a table name.
 	 *
 	 * @param string $table Table name.
 	 * @return string Escaped and backquoted table name.
 	 */
-	public static function escape_table_name($table) {
-		return BackupPlus_Manipulation_Functions::backquote(str_replace('`', '``', $table));
+	public static function escape_table_name( $table ) {
+		return BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $table ) );
 	}
 }
 
@@ -932,12 +1011,14 @@ class BackupPlus_WPDB_OtherDB_Utility extends wpdb {
 	 * @param String $error_code a string containing an error code
 	 * @return Boolean returns false
 	 */
-	public function bail($message, $error_code = '500') {
+	public function bail( $message, $error_code = '500' ) {
 		global $backupplus;
-		if ('db_connect_fail' == $error_code) $message = 'Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled.';
-		$backupplus->log("WPDB_OtherDB error: $message ($error_code)");
+		if ( 'db_connect_fail' == $error_code ) {
+			$message = 'Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled.';
+		}
+		$backupplus->log( "WPDB_OtherDB error: $message ($error_code)" );
 		// Now do the things that would have been done anyway
-		$this->error = class_exists('WP_Error') ? new WP_Error($error_code, $message) : $message;
+		$this->error = class_exists( 'WP_Error' ) ? new WP_Error( $error_code, $message ) : $message;
 		return false;
 	}
 }

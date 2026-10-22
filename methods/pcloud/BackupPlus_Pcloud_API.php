@@ -1,6 +1,8 @@
 <?php
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
-if (!defined('ABSPATH')) die('No direct access allowed');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed' );
+}
 
 /**
  * pCloud API implementation for BackupPlus
@@ -44,7 +46,7 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return void
 	 */
-	public function set_auth($auth = '') {
+	public function set_auth( $auth = '' ) {
 		$this->auth = $auth;
 	}
 
@@ -55,8 +57,8 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return void
 	 */
-	public function set_location($location = 1) {
-		if (1 === $location) {
+	public function set_location( $location = 1 ) {
+		if ( 1 === $location ) {
 			$this->apiep = 'https://api.pcloud.com';
 		} else {
 			$this->apiep = 'https://eapi.pcloud.com';
@@ -70,7 +72,7 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return void
 	 */
-	public function set_folder($folder) {
+	public function set_folder( $folder ) {
 		$this->folder = $folder;
 	}
 
@@ -80,23 +82,25 @@ class BackupPlus_Pcloud_API {
 	 * @return array|WP_Error - returns the response array or a WP_Error
 	 */
 	public function account_info() {
-		
+
 		$params = array(
-			'access_token' => $this->auth
+			'access_token' => $this->auth,
 		);
 
 		$args = array(
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('userinfo', $params, $args);
+		$response = $this->make_request( 'userinfo', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-		if (is_array($response) && isset($response['quota'])) {
+		if ( is_array( $response ) && isset( $response['quota'] ) ) {
 			return $response;
 		} else {
-			return new WP_Error('unexpected_response', 'pCloud userinfo request returned an unexpected result: '.json_encode($response));
+			return new WP_Error( 'unexpected_response', 'pCloud userinfo request returned an unexpected result: ' . json_encode( $response ) );
 		}
 	}
 
@@ -107,30 +111,32 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return int|WP_Error - returns the int result or a WP_Error
 	 */
-	public function make_directory($dir_name) {
+	public function make_directory( $dir_name ) {
 
 		$folder_id = 0;
-		$folders = explode("/", $dir_name);
+		$folders   = explode( '/', $dir_name );
 
-		foreach ($folders as $folder) {
+		foreach ( $folders as $folder ) {
 			$params = array(
-				'name' => untrailingslashit($folder),
-				'folderid' => $folder_id,
+				'name'         => untrailingslashit( $folder ),
+				'folderid'     => $folder_id,
 				'access_token' => $this->auth,
 			);
-	
+
 			$args = array(
 				'method' => 'GET',
 			);
-	
-			$response = $this->make_request('createfolderifnotexists', $params, $args);
-	
-			if (is_wp_error($response)) return $response;
-	
-			if (is_array($response) && isset($response['metadata']) && isset($response['metadata']['folderid'])) {
-				$folder_id = intval($response['metadata']['folderid']);
+
+			$response = $this->make_request( 'createfolderifnotexists', $params, $args );
+
+			if ( is_wp_error( $response ) ) {
+				return $response;
+			}
+
+			if ( is_array( $response ) && isset( $response['metadata'] ) && isset( $response['metadata']['folderid'] ) ) {
+				$folder_id = intval( $response['metadata']['folderid'] );
 			} else {
-				return new WP_Error('unexpected_response', 'pCloud createfolderifnotexists request returned an unexpected result: '.json_encode($response));
+				return new WP_Error( 'unexpected_response', 'pCloud createfolderifnotexists request returned an unexpected result: ' . json_encode( $response ) );
 			}
 		}
 
@@ -147,7 +153,7 @@ class BackupPlus_Pcloud_API {
 		$backup_dir = $this->get_backup_dir();
 
 		$params = array(
-			'path' => '/' . $backup_dir,
+			'path'         => '/' . $backup_dir,
 			'access_token' => $this->auth,
 		);
 
@@ -155,14 +161,16 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('listfolder', $params, $args);
+		$response = $this->make_request( 'listfolder', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-		if (!isset($response['result']) || 2005 === $response['result']) {
-			return $this->make_directory($backup_dir);
+		if ( ! isset( $response['result'] ) || 2005 === $response['result'] ) {
+			return $this->make_directory( $backup_dir );
 		} else {
-			if (isset($response['metadata'])) {
+			if ( isset( $response['metadata'] ) ) {
 				return $response['metadata']['folderid'];
 			}
 		}
@@ -176,7 +184,7 @@ class BackupPlus_Pcloud_API {
 	 * @return array|WP_Error - returns response array or a WP_Error
 	 */
 	public function create_upload() {
-		
+
 		$params = array(
 			'access_token' => $this->auth,
 		);
@@ -185,9 +193,11 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('upload_create', $params, $args);
+		$response = $this->make_request( 'upload_create', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
 		return $response;
 	}
@@ -201,22 +211,22 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return int|WP_Error returns the new offset OR -2 when end of file reached or WP_Error
 	 */
-	public function chunked_upload($path, $upload_id = 0, $uploadoffset = 0) {
+	public function chunked_upload( $path, $upload_id = 0, $uploadoffset = 0 ) {
 
-		if (!file_exists($path) || !is_file($path) || !is_readable($path)) {
-			return new WP_Error('invalid_file', 'pCloud chunked upload: Invalid file provided: '.$path);
+		if ( ! file_exists( $path ) || ! is_file( $path ) || ! is_readable( $path ) ) {
+			return new WP_Error( 'invalid_file', 'pCloud chunked upload: Invalid file provided: ' . $path );
 		}
 
-		$filesize = abs(filesize($path));
+		$filesize = abs( filesize( $path ) );
 
-		if ($uploadoffset >= $filesize) {
+		if ( $uploadoffset >= $filesize ) {
 			return -2;
 		}
 
-		$file = fopen($path, 'r');
+		$file = fopen( $path, 'r' );
 
-		if (0 < $uploadoffset) {
-			fseek($file, $uploadoffset);
+		if ( 0 < $uploadoffset ) {
+			fseek( $file, $uploadoffset );
 		}
 
 		$params = array(
@@ -224,23 +234,23 @@ class BackupPlus_Pcloud_API {
 			'uploadoffset' => $uploadoffset,
 		);
 
-		$content = fread($file, $this->part_size);
+		$content = fread( $file, $this->part_size );
 
-		if (!empty($content)) {
+		if ( ! empty( $content ) ) {
 
-			$result = $this->write($content, $params);
+			$result = $this->write( $content, $params );
 
-			if (is_wp_error($result)) {
-				fclose($file);
+			if ( is_wp_error( $result ) ) {
+				fclose( $file );
 				return $result;
 			}
 
 			$uploadoffset += $this->part_size;
 		}
 
-		fclose($file);
+		fclose( $file );
 
-		if ($uploadoffset >= $filesize) {
+		if ( $uploadoffset >= $filesize ) {
 			return -2;
 		}
 
@@ -256,16 +266,16 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return array|WP_Error - returns response array or a WP_Error
 	 */
-	public function save($upload_id, $path, $folder_id) {
+	public function save( $upload_id, $path, $folder_id ) {
 
-		$path = str_replace(array('\\'), "/", $path);
-		$parts = explode("/", $path);
-		$filename = end($parts);
+		$path     = str_replace( array( '\\' ), '/', $path );
+		$parts    = explode( '/', $path );
+		$filename = end( $parts );
 
 		$params = array(
-			'uploadid' => intval($upload_id),
-			'name' => rawurlencode($filename),
-			'folderid' => intval($folder_id),
+			'uploadid'     => intval( $upload_id ),
+			'name'         => rawurlencode( $filename ),
+			'folderid'     => intval( $folder_id ),
 			'access_token' => $this->auth,
 		);
 
@@ -273,9 +283,11 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('upload_save', $params, $args);
+		$response = $this->make_request( 'upload_save', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
 		return $response;
 	}
@@ -290,7 +302,7 @@ class BackupPlus_Pcloud_API {
 		$backup_dir = $this->get_backup_dir();
 
 		$params = array(
-			'path' => '/' . $backup_dir,
+			'path'         => '/' . $backup_dir,
 			'access_token' => $this->auth,
 		);
 
@@ -298,12 +310,14 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('listfolder', $params, $args);
+		$response = $this->make_request( 'listfolder', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-		if (is_bool($response) || !isset($response['metadata']) || !isset($response['metadata']['contents'])) {
-			return new WP_Error('unexpected_response', 'pCloud listfolder: returned an unexpected result: '.json_encode($response));
+		if ( is_bool( $response ) || ! isset( $response['metadata'] ) || ! isset( $response['metadata']['contents'] ) ) {
+			return new WP_Error( 'unexpected_response', 'pCloud listfolder: returned an unexpected result: ' . json_encode( $response ) );
 		}
 
 		return $response['metadata']['contents'];
@@ -320,17 +334,17 @@ class BackupPlus_Pcloud_API {
 	 * @return int
 	 * @throws Exception Throws standard exception.
 	 */
-	public function download($file_id, $archive_file = null, $options = array(), $offset = 0) {
+	public function download( $file_id, $archive_file = null, $options = array(), $offset = 0 ) {
 
-		$chunksize = 3 * (1024 * 1024);
+		$chunksize = 3 * ( 1024 * 1024 );
 
-		if (isset($options['Range'])) { // Disabled !
-			$range_tmp = str_replace('bytes=', '', $options['Range']);
-			$range_arr = explode('-', $range_tmp);
-			if (is_array($range_arr)) {
-				if (isset($range_arr[0]) && is_numeric($range_arr[0]) && isset($range_arr[1]) && is_numeric($range_arr[1])) {
-					$offset = intval($range_arr[0]);
-					$chunksize = intval($range_arr[1]) - $offset;
+		if ( isset( $options['Range'] ) ) { // Disabled !
+			$range_tmp = str_replace( 'bytes=', '', $options['Range'] );
+			$range_arr = explode( '-', $range_tmp );
+			if ( is_array( $range_arr ) ) {
+				if ( isset( $range_arr[0] ) && is_numeric( $range_arr[0] ) && isset( $range_arr[1] ) && is_numeric( $range_arr[1] ) ) {
+					$offset    = intval( $range_arr[0] );
+					$chunksize = intval( $range_arr[1] ) - $offset;
 				}
 			}
 		}
@@ -338,7 +352,7 @@ class BackupPlus_Pcloud_API {
 		$dwl_url = '';
 
 		$params = array(
-			'fileid' => $file_id,
+			'fileid'       => $file_id,
 			'access_token' => $this->auth,
 		);
 
@@ -346,42 +360,44 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('getfilelink', $params, $args);
+		$response = $this->make_request( 'getfilelink', $params, $args );
 
-		if (is_wp_error($response)) return $response;
-		
-		if (isset($response['hosts']) && isset($response['hosts'][0])) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( isset( $response['hosts'] ) && isset( $response['hosts'][0] ) ) {
 			$dwl_url = $response['hosts'][0] . $response['path'];
 		}
 
-		if (empty($dwl_url)) {
-			return new WP_Error('unexpected_response', 'pCloud download: Failed to get file download link.');
+		if ( empty( $dwl_url ) ) {
+			return new WP_Error( 'unexpected_response', 'pCloud download: Failed to get file download link.' );
 		}
 
 		$errstr = '';
 
 		$args = array(
 			'headers' => array(
-				'Range' => 'bytes=' . $offset . '-' . ($offset + ($chunksize - 1)),
+				'Range' => 'bytes=' . $offset . '-' . ( $offset + ( $chunksize - 1 ) ),
 			),
 		);
 
-		$content = false;
-		$api_response = wp_remote_get('https://' . $dwl_url, $args);
-		if (is_array($api_response) && !is_wp_error($api_response)) {
-			$response_body = wp_remote_retrieve_body($api_response);
-			if (is_string($response_body)) {
+		$content      = false;
+		$api_response = wp_remote_get( 'https://' . $dwl_url, $args );
+		if ( is_array( $api_response ) && ! is_wp_error( $api_response ) ) {
+			$response_body = wp_remote_retrieve_body( $api_response );
+			if ( is_string( $response_body ) ) {
 				$content = $response_body;
 			}
 		} else {
 			$errstr = $api_response->get_error_message();
 		}
 
-		if (!$content) {
-			return new WP_Error('unexpected_response', 'pCloud download: Failed to open connection to the backup file: ' . $dwl_url . ' error:' . $errstr);
+		if ( ! $content ) {
+			return new WP_Error( 'unexpected_response', 'pCloud download: Failed to open connection to the backup file: ' . $dwl_url . ' error:' . $errstr );
 		} else {
-			if (!fwrite($archive_file, $content)) {
-				return new WP_Error('unexpected_response', 'pCloud download: Failed to write content to output file.');
+			if ( ! fwrite( $archive_file, $content ) ) {
+				return new WP_Error( 'unexpected_response', 'pCloud download: Failed to write content to output file.' );
 			} else {
 				$offset += $chunksize;
 			}
@@ -397,10 +413,10 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return array|WP_Error - returns response array or a WP_Error
 	 */
-	public function delete($path) {
+	public function delete( $path ) {
 
 		$params = array(
-			'path' => $path,
+			'path'         => $path,
 			'access_token' => $this->auth,
 		);
 
@@ -408,12 +424,14 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('deletefile', $params, $args);
+		$response = $this->make_request( 'deletefile', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-		if (is_bool($response)) {
-			return new WP_Error('unexpected_response', 'pCloud deletefile: returned an unexpected result: '.json_encode($response));
+		if ( is_bool( $response ) ) {
+			return new WP_Error( 'unexpected_response', 'pCloud deletefile: returned an unexpected result: ' . json_encode( $response ) );
 		}
 
 		return $response;
@@ -426,12 +444,12 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return array|WP_Error - returns response array or a WP_Error
 	 */
-	public function get_file_info($file) {
+	public function get_file_info( $file ) {
 
-		$path = "/" . $this->get_backup_dir() . "/" . $file;
+		$path = '/' . $this->get_backup_dir() . '/' . $file;
 
 		$params = array(
-			'path' => $path,
+			'path'         => $path,
 			'access_token' => $this->auth,
 		);
 
@@ -439,12 +457,14 @@ class BackupPlus_Pcloud_API {
 			'method' => 'GET',
 		);
 
-		$response = $this->make_request('checksumfile', $params, $args);
+		$response = $this->make_request( 'checksumfile', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-		if (is_bool($response)) {
-			return new WP_Error('unexpected_response', 'pCloud checksumfile: returned an unexpected result: '.json_encode($response));
+		if ( is_bool( $response ) ) {
+			return new WP_Error( 'unexpected_response', 'pCloud checksumfile: returned an unexpected result: ' . json_encode( $response ) );
 		}
 
 		$response = $response['metadata'];
@@ -458,7 +478,7 @@ class BackupPlus_Pcloud_API {
 	 * @return string - the backup directory
 	 */
 	public function get_backup_dir() {
-		return untrailingslashit(apply_filters('backupplus_pcloud_backup_dir', 'BackupPlus').'/'.$this->folder);
+		return untrailingslashit( apply_filters( 'backupplus_pcloud_backup_dir', 'BackupPlus' ) . '/' . $this->folder );
 	}
 
 	/**
@@ -469,7 +489,7 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return WP_Error - returns a WP_Error if something goes wrong
 	 */
-	private function write($content, $params) {
+	private function write( $content, $params ) {
 
 		$params['access_token'] = $this->auth;
 
@@ -482,9 +502,11 @@ class BackupPlus_Pcloud_API {
 			'timeout'     => 60,
 		);
 
-		$response = $this->make_request('upload_write', $params, $args);
+		$response = $this->make_request( 'upload_write', $params, $args );
 
-		if (is_wp_error($response)) return $response;
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 	}
 
 	/**
@@ -496,26 +518,26 @@ class BackupPlus_Pcloud_API {
 	 *
 	 * @return array|WP_Error - returns an array response or WP_Error
 	 */
-	private function make_request($endpoint, $params, $args) {
-		$api_response = wp_remote_request($this->apiep . '/'. $endpoint . '?' . http_build_query($params), $args);
+	private function make_request( $endpoint, $params, $args ) {
+		$api_response = wp_remote_request( $this->apiep . '/' . $endpoint . '?' . http_build_query( $params ), $args );
 
-		if (is_wp_error($api_response)) {
+		if ( is_wp_error( $api_response ) ) {
 			return $api_response;
 		}
 
-		$response_code = wp_remote_retrieve_response_code($api_response);
-		if ($response_code < 200 || $response_code >= 300) {
-			return new WP_Error('unexpected_response_code', 'pCloud ' . $endpoint . ': returned an unexpected response code: '. $response_code . ' response: '.json_encode($api_response));
+		$response_code = wp_remote_retrieve_response_code( $api_response );
+		if ( $response_code < 200 || $response_code >= 300 ) {
+			return new WP_Error( 'unexpected_response_code', 'pCloud ' . $endpoint . ': returned an unexpected response code: ' . $response_code . ' response: ' . json_encode( $api_response ) );
 		}
 
-		$response_body = wp_remote_retrieve_body($api_response);
-		if (empty($response_body) || !is_string($response_body)) {
-			return new WP_Error('no_response_body', 'pCloud ' . $endpoint . ': returned no response body: ' . json_encode($api_response));
+		$response_body = wp_remote_retrieve_body( $api_response );
+		if ( empty( $response_body ) || ! is_string( $response_body ) ) {
+			return new WP_Error( 'no_response_body', 'pCloud ' . $endpoint . ': returned no response body: ' . json_encode( $api_response ) );
 		}
-		
-		$response_array = json_decode($response_body, true);
-		if (!is_array($response_array)) {
-			return new WP_Error('json_decode_failed', 'pCloud ' . $endpoint . ': Failed to json decode: ' . $response_body);
+
+		$response_array = json_decode( $response_body, true );
+		if ( ! is_array( $response_array ) ) {
+			return new WP_Error( 'json_decode_failed', 'pCloud ' . $endpoint . ': Failed to json decode: ' . $response_body );
 		}
 
 		return $response_array;

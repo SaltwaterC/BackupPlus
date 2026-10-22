@@ -1,5 +1,7 @@
 <?php
-if (!defined('ABSPATH')) die('No direct access allowed.');
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'No direct access allowed.' );
+}
 
 /** Read-only compatibility for legacy encrypted backup and token formats. */
 class BackupPlus_Crypto {
@@ -12,11 +14,11 @@ class BackupPlus_Crypto {
 	 * @param String|null $iv  Token IV, or the existing backup format's zero IV.
 	 * @return \phpseclib3\Crypt\Rijndael
 	 */
-	public static function rijndael($key, $iv = null) {
-		$length = max(16, min(32, 4 * (int) ceil(strlen($key) / 4)));
-		$cipher = new \phpseclib3\Crypt\Rijndael('cbc');
-		$cipher->setKey(substr(str_pad($key, $length, "\0"), 0, $length));
-		$cipher->setIV(null === $iv ? str_repeat("\0", 16) : $iv);
+	public static function rijndael( $key, $iv = null ) {
+		$length = max( 16, min( 32, 4 * (int) ceil( strlen( $key ) / 4 ) ) );
+		$cipher = new \phpseclib3\Crypt\Rijndael( 'cbc' );
+		$cipher->setKey( substr( str_pad( $key, $length, "\0" ), 0, $length ) );
+		$cipher->setIV( null === $iv ? str_repeat( "\0", 16 ) : $iv );
 		return $cipher;
 	}
 }
