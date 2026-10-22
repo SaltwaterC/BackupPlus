@@ -884,11 +884,12 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		// Loop through the cron schedules
 		foreach ($cron as $timestamp => $cron_hooks) {
 			foreach ($cron_hooks as $hook => $events) {
-				if (!preg_match('/^backupplus_(backup(_database|_resume|_increments)?|clean_temporary_files)$/', $hook)) continue;
+				if (!preg_match('/^backupplus_(backup(_database|_resume|_increments)?|clean_temporary_files|rotate_credential_keys|retry_credential_key_rotation)$/', $hook)) continue;
 
 				sort($events);
 
-				$schedule_name = $schedules[$events[0]['schedule']];
+				$schedule = $events[0]['schedule'];
+				$schedule_name = isset($schedules[$schedule]) ? $schedules[$schedule]['display'] : __('Non-repeating', 'backupplus');
 				// wp_date() is available on WP 5.3+, it performs locale translation.
 				$formatted_date = function_exists('wp_date') ? wp_date($date_format. ' ' .$time_format, $timestamp) : get_date_from_gmt(gmdate('Y-m-d H:i:s', $timestamp), $date_format. ' ' .$time_format);
 
@@ -910,7 +911,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				$data[] = array(
 					'overdue' => $overdue,
 					'hook' => $hook,
-					'name' => $schedule_name['display'],
+					'name' => $schedule_name,
 					'time' => $formatted_date,
 					'interval' => $interval
 				);

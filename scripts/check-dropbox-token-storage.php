@@ -12,18 +12,25 @@ $fixture_name = 'backupplus-sec001-'.wp_generate_password(12, false);
 $fixture_directory = $uploads['basedir'].'/'.$fixture_name;
 define('BACKUPPLUS_CREDENTIAL_KEY_DIR', $fixture_directory);
 $fixture_option = 'backupplus_sec001_test_'.wp_generate_password(12, false);
-register_shutdown_function(function() use ($fixture_option, $fixture_directory) {
+$fixture_cron_option = $fixture_option.'_cron';
+$original_rotation_error = get_option('backupplus_credential_rotation_error', null);
+register_shutdown_function(function() use ($fixture_option, $fixture_cron_option, $fixture_directory, $original_rotation_error) {
 	delete_option($fixture_option);
+	delete_option($fixture_cron_option);
+	if (null === $original_rotation_error) delete_option('backupplus_credential_rotation_error');
+	else update_option('backupplus_credential_rotation_error', $original_rotation_error, false);
 	if (is_dir($fixture_directory)) {
 		foreach (scandir($fixture_directory) as $file) if ('.' !== $file && '..' !== $file) unlink($fixture_directory.'/'.$file);
 		rmdir($fixture_directory);
 	}
 });
 $metadata = array();
-foreach (array('backupplus_credential_key_directory', 'backupplus_dropbox_token_format', 'backupplus_credential_setup_error') as $name) {
+foreach (array('backupplus_credential_key_directory', 'backupplus_dropbox_token_format', 'backupplus_credential_setup_error', 'backupplus_credential_rotation_key') as $name) {
 	add_filter('pre_option_'.$name, function($value) use (&$metadata, $name) { return isset($metadata[$name]) ? $metadata[$name] : ''; });
 	add_filter('pre_update_option_'.$name, function($value, $old) use (&$metadata, $name) { $metadata[$name] = $value; return $old; }, 10, 2);
 }
+add_filter('pre_option_cron', function($value) use ($fixture_cron_option) { return get_option($fixture_cron_option, array('version' => 2)); });
+add_filter('pre_update_option_cron', function($value, $old) use ($fixture_cron_option) { update_option($fixture_cron_option, $value, false); return $old; }, 10, 2);
 // Redirect Dropbox option access to a temporary real DB option; leave user settings alone.
 add_filter('pre_option_backupplus_dropbox', function($value) use ($fixture_option) {
 	return get_option($fixture_option, array('version' => 1, 'settings' => array()));
@@ -74,6 +81,7 @@ unlink($fixture_directory.'/credentials.php');
 BackupPlus_Credential_Key_Admin::perform('restore', $recovery);
 dropbox_wp_expect($rotated === BackupPlus_Credential_Key_Store::configuration(), 'Browser recovery must restore the missing file without SSH');
 require __DIR__.'/check-recovery-key-download.php';
+require __DIR__.'/check-credential-key-rotation.php';
 $rotated = BackupPlus_Credential_Key_Store::configuration();
 wp_set_current_user(0);
 $denied = false;

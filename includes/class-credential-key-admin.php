@@ -18,8 +18,14 @@ class BackupPlus_Credential_Key_Admin {
 			BackupPlus_Credential_Key_Store::relocate(trim($value));
 			$message = __('The encryption key was moved and verified. Dropbox remains connected.', 'backupplus');
 		} elseif ('rotate' === $operation) {
-			BackupPlus_Credential_Key_Store::rotate();
-			BackupPlus_Dropbox_Token_Migration::rotate();
+			if (class_exists('BackupPlus_Credential_Key_Rotation')) BackupPlus_Credential_Key_Rotation::queue_retry();
+			$config = BackupPlus_Credential_Key_Store::rotate();
+			if (class_exists('BackupPlus_Credential_Key_Rotation')) {
+				BackupPlus_Credential_Key_Rotation::reencrypt_credentials($config['active']);
+				BackupPlus_Credential_Key_Rotation::finish();
+			} else {
+				BackupPlus_Dropbox_Token_Migration::rotate();
+			}
 			$message = __('A new encryption key is active. Previous keys were retained so existing backups and running jobs remain readable. Download a new recovery copy.', 'backupplus');
 		} elseif ('restore' === $operation) {
 			BackupPlus_Credential_Key_Store::restore($value, $directory);
@@ -37,6 +43,7 @@ class BackupPlus_Credential_Key_Admin {
 			throw new RuntimeException('Choose a valid encryption key operation.');
 		}
 		BackupPlus_Dropbox_Token_Migration::upgrade();
+		if (class_exists('BackupPlus_Credential_Key_Rotation')) BackupPlus_Credential_Key_Rotation::schedule();
 		delete_option('backupplus_credential_setup_error');
 		return $message;
 	}
@@ -81,6 +88,7 @@ class BackupPlus_Credential_Key_Admin {
 
 		<?php } else {
 			$error = get_option('backupplus_credential_setup_error', '');
+			if (!$error) $error = get_option('backupplus_credential_rotation_error', '');
 			?>
 			<p><?php esc_html_e('BackupPlus automatically creates and protects the key used to encrypt credentials. No server setup is needed.', 'backupplus'); ?></p>
 			<p role="status" class="backupplus-key-status"><?php echo esc_html($error ?: __('Encryption is ready.', 'backupplus')); ?></p>
@@ -94,6 +102,7 @@ class BackupPlus_Credential_Key_Admin {
 			<p><?php esc_html_e('Keep a recovery copy somewhere safe and separate from your backups. You can restore it here after moving your website or losing the key file. Treat this file as a password.', 'backupplus'); ?></p>
 			<p><button type="button" class="button" id="backupplus-key-download"><?php esc_html_e('Download recovery key', 'backupplus'); ?></button>
 			<button type="button" class="button" data-key-operation="rotate"><?php esc_html_e('Rotate encryption key', 'backupplus'); ?></button></p>
+			<p><?php esc_html_e('Encryption keys rotate automatically every year through WordPress cron. You can also rotate them manually. Download a fresh recovery copy after rotation.', 'backupplus'); ?></p>
 			<p><?php esc_html_e('Restoring makes the recovery file\'s active key current. Other keys are kept so credentials saved since that recovery copy was downloaded remain readable.', 'backupplus'); ?></p>
 			<p><label for="backupplus-key-recovery"><?php esc_html_e('Recovery key file', 'backupplus'); ?></label> <input type="file" id="backupplus-key-recovery" accept=".php">
 			<button type="button" class="button" data-key-operation="restore" data-choose-file="<?php esc_attr_e('Choose your downloaded recovery key file first.', 'backupplus'); ?>"><?php esc_html_e('Restore recovery key', 'backupplus'); ?></button></p>

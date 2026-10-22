@@ -148,3 +148,5 @@ $errors = stream_get_contents($pipes[2]);
 fclose($pipes[1]); fclose($pipes[2]);
 expect_dropbox(0 === proc_close($process) && false !== strpos($output, 'RESTRICTED-HOST:PASS'), 'A host restricted by open_basedir must retain a working key: '.$errors);
 echo "PASS: restricted open_basedir hosting rejects inaccessible paths without losing the working key\n";
+
+require __DIR__.'/check-credential-key-rotation-network.php';

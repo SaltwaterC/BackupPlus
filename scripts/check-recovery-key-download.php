@@ -19,13 +19,15 @@ call_user_func(function($directory, $option) {
 <?php
 if (!isset($_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST']) || !hash_equals(TEST_GATE, $_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST'])) return;
 define('BACKUPPLUS_CREDENTIAL_KEY_DIR', TEST_DIRECTORY);
-$test_metadata = array('backupplus_credential_key_directory' => TEST_DIRECTORY, 'backupplus_dropbox_token_format' => 1, 'backupplus_credential_setup_error' => '');
+$test_metadata = array('backupplus_credential_key_directory' => TEST_DIRECTORY, 'backupplus_dropbox_token_format' => 1, 'backupplus_credential_setup_error' => '', 'backupplus_credential_rotation_key' => '', 'backupplus_credential_rotation_error' => '');
 foreach (array_keys($test_metadata) as $test_name) {
     add_filter('pre_option_'.$test_name, function($value) use (&$test_metadata, $test_name) { return $test_metadata[$test_name]; });
     add_filter('pre_update_option_'.$test_name, function($value, $old) use (&$test_metadata, $test_name) { $test_metadata[$test_name] = $value; return $old; }, 10, 2);
 }
 add_filter('pre_option_backupplus_dropbox', function($value) { return get_option(TEST_OPTION); });
 add_filter('pre_update_option_backupplus_dropbox', function($value, $old) { update_option(TEST_OPTION, $value, false); return $old; }, 10, 2);
+add_filter('pre_option_cron', function($value) { return get_option(TEST_OPTION.'_cron', array('version' => 2)); });
+add_filter('pre_update_option_cron', function($value, $old) { update_option(TEST_OPTION.'_cron', $value, false); return $old; }, 10, 2);
 MU;
 		$fixture = strtr($fixture, array('TEST_GATE' => var_export($gate, true), 'TEST_DIRECTORY' => var_export($directory, true), 'TEST_OPTION' => var_export($option, true)));
 		dropbox_wp_expect(false !== file_put_contents($mu_file, $fixture), 'HTTP test isolation must be installed');
@@ -55,6 +57,23 @@ MU;
 			dropbox_wp_expect(!is_wp_error($response), 'The recovery HTTP endpoint must be reachable');
 			return $response;
 		};
+		// Exercise the same authenticated request used by Advanced Tools > Cron events.
+		BackupPlus_Credential_Key_Rotation::schedule();
+		BackupPlus_Credential_Key_Rotation::queue_retry();
+		wp_schedule_single_event(time() + 600, 'backupplus_backup_resume');
+		wp_schedule_single_event(time() + 600, 'unrelated_fixture_cron');
+		$cron_response = $request(admin_url('admin-ajax.php'), $headers, array('action' => 'backupplus_ajax', 'subaction' => 'get_cron_events', 'nonce' => wp_create_nonce('backupplus-credentialtest-nonce')));
+		$cron_rows = json_decode(wp_remote_retrieve_body($cron_response), true);
+		dropbox_wp_expect(200 === wp_remote_retrieve_response_code($cron_response) && is_array($cron_rows), 'The Cron events page must receive valid JSON over HTTP');
+		$cron_by_hook = array_column($cron_rows, null, 'hook');
+		dropbox_wp_expect(isset($cron_by_hook[BackupPlus_Credential_Key_Rotation::HOOK]) && 'Annually' === $cron_by_hook[BackupPlus_Credential_Key_Rotation::HOOK]['name'] && !empty($cron_by_hook[BackupPlus_Credential_Key_Rotation::HOOK]['time']), 'The Cron events page must show annual credential rotation with its interval and next run');
+		dropbox_wp_expect(isset($cron_by_hook[BackupPlus_Credential_Key_Rotation::RETRY_HOOK]) && 'Non-repeating' === $cron_by_hook[BackupPlus_Credential_Key_Rotation::RETRY_HOOK]['name'], 'The Cron events page must show pending credential rotation retries as non-repeating');
+		dropbox_wp_expect(isset($cron_by_hook['backupplus_backup_resume']) && 'Non-repeating' === $cron_by_hook['backupplus_backup_resume']['name'], 'The Cron events page must still show one-off backup tasks');
+		dropbox_wp_expect(!isset($cron_by_hook['unrelated_fixture_cron']), 'The Cron events page must continue to exclude unrelated tasks');
+		wp_clear_scheduled_hook(BackupPlus_Credential_Key_Rotation::RETRY_HOOK);
+		wp_clear_scheduled_hook('backupplus_backup_resume');
+		wp_clear_scheduled_hook('unrelated_fixture_cron');
+		echo "PASS: Cron events HTTP listing includes annual rotation and one-off retries\n";
 		$response = $request($url, $headers, $body);
 		dropbox_wp_expect(200 === wp_remote_retrieve_response_code($response), 'An authorized recovery download must succeed over HTTP');
 		dropbox_wp_expect('application/octet-stream' === wp_remote_retrieve_header($response, 'content-type'), 'Recovery downloads must be binary attachments');

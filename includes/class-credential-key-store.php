@@ -6,6 +6,7 @@ class BackupPlus_Credential_Key_Store {
 	const HEADER = "<?php http_response_code(404); exit; __halt_compiler();\n";
 	const FILE = 'credentials.php';
 	const OPTION = 'backupplus_credential_key_directory';
+	const ROTATION_INTERVAL = 365 * 24 * 60 * 60;
 
 	/** Activation and upgrade share this path; failed initialization can be retried. */
 	public static function initialize() {
@@ -66,7 +67,7 @@ class BackupPlus_Credential_Key_Store {
 		global $backupplus;
 		if (is_wp_error($backupplus->ensure_phpseclib())) throw new RuntimeException('Encryption is unavailable on this host.');
 		$id = bin2hex(\phpseclib3\Crypt\Random::string(8));
-		return array('active' => $id, 'keys' => array($id => base64_encode(\phpseclib3\Crypt\Random::string(32))), 'upgraded_sites' => array());
+		return array('active' => $id, 'keys' => array($id => base64_encode(\phpseclib3\Crypt\Random::string(32))), 'upgraded_sites' => array(), 'rotated_at' => time());
 	}
 
 	public static function validate($config) {
@@ -76,7 +77,9 @@ class BackupPlus_Credential_Key_Store {
 		$sites = isset($config['upgraded_sites']) ? $config['upgraded_sites'] : array();
 		if (!is_array($sites)) throw new RuntimeException('The recovery key file is invalid.');
 		foreach ($sites as $site => $completed) if (!preg_match('/^[0-9]+$/D', (string) $site) || true !== $completed) throw new RuntimeException('The recovery key file is invalid.');
-		return array('active' => $config['active'], 'keys' => $config['keys'], 'upgraded_sites' => $sites);
+		$rotated_at = isset($config['rotated_at']) ? $config['rotated_at'] : 0;
+		if (!is_int($rotated_at) || $rotated_at < 0) throw new RuntimeException('The recovery key file is invalid.');
+		return array('active' => $config['active'], 'keys' => $config['keys'], 'upgraded_sites' => $sites, 'rotated_at' => $rotated_at);
 	}
 
 	public static function decode($contents) {
@@ -204,14 +207,34 @@ class BackupPlus_Credential_Key_Store {
 		}, false);
 	}
 
-	public static function rotate() {
-		self::configuration();
+	public static function rotation_time() {
+		$config = self::configuration();
+		if ($config['rotated_at']) return $config['rotated_at'];
 		return self::with_lock(self::directory(), function($path) {
+			$config = self::read_file($path);
+			if (!$config['rotated_at']) {
+				$config['rotated_at'] = time();
+				self::write_file($path, $config);
+			}
+			return $config['rotated_at'];
+		});
+	}
+
+	public static function rotate($only_if_due = false) {
+		self::configuration();
+		return self::with_lock(self::directory(), function($path) use ($only_if_due) {
 			if (@realpath(dirname($path)) !== @realpath(self::directory())) throw new RuntimeException('The key location changed. Please retry.');
 			$config = self::read_file($path);
+			if ($only_if_due && !$config['rotated_at']) {
+				$config['rotated_at'] = time();
+				self::write_file($path, $config);
+				return $config;
+			}
+			if ($only_if_due && time() < $config['rotated_at'] + self::ROTATION_INTERVAL) return $config;
 			$new = self::new_configuration();
 			$config['active'] = $new['active'];
 			$config['keys'] = array_merge($config['keys'], $new['keys']); // Keep historical and in-flight jobs readable.
+			$config['rotated_at'] = $new['rotated_at'];
 			self::write_file($path, $config);
 			return $config;
 		});
@@ -266,6 +289,7 @@ class BackupPlus_Credential_Key_Store {
 			// Restore the selected recovery state while retaining keys needed by
 			// credentials written since that recovery copy was downloaded.
 			$config['active'] = $imported['active'];
+			$config['rotated_at'] = $imported['rotated_at'];
 			$config['upgraded_sites'] = $config['upgraded_sites'] + $imported['upgraded_sites'];
 			BackupPlus_Dropbox_Token_Migration::verify($config);
 			self::write_file($path, $config);

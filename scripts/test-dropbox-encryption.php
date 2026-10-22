@@ -6,7 +6,13 @@ define('BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION', '5.6.1');
 define('WP_CLI', true);
 function __($text, $domain = null) { return $text; }
 function is_wp_error($value) { return $value instanceof WP_Error; }
-function get_current_blog_id() { return 1; }
+$dropbox_blog_id = 1;
+$dropbox_blog_stack = array();
+function get_current_blog_id() { global $dropbox_blog_id; return $dropbox_blog_id; }
+function get_current_network_id() { return 1; }
+function get_sites($args) { return array(1, 2, 3); }
+function switch_to_blog($id) { global $dropbox_blog_id, $dropbox_blog_stack; $dropbox_blog_stack[] = $dropbox_blog_id; $dropbox_blog_id = $id; }
+function restore_current_blog() { global $dropbox_blog_id, $dropbox_blog_stack; $dropbox_blog_id = array_pop($dropbox_blog_stack); }
 function wp_upload_dir($time = null, $create = true) { return array('basedir' => WP_CONTENT_DIR.'/uploads', 'error' => false); }
 $dropbox_is_multisite = false;
 $dropbox_network_admin = true;
@@ -17,11 +23,12 @@ function current_user_can($capability) { global $dropbox_can_manage, $dropbox_ne
 function backupplus_try_include_file($path, $mode) { require_once BACKUPPLUS_DIR.'/'.$path; }
 class WP_Error {}
 $dropbox_test_options = array();
-function get_option($name, $default = false) { global $dropbox_test_options; return isset($dropbox_test_options[$name]) ? $dropbox_test_options[$name] : $default; }
-function update_option($name, $value, $autoload = null) { global $dropbox_test_options; $dropbox_test_options[$name] = $value; return true; }
-function delete_option($name) { global $dropbox_test_options; unset($dropbox_test_options[$name]); return true; }
-function get_site_option($name, $default = false) { return get_option($name, $default); }
-function update_site_option($name, $value) { return update_option($name, $value); }
+$dropbox_other_blog_options = array();
+function get_option($name, $default = false) { global $dropbox_test_options, $dropbox_other_blog_options; $options = 1 === get_current_blog_id() ? $dropbox_test_options : (isset($dropbox_other_blog_options[get_current_blog_id()]) ? $dropbox_other_blog_options[get_current_blog_id()] : array()); return isset($options[$name]) ? $options[$name] : $default; }
+function update_option($name, $value, $autoload = null) { global $dropbox_test_options, $dropbox_other_blog_options; if (1 === get_current_blog_id()) $dropbox_test_options[$name] = $value; else $dropbox_other_blog_options[get_current_blog_id()][$name] = $value; return true; }
+function delete_option($name) { global $dropbox_test_options, $dropbox_other_blog_options; if (1 === get_current_blog_id()) unset($dropbox_test_options[$name]); else unset($dropbox_other_blog_options[get_current_blog_id()][$name]); return true; }
+function get_site_option($name, $default = false) { global $dropbox_test_options; return isset($dropbox_test_options[$name]) ? $dropbox_test_options[$name] : $default; }
+function update_site_option($name, $value) { global $dropbox_test_options; $dropbox_test_options[$name] = $value; return true; }
 
 class WP_CLI {
 	public static $messages = array();
@@ -57,13 +64,16 @@ class DropboxTestModule extends BackupPlus_BackupModule {
 }
 class BackupPlus_Options {
 	public static $options;
+	public static $blog_options = array();
 	public static $saves = 0;
 	public static $fail_save = false;
+	public static $fail_blog_id = null;
 	public static function user_can_manage() { global $dropbox_can_manage; return $dropbox_can_manage; }
-	public static function get_backupplus_option($name) { return self::$options; }
+	public static function get_backupplus_option($name) { return 1 === get_current_blog_id() ? self::$options : self::$blog_options[get_current_blog_id()]; }
 	public static function update_backupplus_option($name, $options) {
-		if (self::$fail_save) return false;
-		self::$options = $options;
+		if (self::$fail_save || self::$fail_blog_id === get_current_blog_id()) return false;
+		if (1 === get_current_blog_id()) self::$options = $options;
+		else self::$blog_options[get_current_blog_id()] = $options;
 		self::$saves++;
 		return true;
 	}
