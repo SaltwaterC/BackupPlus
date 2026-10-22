@@ -1115,7 +1115,12 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 		
 		$instance_id = $this->get_instance_id();
 		// Instantiate the Encryptor and storage objects
-		$encrypter = new Dropbox_Encrypter('ThisOneDoesNotMatterBeyondLength');
+		try {
+			$encrypter = Dropbox_Encrypter::from_config($instance_id);
+		} catch (Exception $e) {
+			$this->log($e->getMessage(), 'error');
+			return false;
+		}
 
 		// Instantiate the storage
 		$dropbox_storage = new Dropbox_WordPress($encrypter, "tk_", 'backupplus_dropbox', $this);

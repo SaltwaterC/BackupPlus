@@ -51,6 +51,7 @@ test-integration: $(TEST_VENV)/.requirements-installed
 	done
 
 test-wordpress:
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-dropbox-token-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php
 	@set -e; for provider in $$(awk '/^[[:space:]]*\* Provider ID: / { print $$4 }' methods/*.php) all; do \
 		"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php "$$provider"; \

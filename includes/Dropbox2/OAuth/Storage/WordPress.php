@@ -42,9 +42,8 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 */
 	public function __construct($encrypter = null, $option_name_prefix = 'dropbox_token', $option_array = 'dropbox', $backup_module_object = null)
 	{
-		if ($encrypter instanceof Dropbox_Encrypter) {
-			$this->encrypter = $encrypter;
-		}
+		if (!$encrypter instanceof Dropbox_Encrypter) throw new Dropbox_Exception('Dropbox credential encryption is required.');
+		$this->encrypter = $encrypter;
 
 		if ($backup_module_object instanceof BackupPlus_BackupModule) {
 			$this->backup_module_object = $backup_module_object;
@@ -71,6 +70,7 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 					if (!empty($opts[$this->option_name_prefix.$type])) {
 						$gettoken = $opts[$this->option_name_prefix.$type];
 						$token = $this->decrypt($gettoken);
+						if (false === $token) throw new Dropbox_Exception('Dropbox credentials could not be read. Restore your recovery key in BackupPlus Settings, or disconnect and reconnect Dropbox.');
 						return $token;
 					}
 				} else {
@@ -98,10 +98,8 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 			
 			$opts = $this->backup_module_object->get_options();
 			
-			if ($type == 'access_token'){
+			if ($type == 'access_token' || $type == 'request_token'){
 				$token = $this->encrypt($token);
-				$opts[$this->option_name_prefix.$type] = $token;
-			} else if ($type == 'request_token' ) {
 				$opts[$this->option_name_prefix.$type] = $token;
 			} else {
 				$opts[$type] = $token;
@@ -155,9 +153,7 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	}
 	
 	/**
-	 * Use the Encrypter to encrypt a token and return it
-	 * If there is not encrypter object, return just the 
-	 * serialized token object for storage
+	 * Serialize and encrypt a token; encryption failure must prevent the save.
 	 * @param stdClass $token OAuth token to encrypt
 	 * @return stdClass|string
 	 */
@@ -166,28 +162,22 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 		// Serialize the token object
 		$token = serialize($token);
 		
-		// Encrypt the token if there is an Encrypter instance
-		if ($this->encrypter instanceof Dropbox_Encrypter) {
-			$token = $this->encrypter->encrypt($token);
-		}
+		$token = $this->encrypter->encrypt($token);
+		if (false === $token) throw new Dropbox_Exception('Dropbox credentials could not be encrypted.');
 		
 		// Return the token
 		return $token;
 	}
 	
 	/**
-	 * Decrypt a token using the Encrypter object and return it
-	 * If there is no Encrypter object, assume the token was stored
-	 * serialized and return the unserialized token object
+	 * Authenticate before unserializing a stored token. No plaintext fallback.
 	 * @param stdClass $token OAuth token to encrypt
 	 * @return stdClass|string
 	 */
 	protected function decrypt($token)
 	{
-		// Decrypt the token if there is an Encrypter instance
-		if ($this->encrypter instanceof Dropbox_Encrypter) {
-			$token = $this->encrypter->decrypt($token);
-		}
+		$token = $this->encrypter->decrypt($token);
+		if (false === $token) return false;
 		
 		// Return the unserialized token
 		return BackupPlus::unserialize($token, array('stdClass'));

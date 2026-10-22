@@ -19,7 +19,6 @@ function crypto_expect($condition, $message) {
 require BACKUPPLUS_DIR.'/class-backupplus.php';
 require BACKUPPLUS_DIR.'/includes/class-backupplus-encryption.php';
 require BACKUPPLUS_DIR.'/includes/class-manipulation-functions.php';
-require BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/Encrypter.php';
 class CryptoTestBackupPlus extends BackupPlus {
 	public function __construct() {}
 	public function log($line, $level = 'notice', $uniq_id = false, $skip_dblog = false) {}
@@ -68,19 +67,3 @@ foreach (array($first_chunk, $first_chunk.'halfblock', 'invalid') as $partial) {
 $decrypted = BackupPlus_Encryption::decrypt($encrypted, $vectors['chunked']['key']);
 crypto_expect(is_array($decrypted) && $vectors['chunked']['plaintext_sha256'] === hash_file('sha256', $decrypted['fullpath']), 'A chunked encrypted backup must restore exactly');
 echo "PASS: multi-buffer backup encryption, interrupted encryption resumption and decryption\n";
-
-foreach ($vectors['dropbox'] as $vector) {
-	$encrypter = new Dropbox_Encrypter($vector['key']);
-	$plain = base64_decode($vector['plaintext']);
-	crypto_expect($plain === $encrypter->decrypt($vector['ciphertext']), 'Existing Dropbox tokens must decrypt');
-	$encrypted = $encrypter->encrypt($plain);
-	crypto_expect($plain === $encrypter->decrypt($encrypted), 'New Dropbox tokens must roundtrip');
-	crypto_expect($encrypted !== $encrypter->encrypt($plain), 'Dropbox encryption must use a fresh random IV');
-	$raw = base64_decode($vector['ciphertext']);
-	$cipher = BackupPlus_Crypto::rijndael($vector['key'], substr($raw, 0, 16));
-	crypto_expect(substr($raw, 16) === $cipher->encrypt($plain), 'Dropbox token encryption must preserve its ciphertext format');
-	foreach (array('not base64!', '', base64_encode('short'), base64_encode(str_repeat('x', 33))) as $invalid) {
-		crypto_expect(false === $encrypter->decrypt($invalid), 'Malformed stored tokens must fail without exceptions');
-	}
-}
-echo "PASS: pre-migration Dropbox tokens, new token encryption and malformed token handling\n";

@@ -312,3 +312,15 @@ function backupplus_build_mysqldump_list() {
 
 // Do this even if the missing files detection above fired, as the "missing files" detection above has a greater chance of showing the user useful info
 if (!class_exists('BackupPlus_Options')) backupplus_try_include_file('options.php', 'require_once');
+
+// Initialize installation keys on activation and on upgrades that do not reactivate.
+require_once BACKUPPLUS_DIR.'/includes/Dropbox2/Exception.php';
+require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/Encrypter.php';
+require_once BACKUPPLUS_DIR.'/includes/class-credential-key-store.php';
+require_once BACKUPPLUS_DIR.'/includes/class-dropbox-token-migration.php';
+require_once BACKUPPLUS_DIR.'/includes/class-credential-key-admin.php';
+register_activation_hook(__FILE__, array('BackupPlus_Credential_Key_Store', 'initialize'));
+add_action('init', array('BackupPlus_Credential_Key_Store', 'initialize'), 20);
+add_filter('backupplus_exclude_file', array('BackupPlus_Credential_Key_Store', 'exclude'), 100, 2);
+add_filter('backupplus_exclude_directory', array('BackupPlus_Credential_Key_Store', 'exclude'), 100, 2);
+BackupPlus_Credential_Key_Admin::register();

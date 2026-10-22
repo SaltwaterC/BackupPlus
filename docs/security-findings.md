@@ -1,6 +1,6 @@
 # Encryption and credential-storage findings
 
-Reviewed: 2026-10-22. Status: all findings below are open.
+Reviewed: 2026-10-22. SEC-001 is fixed in the working tree; SEC-002 through SEC-005 remain open.
 
 This records a source review of the current BackupPlus working tree, whose plugin header reports version 3.0.0. The reviewed tree includes the SFTP/SCP provider and the migration to phpseclib 3. Findings apply to this tree; affected published versions have not been established.
 
@@ -12,23 +12,23 @@ Priorities are implementation priorities, not CVSS scores. P1 means address prom
 
 | ID | Finding | Priority | Status |
 | --- | --- | --- | --- |
-| SEC-001 | Dropbox OAuth token encryption uses a shared hardcoded key and lacks ciphertext authentication | P1 | Open |
+| SEC-001 | Dropbox OAuth token encryption uses a shared hardcoded key and lacks ciphertext authentication | P1 | Fixed (working tree) |
 | SEC-002 | Database-backup encryption uses a fixed IV, direct passphrase conversion, and unauthenticated CBC | P1 | Open |
 | SEC-003 | Manual decryption puts the key in a URL and displays it on the page | P1 | Open |
 | SEC-004 | Failed database decryption includes the supplied key in its response | P2 | Open |
 | SEC-005 | Provider credentials and backup encryption phrases lack plugin-level encryption in WordPress options | P1 | Open |
 
-The only shared hardcoded data-encryption key found in the reviewed first-party code was the Dropbox key in SEC-001. This is a scoped search result, not proof that no other security issues exist. OAuth application identifiers and application secrets are a separate concern from the key used to encrypt stored user tokens.
+The only shared hardcoded data-encryption key found in the original reviewed first-party code was the Dropbox key in SEC-001. After remediation, it remains only in the one-time credential upgrade; normal token reads and writes cannot use it. This is a scoped search result, not proof that no other security issues exist. OAuth application identifiers and application secrets are a separate concern from the key used to encrypt stored user tokens.
 
 ## SEC-001: Dropbox tokens use a shared hardcoded encryption key
 
-**Evidence.** [`BackupPlus_BackupModule_dropbox::bootstrap()`](../methods/dropbox.php#L1118) constructs the encrypter with the literal 32-byte key:
+**Original evidence (before the fix).** `BackupPlus_BackupModule_dropbox::bootstrap()` constructed the encrypter with the literal 32-byte key:
 
 ```php
 $encrypter = new Dropbox_Encrypter('ThisOneDoesNotMatterBeyondLength');
 ```
 
-[`Dropbox_WordPress::set()`](../includes/Dropbox2/OAuth/Storage/WordPress.php#L101) encrypts access-token values before saving them in the provider options. Its [`encrypt()` method](../includes/Dropbox2/OAuth/Storage/WordPress.php#L164) serializes the token first. [`Dropbox_Encrypter::encrypt()`](../includes/Dropbox2/OAuth/Storage/Encrypter.php#L51) uses AES-256-CBC, PKCS#7 padding, and a fresh random 16-byte IV, and stores `Base64(IV || ciphertext)`. It adds no MAC or authentication tag. The decryptor checks encoding, length, and padding but does not cryptographically authenticate the stored value.
+The original `Dropbox_WordPress::set()` serialized and encrypted access-token values before saving them in provider options. `Dropbox_Encrypter::encrypt()` used AES-256-CBC, PKCS#7 padding, and a fresh random 16-byte IV, storing `Base64(IV || ciphertext)`. It added no MAC or authentication tag. The decryptor checked encoding, length, and padding without cryptographically authenticating the stored value.
 
 **Impact and conditions.** Anyone who obtains the encrypted token from a database copy, settings export, or another disclosure can recover it using the publicly available plugin source. No site-specific secret is needed. The random IV does not make a public shared key secret. Token permissions and validity determine the access a recovered token grants. An attacker able to change the stored value can also tamper with unauthenticated ciphertext; the resulting application effects were not demonstrated.
 
@@ -37,6 +37,16 @@ This concerns locally stored OAuth credentials. It does not describe Dropbox's o
 **Remediation.** Use authenticated encryption with a random installation-specific key kept separately from the database and exported settings. Define key rotation, missing-key behavior, and migration before changing the writer. Keep the old decoder only for an explicit one-time credential migration, then remove it. Rotate or reauthorize tokens if exposure is suspected. This follows [OWASP's guidance on authenticated encryption and separating keys from encrypted data](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html).
 
 **Verification required before closure.** Using disposable tokens, migrate a value produced with the old key, verify subsequent writes use the new format, reject modified ciphertext, and demonstrate that a database copy plus public source cannot decrypt the new value without the installation key. Verify restart, restore, and rotation behavior.
+
+**Resolution (2026-10-22; fixing commit pending).** The runtime now uses a versioned AES-256-GCM envelope with a random 96-bit nonce and full 128-bit authentication tag. It authenticates the version, key ID, WordPress blog ID and Dropbox instance ID before returning plaintext for unserialization. Access and request token writes require encryption; failed encryption preserves existing credentials.
+
+BackupPlus automatically generates a random installation key file on activation and upgrades, defaulting to a protected folder under wp-content and falling back to writable uploads storage on restricted hosts. No SSH, manually generated keys or external server setup are required. The guarded PHP file uses owner-only permissions, HTTP access protections and archive exclusions. Keys never enter the database or settings exports. WordPress Settings provides authorized, nonce-protected controls to relocate the file (including outside wp-content/docroot), download/restore a recovery copy and rotate keys. Hosts can optionally override the directory; key generation remains automatic. Managed location metadata cannot be imported through settings.
+
+The one-time automatic credential upgrade prepares/verifies every replacement before one options update and records a per-site completion marker in the protected key file, outside the database. The old decoder is private to that upgrade and is never used by normal reads; inserting legacy ciphertext or deleting a database marker after completion does not reopen it. Administrators can deliberately convert restored legacy settings through an authorized Settings action. Invalid inputs and failed saves preserve saved credentials. Existing tokens require no CLI migration or reauthorization on a successful upgrade. Lost managed keys are never silently replaced; administrators without a recovery copy can explicitly create a replacement in Settings and reconnect Dropbox without server access, while preserving old ciphertext for later recovery. Browser recovery verifies uploaded data against saved credentials before publishing it, activates the uploaded file's active key while retaining newer keys, and never executes the file. Relocation preserves keys and rotation retains historical keys for old backups/running jobs. Multisite key maintenance is restricted to network administrators. See the deployment notes for [storage, upgrade, recovery and rotation behavior](dropbox-token-encryption.md).
+
+**Verification evidence.** `make test` passes (asset checks, PHP unit tests, FTP/SFTP/SCP/WebDAV integration tests and WordPress checks). The Dropbox regression checks cover an independently produced disposable legacy CBC fixture, automatic one-time migration, protected installation file creation, shared-host uploads fallback, concurrent creation, relocation outside the document root, failure preservation, key rotation and verified browser recovery. Crypto checks cover OpenSSL interoperability, the portable phpseclib engine, fresh nonces, changes to every nonce/ciphertext/tag byte and the header, wrong installation keys, context binding and restart/database-only/full restore. The real WordPress check exercises activation, persisted token encryption, archive filters, unauthenticated HTTP denial of the key file, Settings controls, rotation, recovery, permissions and nonce rejection using disposable options/files. The recovery HTTP regression uses a disposable administrator and isolated key storage to verify the downloaded attachment, no-store headers, exact current file format, upload/restore roundtrip, restoration of an older active key after rotation without losing newer credentials, idempotence/conflict handling, and nonce/method/authentication/capability rejection. A fresh-process regression covers key metadata updates before crypto has loaded. Existing vendor/WP-CLI PHP deprecation notices remain.
+
+**Remaining limitations.** The protected default file is inside the web filesystem where shared-host permissions require it; administrators can move it outside the document root through Settings when permitted. Other backup products require separate exclusion rules. Historical database copies encrypted under the old public key remain vulnerable; revoke/reauthorize Dropbox tokens if exposure is suspected. Normal key rotation retains old keys and does not revoke Dropbox tokens. Recovery copies must be kept separately from backups.
 
 ## SEC-002: Database-backup encryption preserves an unsafe legacy format
 
@@ -80,7 +90,7 @@ The passphrase is user supplied, rather than a second shared hardcoded key. The 
 
 **Evidence.** [`BackupPlus_BackupModule::save_options()`](../methods/backup-module.php#L75) copies the provider's options directly into its settings array. [`BackupPlus_Options::update_backupplus_option()`](../options.php#L79) passes the value to WordPress's `update_option()`. The corresponding getter returns it through `get_option()`. Hooks exist for external customization, but no built-in encryption handler for these hooks was found.
 
-Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_passphrase` fields](../methods/sftp.php#L24). The SFTP provider added in this working tree follows the same persistence design. Consequently, an encrypted private key and the passphrase needed to unlock it can be stored together. The [`backupplus_encryptionphrase` setting](../options.php#L212) is also registered as a string without an encryption wrapper. Dropbox access tokens have the separate fixed-key wrapper described in SEC-001, which is not an effective site-specific protection boundary.
+Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_passphrase` fields](../methods/sftp.php#L24). The SFTP provider added in this working tree follows the same persistence design. Consequently, an encrypted private key and the passphrase needed to unlock it can be stored together. The [`backupplus_encryptionphrase` setting](../options.php#L212) is also registered as a string without an encryption wrapper. Dropbox access tokens originally had the separate fixed-key wrapper described in SEC-001; the SEC-001 fix replaces it with authenticated encryption under an automatically managed installation key. Other credentials listed here remain outside that fix.
 
 **Impact and conditions.** Someone who can read the relevant options through a database disclosure, a database backup, or a settings export that includes secrets can recover the provider credentials. For SFTP, the stored key and passphrase may permit remote authentication; the account's permissions determine the impact. A settings input rendered as a password field only changes browser presentation. Deployment-level database or disk encryption and third-party option hooks were not assessed.
 
@@ -90,7 +100,7 @@ Examples include FTP and WebDAV passwords and the SFTP [`pass`, `key`, and `key_
 
 ## Migration and closure notes
 
-The phpseclib 3 migration removed the obsolete library; it did not resolve these application-level designs. Existing [`scripts/test-encryption.php`](../scripts/test-encryption.php) and [`fixtures`](../scripts/fixtures/phpseclib2-compat.json) test legacy ciphertext compatibility. Passing those tests is not evidence that these findings are fixed.
+The phpseclib 3 migration removed the obsolete library; it did not resolve these application-level designs. Existing [`scripts/test-encryption.php`](../scripts/test-encryption.php) and [`fixtures`](../scripts/fixtures/phpseclib2-compat.json) test legacy database ciphertext compatibility. Passing those tests is not evidence that SEC-002 is fixed. SEC-001 has separate authenticated-storage and migration checks described above.
 
 Address the URL and response disclosures without waiting for a ciphertext-format migration. Coordinate SEC-001 and SEC-005 around a common secret-storage policy. Treat SEC-002 as a versioned file-format change: preserve restore support for existing archives without continuing unsafe new writes.
 

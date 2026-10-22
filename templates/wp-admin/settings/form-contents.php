@@ -296,6 +296,7 @@ $multi = apply_filters('backupplus_storage_printoptions_multi', '');
 	<tr>
 		<td colspan="2"><h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Advanced / Debugging Settings', 'backupplus'); ?></h2></td>
 	</tr>
+	<?php BackupPlus_Credential_Key_Admin::render(); ?>
 
 	<tr>
 		<th><?php esc_html_e('Expert settings', 'backupplus');?>:</th>
