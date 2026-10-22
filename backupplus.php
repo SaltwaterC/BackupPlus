@@ -378,3 +378,6 @@ BackupPlus_Credential_Key_Rotation::register();
 require_once BACKUPPLUS_DIR . '/includes/class-database-encryption.php';
 require_once BACKUPPLUS_DIR . '/includes/class-age-restore.php';
 BackupPlus_Database_Encryption::register();
+
+require_once BACKUPPLUS_DIR . '/includes/class-pre-update-backups.php';
+BackupPlus_Pre_Update_Backups::instance();

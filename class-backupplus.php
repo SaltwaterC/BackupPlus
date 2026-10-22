@@ -2763,7 +2763,7 @@ class BackupPlus {
 
 		$total_size = 0;
 
-		$service = $this->just_one( $this->jobdata_get( 'service' ) );
+		$service = $this->jobdata_get( 'pre_update_batch' ) ? $this->jobdata_get( 'service' ) : $this->just_one( $this->jobdata_get( 'service' ) );
 		if ( empty( $service ) ) {
 			$message = 'This file has already been successfully processed';
 		} else {
@@ -3500,7 +3500,7 @@ class BackupPlus {
 			$service = array_merge( array_keys( $options['remote_storage_instances'] ), $legacy_storage_instances );
 		}
 
-		$service = $this->just_one( $service );
+		$service = ! empty( $options['pre_update_batch'] ) ? $service : $this->just_one( $service );
 		$service = $this->get_canonical_service_list( $service );
 
 		$canonised_storage_objects_and_ids = array_merge( array_flip( $service ), $enabled_storage_objects_and_ids );
@@ -3610,6 +3610,9 @@ class BackupPlus {
 		);
 
 		array_push( $initial_jobdata, 'incremental_configuration', $incremental_configuration );
+		if ( ! empty( $options['pre_update_batch'] ) ) {
+			array_push( $initial_jobdata, 'pre_update_batch', $options['pre_update_batch'] );
+		}
 		if ( $incremental_base ) {
 			$previous_files = array();
 			foreach ( $job_file_entities as $entity => $unused ) {
@@ -3872,6 +3875,12 @@ class BackupPlus {
 
 		@fclose( $this->logfile_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		$this->logfile_handle = null;
+
+		// Emit a terminal result while archive and upload metadata are still available.
+		if ( $do_cleanup && ( $force_abort || 0 === $this->error_count() || ! $this->newresumption_scheduled || $this->current_resumption + 1 == $this->jobdata_get( 'fail_on_resume' ) ) ) {
+			$outcome = $force_abort ? 'aborted' : ( 0 === $this->error_count() && 0 === $this->error_count( 'warning' ) ? 'success' : 'failed' );
+			do_action( 'backupplus_backup_finished', $this->nonce, $outcome, $this->jobdata );
+		}
 
 		// This is left until last for the benefit of the front-end UI, which then gets maximum chance to display the 'finished' status
 		if ( $delete_jobdata ) {
@@ -4797,6 +4806,14 @@ class BackupPlus {
 			'complete'      => false,
 			'snapshots'     => $this->jobdata_get( 'incremental_snapshots', array() ),
 		);
+		if ( $this->jobdata_get( 'pre_update_batch' ) ) {
+			$backup_array['pre_update'] = array(
+				'batch'     => $this->jobdata_get( 'pre_update_batch' ),
+				'complete'  => false,
+				'snapshots' => $this->jobdata_get( 'incremental_snapshots', array() ),
+			);
+			unset( $backup_array['incremental'] );
+		}
 		BackupPlus_Backup_History::save_backup( apply_filters( 'backupplus_save_backup_history_timestamp', $history_time ), $backup_array );
 	}
 

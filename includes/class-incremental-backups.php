@@ -32,7 +32,7 @@ class BackupPlus_Incremental_Backups {
 		}
 		$now = null === $now ? time() : $now;
 		foreach ( BackupPlus_Backup_History::get_history() as $timestamp => $backup ) {
-			if ( $timestamp > $now || $timestamp <= $now - 7 * DAY_IN_SECONDS || empty( $backup['incremental']['complete'] ) || empty( $backup['native'] ) || $configuration !== $backup['incremental']['configuration'] ) {
+			if ( ! empty( $backup['pre_update'] ) || $timestamp > $now || $timestamp <= $now - 7 * DAY_IN_SECONDS || empty( $backup['incremental']['complete'] ) || empty( $backup['native'] ) || $configuration !== $backup['incremental']['configuration'] ) {
 				continue;
 			}
 			foreach ( $entities as $entity ) {

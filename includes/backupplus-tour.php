@@ -146,9 +146,9 @@ class BackupPlus_Tour {
 				'text'  => __( 'Look through the other settings here, making any changes you’d like.', 'backupplus' ),
 			),
 			'auto_backup'             => array(
-				'title'   => __( 'Automatic backups before update', 'backupplus' ),
+				'title'   => __( 'Pre-update backups', 'backupplus' ),
 				'text'    => __( 'Check this box to enable automatic backups whenever a plugin, theme, or the WordPress core is updated.', 'backupplus' ),
-				'enabled' => false,
+				'enabled' => true,
 			),
 			'settings_save'           => array(
 				'title' => __( 'Save', 'backupplus' ),

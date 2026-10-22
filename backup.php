@@ -473,7 +473,7 @@ class BackupPlus_Backup {
 	public function do_prune_standalone() {
 		global $backupplus;
 
-		$services = (array) $backupplus->just_one( $backupplus->jobdata_get( 'service' ) );
+		$services = (array) ( $backupplus->jobdata_get( 'pre_update_batch' ) ? $backupplus->jobdata_get( 'service' ) : $backupplus->just_one( $backupplus->jobdata_get( 'service' ) ) );
 
 		$prune_services = array();
 
@@ -566,7 +566,7 @@ class BackupPlus_Backup {
 			}
 		}
 
-		$services                 = (array) $backupplus->just_one( $backupplus->jobdata_get( 'service' ) );
+		$services                 = (array) ( $backupplus->jobdata_get( 'pre_update_batch' ) ? $backupplus->jobdata_get( 'service' ) : $backupplus->just_one( $backupplus->jobdata_get( 'service' ) ) );
 		$remote_storage_instances = $backupplus->jobdata_get( 'remote_storage_instances', array() );
 
 		// We need to make sure that the loop below actually runs
@@ -628,7 +628,8 @@ class BackupPlus_Backup {
 				$total_instance_ids = ( 'none' !== $service && '' !== $service && $storage_objects_and_ids[ $service ]['object']->supports_feature( 'multi_options' ) ) ? count( $storage_objects_and_ids[ $service ]['instance_settings'] ) : 1;
 
 				// Used for logging by record_upload_chunk()
-				$this->current_service = $service;
+				$this->current_service  = $service;
+				$this->current_instance = ''; // Legacy providers must not inherit the preceding provider's instance ID.
 
 				// Used when deciding whether to delete the local file
 				$this->last_storage_instance = ( $ind + 1 >= count( $services ) && $instance_id_count + 1 >= $total_instance_ids && $errors_before_uploads == $backupplus->error_count() ) ? true : false;
@@ -863,6 +864,12 @@ class BackupPlus_Backup {
 
 		// Remove non-native (imported) backups, which are neither counted nor pruned. It's neater to do these in advance, and log only one line.
 		$functional_backup_history = $backup_history;
+		// Pre-update restore points are retained as complete sets by their coordinator.
+		foreach ( $functional_backup_history as $time => $set ) {
+			if ( ! empty( $set['pre_update'] ) ) {
+				unset( $functional_backup_history[ $time ] );
+			}
+		}
 		foreach ( $functional_backup_history as $backup_time => $backup_to_examine ) {
 			if ( isset( $backup_to_examine['native'] ) && false == $backup_to_examine['native'] ) {
 				$ignored_because_imported[] = $backup_time;

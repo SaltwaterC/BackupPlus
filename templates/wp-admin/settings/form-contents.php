@@ -69,6 +69,7 @@ foreach ( $default_options as $k => $v ) {
 		</td>
 	</tr>
 
+
 	<?php apply_filters( 'backupplus_after_file_intervals', false, $selected_interval ); ?>
 	<tr>
 		<th scope="row"><label for="backupplus_interval_database"><?php esc_html_e( 'Database backups', 'backupplus' ); ?></label></th>
@@ -95,6 +96,14 @@ foreach ( $default_options as $k => $v ) {
 				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showdbopts', '<input type="hidden" name="backupplus_starttime_db" value="">', $selected_interval_db ), $backupplus_admin->kses_allow_tags() ); ?>
 			</span>
 			<?php do_action( 'backupplus_after_dbconfig' ); ?>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="backupplus_autobackup_default"><?php esc_html_e( 'Pre-update backups', 'backupplus' ); ?></label></th>
+		<td>
+			<input type="hidden" name="backupplus_autobackup_default" value="0">
+			<input type="checkbox" id="backupplus_autobackup_default" name="backupplus_autobackup_default" value="1" <?php checked( BackupPlus_Options::get_backupplus_option( 'backupplus_autobackup_default', 1 ) ); ?> aria-describedby="backupplus-pre-update-description">
+			<p id="backupplus-pre-update-description" class="description"><?php esc_html_e( 'Automatically back up the database and site files before plugin, theme and WordPress core updates. Updates continue only after the backup and all configured remote uploads finish successfully.', 'backupplus' ); ?></p>
 		</td>
 	</tr>
 </table>
