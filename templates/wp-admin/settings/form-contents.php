@@ -241,12 +241,12 @@ $multi = apply_filters('backupplus_storage_printoptions_multi', '');
 	<tr>
 		<td colspan="2"><h2 class="backupplus_settings_sectionheading"><?php esc_html_e('Advanced / Debugging Settings', 'backupplus'); ?></h2></td>
 	</tr>
-	<?php BackupPlus_Credential_Key_Admin::render(); ?>
-
 	<tr>
 		<th><?php esc_html_e('Expert settings', 'backupplus');?>:</th>
 		<td><a class="enableexpertmode" href="<?php echo esc_url(BackupPlus::get_current_clean_url());?>#enableexpertmode"><?php esc_html_e('Show expert settings', 'backupplus');?></a> - <?php esc_html_e("open this to show some further options; don't bother with this unless you have a problem or are curious.", 'backupplus');?> <?php do_action('backupplus_expertsettingsdescription'); ?></td>
 	</tr>
+	<?php BackupPlus_Credential_Key_Admin::render(); ?>
+
 	<?php
 	$delete_local = BackupPlus_Options::get_backupplus_option('backupplus_delete_local', 1);
 	$split_every_mb = BackupPlus_Options::get_backupplus_option('backupplus_split_every', 400);

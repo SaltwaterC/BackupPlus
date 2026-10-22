@@ -85,7 +85,7 @@ class BackupPlus_Credential_Key_Admin {
 
 	public static function render() {
 		?>
-		<tr><th><?php esc_html_e('Credential encryption', 'backupplus'); ?></th><td id="backupplus-credential-keys" data-nonce="<?php echo esc_attr(wp_create_nonce('backupplus-credential-keys')); ?>" data-download-url="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+		<tr class="expertmode backupplus-hidden" style="display:none;"><th><?php esc_html_e('Credential encryption', 'backupplus'); ?></th><td id="backupplus-credential-keys" data-nonce="<?php echo esc_attr(wp_create_nonce('backupplus-credential-keys')); ?>" data-download-url="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 		<?php if (!self::allowed()) { ?>
 			<p><?php esc_html_e('Installation encryption keys are managed by your network administrator.', 'backupplus'); ?></p>
 

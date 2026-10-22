@@ -10,7 +10,7 @@ Job persistence encrypts the complete option snapshot and filesystem credentials
 
 ## Upgrade and recovery
 
-Activation and the first request after upgrading automatically convert existing provider settings and job snapshots. A separate per-site completion marker lives in the protected key file. Normal reads never accept nonempty plaintext secret fields after upgrading. An authorized administrator can deliberately convert restored legacy settings with **Settings → Credential encryption → Upgrade restored credentials**. New settings imports pass through the ordinary encrypted writer.
+Activation and the first request after upgrading automatically convert existing provider settings and job snapshots. A separate per-site completion marker lives in the protected key file. Normal reads never accept nonempty plaintext secret fields after upgrading. An authorized administrator can deliberately convert restored legacy settings with **Settings → Expert settings → Credential encryption → Upgrade restored credentials**. New settings imports pass through the ordinary encrypted writer.
 
 Maintenance prepares provider replacements before saving them, checks for intervening changes, and verifies persisted ciphertext. Individual saves that fail retain their previous values; successfully converted options remain encrypted if a later save fails. Completion is recorded only after every option and job succeeds, so retrying finishes partial work. Concurrent jobs or settings changes can require a retry.
 
