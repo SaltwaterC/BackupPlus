@@ -5,6 +5,7 @@
  */
 define('ABSPATH', __DIR__);
 require_once dirname(__DIR__).'/includes/class-settings-importer.php';
+require_once dirname(__DIR__).'/methods/ftp/settings-import.php';
 
 function backupplus_settings_import_expect($condition, $message) {
 	if (!$condition) {
@@ -95,7 +96,7 @@ $future_alias_result = BackupPlus_Settings_Importer::normalize_legacy_settings(
 );
 backupplus_settings_import_expect('preserve-me' === $future_alias_result['settings']['backupplus_future_setting'], 'allowed future options accept their legacy export key');
 
-$legacy_ftp = BackupPlus_Settings_Importer::normalize_legacy_ftp_settings(array(
+$legacy_ftp = BackupPlus_FTP_Settings_Importer::normalize(array(
 	'updraft_server_address' => 'ftp.example.test',
 	'updraft_ftp_login' => 'backup-user',
 	'updraft_ftp_pass' => 'secret',

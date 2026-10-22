@@ -16,6 +16,15 @@ if (!is_array(BackupPlus_Options::get_backupplus_option('backupplus_sftp')) && '
 if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
 class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
+	public function normalize_imported_settings($settings) {
+		foreach (array('updraft_sftp_settings', 'backupplus_sftp_settings') as $old_key) {
+			if (!array_key_exists($old_key, $settings)) continue;
+			if (!array_key_exists('backupplus_sftp', $settings)) $settings['backupplus_sftp'] = $settings[$old_key];
+			unset($settings[$old_key]);
+		}
+		return $settings;
+	}
+
 	protected $input_option_field_mappings = array(
 		'host' => array('default_value' => '', 'contexts' => array('option', 'input')),
 		'port' => array('default_value' => 22, 'contexts' => array('option', 'input')),
@@ -29,7 +38,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 	);
 
 	public function get_supported_features() {
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
+		return array('phpseclib', 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic');
 	}
 
 	public function options_exist($opts) {
@@ -68,7 +77,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 	/** Return a connection tied to this settings instance. set_options() clears it. */
 	private function connect($options = null) {
 		if (null === $options && $this->get_storage()) return $this->get_storage();
-		backupplus_try_include_file('includes/sftp.class.php', 'require_once');
+		backupplus_try_include_file('methods/sftp/client.php', 'require_once');
 		$client = BackupPlus_SFTP_Client::open($this->normalise_options(null === $options ? $this->get_options() : $options));
 		if (null === $options && !is_wp_error($client)) $this->set_storage($client);
 		return $client;

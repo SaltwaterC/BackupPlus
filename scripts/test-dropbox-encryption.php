@@ -21,6 +21,11 @@ $dropbox_can_manage = true;
 function current_user_can($capability) { global $dropbox_can_manage, $dropbox_network_admin; return 'manage_network_options' === $capability ? $dropbox_network_admin : $dropbox_can_manage; }
 
 function backupplus_try_include_file($path, $mode) { require_once BACKUPPLUS_DIR.'/'.$path; }
+$dropbox_hooks = array();
+function add_action($hook, $callback) { $GLOBALS['dropbox_hooks'][$hook][] = $callback; }
+function add_filter($hook, $callback) { add_action($hook, $callback); }
+function do_action($hook, ...$args) { foreach ($GLOBALS['dropbox_hooks'][$hook] ?? array() as $callback) $callback(...$args); }
+function apply_filters($hook, $value) { foreach ($GLOBALS['dropbox_hooks'][$hook] ?? array() as $callback) $value = $callback($value); return $value; }
 class WP_Error {}
 $dropbox_test_options = array();
 $dropbox_other_blog_options = array();
@@ -44,12 +49,12 @@ function expect_dropbox_failure($callback, $message) {
 }
 require BACKUPPLUS_DIR.'/class-backupplus.php';
 require BACKUPPLUS_DIR.'/methods/backup-module.php';
-require BACKUPPLUS_DIR.'/includes/Dropbox2/Exception.php';
-require BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/StorageInterface.php';
-require BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/Encrypter.php';
+require BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/Exception.php';
+require BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/OAuth/Storage/StorageInterface.php';
+require BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/OAuth/Storage/Encrypter.php';
 require BACKUPPLUS_DIR.'/includes/class-credential-key-store.php';
-require BACKUPPLUS_DIR.'/includes/class-dropbox-token-migration.php';
-require BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/WordPress.php';
+require BACKUPPLUS_DIR.'/methods/dropbox/bootstrap.php';
+require BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/OAuth/Storage/WordPress.php';
 class DropboxTestBackupPlus extends BackupPlus {
 	public $unavailable = false;
 	public function __construct() {}

@@ -7,12 +7,15 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-backupplus_try_include_file('methods/s3-base.php', 'require_once');
+require_once __DIR__.'/dreamobjects/admin.php';
+
+backupplus_try_include_file('methods/dreamobjects/base.php', 'require_once');
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
  */
-class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_s3_base {
+class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dreamobjects_base {
+	use BackupPlus_dreamobjects_Admin;
 
 	/** @return Array Endpoint validation data for the settings scripts. */
 	public function get_admin_script_data() {
@@ -95,7 +98,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_s3_ba
 	/**
 	 * Given an S3 object, possibly set the region on it
 	 *
-	 * @param Object $obj		  - like BackupPlus_S3
+	 * @param Object $obj		  - like BackupPlus_DreamObjects
 	 * @param String $region	  - or empty to fetch one from saved configuration
 	 * @param String $bucket_name
 	 */
@@ -248,7 +251,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_s3_ba
 			$simplexmlelement_existence_label = '';
 		}
 
-		if (!apply_filters('backupplus_dreamobjects_xmlwriter_exists', 'BackupPlus_S3_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
+		if (!apply_filters('backupplus_dreamobjects_xmlwriter_exists', 'BackupPlus_DreamObjects_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>'.__('Warning', 'backupplus').':</strong> '.

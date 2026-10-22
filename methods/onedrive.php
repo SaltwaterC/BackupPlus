@@ -7,11 +7,14 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
+require_once __DIR__.'/onedrive/admin.php';
+
 if (version_compare(phpversion(), '5.3.3', '>=')) {
 
 	if (class_exists('BackupPlus_Addons_RemoteStorage_onedrive')) {
 
 		class BackupPlus_BackupModule_onedrive extends BackupPlus_Addons_RemoteStorage_onedrive {
+			use BackupPlus_onedrive_Admin;
 			public function __construct() {
 				parent::__construct('onedrive', 'Microsoft OneDrive', '5.3.3', 'onedrive.png');
 			}
@@ -24,6 +27,7 @@ if (version_compare(phpversion(), '5.3.3', '>=')) {
 		 * N.B. BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 		 */
 		class BackupPlus_BackupModule_onedrive extends BackupPlus_BackupModule_AddonNotYetPresent {
+			use BackupPlus_onedrive_Admin;
 			public function __construct() {
 				parent::__construct('onedrive', 'Microsoft OneDrive', '5.3.3', 'onedrive.png');
 			}
@@ -34,6 +38,7 @@ if (version_compare(phpversion(), '5.3.3', '>=')) {
 } else {
 	backupplus_try_include_file('methods/insufficient.php', 'include_once');
 	class BackupPlus_BackupModule_onedrive extends BackupPlus_BackupModule_insufficientphp {
+		use BackupPlus_onedrive_Admin;
 		public function __construct() {
 			parent::__construct('onedrive', 'Microsoft OneDrive', '5.3.3', 'onedrive.png');
 		}

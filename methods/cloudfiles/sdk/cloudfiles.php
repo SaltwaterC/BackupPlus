@@ -75,8 +75,8 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 /**
  */
-require_once(BACKUPPLUS_DIR."/includes/cloudfiles/cloudfiles_exceptions.php");
-require_once(BACKUPPLUS_DIR."/includes/cloudfiles/cloudfiles_http.php");
+require_once(BACKUPPLUS_DIR."/methods/cloudfiles/sdk/cloudfiles_exceptions.php");
+require_once(BACKUPPLUS_DIR."/methods/cloudfiles/sdk/cloudfiles_http.php");
 @define("DEFAULT_CF_API_VERSION", 1);
 @define("MAX_CONTAINER_NAME_LEN", 256);
 @define("MAX_OBJECT_NAME_LEN", 1024);

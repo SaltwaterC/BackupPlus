@@ -61,6 +61,7 @@ test-wordpress:
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php
 	@set -e; for provider in $$(awk '/^[[:space:]]*\* Provider ID: / { print $$4 }' methods/*.php) all; do \
 		"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php "$$provider"; \
+		if [ "$$provider" != all ]; then "$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php "only:$$provider"; fi; \
 	done
 
 test-client:

@@ -3,7 +3,9 @@
  * This is a bare-bones to get you started with developing an access method. The methods provided below are all ones you will want to use (though note that the provided email.php method is an
  * example of truly bare-bones for a method that cannot delete or download and has no configuration).
  *
- * Read the existing methods for help. There is no hard-and-fast need to put all your code in this file; it is just for increasing convenience and maintainability; there are no bonus points for 100% elegance. If you need access to some part of WordPress that you can only reach through the main plugin file (backupplus.php), then go right ahead and patch that.
+ * Read the existing methods for help. Keep the main provider class here and its
+ * helpers and provider libraries in methods/template/. Use the provider interface
+ * and hooks for core integration so the provider can be removed independently.
  *
  * Some handy tips:
  * - Search-and-replace "template" for the name of your access method
@@ -15,8 +17,11 @@
  *     `Provider Class: BackupPlus_BackupModule_template`
  * - The factory discovers these headers automatically; use get_storage_object('template')
  *   to access the provider. The ID must match get_id() (or override get_id()).
- * - Keep shared implementation in helper files so removing an entry point cannot
- *   remove a dependency of another provider.
+ * - Do not load another provider's code. Duplicate provider implementation with
+ *   distinct class names when needed; general services such as encryption stay shared.
+ * - Own authentication checks, dashboard notices and import conversions through
+ *   authentication_required(), get_admin_notices() and normalize_imported_settings().
+ * - Register early lifecycle hooks in methods/template/bootstrap.php if needed.
  * - Use the constant BACKUPPLUS_DIR to reach BackupPlus's plugin directory
  * - Call $backupplus->log("my log message") to log things, which greatly helps debugging
  * - BackupPlus is licensed under the GPL version 3 or later. Any distributed combined work must be licensed in a way compatible with the GPL.

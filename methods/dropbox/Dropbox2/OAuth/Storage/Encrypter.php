@@ -1,5 +1,5 @@
 <?php
-require_once dirname(dirname(dirname(__DIR__))).'/class-credential-encrypter.php';
+require_once BACKUPPLUS_DIR.'/includes/class-credential-encrypter.php';
 
 /** Compatibility adapter: preserve the authenticated context of existing Dropbox tokens. */
 class Dropbox_Encrypter extends BackupPlus_Credential_Encrypter {

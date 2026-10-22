@@ -132,7 +132,7 @@ if (!function_exists('curl_init')) {
 	$provider->set_options(array('host' => 'example.test', 'user' => 'test', 'pass' => 'test', 'encryption' => 'tls'));
 	$result = $provider->listfiles();
 	ftp_expect(is_wp_error($result) && 'ftp_missing_support' === $result->get_error_code(), 'Background operations must handle unavailable cURL support');
-	require_once dirname(__DIR__).'/includes/ftp.class.php';
+	require_once dirname(__DIR__).'/methods/ftp/client.php';
 	$ftp = new BackupPlus_ftp_wrapper('example.test', 'test', 'test');
 	$ftp->ssl = true;
 	ftp_expect(false === $ftp->connect(), 'The wrapper must also fail safely when cURL is unavailable');

@@ -97,7 +97,7 @@ class BackupPlus_Credential_Key_Rotation {
 
 	private static function reencrypt_site($active_key) {
 		if (get_option(self::REWRITTEN_KEY_OPTION, '') === $active_key) return;
-		BackupPlus_Dropbox_Token_Migration::rotate();
+		do_action('backupplus_credentials_rotate');
 		if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::rewrite();
 		update_option(self::REWRITTEN_KEY_OPTION, $active_key, false);
 		if (get_option(self::REWRITTEN_KEY_OPTION) !== $active_key) throw new RuntimeException('The encryption key rotation result could not be saved.');

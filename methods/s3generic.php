@@ -7,12 +7,12 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed.');
 
-backupplus_try_include_file('methods/s3-base.php', 'require_once');
+backupplus_try_include_file('methods/s3generic/base.php', 'require_once');
 
 /**
  * Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
  */
-class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3_base {
+class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generic_base {
 
 	protected $provider_can_use_aws_sdk = false;
 	
@@ -56,7 +56,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3_base 
 	/**
 	 * Given an S3 object, possibly set the region on it
 	 *
-	 * @param Object $obj		  - like BackupPlus_S3
+	 * @param Object $obj		  - like BackupPlus_S3Generic
 	 * @param String $region
 	 * @param String $bucket_name
 	 */
@@ -233,7 +233,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3_base 
 		}
 
 		$xmlwriter_existence_label = '';
-		if (!apply_filters('backupplus_s3generic_xmlwriter_exists', 'BackupPlus_S3_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
+		if (!apply_filters('backupplus_s3generic_xmlwriter_exists', 'BackupPlus_S3Generic_Compat' != $this->indicate_s3_class() || !class_exists('XMLWriter'))) {
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>'.__('Warning', 'backupplus').':</strong> '.

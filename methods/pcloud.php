@@ -7,9 +7,12 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
+require_once __DIR__.'/pcloud/admin.php';
+
 if (class_exists('BackupPlus_Addons_RemoteStorage_pcloud')) {
 
 	class BackupPlus_BackupModule_pcloud extends BackupPlus_Addons_RemoteStorage_pcloud {
+		use BackupPlus_pcloud_Admin;
 		public function __construct() {
 			parent::__construct('pcloud', 'pCloud', false, 'pcloud-logo.png');
 		}
@@ -22,6 +25,7 @@ if (class_exists('BackupPlus_Addons_RemoteStorage_pcloud')) {
 	 * N.B. BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 	 */
 	class BackupPlus_BackupModule_pcloud extends BackupPlus_BackupModule_AddonNotYetPresent {
+		use BackupPlus_pcloud_Admin;
 		public function __construct() {
 			parent::__construct('pcloud', 'pCloud', false, 'pcloud-logo.png');
 		}

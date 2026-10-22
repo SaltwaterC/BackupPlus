@@ -8,9 +8,9 @@ use OpenCloud\Rackspace;
 // New SDK - https://github.com/rackspace/php-opencloud and http://docs.rackspace.com/sdks/guide/content/php.html
 // Uploading: https://github.com/rackspace/php-opencloud/blob/master/docs/userguide/ObjectStore/Storage/Object.md
 
-backupplus_try_include_file('methods/openstack-base.php', 'require_once');
+backupplus_try_include_file('methods/cloudfiles/base.php', 'require_once');
 
-class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupModule_openstack_base {
+class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupModule_cloudfiles_base {
 
 	/**
 	 * Cloudfiles available regions.

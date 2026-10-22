@@ -11,6 +11,7 @@ $credential_multisite = false;
 $blog_stack = array();
 function backupplus_try_include_file($file, $mode) { require_once BACKUPPLUS_DIR.'/'.$file; }
 function add_action() {}
+function do_action() {}
 function add_filter($name, $callback, $priority = 10, $args = 1) { global $filters; $filters[$name][$priority][] = array($callback, $args); }
 function apply_filters($name, $value, ...$args) {
 	global $filters;
@@ -184,7 +185,6 @@ update_option('backupplus_ftp', array('pass' => 'synthetic second site password'
 $second_before = get_option('backupplus_ftp');
 $blog_id = 1;
 require BACKUPPLUS_DIR.'/includes/class-credential-key-rotation.php';
-class BackupPlus_Dropbox_Token_Migration { public static function rotate() {} }
 $config['keys']['network'] = base64_encode(random_bytes(32));
 $config['active'] = 'network';
 BackupPlus_Credential_Key_Store::$config = $config;

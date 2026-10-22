@@ -11,6 +11,8 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
+require_once __DIR__.'/dropbox/admin.php';
+
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
 if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
@@ -24,6 +26,14 @@ if (is_array($potential_options) && isset($potential_options['version']) && isse
 }
 
 class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
+	use BackupPlus_dropbox_Admin;
+
+	/** Repair files written by the historical Dropbox upload bug. */
+	public function download_complete($handle, $path) {
+		if (filesize($path) < 4) return;
+		fseek($handle, -4, SEEK_END);
+		if ('null' === fread($handle, 4)) ftruncate($handle, filesize($path) - 4);
+	}
 
 	private $current_file_hash;
 
@@ -116,7 +126,7 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array('multi_options', 'config_templates', 'multi_storage', 'conditional_logic', 'manual_authentication');
+		return array('phpseclib', 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic', 'manual_authentication');
 	}
 
 	/**
@@ -1091,14 +1101,14 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 		// Dropbox APIv1 is dead, but we'll keep the variable in case v3 is ever announced
 		$dropbox_api = 'Dropbox2';
 
-		backupplus_try_include_file('includes/'.$dropbox_api.'/API.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/Exception.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Consumer/ConsumerAbstract.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Storage/StorageInterface.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Storage/Encrypter.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Storage/WordPress.php', 'include_once');
-		backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Consumer/Curl.php', 'include_once');
-		// backupplus_try_include_file('includes/'.$dropbox_api.'/OAuth/Consumer/WordPress.php', 'require_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/API.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/Exception.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/ConsumerAbstract.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/StorageInterface.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/Encrypter.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Storage/WordPress.php', 'include_once');
+		backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/Curl.php', 'include_once');
+		// backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/WordPress.php', 'require_once');
 
 		$opts = $this->get_options();
 

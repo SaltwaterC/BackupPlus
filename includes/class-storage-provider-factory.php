@@ -11,6 +11,23 @@ class BackupPlus_Storage_Provider_Factory {
 	private static $providers;
 	private static $objects = array();
 	private static $errors = array();
+	private static $hooks_registered = false;
+
+	/** Load optional provider lifecycle hooks before core reads credentials. */
+	public static function register_hooks() {
+		if (self::$hooks_registered) return;
+		self::$hooks_registered = true;
+		self::discover();
+		foreach (self::$providers as $id => $provider) {
+			$file = BACKUPPLUS_DIR.'/methods/'.$id.'/bootstrap.php';
+			if (!is_readable($file)) continue;
+			try {
+				require_once $file;
+			} catch (Throwable $error) {
+				self::$errors[$id] = new WP_Error('storage_provider_unavailable', $error->getMessage(), $id);
+			}
+		}
+	}
 
 	/** Register installed providers from their file headers, without executing them. */
 	private static function discover() {

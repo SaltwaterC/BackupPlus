@@ -16,6 +16,15 @@ if (!is_array(BackupPlus_Options::get_backupplus_option('backupplus_webdav')) &&
 if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
 class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
+	public function normalize_imported_settings($settings) {
+		foreach (array('updraft_webdav_settings', 'backupplus_webdav_settings') as $old_key) {
+			if (!array_key_exists($old_key, $settings)) continue;
+			if (!array_key_exists('backupplus_webdav', $settings)) $settings['backupplus_webdav'] = $settings[$old_key];
+			unset($settings[$old_key]);
+		}
+		return $settings;
+	}
+
 	protected $input_option_field_mappings = array(
 		'webdav' => array('default_value' => 'https://', 'contexts' => array('option', 'input')),
 		'host' => array('default_value' => '', 'contexts' => array('option', 'input')),
@@ -30,7 +39,7 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 	}
 
 	private function normalise_options($options) {
-		backupplus_try_include_file('includes/webdav.class.php', 'require_once');
+		backupplus_try_include_file('methods/webdav/client.php', 'require_once');
 		$options = BackupPlus_WebDAV_Client::normalise_options($options);
 		$options['webdav'] = str_replace(array('webdavs', 'webdav'), array('https', 'http'), strtolower($options['webdav']));
 		if (in_array($options['webdav'], array('http', 'https'), true)) $options['webdav'] .= '://';

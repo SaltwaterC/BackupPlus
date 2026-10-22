@@ -5,6 +5,7 @@ if (!defined('WP_CLI') || !WP_CLI || !defined('BACKUPPLUS_DIR')) {
     exit(1);
 }
 try {
+    if (!class_exists('BackupPlus_Dropbox_Token_Migration')) throw new RuntimeException('The Dropbox provider is not installed or is unavailable.');
     $mode = isset($args[0]) ? $args[0] : '';
     if ('migrate-legacy' === $mode) {
         $count = BackupPlus_Dropbox_Token_Migration::upgrade();

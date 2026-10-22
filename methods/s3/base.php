@@ -120,9 +120,9 @@ abstract class BackupPlus_BackupModule_s3_base extends BackupPlus_BackupModule {
 
 		if (!class_exists($class_to_use)) {
 			if ('BackupPlus_S3_Compat' == $class_to_use) {
-				backupplus_try_include_file('includes/S3compat.php', 'include_once');
+				backupplus_try_include_file('methods/s3/S3compat.php', 'include_once');
 			} else {
-				backupplus_try_include_file('includes/S3.php', 'include_once');
+				backupplus_try_include_file('methods/s3/S3.php', 'include_once');
 			}
 		}
 		
@@ -195,7 +195,7 @@ abstract class BackupPlus_BackupModule_s3_base extends BackupPlus_BackupModule {
 		
 			// Catch a specific PHP engine bug - see HS#6364
 			if ('BackupPlus_S3_Compat' == $use_s3_class && is_a($e, 'InvalidArgumentException') && false !== strpos('Invalid signature type: s3', $e->getMessage())) {
-				backupplus_try_include_file('includes/S3.php', 'include_once');
+				backupplus_try_include_file('methods/s3/S3.php', 'include_once');
 				$use_s3_class = 'BackupPlus_S3';
 				$try_again = true;
 			} else {

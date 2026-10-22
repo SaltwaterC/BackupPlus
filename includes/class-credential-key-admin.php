@@ -24,7 +24,7 @@ class BackupPlus_Credential_Key_Admin {
 				BackupPlus_Credential_Key_Rotation::reencrypt_credentials($config['active']);
 				BackupPlus_Credential_Key_Rotation::finish();
 			} else {
-				BackupPlus_Dropbox_Token_Migration::rotate();
+				do_action('backupplus_credentials_rotate');
 				if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::rewrite();
 			}
 			$message = __('A new encryption key is active. Previous keys were retained so existing backups and running jobs remain readable. Download a new recovery copy.', 'backupplus');
@@ -35,7 +35,7 @@ class BackupPlus_Credential_Key_Admin {
 			BackupPlus_Credential_Key_Store::configuration();
 			$message = __('Encryption setup is complete.', 'backupplus');
 		} elseif ('upgrade' === $operation) {
-			BackupPlus_Dropbox_Token_Migration::upgrade_restored();
+			do_action('backupplus_credentials_upgrade_restored');
 			if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade(true);
 			$message = __('Restored credentials were upgraded and verified.', 'backupplus');
 		} elseif ('replace_missing' === $operation) {
@@ -44,7 +44,7 @@ class BackupPlus_Credential_Key_Admin {
 		} else {
 			throw new RuntimeException('Choose a valid encryption key operation.');
 		}
-		BackupPlus_Dropbox_Token_Migration::upgrade();
+		do_action('backupplus_credentials_upgrade');
 		if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade();
 		if (class_exists('BackupPlus_Credential_Key_Rotation')) BackupPlus_Credential_Key_Rotation::schedule();
 		delete_option('backupplus_credential_setup_error');

@@ -4,6 +4,18 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 
 abstract class BackupPlus_BackupModule {
 
+	/** Whether this instance needs an OAuth authentication notice. */
+	public function authentication_required($settings) { return false; }
+
+	/** Provider notices, each containing a message and a WordPress notice class. */
+	public function get_admin_notices($settings) { return array(); }
+
+	/** Optional provider repair after a chunked download, before closing the file. */
+	public function download_complete($handle, $path) {}
+
+	/** Convert this provider's historical settings before generic import mapping. */
+	public function normalize_imported_settings($settings) { return $settings; }
+
 	/** @return Array Provider-specific values for the settings scripts. */
 	public function get_admin_script_data() {
 		return array();

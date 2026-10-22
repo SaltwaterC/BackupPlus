@@ -25,7 +25,9 @@ class BackupPlus_Admin {
 
 	private $backups_instance_ids;
 
-	private $auth_instance_ids = array('dropbox' => array(), 'pcloud' => array(), 'onedrive' => array(), 'googledrive' => array(), 'googlecloud' => array());
+	private $auth_instance_ids = array();
+	private $auth_notice_callbacks = array();
+	private $provider_admin_notices = array();
 
 
 	private $storage_service_without_settings;
@@ -139,6 +141,7 @@ class BackupPlus_Admin {
 		$this->storage_service_without_settings = array();
 		$this->storage_service_with_partial_settings = array();
 		$this->storage_service_without_addons_settings = array();
+		$this->auth_instance_ids = array();
 		
 		foreach ($all_services as $method => $sinfo) {
 			
@@ -166,145 +169,34 @@ class BackupPlus_Admin {
 			add_action('all_admin_notices', array($this, 'show_admin_warning_if_remote_storage_without_addons'));
 		}
 
-		if ('googledrive' === $services || (is_array($services) && in_array('googledrive', $services)) && in_array('googledrive', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('googledrive');
-			
+		foreach (array_intersect((array) $services, $available_services) as $method) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($method);
+			if (is_wp_error($provider) || is_a($provider, 'BackupPlus_BackupModule_AddonNotYetPresent')) continue;
+			if (!$provider->supports_feature('multi_options')) continue;
+			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format($method);
 			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "Google Drive (".$settings->get_error_code()."): ".$settings->get_error_message();
+				$this->storage_module_option_errors .= $backupplus->backup_methods[$method]." (".$settings->get_error_code()."): ".$settings->get_error_message();
 				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
 				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if ((defined('BACKUPPLUS_CUSTOM_GOOGLEDRIVE_APP') && BACKUPPLUS_CUSTOM_GOOGLEDRIVE_APP) || !empty($storage_options['clientid'])) {
-						if (!empty($storage_options['clientid'])) {
-							$clientid = $storage_options['clientid'];
-							$token = empty($storage_options['token']) ? '' : $storage_options['token'];
-						}
-						if (!empty($clientid) && '' == $token) {
-							if (!in_array($instance_id, $this->auth_instance_ids['googledrive'])) $this->auth_instance_ids['googledrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googledrive'))) add_action('all_admin_notices', array($this, 'show_admin_warning_googledrive'));
-						}
-						unset($clientid);
-						unset($token);
-					} else {
-						if (empty($storage_options['user_id'])) {
-							if (!in_array($instance_id, $this->auth_instance_ids['googledrive'])) $this->auth_instance_ids['googledrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googledrive'))) add_action('all_admin_notices', array($this, 'show_admin_warning_googledrive'));
-						}
+				continue;
+			}
+			foreach ($settings['settings'] ?? array() as $instance_id => $storage_options) {
+				if ($provider->authentication_required($storage_options)) {
+					if (!isset($this->auth_instance_ids[$method])) $this->auth_instance_ids[$method] = array();
+					if (!in_array($instance_id, $this->auth_instance_ids[$method], true)) $this->auth_instance_ids[$method][] = $instance_id;
+					if (!isset($this->auth_notice_callbacks[$method])) {
+						$this->auth_notice_callbacks[$method] = function() use ($method) { $this->get_method_auth_link($method); };
+					}
+					if (false === has_action('all_admin_notices', $this->auth_notice_callbacks[$method])) {
+						add_action('all_admin_notices', $this->auth_notice_callbacks[$method]);
 					}
 				}
-			}
-		}
-		if ('googlecloud' === $services || (is_array($services) && in_array('googlecloud', $services)) && in_array('googlecloud', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('googlecloud');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "Google Cloud (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if ((defined('BACKUPPLUS_CUSTOM_GOOGLECLOUD_APP') && BACKUPPLUS_CUSTOM_GOOGLECLOUD_APP) || !empty($storage_options['clientid'])) {
-						$clientid = $storage_options['clientid'];
-						$token = (empty($storage_options['token'])) ? '' : $storage_options['token'];
-
-						if (!empty($clientid) && empty($token)) {
-							if (!in_array($instance_id, $this->auth_instance_ids['googlecloud'])) $this->auth_instance_ids['googlecloud'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud')) && !isset($this->storage_service_without_addons_settings['googlecloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
-						}
-					} else {
-						if (empty($storage_options['user_id'])) {
-							if (!in_array($instance_id, $this->auth_instance_ids['googlecloud'])) $this->auth_instance_ids['googlecloud'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud')) && !isset($this->storage_service_without_addons_settings['googlecloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_googlecloud'));
-						}
+				foreach ($provider->get_admin_notices($storage_options) as $notice) {
+					$key = $method.':'.md5(serialize($notice));
+					if (!isset($this->provider_admin_notices[$key])) {
+						$this->provider_admin_notices[$key] = function() use ($notice) { $this->show_admin_warning($notice['message'], $notice['class']); };
 					}
-				}
-			}
-		}
-		
-		if ('dropbox' === $services || (is_array($services) && in_array('dropbox', $services)) && in_array('dropbox', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('dropbox');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "Dropbox (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if (empty($storage_options['tk_access_token'])) {
-						if (!in_array($instance_id, $this->auth_instance_ids['dropbox'])) $this->auth_instance_ids['dropbox'][] = $instance_id;
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_dropbox'))) add_action('all_admin_notices', array($this, 'show_admin_warning_dropbox'));
-					}
-				}
-			}
-		}
-
-		if ('pcloud' === $services || (is_array($services) && in_array('pcloud', $services)) && in_array('pcloud', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('pcloud');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "pCloud (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if (empty($storage_options['pclauth'])) {
-						if (!in_array($instance_id, $this->auth_instance_ids['pcloud'])) $this->auth_instance_ids['pcloud'][] = $instance_id;
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_pcloud')) && !isset($this->storage_service_without_addons_settings['pcloud'])) add_action('all_admin_notices', array($this, 'show_admin_warning_pcloud'));
-					}
-				}
-			}
-		}
-		
-		if ('onedrive' === $services || (is_array($services) && in_array('onedrive', $services)) && in_array('onedrive', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('onedrive');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "OneDrive (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if ((defined('BACKUPPLUS_CUSTOM_ONEDRIVE_APP') && BACKUPPLUS_CUSTOM_ONEDRIVE_APP)) {
-						if (!empty($storage_options['clientid']) && !empty($storage_options['secret']) && empty($storage_options['refresh_token'])) {
-								if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-								if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
-						} elseif (empty($storage_options['refresh_token'])) {
-							if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
-						}
-					} else {
-						if (empty($storage_options['refresh_token'])) {
-							if (!in_array($instance_id, $this->auth_instance_ids['onedrive'])) $this->auth_instance_ids['onedrive'][] = $instance_id;
-							if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive'));
-						}
-					}
-					
-					if (isset($storage_options['endpoint_tld']) && 'de' === $storage_options['endpoint_tld']) {
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany')) && !isset($this->storage_service_without_addons_settings['onedrive'])) add_action('all_admin_notices', array($this, 'show_admin_warning_onedrive_germany'));
-					}
-				}
-			}
-		}
-		
-		if ('azure' === $services || (is_array($services) && in_array('azure', $services)) && in_array('azure', $available_services)) {
-			$settings = BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('azure');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "Azure (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $instance_id => $storage_options) {
-					if (isset($storage_options['endpoint']) && 'blob.core.cloudapi.de' === $storage_options['endpoint']) {
-						if (false === has_action('all_admin_notices', array($this, 'show_admin_warning_azure_germany'))) add_action('all_admin_notices', array($this, 'show_admin_warning_azure_germany'));
-					}
+					if (false === has_action('all_admin_notices', $this->provider_admin_notices[$key])) add_action('all_admin_notices', $this->provider_admin_notices[$key]);
 				}
 			}
 		}
@@ -370,27 +262,7 @@ class BackupPlus_Admin {
 
 		if (version_compare($backupplus->get_wordpress_version(), '3.2', '<')) add_action('all_admin_notices', array($this, 'show_admin_warning_wordpressversion'));
 		
-		// DreamObjects west cluster shutdown warning
-		if (BackupPlus_Storage_Provider_Factory::has('dreamobjects') && ('dreamobjects' === $service || (is_array($service) && in_array('dreamobjects', $service)))) {
-			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object('dreamobjects');
-			$settings = is_wp_error($provider) ? $provider : BackupPlus_Storage_Methods_Interface::update_remote_storage_options_format('dreamobjects');
-			
-			if (is_wp_error($settings)) {
-				if (!isset($this->storage_module_option_errors)) $this->storage_module_option_errors = '';
-				$this->storage_module_option_errors .= "DreamObjects (".$settings->get_error_code()."): ".$settings->get_error_message();
-				add_action('all_admin_notices', array($this, 'show_admin_warning_multiple_storage_options'));
-				$backupplus->log_wp_error($settings, true, true);
-			} elseif (!empty($settings['settings'])) {
-				foreach ($settings['settings'] as $storage_options) {
-					if ('objects-us-east-1.dream.io' == $storage_options['endpoint']) {
-						add_action('all_admin_notices', array($this, 'show_admin_warning_dreamobjects'));
-					} elseif (!$provider->is_valid_endpoint($storage_options['endpoint'])) {
-						add_action('all_admin_notices', array($this, 'show_admin_error_dreamobjects_invalid_custom_endpoint'));
-					}
-				}
-			}
-		}
-		
+
 		if (!$backupplus->phpseclib_requirements_met()) {
 			add_action('all_admin_notices', array($this, 'show_admin_warning_phpseclib'));
 		}
@@ -1296,103 +1168,6 @@ class BackupPlus_Admin {
 	}
 
 	/**
-	 * Output authorisation links for any un-authorised Dropbox settings instances
-	 */
-	public function show_admin_warning_dropbox() {
-		$this->get_method_auth_link('dropbox');
-	}
-
-	/**
-	 * Output authorisation links for any un-authorised Dropbox settings instances
-	 */
-	public function show_admin_warning_pcloud() {
-		$this->get_method_auth_link('pcloud');
-	}
-
-	/**
-	 * Output authorisation links for any un-authorised OneDrive settings instances
-	 */
-	public function show_admin_warning_onedrive() {
-		$this->get_method_auth_link('onedrive');
-	}
-
-	/**
-	 * Output authorisation links for any un-authorised Google Drive settings instances
-	 */
-	public function show_admin_warning_googledrive() {
-		$this->get_method_auth_link('googledrive');
-	}
-
-	/**
-	 * Output authorisation links for any un-authorised Google Cloud settings instances
-	 */
-	public function show_admin_warning_googlecloud() {
-		$this->get_method_auth_link('googlecloud');
-	}
-	
-	/**
-	 * Show DreamObjects cluster migration warning
-	 */
-	public function show_admin_warning_dreamobjects() {
-		$this->show_admin_warning(
-			'<strong>'.__('BackupPlus notice:', 'backupplus').'</strong> '.
-			/* translators: %s: Storage endpoint name */
-			sprintf(__('As of Nov 12th, 2025, objects-us-east-1.dream.io has been permanently shut down.', 'backupplus'), 'objects-us-east-1.dream.io').' '.
-			__('For most DreamObjects customers, this involves updating the endpoint and region to s3.us-east-005.dream.io (us-east-005).', 'backupplus').' '.
-			__('If you need assistance migrating your data, please reach out to the DreamObjects support team.', 'backupplus').' '.
-			/* translators: 1: Opening anchor tag, 2: Closing anchor tag */
-			sprintf(__('%1$sPlease see this article for more information%2$s', 'backupplus'), '<a href="https://help.dreamhost.com/hc/en-us/articles/360001370846-What-DreamObjects-hostname-should-I-use-to-connect" target="_blank">', '</a>'),
-			'updated'
-		);
-	}
-
-	/**
-	 * Show DreamObjects invalid custom endpoint error.
-	 *
-	 * @return void
-	 */
-	public function show_admin_error_dreamobjects_invalid_custom_endpoint() {
-		$this->show_admin_warning(
-			'<strong>'.__('Error:', 'backupplus').'</strong> '.
-				/* translators: %s: Non-translated string 'DreamObjects'. */
-				sprintf(__('Invalid custom %s endpoint.', 'backupplus'), '<em>DreamObjects</em>').' '.
-				/* translators: %s: Desired endpoint format. */
-				sprintf(__('Please enter the endpoint in the format "%s".', 'backupplus'), '<em>s3.&lt;region&gt;.dream.io</em>'),
-			'error'
-		);
-	}
-	
-	/**
-	 * Output warning of Microsoft Azure Germany shutdown
-	 */
-	public function show_admin_warning_azure_germany() {
-		$this->show_admin_warning(
-			'<strong>'.__('BackupPlus notice', 'backupplus').':</strong> '.
-			/* translators: 1: Endpoint name */
-			sprintf(__('Due to the shutdown of the %1$s endpoint, support for %1$s will be ending soon.', 'backupplus'), 'Azure Germany').' '.
-			__('You will need to migrate to the Global endpoint in your BackupPlus settings.', 'backupplus').' '.
-			/* translators: %s: Azure link */
-			sprintf(__('For more information, please see: %s', 'backupplus'), '<a href="https://www.microsoft.com/en-us/cloud-platform/germany-cloud-regions" target="_blank">https://www.microsoft.com/en-us/cloud-platform/germany-cloud-regions</a>'),
-			'updated'
-		);
-	}
-	
-	/**
-	 * Output warning of Microsoft OneDrive Germany shutdown
-	 */
-	public function show_admin_warning_onedrive_germany() {
-		$this->show_admin_warning(
-			'<strong>'.__('BackupPlus notice', 'backupplus').':</strong> '.
-			/* translators: 1: Endpoint name */
-			sprintf(__('Due to the shutdown of the %1$s endpoint, support for %1$s will be ending soon.', 'backupplus'), 'OneDrive Germany').' '.
-			__('You will need to migrate to the Global endpoint in your BackupPlus settings.', 'backupplus').' '.
-			/* translators: %s: OneDrive link */
-			sprintf(__('For more information, please see: %s', 'backupplus'), '<a href="https://www.microsoft.com/en-us/cloud-platform/germany-cloud-regions" target="_blank">https://www.microsoft.com/en-us/cloud-platform/germany-cloud-regions</a>'),
-			'updated'
-		);
-	}
-	
-	/**
 	 * This method will setup the storage object and get the authentication link ready to be output with the notice
 	 *
 	 * @param  String $method - the remote storage method
@@ -1403,7 +1178,7 @@ class BackupPlus_Admin {
 		if (empty($storage_objects_and_ids[$method]['object'])) return;
 		$object = $storage_objects_and_ids[$method]['object'];
 
-		foreach ($this->auth_instance_ids[$method] as $instance_id) {
+		foreach ($this->auth_instance_ids[$method] ?? array() as $instance_id) {
 			
 			$object->set_instance_id($instance_id);
 
@@ -5601,25 +5376,12 @@ class BackupPlus_Admin {
 			die;
 		}
 
-		// Convert the old add-on option names before mapping provider settings.
-		$legacy_storage_option_names = array(
-			'updraft_webdav_settings' => 'backupplus_webdav',
-			'backupplus_webdav_settings' => 'backupplus_webdav',
-			'updraft_sftp_settings' => 'backupplus_sftp',
-			'backupplus_sftp_settings' => 'backupplus_sftp',
-		);
-		foreach ($legacy_storage_option_names as $old_key => $new_key) {
-			if (!array_key_exists($old_key, $posted_settings)) continue;
-			if (!array_key_exists($new_key, $posted_settings)) $posted_settings[$new_key] = $posted_settings[$old_key];
-			unset($posted_settings[$old_key]);
-		}
-		$posted_settings = BackupPlus_Settings_Importer::normalize_legacy_ftp_settings($posted_settings);
-
 		$known_services = array_keys($backupplus->backup_methods);
 		$available_services = array();
 		foreach ($known_services as $service) {
 			$storage_object = BackupPlus_Storage_Methods_Interface::get_storage_object($service);
 			if (is_wp_error($storage_object) || is_a($storage_object, 'BackupPlus_BackupModule_AddonNotYetPresent')) continue;
+			$posted_settings = $storage_object->normalize_imported_settings($posted_settings);
 			$available_services[] = $service;
 		}
 		$normalized = BackupPlus_Settings_Importer::normalize_legacy_settings($posted_settings, $known_services, $backupplus->get_settings_keys(), $available_services);

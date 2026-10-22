@@ -1432,14 +1432,7 @@ class BackupPlus {
 			return false;
 		}
 
-		// April 1st 2020 - Due to a bug during uploads to Dropbox some backups had string "null" appended to the end which caused warnings, this removes the string "null" from these backups
-		if ('dropbox' == $method->get_id()) {
-			fseek($fh, -4, SEEK_END);
-			$data = fgets($fh, 5);
-			if ("null" == $data) {
-				ftruncate($fh, filesize($fullpath) - 4);
-			}
-		}
+		$method->download_complete($fh, $fullpath);
 
 		fclose($fh);
 
@@ -6079,7 +6072,7 @@ class BackupPlus {
 	 */
 	public function phpseclib_requirements_met() {
 		if (version_compare(PHP_VERSION, BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION, '>=')) return true;
-		$active_phpseclib_related_features = array_intersect($this->list_active_features_requiring_phpseclib(), array('dropbox', 'sftp', 'dbencryption'));
+		$active_phpseclib_related_features = $this->list_active_features_requiring_phpseclib();
 		if (!empty($active_phpseclib_related_features)) return false;
 		return true;
 	}
@@ -6103,11 +6096,7 @@ class BackupPlus {
 	 * @return String The warning message (filterable)
 	 */
 	public function get_phpseclib_warning_msg() {
-		$phpseclib_related_features = array(
-			'dropbox' => 'Dropbox',
-			'sftp' => 'SFTP/SCP',
-			'dbencryption' => 'Backup Encryption',
-		);
+		$phpseclib_related_features = array_merge($this->backup_methods, array('dbencryption' => 'Backup Encryption'));
 		$active_phpseclib_related_features = array_intersect_key($phpseclib_related_features, array_flip($this->list_active_features_requiring_phpseclib()));
 		return sprintf(
 			/* translators: %s: PHP version */
@@ -6136,8 +6125,10 @@ class BackupPlus {
 		$active_features = array();
 		$encryption_config = BackupPlus_Options::get_backupplus_option('backupplus_database_encryption', array());
 		$backupplus_services = $this->get_canonical_service_list();
-		if (in_array('dropbox', $backupplus_services)) $active_features[] = 'dropbox';
-		if (in_array('sftp', $backupplus_services)) $active_features[] = 'sftp';
+		foreach ($backupplus_services as $service) {
+			$provider = BackupPlus_Storage_Methods_Interface::get_storage_object($service);
+			if (!is_wp_error($provider) && $provider->supports_feature('phpseclib')) $active_features[] = $service;
+		}
 		if (isset($encryption_config['mode']) && 'age' === $encryption_config['mode']) $active_features[] = 'dbencryption';
 		return $active_features;
 	}

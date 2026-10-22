@@ -12,7 +12,7 @@ class BackupPlus_Credential_Key_Store {
 	public static function initialize() {
 		try {
 			self::configuration();
-			BackupPlus_Dropbox_Token_Migration::upgrade();
+			do_action('backupplus_credentials_upgrade');
 			if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade();
 			delete_option('backupplus_credential_setup_error');
 		} catch (Exception $e) {
@@ -310,7 +310,7 @@ class BackupPlus_Credential_Key_Store {
 		foreach ($sites as $site) {
 			if (is_multisite()) switch_to_blog($site);
 			try {
-				BackupPlus_Dropbox_Token_Migration::verify($config);
+				do_action('backupplus_credentials_verify', $config);
 				if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::verify($config);
 			} finally {
 				if (is_multisite()) restore_current_blog();
@@ -319,16 +319,16 @@ class BackupPlus_Credential_Key_Store {
 	}
 
 	/** Completion lives beside the keys, so deleting a DB marker cannot downgrade tokens. */
-	public static function upgrade_complete($scope = 'dropbox') {
+	public static function upgrade_complete($scope = 'legacy_tokens') {
 		$config = self::configuration();
-		$field = 'dropbox' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
+		$field = 'legacy_tokens' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
 		return !empty($config[$field][get_current_blog_id()]);
 	}
 
-	public static function mark_upgraded($scope = 'dropbox') {
+	public static function mark_upgraded($scope = 'legacy_tokens') {
 		self::with_lock(self::directory(), function($path) use ($scope) {
 			$config = self::read_file($path);
-			$field = 'dropbox' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
+			$field = 'legacy_tokens' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
 			$config[$field][get_current_blog_id()] = true;
 			self::write_file($path, $config);
 		});
@@ -337,7 +337,7 @@ class BackupPlus_Credential_Key_Store {
 	/** Raw reads avoid re-entering the option decryptor while locating its key. */
 	private static function has_stored_ciphertext() {
 		if (class_exists('BackupPlus_Credential_Storage')) return BackupPlus_Credential_Storage::has_ciphertext();
-		return false !== strpos(serialize(BackupPlus_Options::get_backupplus_option('backupplus_dropbox')), 'bpcred:');
+		return apply_filters('backupplus_credentials_has_ciphertext', false);
 	}
 
 	/** Exclude the managed directory even when custom backup selections include it. */

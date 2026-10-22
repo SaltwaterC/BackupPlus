@@ -66,7 +66,13 @@ Each provider entry file in `methods/` declares its own registration headers:
 
 The factory discovers these headers automatically and sorts providers by display name, ignoring helper files without headers. The class must extend `BackupPlus_BackupModule`; its `get_id()` must match the registered ID (lowercase letters and digits). Implement the storage operations and configuration methods illustrated in `methods/template.php`.
 
-Use `BackupPlus_Storage_Methods_Interface::get_storage_object('example')` for a shared object, or `BackupPlus_Storage_Provider_Factory::create('example', false)` for an independent object. Both return `WP_Error` for an unavailable provider. Keep shared implementation in helper files rather than another provider's entry file, so removing an entry file removes only that destination. Saved settings are retained when a provider is absent.
+Use `BackupPlus_Storage_Methods_Interface::get_storage_object('example')` for a shared object, or `BackupPlus_Storage_Provider_Factory::create('example', false)` for an independent object. Both return `WP_Error` for an unavailable provider.
+
+Keep the main provider class in `methods/example.php` and its helpers, transports and bundled provider libraries in `methods/example/`. A provider must not load another provider's entry point or helpers. S3, S3-compatible and DreamObjects each own their implementation and transport classes; OpenStack and Cloud Files likewise own separate implementations. Use distinct class names when duplicating code so providers can run together. General services such as credential encryption, the key store, CA certificates, and Composer libraries remain reusable.
+
+Provider methods own authentication checks (`authentication_required()`), dashboard messages (`get_admin_notices()`), imported settings conversion (`normalize_imported_settings()`) and any download repair (`download_complete()`). Declare the `phpseclib` supported feature when a provider needs that library. An optional `methods/example/bootstrap.php` registers hooks before credential options are registered, without constructing the provider. Credential lifecycle actions are `backupplus_credentials_upgrade`, `backupplus_credentials_upgrade_restored`, `backupplus_credentials_rotate` and `backupplus_credentials_verify` (which receives the candidate key configuration). Failures must throw so maintenance cannot report success with unreadable credentials. Dropbox uses these hooks for its historical token format; the cipher and key lifecycle stay in core.
+
+Remove a provider by deleting `methods/example.php` and `methods/example/`. BackupPlus and the other providers continue to work; saved settings are retained for reinstatement.
 
 Run the WordPress integration checks with the plugin skipped, so the test can load an isolated copy:
 
@@ -74,4 +80,4 @@ Run the WordPress integration checks with the plugin skipped, so the test can lo
 podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php s3
 ```
 
-Omit `s3` to test the complete installation, pass another provider ID to test its removal, or pass `all` to test with every provider entry file removed. The checks exercise discovery, object creation, the Settings form, and stale credentials and authentication requests without changing source providers or saved options.
+Omit `s3` to test the complete installation, pass another provider ID to test removal of its entry file and helper directory, or pass `all` to test with every provider removed. Pass `only:s3` to test S3 with every other provider removed. The checks exercise discovery, object creation, credential upgrade/rotation/recovery, the Settings form, and stale credentials and authentication requests without changing source providers or saved options. `make test-wordpress` runs every removal and standalone-provider combination.

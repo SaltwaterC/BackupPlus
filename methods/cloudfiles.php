@@ -34,7 +34,7 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 		$storage = $this->get_storage();
 		if (!empty($storage)) return $storage;
 		
-		if (!class_exists('BackupPlus_CF_Authentication')) backupplus_try_include_file('includes/cloudfiles/cloudfiles.php', 'include_once');
+		if (!class_exists('BackupPlus_CF_Authentication')) backupplus_try_include_file('methods/cloudfiles/sdk/cloudfiles.php', 'include_once');
 
 		if (!defined('BACKUPPLUS_SSL_DISABLEVERIFY')) define('BACKUPPLUS_SSL_DISABLEVERIFY', BackupPlus_Options::get_backupplus_option('backupplus_ssl_disableverify'));
 
@@ -604,7 +604,7 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 
 // Moved to the bottom to fix a bug in some version or install of PHP which required BackupPlus_BackupModule_cloudfiles_oldsdk to be defined earlier in the file (despite the conditionality) - see HS#19911
 if (version_compare(PHP_VERSION, '5.3.3', '>=') && (!defined('BACKUPPLUS_CLOUDFILES_USEOLDSDK') || BACKUPPLUS_CLOUDFILES_USEOLDSDK != true)) {
-	backupplus_try_include_file('methods/cloudfiles-new.php', 'include_once');
+	backupplus_try_include_file('methods/cloudfiles/client.php', 'include_once');
 	class BackupPlus_BackupModule_cloudfiles extends BackupPlus_BackupModule_cloudfiles_opencloudsdk {
 	}
 } else {

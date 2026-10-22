@@ -46,8 +46,8 @@ add_filter('query', function($query) {
 	return $query;
 });
 require dirname(__DIR__).'/backupplus.php';
-require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/StorageInterface.php';
-require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/WordPress.php';
+require_once BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/OAuth/Storage/StorageInterface.php';
+require_once BACKUPPLUS_DIR.'/methods/dropbox/Dropbox2/OAuth/Storage/WordPress.php';
 wp_set_current_user(1);
 $legacy = json_decode(file_get_contents(__DIR__.'/fixtures/dropbox-legacy-token.json'), true);
 update_option($fixture_option, array('version' => 1, 'settings' => array('sec001fixture' => array('folder' => 'disposable', 'tk_access_token' => $legacy['ciphertext']))), false);

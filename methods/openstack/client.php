@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) die('No direct access allowed.');
 // @codingStandardsIgnoreLine
 use OpenCloud\OpenStack;
 
-backupplus_try_include_file('methods/openstack-base.php', 'require_once');
+backupplus_try_include_file('methods/openstack/base.php', 'require_once');
 
 class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstack_base {
 

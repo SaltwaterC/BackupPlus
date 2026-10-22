@@ -7,11 +7,14 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_fgets, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fputs, WordPress.WP.AlternativeFunctions.file_system_operations_is_writeable, WordPress.WP.AlternativeFunctions.file_system_operations_chown, WordPress.WP.AlternativeFunctions.file_system_operations_chgrp, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Native PHP fileystem function is used for direct control and performance because it can bypass additional layers of abstraction so that no overhead from the WordPress filesystem API's internal handling
 if (!defined('ABSPATH')) die('No direct access allowed');
 
+require_once __DIR__.'/googledrive/admin.php';
+
 // Converted to multi-options (Feb 2017-) and previous options conversion removed: Yes
 
 if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
 class BackupPlus_BackupModule_googledrive extends BackupPlus_BackupModule {
+	use BackupPlus_googledrive_Admin;
 
 	private $client;
 
@@ -1014,11 +1017,11 @@ class BackupPlus_BackupModule_googledrive extends BackupPlus_BackupModule {
 		}
 
 		if ((!class_exists('UDP_Google_Config') || !class_exists('UDP_Google_Client') || !class_exists('UDP_Google_Service_Drive') || !class_exists('UDP_Google_Http_Request')) && !function_exists('google_api_php_client_autoload_backupplus')) {
-			backupplus_try_include_file('includes/Google/autoload.php', 'include_once');
+			backupplus_try_include_file('methods/googledrive/Google/autoload.php', 'include_once');
 		}
 
 		if (!class_exists('BackupPlus_Google_Http_MediaFileUpload')) {
-			backupplus_try_include_file('includes/google-extensions.php', 'include_once');
+			backupplus_try_include_file('methods/googledrive/google-extensions.php', 'include_once');
 		}
 
 		$config = new UDP_Google_Config();

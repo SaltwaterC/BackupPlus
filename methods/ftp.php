@@ -29,6 +29,12 @@ if (!is_array(BackupPlus_Options::get_backupplus_option('backupplus_ftp')) && ''
 if (!class_exists('BackupPlus_BackupModule')) backupplus_try_include_file('methods/backup-module.php', 'require_once');
 
 class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
+
+	public function normalize_imported_settings($settings) {
+		require_once __DIR__.'/ftp/settings-import.php';
+		return BackupPlus_FTP_Settings_Importer::normalize($settings);
+	}
+
 	
 	/**
 	 * Input and option field mappings with default values and supported contexts.
@@ -86,7 +92,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 
 		if (!in_array($encryption, array('none', 'tls'), true)) return new WP_Error('ftp_invalid_encryption', __('Unsupported FTP encryption setting.', 'backupplus'));
 		if ('tls' === $encryption && $disable_ssl) return new WP_Error('ftp_ssl_disabled', __('FTPS requires SSL/TLS. Uncheck the option to disable SSL in the expert settings, then try again.', 'backupplus'));
-		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('includes/ftp.class.php', 'include_once');
+		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('methods/ftp/client.php', 'include_once');
 		$missing = BackupPlus_ftp_wrapper::get_support_errors('tls' === $encryption);
 		/* translators: %s: Required PHP cURL functions or libcurl capabilities. */
 		if ($missing) return new WP_Error('ftp_missing_support', sprintf(__('Your PHP installation needs the following to use this FTP connection: %s.', 'backupplus'), implode(', ', $missing)));
@@ -424,7 +430,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 	}
 
 	private function ftp_possible() {
-		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('includes/ftp.class.php', 'include_once');
+		if (!class_exists('BackupPlus_ftp_wrapper')) backupplus_try_include_file('methods/ftp/client.php', 'include_once');
 		$funcs_disabled = array();
 		$missing = BackupPlus_ftp_wrapper::get_support_errors();
 		if ($missing) $funcs_disabled['ftp'] = $missing;
