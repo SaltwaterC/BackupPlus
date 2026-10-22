@@ -40,7 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<input type="checkbox" class="new-backups-only" id="backupnow_includefiles" checked="checked">
 	<label id="backupnow_includefiles_label" for="backupnow_includefiles"><?php esc_html_e( 'Include your files in the backup', 'backupplus' ); ?></label>
 	
-	(<a href="<?php echo esc_url( $backupplus->get_current_clean_url() ); ?>" id"backupnow_includefiles_showmoreoptions>...</a>)<br>
+	(<a href="<?php echo esc_url( $backupplus->get_current_clean_url() ); ?>" id="backupnow_includefiles_showmoreoptions">...</a>)<br>
 
 	<div id="backupnow_includefiles_moreoptions" class="backupplus-hidden" style="display:none;">
 		<em><?php esc_html_e( 'Your saved settings also affect what is backed up - e.g. files excluded.', 'backupplus' ); ?></em><br>
