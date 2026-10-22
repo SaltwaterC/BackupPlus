@@ -164,8 +164,6 @@ class BackupPlus_Database_Encryption {
 
 	public static function restore_fields() {
 		?>
-		<p><label for="backupplus-restore-passphrase"><?php esc_html_e( 'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives)', 'backupplus' ); ?></label><br>
-		<input id="backupplus-restore-passphrase" name="backupplus_encryptionphrase" type="password" autocomplete="off"></p>
 		<p><label for="backupplus-age-identity"><?php esc_html_e( 'age identity or SSH/PEM private key (age-encrypted archives)', 'backupplus' ); ?></label><br>
 		<textarea id="backupplus-age-identity" name="backupplus_age_identity" rows="4" cols="65" autocomplete="off" spellcheck="false"></textarea></p>
 		<p><label for="backupplus-age-key-passphrase"><?php esc_html_e( 'Private key passphrase, if encrypted', 'backupplus' ); ?></label><br>

@@ -44,3 +44,11 @@
 }
 #backupplus-age-key-dialog::backdrop { background: rgb(0 0 0 / 40%); }
 #backupplus-age-key-public { overflow-wrap: anywhere; }
+
+/* Keep the restore dialog's age key fields inside their column. */
+.backupplus-restore-encryption input[type="password"],
+.backupplus-restore-encryption textarea {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+}

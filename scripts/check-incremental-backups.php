@@ -245,12 +245,26 @@ $run( true, time() + 1 );
 incremental_expect( 'backup' === $backupplus->jobdata_get( 'job_type' ), 'Expired chain must promote the actual job to a full backup' );
 incremental_expect( 'weekly' === $backupplus->schedule_backup( 'weekly' ), 'Full backups must still support a weekly schedule' );
 incremental_expect( 'daily' === $backupplus->schedule_backup_increments( 'monthly' ), 'Increment schedules longer than one day must be capped to daily' );
+// Settings saves schedule through the shared controller; its state option is restored afterwards.
+$increment_interval = 'monthly';
+$schedule_state     = get_option( BackupPlus_Backup_Schedule::STATE, null );
+$increment_filter   = function () use ( &$increment_interval ) {
+	return $increment_interval;
+};
+add_filter( 'pre_option_backupplus_interval_increments', $increment_filter, 100 );
+BackupPlus_Backup_Schedule::instance()->reconcile();
 $event = wp_get_scheduled_event( 'backupplus_backup_increments' );
 incremental_expect( $event && 'daily' === $event->schedule, 'Validated incremental schedule must have a runnable cron event' );
-$backupplus->schedule_backup( 'manual' );
-incremental_expect( false !== wp_next_scheduled( 'backupplus_backup_increments' ), 'Incremental scheduling must work independently of a manual full-backup schedule' );
-$backupplus->schedule_backup_increments( 'none' );
+incremental_expect( false === wp_next_scheduled( 'backupplus_backup' ), 'Incremental scheduling must work independently of a manual full-backup schedule' );
+$increment_interval = 'none';
+BackupPlus_Backup_Schedule::instance()->reconcile();
 incremental_expect( false === wp_next_scheduled( 'backupplus_backup_increments' ), 'Disabling increments must remove their cron event' );
+remove_filter( 'pre_option_backupplus_interval_increments', $increment_filter, 100 );
+if ( null === $schedule_state ) {
+	delete_option( BackupPlus_Backup_Schedule::STATE );
+} else {
+	update_option( BackupPlus_Backup_Schedule::STATE, $schedule_state, false );
+}
 incremental_expect( false !== has_action( 'backupplus_backup_increments', array( $backupplus, 'backup_increments' ) ), 'Cron must have an incremental backup callback' );
 
 // Changing encryption starts a new base; subsequent encrypted increments keep prior ciphertext intact.

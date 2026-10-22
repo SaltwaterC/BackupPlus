@@ -22,15 +22,9 @@ class BackupPlus_Age_Restore {
 		return 'age-encryption.org/' === $prefix;
 	}
 
-	/** Called only by the existing authorized, nonce-protected preflight command. */
-	public static function prepare( $backup, $timestamp, $identity, $passphrase, $ticket = '', $entities = array( 'db' ), $archive_passphrase = '' ) {
+	/** Restorable archives of a backup set, as entity and filename pairs. */
+	private static function archives( $backup, $entities ) {
 		global $backupplus;
-		if ( ! BackupPlus_Options::user_can_manage() ) {
-			throw new \RuntimeException( 'Not authorized.' );
-		}
-		if ( ! is_string( $identity ) || ! is_string( $passphrase ) || ! is_string( $ticket ) || strlen( $identity ) > 65536 || strlen( $passphrase ) > 4096 ) {
-			throw new \RuntimeException( 'Invalid identity input.' );
-		}
 		$files         = array();
 		$allowed       = $backupplus->get_backupable_file_entities( true );
 		$allowed       = BackupPlus_Backup_Sources::restore_entities( $allowed, $backup );
@@ -43,6 +37,29 @@ class BackupPlus_Age_Restore {
 				$files[] = array( $entity, $file );
 			}
 		}
+		return $files;
+	}
+
+	/** Whether restoring any part of a backup set needs a private key. */
+	public static function has_encrypted( $backup ) {
+		foreach ( self::archives( $backup, array_map( 'strval', array_keys( $backup ) ) ) as $entry ) {
+			if ( is_string( $entry[1] ) && BackupPlus_Encryption::is_file_encrypted( $entry[1] ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Called only by the existing authorized, nonce-protected preflight command. */
+	public static function prepare( $backup, $timestamp, $identity, $passphrase, $ticket = '', $entities = array( 'db' ), $archive_passphrase = '' ) {
+		global $backupplus;
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			throw new \RuntimeException( 'Not authorized.' );
+		}
+		if ( ! is_string( $identity ) || ! is_string( $passphrase ) || ! is_string( $ticket ) || strlen( $identity ) > 65536 || strlen( $passphrase ) > 4096 ) {
+			throw new \RuntimeException( 'Invalid identity input.' );
+		}
+		$files = self::archives( $backup, $entities );
 		if ( count( $files ) > 10000 ) {
 			throw new \RuntimeException( 'Too many backup archives.' );
 		}

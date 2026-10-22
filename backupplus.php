@@ -387,3 +387,9 @@ BackupPlus_Sources_Admin::register();
 
 require_once BACKUPPLUS_DIR . '/includes/class-pre-update-backups.php';
 BackupPlus_Pre_Update_Backups::instance();
+
+require_once BACKUPPLUS_DIR . '/includes/class-backup-schedule.php';
+require_once BACKUPPLUS_DIR . '/includes/class-retention-cleanup.php';
+BackupPlus_Backup_Schedule::instance();
+BackupPlus_Retention_Cleanup::instance();
+add_action( 'admin_enqueue_scripts', array( 'BackupPlus_Backup_Schedule', 'assets' ) );

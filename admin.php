@@ -319,7 +319,7 @@ class BackupPlus_Admin {
 		}
 
 		$next_scheduled_backup_database = wp_next_scheduled( 'backupplus_backup_database' );
-		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) == BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) {
+		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) ) == BackupPlus_Options::get_backupplus_option( 'backupplus_interval' ) && BackupPlus_Backup_Schedule::instance()->same_schedule() ) {
 			if ( isset( $files_not_scheduled ) ) {
 				$next_scheduled_backup_database = $next_scheduled_backup;
 				$database_not_scheduled         = true;
@@ -396,10 +396,27 @@ class BackupPlus_Admin {
 			echo '<span class="backupplus_next_scheduled_date_time">' . esc_html( $next_scheduled_backup ) . '</span>';
 		}
 
+		if ( $return_instead_of_echo ) {
+			return ob_get_clean();
+		}
+	}
+
+	/**
+	 * Used to output the information for the next scheduled incremental backup.
+	 *
+	 * @param Boolean $return_instead_of_echo Whether to return or echo the results
+	 * @return Void|String If $return_instead_of_echo parameter is true, It returns html string
+	 */
+	public function next_scheduled_incremental_backups_output( $return_instead_of_echo = false ) {
+		if ( $return_instead_of_echo ) {
+			ob_start();
+		}
 		$next_increment = wp_next_scheduled( 'backupplus_backup_increments' );
 		if ( $next_increment ) {
 			$increment_date = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next_increment ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next_increment ), 'D, F j, Y H:i' );
-			echo '<br><span>' . esc_html( sprintf( __( 'Incremental backup (or required full backup): %s', 'backupplus' ), $increment_date ) ) . '</span>';
+			echo '<span class="backupplus_next_scheduled_date_time">' . esc_html( $increment_date ) . '</span>';
+		} else {
+			echo '<span>' . esc_html__( 'Nothing currently scheduled', 'backupplus' ) . '</span>';
 		}
 
 		if ( $return_instead_of_echo ) {
@@ -420,7 +437,10 @@ class BackupPlus_Admin {
 		}
 
 		$next_scheduled_backup_database = wp_next_scheduled( 'backupplus_backup_database' );
-		if ( $next_scheduled_backup_database ) {
+		if ( $next_scheduled_backup_database && wp_next_scheduled( 'backupplus_backup' ) && BackupPlus_Backup_Schedule::instance()->same_schedule() ) {
+			$next_scheduled_backup_database = __( 'At the same time as the files backup', 'backupplus' );
+			$database_not_scheduled         = true;
+		} elseif ( $next_scheduled_backup_database ) {
 			// Convert to GMT
 			$next_scheduled_backup_database_gmt = gmdate( 'Y-m-d H:i:s', $next_scheduled_backup_database );
 			// Convert to blog time zone. wp_date() (WP 5.3+) also performs locale translation.
@@ -665,7 +685,7 @@ class BackupPlus_Admin {
 	 */
 	public function admin_enqueue_scripts() {
 
-		global $backupplus, $wp_locale;
+		global $backupplus;
 
 		// This should not happen, but is an extra protection in case it does.
 		if ( ! BackupPlus_Options::user_can_manage() ) {
@@ -736,19 +756,6 @@ class BackupPlus_Admin {
 		$jqueryui_dialog_extended_version = $backupplus->use_unminified_scripts() ? '1.0.4' . '.' . time() : '1.0.4';
 		wp_enqueue_script( 'jquery-ui.dialog.extended', BACKUPPLUS_URL . '/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended' . $backupplus_min_or_not . '.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog' ), $jqueryui_dialog_extended_version );
 
-		$day_selector = '';
-		for ( $day_index = 0; $day_index <= 6; $day_index++ ) {
-			// $selected = ($opt == $day_index) ? 'selected="selected"' : '';
-			$selected      = '';
-			$day_selector .= "\n\t<option value='" . $day_index . "' $selected>" . $wp_locale->get_weekday( $day_index ) . '</option>';
-		}
-
-		$mday_selector = '';
-		for ( $mday_index = 1; $mday_index <= 28; $mday_index++ ) {
-			// $selected = ($opt == $mday_index) ? 'selected="selected"' : '';
-			$selected       = '';
-			$mday_selector .= "\n\t<option value='" . $mday_index . "' $selected>" . $mday_index . '</option>';
-		}
 		$remote_storage_options_and_templates = BackupPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
 		$backup_methods                       = $backupplus->backup_methods;
 		$provider_script_data                 = array();
@@ -849,10 +856,6 @@ class BackupPlus_Admin {
 					'browse_download_link'                 => apply_filters( 'backupplus_browse_download_link', '' ),
 					'unsavedsettingsbackup'                => __( 'You have made changes to your settings, and not saved.', 'backupplus' ) . "\n" . __( 'You should save your changes to ensure that they are used for making your backup.', 'backupplus' ),
 					'unsaved_settings_export'              => __( 'You have made changes to your settings, and not saved.', 'backupplus' ) . "\n" . __( 'Your export file will be of your displayed settings, not your saved ones.', 'backupplus' ),
-					'dayselector'                          => $day_selector,
-					'mdayselector'                         => $mday_selector,
-					'day'                                  => __( 'day', 'backupplus' ),
-					'inthemonth'                           => __( 'in the month', 'backupplus' ),
 					'days'                                 => __( 'day(s)', 'backupplus' ),
 					'hours'                                => __( 'hour(s)', 'backupplus' ),
 					'weeks'                                => __( 'week(s)', 'backupplus' ),
@@ -3768,7 +3771,8 @@ class BackupPlus_Admin {
 			return '';
 		}
 
-		if ( ! isset( $jobdata['backup_time'] ) ) {
+		// Retention cleanup jobs are reported in the next scheduled backups box.
+		if ( ! isset( $jobdata['backup_time'] ) || ( isset( $jobdata['job_type'] ) && 'cleanup' === $jobdata['job_type'] ) ) {
 			return '';
 		}
 
@@ -5058,6 +5062,10 @@ class BackupPlus_Admin {
 			if ( isset( $backup['native'] ) && false == $backup['native'] ) {
 				$show_data .= ' ' . __( '(backup set imported from remote location)', 'backupplus' );
 			}
+			// Only encrypted sets ask for a private key.
+			if ( BackupPlus_Age_Restore::has_encrypted( $backup ) ) {
+				$entities .= '/crypted=1/';
+			}
 			?>
 			<button data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
 				<?php esc_html_e( 'Restore', 'backupplus' ); ?>
@@ -6151,17 +6159,21 @@ class BackupPlus_Admin {
 
 		$more_files_path_updated = false;
 
-		if ( isset( $settings['backupplus_version'] ) && $backupplus->version == $settings['backupplus_version'] ) {
+		$version_matches = isset( $settings['backupplus_version'] ) && $backupplus->version == $settings['backupplus_version'];
+		// Nothing is saved when the scheduling fields are invalid.
+		$schedule_check = $version_matches ? BackupPlus_Backup_Schedule::instance()->validate( $settings ) : true;
+
+		if ( is_wp_error( $schedule_check ) ) {
+			$return_array = array(
+				'saved'         => false,
+				'error_message' => $schedule_check->get_error_message(),
+			);
+		} elseif ( $version_matches ) {
 
 			$return_array = array( 'saved' => true );
 
-			$add_to_post_keys = array( 'backupplus_interval', 'backupplus_interval_database', 'backupplus_interval_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db' );
+			$add_to_post_keys = array( 'backupplus_interval', 'backupplus_interval_database', 'backupplus_interval_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db', 'backupplus_schedule_exact_files', 'backupplus_schedule_exact_db', 'backupplus_schedule_exact_increments', 'backupplus_starttime_increments', 'backupplus_retention_cleanup_mode', 'backupplus_retention_cleanup_time' );
 
-			// If database and files are on same schedule, override the db day/time settings
-			if ( isset( $settings['backupplus_interval_database'] ) && isset( $settings['backupplus_interval_database'] ) && $settings['backupplus_interval_database'] == $settings['backupplus_interval'] && isset( $settings['backupplus_starttime_files'] ) ) {
-				$settings['backupplus_starttime_db'] = $settings['backupplus_starttime_files'];
-				$settings['backupplus_startday_db']  = $settings['backupplus_startday_files'];
-			}
 			foreach ( $add_to_post_keys as $key ) {
 				// For add-ons that look at $_POST to find saved settings, add the relevant keys to $_POST so that they find them there
 				if ( isset( $settings[ $key ] ) ) {
@@ -6232,6 +6244,9 @@ class BackupPlus_Admin {
 					// error_log("Non-UD key when saving from POSTed data: ".$key);
 				}
 			}
+
+			// Schedule from the complete set of saved settings
+			BackupPlus_Backup_Schedule::instance()->reconcile();
 		} else {
 			$return_array = array(
 				'saved'         => false,
@@ -6298,10 +6313,12 @@ class BackupPlus_Admin {
 
 		$scheduled_output = ob_get_clean();
 
-		$return_array['messages']           = $messages_output;
-		$return_array['scheduled']          = $scheduled_output;
-		$return_array['files_scheduled']    = $this->next_scheduled_files_backups_output( true );
-		$return_array['database_scheduled'] = $this->next_scheduled_database_backups_output( true );
+		$return_array['messages']              = $messages_output;
+		$return_array['scheduled']             = $scheduled_output;
+		$return_array['files_scheduled']       = $this->next_scheduled_files_backups_output( true );
+		$return_array['incremental_scheduled'] = $this->next_scheduled_incremental_backups_output( true );
+		$return_array['database_scheduled']    = $this->next_scheduled_database_backups_output( true );
+		$return_array['cleanup_scheduled']     = BackupPlus_Retention_Cleanup::instance()->summary_html();
 
 		// Add the updated options to the return message, so we can update on screen
 		return $return_array;
@@ -6412,8 +6429,9 @@ class BackupPlus_Admin {
 			delete_site_option( $s );
 		}
 
-		$backupplus->schedule_backup( 'manual' );
-		$backupplus->schedule_backup_database( 'manual' );
+		BackupPlus_Backup_Schedule::instance()->reset();
+		delete_option( BackupPlus_Retention_Cleanup::STATUS );
+		delete_option( BackupPlus_Retention_Cleanup::FAILURES );
 
 		$this->show_admin_warning( __( 'Your settings have been wiped.', 'backupplus' ) );
 

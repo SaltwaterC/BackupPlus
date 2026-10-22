@@ -996,7 +996,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		// Loop through the cron schedules
 		foreach ( $cron as $timestamp => $cron_hooks ) {
 			foreach ( $cron_hooks as $hook => $events ) {
-				if ( ! preg_match( '/^backupplus_(backup(_database|_resume|_increments)?|clean_temporary_files|rotate_credential_keys|retry_credential_key_rotation)$/', $hook ) ) {
+				if ( ! preg_match( '/^backupplus_(backup(_database|_resume|_increments)?|retention_cleanup(_retry)?|clean_temporary_files|rotate_credential_keys|retry_credential_key_rotation)$/', $hook ) ) {
 					continue;
 				}
 

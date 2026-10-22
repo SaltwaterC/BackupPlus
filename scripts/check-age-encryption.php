@@ -514,7 +514,8 @@ try {
 	BackupPlus_Database_Encryption::restore_fields();
 	$html = ob_get_clean();
 	age_wp_expect( preg_match( '/<select id="backupplus-database-encryption"[^>]*>(.*?)<\/select>/s', $html, $select ) && 2 === substr_count( $select[1], '<option ' ) && false === strpos( $select[1], 'password' ) && false === strpos( $html, 'id="backupplus_encryptionphrase"' ), 'Backup settings must offer only Disabled and age public keys without a saved passphrase field' );
-	age_wp_expect( false !== strpos( $html, 'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives)' ), 'Restore passphrase controls must describe legacy compatibility' );
+	age_wp_expect( false === strpos( $html, 'backupplus-restore-passphrase' ), 'The restore form must not offer a legacy passphrase field' );
+	age_wp_expect( BackupPlus_Age_Restore::has_encrypted( array( 'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ), 'db' => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz.crypt' ) ) && ! BackupPlus_Age_Restore::has_encrypted( array( 'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ), 'db' => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz' ) ), 'Restore key fields must be requested only for backup sets with encrypted archives' );
 	age_wp_expect( false !== strpos( $html, 'github:USERNAME' ) && false !== strpos( $html, 'backupplus_age_identity' ) && false === strpos( $html, $fixture['passphrase'] ), 'Settings and restore forms must expose public recipient and request-only key controls' );
 	echo "PASS: real WordPress age settings, backup writer, POST downloads, authorization, restore preflight and private-key-free DB continuation\n";
 } finally {

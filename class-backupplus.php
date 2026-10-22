@@ -1045,6 +1045,10 @@ class BackupPlus {
 				// if ('debug' != $level) echo $line."\n";
 				break;
 
+			case 'cleanup':
+				// The dashboard's last message describes backups; cleanup results are shown separately.
+				break;
+
 			default:
 				if ( ! $skip_dblog && 'debug' != $level ) {
 					BackupPlus_Options::update_backupplus_option( 'backupplus_lastmessage', $line . ' (' . date_i18n( 'M d H:i:s' ) . ')', false );
@@ -2542,6 +2546,10 @@ class BackupPlus {
 			}
 
 			if ( ! empty( $fail_on_resume ) && $fail_on_resume == $this->current_resumption ) {
+				if ( 'cleanup' === $job_type ) {
+					BackupPlus_Retention_Cleanup::instance()->abandon();
+					die;
+				}
 				$this->log( 'The backup is being aborted for a repeated failure to progress.', 'backupplus' );
 				$this->log( __( 'The backup is being aborted for a repeated failure to progress.', 'backupplus' ), 'error' );
 				$this->backup_finish( true, true );
@@ -2573,6 +2581,13 @@ class BackupPlus {
 		// Bring in all the backup routines
 		backupplus_try_include_file( 'backup.php', 'include_once' );
 		$backupplus_backup = new BackupPlus_Backup( $backup_files, apply_filters( 'backupplus_files_altered_since', -1, $job_type ) );
+
+		// Retention cleanup reuses the resumption machinery above, but creates no archives, history or reports.
+		if ( 'cleanup' === $job_type ) {
+			BackupPlus_Retention_Cleanup::instance()->run_job( $backupplus_backup );
+			restore_error_handler();
+			return;
+		}
 
 		$undone_files = array();
 
@@ -3416,10 +3431,10 @@ class BackupPlus {
 			$sched_log_extra = '';
 
 			if ( 'manual' != $files_schedule && false !== $files_schedule ) {
-				if ( $files_schedule == $db_schedule || BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database', 'xyz' ) == 'xyz' ) {
+				if ( BackupPlus_Backup_Schedule::instance()->same_schedule() ) {
 					$sched_log_extra = 'Combining jobs from identical schedules. ';
 					$backup_database = ( true == $backup_files ) ? true : false;
-				} elseif ( $files_schedule && $db_schedule && $files_schedule != $db_schedule ) {
+				} elseif ( $files_schedule && $db_schedule && ! BackupPlus_Backup_Schedule::instance()->any_exact() ) {
 
 					// This stored value is the earliest of the two apparently-close jobs
 					$combine_around = empty( $this->combine_jobs_around ) ? false : $this->combine_jobs_around;
@@ -3902,6 +3917,29 @@ class BackupPlus {
 		if ( $delete_jobdata ) {
 			delete_site_option( 'backupplus_jobdata_' . $this->nonce );
 		}
+	}
+
+	/**
+	 * End a job that creates no backup, such as retention cleanup. Unlike backup_finish(), this saves no backup history, sends no report and does not fire backupplus_backup_finished.
+	 */
+	public function end_cleanup_job() {
+		if ( ! empty( $this->backup_semaphore ) ) {
+			$this->backup_semaphore->delete();
+			$this->backup_semaphore = null;
+		}
+		$this->restore_composer_autoloaders();
+		$this->jobdata_set( 'jobstatus', 'finished' );
+		for ( $resumption = $this->current_resumption + 1; $resumption <= $this->current_resumption + 5; $resumption++ ) {
+			wp_clear_scheduled_hook( 'backupplus_backup_resume', array( $resumption, $this->nonce ) );
+		}
+		$this->newresumption_scheduled = false;
+		if ( $this->logfile_handle ) {
+			fclose( $this->logfile_handle );
+			$this->logfile_handle = null;
+		}
+		delete_site_option( 'backupplus_jobdata_' . $this->nonce );
+		// A later cron event in this request must not inherit this job's data.
+		$this->jobdata_reset();
 	}
 
 	/**
@@ -4851,6 +4889,11 @@ class BackupPlus {
 
 		static $scheduled = array();
 
+		// Incremental and cleanup events are never combined with other jobs.
+		if ( is_object( $event ) && in_array( $event->hook, array( 'backupplus_backup_increments', 'backupplus_retention_cleanup' ), true ) ) {
+			return apply_filters( 'backupplus_override_scheduled_backup_event', $event );
+		}
+
 		if ( is_object( $event ) && ( 'backupplus_backup' == $event->hook || 'backupplus_backup_database' == $event->hook ) ) {
 
 			// Reset the option - but make sure it is saved first so that we can used it (since this hook may be called just before our actual cron task)
@@ -4867,8 +4910,13 @@ class BackupPlus {
 			// return $event;
 			// }
 
-			// Override the timestamp of the scheduled backup event based on the user's predefined schedule setting if there is a fixtime add-on.
+			// Override the timestamp of the scheduled backup event based on the user's exact time setting.
 			$event = apply_filters( 'backupplus_override_scheduled_backup_event', $event );
+
+			// Exact times are chosen deliberately, so nearby schedules are not merged.
+			if ( BackupPlus_Backup_Schedule::instance()->any_exact() ) {
+				return $event;
+			}
 
 			$backup_scheduled_for = ( 'backupplus_backup' == $event->hook ) ? $event->timestamp : wp_next_scheduled( 'backupplus_backup' );
 			$db_scheduled_for     = ( 'backupplus_backup_database' == $event->hook ) ? $event->timestamp : wp_next_scheduled( 'backupplus_backup_database' );
@@ -4887,94 +4935,38 @@ class BackupPlus {
 	}
 
 	/**
-	 * This function is both the backup scheduler and a filter callback for saving the option. It is called in the register_setting for the backupplus_interval, which means when the admin settings are saved it is called.
+	 * Filter callback for saving the backupplus_interval option. The cron event is updated by BackupPlus_Backup_Schedule::reconcile() once all settings are saved, so that it also sees the new timing settings.
 	 *
 	 * @param  String $interval
 	 * @return String - filtered value
 	 */
 	public function schedule_backup( $interval ) {
-		$previous_time = wp_next_scheduled( 'backupplus_backup' );
-
-		// Clear schedule so that we don't stack up scheduled backups
-		wp_clear_scheduled_hook( 'backupplus_backup' );
 		if ( 'manual' == $interval ) {
 			return 'manual';
 		}
-		$previous_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval' );
-
 		$valid_schedules = wp_get_schedules();
-		if ( empty( $valid_schedules[ $interval ] ) ) {
-			$interval = 'daily';
-		}
-
-		// Try to avoid changing the time is one was already scheduled. This is fairly conservative - we could do more, e.g. check if a backup already happened today.
-		$default_time = ( $interval == $previous_interval && $previous_time > 0 ) ? $previous_time : $this->random_schedule_time();
-		$first_time   = apply_filters( 'backupplus_schedule_firsttime_files', $default_time );
-
-		wp_schedule_event( $first_time, $interval, 'backupplus_backup' );
-
-		return $interval;
+		return empty( $valid_schedules[ $interval ] ) ? 'daily' : $interval;
 	}
 
 	/**
-	 * This function is both the database backup scheduler and a filter callback for saving the option. It is called in the register_setting for the backupplus_interval_database, which means when the admin settings are saved it is called.
+	 * Filter callback for saving the backupplus_interval_database option; see schedule_backup().
 	 *
 	 * @param  String $interval
 	 * @return String - filtered value
 	 */
 	public function schedule_backup_database( $interval ) {
-		$previous_time = wp_next_scheduled( 'backupplus_backup_database' );
-
-		// Clear schedule so that we don't stack up scheduled backups
-		wp_clear_scheduled_hook( 'backupplus_backup_database' );
-		if ( 'manual' == $interval ) {
-			return 'manual';
-		}
-
-		$previous_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_database' );
-
-		$valid_schedules = wp_get_schedules();
-		if ( empty( $valid_schedules[ $interval ] ) ) {
-			$interval = 'daily';
-		}
-
-		// Try to avoid changing the time is one was already scheduled. This is fairly conservative - we could do more, e.g. check if a backup already happened today.
-		$default_time = ( $interval == $previous_interval && $previous_time > 0 ) ? $previous_time : $this->random_schedule_time();
-
-		$first_time = apply_filters( 'backupplus_schedule_firsttime_db', $default_time );
-		wp_schedule_event( $first_time, $interval, 'backupplus_backup_database' );
-
-		return $interval;
+		return $this->schedule_backup( $interval );
 	}
 
 	/**
-	 * This function is both the increments backup scheduler and a filter callback for saving the option. It is called in the register_setting for the backupplus_interval_increments, which means when the admin settings are saved it is called.
+	 * Filter callback for saving the backupplus_interval_increments option: increments run from hourly to daily. The cron event is updated by BackupPlus_Backup_Schedule::reconcile(); see schedule_backup().
 	 *
 	 * @param  String $interval
 	 * @return String - filtered value
 	 */
 	public function schedule_backup_increments( $interval ) {
-		$previous_time = wp_next_scheduled( 'backupplus_backup_increments' );
-
-		// Clear schedule so that we don't stack up scheduled backups
-		wp_clear_scheduled_hook( 'backupplus_backup_increments' );
-		if ( 'none' == $interval || empty( $interval ) ) {
-			return 'none';
-		}
-		$previous_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments' );
-
-		$valid_schedules = wp_get_schedules();
-		if ( empty( $valid_schedules[ $interval ] ) || $valid_schedules[ $interval ]['interval'] > DAY_IN_SECONDS || $valid_schedules[ $interval ]['interval'] < HOUR_IN_SECONDS ) {
-			$interval = 'daily';
-		}
-
-		// Try to avoid changing the time is one was already scheduled. This is fairly conservative - we could do more, e.g. check if a backup already happened today.
-		$default_time = ( $interval == $previous_interval && $previous_time > 0 ) ? $previous_time : time() + 120;
-		$first_time   = apply_filters( 'backupplus_schedule_firsttime_increments', $default_time );
-
-		wp_schedule_event( $first_time, $interval, 'backupplus_backup_increments' );
-
-		return $interval;
+		$interval = BackupPlus_Backup_Schedule::increments_interval( $interval );
+		return $interval ? $interval : 'none';
 	}
 
 	/**
@@ -4982,7 +4974,7 @@ class BackupPlus {
 	 *
 	 * @return string - the random timestamp
 	 */
-	private function random_schedule_time() {
+	public function random_schedule_time() {
 
 		static $scheduled_timestamp = false;
 
@@ -6150,6 +6142,12 @@ class BackupPlus {
 				'backupplus_starttime_db',
 				'backupplus_startday_db',
 				'backupplus_startday_files',
+				'backupplus_schedule_exact_files',
+				'backupplus_schedule_exact_db',
+				'backupplus_schedule_exact_increments',
+				'backupplus_starttime_increments',
+				'backupplus_retention_cleanup_mode',
+				'backupplus_retention_cleanup_time',
 				'backupplus_sftp',
 				'backupplus_s3',
 				'backupplus_s3generic',
@@ -6215,6 +6213,8 @@ class BackupPlus {
 				'backupplus_backup',
 				'backupplus_backup_database',
 				'backupplus_backup_increments',
+				'backupplus_retention_cleanup',
+				'backupplus_retention_cleanup_retry',
 				'backupplus_clean_temporary_files',
 				'puc_cron_check_updates-backupplus',
 				'backupplus_backup_resume',

@@ -35,13 +35,13 @@ foreach ( $default_options as $k => $v ) {
 				?>
 				</select>
 				<label class="backupplus-schedule-retention" for="backupplus_retain">
-					<span><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
+					<span class="backupplus-field-prefix"><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
 					<input id="backupplus_retain" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many scheduled file backups', 'backupplus' ); ?>" name="backupplus_retain" value="<?php echo esc_attr( $backupplus_retain ); ?>" class="retain-files">
 					<span><?php esc_html_e( 'backup chains', 'backupplus' ); ?></span>
 				</label>
 			</div>
 			<span class="backupplus_files_timings">
-				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showfileopts', '<input type="hidden" name="backupplus_starttime_files" value="">', $selected_interval ), $backupplus_admin->kses_allow_tags() ); ?>
+				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showfileopts', BackupPlus_Backup_Schedule::instance()->timing_controls( 'files' ), $selected_interval ), BackupPlus_Backup_Schedule::allowed_html() ); ?>
 			</span>
 			<?php
 				do_action( 'backupplus_incremental_cell', $selected_interval );
@@ -56,8 +56,9 @@ foreach ( $default_options as $k => $v ) {
 				<select id="backupplus_interval_increments" name="backupplus_interval_increments" aria-describedby="backupplus-incremental-description">
 					<option value="none"><?php esc_html_e( 'Disabled', 'backupplus' ); ?></option>
 					<?php
-					$increment_interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' );
-					foreach ( wp_get_schedules() as $schedule => $details ) {
+					$increment_interval = BackupPlus_Backup_Schedule::increments_interval( BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' ) );
+					// The plugin's own list, as for full backups: WordPress's "Once Hourly" would duplicate "Every hour".
+					foreach ( array_intersect_key( backupplus_list_cron_schedules(), wp_get_schedules() ) as $schedule => $details ) {
 						if ( $details['interval'] >= HOUR_IN_SECONDS && $details['interval'] <= DAY_IN_SECONDS ) {
 							echo '<option value="' . esc_attr( $schedule ) . '" ' . selected( $increment_interval, $schedule, false ) . '>' . esc_html( $details['display'] ) . '</option>';
 						}
@@ -65,6 +66,9 @@ foreach ( $default_options as $k => $v ) {
 					?>
 				</select>
 			</div>
+			<span class="backupplus_increments_timings">
+				<?php echo wp_kses( BackupPlus_Backup_Schedule::instance()->timing_controls( 'increments' ), BackupPlus_Backup_Schedule::allowed_html() ); ?>
+			</span>
 			<p id="backupplus-incremental-description" class="description"><?php esc_html_e( 'Back up changed files between full backups. A new full backup is taken at least every seven days. Increments are kept with their full backup.', 'backupplus' ); ?></p>
 		</td>
 	</tr>
@@ -86,16 +90,34 @@ foreach ( $default_options as $k => $v ) {
 				?>
 				</select>
 				<label class="backupplus-schedule-retention" for="backupplus_retain_db">
-					<span><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
+					<span class="backupplus-field-prefix"><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
 					<input id="backupplus_retain_db" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many scheduled database backups', 'backupplus' ); ?>" name="backupplus_retain_db" value="<?php echo esc_attr( $backupplus_retain_db ); ?>" class="retain-files">
 					<span><?php esc_html_e( 'backups', 'backupplus' ); ?></span>
 				</label>
 			</div>
 			<span class="backupplus_same_schedules_message"><?php echo esc_html( apply_filters( 'backupplus_schedule_sametimemsg', '' ) ); ?></span>
 			<span class="backupplus_db_timings">
-				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showdbopts', '<input type="hidden" name="backupplus_starttime_db" value="">', $selected_interval_db ), $backupplus_admin->kses_allow_tags() ); ?>
+				<?php echo wp_kses( apply_filters( 'backupplus_schedule_showdbopts', BackupPlus_Backup_Schedule::instance()->timing_controls( 'db' ), $selected_interval_db ), BackupPlus_Backup_Schedule::allowed_html() ); ?>
 			</span>
 			<?php do_action( 'backupplus_after_dbconfig' ); ?>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="backupplus_retention_cleanup_mode"><?php esc_html_e( 'Delete old backups', 'backupplus' ); ?></label></th>
+		<td class="js-retention-cleanup-schedule">
+			<?php
+			$backupplus_cleanup_mode = BackupPlus_Backup_Schedule::sanitize_cleanup_mode( BackupPlus_Options::get_backupplus_option( 'backupplus_retention_cleanup_mode', 'after_backup' ) );
+			$backupplus_cleanup_time = BackupPlus_Backup_Schedule::sanitize_time( BackupPlus_Options::get_backupplus_option( 'backupplus_retention_cleanup_time', '' ) );
+			?>
+			<div class="backupplus-schedule-controls">
+				<select id="backupplus_retention_cleanup_mode" name="backupplus_retention_cleanup_mode" aria-describedby="backupplus-retention-cleanup-description">
+					<option value="after_backup" <?php selected( $backupplus_cleanup_mode, 'after_backup' ); ?>><?php esc_html_e( 'After each backup', 'backupplus' ); ?></option>
+					<option value="daily" <?php selected( $backupplus_cleanup_mode, 'daily' ); ?>><?php esc_html_e( 'Daily at a chosen time', 'backupplus' ); ?></option>
+				</select>
+				<label class="backupplus-retention-cleanup-time"><span class="backupplus-field-prefix"><?php esc_html_e( 'at', 'backupplus' ); ?></span> <input type="time" step="60" id="backupplus_retention_cleanup_time" name="backupplus_retention_cleanup_time" value="<?php echo esc_attr( $backupplus_cleanup_time ); ?>"></label>
+			</div>
+			<p id="backupplus-retention-cleanup-description" class="description"><?php esc_html_e( 'Backups beyond the numbers kept above are deleted, except backups marked "Always Keep" and imported backups. In daily mode, backups no longer delete old backups when they finish; a separate cleanup runs once a day without creating a backup.', 'backupplus' ); ?></p>
+			<?php echo wp_kses( BackupPlus_Backup_Schedule::timing_help(), BackupPlus_Backup_Schedule::allowed_html() ); ?>
 		</td>
 	</tr>
 	<tr>

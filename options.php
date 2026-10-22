@@ -283,6 +283,13 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_startday_files', array( 'BackupPlus_Options', 'week_or_month_day' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_startday_db', array( 'BackupPlus_Options', 'week_or_month_day' ) );
 
+		register_setting( 'backupplus-options-group', 'backupplus_schedule_exact_files', array( 'BackupPlus_Backup_Schedule', 'sanitize_flag' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_schedule_exact_db', array( 'BackupPlus_Backup_Schedule', 'sanitize_flag' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_schedule_exact_increments', array( 'BackupPlus_Backup_Schedule', 'sanitize_flag' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_starttime_increments', array( 'BackupPlus_Backup_Schedule', 'sanitize_time' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_retention_cleanup_mode', array( 'BackupPlus_Backup_Schedule', 'sanitize_cleanup_mode' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_retention_cleanup_time', array( 'BackupPlus_Backup_Schedule', 'sanitize_time' ) );
+
 		global $pagenow;
 		$page = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'page', '' );
 		if ( 'options-general.php' == $pagenow && 'backupplus' == substr( $page, 0, 11 ) ) {

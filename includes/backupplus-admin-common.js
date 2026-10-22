@@ -501,6 +501,7 @@ function backupplus_restore_setoptions(entities) {
 		jQuery('.backupplus_restore_crypteddb').hide();
 	}
 	jQuery('#backupplus_restore_db').trigger('change');
+	jQuery('.backupplus-restore-encryption').toggle(/\/crypted=1\//.test(entities));
 	var dmatch = entities.match(/meta_foreign=([12])/);
 	if (dmatch) {
 		jQuery('#backupplus_restore_meta_foreign').val(dmatch[1]);
@@ -1186,93 +1187,14 @@ function backupplus_is_unique_exclude_rule(exclude_rule, include_backup_file) {
 }
 
 
-var backupplus_interval_week_val = false;
-var backupplus_interval_month_val = false;
-
-function backupplus_intervals_monthly_or_not(selector_id, now_showing) {
-	var selector = '#backupplus-navtab-settings-content #'+selector_id;
-	var current_length = jQuery(selector+' option').length;
-	var is_monthly = ('monthly' == now_showing) ? true : false;
-	var existing_is_monthly = false;
-	if (current_length > 10) { existing_is_monthly = true; }
-	if (!is_monthly && !existing_is_monthly) {
-		return;
-	}
-	if (is_monthly && existing_is_monthly) {
-		if ('monthly' == now_showing) {
-			// existing_is_monthly does not mean the same as now_showing=='monthly'. existing_is_monthly refers to the drop-down, not whether the drop-down is being displayed. We may need to add these words back.
-			jQuery('.backupplus_monthly_extra_words_'+selector_id).remove();
-			jQuery(selector).before('<span class="backupplus_monthly_extra_words_'+selector_id+'">'+backupplus_i18n.day+' </span>').after('<span class="backupplus_monthly_extra_words_'+selector_id+'"> '+backupplus_i18n.inthemonth+' </span>');
-		}
-		return;
-	}
-	jQuery('.backupplus_monthly_extra_words_'+selector_id).remove();
-	if (is_monthly) {
-		// Save the old value
-		backupplus_interval_week_val = jQuery(selector+' option:selected').val();
-		jQuery(selector).html(backupplus_i18n.mdayselector).before('<span class="backupplus_monthly_extra_words_'+selector_id+'">'+backupplus_i18n.day+' </span>').after('<span class="backupplus_monthly_extra_words_'+selector_id+'"> '+backupplus_i18n.inthemonth+' </span>');
-		var select_mday = (backupplus_interval_month_val === false) ? 1 : backupplus_interval_month_val;
-		// Convert from day of the month (ordinal) to option index (starts at 0)
-		select_mday = select_mday - 1;
-		jQuery(selector+" option").eq(select_mday).prop('selected', true);
-	} else {
-		// Save the old value
-		backupplus_interval_month_val = jQuery(selector+' option:selected').val();
-		jQuery(selector).html(backupplus_i18n.dayselector);
-		var select_day = (backupplus_interval_week_val === false) ? 1 : backupplus_interval_week_val;
-		jQuery(selector+" option").eq(select_day).prop('selected', true);
-	}
-}
-
 function backupplus_check_same_times() {
-	var dbmanual = 0;
 	var file_interval = jQuery('#backupplus-navtab-settings-content .backupplus_interval').val();
-	if (file_interval == 'manual') {
-// jQuery('#backupplus_files_timings').css('opacity', '0.25');
-		jQuery('#backupplus-navtab-settings-content .backupplus_files_timings').hide();
-	} else {
-// jQuery('#backupplus_files_timings').css('opacity', 1);
-		jQuery('#backupplus-navtab-settings-content .backupplus_files_timings').show();
-	}
-	
-	if ('weekly' == file_interval || 'fortnightly' == file_interval || 'monthly' == file_interval) {
-		backupplus_intervals_monthly_or_not('backupplus_startday_files', file_interval);
-		jQuery('#backupplus-navtab-settings-content #backupplus_startday_files').show();
-	} else {
-		jQuery('.backupplus_monthly_extra_words_backupplus_startday_files').remove();
-		jQuery('#backupplus-navtab-settings-content #backupplus_startday_files').hide();
-	}
-	
 	var db_interval = jQuery('#backupplus-navtab-settings-content .backupplus_interval_database').val();
-	if (db_interval == 'manual') {
-		dbmanual = 1;
-// jQuery('#backupplus_db_timings').css('opacity', '0.25');
-		jQuery('#backupplus-navtab-settings-content .backupplus_db_timings').hide();
-	}
-	
-	if ('weekly' == db_interval || 'fortnightly' == db_interval || 'monthly' == db_interval) {
-		backupplus_intervals_monthly_or_not('backupplus_startday_db', db_interval);
-		jQuery('#backupplus-navtab-settings-content #backupplus_startday_db').show();
-	} else {
-		jQuery('.backupplus_monthly_extra_words_backupplus_startday_db').remove();
-		jQuery('#backupplus-navtab-settings-content #backupplus_startday_db').hide();
-	}
-	
-	if (db_interval == file_interval) {
-// jQuery('#backupplus_db_timings').css('opacity','0.25');
-		jQuery('#backupplus-navtab-settings-content .backupplus_db_timings').hide();
-// jQuery('#backupplus_same_schedules_message').show();
-		if (0 == dbmanual) {
-			jQuery('#backupplus-navtab-settings-content .backupplus_same_schedules_message').show();
-		} else {
-			jQuery('#backupplus-navtab-settings-content .backupplus_same_schedules_message').hide();
-		}
-	} else {
-		jQuery('#backupplus-navtab-settings-content .backupplus_same_schedules_message').hide();
-		if (0 == dbmanual) {
-// jQuery('#backupplus_db_timings').css('opacity', '1');
-			jQuery('#backupplus-navtab-settings-content .backupplus_db_timings').show();
-		}
+	jQuery('#backupplus-navtab-settings-content .backupplus_files_timings').toggle('manual' != file_interval);
+	// Database timing stays editable when its frequency matches the files schedule.
+	jQuery('#backupplus-navtab-settings-content .backupplus_db_timings').toggle('manual' != db_interval);
+	if ('function' === typeof window.backupplus_schedule_refresh) {
+		window.backupplus_schedule_refresh();
 	}
 }
 
@@ -3589,7 +3511,6 @@ jQuery(function($) {
 	});
 	
 	function backupplus_restore_setup(entities, key, show_data) {
-		jQuery('#backupplus-restore-passphrase').val('');
 		jQuery('#backupplus-age-ticket').val('');
 		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
@@ -4476,7 +4397,13 @@ jQuery(function($) {
 		console.log(resp);
 		// $('#backupplus-next-backup-inner').html(resp.scheduled);
 		$('#backupplus-next-files-backup-inner').html(resp.files_scheduled);
+		if (resp.hasOwnProperty('incremental_scheduled')) {
+			$('#backupplus-next-incremental-backup-inner').html(resp.incremental_scheduled);
+		}
 		$('#backupplus-next-database-backup-inner').html(resp.database_scheduled);
+		if (resp.hasOwnProperty('cleanup_scheduled')) {
+			$('#backupplus-next-cleanup-inner').html(resp.cleanup_scheduled);
+		}
 		
 		return resp;
 		

@@ -32,11 +32,31 @@
 			</div>
 			<div class="backupplus_next_scheduled_entity">
 				<div class="backupplus_next_scheduled_heading">
+					<strong><?php echo esc_html__( 'Incremental backup', 'backupplus' ) . ':'; ?></strong>
+				</div>
+				<div id="backupplus-next-incremental-backup-inner">
+					<?php
+					$backupplus_admin->next_scheduled_incremental_backups_output();
+					?>
+				</div>
+			</div>
+			<div class="backupplus_next_scheduled_entity">
+				<div class="backupplus_next_scheduled_heading">
 					<strong><?php echo esc_html__( 'Database', 'backupplus' ) . ':'; ?></strong>
 				</div>
 				<div id="backupplus-next-database-backup-inner">
 					<?php
 						$backupplus_admin->next_scheduled_database_backups_output();
+					?>
+				</div>
+			</div>
+			<div class="backupplus_next_scheduled_entity">
+				<div class="backupplus_next_scheduled_heading">
+					<strong><?php echo esc_html__( 'Cleanup', 'backupplus' ) . ':'; ?></strong>
+				</div>
+				<div id="backupplus-next-cleanup-inner">
+					<?php
+						echo wp_kses( BackupPlus_Retention_Cleanup::instance()->summary_html(), BackupPlus_Backup_Schedule::allowed_html() );
 					?>
 				</div>
 			</div>

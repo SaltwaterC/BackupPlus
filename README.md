@@ -8,7 +8,7 @@ Start with `cp .env.example .env && ./dev/up.sh`. See [the development environme
 
 Choose an **Incremental file backups** interval in Settings, or click **Take an incremental backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. Database backups continue to use their existing full-backup schedule.
 
-An incremental request automatically creates a full backup when the base is seven days old, incomplete, incompatible with the current file selection/exclusions/encryption/storage settings, or unavailable. Incremental schedules run at least daily; the weekly limit uses the original full backup's time, so adding increments never extends it. Scheduled backups depend on WordPress cron running. The normal file schedule still creates full backups and can run more frequently.
+An incremental request automatically creates a full backup when the base is seven days old, incomplete, incompatible with the current file selection/exclusions/encryption/storage settings, or unavailable. Incremental schedules run at least daily, optionally at an exact time (see [backup times](docs/backup-scheduling.md)); the weekly limit uses the original full backup's time, so adding increments never extends it. Scheduled backups depend on WordPress cron running. The normal file schedule still creates full backups and can run more frequently.
 
 Restoring a backup chain applies its full backup and increments in order, including recorded deletions. Keep every archive in the chain; scheduled retention counts and removes complete chains together. Encrypted increments use the saved age recipients. Local protected inventories support change detection; if an inventory is lost (for example after moving to a different installation), the next request creates a new full backup. Restore requires the archives and does not require those inventories.
 
@@ -17,6 +17,10 @@ Restoring a backup chain applies its full backup and increments in order, includ
 ```sh
 podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
 ```
+
+## Backup times and retention cleanup
+
+File, database and incremental schedules can each run at an exact time in the site timezone. Hourly schedules choose the minute past the hour, and schedules of two to twelve hours choose which hours they run at and the minute. Weekly and fortnightly schedules also use a weekday, and monthly schedules a day from 1 to 28. Old backups can be deleted after each backup or by a separate daily cleanup that creates no backup. Existing schedules keep their timing until exact times are selected. Runs can be late without site traffic; running WordPress cron from the server's task scheduler is optional. See [backup times and retention cleanup](docs/backup-scheduling.md) for the scheduling rules, cleanup behaviour, server cron setup and checks.
 
 ## Building assets
 

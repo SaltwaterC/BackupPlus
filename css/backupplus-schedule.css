@@ -1,0 +1,96 @@
+/* Exact backup times and the daily retention cleanup on the settings tab. */
+.backupplus-schedule-timing {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 24px;
+	margin-top: 12px;
+}
+
+/* Words before a field ("Keep", "at", "on") share one width, so the fields after them line up. */
+#backupplus-wrap .backup-schedule .backupplus-field-prefix {
+	display: inline-block;
+	min-width: 3.5em;
+}
+
+/* The toggle fills the schedule select's column, so the time starts under "Keep". */
+.backupplus-schedule-timing > label {
+	box-sizing: border-box;
+	width: 208px;
+	max-width: 100%;
+}
+
+.backupplus-schedule-timing label,
+.backupplus-exact-fields,
+.backupplus-retention-cleanup-time {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	min-height: 32px;
+}
+
+.backupplus-schedule-timing input[type="checkbox"] {
+	margin: 0;
+}
+
+.backupplus-schedule-timing select,
+.backupplus-schedule-timing input[type="time"],
+.backupplus-retention-cleanup-time input[type="time"] {
+	box-sizing: border-box;
+	min-height: 32px;
+	margin: 0;
+}
+
+/* Run-time choices list every run of the day, so they can be wider than a phone screen. */
+.backupplus-schedule-timing select {
+	max-width: 100%;
+}
+
+#backupplus-wrap .backupplus-schedule-timing select[data-part$="minute"] {
+	min-width: 72px;
+}
+
+.backupplus-schedule-weekday select {
+	min-width: 140px;
+}
+
+#backupplus-wrap .backup-schedule .backupplus_same_schedules_message {
+	display: block;
+	margin-top: 8px;
+	font-style: italic;
+}
+
+#backupplus-wrap .backup-schedule p.backupplus-schedule-help {
+	max-width: 65ch;
+}
+
+#backupplus-wrap .backupplus-cleanup-result {
+	display: inline-block;
+	margin-top: 4px;
+}
+
+/* Next scheduled backups: Files, Database and Cleanup on a two-column grid so a taller entity cannot push the others out of line. */
+.backupplus_next_scheduled_backups_wrapper .schedule {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24px 16px;
+	align-content: start;
+}
+
+.backupplus_next_scheduled_backups_wrapper .schedule .backupplus_next_scheduled_entity {
+	float: none;
+	width: auto;
+	margin-bottom: 0;
+}
+
+.backupplus_next_scheduled_backups_wrapper .schedule .backupplus_time_now_wrapper {
+	grid-column: 1 / -1;
+	margin-top: 0;
+}
+
+@media screen and (max-width: 600px) {
+	.backupplus_next_scheduled_backups_wrapper .schedule {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

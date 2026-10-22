@@ -135,6 +135,9 @@ class BackupPlus_Backup {
 
 	private $hash_list_of_complete_pruned_files = array();
 
+	// The backup history as it was read when a retention cleanup job began pruning
+	private $history_snapshot = null;
+
 	private $pruning_number_of_files = 10;
 
 	private $minimum_time_to_cache_pruned_files = 25; // seconds
@@ -820,11 +823,18 @@ class BackupPlus_Backup {
 	 *
 	 * @param Array $services - An associative array with list of services as key and remote object and boolean flag as values to prune on. This must be an array (i.e. it is not flexible like some other places)
 	 *
-	 * @return void
+	 * @return Boolean|void - false when a retention cleanup job stopped early to let a backup run
 	 */
 	public function prune_retained_backups( $services ) {
 
 		global $backupplus, $wpdb;
+
+		$is_cleanup = 'cleanup' === $backupplus->jobdata_get( 'job_type' );
+		if ( ! $is_cleanup && BackupPlus_Retention_Cleanup::deferred() ) {
+			$backupplus->log( 'Retain: old backups are deleted by the daily retention cleanup, so nothing will be pruned now' );
+			$backupplus->jobdata_set( 'prune', 'finished' );
+			return;
+		}
 
 		if ( method_exists( $wpdb, 'check_connection' ) && ( ! defined( 'BACKUPPLUS_SUPPRESS_CONNECTION_CHECKS' ) || ! BACKUPPLUS_SUPPRESS_CONNECTION_CHECKS ) ) {
 			if ( ! $wpdb->check_connection( false ) ) {
@@ -864,7 +874,11 @@ class BackupPlus_Backup {
 		$backupplus->log( "Retain: beginning examination of existing backup sets; user setting: retain_files=$backupplus_retain, retain_db=$backupplus_retain_db" );
 
 		// Returns an array, most recent first, of backup sets
-		$backup_history = BackupPlus_Backup_History::get_history();
+		if ( $is_cleanup ) {
+			BackupPlus_Backup_History::always_get_from_db();
+		}
+		$backup_history         = BackupPlus_Backup_History::get_history();
+		$this->history_snapshot = $is_cleanup ? $backup_history : null;
 
 		$ignored_because_imported = array();
 
@@ -930,6 +944,12 @@ class BackupPlus_Backup {
 
 				$files_to_prune = array();
 				$nonce          = empty( $backup_to_examine['nonce'] ) ? '???' : $backup_to_examine['nonce'];
+
+				if ( $is_cleanup && BackupPlus_Retention_Cleanup::instance()->should_yield() ) {
+					$backupplus->log( 'Retain: a backup has started; saving progress and stopping the retention cleanup for now' );
+					$this->save_pruned_history( $backup_history );
+					return false;
+				}
 
 				// $backup_to_examine is an array of file names, keyed on db/plugins/themes/uploads
 				// The new backup_history array is saved afterwards, so remember to unset the ones that are to be deleted
@@ -1090,6 +1110,12 @@ class BackupPlus_Backup {
 				$files_to_prune = array();
 				$nonce          = empty( $backup_to_examine['nonce'] ) ? '???' : $backup_to_examine['nonce'];
 
+				if ( $is_cleanup && BackupPlus_Retention_Cleanup::instance()->should_yield() ) {
+					$backupplus->log( 'Retain: a backup has started; saving progress and stopping the retention cleanup for now' );
+					$this->save_pruned_history( $backup_history );
+					return false;
+				}
+
 				// $backup_to_examine is an array of file names, keyed on db/plugins/themes/uploads
 				// The new backup_history array is saved afterwards, so remember to unset the ones that are to be deleted
 				$this->log_with_db_occasionally( sprintf( 'Examining (for files) backup set with nonce=%s, datestamp=%s (%s)', $nonce, $backup_datestamp, gmdate( 'M d Y H:i:s', $backup_datestamp ) ) );
@@ -1221,11 +1247,42 @@ class BackupPlus_Backup {
 		}
 
 		$backupplus->log( 'Retain: saving new backup history (sets now: ' . count( $backup_history ) . ') and finishing retain operation' );
-		BackupPlus_Backup_History::save_history( $backup_history, false );
+		$this->save_pruned_history( $backup_history );
 
 		do_action( 'backupplus_prune_retained_backups_finished' );
 
 		$backupplus->jobdata_set( 'prune', 'finished' );
+		return true;
+	}
+
+	/**
+	 * Save the pruned backup history. A retention cleanup job can run alongside a backup that adds
+	 * to the history, so it applies only its own removals to the latest saved history.
+	 *
+	 * @param Array $backup_history - the backup history after pruning
+	 */
+	private function save_pruned_history( $backup_history ) {
+		if ( null === $this->history_snapshot ) {
+			BackupPlus_Backup_History::save_history( $backup_history, false );
+			return;
+		}
+		BackupPlus_Backup_History::always_get_from_db();
+		$latest = BackupPlus_Backup_History::get_history();
+		foreach ( $this->history_snapshot as $timestamp => $set ) {
+			if ( ! isset( $latest[ $timestamp ] ) ) {
+				continue;
+			}
+			if ( ! isset( $backup_history[ $timestamp ] ) ) {
+				unset( $latest[ $timestamp ] );
+				continue;
+			}
+			foreach ( array_diff_key( $set, $backup_history[ $timestamp ] ) as $key => $unused ) {
+				unset( $latest[ $timestamp ][ $key ] );
+			}
+		}
+		BackupPlus_Backup_History::save_history( $latest, false );
+		// Later removals are relative to what has now been saved.
+		$this->history_snapshot = $backup_history;
 	}
 
 	/**
@@ -1241,7 +1298,7 @@ class BackupPlus_Backup {
 		if ( time() - $last_saved_at >= 10 ) {
 			global $backupplus;
 			$backupplus->log( 'Retain: saving new backup history, because at least 10 seconds have passed since the last save (sets now: ' . count( $backup_history ) . ')' );
-			BackupPlus_Backup_History::save_history( $backup_history, false );
+			$this->save_pruned_history( $backup_history );
 			BackupPlus_Job_Scheduler::something_useful_happened();
 			$last_saved_at = time();
 		}
@@ -1318,6 +1375,9 @@ class BackupPlus_Backup {
 			return;
 		}
 
+		$is_cleanup = 'cleanup' === $backupplus->jobdata_get( 'job_type' );
+		$cleanup    = $is_cleanup ? BackupPlus_Retention_Cleanup::instance() : null;
+
 		foreach ( $dofiles as $dofile ) {
 			$fullpath = $this->backupplus_dir . '/' . $dofile;
 			if ( empty( $dofile ) || ! file_exists( $fullpath ) ) {
@@ -1326,7 +1386,16 @@ class BackupPlus_Backup {
 			$backupplus->log( "Delete file: $dofile, service=$service" );
 			// delete it if it's locally available
 			$backupplus->log( "Deleting local copy ($dofile)" );
-			unlink( $fullpath );
+			if ( $is_cleanup ) {
+				// A failed local deletion is queued for the next cleanup.
+				if ( @unlink( $fullpath ) ) { // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The failure is recorded.
+					$cleanup->record_deleted( array( $dofile ) );
+				} else {
+					$cleanup->record_failed( 'local', '', array( $dofile ), array( null ) );
+				}
+			} else {
+				unlink( $fullpath );
+			}
 			if ( file_exists( $fullpath . '.list.tmp' ) ) {
 				$backupplus->log( "Deleting zip manifest ({$dofile}.list.tmp)" );
 				unlink( $fullpath . '.list.tmp' );
@@ -1347,8 +1416,16 @@ class BackupPlus_Backup {
 				if ( count( $dofiles ) !== $actual_index + 1 && 0 != ( $actual_index + 1 ) % $this->pruning_number_of_files ) {
 					continue; // only proceed with deletion at every multiples of ten (default) or if it's already at the end of files
 				}
-				$method_object->delete( $files, $object_passback, $sizes );
-				if ( count( $dofiles ) === $actual_index + 1 || ( floor( microtime( true ) - $pruning_start_time_for_current_instance_id ) ) >= $this->minimum_time_to_cache_pruned_files ) {
+				$deleted = $method_object->delete( $files, $object_passback, $sizes );
+				if ( $is_cleanup ) {
+					if ( true === $deleted ) {
+						$cleanup->record_deleted( $files );
+					} else {
+						$cleanup->record_failed( $service, $this->current_pruning_instance_id, $files, $sizes );
+					}
+				}
+				// A cleanup job records each deletion, so that a resumed job does not repeat it.
+				if ( $is_cleanup || count( $dofiles ) === $actual_index + 1 || ( floor( microtime( true ) - $pruning_start_time_for_current_instance_id ) ) >= $this->minimum_time_to_cache_pruned_files ) {
 					$this->hash_list_of_complete_pruned_files = array_unique( $this->hash_list_of_complete_pruned_files );
 					$backupplus->jobdata_set( 'hash_list_of_complete_pruned_files', $this->hash_list_of_complete_pruned_files ); // only cache already-done files when it reaches the minimum time, which is 25 seconds by default
 					$pruning_start_time_for_current_instance_id = microtime( true );
