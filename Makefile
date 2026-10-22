@@ -66,4 +66,4 @@ test-client:
 	node scripts/test-client-decryption.mjs
 
 test-client-browser:
-	node scripts/test-client-decryption-browser.mjs
+	PODMAN="$(PODMAN)" WP_TEST_CONTAINER="$(WP_TEST_CONTAINER)" node scripts/test-client-decryption-browser.mjs

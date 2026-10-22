@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync } from 'node:fs';
 import { readFile, writeFile, mkdtemp, rm, truncate } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createCipheriv, createHash, randomBytes } from 'node:crypto';
+import { createServer, request as httpRequest } from 'node:http';
 import { tmpdir, homedir } from 'node:os';
 import path from 'node:path';
 const origin = process.env.BACKUPPLUS_TEST_URL || 'http://localhost:8080';
@@ -24,6 +25,39 @@ if (existsSync(playwrightCache))
 	}
 const chrome = process.env.CHROMIUM || candidates.find(existsSync);
 assert(chrome, 'Chromium is required for browser tests. Set CHROMIUM to its executable.');
+// Capture real HTTP access records, including Referer and redirect destinations.
+// This proxy is restricted to the disposable WordPress test origin.
+assert.equal(new URL(origin).protocol, 'http:', 'Use the local HTTP WordPress test environment.');
+const started = new Date().toISOString();
+const accessLog = [];
+const proxyRequests = [];
+const proxy = createServer((req, res) => {
+	const url = new URL(req.url, origin);
+	const record = { method: req.method, url: url.href, referer: req.headers.referer || '' };
+	accessLog.push(record);
+	const body = [];
+	req.on('data', chunk => body.push(chunk));
+	req.on('end', () => proxyRequests.push({
+		url: url.href, headers: req.headers, body: Buffer.concat(body).toString(),
+	}));
+	if (url.origin !== new URL(origin).origin) {
+		res.writeHead(403).end();
+		return;
+	}
+	const upstream = httpRequest(url, { method: req.method, headers: req.headers }, (response) => {
+		record.status = response.statusCode;
+		record.location = response.headers.location || '';
+		res.writeHead(response.statusCode, response.headers);
+		response.pipe(res);
+	});
+	upstream.on('error', () => res.destroy());
+	res.on('close', () => upstream.destroy());
+	req.pipe(upstream);
+});
+await new Promise((resolve, reject) => {
+	proxy.once('error', reject);
+	proxy.listen(0, '127.0.0.1', resolve);
+});
 const directory = await mkdtemp(path.join(tmpdir(), 'backupplus-decrypt-browser-'));
 const browser = spawn(
 	chrome,
@@ -32,12 +66,16 @@ const browser = spawn(
 		'--disable-gpu',
 		'--no-sandbox',
 		'--disable-dev-shm-usage',
+		'--disable-background-networking',
+		'--proxy-server=http://127.0.0.1:' + proxy.address().port,
+		'--proxy-bypass-list=<-loopback>',
 		'--remote-debugging-port=0',
 		'--user-data-dir=' + directory,
 		'about:blank',
 	],
 	{ stdio: ['ignore', 'ignore', 'pipe'] },
 );
+const browserExited = new Promise((resolve) => browser.once('close', resolve));
 let browserError = '';
 browser.stderr.on('data', (b) => {
 	browserError += b;
@@ -66,6 +104,8 @@ try {
 	let seq = 0;
 	const pending = new Map(),
 		requests = [],
+		redirects = [],
+		downloads = [],
 		exceptions = [];
 	ws.addEventListener('message', ({ data }) => {
 		const m = JSON.parse(data);
@@ -75,7 +115,10 @@ try {
 				pending.delete(m.id);
 				m.error ? p.reject(new Error(JSON.stringify(m.error))) : p.resolve(m.result);
 			}
-		} else if (m.method === 'Network.requestWillBeSent') requests.push(m.params.request);
+		} else if (m.method === 'Network.requestWillBeSent') {
+			requests.push(m.params.request);
+			if (m.params.redirectResponse) redirects.push(m.params.redirectResponse);
+		} else if (m.method === 'Browser.downloadWillBegin' || m.method === 'Page.downloadWillBegin') downloads.push(m.params);
 		else if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails);
 	});
 	const call = (method, params = {}) =>
@@ -84,11 +127,12 @@ try {
 			pending.set(id, { resolve, reject });
 			ws.send(JSON.stringify({ id, method, params }));
 		});
-	const evaluate = async (expression) => {
+	const evaluate = async (expression, userGesture = false) => {
 		const r = await call('Runtime.evaluate', {
 			expression,
 			awaitPromise: true,
 			returnByValue: true,
+			userGesture,
 		});
 		if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
 		return r.result.value;
@@ -110,6 +154,9 @@ try {
 	await call('Runtime.enable');
 	await call('Network.enable');
 	await call('Network.setCacheDisabled', { cacheDisabled: true });
+	await call('Browser.setDownloadBehavior', {
+		behavior: 'allow', downloadPath: path.join(directory, 'downloads'), eventsEnabled: true,
+	});
 	await call('Page.navigate', {
 		url:
 			origin +
@@ -157,7 +204,30 @@ try {
 	const age = await fixture('age-keys'),
 		legacy = (await fixture('phpseclib2-compat')).database[8];
 	let index = 0;
-	const sentinel = 'browser-private-sentinel-do-not-send';
+	const sentinel = 'SEC003/+?&=' + randomBytes(10).toString('hex') + '!';
+	const secrets = [
+		sentinel,
+		Buffer.from(legacy.key, 'base64').toString(),
+		age.passphrase,
+		...Object.values(age.keys).map((k) => k.identity),
+		...Object.values(age.keys).map((k) => k.encrypted_pem),
+	];
+	function assertNoSecrets(content, label) {
+		for (const secret of secrets)
+			for (const encoded of [secret, encodeURIComponent(secret),
+				new URLSearchParams({ key: secret }).toString().slice(4),
+				JSON.stringify(secret).slice(1, -1)])
+				assert(!content.includes(encoded), label + ' must omit decryption credentials');
+	}
+	async function checkPage() {
+		assertNoSecrets(await evaluate(`JSON.stringify({
+			text: document.body.innerText,
+			markup: document.querySelector('.backupplus-decryption-tool').outerHTML,
+			links: [...document.querySelectorAll('a')].map(a => a.href),
+			fields: [...document.querySelectorAll('.backupplus-decryption-tool input, .backupplus-decryption-tool textarea')].map(e => e.value)
+		})`), 'Page content, links and cleared fields');
+		assertNoSecrets(JSON.stringify(await call('Page.getNavigationHistory')), 'Browser history');
+	}
 	async function selectPath(file) {
 		const { root } = await call('DOM.getDocument');
 		const { nodeId } = await call('DOM.querySelector', {
@@ -193,6 +263,7 @@ try {
 			),
 			true,
 		);
+		await checkPage();
 		if (failure) {
 			assert.equal(
 				await evaluate('document.querySelectorAll("#backupplus-decrypt-results a").length'),
@@ -216,6 +287,32 @@ try {
 	}
 	const from = (s) => Buffer.from(s, 'base64');
 	const networkStart = requests.length;
+	// A unique sentinel with URL metacharacters must also succeed, then download
+	// through the real anchor. Only the disposable test creates legacy ciphertext.
+	const sentinelPlain = Buffer.from('# Disposable SEC-003 synthetic backup\nSELECT 42;\n');
+	const cipher = createCipheriv('aes-256-cbc', Buffer.from(sentinel), Buffer.alloc(16));
+	await run(Buffer.concat([cipher.update(sentinelPlain), cipher.final()]), sentinelPlain,
+		{ password: sentinel }, { legacy: true });
+	const downloadName = await evaluate("document.querySelector('#backupplus-decrypt-results a').download");
+	await evaluate("document.querySelector('#backupplus-decrypt-results a').click()", true);
+	let downloaded;
+	for (let attempt = 0; attempt < 100; attempt++) {
+		// Chromium may add an extension inferred from the plaintext MIME type.
+		const suggested = downloads[0]?.suggestedFilename;
+		downloaded = suggested
+			? await readFile(path.join(directory, 'downloads', suggested)).catch(() => null) : null;
+		if (downloaded) break;
+		await sleep(100);
+	}
+	assert(downloaded, 'The local download must finish: ' + JSON.stringify({
+		downloads, files: existsSync(path.join(directory, 'downloads'))
+			? readdirSync(path.join(directory, 'downloads')) : [],
+	}));
+	assert.deepEqual(downloaded, sentinelPlain, 'The real local download must contain exact plaintext');
+	assert(downloads.length > 0 && downloads.every(d => d.url.startsWith('blob:')),
+		'Plaintext downloads must use local Blob URLs');
+	assert(downloads[0].suggestedFilename.startsWith(downloadName));
+	assertNoSecrets(JSON.stringify(downloads), 'Download records');
 	await run(
 		from(legacy.ciphertext),
 		from(legacy.plaintext),
@@ -329,25 +426,13 @@ try {
 	console.log(
 		'PASS: actual browser X25519 fallback, small-file memory fallback, repeated runs/cleanup, and local large-file rejection',
 	);
-	const secrets = [
-		sentinel,
-		from(legacy.key).toString(),
-		age.passphrase,
-		...Object.values(age.keys).map((k) => k.identity),
-		...Object.values(age.keys).map((k) => k.encrypted_pem),
-	];
 	for (const request of requests.slice(networkStart)) {
-		if (request.url.startsWith('blob:')) continue;
 		const content = request.url + '\n' + (request.postData || '');
 		assert(
 			!/plupload_action2|backupplus_decrypt_database/.test(content),
 			'The tab must not call server decryption',
 		);
-		for (const secret of secrets)
-			assert(
-				!content.includes(secret) && !content.includes(encodeURIComponent(secret)),
-				'Credentials must never reach the network',
-			);
+		assertNoSecrets(JSON.stringify(request), 'Requests, URLs and headers');
 		assert(
 			!/multipart\/form-data/.test(JSON.stringify(request.headers)),
 			'No file upload request is allowed',
@@ -382,10 +467,41 @@ try {
 	console.log(
 		'PASS: local Blob downloads, legacy notice, failure/cancellation cleanup, cleared keys, no archive/key upload, and mobile layout',
 	);
+	// Keep history across a real navigation and back, and inspect server-side logs.
+	await checkPage();
+	await navigate(origin + '/wp-admin/index.php');
+	await evaluate('history.back()');
+	await wait('location.search.includes("tab=decryption") && document.readyState === "complete"');
+	await checkPage();
+	assertNoSecrets(JSON.stringify(redirects), 'Redirect responses');
+	const marker = 'backupplus_sec003_' + randomBytes(12).toString('hex');
+	await evaluate(`fetch(${JSON.stringify(origin + '/wp-login.php?' + marker)}, {cache:'no-store'}).then(r=>r.text()).then(()=>true)`);
+	assert(accessLog.some(r => r.url.includes(marker) && r.status === 200),
+		'The proxy access log must contain the control request');
+	assert(accessLog.some(r => r.url.includes('/js/backupplus-decryption-worker.js') && r.status === 200),
+		'The proxy must also capture worker traffic');
+	assertNoSecrets(JSON.stringify(accessLog), 'Proxy access logs including Referer and Location');
+	assertNoSecrets(JSON.stringify(proxyRequests), 'Proxy-captured page and worker requests');
+	for (const request of proxyRequests) {
+		assert(!/plupload_action2|backupplus_decrypt_database/.test(request.url + request.body),
+			'The page and worker must not call server decryption');
+		assert(!/multipart\/form-data/.test(JSON.stringify(request.headers)),
+			'The page and worker must not upload archives');
+	}
+	const logs = spawnSync(process.env.PODMAN || 'podman', [
+		'logs', '--since', started, process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress',
+	], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+	assert.equal(logs.status, 0, 'Local WordPress server logs must be readable');
+	const serverLog = logs.stdout + logs.stderr;
+	assert(serverLog.includes(marker), 'Server access logs must contain the control request');
+	assertNoSecrets(serverLog, 'WordPress server access/error logs');
+	console.log('PASS: SEC-003 sentinel download, page/errors/links, redirects, navigation history, proxy and WordPress access/error logs');
 	await Promise.race([call('Browser.close'), sleep(1000)]);
 } finally {
 	if (ws) ws.close();
 	browser.kill();
-	await sleep(100);
+	await browserExited;
+	proxy.closeAllConnections();
+	await new Promise(resolve => proxy.close(resolve));
 	await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
