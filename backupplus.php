@@ -315,9 +315,12 @@ function backupplus_build_mysqldump_list() {
 if (!class_exists('BackupPlus_Options')) backupplus_try_include_file('options.php', 'require_once');
 
 // Initialize installation keys on activation and on upgrades that do not reactivate.
+require_once BACKUPPLUS_DIR.'/includes/class-credential-encrypter.php';
 require_once BACKUPPLUS_DIR.'/includes/Dropbox2/Exception.php';
 require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/Encrypter.php';
 require_once BACKUPPLUS_DIR.'/includes/class-credential-key-store.php';
+require_once BACKUPPLUS_DIR.'/includes/class-credential-storage.php';
+BackupPlus_Credential_Storage::register();
 require_once BACKUPPLUS_DIR.'/includes/class-dropbox-token-migration.php';
 require_once BACKUPPLUS_DIR.'/includes/class-credential-key-admin.php';
 require_once BACKUPPLUS_DIR.'/includes/class-credential-key-rotation.php';

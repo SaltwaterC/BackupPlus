@@ -4289,6 +4289,8 @@ jQuery(function($) {
 	
 	function export_settings() {
 		var form_data = gather_backupplus_settings('object');
+		// Connection settings and legacy secrets are never placed in export files.
+		backupplus_i18n.credential_export_omissions.forEach(function(option) { delete form_data[option]; });
 		
 		var date_now = new Date();
 		

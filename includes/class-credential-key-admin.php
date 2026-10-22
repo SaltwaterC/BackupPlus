@@ -16,7 +16,7 @@ class BackupPlus_Credential_Key_Admin {
 		if (!self::allowed()) throw new RuntimeException('You do not have permission to manage installation encryption keys.');
 		if ('move' === $operation) {
 			BackupPlus_Credential_Key_Store::relocate(trim($value));
-			$message = __('The encryption key was moved and verified. Dropbox remains connected.', 'backupplus');
+			$message = __('The encryption key was moved and verified. Storage destinations remain connected.', 'backupplus');
 		} elseif ('rotate' === $operation) {
 			if (class_exists('BackupPlus_Credential_Key_Rotation')) BackupPlus_Credential_Key_Rotation::queue_retry();
 			$config = BackupPlus_Credential_Key_Store::rotate();
@@ -25,6 +25,7 @@ class BackupPlus_Credential_Key_Admin {
 				BackupPlus_Credential_Key_Rotation::finish();
 			} else {
 				BackupPlus_Dropbox_Token_Migration::rotate();
+				if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::rewrite();
 			}
 			$message = __('A new encryption key is active. Previous keys were retained so existing backups and running jobs remain readable. Download a new recovery copy.', 'backupplus');
 		} elseif ('restore' === $operation) {
@@ -35,14 +36,16 @@ class BackupPlus_Credential_Key_Admin {
 			$message = __('Encryption setup is complete.', 'backupplus');
 		} elseif ('upgrade' === $operation) {
 			BackupPlus_Dropbox_Token_Migration::upgrade_restored();
-			$message = __('Restored Dropbox credentials were upgraded and verified.', 'backupplus');
+			if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade(true);
+			$message = __('Restored credentials were upgraded and verified.', 'backupplus');
 		} elseif ('replace_missing' === $operation) {
 			BackupPlus_Credential_Key_Store::replace_missing($directory);
-			$message = __('A replacement encryption key was created. Disconnect and reconnect Dropbox, then download a new recovery key. Your previous credentials have been kept for recovery with the original key.', 'backupplus');
+			$message = __('A replacement encryption key was created. Reconnect storage destinations, then download a new recovery key. Your previous credentials have been kept for recovery with the original key.', 'backupplus');
 		} else {
 			throw new RuntimeException('Choose a valid encryption key operation.');
 		}
 		BackupPlus_Dropbox_Token_Migration::upgrade();
+		if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade();
 		if (class_exists('BackupPlus_Credential_Key_Rotation')) BackupPlus_Credential_Key_Rotation::schedule();
 		delete_option('backupplus_credential_setup_error');
 		return $message;
@@ -97,8 +100,8 @@ class BackupPlus_Credential_Key_Admin {
 			<p><?php esc_html_e('You can move the key to a dedicated writable folder outside wp-content or your website root, if your host allows it. BackupPlus moves and verifies the file for you. The key folder is excluded from BackupPlus archives.', 'backupplus'); ?></p>
 			<p><button type="button" class="button" data-key-operation="move" <?php disabled(defined('BACKUPPLUS_CREDENTIAL_KEY_DIR')); ?>><?php esc_html_e('Move key file', 'backupplus'); ?></button>
 			<button type="button" class="button" data-key-operation="retry"><?php esc_html_e('Retry encryption setup', 'backupplus'); ?></button></p>
-			<p><?php esc_html_e('If you restored Dropbox settings from a backup made before credential encryption was upgraded, use this button to convert those restored credentials.', 'backupplus'); ?>
-			<button type="button" class="button" data-key-operation="upgrade"><?php esc_html_e('Upgrade restored Dropbox credentials', 'backupplus'); ?></button></p>
+			<p><?php esc_html_e('If you restored storage settings from a backup made before credential encryption was upgraded, use this button to convert those restored credentials.', 'backupplus'); ?>
+			<button type="button" class="button" data-key-operation="upgrade"><?php esc_html_e('Upgrade restored credentials', 'backupplus'); ?></button></p>
 			<p><?php esc_html_e('Keep a recovery copy somewhere safe and separate from your backups. You can restore it here after moving your website or losing the key file. Treat this file as a password.', 'backupplus'); ?></p>
 			<p><button type="button" class="button" id="backupplus-key-download"><?php esc_html_e('Download recovery key', 'backupplus'); ?></button>
 			<button type="button" class="button" data-key-operation="rotate"><?php esc_html_e('Rotate encryption key', 'backupplus'); ?></button></p>
@@ -106,7 +109,7 @@ class BackupPlus_Credential_Key_Admin {
 			<p><?php esc_html_e('Restoring makes the recovery file\'s active key current. Other keys are kept so credentials saved since that recovery copy was downloaded remain readable.', 'backupplus'); ?></p>
 			<p><label for="backupplus-key-recovery"><?php esc_html_e('Recovery key file', 'backupplus'); ?></label> <input type="file" id="backupplus-key-recovery" accept=".php">
 			<button type="button" class="button" data-key-operation="restore" data-choose-file="<?php esc_attr_e('Choose your downloaded recovery key file first.', 'backupplus'); ?>"><?php esc_html_e('Restore recovery key', 'backupplus'); ?></button></p>
-			<p><?php esc_html_e('If the key file is missing and you have no recovery copy, create a replacement key and reconnect Dropbox. This keeps the old credentials for later recovery but does not unlock them.', 'backupplus'); ?>
+			<p><?php esc_html_e('If the key file is missing and you have no recovery copy, create a replacement key and reconnect your storage destinations. This keeps the old credentials for later recovery but does not unlock them.', 'backupplus'); ?>
 			<button type="button" class="button" data-key-operation="replace_missing"><?php esc_html_e('Replace missing key', 'backupplus'); ?></button></p>
 		<?php } ?>
 		</td></tr>

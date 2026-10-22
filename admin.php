@@ -949,6 +949,7 @@ class BackupPlus_Admin {
 			'download_timeout' => __('Unable to download file.', 'backupplus').' '.__('This could be caused by a timeout.', 'backupplus').' '.__('It would be best to download the zip to your computer.', 'backupplus'),
 			'loading_log_file' => __('Loading log file', 'backupplus'),
 			'backupplus_version' => $backupplus->version,
+			'credential_export_omissions' => BackupPlus_Credential_Storage::export_omitted_options(),
 			'export_settings_file_name' => 'backupplus-settings-'.sanitize_title(get_bloginfo('name')).'.json',
 			// For remote storage handlebarsjs template
 			'remote_storage_options' => $remote_storage_options_and_templates['options'],

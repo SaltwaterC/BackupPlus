@@ -13,6 +13,7 @@ class BackupPlus_Credential_Key_Store {
 		try {
 			self::configuration();
 			BackupPlus_Dropbox_Token_Migration::upgrade();
+			if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::upgrade();
 			delete_option('backupplus_credential_setup_error');
 		} catch (Exception $e) {
 			update_option('backupplus_credential_setup_error', $e->getMessage(), false);
@@ -42,8 +43,7 @@ class BackupPlus_Credential_Key_Store {
 			if (get_site_option(self::OPTION, '') !== $candidate) throw new RuntimeException('The encryption key location could not be saved. Please retry in BackupPlus Settings.');
 			return $config;
 		}
-		$options = BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
-		if (false !== strpos(serialize($options), 'bpcred:')) throw new RuntimeException('The encryption key is missing. Restore your recovery key in BackupPlus Settings.');
+		if (self::has_stored_ciphertext()) throw new RuntimeException('The encryption key is missing. Restore your recovery key in BackupPlus Settings.');
 		foreach (array_unique($candidates) as $candidate) {
 			try {
 				$config = self::with_lock($candidate, function($path) {
@@ -67,19 +67,22 @@ class BackupPlus_Credential_Key_Store {
 		global $backupplus;
 		if (is_wp_error($backupplus->ensure_phpseclib())) throw new RuntimeException('Encryption is unavailable on this host.');
 		$id = bin2hex(\phpseclib3\Crypt\Random::string(8));
-		return array('active' => $id, 'keys' => array($id => base64_encode(\phpseclib3\Crypt\Random::string(32))), 'upgraded_sites' => array(), 'rotated_at' => time());
+		return array('active' => $id, 'keys' => array($id => base64_encode(\phpseclib3\Crypt\Random::string(32))), 'upgraded_sites' => array(), 'credential_upgraded_sites' => array(), 'rotated_at' => time());
 	}
 
 	public static function validate($config) {
 		if (!is_array($config) || !isset($config['keys'], $config['active'])) throw new RuntimeException('The recovery key file is invalid. Choose a recovery file downloaded from BackupPlus.');
 		// Reuse the exact runtime key validation, without decrypting or executing files.
-		new Dropbox_Encrypter($config['keys'], $config['active'], 'validation');
+		new BackupPlus_Credential_Encrypter($config['keys'], $config['active'], 'validation');
 		$sites = isset($config['upgraded_sites']) ? $config['upgraded_sites'] : array();
 		if (!is_array($sites)) throw new RuntimeException('The recovery key file is invalid.');
 		foreach ($sites as $site => $completed) if (!preg_match('/^[0-9]+$/D', (string) $site) || true !== $completed) throw new RuntimeException('The recovery key file is invalid.');
+		$credential_sites = isset($config['credential_upgraded_sites']) ? $config['credential_upgraded_sites'] : array();
+		if (!is_array($credential_sites)) throw new RuntimeException('The recovery key file is invalid.');
+		foreach ($credential_sites as $site => $completed) if (!preg_match('/^[0-9]+$/D', (string) $site) || true !== $completed) throw new RuntimeException('The recovery key file is invalid.');
 		$rotated_at = isset($config['rotated_at']) ? $config['rotated_at'] : 0;
 		if (!is_int($rotated_at) || $rotated_at < 0) throw new RuntimeException('The recovery key file is invalid.');
-		return array('active' => $config['active'], 'keys' => $config['keys'], 'upgraded_sites' => $sites, 'rotated_at' => $rotated_at);
+		return array('active' => $config['active'], 'keys' => $config['keys'], 'upgraded_sites' => $sites, 'credential_upgraded_sites' => $credential_sites, 'rotated_at' => $rotated_at);
 	}
 
 	public static function decode($contents) {
@@ -173,8 +176,7 @@ class BackupPlus_Credential_Key_Store {
 		if (defined('BACKUPPLUS_CREDENTIAL_KEY_DIR')) throw new RuntimeException('The key location is controlled by your hosting configuration.');
 		$old = self::directory();
 		if ($old) return self::move_file($old, $directory);
-		$options = BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
-		if (false !== strpos(serialize($options), 'bpcred:')) throw new RuntimeException('Restore your recovery key before moving its location.');
+		if (self::has_stored_ciphertext()) throw new RuntimeException('Restore your recovery key before moving its location.');
 		$config = self::with_lock($directory, function($path) {
 			if (@file_exists($path)) return self::read_file($path);
 			$config = self::new_configuration();
@@ -254,6 +256,7 @@ class BackupPlus_Credential_Key_Store {
 			if (@file_exists($path)) throw new RuntimeException('The selected folder already contains an encryption key. No key was replaced.');
 			$config = self::new_configuration();
 			$config['upgraded_sites'][get_current_blog_id()] = true;
+			$config['credential_upgraded_sites'][get_current_blog_id()] = true;
 			self::write_file($path, $config);
 			return $config;
 		});
@@ -291,7 +294,8 @@ class BackupPlus_Credential_Key_Store {
 			$config['active'] = $imported['active'];
 			$config['rotated_at'] = $imported['rotated_at'];
 			$config['upgraded_sites'] = $config['upgraded_sites'] + $imported['upgraded_sites'];
-			BackupPlus_Dropbox_Token_Migration::verify($config);
+			$config['credential_upgraded_sites'] = $config['credential_upgraded_sites'] + $imported['credential_upgraded_sites'];
+			self::verify_credentials($config);
 			self::write_file($path, $config);
 			return $config;
 		});
@@ -300,18 +304,40 @@ class BackupPlus_Credential_Key_Store {
 		return $config;
 	}
 
-	/** Completion lives beside the keys, so deleting a DB marker cannot downgrade tokens. */
-	public static function upgrade_complete() {
-		$config = self::configuration();
-		return !empty($config['upgraded_sites'][get_current_blog_id()]);
+	/** A shared recovery file must unlock every site's credentials before publication. */
+	private static function verify_credentials($config) {
+		$sites = is_multisite() ? get_sites(array('fields' => 'ids', 'number' => 0, 'network_id' => get_current_network_id())) : array(get_current_blog_id());
+		foreach ($sites as $site) {
+			if (is_multisite()) switch_to_blog($site);
+			try {
+				BackupPlus_Dropbox_Token_Migration::verify($config);
+				if (class_exists('BackupPlus_Credential_Storage')) BackupPlus_Credential_Storage::verify($config);
+			} finally {
+				if (is_multisite()) restore_current_blog();
+			}
+		}
 	}
 
-	public static function mark_upgraded() {
-		self::with_lock(self::directory(), function($path) {
+	/** Completion lives beside the keys, so deleting a DB marker cannot downgrade tokens. */
+	public static function upgrade_complete($scope = 'dropbox') {
+		$config = self::configuration();
+		$field = 'dropbox' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
+		return !empty($config[$field][get_current_blog_id()]);
+	}
+
+	public static function mark_upgraded($scope = 'dropbox') {
+		self::with_lock(self::directory(), function($path) use ($scope) {
 			$config = self::read_file($path);
-			$config['upgraded_sites'][get_current_blog_id()] = true;
+			$field = 'dropbox' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
+			$config[$field][get_current_blog_id()] = true;
 			self::write_file($path, $config);
 		});
+	}
+
+	/** Raw reads avoid re-entering the option decryptor while locating its key. */
+	private static function has_stored_ciphertext() {
+		if (class_exists('BackupPlus_Credential_Storage')) return BackupPlus_Credential_Storage::has_ciphertext();
+		return false !== strpos(serialize(BackupPlus_Options::get_backupplus_option('backupplus_dropbox')), 'bpcred:');
 	}
 
 	/** Exclude the managed directory even when custom backup selections include it. */

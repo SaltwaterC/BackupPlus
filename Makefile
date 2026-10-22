@@ -55,6 +55,7 @@ test-integration: $(TEST_VENV)/.requirements-installed
 	done
 
 test-wordpress:
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-credential-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-dropbox-token-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-age-encryption.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/test-storage-providers.php
@@ -63,6 +64,7 @@ test-wordpress:
 	done
 
 test-client:
+	node scripts/test-credential-export.mjs
 	node scripts/test-client-decryption.mjs
 
 test-client-browser:

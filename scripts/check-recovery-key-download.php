@@ -19,6 +19,11 @@ call_user_func(function($directory, $option) {
 <?php
 if (!isset($_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST']) || !hash_equals(TEST_GATE, $_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST'])) return;
 define('BACKUPPLUS_CREDENTIAL_KEY_DIR', TEST_DIRECTORY);
+add_filter('query', function($query) {
+    global $wpdb;
+    if (0 === strpos($query, "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE ")) return $query.' AND 1=0';
+    return $query;
+});
 $test_metadata = array('backupplus_credential_key_directory' => TEST_DIRECTORY, 'backupplus_dropbox_token_format' => 1, 'backupplus_credential_setup_error' => '', 'backupplus_credential_rotation_key' => '', 'backupplus_credential_rotation_error' => '');
 foreach (array_keys($test_metadata) as $test_name) {
     add_filter('pre_option_'.$test_name, function($value) use (&$test_metadata, $test_name) { return $test_metadata[$test_name]; });

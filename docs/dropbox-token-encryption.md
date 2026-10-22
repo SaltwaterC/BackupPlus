@@ -2,7 +2,7 @@
 
 BackupPlus creates its installation encryption key automatically when activated. Existing installations get the same setup on the first request after upgrading. Dropbox requires no manual key generation, SSH, file uploads or server configuration.
 
-Existing Dropbox credentials are upgraded automatically once. Subsequent reads accept only authenticated ciphertext; there is no legacy or plaintext fallback. Other providers and database archive encryption are outside this change.
+Existing Dropbox credentials are upgraded automatically once. Subsequent reads accept only authenticated ciphertext; there is no legacy or plaintext fallback. Other providers now share this cipher and key lifecycle through the [generic credential policy](credential-encryption.md). Database archive encryption uses its separate age format.
 
 ## Storage on shared hosts
 
@@ -34,7 +34,7 @@ The plugin reuses its key across restarts. It never silently creates a replaceme
 
 BackupPlus registers an annual WordPress cron job automatically on activation and for existing installations. It runs every 365 days after key creation or the last rotation. Existing key files without rotation metadata start their first annual interval when this feature initializes. WordPress cron runs when triggered by site traffic or the site's existing system cron integration, so an inactive site may execute an overdue job later.
 
-The job creates one new random key, makes it active, and re-encrypts all saved encrypted Dropbox access and request tokens for every stored instance. On multisite it re-encrypts credentials across the network sharing the installation key file. Each rewritten token is verified before saving; each completed site's active key ID is recorded so retries skip completed work. Previous keys stay in the file so historical backups and running jobs remain readable; rotation does not retire old keys.
+The job creates one new random key, makes it active, and re-encrypts all saved encrypted Dropbox access and request tokens for every stored instance. It also re-encrypts other provider secret fields and saved job snapshots. On multisite it re-encrypts credentials across the network sharing the installation key file. Each rewritten token is verified before saving; each completed site's active key ID is recorded so retries skip completed work. Previous keys stay in the file so historical backups and running jobs remain readable; rotation does not retire old keys.
 
 The shared file's rotation timestamp is checked under its lock, preventing overlapping or duplicate callbacks from generating additional keys. A retry is scheduled before changes begin, so interrupted jobs can resume. Failed writes preserve the previous credential ciphertext, retain its keys, show an error in Settings and retry the rewrite after a day using the already published key. Successful completion clears the retry and error. Deactivation removes the annual and retry jobs; reactivation resumes scheduling.
 
@@ -56,7 +56,7 @@ BackupPlus generates the file there on first installation. Changing this overrid
 
 The envelope is `bpcred:v1:<key-id>:<base64(nonce || ciphertext || tag)>`, using AES-256-GCM through bundled phpseclib 3, a random 12-byte nonce and a full 16-byte tag. The version, key ID, WordPress blog ID and Dropbox storage instance ID are authenticated before unserialization.
 
-The automatic one-time upgrade prepares and verifies replacements for all saved Dropbox instances before one options update. It reads the former shared-key CBC access tokens and old plaintext request tokens only while the site's upgrade-completion marker in the protected key file is absent. Deleting a database marker or placing legacy ciphertext in settings cannot reopen that decoder after completion. When restoring settings from before this upgrade, an authorized administrator can select **Upgrade restored Dropbox credentials** to deliberately run that conversion again; no CLI is required. Invalid input or a save failure retains original credentials and shows recovery instructions. The optional CLI maintenance script calls the same upgrade/rotation routines; it is not required for installation or recovery.
+The automatic one-time upgrade prepares and verifies replacements for all saved Dropbox instances before one options update. It reads the former shared-key CBC access tokens and old plaintext request tokens only while the site's upgrade-completion marker in the protected key file is absent. Deleting a database marker or placing legacy ciphertext in settings cannot reopen that decoder after completion. When restoring settings from before this upgrade, an authorized administrator can select **Upgrade restored credentials** to deliberately run that conversion again; no CLI is required. Invalid input or a save failure retains original credentials and shows recovery instructions. The optional CLI maintenance script calls the same upgrade/rotation routines; it is not required for installation or recovery.
 
 Key creation, relocation and rotation use file locks; writes publish a complete guarded temporary file with an atomic rename. Concurrent first installations converge on one key. Recovery uploads never execute PHP. Managed paths are private plugin metadata, not exported settings, and cannot be changed through settings imports.
 

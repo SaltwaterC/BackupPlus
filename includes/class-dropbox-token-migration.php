@@ -22,7 +22,7 @@ class BackupPlus_Dropbox_Token_Migration {
 	public static function rotate() { return self::rewrite(false); }
 
 	public static function verify($config) {
-		$options = BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
+		$options = class_exists('BackupPlus_Credential_Storage') ? get_option('backupplus_dropbox') : BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
 		if (empty($options['settings'])) return;
 		foreach ($options['settings'] as $id => $settings) {
 			$encrypter = new Dropbox_Encrypter($config['keys'], $config['active'], 'dropbox:'.get_current_blog_id().':'.$id);
@@ -34,7 +34,11 @@ class BackupPlus_Dropbox_Token_Migration {
 	}
 
 	private static function rewrite($allow_legacy) {
-		$original = BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
+		$raw_original = class_exists('BackupPlus_Credential_Storage') ? get_option('backupplus_dropbox') : BackupPlus_Options::get_backupplus_option('backupplus_dropbox');
+		$original = $raw_original;
+		if (class_exists('BackupPlus_Credential_Storage')) {
+			$original = $allow_legacy ? BackupPlus_Credential_Storage::incoming($original, 'backupplus_dropbox') : BackupPlus_Credential_Storage::reading($original, 'backupplus_dropbox', true);
+		}
 		if (empty($original)) return 0;
 		if (!is_array($original) || !isset($original['settings']) || !is_array($original['settings'])) throw new RuntimeException('The saved Dropbox settings could not be upgraded. Reconnect Dropbox in BackupPlus Settings.');
 		$updated = $original;
@@ -65,7 +69,7 @@ class BackupPlus_Dropbox_Token_Migration {
 			throw new RuntimeException('The Dropbox credential upgrade could not be completed. Your saved credentials are unchanged. Restore a recovery key or reconnect Dropbox in BackupPlus Settings.');
 		}
 		if ($updated !== $original) {
-			if (BackupPlus_Options::get_backupplus_option('backupplus_dropbox') !== $original) throw new RuntimeException('Dropbox settings changed during the upgrade. Please retry.');
+			if ((class_exists('BackupPlus_Credential_Storage') ? get_option('backupplus_dropbox') : BackupPlus_Options::get_backupplus_option('backupplus_dropbox')) !== $raw_original) throw new RuntimeException('Dropbox settings changed during the upgrade. Please retry.');
 			BackupPlus_Options::update_backupplus_option('backupplus_dropbox', $updated);
 			if (BackupPlus_Options::get_backupplus_option('backupplus_dropbox') !== $updated) throw new RuntimeException('The upgraded Dropbox credentials could not be saved. Please retry in BackupPlus Settings.');
 		}

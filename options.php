@@ -63,6 +63,7 @@ class BackupPlus_Options {
 	 */
 	public static function get_backupplus_option($option, $default = null) {
 		$ret = get_option($option, $default);
+		if (class_exists('BackupPlus_Credential_Storage')) $ret = BackupPlus_Credential_Storage::reading($ret, $option);
 		return apply_filters('backupplus_get_option', $ret, $option, $default);
 	}
 

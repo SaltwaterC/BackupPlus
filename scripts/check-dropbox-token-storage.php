@@ -39,6 +39,12 @@ add_filter('pre_update_option_backupplus_dropbox', function($value, $old) use ($
 	update_option($fixture_option, $value, false);
 	return $old;
 }, 10, 2);
+// The generic credential upgrade must not inspect or rewrite unrelated real jobs.
+add_filter('query', function($query) {
+	global $wpdb;
+	if (0 === strpos($query, "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE ")) return $query.' AND 1=0';
+	return $query;
+});
 require dirname(__DIR__).'/backupplus.php';
 require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/StorageInterface.php';
 require_once BACKUPPLUS_DIR.'/includes/Dropbox2/OAuth/Storage/WordPress.php';

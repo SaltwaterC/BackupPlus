@@ -2626,12 +2626,22 @@ class BackupPlus {
 	 * @return Array
 	 */
 	public function jobdata_getarray($job_id) {
-		return get_site_option('backupplus_jobdata_'.$job_id, array());
+		return $this->read_jobdata($job_id);
+	}
+
+	private function read_jobdata($job_id) {
+		$data = get_site_option('backupplus_jobdata_'.$job_id, array());
+		return class_exists('BackupPlus_Credential_Storage') ? BackupPlus_Credential_Storage::job($data, $job_id, 'decrypt') : $data;
+	}
+
+	private function save_jobdata() {
+		$data = class_exists('BackupPlus_Credential_Storage') ? BackupPlus_Credential_Storage::job($this->jobdata, $this->nonce, 'encrypt') : $this->jobdata;
+		return update_site_option('backupplus_jobdata_'.$this->nonce, $data);
 	}
 
 	public function jobdata_set_from_array($array) {
 		$this->jobdata = $array;
-		if (!empty($this->nonce)) update_site_option("backupplus_jobdata_".$this->nonce, $this->jobdata);
+		if (!empty($this->nonce)) $this->save_jobdata();
 	}
 
 	/**
@@ -2641,6 +2651,7 @@ class BackupPlus {
 	 * @return null
 	 */
 	public function jobdata_set_multi() {
+		if (!is_array($this->jobdata)) $this->jobdata = empty($this->nonce) ? array() : $this->read_jobdata($this->nonce);
 		if (!is_array($this->jobdata)) $this->jobdata = array();
 
 		$args = func_num_args();
@@ -2659,7 +2670,7 @@ class BackupPlus {
 			}
 			
 		}
-		if (!empty($this->nonce)) update_site_option('backupplus_jobdata_'.$this->nonce, $this->jobdata);
+		if (!empty($this->nonce)) $this->save_jobdata();
 	}
 
 	/**
@@ -2672,11 +2683,11 @@ class BackupPlus {
 	 */
 	public function jobdata_set($key, $value) {
 		if (empty($this->jobdata)) {
-			$this->jobdata = empty($this->nonce) ? array() : get_site_option('backupplus_jobdata_'.$this->nonce);
+			$this->jobdata = empty($this->nonce) ? array() : $this->read_jobdata($this->nonce);
 			if (!is_array($this->jobdata)) $this->jobdata = array();
 		}
 		$this->jobdata[$key] = $value;
-		if ($this->nonce) update_site_option('backupplus_jobdata_'.$this->nonce, $this->jobdata);
+		if ($this->nonce) $this->save_jobdata();
 	}
 
 	/**
@@ -2686,18 +2697,18 @@ class BackupPlus {
 	 */
 	public function jobdata_delete($key) {
 		if (!is_array($this->jobdata)) {
-			$this->jobdata = empty($this->nonce) ? array() : get_site_option("backupplus_jobdata_".$this->nonce);
+			$this->jobdata = empty($this->nonce) ? array() : $this->read_jobdata($this->nonce);
 			if (!is_array($this->jobdata)) $this->jobdata = array();
 		}
 		unset($this->jobdata[$key]);
-		if ($this->nonce) update_site_option("backupplus_jobdata_".$this->nonce, $this->jobdata);
+		if ($this->nonce) $this->save_jobdata();
 	}
 
 	public function get_job_option($opt) {
 		// These are meant to be read-only
 		if (empty($this->jobdata['option_cache']) || !is_array($this->jobdata['option_cache'])) {
-			if (!is_array($this->jobdata) && $this->nonce) $this->jobdata = get_site_option("backupplus_jobdata_".$this->nonce, array());
-			$this->jobdata['option_cache'] = array();
+			if (!is_array($this->jobdata) && $this->nonce) $this->jobdata = $this->read_jobdata($this->nonce);
+			if (empty($this->jobdata['option_cache']) || !is_array($this->jobdata['option_cache'])) $this->jobdata['option_cache'] = array();
 		}
 		return isset($this->jobdata['option_cache'][$opt]) ? $this->jobdata['option_cache'][$opt] : BackupPlus_Options::get_backupplus_option($opt);
 	}
@@ -2712,7 +2723,7 @@ class BackupPlus {
 	 */
 	public function jobdata_get($key, $default = null) {
 		if (empty($this->jobdata)) {
-			$this->jobdata = empty($this->nonce) ? array() : get_site_option('backupplus_jobdata_'.$this->nonce, array());
+			$this->jobdata = empty($this->nonce) ? array() : $this->read_jobdata($this->nonce);
 			if (!is_array($this->jobdata)) return $default;
 		}
 		return isset($this->jobdata[$key]) ? $this->jobdata[$key] : $default;
