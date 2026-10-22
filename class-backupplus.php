@@ -253,71 +253,14 @@ class BackupPlus {
 	}
 
 
-	/**
-	 * Ensure that the indicated phpseclib classes are available
-	 *
-	 * @return Boolean|WP_Error Boolean true if the given classes is already included or autoloader is successfully registered, otherwise WP Error
-	 */
+	/** Load the single bundled phpseclib 3 installation. */
 	public function ensure_phpseclib() {
-
-		if (!$this->phpseclib_requirements_met()) {
-			$this->maybe_log_phpseclib_warnings();
-			// return new WP_Error('phpseclib_php_version', "PHP Secure Communication Library doesn't meet the minimum PHP requirements.");
+		if (version_compare(PHP_VERSION, BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION, '<')) {
+			return new WP_Error('phpseclib_php_version', sprintf(__('The bundled cryptography library requires PHP %s or newer.', 'backupplus'), BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION));
 		}
-	
-		$this->no_deprecation_warnings_on_php7();
-		
-		$ret = true;
-		
-		// From phpseclib/phpseclib/phpseclib/bootstrap.php - we nullify it there, but log here instead
-		if (extension_loaded('mbstring')) {
-			// 2 - MB_OVERLOAD_STRING
-			// phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated -- Ignore the removed ini directives compatibility
-			if (ini_get('mbstring.func_overload') & 2) {
-				// We go on to try anyway, in case the caller wasn't using an affected part of phpseclib
-				// @codingStandardsIgnoreLine
-				$ret = new WP_Error('mbstring_func_overload', 'Overloading of string functions using mbstring.func_overload is not supported by phpseclib.');
-			}
-		}
-		
-		$phpseclib_dir = BACKUPPLUS_DIR.'/vendor/phpseclib/phpseclib/phpseclib';
-		if (false === strpos(get_include_path(), $phpseclib_dir)) set_include_path(get_include_path().PATH_SEPARATOR.$phpseclib_dir);
-		spl_autoload_register(array($this, 'autoload_phpseclib_class'));
-		return $ret;
-	}
-
-	/**
-	 * Load phpseclib class automatically. Note that this method is hooked into the PHP's spl_auto_register and this is exclusively used for phpseclib only
-	 *
-	 * @param String $class A class name that's going to be used for instantiating an object
-	 * @return Void
-	 */
-	public function autoload_phpseclib_class($class) {
-		if (!preg_match('#^phpseclib_#', $class)) return; // only deals with class prefixed with "phpseclib_", because we use that prefix to our customised phpseclib class and to call/instantiate object of phpseclib classes (e.g. new phpseclib_Crypt_RSA = new phpseclib\Crypt\RSA)
-		$phpseclib_dir = BACKUPPLUS_DIR.'/vendor/phpseclib/phpseclib/phpseclib';
-		$class = str_replace('_', '/', $class); // turn the class name into paths by replacing underscores from the given class with slashes, this is to change our customised phpseclib class name to a fully qualified phpseclib v2 namespace
-		$class = preg_replace('#^phpseclib/(.+)$#', "$1", $class); // take out the 'phpseclib' from the beginning of the class name as we already have the root directory of phpseclib defined in the $phpseclib_dir variable
-		if (file_exists($phpseclib_dir.'/'.$class.'.php') == true) { // check whether the class name that has been transformed into directory paths mathces with one of the phpseclib class files
-			$phpseclib_class_v2 = 'phpseclib\\'.str_replace('/', '\\', $class);
-			$phpseclib_backupplus_class = 'phpseclib_'.str_replace('/', '_', $class);
-			backupplus_try_include_file('vendor/autoload.php', 'require_once'); // load the composer autoload.php every time our customised phpseclib class is called (if not already loaded)
-			if (class_exists($phpseclib_class_v2) && !class_exists($phpseclib_backupplus_class)) class_alias($phpseclib_class_v2, $phpseclib_backupplus_class); // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctions.class_aliasFound -- the use of class_alias here to map our customised phpseclib class to the real one owned by the phpseclib v2 class (e.g. phpseclib_Crypt_RSA => phpseclib\Crypt\RSA)
-		}
-	}
-
-	/**
-	 * Ugly, but necessary to prevent debug output breaking the conversation when the user has debug turned on
-	 */
-	private function no_deprecation_warnings_on_php7() {
-		// PHP_MAJOR_VERSION is defined in PHP 5.2.7+
-		// We don't test for PHP > 7 because the specific deprecated element will be removed in PHP 8 - and so no warning should come anyway (and we shouldn't suppress other stuff until we know we need to).
-		// phpcs:ignore PHPCompatibility.Constants.NewConstants.php_major_versionFound -- PHP_MAJOR_VERSION constant does not exist in PHP 5.2.6 and lower
-		if (defined('PHP_MAJOR_VERSION') && PHP_MAJOR_VERSION == 7) {
-			$old_level = error_reporting(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to get the current PHP error level.
-			$new_level = $old_level & ~E_DEPRECATED; // phpcs:ignore PHPCompatibility.Constants.NewConstants.e_deprecatedFound -- E_DEPRECATED constant does not exist in PHP 5.2 and lower
-			if ($old_level != $new_level) error_reporting($new_level); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to display PHP errors when debug mode is enabled.
-			$this->no_deprecation_warnings = true;
-		}
+		backupplus_try_include_file('vendor/autoload.php', 'require_once');
+		backupplus_try_include_file('includes/class-backupplus-crypto.php', 'require_once');
+		return true;
 	}
 
 	/**

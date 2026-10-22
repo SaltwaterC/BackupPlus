@@ -112,6 +112,8 @@ abstract class BackupPlus_BackupModule {
 			'method_id' => $this->get_id(),
 			'_instance_id' => $this->_instance_id,
 			'method_display_name' => $backupplus->backup_methods[$this->get_id()],
+			/* translators: %s: Storage method name. */
+			'input_test_label' => sprintf(__('Test %s Settings', 'backupplus'), $this->get_description()),
 			'admin_page_url' => BackupPlus_Options::admin_page_url(),
 			'storage_auth_nonce' =>wp_create_nonce('storage_auth_nonce'),
 			'input_select_folder_label' => __('Select existing folder', 'backupplus'),

@@ -1,0 +1,102 @@
+{
+    "source": "Generated with phpseclib 2.0.55 before its removal. Synthetic test data only.",
+    "database": [
+        {
+            "key": "",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "IB7dTubC5vaBNQU+SN/ifc9fCdDczOzb2+RgAEQN3yVgA8MQLBP6G2HHcaTDZk4QDxOMiBmhQNvO8rRDpaCKZvpPmOf41zGTbosXNcn/uj0="
+        },
+        {
+            "key": "cA==",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "3ISM+PwPspAyG5VCpCzgbXsux2zWwOOcwGje0sSSWKgCcAZ6gd7Ow3jLdE26YkNbCRNME4unZOZA20FBGT5Zu1P+9bVg3jkhIE0vP+rSzjs="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFz",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "UEU3edHvDU+g5vEE6ReMoYmp7RH5/qgd07F6FfQTAegRM5pNUpXJajVb088tudqWBasn5IKI7GeOO67RaiDG8yir0angqVDGNxFZ+a/R0xc="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzcw==",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "+zFg0rOfzDSwdRN7n5OXxgrcJ4hnxmXoh4u/gTDLN/jmrJyZxh54a1gXTLLJU7dDrE7jVwH38SKkE2n9URXxfyu63Vit5FfOBsQ7kxao0iU="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3A=",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "7Z6dgdLGFp5Hk9N/PIXWPeVJ81VwMxpbElBXLOjyD2fuivRfeMqBbbOZW7lzH5Ur8/3tO0WwTeco2Srusb8mMu7iU7fYgKNIEBJlYIS0hgU="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmE=",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "1vcmaqPPTB1y6rS1fEtg4+69WbAHMnv/ehmLnfWxBBKpckwGKiblTSkHpibsmFM9FDd3PnR5rD37V5uE8ntPLp7+Ecdd+E30jSefLAOvOPY="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFz",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "1gP6m54GqYMatB2XD/1wH1WGKrd+e2rRJlnSnx04QUSS9/XgqLQHPDlwtsjdCH+S7FM6nwFNA7k79AtsITXzjmyuNSFLXF1AjOli55OaTfs="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsg",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "iQvaYzUZe7ZxPoFG4orjTjH7WZ3YkohcQKArsChi806vK7FJBSDqDhpxWrT9psyjOSqHxzxx4sQLKjdLGgIR17WVoB1Vp3nFJJMRAR+TOIo="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcA==",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "JdCELYn2toLROrdczGjM+TR9s/hnEj9cEsPjc6dKt+FV80u1OGgiwrBHavJJ1EH2Vj8fD9w4umvVt13BqQO+tIesCv0EkGzMEfUk6oaTTms="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzcw==",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "9nWeiv+6zSCL+zDjuim3q0GGtrMCf0nvjWMpV1gs+bIx8h/Bi2CjgoVcDEutOWoeog3uquQMBfUSxgvTsUHMQte9HFs2HEJuJQ+SimyxyFg="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3A=",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "poRhjyRit0tGXE/Z8weWMwQLOa6/icK6KaQxpC+E8xNO1JgmqGCH6y2K6TNTEnPf4XfcTkjcc2HaZrFsWa9CTKVfMOFBzkuS/2WbrXEKDJU="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3BocmE=",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "zj9jg/gq5Lu1nHe975Kw4x1qPXt7IeUQHLY66ouIxwqDonlrjNpxncHjKhazrT0xuF9/I/67AzKExDmkBqKfxlxKrlHv+hnhzJFVO5dLGR4="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3BocmFz",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "zj9jg/gq5Lu1nHe975Kw4x1qPXt7IeUQHLY66ouIxwqDonlrjNpxncHjKhazrT0xuF9/I/67AzKExDmkBqKfxlxKrlHv+hnhzJFVO5dLGR4="
+        },
+        {
+            "key": "cGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzc3BocmFzZSsgcGFzcw==",
+            "plaintext": "LS0gQmFja3VwUGx1cyBsZWdhY3kgZGF0YWJhc2UgZml4dHVyZQpJTlNFUlQgSU5UTyB0ZXN0IFZBTFVFUyAoJ2JpbmFyeQBkYXRhJyk7Cg==",
+            "ciphertext": "zj9jg/gq5Lu1nHe975Kw4x1qPXt7IeUQHLY66ouIxwqDonlrjNpxncHjKhazrT0xuF9/I/67AzKExDmkBqKfxlxKrlHv+hnhzJFVO5dLGR4="
+        }
+    ],
+    "dropbox": [
+        {
+            "key": "0123456789abcdef0123456789abcdef",
+            "plaintext": "",
+            "ciphertext": "ABEiM0RVZneImaq7zN3u/+30JH7h/GmAeyMHr9rVcj0="
+        },
+        {
+            "key": "0123456789abcdef0123456789abcdef",
+            "plaintext": "c2VyaWFsaXplZCBEcm9wYm94IHRva2Vu",
+            "ciphertext": "ABEiM0RVZneImaq7zN3u/xKJbAhMhIaWL84hiaiOSOMEVWbFV22cM59IMI1jnOXE"
+        },
+        {
+            "key": "0123456789abcdef0123456789abcdef",
+            "plaintext": "eHh4eHh4eHh4eHh4eHh4eA==",
+            "ciphertext": "ABEiM0RVZneImaq7zN3u/2mCCsJOCVIfsVnEgSeu0eYGk1RtOY26wckkLD+xZKNO"
+        },
+        {
+            "key": "0123456789abcdef0123456789abcdef",
+            "plaintext": "YmluYXJ5AP8gdG9rZW4=",
+            "ciphertext": "ABEiM0RVZneImaq7zN3u/3cT1Ii7lKy+Rn+3xqjGo5w="
+        }
+    ],
+    "chunked": {
+        "key": "resumable backup key",
+        "plaintext_sha256": "190c393627e548312e583bb0d004252285722d364e6b5a55138c0f6bcb411f16",
+        "ciphertext_sha256": "a58cc32c84f4662f8382ef106bfd1804b35cc1c9a890f86482b6e0abb61e1893"
+    }
+}

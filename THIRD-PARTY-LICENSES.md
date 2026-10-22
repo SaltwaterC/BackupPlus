@@ -12,5 +12,7 @@ BackupPlus includes third-party code under licenses compatible with GPLv3. Prese
 | Rackspace PHP Cloud Files API in `includes/cloudfiles/` | MIT, with the additional Rackspace name-use term | [`includes/cloudfiles/COPYING`](includes/cloudfiles/COPYING) |
 | Amazon S3 classes in `includes/S3.php` and `includes/S3compat.php` | BSD 3-Clause | The full notices are retained in each source file |
 | Team Updraft common libraries in `vendor/team-updraft/common-libs/` | GPL-3.0-only | [`LICENSE`](LICENSE) |
+| phpseclib 3 in `vendor/phpseclib/phpseclib/` | MIT | [`vendor/phpseclib/phpseclib/LICENSE`](vendor/phpseclib/phpseclib/LICENSE) |
+| Paragon Initiative constant-time encoding and random compatibility libraries in `vendor/paragonie/` | MIT | Upstream license files are retained in each package directory |
 
 Other Composer packages retain their upstream license files. Their license identifiers are recorded in `vendor/composer/installed.json`.

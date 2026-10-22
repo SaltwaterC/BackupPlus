@@ -96,7 +96,12 @@ $html = $backupplus_admin->include_template('wp-admin/settings/form-contents.php
 preg_match_all('/class="backupplus_servicecheckbox [^"]*"[^>]*value="([^"]+)"/', $html, $matches);
 $visible = array();
 foreach ($expected as $id => $name) {
-	if (!is_a(BackupPlus_Storage_Methods_Interface::get_storage_object($id), 'BackupPlus_BackupModule_AddonNotYetPresent')) $visible[] = $id;
+	$object = BackupPlus_Storage_Methods_Interface::get_storage_object($id);
+	if (!is_a($object, 'BackupPlus_BackupModule_AddonNotYetPresent')) $visible[] = $id;
+	if ($object->supports_feature('config_templates') && is_callable(array($object, 'credentials_test'))) {
+		$properties = $object->get_template_properties();
+		backupplus_provider_expect(!empty($properties['input_test_label']), "$id settings test button must have an initial label");
+	}
 }
 backupplus_provider_expect($visible === $matches[1], 'Settings must render available providers alphabetically');
 $result = $backupplus_admin->do_credentials_test(array('method' => 'missingprovider'), true);

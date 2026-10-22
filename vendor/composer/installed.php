@@ -238,6 +238,15 @@
             'reference' => 'b3af30a6aec7f6467c773cd49b2d974a70f7c0d4',
             'dev_requirement' => false,
         ),
+        'paragonie/constant_time_encoding' => array(
+            'pretty_version' => 'v1.1.0',
+            'version' => '1.1.0.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../paragonie/constant_time_encoding',
+            'aliases' => array(),
+            'reference' => '317718fb438e60151f72b20404f040cb5ae1d494',
+            'dev_requirement' => false,
+        ),
         'paragonie/random_compat' => array(
             'pretty_version' => 'v2.0.21',
             'version' => '2.0.21.0',
@@ -248,12 +257,12 @@
             'dev_requirement' => false,
         ),
         'phpseclib/phpseclib' => array(
-            'pretty_version' => '2.0.55',
-            'version' => '2.0.55.0',
+            'pretty_version' => '3.0.57',
+            'version' => '3.0.57.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpseclib/phpseclib',
             'aliases' => array(),
-            'reference' => 'd73c9e019a895be83b18a2ccccfa7e2b0a648743',
+            'reference' => 'd17e0ddaeaf6f22f7e007cbb437d78792fe2a0e4',
             'dev_requirement' => false,
         ),
         'psr/http-message' => array(

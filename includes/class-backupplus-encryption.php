@@ -34,18 +34,15 @@ class BackupPlus_Encryption {
 		if (false === ($decrypted_handle = fopen($decrypted_path, 'wb+'))) return false;
 
 		// setup encryption
-		$rijndael = new phpseclib_Crypt_Rijndael();
-		$rijndael->setKey($key);
+		$rijndael = BackupPlus_Crypto::rijndael($key);
 		$rijndael->disablePadding();
 		$rijndael->enableContinuousBuffer();
 		
 		if (defined('BACKUPPLUS_DECRYPTION_ENGINE')) {
 			if ('openssl' == BACKUPPLUS_DECRYPTION_ENGINE) {
-				$rijndael->setPreferredEngine(CRYPT_ENGINE_OPENSSL);
-			} elseif ('mcrypt' == BACKUPPLUS_DECRYPTION_ENGINE) {
-				$rijndael->setPreferredEngine(CRYPT_ENGINE_MCRYPT);
+				$rijndael->setPreferredEngine('OpenSSL');
 			} elseif ('internal' == BACKUPPLUS_DECRYPTION_ENGINE) {
-				$rijndael->setPreferredEngine(CRYPT_ENGINE_INTERNAL);
+				$rijndael->setPreferredEngine('PHP');
 			}
 		}
 
@@ -145,9 +142,9 @@ class BackupPlus_Encryption {
 	
 		global $backupplus;
 
-		if (!function_exists('mcrypt_encrypt') && !extension_loaded('openssl')) {
+		if (!extension_loaded('openssl')) {
 			/* translators: %s: The name of the missing encryption module. */
-			$backupplus->log(sprintf(__('Your web-server does not have the %s module installed.', 'backupplus'), 'PHP/mcrypt / PHP/OpenSSL').' '.__('Without it, encryption will be a lot slower.', 'backupplus'), 'warning', 'nocrypt');
+			$backupplus->log(sprintf(__('Your web-server does not have the %s module installed.', 'backupplus'), 'PHP/OpenSSL').' '.__('Without it, encryption will be a lot slower.', 'backupplus'), 'warning', 'nocrypt');
 		}
 
 		// include Rijndael library from phpseclib
@@ -178,8 +175,7 @@ class BackupPlus_Encryption {
 		$resumption = false;
 
 		// setup encryption
-		$rijndael = new phpseclib_Crypt_Rijndael();
-		$rijndael->setKey($key);
+		$rijndael = BackupPlus_Crypto::rijndael($key);
 		$rijndael->disablePadding();
 		$rijndael->enableContinuousBuffer();
 		
@@ -250,8 +246,7 @@ class BackupPlus_Encryption {
 				// reset the data encrypted so that the loop can be entered
 				$data_encrypted = 0;
 				// setup encryption to reset the IV
-				$rijndael = new phpseclib_Crypt_Rijndael();
-				$rijndael->setKey($key);
+				$rijndael = BackupPlus_Crypto::rijndael($key);
 				$rijndael->disablePadding();
 				$rijndael->enableContinuousBuffer();
 				// reset the file pointer and then we should be able to start from fresh

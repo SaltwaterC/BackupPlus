@@ -8,7 +8,37 @@ Start with `cp .env.example .env && ./dev/up.sh`. See [the development environme
 
 The plugin's versioned minified assets are generated from the stable inputs in `assets-src/`. After changing the `Version:` header in `backupplus.php`, run `make build-assets` to produce the filenames used by the plugin and update CSS source-map references. Run `make check-assets` to verify the checked-in assets match the current plugin version. This uses PHP CLI and Make; it does not require Node or npm.
 
+## Tests
+
+Run the complete suite with:
+
+```sh
+make test
+```
+
+This runs all standalone PHP tests, missing-extension checks, live FTP/FTPS, SFTP/SCP and WebDAV integration tests, asset checks, and WordPress provider checks with every provider removed individually and all providers removed together. Failures return a nonzero exit status; missing prerequisites fail instead of skipping a suite.
+
+Prerequisites are PHP with cURL, DOM, OpenSSL and ctype (libcurl must support FTP and TLS), Python 3.8+ with `venv` and pip, the `openssl` and `scp` commands, and the running Podman WordPress development environment (`./dev/up.sh`). The first run installs Python test dependencies into `.cache/test-venv`; subsequent runs reuse them. Live storage tests create disposable loopback servers and need no external storage accounts.
+
+For a focused run, use `make test-unit`, `make test-integration`, `make test-wordpress`, or `make check-assets`. Override `PYTHON`, `TEST_VENV`, `PODMAN`, or `WP_TEST_CONTAINER` on the Make command line if needed, for example `make test PYTHON=python3.12`.
+
 ## Storage providers
+
+The **WebDAV** provider supports HTTP and HTTPS with Basic or Digest authentication. Enter the server hostname, optional port, username, password, and remote directory. HTTPS is the default; ports default to 443 for HTTPS and 80 for HTTP. The directory must already exist. Enter its path without URL encoding (for example, `remote.php/dav/files/username/backups` for Nextcloud); an empty path or `/` uses the server root. Legacy WebDAV settings are retained.
+
+WebDAV supports backup uploads, restore downloads, backup discovery, retention deletion, and a settings test that lists the directory, uploads a disposable file, reads it back, and deletes it. Transfers stream through PHP cURL. Retried uploads restart in full; downloads replace local files only after a successful complete transfer. Configure the final WebDAV endpoint because redirects are rejected. PHP cURL and DOM XML are required. HTTPS verifies server certificates and hostnames by default, honoring the plugin's expert settings for certificate verification and system CA selection (`curl.cainfo`); disabling SSL rejects HTTPS connections.
+
+Run `php scripts/test-webdav.php` and `php -d disable_functions=curl_init scripts/test-webdav.php` for settings and missing-support checks. Run `python3 scripts/test-webdav-integration.py` for disposable HTTP/HTTPS servers, Basic and Digest authentication, binary and empty files, special characters, malformed XML, failed transfers, and certificate verification. The integration checks require PHP cURL/DOM, Python's standard library, and `openssl`; no external WebDAV service is needed.
+
+The **SFTP / SCP** provider uses the bundled phpseclib 3 library; PHP's SSH2 extension and a local SSH executable are not required. Select SFTP (the default) or SCP, enter the SSH server, port (default 22), username, and password or private key. Both RSA and Ed25519 keys are supported, including encrypted OpenSSH Ed25519 keys. Paste the complete private key into the private-key field and enter its passphrase separately when encrypted. A supplied private key takes precedence over the password. Hostnames with a port, bracketed IPv6 addresses, and `sftp://` or `scp://` host prefixes are accepted. A prefix also selects that protocol.
+
+SSH host verification is required before authentication. Enter the server's SHA256 host key fingerprint, obtained from your server administrator. Testing with an empty fingerprint displays the server's fingerprint without sending credentials; verify it independently before saving it. A changed or missing fingerprint stops transfers. Existing SFTP settings are retained, including settings from the legacy `backupplus_sftp_settings` option; configure a fingerprint before using them.
+
+The remote directory must already exist. An empty path uses the login directory; `/` starts an absolute path. SFTP supports upload and download resumption. SCP restarts interrupted transfers and requires a POSIX shell, `scp`, `wc`, and `rm` on the remote server. SCP works without an SFTP subsystem. Both protocols support backup uploads, restore downloads, backup discovery, retention deletion, and a settings test that uploads, reads back, and removes a disposable file.
+
+Run `make test` for the complete suite. SSH integration checks cover password authentication, encrypted and unencrypted RSA and Ed25519 keys, Ed25519 server host keys, fingerprint rejection before login, transfer resumption, empty files, absolute and relative paths, shell metacharacters, symlinks, and read-only directories. No external SSH service is needed.
+
+phpseclib 3 is the sole bundled cryptography library and is also used for database backups and Dropbox token encryption. Existing ciphertext formats are preserved. `scripts/test-encryption.php`, included in `make test`, verifies decryption against fixtures generated before the migration, matching ciphertext for existing passphrases, interrupted encryption resumption, and stored Dropbox token compatibility.
 
 The FTP provider supports plain FTP and FTPS with explicit TLS. Select **FTPS (explicit TLS)** under **Encryption** to encrypt the login and file transfers. Both modes default to port 21; enter `hostname:port` to use a custom port. The `ftps://` and `ftpes://` host prefixes also select explicit TLS, including in connection tests. Existing FTP settings continue to use plain FTP.
 

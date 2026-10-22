@@ -148,13 +148,13 @@ abstract class Dropbox_ConsumerAbstract
     {
 	    /*
 		    Generate a random key to be passed to Dropbox and stored in session to be checked to prevent CSRF
-		    Uses OpenSSL or Mcrypt or defaults to pure PHP implementaion if neither are available.
+		    Uses the bundled phpseclib 3 cryptographic random source.
 		*/
 	    
 		global $backupplus;
         $backupplus->ensure_phpseclib();
 
-		$CSRF = base64_encode(phpseclib_Crypt_Random::string(16));
+		$CSRF = base64_encode(\phpseclib3\Crypt\Random::string(16));
         $this->storage->set($CSRF,'CSRF');
         // Prepare request parameters
         /*

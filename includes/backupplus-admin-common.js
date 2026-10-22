@@ -338,7 +338,7 @@ function backupplus_remote_storage_test(method, result_callback, instance_id) {
 		var value = null;
 		if ('checkbox' == input_type) {
 			value = jQuery(item).is(':checked') ? 1 : 0;
-		} else if ('text' == input_type || 'password' == input_type || 'hidden' == input_type) {
+		} else if ('text' == input_type || 'password' == input_type || 'hidden' == input_type || 'number' == input_type) {
 			value = jQuery(item).val();
 		} else {
 			console.log("BackupPlus: settings test input item with unrecognised type ("+input_type+") found");

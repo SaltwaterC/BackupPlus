@@ -9,13 +9,8 @@
  * @subpackage Storage
  */
 
-/* BackupPlus notes
-Using this was fairly pointless (it encrypts storage credentials at rest). But, it's implemented now, so needs supporting.
-Investigation shows that mcrypt and phpseclib native encryption using different padding schemes.
-As a result, that which is encrypted by phpseclib native can be decrypted by mcrypt, but not vice-versa. Each can (as you'd expect) decrypt the results of their own encryption.
-As a consequence, it makes sense to always encrypt with phpseclib native, and prefer decrypting with with mcrypt if it is available and otherwise fall back to phpseclib.
-We could deliberately re-encrypt all loaded information with phpseclib native, but there seems little need for that yet. There can only be a problem if mcrypt is disabled - which pre-July-2015 meant that Dropbox wouldn't work at all. Now, it will force a re-authorisation.
-*/
+/* BackupPlus: token ciphertext retains its original Rijndael-CBC format,
+ * including the 16-byte IV prefix and PKCS#7 padding, using phpseclib 3. */
 
 class Dropbox_Encrypter
 {    
@@ -31,7 +26,7 @@ class Dropbox_Encrypter
     private $key = null;
     
     /**
-     * Check Mcrypt is loaded and set the encryption key
+     * Validate and set the raw encryption key
      * @param string $key
      * @return void
      */
@@ -66,16 +61,9 @@ class Dropbox_Encrypter
             return false;
         }
         
-        $backupplus->ensure_phpseclib();
+        $iv = \phpseclib3\Crypt\Random::string(self::IV_SIZE);
         
-        $iv = phpseclib_Crypt_Random::string(self::IV_SIZE);
-        
-        // Defaults to CBC mode
-        $rijndael = new phpseclib_Crypt_Rijndael();
-        
-        $rijndael->setKey($this->key);
-        
-        $rijndael->setIV($iv);
+        $rijndael = BackupPlus_Crypto::rijndael($this->key, $iv);
 
         $cipherText = $rijndael->encrypt($token);
         
@@ -90,20 +78,20 @@ class Dropbox_Encrypter
     public function decrypt($cipherText)
     {
 
-		// Note: mcrypt_decrypt() is deprecated since PHP 7.1 and removed in 7.2.
-		// Switched to phpseclib exclusively for decryption.
-		
 		global $backupplus;
-        $cipherText = base64_decode($cipherText);
+        $cipherText = base64_decode($cipherText, true);
+        if (false === $cipherText || strlen($cipherText) <= self::IV_SIZE || (strlen($cipherText) - self::IV_SIZE) % 16) return false;
         $iv = substr($cipherText, 0, self::IV_SIZE);
         $cipherText = substr($cipherText, self::IV_SIZE);
             
-		$backupplus->ensure_phpseclib();
+		if (is_wp_error($backupplus->ensure_phpseclib())) return false;
 
-		$rijndael = new phpseclib_Crypt_Rijndael();
-		$rijndael->setKey($this->key);
-		$rijndael->setIV($iv);
-		$token = $rijndael->decrypt($cipherText);
+		$rijndael = BackupPlus_Crypto::rijndael($this->key, $iv);
+        try {
+            $token = $rijndael->decrypt($cipherText);
+        } catch (\Exception $e) {
+            return false;
+        }
         
         return $token;
     }

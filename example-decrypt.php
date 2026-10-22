@@ -13,7 +13,7 @@ Thus, here are the easy instructions:
 e.g.
 rijndael_decrypt_file('/home/myself/myfile.crypt' , 'MYKEY');
 
-2) Run this file (and make sure that includes/Rijndael.php is available, if you are moving this file around)
+2) Run this file (and make sure that the vendor/ and includes/ directories are available, if you are moving this file around)
 e.g. 
 php /home/myself/example-decrypt.php >output.sql.gz
 
@@ -32,11 +32,9 @@ gunzip output.sql.gz
  */
 function rijndael_decrypt_file($file, $key) {
 
-	include_once(dirname(__FILE__).'/vendor/phpseclib/phpseclib/phpseclib/Crypt/Rijndael.php');
-
-	$rijndael = new Crypt_Rijndael();
-
-	$rijndael->setKey($key);
+	require_once __DIR__.'/vendor/autoload.php';
+	require_once __DIR__.'/includes/class-backupplus-crypto.php';
+	$rijndael = BackupPlus_Crypto::rijndael($key);
 
 	$ciphertext = file_get_contents($file);
 
