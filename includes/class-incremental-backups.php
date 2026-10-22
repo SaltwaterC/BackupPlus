@@ -157,10 +157,23 @@ class BackupPlus_Incremental_Backups {
 		);
 	}
 
+	/** Count the warnings that mean the archives and the inventory might disagree. */
+	private static function blocking_warnings() {
+		global $backupplus;
+		$count = 0;
+		foreach ( $backupplus->errors as $key => $error ) {
+			// A dangling symlink is neither archived nor inventoried, so it cannot make a chain inconsistent.
+			if ( is_array( $error ) && 'warning' === $error['level'] && ! ( is_string( $key ) && 0 === strpos( $key, 'unrlink-' ) ) ) {
+				++$count;
+			}
+		}
+		return $count;
+	}
+
 	/** Only publish an inventory after all file creation and uploads completed without warnings. */
 	public static function complete() {
 		global $backupplus;
-		if ( 'finished' !== $backupplus->jobdata_get( 'backup_files' ) || $backupplus->error_count() || $backupplus->error_count( 'warning' ) ) {
+		if ( 'finished' !== $backupplus->jobdata_get( 'backup_files' ) || $backupplus->error_count() || self::blocking_warnings() ) {
 			return;
 		}
 		$timestamp = $backupplus->jobdata_get( 'incremental_base_time', $backupplus->backup_time );

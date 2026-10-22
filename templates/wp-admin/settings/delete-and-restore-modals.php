@@ -23,6 +23,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			printf( esc_html__( 'Are you sure that you wish to remove %s from BackupPlus?', 'backupplus' ), esc_html__( 'these backup sets', 'backupplus' ) );
 			?>
 		</p>
+		<div id="backupplus_delete_chain_warning" class="backupplus-delete-chain-warning" style="display:none;">
+			<p><strong><?php esc_html_e( 'Warning: deleting a full backup also deletes every incremental backup chained to it.', 'backupplus' ); ?></strong></p>
+			<p><?php esc_html_e( 'All restore points in the following sets will be permanently removed, including from remote storage if that option is ticked. Incremental backups cannot be kept without their full backup.', 'backupplus' ); ?></p>
+			<ul></ul>
+		</div>
 		<fieldset>
 			<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>">
 			<input type="hidden" name="action" value="backupplus_ajax">
@@ -71,6 +76,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 								echo wp_kses_post( '<p><em>' . __( "Your web server has PHP's so-called safe_mode active.", 'backupplus' ) . ' ' . __( 'This makes time-outs much more likely. Turn it off if possible, or restore only one entity at a time.', 'backupplus' ) . '</em></p>' );
 							}
 							?>
+							<div id="backupplus_restore_point_row" class="udp-notice backupplus-restore-option" style="display:none;">
+								<p><strong><label for="backupplus_incremental_restore_point"><?php esc_html_e( 'Restore files to this point in the backup chain:', 'backupplus' ); ?></label></strong></p>
+								<select name="backupplus_incremental_restore_point" id="backupplus_incremental_restore_point" disabled="disabled"></select>
+								<p><em><?php esc_html_e( 'Restoring applies the full backup and then every incremental backup up to the chosen point. The database is not part of the chain.', 'backupplus' ); ?></em></p>
+							</div>
 							<p><strong><?php esc_html_e( 'Choose the components to restore:', 'backupplus' ); ?></strong></p>
 							<?php
 								$backupable_entities = $backupplus->get_backupable_file_entities( true, true );

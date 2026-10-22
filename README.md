@@ -6,7 +6,7 @@ Start with `cp .env.example .env && ./dev/up.sh`. See [the development environme
 
 ## Incremental backups
 
-Choose an **Incremental file backups** interval in Settings, or click **Take an incremental backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. Database backups continue to use their existing full-backup schedule.
+Choose an **Incremental file backups** interval in Settings, or click **Incremental Backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. Database backups continue to use their existing full-backup schedule.
 
 An incremental request automatically creates a full backup when the base is seven days old, incomplete, incompatible with the current file selection/exclusions/encryption/storage settings, or unavailable. Incremental schedules run at least daily, optionally at an exact time (see [backup times](docs/backup-scheduling.md)); the weekly limit uses the original full backup's time, so adding increments never extends it. Scheduled backups depend on WordPress cron running. The normal file schedule still creates full backups and can run more frequently.
 

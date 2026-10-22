@@ -108,8 +108,16 @@ function backupplus_send_command(action, data, callback, options) {
  * @param {string}  key        - The UNIX timestamp of the backup
  * @param {string}  nonce      - The backup job ID
  * @param {boolean} showremote - Whether or not to show the "also delete from remote storage?" checkbox
+ * @param {Array}   chains     - Descriptions of the selected sets which are a full backup with incremental backups
  */
-function backupplus_delete(key, nonce, showremote) {
+function backupplus_delete(key, nonce, showremote, chains) {
+	var chain_warning = jQuery('#backupplus_delete_chain_warning');
+	var chain_list = chain_warning.find('ul').empty();
+	chains = chains || [];
+	jQuery.each(chains, function(index, line) {
+		chain_list.append(jQuery('<li>').text(line));
+	});
+	chain_warning.toggle(chains.length > 0);
 	jQuery('#backupplus_delete_timestamp').val(key);
 	jQuery('#backupplus_delete_nonce').val(nonce);
 	if (showremote) {
@@ -422,6 +430,7 @@ function backupplus_deleteallselected() {
 	var key_all = '';
 	var nonce_all = '';
 	var remote_all = 0;
+	var chains = [];
 	jQuery('#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected').each(function(index) {
 		howmany++;
 		var nonce = jQuery(this).data('nonce');
@@ -432,8 +441,10 @@ function backupplus_deleteallselected() {
 		key_all += key;
 		var has_remote = jQuery(this).find('.backupplus-remove').data('hasremote');
 		if (has_remote) remote_all++;
+		var chain = jQuery(this).find('.backupplus-delete-link').data('chain');
+		if (chain) chains.push(chain);
 	});
-	backupplus_delete(key_all, nonce_all, remote_all);
+	backupplus_delete(key_all, nonce_all, remote_all, chains);
 }
 
 /**
@@ -2773,7 +2784,7 @@ jQuery(function($) {
 					}
 
 					if (!continue_restore) return;
-					var restore_options = $('#backupplus_restoreoptions_ui select, #backupplus_restoreoptions_ui input').serialize();
+					var restore_options = $('#backupplus_restoreoptions_ui select, #backupplus_restoreoptions_ui input, #backupplus_incremental_restore_point').serialize();
 
 					// jQuery serialize does not pick up unchecked checkboxes, but we want to include these so that we have a list of table/plugins/themes the user does not want to restore we prepend these with udp-skip-{entity}- and check this on the backend
 					var entities = ['tables', 'plugins', 'themes'];
@@ -3510,12 +3521,27 @@ jQuery(function($) {
 		}
 	});
 	
-	function backupplus_restore_setup(entities, key, show_data) {
+	function backupplus_restore_setup(entities, key, show_data, restore_points) {
+		var point_select = jQuery('#backupplus_incremental_restore_point').empty();
+		restore_points = Array.isArray(restore_points) ? restore_points : [];
+		jQuery.each(restore_points, function(index, point) {
+			point_select.append(jQuery('<option>').val(point.timestamp).text(point.label));
+		});
+		// The restore header names the chosen point rather than only the full backup the chain started from
+		var show_chosen_point = function() {
+			var chosen = point_select.find('option:selected').text();
+			if (chosen) jQuery('.backupplus_restore_date').text(chosen.split(' - ')[0]);
+		};
+		point_select.off('change.backupplus_restore_point').on('change.backupplus_restore_point', show_chosen_point);
+		// A disabled select is not submitted, so backups without a chain fall back to restoring everything
+		point_select.prop('disabled', 0 == restore_points.length);
+		jQuery('#backupplus_restore_point_row').toggle(restore_points.length > 0);
 		jQuery('#backupplus-age-ticket').val('');
 		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
 		if (key.toString().match(/^[0-9]+$/i)) jQuery('#backupplus_restore_timestamp').val(key);
 		jQuery('.backupplus_restore_date').text(show_data);
+		if (restore_points.length > 0) point_select.trigger('change.backupplus_restore_point');
 		
 		backupplus_restore_stage = 1;
 		
@@ -3528,7 +3554,7 @@ jQuery(function($) {
 		var entities = jQuery(this).data('entities');
 		var backup_timestamp = jQuery(this).data('backup_timestamp');
 		var show_data = jQuery(this).data('showdata');
-		backupplus_restore_setup(entities, backup_timestamp, show_data);
+		backupplus_restore_setup(entities, backup_timestamp, show_data, jQuery(this).data('restorepoints'));
 	});
 	
 	/**
@@ -3657,8 +3683,9 @@ jQuery(function($) {
 		var hasremote = jQuery(this).data('hasremote');
 		var nonce = jQuery(this).data('nonce').toString();
 		var key = jQuery(this).data('key').toString();
+		var chain = jQuery(this).data('chain');
 		if (nonce) {
-			backupplus_delete(key, nonce, hasremote);
+			backupplus_delete(key, nonce, hasremote, chain ? [chain] : []);
 		} else {
 			console.log("BackupPlus: A delete link was clicked, but the Job ID could not be found");
 		}

@@ -235,7 +235,8 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 						if ( 'db' !== $type && BackupPlus_Encryption::is_file_encrypted( $file ) ) {
 							$prepared = BackupPlus_Age_Restore::file( $check_path, $age_ticket, '', $timestamp );
 							if ( ! $prepared ) {
-								continue; // Preparation already reports the error.
+								++$expected_index; // Preparation already reports the error; don't also report this archive as missing.
+								continue;
 							}
 							$check_path = $prepared['fullpath'];
 						}
@@ -256,8 +257,8 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				}
 			}
 
-			// Check this backup set has a incremental_sets array e.g may have been created before this array was introduced
-			if ( isset( $backups[ $timestamp ]['incremental_sets'] ) ) {
+			// Check this backup set has a incremental_sets array e.g may have been created before this array was introduced; the restore point is normally already chosen in the first step
+			if ( isset( $backups[ $timestamp ]['incremental_sets'] ) && ! isset( $res['backupplus_incremental_restore_point'] ) ) {
 				if ( isset( $elements['db'] ) && 1 === count( $elements ) ) {
 					// Don't show the incremental dropdown if the user only selects 'database'
 				} else {

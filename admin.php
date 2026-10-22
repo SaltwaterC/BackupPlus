@@ -4816,8 +4816,7 @@ class BackupPlus_Admin {
 				}
 
 				$ide .= __( 'Press here to download or browse', 'backupplus' ) . ' ' . strtolower( $info['description'] );
-				/* translators: 1: Archive count, 2: Total size.*/
-				$ide .= ' ' . sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size ) );
+				$ide .= ' ' . $this->archive_set_summary( $backup, $type, $howmanyinset, $total_file_size );
 				if ( $index_missing ) {
 					$ide .= ' ' . __( 'You are missing one or more archives from this multi-archive set.', 'backupplus' );
 				}
@@ -4971,8 +4970,7 @@ class BackupPlus_Admin {
 					}
 
 					$ide .= __( 'Press here to download or browse', 'backupplus' ) . ' ' . strtolower( $info['description'] );
-					/* translators: 1: Archive count, 2: Total size.*/
-					$ide .= ' ' . sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $howmanyinset, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size ) );
+					$ide .= ' ' . $this->archive_set_summary( $backup, $type, $howmanyinset, $total_file_size );
 					if ( $index_missing ) {
 						$ide .= ' ' . __( 'You are missing one or more archives from this multi-archive set.', 'backupplus' );
 					}
@@ -4996,6 +4994,104 @@ class BackupPlus_Admin {
 	}
 
 	/**
+	 * Count the incremental backups that were added to a full backup.
+	 *
+	 * @param array $backup Backup instance, including its runtime 'incremental_sets'.
+	 * @return int - Number of incremental backups chained to the full backup; 0 if there are none.
+	 */
+	public function incremental_count( $backup ) {
+		if ( empty( $backup['incremental'] ) || empty( $backup['incremental_sets'] ) || ! is_array( $backup['incremental_sets'] ) ) {
+			return 0;
+		}
+		return max( 0, count( $backup['incremental_sets'] ) - 1 );
+	}
+
+	/**
+	 * Describe the archives of one entity in a backup, separating the full backup from its increments when there are any.
+	 *
+	 * @param array  $backup          Backup instance, including its runtime 'incremental_sets'.
+	 * @param string $type            Entity key, e.g. plugins.
+	 * @param int    $archive_count   Number of archives of the entity in the backup.
+	 * @param int    $total_file_size Total size of those archives in bytes.
+	 * @return string
+	 */
+	private function archive_set_summary( $backup, $type, $archive_count, $total_file_size ) {
+		$total = BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size );
+
+		$increments = $this->incremental_count( $backup );
+		if ( $increments < 1 ) {
+			/* translators: 1: Archive count, 2: Total size.*/
+			return sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $archive_count, $total );
+		}
+
+		// The earliest restore point is the full backup; every later one is an increment.
+		$full_files     = reset( $backup['incremental_sets'] );
+		$full_file_size = 0;
+		if ( isset( $full_files[ $type ] ) ) {
+			foreach ( array_keys( $full_files[ $type ] ) as $findex ) {
+				$size_key        = $type . ( ( $findex > 0 ) ? $findex : '' ) . '-size';
+				$full_file_size += isset( $backup[ $size_key ] ) ? $backup[ $size_key ] : 0;
+			}
+		}
+
+		/* translators: 1: Archive count, 2: Total size, 3: Full backup size, 4: Number of incremental backups, 5: Size of the incremental backups. */
+		return sprintf( __( '(%1$d archive(s) in chain, total %2$s: full backup %3$s plus %4$d incremental backup(s) %5$s).', 'backupplus' ), $archive_count, $total, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full_file_size ), $increments, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( max( 0, $total_file_size - $full_file_size ) ) );
+	}
+
+	/**
+	 * List the points in time that a backup chain can be restored to, newest first.
+	 *
+	 * @param array $backup Backup instance, including its runtime 'incremental_sets'.
+	 * @return array - Restore points as arrays with keys 'timestamp' and 'label'; empty if the backup has no increments.
+	 */
+	public function restore_points( $backup ) {
+		if ( $this->incremental_count( $backup ) < 1 ) {
+			return array();
+		}
+		$timestamps = array_keys( $backup['incremental_sets'] );
+		$points     = array();
+		foreach ( $timestamps as $index => $timestamp ) {
+			$label = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $timestamp ), 'M d, Y G:i' ) . ' - ';
+			if ( 0 === $index ) {
+				$label .= __( 'full backup', 'backupplus' );
+			} else {
+				/* translators: %d: Position of the incremental backup in its chain */
+				$label .= sprintf( __( 'incremental backup %d', 'backupplus' ), $index );
+			}
+			if ( count( $timestamps ) - 1 === $index ) {
+				$label .= ' (' . __( 'latest', 'backupplus' ) . ')';
+			}
+			$points[] = array(
+				'timestamp' => (int) $timestamp,
+				'label'     => $label,
+			);
+		}
+		return array_reverse( $points );
+	}
+
+	/**
+	 * Short label for a backup that is a full backup with increments.
+	 *
+	 * @param int $increments Number of incremental backups in the chain.
+	 * @return string
+	 */
+	public function chain_label( $increments ) {
+		/* translators: %d: Number of incremental backups */
+		return sprintf( _n( 'Full + %d incremental', 'Full + %d incrementals', $increments, 'backupplus' ), $increments );
+	}
+
+	/**
+	 * Explain what removing a backup that is a full backup with increments does.
+	 *
+	 * @param int $increments Number of incremental backups in the chain.
+	 * @return string
+	 */
+	public function chain_description( $increments ) {
+		/* translators: 1: Number of incremental backups, 2: Number of restore points */
+		return sprintf( _n( 'This full backup has %1$d incremental backup chained to it (%2$d restore points). Deleting it deletes all of them.', 'This full backup has %1$d incremental backups chained to it (%2$d restore points). Deleting it deletes all of them.', $increments, 'backupplus' ), $increments, $increments + 1 );
+	}
+
+	/**
 	 * Return HTML for 'Backup date' column in existing backups data table.
 	 *
 	 * @param string $pretty_date   Pretty date.
@@ -5009,6 +5105,10 @@ class BackupPlus_Admin {
 	public function date_label( $pretty_date, $key, $backup, $jobdata, $nonce, $simple_format = false ) {
 
 		$pretty_date = $simple_format ? $pretty_date : '<div class="clear-right">' . $pretty_date . '</div>';
+		$increments  = $this->incremental_count( $backup );
+		if ( $increments > 0 && ! $simple_format ) {
+			$pretty_date .= '<span class="backupplus-chain-badge" title="' . esc_attr( $this->chain_description( $increments ) ) . '">' . esc_html( $this->chain_label( $increments ) ) . '</span>';
+		}
 
 		$ret = apply_filters( 'backupplus_showbackup_date', $pretty_date, $backup, $jobdata, (int) $key, $simple_format );
 		if ( is_array( $jobdata ) && ! empty( $jobdata['resume_interval'] ) && ( empty( $jobdata['jobstatus'] ) || 'finished' != $jobdata['jobstatus'] ) ) {
@@ -5067,7 +5167,7 @@ class BackupPlus_Admin {
 				$entities .= '/crypted=1/';
 			}
 			?>
-			<button data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
+			<button data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" data-restorepoints="<?php echo esc_attr( wp_json_encode( $this->restore_points( $backup ) ) ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
 				<?php esc_html_e( 'Restore', 'backupplus' ); ?>
 			</button>
 			<?php
@@ -5171,11 +5271,12 @@ class BackupPlus_Admin {
 	 */
 	public function delete_button( $backup_time, $nonce, $backup ) {
 		global $backupplus;
-		$services = $backupplus->get_canonical_service_list( $backup['service'] );
-		$sval     = array_diff( $services, array( 'email' ) ) ? 1 : 0;
+		$services   = $backupplus->get_canonical_service_list( $backup['service'] );
+		$sval       = array_diff( $services, array( 'email' ) ) ? 1 : 0;
+		$increments = $this->incremental_count( $backup );
 		?>
 		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr( $sval ); ?>">
-			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
+			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-chain="<?php echo esc_attr( $increments > 0 ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $backup_time ), 'M d, Y G:i' ) . ': ' . $this->chain_label( $increments ) : '' ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
 				<?php esc_html_e( 'Delete', 'backupplus' ); ?>
 			</a>
 		</div>
@@ -7063,6 +7164,16 @@ class BackupPlus_Admin {
 				'target'           => true,
 				'onclick'          => true,
 				'data-type'        => true,
+				'data-incremental' => true,
+			),
+			'button' => array(
+				'id'               => true,
+				'class'            => true,
+				'type'             => true,
+				'style'            => true,
+				'onclick'          => true,
+				'disabled'         => true,
+				'title'            => true,
 				'data-incremental' => true,
 			),
 			'span'   => array(

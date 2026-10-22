@@ -446,6 +446,43 @@ button.ui-dialog-titlebar-close:before {
 	        align-items: center;
 }
 
+.backupplus_backup_btn_wrapper {
+	display: grid;
+	justify-content: center;
+	align-content: center;
+	row-gap: 10px;
+}
+
+.backupplus_backup_btn_wrapper .button-hero {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+}
+
+.backupplus-chain-badge {
+	display: inline-block;
+	margin-top: 4px;
+	padding: 1px 8px;
+	border: 1px solid #2271B1;
+	border-radius: 10px;
+	background: #F0F6FC;
+	color: #2271B1;
+	font-size: 12px;
+	line-height: 18px;
+}
+
+.backupplus-delete-chain-warning {
+	margin: 0 0 12px;
+	padding: 4px 12px;
+	border-left: 4px solid #D63638;
+	background: #FCF0F1;
+}
+
+.backupplus-delete-chain-warning ul {
+	margin: 0 0 8px 20px;
+	list-style: disc;
+}
+
 .incremental-backups-only {
 	display: none;
 }
