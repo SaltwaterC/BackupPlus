@@ -760,6 +760,13 @@ class BackupPlus_Admin {
 	
 		wp_enqueue_style('backupplus-admin-css', BACKUPPLUS_URL.'/css/backupplus-admin'.$backupplus_min_or_not.'.css', array(), $enqueue_version);
 		wp_enqueue_style('backupplus-decryption-css', BACKUPPLUS_URL.'/css/backupplus-decryption.css', array('backupplus-admin-css'), $enqueue_version);
+		wp_enqueue_script('backupplus-age-keygen', BACKUPPLUS_URL.'/js/backupplus-age-keygen.js', array(), $enqueue_version, true);
+		wp_localize_script('backupplus-age-keygen', 'backupplus_age_keygen', array(
+			'added' => __('Public recipient added. Click Save Changes to save it and enable age encryption.', 'backupplus'),
+			'failed' => __('Could not generate an age key. Try again in a modern browser over HTTPS or localhost.', 'backupplus'),
+			'unsupported' => __('Local age key generation requires HTTPS (or localhost) and a modern browser with Web Crypto.', 'backupplus'),
+			'limit' => __('You can save at most 100 recipient entries. Remove an entry before generating another key.', 'backupplus'),
+		));
 		wp_enqueue_script('backupplus-decryption', BACKUPPLUS_URL.'/includes/backupplus-decryption.js', array(), $enqueue_version, true);
 		wp_localize_script('backupplus-decryption', 'backupplus_decryption', array(
 			'worker' => BACKUPPLUS_URL.'/js/backupplus-decryption-worker.js?ver='.rawurlencode($enqueue_version),

@@ -3,9 +3,12 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const out = path.join(root, 'js/backupplus-decryption-worker.js');
+const outputDirectory = path.join(root, 'js');
 const result = await esbuild.build({
-	entryPoints: [path.join(root, 'assets-src/decryption/worker.mjs')],
+	entryPoints: {
+		'backupplus-decryption-worker': path.join(root, 'assets-src/decryption/worker.mjs'),
+		'backupplus-age-keygen': path.join(root, 'assets-src/decryption/keygen-ui.mjs'),
+	},
 	bundle: true,
 	write: false,
 	platform: 'browser',
@@ -13,7 +16,7 @@ const result = await esbuild.build({
 	target: ['es2022'],
 	minify: true,
 	legalComments: 'external',
-	outfile: out,
+	outdir: outputDirectory,
 	plugins: [
 		{
 			name: 'browser-only',
@@ -47,7 +50,7 @@ const packages = [
 	'tweetnacl',
 	'crypto-js',
 ];
-let notices = 'BackupPlus browser decryptor — third-party licenses\n\n';
+let notices = 'BackupPlus browser cryptography — third-party licenses\n\n';
 for (const name of packages) {
 	const dir = path.join(root, 'node_modules', name);
 	const pkg = JSON.parse(await readFile(path.join(dir, 'package.json'), 'utf8'));

@@ -1,4 +1,4 @@
-BackupPlus browser decryptor — third-party licenses
+BackupPlus browser cryptography — third-party licenses
 
 @noble/ciphers 2.4.0
 The MIT License (MIT)

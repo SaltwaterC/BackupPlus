@@ -36,10 +36,14 @@ const proxy = createServer((req, res) => {
 	const record = { method: req.method, url: url.href, referer: req.headers.referer || '' };
 	accessLog.push(record);
 	const body = [];
-	req.on('data', chunk => body.push(chunk));
-	req.on('end', () => proxyRequests.push({
-		url: url.href, headers: req.headers, body: Buffer.concat(body).toString(),
-	}));
+	req.on('data', (chunk) => body.push(chunk));
+	req.on('end', () =>
+		proxyRequests.push({
+			url: url.href,
+			headers: req.headers,
+			body: Buffer.concat(body).toString(),
+		}),
+	);
 	if (url.origin !== new URL(origin).origin) {
 		res.writeHead(403).end();
 		return;
@@ -85,6 +89,26 @@ browser.on('error', (e) => {
 });
 const sleep = (n) => new Promise((r) => setTimeout(r, n));
 let ws;
+const keygenToken = randomBytes(12).toString('hex');
+let keygenIsolated = false;
+function keygenSettings(operation) {
+	const result = spawnSync(
+		process.env.PODMAN || 'podman',
+		[
+			'exec',
+			process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress',
+			'wp',
+			'--skip-plugins=backupplus',
+			'eval-file',
+			'wp-content/plugins/backupplus/scripts/fixtures/age-keygen-settings.php',
+			keygenToken,
+			operation,
+		],
+		{ encoding: 'utf8' },
+	);
+	assert.equal(result.status, 0, 'Settings test isolation must succeed: ' + result.stderr);
+	return ['read', 'original'].includes(operation) ? JSON.parse(result.stdout) : null;
+}
 try {
 	let port;
 	for (let i = 0; i < 100; i++) {
@@ -118,7 +142,8 @@ try {
 		} else if (m.method === 'Network.requestWillBeSent') {
 			requests.push(m.params.request);
 			if (m.params.redirectResponse) redirects.push(m.params.redirectResponse);
-		} else if (m.method === 'Browser.downloadWillBegin' || m.method === 'Page.downloadWillBegin') downloads.push(m.params);
+		} else if (m.method === 'Browser.downloadWillBegin' || m.method === 'Page.downloadWillBegin')
+			downloads.push(m.params);
 		else if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails);
 	});
 	const call = (method, params = {}) =>
@@ -155,7 +180,9 @@ try {
 	await call('Network.enable');
 	await call('Network.setCacheDisabled', { cacheDisabled: true });
 	await call('Browser.setDownloadBehavior', {
-		behavior: 'allow', downloadPath: path.join(directory, 'downloads'), eventsEnabled: true,
+		behavior: 'allow',
+		downloadPath: path.join(directory, 'downloads'),
+		eventsEnabled: true,
 	});
 	await call('Page.navigate', {
 		url:
@@ -214,18 +241,24 @@ try {
 	];
 	function assertNoSecrets(content, label) {
 		for (const secret of secrets)
-			for (const encoded of [secret, encodeURIComponent(secret),
+			for (const encoded of [
+				secret,
+				encodeURIComponent(secret),
 				new URLSearchParams({ key: secret }).toString().slice(4),
-				JSON.stringify(secret).slice(1, -1)])
+				JSON.stringify(secret).slice(1, -1),
+			])
 				assert(!content.includes(encoded), label + ' must omit decryption credentials');
 	}
 	async function checkPage() {
-		assertNoSecrets(await evaluate(`JSON.stringify({
+		assertNoSecrets(
+			await evaluate(`JSON.stringify({
 			text: document.body.innerText,
 			markup: document.querySelector('.backupplus-decryption-tool').outerHTML,
 			links: [...document.querySelectorAll('a')].map(a => a.href),
 			fields: [...document.querySelectorAll('.backupplus-decryption-tool input, .backupplus-decryption-tool textarea')].map(e => e.value)
-		})`), 'Page content, links and cleared fields');
+		})`),
+			'Page content, links and cleared fields',
+		);
 		assertNoSecrets(JSON.stringify(await call('Page.getNavigationHistory')), 'Browser history');
 	}
 	async function selectPath(file) {
@@ -291,26 +324,45 @@ try {
 	// through the real anchor. Only the disposable test creates legacy ciphertext.
 	const sentinelPlain = Buffer.from('# Disposable SEC-003 synthetic backup\nSELECT 42;\n');
 	const cipher = createCipheriv('aes-256-cbc', Buffer.from(sentinel), Buffer.alloc(16));
-	await run(Buffer.concat([cipher.update(sentinelPlain), cipher.final()]), sentinelPlain,
-		{ password: sentinel }, { legacy: true });
-	const downloadName = await evaluate("document.querySelector('#backupplus-decrypt-results a').download");
+	await run(
+		Buffer.concat([cipher.update(sentinelPlain), cipher.final()]),
+		sentinelPlain,
+		{ password: sentinel },
+		{ legacy: true },
+	);
+	const downloadName = await evaluate(
+		"document.querySelector('#backupplus-decrypt-results a').download",
+	);
 	await evaluate("document.querySelector('#backupplus-decrypt-results a').click()", true);
 	let downloaded;
 	for (let attempt = 0; attempt < 100; attempt++) {
 		// Chromium may add an extension inferred from the plaintext MIME type.
 		const suggested = downloads[0]?.suggestedFilename;
 		downloaded = suggested
-			? await readFile(path.join(directory, 'downloads', suggested)).catch(() => null) : null;
+			? await readFile(path.join(directory, 'downloads', suggested)).catch(() => null)
+			: null;
 		if (downloaded) break;
 		await sleep(100);
 	}
-	assert(downloaded, 'The local download must finish: ' + JSON.stringify({
-		downloads, files: existsSync(path.join(directory, 'downloads'))
-			? readdirSync(path.join(directory, 'downloads')) : [],
-	}));
-	assert.deepEqual(downloaded, sentinelPlain, 'The real local download must contain exact plaintext');
-	assert(downloads.length > 0 && downloads.every(d => d.url.startsWith('blob:')),
-		'Plaintext downloads must use local Blob URLs');
+	assert(
+		downloaded,
+		'The local download must finish: ' +
+			JSON.stringify({
+				downloads,
+				files: existsSync(path.join(directory, 'downloads'))
+					? readdirSync(path.join(directory, 'downloads'))
+					: [],
+			}),
+	);
+	assert.deepEqual(
+		downloaded,
+		sentinelPlain,
+		'The real local download must contain exact plaintext',
+	);
+	assert(
+		downloads.length > 0 && downloads.every((d) => d.url.startsWith('blob:')),
+		'Plaintext downloads must use local Blob URLs',
+	);
 	assert(downloads[0].suggestedFilename.startsWith(downloadName));
 	assertNoSecrets(JSON.stringify(downloads), 'Download records');
 	await run(
@@ -473,35 +525,191 @@ try {
 	await evaluate('history.back()');
 	await wait('location.search.includes("tab=decryption") && document.readyState === "complete"');
 	await checkPage();
+	// Generate and save through the real settings UI, using disposable server options.
+	keygenSettings('setup');
+	keygenIsolated = true;
+	await call('Network.setExtraHTTPHeaders', {
+		headers: { 'X-BackupPlus-Keygen-Test': keygenToken },
+	});
+	await navigate(origin + '/wp-admin/options-general.php?page=backupplus&tab=settings');
+	await wait(
+		'document.getElementById("backupplus-age-generate") && !document.getElementById("backupplus-age-generate").disabled',
+	);
+	const originalSettings = keygenSettings('read');
+	const originalOptionsHash = keygenSettings('original');
+	const formWasDirty = await evaluate('backupplus_settings_form_changed');
+	assert.equal(originalSettings.mode, 'none');
+	const generatedNetworkStart = requests.length;
+	await evaluate('document.getElementById("backupplus-age-generate").click()', true);
+	assert.equal(await evaluate('document.getElementById("backupplus-age-key-dialog").open'), true);
+	assert.equal(
+		await evaluate(
+			'document.getElementById("backupplus-age-key-add").disabled && document.getElementById("backupplus-age-key-saved").disabled',
+		),
+		true,
+	);
+	const generatedRecipient = await evaluate(
+		'document.getElementById("backupplus-age-key-public").textContent',
+	);
+	assert.match(generatedRecipient, /^age1[0-9a-z]{58}$/);
+	await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+	assert.equal(await evaluate("(()=>{const r=document.getElementById('backupplus-age-key-dialog').getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;})()"),true,'The private-key prompt must fit a narrow screen');
+	await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
+	await writeFile('/tmp/backupplus-age-keygen-dialog.png',Buffer.from((await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+
+	assert.equal(await evaluate('document.getElementById("backupplus-age-recipients").value'), '');
+	assert.deepEqual(
+		keygenSettings('read'),
+		originalSettings,
+		'Generation must not write server settings',
+	);
+	const privateDownloadName = await evaluate(
+		'document.getElementById("backupplus-age-key-download").download',
+	);
+	await evaluate('document.getElementById("backupplus-age-key-download").click()', true);
+	let generatedFile;
+	for (let i = 0; i < 100; i++) {
+		generatedFile = await readFile(
+			path.join(directory, 'downloads', privateDownloadName),
+			'utf8',
+		).catch(() => null);
+		if (generatedFile) break;
+		await sleep(100);
+	}
+	assert(generatedFile, 'The private key download must finish before adding its public recipient');
+	const generatedIdentity = generatedFile.match(/AGE-SECRET-KEY-1[0-9A-Z]{58}/)?.[0];
+	assert(generatedIdentity);
+	secrets.push(generatedIdentity, generatedFile);
+	const generatedPath = path.join(directory, 'downloads', privateDownloadName);
+	const publicCheck = spawnSync('age-keygen', ['-y', generatedPath], { encoding: 'utf8' });
+	assert.equal(publicCheck.status, 0);
+	assert.equal(publicCheck.stdout.trim(), generatedRecipient);
+	await evaluate('document.getElementById("backupplus-age-key-saved").click()', true);
+	assert.equal(
+		await evaluate('backupplus_settings_form_changed'),
+		formWasDirty,
+		'Local download confirmation must not change settings',
+	);
+	await evaluate('document.getElementById("backupplus-age-key-add").click()', true);
+	assert.equal(await evaluate('document.getElementById("backupplus-age-key-dialog").open'), false);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-age-recipients").value'),
+		generatedRecipient,
+	);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-database-encryption").value'),
+		'age',
+	);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-age-key-download").hasAttribute("href")'),
+		false,
+	);
+	assert.deepEqual(
+		keygenSettings('read'),
+		originalSettings,
+		'Adding a public recipient must wait for Save Changes',
+	);
+	assert(
+		!requests.slice(generatedNetworkStart).some((r) => r.method === 'POST'),
+		'Generation and adding recipients must not send HTTP requests',
+	);
+	await checkPage();
+	await evaluate('document.getElementById("backupplus-settings-save").click()', true);
+	await wait('!document.querySelector(".blockUI.blockOverlay")');
+	const savedSettings = keygenSettings('read');
+	assert.equal(savedSettings.mode, 'age');
+	assert.equal(
+		keygenSettings('original'),
+		originalOptionsHash,
+		'The Save Changes test must not alter real WordPress settings',
+	);
+	assert.deepEqual(savedSettings.recipients, [generatedRecipient]);
+	assert(
+		!JSON.stringify(savedSettings).includes('SECRET-KEY'),
+		'Only the public recipient may be saved',
+	);
+	const saveRequests = requests
+		.slice(generatedNetworkStart)
+		.filter((r) => (r.postData || '').includes('backupplus_savesettings'));
+	assert.equal(saveRequests.length, 1, 'Save Changes must use the existing settings endpoint');
+	const formSettings = new URLSearchParams(
+		new URLSearchParams(saveRequests[0].postData).get('settings'),
+	);
+	assert.equal(formSettings.get('backupplus_database_encryption[sources]'), generatedRecipient);
+	assert.equal(formSettings.get('backupplus_database_encryption[mode]'), 'age');
+	assert(
+		!formSettings.has('undefined'),
+		'Local confirmation controls must not enter form settings',
+	);
+	await wait('!document.querySelector(".blockUI.blockOverlay")');
+	await navigate(origin + '/wp-admin/options-general.php?page=backupplus&tab=settings');
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-age-recipients").value'),
+		generatedRecipient,
+	);
+	// Cancelling a second key leaves the saved recipient untouched and clears its local download.
+	await evaluate(
+		'document.getElementById("backupplus-age-generate").click();document.getElementById("backupplus-age-key-cancel").click()',
+		true,
+	);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-age-recipients").value'),
+		generatedRecipient,
+	);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-age-key-download").hasAttribute("href")'),
+		false,
+	);
+	await checkPage();
+	console.log(
+		'PASS: local age generation, private-key download/confirmation, no early writes, public-only Save Changes, reload and cancellation',
+	);
 	assertNoSecrets(JSON.stringify(redirects), 'Redirect responses');
 	const marker = 'backupplus_sec003_' + randomBytes(12).toString('hex');
-	await evaluate(`fetch(${JSON.stringify(origin + '/wp-login.php?' + marker)}, {cache:'no-store'}).then(r=>r.text()).then(()=>true)`);
-	assert(accessLog.some(r => r.url.includes(marker) && r.status === 200),
-		'The proxy access log must contain the control request');
-	assert(accessLog.some(r => r.url.includes('/js/backupplus-decryption-worker.js') && r.status === 200),
-		'The proxy must also capture worker traffic');
+	await evaluate(
+		`fetch(${JSON.stringify(origin + '/wp-login.php?' + marker)}, {cache:'no-store'}).then(r=>r.text()).then(()=>true)`,
+	);
+	assert(
+		accessLog.some((r) => r.url.includes(marker) && r.status === 200),
+		'The proxy access log must contain the control request',
+	);
+	assert(
+		accessLog.some(
+			(r) => r.url.includes('/js/backupplus-decryption-worker.js') && r.status === 200,
+		),
+		'The proxy must also capture worker traffic',
+	);
 	assertNoSecrets(JSON.stringify(accessLog), 'Proxy access logs including Referer and Location');
 	assertNoSecrets(JSON.stringify(proxyRequests), 'Proxy-captured page and worker requests');
 	for (const request of proxyRequests) {
-		assert(!/plupload_action2|backupplus_decrypt_database/.test(request.url + request.body),
-			'The page and worker must not call server decryption');
-		assert(!/multipart\/form-data/.test(JSON.stringify(request.headers)),
-			'The page and worker must not upload archives');
+		assert(
+			!/plupload_action2|backupplus_decrypt_database/.test(request.url + request.body),
+			'The page and worker must not call server decryption',
+		);
+		assert(
+			!/multipart\/form-data/.test(JSON.stringify(request.headers)),
+			'The page and worker must not upload archives',
+		);
 	}
-	const logs = spawnSync(process.env.PODMAN || 'podman', [
-		'logs', '--since', started, process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress',
-	], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+	const logs = spawnSync(
+		process.env.PODMAN || 'podman',
+		['logs', '--since', started, process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress'],
+		{ encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
+	);
 	assert.equal(logs.status, 0, 'Local WordPress server logs must be readable');
 	const serverLog = logs.stdout + logs.stderr;
 	assert(serverLog.includes(marker), 'Server access logs must contain the control request');
 	assertNoSecrets(serverLog, 'WordPress server access/error logs');
-	console.log('PASS: SEC-003 sentinel download, page/errors/links, redirects, navigation history, proxy and WordPress access/error logs');
+	console.log(
+		'PASS: SEC-003 sentinel download, page/errors/links, redirects, navigation history, proxy and WordPress access/error logs',
+	);
 	await Promise.race([call('Browser.close'), sleep(1000)]);
 } finally {
+	if (keygenIsolated) keygenSettings('cleanup');
 	if (ws) ws.close();
 	browser.kill();
 	await browserExited;
 	proxy.closeAllConnections();
-	await new Promise(resolve => proxy.close(resolve));
+	await new Promise((resolve) => proxy.close(resolve));
 	await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }

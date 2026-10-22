@@ -1,4 +1,5 @@
 /** Independent PHP/age interoperability, boundaries and fail-closed browser decoder checks. */
+import { generateAgeIdentity } from '../assets-src/decryption/keygen.mjs';
 import { decryptArchive } from '../assets-src/decryption/archive.mjs';
 import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -110,6 +111,67 @@ function run(command, args, input) {
 try {
 	const plainPath = path.join(directory, 'archive'),
 		encryptedPath = plainPath + '.crypt';
+	const originalRNG = crypto.getRandomValues;
+	let randomCalls = 0,
+		randomBuffer;
+	let generated;
+	try {
+		crypto.getRandomValues = function (bytes) {
+			randomCalls++;
+			if (randomCalls === 1) {
+				assert.equal(bytes.length, 32);
+				randomBuffer = bytes;
+			}
+			return originalRNG.call(crypto, bytes);
+		};
+		generated = generateAgeIdentity();
+		assert(randomCalls >= 1);
+		assert(
+			randomBuffer.every((byte) => byte === 0),
+			'Temporary raw private bytes must be cleared',
+		);
+		crypto.getRandomValues = () => {
+			throw new Error('No entropy');
+		};
+		assert.throws(generateAgeIdentity, /No entropy/, 'There must be no insecure RNG fallback');
+	} finally {
+		crypto.getRandomValues = originalRNG;
+	}
+	assert.match(generated.identity, /^AGE-SECRET-KEY-1[0-9A-Z]{58}$/);
+	assert.match(generated.recipient, /^age1[0-9a-z]{58}$/);
+	assert.notEqual(generated.identity, generateAgeIdentity().identity);
+	const generatedPath = path.join(directory, 'generated-key.txt');
+	await writeFile(generatedPath, generated.identity + '\n', { mode: 0o600 });
+	assert.equal(
+		run('age-keygen', ['-y', generatedPath]).trim(),
+		generated.recipient,
+		'The independent age CLI must derive the same public recipient',
+	);
+	const generatedPlain = Buffer.from('independent generated key interoperability');
+	await writeFile(plainPath, generatedPlain);
+	for (const producer of ['age', 'php']) {
+		if (producer === 'age') run('age', ['-r', generated.recipient, '-o', encryptedPath, plainPath]);
+		else
+			run(
+				'php',
+				['scripts/fixtures/age-interop.php'],
+				JSON.stringify({
+					operation: 'encrypt',
+					input: plainPath,
+					output: encryptedPath,
+					recipients: [generated.recipient],
+				}),
+			);
+		assert.deepEqual(
+			(await decode(await readFile(encryptedPath), credentials('', generated.identity))).output,
+			generatedPlain,
+		);
+		assert.equal(run('age', ['-d', '-i', generatedPath, encryptedPath]), generatedPlain.toString());
+		await rm(encryptedPath);
+	}
+	console.log(
+		'PASS: Web Crypto RNG, entropy failure, independent age-keygen derivation and generated identities with PHP/age archives',
+	);
 	const legacyFixture = (await fixture('phpseclib2-compat')).chunked;
 	const legacyPHP = `define('ABSPATH',getcwd().'/'); require 'vendor/autoload.php'; require 'includes/class-backupplus-crypto.php'; $plain=str_repeat("-- chunked database fixture\n",90000).'trailing data'; $cipher=BackupPlus_Crypto::rijndael($argv[2]); $cipher->disablePadding(); $pad=(16-strlen($plain)%16)%16; file_put_contents($argv[1],$cipher->encrypt($plain.str_repeat(chr($pad),$pad)));`;
 	run('php', ['-r', legacyPHP, encryptedPath, legacyFixture.key]);

@@ -85,6 +85,20 @@ class BackupPlus_Database_Encryption {
 		<p class="description"><?php esc_html_e('Encrypts database dumps and every file archive, including split ZIP parts. Encryption must complete before files are uploaded.', 'backupplus'); ?></p>
 		<p><label for="backupplus-age-recipients"><?php esc_html_e('age recipients, one per line', 'backupplus'); ?></label><br>
 		<textarea id="backupplus-age-recipients" name="backupplus_database_encryption[sources]" rows="5" cols="80" spellcheck="false"><?php echo esc_textarea(implode("\n", $sources)); ?></textarea></p>
+		<p><button type="button" id="backupplus-age-generate" class="button"><?php esc_html_e('Generate age key in browser', 'backupplus'); ?></button></p>
+		<p id="backupplus-age-key-status" class="description" role="status" aria-live="polite"></p>
+		<dialog id="backupplus-age-key-dialog" aria-labelledby="backupplus-age-key-title">
+			<h2 id="backupplus-age-key-title"><?php esc_html_e('Save your private age key', 'backupplus'); ?></h2>
+			<p><?php esc_html_e('Download the private key and keep it somewhere safe, separate from your backups. You will need it to decrypt or restore backups. BackupPlus cannot recover it for you.', 'backupplus'); ?></p>
+			<p><?php esc_html_e('The private key is generated in your browser and is never sent to the server.', 'backupplus'); ?></p>
+			<p><a id="backupplus-age-key-download" class="button button-primary"><?php esc_html_e('Download private key', 'backupplus'); ?></a></p>
+			<p><label><input type="checkbox" id="backupplus-age-key-saved" class="udignorechange" disabled> <?php esc_html_e('I have saved my private key somewhere safe.', 'backupplus'); ?></label></p>
+			<p><?php esc_html_e('Public recipient:', 'backupplus'); ?> <code id="backupplus-age-key-public"></code></p>
+			<p>
+				<button type="button" id="backupplus-age-key-add" class="button button-primary" disabled><?php esc_html_e('Add public recipient', 'backupplus'); ?></button>
+				<button type="button" id="backupplus-age-key-cancel" class="button"><?php esc_html_e('Cancel', 'backupplus'); ?></button>
+			</p>
+		</dialog>
 		<p class="description"><?php esc_html_e('Use age1… recipients, SSH RSA/Ed25519 public keys, or github:USERNAME. GitHub keys are fetched and pinned when you save; save again to refresh them. Backups use every saved recipient without contacting GitHub.', 'backupplus'); ?></p>
 		<p class="description"><?php echo esc_html(sprintf(__('Saved public recipients: %d. Each recipient can decrypt the backup. Keep the corresponding private key for restoration; it is never saved here.', 'backupplus'), isset($config['recipients']) ? count($config['recipients']) : 0)); ?></p>
 		</td></tr>

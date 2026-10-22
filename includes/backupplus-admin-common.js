@@ -4384,7 +4384,7 @@ jQuery(function($) {
 			// include unchecked checkboxes. user filter to only include unchecked boxes.
 			$.each($('#backupplus-navtab-settings-content form input[type=checkbox]')
 				.filter(function(idx) {
-				return $(this).prop('checked') == false
+				return $(this).prop('checked') == false && !!$(this).attr('name');
 				}),
 				function(idx, el) {
 					// attach matched element names to the form_data with chosen value.
