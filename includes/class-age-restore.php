@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
 
+require_once __DIR__ . '/class-backup-sources.php';
+
 /** Prepare verified archives for resumable restores without retaining identities. */
 class BackupPlus_Age_Restore {
 	const LIFETIME = 7200;
@@ -31,6 +33,7 @@ class BackupPlus_Age_Restore {
 		}
 		$files         = array();
 		$allowed       = $backupplus->get_backupable_file_entities( true );
+		$allowed       = BackupPlus_Backup_Sources::restore_entities( $allowed, $backup );
 		$allowed['db'] = true;
 		foreach ( $entities as $entity ) {
 			if ( ! is_string( $entity ) || ! isset( $allowed[ $entity ] ) || ! isset( $backup[ $entity ] ) ) {

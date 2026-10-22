@@ -165,6 +165,10 @@ $multi = apply_filters( 'backupplus_storage_printoptions_multi', '' );
 			<p><?php esc_html_e( 'This includes all WordPress file directories. WordPress core files can be downloaded again from WordPress.org.', 'backupplus' ); ?></p>
 		</td>
 	</tr>
+	<tr id="backupplus-database-settings">
+		<th scope="row"><?php esc_html_e( 'Database connections and tables', 'backupplus' ); ?></th>
+		<td><?php BackupPlus_Sources_Admin::database_settings(); ?></td>
+	</tr>
 </table>
 
 <h2 class="backupplus_settings_sectionheading"><?php esc_html_e( 'Reporting', 'backupplus' ); ?></h2>

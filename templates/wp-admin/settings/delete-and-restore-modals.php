@@ -74,11 +74,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<p><strong><?php esc_html_e( 'Choose the components to restore:', 'backupplus' ); ?></strong></p>
 							<?php
 								$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
+							foreach ( BackupPlus_Backup_History::get_history() as $source_backup ) { $backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupable_entities, $source_backup ); }
 
 							foreach ( $backupable_entities as $type => $info ) {
 								if ( ! isset( $info['restorable'] ) || true == $info['restorable'] ) {
 									$sdescrip = isset( $info['shortdescription'] ) ? $info['shortdescription'] : $info['description'];
-									echo '<div class="backupplus-restore-item"><input id="backupplus_restore_"' . esc_attr( $type ) . ' type="checkbox" name="backupplus_restore[]" value="' . esc_attr( $type ) . '"> <label id="backupplus_restore_label_"' . esc_attr( $type ) . ' for="backupplus_restore_"' . esc_attr( $type ) . '>' . esc_html( $sdescrip ) . '</label><br>';
+									echo '<div class="backupplus-restore-item"><input id="backupplus_restore_' . esc_attr( $type ) . '" type="checkbox" name="backupplus_restore[]" value="' . esc_attr( $type ) . '"> <label id="backupplus_restore_label_' . esc_attr( $type ) . '" for="backupplus_restore_' . esc_attr( $type ) . '">' . esc_html( $sdescrip ) . '</label><br>';
+									BackupPlus_Sources_Admin::restore_fields( $type, $info );
 									do_action( "backupplus_restore_form_$type" );
 									echo '</div>';
 								} else {
@@ -86,7 +88,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 									echo '<div class="backupplus-restore-item cannot-restore"><em>' .
 									/* translators: %s: Entity that cannot be restored */
 									esc_html( sprintf( __( 'The following entity cannot be restored automatically: "%s".', 'backupplus' ), $sdescrip ) ) . ' ' .
-									esc_html__( 'You will need to restore it manually.', 'backupplus' ) . '</em><br>' . '<input id="backupplus_restore_"' . esc_attr( $type ) . ' type="hidden" name="backupplus_restore[]" value="' . esc_attr( $type ) . '">';
+									esc_html__( 'You will need to restore it manually.', 'backupplus' ) . '</em><br>' . '<input id="backupplus_restore_' . esc_attr( $type ) . '" type="hidden" name="backupplus_restore[]" value="' . esc_attr( $type ) . '">';
 									echo '</div>';
 								}
 							}

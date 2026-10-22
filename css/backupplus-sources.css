@@ -1,0 +1,150 @@
+.bp-databases {
+	max-width: 760px;
+	min-width: 0;
+}
+
+.bp-databases .bp-wordpress-database,
+.bp-databases .bp-connection {
+	box-sizing: border-box;
+	padding: 20px;
+	margin: 0 0 16px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.bp-databases h4 {
+	margin: 0 0 16px;
+	font-size: 14px;
+}
+
+.bp-connection-header,
+.bp-table-controls,
+.bp-table-tools {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.bp-connection-header {
+	justify-content: space-between;
+	margin-bottom: 20px;
+}
+
+.bp-connection-header h4 {
+	margin: 0;
+}
+
+.bp-connection-fields {
+	margin-bottom: 20px;
+}
+
+.bp-connection-field {
+	display: grid;
+	grid-template-columns: 160px minmax(0, 1fr);
+	align-items: start;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.bp-connection-field > label {
+	padding-top: 8px;
+	font-weight: 600;
+}
+
+.bp-connection-field input {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 420px;
+	min-width: 0;
+	margin: 0;
+}
+
+.bp-connection-field .description {
+	margin: 6px 0 0;
+}
+
+.bp-table-controls > label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.bp-table-controls input[type="checkbox"] {
+	margin: 0;
+}
+
+.bp-databases .button,
+.bp-databases select,
+.bp-table-search {
+	max-width: 100%;
+}
+
+.bp-databases .button {
+	height: auto;
+	white-space: normal;
+}
+
+.bp-connection-status:not(:empty) {
+	display: block;
+	margin-top: 10px;
+	overflow-wrap: anywhere;
+}
+
+.bp-non-wp-tables {
+	display: block;
+	margin-top: 16px;
+}
+
+.bp-databases .bp-selection-help {
+	margin: 12px 0 0;
+}
+
+.bp-databases .bp-table-tools {
+	margin: 16px 0 12px;
+}
+
+.bp-table-search {
+	box-sizing: border-box;
+	flex: 1 1 180px;
+	min-width: 0;
+}
+
+.bp-table-list {
+	max-height: 240px;
+	overflow: auto;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+.bp-table-list .bp-table-label {
+	display: block;
+	margin-bottom: 8px;
+	overflow-wrap: anywhere;
+}
+
+.bp-table-list .bp-table-label:last-child {
+	margin-bottom: 0;
+}
+
+@media (max-width: 782px) {
+	.bp-databases .bp-wordpress-database,
+	.bp-databases .bp-connection {
+		padding: 16px;
+	}
+
+	.bp-connection-field {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 6px;
+	}
+
+	.bp-connection-field > label {
+		padding-top: 0;
+	}
+
+	.bp-connection-field input {
+		max-width: none;
+	}
+}

@@ -302,8 +302,8 @@ credential_reject(
 credential_expect( get_option( 'backupplus_ftp' ) === $original, 'Rejected writes must retain credentials' );
 
 // Real job APIs must encrypt each persistence path and resume with identical data.
-$backupplus->nonce = 'disposable-job';
-$job               = array(
+$backupplus->nonce                  = 'disposable-job';
+$job                                = array(
 	'job_type'               => 'backup',
 	'option_cache'           => array( 'backupplus_ftp' => BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' ) ),
 	'filesystem_credentials' => array( 'password' => 'synthetic filesystem password' ),
@@ -317,8 +317,18 @@ $job               = array(
 		),
 	),
 );
+$job['backupplus_external_targets'] = array(
+	'db7' => array(
+		'connection' => array(
+			'pass'     => 'synthetic restore password',
+			'password' => 'synthetic restore alias password',
+		),
+	),
+);
+$job['restore_options']['backupplus_external_targets']                     = $job['backupplus_external_targets'];
+$job['backupplus_restorer_restore_options']['backupplus_external_targets'] = $job['backupplus_external_targets'];
 $backupplus->jobdata_set_from_array( $job );
-credential_raw_safe( get_site_option( 'backupplus_jobdata_disposable-job' ), array( 'synthetic FTP password', 'synthetic filesystem password', 'synthetic external DB snapshot password' ) );
+credential_raw_safe( get_site_option( 'backupplus_jobdata_disposable-job' ), array( 'synthetic FTP password', 'synthetic filesystem password', 'synthetic external DB snapshot password', 'synthetic restore password', 'synthetic restore alias password' ) );
 credential_expect( $job === $backupplus->jobdata_getarray( 'disposable-job' ), 'Jobs must resume with decrypted options' );
 $backupplus->jobdata_reset();
 $backupplus->jobdata_set_multi( 'jobstatus', 'running' );

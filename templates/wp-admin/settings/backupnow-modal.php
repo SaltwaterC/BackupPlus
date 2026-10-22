@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div id="backupnow_database_moreoptions" class="backupplus-hidden" style="display:none;">
 
 		<?php
-		echo apply_filters( 'backupplus_backupnow_database_showmoreoptions', $free_ret, '' );// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- needs to be presented in html
+		BackupPlus_Sources_Admin::database_settings( true );// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- needs to be presented in html
 		?>
 
 	</div>

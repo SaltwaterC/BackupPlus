@@ -27,6 +27,8 @@ class BackupPlus_PclZip {
 
 	protected $adddirs;
 
+	protected $renamed_files = array();
+
 	private $statindex;
 
 	private $include_mtime = false;
@@ -327,6 +329,15 @@ class BackupPlus_PclZip {
 			unset( $this->addfiles[ $rdirname ] );
 		}
 
+		if ( $this->renamed_files ) {
+			if ( false === $this->pclzip->add( $this->renamed_files ) ) {
+				$this->last_error = $this->pclzip->errorInfo( true );
+				return false;
+			}
+			$activity            = true;
+			$this->renamed_files = array();
+		}
+
 		$this->pclzip   = false;
 		$this->addfiles = array();
 		$this->adddirs  = array();
@@ -342,12 +353,19 @@ class BackupPlus_PclZip {
 	}
 
 	/**
-	 * Note: basename($add_as) is irrelevant; that is, it is actually basename($file) that will be used. But these are always identical in our usage.
+	 * Batch ordinary files by directory; use explicit PclZip attributes when the stored filename differs.
 	 *
 	 * @param string $file   Specific file to add
 	 * @param string $add_as This is the name of the file that it is added as but it is usually the same as $file
 	 */
 	public function addFile( $file, $add_as ) {
+		if ( basename( $file ) !== basename( $add_as ) ) {
+			$this->renamed_files[] = array(
+				PCLZIP_ATT_FILE_NAME          => $file,
+				PCLZIP_ATT_FILE_NEW_FULL_NAME => $add_as,
+			);
+			return;
+		}
 		// Add the files. PclZip appears to do the whole (copy zip to temporary file, add file, move file) cycle for each file - so batch them as much as possible. We have to batch by dirname(). On a test with 1000 files of 25KB each in the same directory, this reduced the time needed on that directory from 120s to 15s (or 5s with primed caches).
 		$rdirname                                   = dirname( $file );
 		$adirname                                   = dirname( $add_as );

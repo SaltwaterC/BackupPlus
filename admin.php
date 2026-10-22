@@ -1862,7 +1862,8 @@ class BackupPlus_Admin {
 				);
 			}
 
-			$nonce = isset( $backups[ $timestamp ]['nonce'] ) ? $backups[ $timestamp ]['nonce'] : '';
+			$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupable_entities, $backups[ $timestamp ] );
+			$nonce               = isset( $backups[ $timestamp ]['nonce'] ) ? $backups[ $timestamp ]['nonce'] : '';
 
 			$delete_from_service = array();
 
@@ -2354,6 +2355,11 @@ class BackupPlus_Admin {
 	public function request_backupnow( $request, $close_connection_callable = false ) {
 		global $backupplus;
 
+		try {
+			$source_options = BackupPlus_Backup_Sources::request_options( array(), $request );
+			if ( empty( $request['backupnow_nodb'] ) ) { BackupPlus_Backup_Sources::plan_databases( $source_options ); }
+		} catch ( Exception $e ) { return new WP_Error( 'invalid_backup_selection', $e->getMessage() ); }
+
 		$backupnow_nocloud = ! empty( $request['backupnow_nocloud'] );
 
 		$request['incremental'] = ! empty( $request['incremental'] );
@@ -2710,7 +2716,7 @@ class BackupPlus_Admin {
 			} else {
 				$backupable_entities = $backupplus->get_backupable_file_entities( true );
 				$type                = isset( $matches[3] ) ? $matches[3] : '';
-				if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/', $final_file ) && 'db' != $type && ! isset( $backupable_entities[ $type ] ) ) {
+				if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/', $final_file ) && 'db' != $type && ! BackupPlus_Backup_Sources::custom( $type ) && ! isset( $backupable_entities[ $type ] ) ) {
 					if ( isset( $status['file'] ) ) {
 						@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 					}                   echo json_encode(
@@ -4442,28 +4448,29 @@ class BackupPlus_Admin {
 		// The true (default value if non-existent) here has the effect of forcing a default of on.
 		$include_more_paths = BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path' );
 		foreach ( $backupable_entities as $key => $info ) {
-			$included = ( BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", apply_filters( 'backupplus_defaultoption_include_' . $key, true ) ) ) ? 'checked="checked"' : '';
+			if ( $show_exclusion_options && BackupPlus_Backup_Sources::custom( $key ) ) { continue; }
+			$included = ( BackupPlus_Backup_Sources::included( $key ) ) ? 'checked="checked"' : '';
 			if ( 'others' == $key || 'uploads' == $key ) {
 
 				$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="' . $key . '"' : '';
 
 				/* translators: %s: Server path. */
-				echo '<label ' . ( ( 'others' == $key ) ? 'title="' . esc_attr( sprintf( __( 'Your wp-content directory server path: %s', 'backupplus' ), WP_CONTENT_DIR ) ) . '" ' : '' ) . ' for=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' class="backupplus_checkbox"><input class="backupplus_include_entity" id=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' ' . wp_kses( $data_toggle_exclude_field, array() ) . ' type="checkbox" name="backupplus_include_' . esc_attr( $key ) . '" value="1" ' . wp_kses( $included, array() ) . '> ' .
+				echo '<label ' . ( ( 'others' == $key ) ? 'title="' . esc_attr( sprintf( __( 'Your wp-content directory server path: %s', 'backupplus' ), WP_CONTENT_DIR ) ) . '" ' : '' ) . ' for="' . esc_attr( $prefix . 'backupplus_include_' . $key ) . '" class="backupplus_checkbox"><input class="backupplus_include_entity" id="' . esc_attr( $prefix . 'backupplus_include_' . $key ) . '" ' . wp_kses( $data_toggle_exclude_field, array() ) . ' type="checkbox" name="backupplus_include_' . esc_attr( $key ) . '" value="1" ' . wp_kses( $included, array() ) . '> ' .
 							esc_html( ( 'others' == $key ) ? __( 'Any other directories found inside wp-content', 'backupplus' ) : $info['description'] ) .
 						'</label>';
 
 				if ( $show_exclusion_options ) {
 					$include_exclude = BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . $key . '_exclude', ( 'others' == $key ) ? BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE : BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE );
 
-					$display                  = ( $included ) ? 'class"backupplus_exclude_container' : 'class"backupplus-hidden backupplus_exclude_container style="display:none;"';
+					$display                  = ( $included ) ? 'class="backupplus_exclude_container"' : 'class="backupplus-hidden backupplus_exclude_container" style="display:none;"';
 					$exclude_container_class  = $prefix . 'backupplus_include_' . $key . '_exclude';
 					$exclude_container_class .= '_container';
 
-					echo '<div id=""' . esc_attr( $exclude_container_class ) . ' ' . wp_kses( $display, array() ) . '>';
+					echo '<div id="' . esc_attr( $exclude_container_class ) . '" ' . wp_kses( $display, array() ) . '>';
 
-					echo '<label class="backupplus-exclude-label" for=""' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '>' . esc_html( __( 'Exclude these from', 'backupplus' ) . ' ' . $info['description'] ) . ':</label> <span class="backupplus-fs-italic">' . esc_html__( '(the asterisk character matches zero or more characters)', 'backupplus' ) . '</span>';
+					echo '<label class="backupplus-exclude-label" for="' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '">' . esc_html( __( 'Exclude these from', 'backupplus' ) . ' ' . $info['description'] ) . ':</label> <span class="backupplus-fs-italic">' . esc_html__( '(the asterisk character matches zero or more characters)', 'backupplus' ) . '</span>';
 
-					echo '<input type="hidden" id=""' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . ' name="' . esc_attr( 'backupplus_include_' . $key . '_exclude' ) . '" value="' . esc_attr( $include_exclude ) . '" />';
+					echo '<input type="hidden" id="' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '" name="' . esc_attr( 'backupplus_include_' . $key . '_exclude' ) . '" value="' . esc_attr( $include_exclude ) . '" />';
 
 						global $backupplus;
 						$backupable_file_entities = $backupplus->get_backupable_file_entities();
@@ -4499,7 +4506,7 @@ class BackupPlus_Admin {
 						$info['description'] .= ' (' . __( 'none present', 'backupplus' ) . ')';
 					}
 
-					echo '<label for=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' ' . ( ( isset( $info['htmltitle'] ) ) ? ' title="' . esc_attr( $info['htmltitle'] ) . '"' : '' ) . ' class="backupplus_checkbox"><input class="backupplus_include_entity "' . wp_kses( $data_toggle_exclude_field, array() ) . ' id=""' . esc_attr( $prefix . 'backupplus_include_' . $key ) . ' type="checkbox" name="' . esc_attr( 'backupplus_include_' . $key ) . '" value="1" ' . wp_kses( $included . ' ' . $force_disabled, array() ) . '>' . esc_html( $info['description'] );
+					echo '<label for="' . esc_attr( $prefix . 'backupplus_include_' . $key ) . '" ' . ( ( isset( $info['htmltitle'] ) ) ? ' title="' . esc_attr( $info['htmltitle'] ) . '"' : '' ) . ' class="backupplus_checkbox"><input class="backupplus_include_entity" ' . wp_kses( $data_toggle_exclude_field, array() ) . ' id="' . esc_attr( $prefix . 'backupplus_include_' . $key ) . '" type="checkbox" name="' . esc_attr( 'backupplus_include_' . $key ) . '" value="1" ' . wp_kses( $included . ' ' . $force_disabled, array() ) . '>' . esc_html( $info['description'] );
 
 					echo '</label>';
 					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
@@ -4509,6 +4516,7 @@ class BackupPlus_Admin {
 			}
 		}
 
+		if ( $show_exclusion_options ) { BackupPlus_Sources_Admin::file_settings(); }
 		if ( ! $echo_instead_of_return ) {
 			return ob_get_clean();
 		}
@@ -4629,9 +4637,12 @@ class BackupPlus_Admin {
 		$rawbackup .= '<hr>';
 		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="' . $key . '" ' . ( empty( $backup['always_keep'] ) ? '' : 'checked ' ) . '><label for="always_keep_this_backup">' . __( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ) . '</label>';
 
+		foreach ( isset( $backup['database_coverage'] ) ? $backup['database_coverage'] : array() as $database_id => $coverage ) {
+			if ( ! empty( $coverage['partial'] ) || 'selected' === $coverage['mode'] ) { $rawbackup .= '<p>' . esc_html( 'Partial database backup (' . $database_id . '): ' . implode( ', ', $coverage['tables'] ) ) . '</p>'; }
+		}
 		$rawbackup .= '<hr><p>';
 
-		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
+		$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup );
 
 		$checksums = $backupplus->which_checksums();
 
@@ -4740,11 +4751,13 @@ class BackupPlus_Admin {
 	 */
 	public function download_buttons( $backup, $key, $accept, &$entities, $esc_pretty_date ) {
 		global $backupplus;
-		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
+		$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup );
 
 		$first_entity = true;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- template
 
 		foreach ( $backupable_entities as $type => $info ) {
+			if ( preg_match( '/^db[1-9][0-9]*$/D', $type ) ) { $entities .= '/' . $type . '=0/';
+				continue; }
 			if ( ! empty( $backup['meta_foreign'] ) && 'wpcore' != $type ) {
 				continue;
 			}
@@ -4834,6 +4847,7 @@ class BackupPlus_Admin {
 		$button_data = array();
 
 		foreach ( $backup_history as $key => $backup ) {
+			$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup );
 			$button_data[ $key ] = array(
 				'downloads' => array(),
 			);
@@ -4897,6 +4911,8 @@ class BackupPlus_Admin {
 			}
 
 			foreach ( $backupable_entities as $type => $info ) {
+				if ( preg_match( '/^db[1-9][0-9]*$/D', $type ) ) { $entities .= '/' . $type . '=0/';
+					continue; }
 				if ( ! empty( $backup['meta_foreign'] ) && 'wpcore' != $type ) {
 					continue;
 				}
@@ -5669,6 +5685,13 @@ class BackupPlus_Admin {
 				wp_die( esc_html__( 'The prepared encrypted restore has expired or belongs to another restore. Prepare the archives again.', 'backupplus' ) ); }
 				$restore_options['backupplus_age_ticket'] = $age_ticket;
 		}
+		foreach ( array( 'backupplus_source_destinations', 'backupplus_external_targets' ) as $field ) {
+			$restore_options[ $field ] = $backupplus->jobdata_get( $field, array() );
+		}
+		foreach ( $restore_options['backupplus_external_targets'] as $id => &$mapping ) {
+			if ( ! empty( $mapping['saved'] ) ) { $mapping = array( 'connection' => BackupPlus_Source_Restore::connection( $id, $restore_options ) ); }
+		}
+		unset( $mapping );
 		$backupplus_encryptionphrase = $backupplus->jobdata_get( 'backupplus_encryptionphrase' );
 		$include_wpconfig            = $backupplus->jobdata_get( 'backupplus_restorer_wpcore_includewpconfig' );
 

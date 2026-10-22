@@ -148,7 +148,8 @@ class BackupPlus_Commands {
 		}
 
 		$background_operation_started_method_name = empty( $params['background_operation_started_method_name'] ) ? '_backupplus_background_operation_started' : $params['background_operation_started_method_name'];
-		$backupplus_admin->request_backupnow( $params, array( $this->_uc_helper, $background_operation_started_method_name ) );
+		$result                                   = $backupplus_admin->request_backupnow( $params, array( $this->_uc_helper, $background_operation_started_method_name ) );
+		if ( is_wp_error( $result ) ) { return $result; }
 
 		// Control returns when the backup finished; but, the browser connection should have been closed before
 		die;

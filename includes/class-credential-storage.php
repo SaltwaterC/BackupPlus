@@ -202,6 +202,21 @@ class BackupPlus_Credential_Storage {
 				}
 			}
 		}
+		foreach ( array( '', 'restore_options', 'backupplus_restorer_restore_options' ) as $container ) {
+			$targets = '' === $container ? ( isset( $data['backupplus_external_targets'] ) ? $data['backupplus_external_targets'] : array() ) : ( isset( $data[ $container ]['backupplus_external_targets'] ) ? $data[ $container ]['backupplus_external_targets'] : array() );
+			foreach ( $targets as $id => &$target ) {
+				foreach ( array( 'pass', 'password' ) as $field ) {
+					if ( isset( $target['connection'][ $field ] ) ) {
+						$target['connection'][ $field ] = self::secret( $target['connection'][ $field ], $mode, 'job:' . $job_id . ':restore-target:' . $container . ':' . $id . ':' . $field, $config );
+					}
+				}
+			}
+			unset( $target );
+			if ( $targets ) {
+				if ( '' === $container ) { $data['backupplus_external_targets'] = $targets; }
+				else { $data[ $container ]['backupplus_external_targets'] = $targets; }
+			}
+		}
 		// Both old and current restore containers may carry a legacy phrase.
 		foreach ( array( 'restore_options', 'backupplus_restorer_restore_options' ) as $container ) {
 			if ( isset( $data[ $container ]['backupplus_encryptionphrase'] ) ) {

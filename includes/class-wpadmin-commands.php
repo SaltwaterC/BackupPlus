@@ -138,6 +138,21 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				$err[] = __( 'Could not prepare the encrypted backup archives. Check the identity and passphrases, then try again.', 'backupplus' );
 			}
 			unset( $res['backupplus_age_identity'], $res['backupplus_age_key_passphrase'] );
+			if ( ! $err ) {
+				$before_metadata = $backups[ $timestamp ];
+				foreach ( $elements as $entity => $unused ) {
+					foreach ( isset( $backups[ $timestamp ][ $entity ] ) ? (array) $backups[ $timestamp ][ $entity ] : array() as $file ) {
+						$path = $backupplus_dir . '/' . basename( $file );
+						if ( BackupPlus_Encryption::is_file_encrypted( $path ) ) {
+							$prepared = BackupPlus_Age_Restore::file( $path, $age_ticket, '', $timestamp );
+							if ( ! $prepared ) { continue; }
+							$path = $prepared['fullpath'];
+						}
+						$backups[ $timestamp ] = BackupPlus_Backup_Sources::archive_metadata( $backups[ $timestamp ], $entity, $path );
+					}
+				}
+				if ( $before_metadata !== $backups[ $timestamp ] ) { BackupPlus_Backup_History::save_history( $backups ); }
+			}
 			if ( isset( $elements['db'] ) ) {
 				// Analyse the header of the database file + display results
 				if ( ! $err ) {
@@ -148,15 +163,23 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				$mess = array_merge( $mess, $mess2 );
 				$warn = array_merge( $warn, $warn2 );
 				$err  = array_merge( $err, $err2 );
-				foreach ( $backups[ $timestamp ] as $bid => $bval ) {
-					if ( 'db' != $bid && 'db' == substr( $bid, 0, 2 ) && '-size' != substr( $bid, -5, 5 ) ) {
-						$warn[] = __( 'Only the WordPress database can be restored; you will need to deal with the external database manually.', 'backupplus' );
-						break;
-					}
-				}
+
 			}
 
-			$backupable_entities      = $this->_backupplus->get_backupable_file_entities( true, true );
+			foreach ( isset( $backups[ $timestamp ]['file_sources'] ) ? $backups[ $timestamp ]['file_sources'] : array() as $id => $source ) {
+				$info['source_defaults'][ $id ] = $source['path'];
+				if ( empty( $res['backupplus_source_destinations'][ $id ] ) ) { $res['backupplus_source_destinations'][ $id ] = $source['path']; }
+			}
+			$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $this->_backupplus->get_backupable_file_entities( true, true ), $backups[ $timestamp ] );
+			try {
+				BackupPlus_Source_Restore::preflight( $elements, $backups[ $timestamp ], $res );
+				foreach ( $elements as $id => $unused ) {
+					if ( BackupPlus_Backup_Sources::custom( $id ) ) { $mess[] = esc_html( 'Merge additional source into ' . $res['backupplus_source_destinations'][ $id ] ); }
+					elseif ( preg_match( '/^db[1-9][0-9]*$/D', $id ) ) { $target = BackupPlus_Source_Restore::connection( $id, $res );
+						$mess[] = esc_html( $id . ': replace tables present in the dump in ' . $target['host'] . '/' . $target['name'] . '; other tables remain untouched.' ); }
+					elseif ( 'wpcore' === $id ) { $mess[] = empty( $res['backupplus_restorer_wpcore_includewpconfig'] ) ? esc_html__( 'The current wp-config.php will be preserved.', 'backupplus' ) : esc_html__( 'The current wp-config.php will be replaced.', 'backupplus' ); }
+				}
+			} catch ( Exception $e ) { $err[] = esc_html( $e->getMessage() ); }
 			$backupable_plus_db       = $backupable_entities;
 			$backupable_plus_db['db'] = array(
 				'path'        => 'path-unused',
@@ -479,7 +502,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		$send_back           = array();
 		$backup              = BackupPlus_Backup_History::get_history( $params['timestamp'] );
 		$backupplus_dir      = $this->_backupplus->backups_dir_location();
-		$backupable_entities = $this->_backupplus->get_backupable_file_entities();
+		$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $this->_backupplus->get_backupable_file_entities(), $backup );
 
 		if ( empty( $backup ) ) {
 			return array( 'result' => 'asyouwere' );

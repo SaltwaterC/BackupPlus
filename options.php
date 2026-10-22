@@ -260,8 +260,11 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_autobackup_default', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_delete_local', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_debug_mode', 'absint' );
-		register_setting( 'backupplus-options-group', 'backupplus_extradbs', array( $backupplus_admin, 'return_array' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_extradbs', array( 'BackupPlus_Backup_Sources', 'connections' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_database_selection', array( 'BackupPlus_Backup_Sources', 'sanitize_selection' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_backupdb_nonwp', 'absint' );
+		register_setting( 'backupplus-options-group', 'backupplus_database_next_id', 'absint' );
+		register_setting( 'backupplus-options-group', 'backupplus_include_more_exclude', array( 'BackupPlus_Manipulation_Functions', 'strip_dirslash' ) );
 
 		register_setting( 'backupplus-options-group', 'backupplus_include_plugins', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_themes', 'absint' );
@@ -270,7 +273,7 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_include_wpcore', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_wpcore_exclude', array( 'BackupPlus_Manipulation_Functions', 'strip_dirslash' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_include_more', 'absint' );
-		register_setting( 'backupplus-options-group', 'backupplus_include_more_path', array( 'BackupPlus_Manipulation_Functions', 'remove_empties' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_include_more_path', array( 'BackupPlus_Backup_Sources', 'sanitize_paths' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_include_uploads_exclude', array( 'BackupPlus_Manipulation_Functions', 'strip_dirslash' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_include_others_exclude', array( 'BackupPlus_Manipulation_Functions', 'strip_dirslash' ) );
 

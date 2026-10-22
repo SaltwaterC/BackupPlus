@@ -190,7 +190,8 @@ class BackupPlus_Backup_History {
 
 		foreach ( $backup_history as $btime => $bdata ) {
 
-			$incremental_sets = array();
+			$incremental_sets    = array();
+			$backupable_entities = array_keys( BackupPlus_Backup_Sources::restore_entities( array_fill_keys( $backupable_entities, true ), $bdata ) );
 
 			foreach ( $backupable_entities as $entity ) {
 
@@ -382,7 +383,7 @@ class BackupPlus_Backup_History {
 			foreach ( $bdata as $key => $values ) {
 				// make sure we also handle multiple databases, which has a different array structure compared to other entities (e.g. plugins, themes, etc.)
 				// we don't do strict comparison using identical operator (===) here because we want to catch boolean false or a non-boolean value which evaluates to false, hence we use equal operator (==)
-				if ( false == preg_match( '/^db[0-9]*$/i', $key ) && ! isset( $backupable_entities[ $key ] ) ) {
+				if ( false == preg_match( '/^db[0-9]*$/i', $key ) && ! BackupPlus_Backup_Sources::custom( $key ) && ! isset( $backupable_entities[ $key ] ) ) {
 					continue;
 				}
 				// Record which set this file is found in
@@ -734,6 +735,7 @@ class BackupPlus_Backup_History {
 				}
 			}
 
+			$backup_history[ $btime ] = BackupPlus_Backup_Sources::archive_metadata( isset( $backup_history[ $btime ] ) ? $backup_history[ $btime ] : array(), $type, $backupplus_dir . '/' . $entry );
 			if ( preg_match( '/^db[0-9]*$/i', $type ) ) { // make sure we also handle multiple databases, which has a bit different array structure
 				$backup_history[ $btime ][ $type ] = $entry; // $backup_history[$btime][$type] is in string type not array
 			} else {

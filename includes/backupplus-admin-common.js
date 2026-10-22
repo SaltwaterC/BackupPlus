@@ -1718,6 +1718,9 @@ function backupplus_restorer_checkstage2(doalert) {
 				// Store the information passed back from the backup scan
 				try {
 					info = ud_parse_json(resp.i);
+					if (info.source_defaults) {
+						Object.keys(info.source_defaults).forEach(function(id) { var input = jQuery('[name="backupplus_source_destinations['+id+']"]'); if (!input.val()) { input.val(info.source_defaults[id]); } });
+					}
 					if (info.age_ticket) {
 						jQuery('#backupplus-age-ticket').val(info.age_ticket);
 						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', true);
@@ -1917,6 +1920,7 @@ function backupplus_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_no
 	params.always_keep = (typeof extradata.always_keep !== 'undefined') ? extradata.always_keep : 0;
 	delete extradata.always_keep;
 
+	if (window.backupplus_database_override) { params.database_selection = JSON.stringify(window.backupplus_database_override()); }
 	params.incremental = (typeof extradata.incremental !== 'undefined') ? extradata.incremental : 0;
 	delete extradata.incremental;
 
@@ -2860,7 +2864,7 @@ jQuery(function($) {
 						});
 					})
 
-					console.log("Restore options: "+restore_options);
+
 
 					if (typeof php_max_input_vars !== 'undefined') {
 						var restore_options_length = restore_options.split("&").length;
@@ -2935,6 +2939,7 @@ jQuery(function($) {
 		var db_anon_non_staff = jQuery('#backupnow_db_anon_non_staff').is(':checked') ? 1 : 0;
 		var db_anon_wc_orders = jQuery('#backupnow_db_anon_wc_order_data').is(':checked') ? 1 : 0;
 		var onlythesetableentities = backupnow_whichtables_checked('');
+		if (window.backupplus_database_override && !backupplus_database_override() && !backupnow_nodb) { alert(backupplus_i18n.notableschosen); return; }
 		var always_keep = jQuery('#always_keep').is(':checked') ? 1 : 0;
 		var incremental = ('incremental' == jQuery('#backupplus-backupnow-modal').data('backup-type')) ? 1 : 0;
 

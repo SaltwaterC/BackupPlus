@@ -77,6 +77,8 @@ test-integration: $(TEST_VENV)/.requirements-installed
 	done
 
 test-wordpress:
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-sources.php
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-sources.php pclzip
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-pre-update-backups.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-credential-storage.php
@@ -93,5 +95,6 @@ test-client:
 	node scripts/test-client-decryption.mjs
 
 test-client-browser:
+	PODMAN="$(PODMAN)" WP_TEST_CONTAINER="$(WP_TEST_CONTAINER)" node scripts/test-backup-sources-browser.mjs
 	PODMAN="$(PODMAN)" WP_TEST_CONTAINER="$(WP_TEST_CONTAINER)" node scripts/test-pre-update-browser.mjs
 	PODMAN="$(PODMAN)" WP_TEST_CONTAINER="$(WP_TEST_CONTAINER)" node scripts/test-client-decryption-browser.mjs

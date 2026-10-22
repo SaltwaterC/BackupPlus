@@ -2687,6 +2687,10 @@ class BackupPlus {
 					die();
 				}
 
+				if ( false === $db_backup || is_wp_error( $db_backup ) ) {
+					$this->log( 'Database export failed; backup dispatch has been stopped.', 'error' );
+					return false;
+				}
 				if ( is_array( $our_files ) && is_string( $db_backup ) ) {
 					$our_files[ $tindex ] = $db_backup;
 				}
@@ -3552,13 +3556,22 @@ class BackupPlus {
 		if ( $backup_files ) {
 			$possible_backups = $this->get_backupable_file_entities( true );
 			foreach ( $possible_backups as $youwhat => $whichdir ) {
-				if ( ( false === $restrict_files_to_override && BackupPlus_Options::get_backupplus_option( "backupplus_include_$youwhat", apply_filters( "backupplus_defaultoption_include_$youwhat", true ) ) ) || ( is_array( $restrict_files_to_override ) && in_array( $youwhat, $restrict_files_to_override ) ) ) {
+				if ( ( false === $restrict_files_to_override && BackupPlus_Backup_Sources::included( $youwhat ) ) || ( is_array( $restrict_files_to_override ) && in_array( $youwhat, $restrict_files_to_override ) ) ) {
 					// The 0 indicates the zip file index
 					$job_file_entities[ $youwhat ] = array(
 						'index' => 0,
 					);
 				}
 			}
+		}
+
+		$file_sources = BackupPlus_Backup_Sources::sources();
+		try {
+			BackupPlus_Backup_Sources::validate_sources( $job_file_entities, $file_sources );
+		} catch ( Exception $e ) {
+			$this->log( $e->getMessage(), 'error' );
+			if ( $this->semaphore ) { $this->semaphore->unlock(); }
+			return false;
 		}
 
 		$incremental_configuration = BackupPlus_Incremental_Backups::configuration( array_keys( $job_file_entities ), $service, isset( $options['remote_storage_instances'] ) ? $options['remote_storage_instances'] : array(), $option_cache );
@@ -3646,18 +3659,21 @@ class BackupPlus {
 		}
 		// Save what *should* be done, to make it resumable from this point on
 		if ( $backup_database ) {
-			$dbs = apply_filters( 'backupplus_backup_databases', array( 'wp' => 'begun' ) );
-			if ( is_array( $dbs ) ) {
-				foreach ( $dbs as $key => $db ) {
-					if ( 'wp' != $key && ( ! is_array( $db ) || empty( $db['dbinfo'] ) || ! is_array( $db['dbinfo'] ) || empty( $db['dbinfo']['host'] ) ) ) {
-						unset( $dbs[ $key ] );
-					}
-				}
+			try {
+				list( $dbs, $coverage ) = BackupPlus_Backup_Sources::plan_databases( $options );
+				array_push( $initial_jobdata, 'database_coverage', $coverage );
+			} catch ( Exception $e ) {
+				$this->log( $e->getMessage(), 'error' );
+				if ( $this->semaphore ) { $this->semaphore->unlock(); }
+				return false;
 			}
 		} else {
 			$dbs = 'no';
 		}
 
+		$file_exclusions = array();
+		foreach ( $job_file_entities as $entity => $unused ) { $file_exclusions[ $entity ] = $this->get_exclude( $entity ); }
+		array_push( $initial_jobdata, 'file_sources', $file_sources, 'file_exclusions', $file_exclusions );
 		array_push( $initial_jobdata, 'backup_database', $dbs );
 		array_push( $initial_jobdata, 'backup_files', ( ( $backup_files ) ? 'begun' : 'no' ) );
 
@@ -4578,10 +4594,14 @@ class BackupPlus {
 	}
 
 	public function get_exclude( $whichone ) {
+		$frozen = $this->jobdata_get( 'file_exclusions', array() );
+		if ( isset( $frozen[ $whichone ] ) ) { return $frozen[ $whichone ]; }
 		if ( 'uploads' == $whichone ) {
 			$exclude = explode( ',', BackupPlus_Options::get_backupplus_option( 'backupplus_include_uploads_exclude', BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE ) );
 		} elseif ( 'others' == $whichone ) {
 			$exclude = explode( ',', BackupPlus_Options::get_backupplus_option( 'backupplus_include_others_exclude', BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE ) );
+		} elseif ( 'wpcore' === $whichone || BackupPlus_Backup_Sources::custom( $whichone ) ) {
+			$exclude = explode( ',', BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . ( 'wpcore' === $whichone ? 'wpcore' : 'more' ) . '_exclude', '' ) );
 		} else {
 			$exclude = apply_filters( 'backupplus_include_' . $whichone . '_exclude', array() );
 		}
@@ -4755,6 +4775,8 @@ class BackupPlus {
 
 		$job_type = $this->jobdata_get( 'job_type' );
 
+		$backup_array['file_sources']         = $this->jobdata_get( 'file_sources', array() );
+		$backup_array['database_coverage']    = $this->jobdata_get( 'database_coverage', array() );
 		$backup_array['nonce']                = $this->file_nonce;
 		$backup_array['native']               = true;
 		$backup_array['service']              = $this->jobdata_get( 'service' );
@@ -5326,7 +5348,7 @@ class BackupPlus {
 		}
 
 		// Even the empty schema when gzipped comes to 1565 bytes; a blank WP 3.6 install at 5158. But we go low, in case someone wants to share single tables.
-		if ( filesize( $db_file ) < 1000 ) {
+		if ( filesize( $db_file ) < 1000 && empty( $backup['database_coverage']['wp']['partial'] ) && ( empty( $backup['database_coverage']['wp']['mode'] ) || 'selected' !== $backup['database_coverage']['wp']['mode'] ) ) {
 			/* translators: %s: Database size in KB */
 			$err[] = sprintf( __( 'The database is too small to be a valid WordPress database (size: %s Kb).', 'backupplus' ), round( filesize( $db_file ) / 1024, 1 ) );
 			return array( $mess, $warn, $err, $info );
@@ -5546,6 +5568,12 @@ class BackupPlus {
 							}
 						}
 						$old_siteinfo[ $key ] = $val;
+					}
+				} elseif ( 0 === strpos( $buffer, '# BackupPlus database coverage: ' ) ) {
+					$coverage = json_decode( substr( $buffer, strlen( '# BackupPlus database coverage: ' ) ), true );
+					if ( is_array( $coverage ) ) {
+						$info['database_coverage'] = $coverage;
+						if ( ! empty( $coverage['partial'] ) || 'selected' === $coverage['mode'] ) { $mess[] = esc_html__( 'This is an intentionally partial database backup. Only tables present in the dump will be restored.', 'backupplus' ); }
 					}
 				} elseif ( preg_match( '/^\# Skipped tables: (.*)$/', $buffer, $matches ) ) {
 					$skipped_tables = array_map( 'trim', explode( ',', $matches[1] ) );
@@ -5803,7 +5831,7 @@ class BackupPlus {
 					}
 				}
 
-				if ( count( $missing_tables ) > 0 ) {
+				if ( count( $missing_tables ) > 0 && empty( $info['database_coverage']['partial'] ) && ( empty( $info['database_coverage']['mode'] ) || 'selected' !== $info['database_coverage']['mode'] ) ) {
 					/* translators: %s: Missing WordPress tables */
 					$warn[] = sprintf( __( 'This database backup is missing core WordPress tables: %s', 'backupplus' ), implode( ', ', $missing_tables ) );
 				}
@@ -6113,6 +6141,9 @@ class BackupPlus {
 				'backupplus_ssl_nossl',
 				'backupplus_backupdb_nonwp',
 				'backupplus_extradbs',
+				'backupplus_database_selection',
+				'backupplus_database_next_id',
+				'backupplus_include_more_exclude',
 				'backupplus_combine_jobs_around',
 				'backupplus_last_backup',
 				'backupplus_starttime_files',

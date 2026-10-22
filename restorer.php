@@ -745,6 +745,7 @@ class BackupPlus_Restorer {
 
 		// Now log. We first remove any encryption passphrase from the log data.
 		$copy_restore_options = $restore_options;
+		unset( $copy_restore_options['backupplus_external_targets'] );
 		if ( ! empty( $copy_restore_options['backupplus_encryptionphrase'] ) ) {
 			$copy_restore_options['backupplus_encryptionphrase'] = '***';
 		}
@@ -756,7 +757,9 @@ class BackupPlus_Restorer {
 
 		$services = isset( $backup_set['service'] ) ? $backupplus->get_canonical_service_list( $backup_set['service'] ) : array();
 
-		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
+		$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup_set );
+		try { BackupPlus_Source_Restore::preflight( $entities_to_restore, $backup_set, $restore_options ); }
+		catch ( Exception $e ) { return new WP_Error( 'source_preflight_failed', $e->getMessage() ); }
 
 		$remove_zip = isset( $restore_options['delete_during_restore'] ) ? $restore_options['delete_during_restore'] : false;
 
@@ -779,6 +782,16 @@ class BackupPlus_Restorer {
 			return $second_loop;
 		}
 
+		// External databases precede the WordPress database, whose options may change this installation.
+		uksort(
+			$second_loop,
+			function ( $a, $b ) {
+				$rank = function ( $type ) {
+					return preg_match( '/^db[1-9][0-9]*$/D', $type ) ? 0 : ( 'db' === $type ? 2 : 1 );
+				};
+				return $rank( $a ) - $rank( $b );
+			}
+		);
 		$timestamp = $backup_set['timestamp'];
 
 		$backupplus->jobdata_set( 'second_loop_entities', $second_loop );
@@ -1829,7 +1842,7 @@ class BackupPlus_Restorer {
 		}
 
 		// Code below here assumes that we're dealing with file-based entities
-		if ( 'db' == $type ) {
+		if ( 'db' == $type || preg_match( '/^db[1-9][0-9]*$/D', $type ) || BackupPlus_Backup_Sources::custom( $type ) ) {
 			return true;
 		}
 
@@ -1905,6 +1918,24 @@ class BackupPlus_Restorer {
 
 		global $wp_filesystem, $backupplus;
 
+		if ( preg_match( '/^db[1-9][0-9]*$/D', $type ) ) {
+			try {
+				$connection = BackupPlus_Source_Restore::connection( $type, $this->restore_options );
+				$path       = $backupplus->backups_dir_location() . '/' . basename( $backup_file );
+				if ( BackupPlus_Encryption::is_file_encrypted( $backup_file ) ) {
+					$prepared = BackupPlus_Age_Restore::file( $path, isset( $this->restore_options['backupplus_age_ticket'] ) ? $this->restore_options['backupplus_age_ticket'] : '', $backupplus->nonce );
+					if ( ! $prepared ) { return new WP_Error( 'decrypt_failed', 'Prepare the encrypted external dump again.' ); }
+					$path = $prepared['fullpath'];
+				}
+				return BackupPlus_External_Importer::restore( $path, $type, $connection );
+			} catch ( Exception $e ) { return new WP_Error( 'external_restore_failed', $e->getMessage() ); }
+		}
+		if ( BackupPlus_Backup_Sources::custom( $type ) ) {
+			$working = $this->unpack_package_archive( $backup_file, $type );
+			if ( is_wp_error( $working ) ) { return $working; }
+			try { return BackupPlus_Source_Restore::restore( $working, $type, $this->ud_backup_set, $this->restore_options, $last_entity ); }
+			catch ( Exception $e ) { return new WP_Error( 'custom_restore_failed', $e->getMessage() ); }
+		}
 		$backupplus->log( "restore_backup(backup_file=$backup_file, type=$type, info=" . serialize( $info ) . ", last_one=$last_one)" );
 
 		if ( 'db' == $type ) {
@@ -1995,6 +2026,10 @@ class BackupPlus_Restorer {
 						),
 					)
 				);
+			} elseif ( 'wpcore' === $type && empty( $this->ud_foreign ) ) {
+				$move_in = $this->move_backup_in( $working_dir, trailingslashit( $wp_filesystem_dir ), self::MOVEIN_COPY_IN_CONTENTS, array( 'backupplus-manifest.json' ), 'wpcore' );
+				if ( is_wp_error( $move_in ) || ! $move_in ) { return $move_in ?: new WP_Error( 'core_move_failed', 'Could not restore WordPress core files.' ); }
+				$this->been_restored['wpcore'] = true;
 			} elseif ( 'others' == $type ) {
 
 				// For foreign 'Simple Backup', we need to keep going down until we find wp-content
@@ -2281,7 +2316,7 @@ class BackupPlus_Restorer {
 			if ( ! is_string( $relative ) || preg_match( '#(^/|[\\\\:\x00]|(^|/)\.\.?(/|$)|//)#', $relative ) ) {
 				return new WP_Error( 'read_manifest_failed', 'Unsafe path in incremental restore manifest.' );
 			}
-			if ( 'others' !== $type ) {
+			if ( ! in_array( $type, array( 'others', 'wpcore' ), true ) ) {
 				$prefix = $manifest['root'] . '/';
 				if ( 0 !== strpos( $relative, $prefix ) ) {
 					return new WP_Error( 'read_manifest_failed', 'Incremental deletion is outside the restored component.' );
@@ -2298,6 +2333,7 @@ class BackupPlus_Restorer {
 			if ( 'themes' === $type && ( in_array( $component, $this->themes_to_skip, true ) || ( ! empty( $this->themes_to_restore ) && ! $this->include_unspecified_themes && ! in_array( $component, $this->themes_to_restore, true ) ) ) ) {
 				continue;
 			}
+			if ( 'wpcore' === $type && 'wp-config.php' === $relative && empty( $this->restore_options['backupplus_restorer_wpcore_includewpconfig'] ) ) { continue; }
 			$paths[] = trailingslashit( $destination ) . $relative;
 		}
 		// Children precede their deleted parents. Never follow a parent symlink outside the destination.
@@ -3556,7 +3592,7 @@ class BackupPlus_Restorer {
 		while ( ( $is_plain && ! feof( $dbhandle ) ) || ( ! $is_plain && ( ( $is_bz2 ) || ( ! $is_bz2 && ! gzeof( $dbhandle ) ) ) ) ) {
 			// Up to 1Mb
 			if ( $is_plain ) {
-				$buffer = rtrim( fgets( $dbhandle, 1048576 ) );
+				$buffer = rtrim( BackupPlus_SQL_Stream::line( $dbhandle, true ) );
 			} elseif ( $is_bz2 ) {
 				if ( ! isset( $bz2_buffer ) ) {
 					$bz2_buffer = '';// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- The variable is defined after check.
@@ -3581,7 +3617,7 @@ class BackupPlus_Restorer {
 				}
 				$buffer = rtrim( $buffer );
 			} else {
-				$buffer = rtrim( gzgets( $dbhandle, 1048576 ) );
+				$buffer = rtrim( BackupPlus_SQL_Stream::line( $dbhandle, false ) );
 			}
 
 			// Discard comments

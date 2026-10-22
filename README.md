@@ -119,3 +119,27 @@ podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-c
 ```
 
 Omit `s3` to test the complete installation, pass another provider ID to test removal of its entry file and helper directory, or pass `all` to test with every provider removed. Pass `only:s3` to test S3 with every other provider removed. The checks exercise discovery, object creation, credential upgrade/rotation/recovery, the Settings form, and stale credentials and authentication requests without changing source providers or saved options. `make test-wordpress` runs every removal and standalone-provider combination.
+
+
+## Core files, additional sources, and database tables
+
+WordPress core and **Additional files** are opt-in in Settings. Core includes the installation root and non-WordPress root files, excluding separately backed-up content directories. Additional sources accept absolute paths to readable local files and directories, one per line. Each source has a stable archive namespace and stores its original path in its archive manifest. The backup output and credential key directories are excluded. Missing or unreadable selected sources fail the backup.
+
+Database Options provides saved external MySQL/MariaDB connections, connection testing and table discovery. Connections use stable numeric IDs (`db1`, `db2`, etc. in archive names). For each database, choose **All eligible tables** or **Only selected tables**. WordPress eligibility defaults to its table prefix; the non-WordPress checkbox expands it to the whole database. New external connections default to all tables; an imported prefix restriction still applies to eligible mode. Selected mode uses exact names regardless of prefix, permits omitting WordPress core tables, and adds no related tables automatically. Empty selected lists and missing selected tables fail without falling back to a broader backup.
+
+Scheduled backups use saved selections. **Backup Now** has independent temporary choices. Each job snapshots its resolved table list, source paths and exclusions for resumptions. Databases are full dumps of the chosen tables, even during incremental file backups. Dump headers and backup history record partial coverage, and unencrypted local rescans or encrypted restore verification recover that metadata.
+
+The existing restore wizard offers core, individual additional sources and each external dump. Directory destinations merge archived contents; standalone files accept a destination filename. The current `wp-config.php` is preserved unless replacement is explicitly selected. External dumps require an explicit saved or newly entered connection to an existing database. Verification displays destinations and replacement details. External imports run before the WordPress database, preserve table names and values without WordPress transformations, and leave tables absent from the dump untouched. Interrupted imports restart the current table. Restore connection passwords use the existing credential encryption, recovery and rotation mechanisms; archive metadata and history contain no passwords.
+
+Programmatic backup options accept the same structure as `backupplus_database_selection`:
+
+```php
+array(
+    'database_selection' => array(
+        'wp' => array( 'enabled' => false, 'mode' => 'all', 'tables' => array() ),
+        1 => array( 'enabled' => true, 'mode' => 'selected', 'tables' => array( 'orders', 'order_items' ) ),
+    ),
+)
+```
+
+Focused checks: `php scripts/test-backup-sources.php`, `wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-sources.php`, and `node scripts/test-backup-sources-browser.mjs`. These also run through the existing `make test` targets.

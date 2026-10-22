@@ -392,6 +392,12 @@ class BackupPlus_Backup {
 
 		$this->zip_microtime_start = microtime( true );
 
+		// Mapped namespaces and manifests require a writer that supports stored filenames independent of source paths.
+		if ( 'BackupPlus_BinZip' === $this->use_zip_object && ( 'wpcore' === $whichone || BackupPlus_Backup_Sources::custom( $whichone ) || $backupplus->jobdata_get( 'incremental_configuration' ) ) ) {
+			$this->binzip         = false;
+			$this->use_zip_object = class_exists( 'BackupPlus_ZipArchive' ) ? 'BackupPlus_ZipArchive' : 'BackupPlus_PclZip';
+		}
+
 		// The paths in the zip should then begin with '$whichone', having removed WP_CONTENT_DIR from the front
 		$zipcode = $this->make_zipfile( $create_from_dir, $backup_file_basename, $whichone );
 		if ( true !== $zipcode ) {
@@ -881,6 +887,10 @@ class BackupPlus_Backup {
 		}
 
 		$backupable_entities = $backupplus->get_backupable_file_entities( true );
+		foreach ( $functional_backup_history as $set ) {
+			foreach ( $set as $id => $unused ) { if ( BackupPlus_Backup_Sources::custom( $id ) ) { $backupable_entities[ $id ] = true; }
+			}
+		}
 
 		$database_backups_found = array();
 
@@ -1835,11 +1845,13 @@ class BackupPlus_Backup {
 				$backupplus->log( $dbinfo['user'] . '@' . $dbinfo['host'] . '/' . $dbinfo['name'] . ' : ' . __( 'database connection attempt failed.', 'backupplus' ) . ' ' . __( 'Connection failed: check your access details, that the database server is up, and that the network connection is not firewalled.', 'backupplus' ), 'error' );
 				return $backupplus->log_wp_error( $this->wpdb_obj->error );
 			}
-			$this->table_prefix     = $dbinfo['prefix'];
-			$this->table_prefix_raw = $dbinfo['prefix'];
+			$this->table_prefix     = isset( $dbinfo['prefix'] ) ? $dbinfo['prefix'] : '';
+			$this->table_prefix_raw = $this->table_prefix;
 		}
 
 		$this->dbinfo = $dbinfo;
+		$coverage     = $backupplus->jobdata_get( 'database_coverage', array() );
+		$exact_tables = isset( $coverage[ $whichdb ] ) ? $coverage[ $whichdb ]['tables'] : null;
 
 		do_action( 'backupplus_backup_db_begin', $whichdb, $dbinfo, $already_done, $this );
 
@@ -1884,8 +1896,24 @@ class BackupPlus_Backup {
 			$all_tables = array_map( array( $this, 'cb_get_name_type' ), $all_tables );
 		}
 
+		if ( null !== $exact_tables ) {
+			$missing = array_diff( $exact_tables, array_column( $all_tables, 'name' ) );
+			if ( $missing ) {
+				$backupplus->log( 'Selected tables no longer exist: ' . implode( ', ', $missing ), 'error' );
+				return false;
+			}
+			$all_tables = array_values(
+				array_filter(
+					$all_tables,
+					function ( $table ) use ( $exact_tables ) {
+						return in_array( $table['name'], $exact_tables, true );
+					}
+				)
+			);
+		}
+
 		// If this is not the WP database, then we do not consider it a fatal error if there are no tables
-		if ( 'wp' == $whichdb && 0 == count( $all_tables ) ) {
+		if ( null === $exact_tables && 'wp' == $whichdb && 0 == count( $all_tables ) ) {
 			$extra = ( $backupplus->newresumption_scheduled ) ? ' - ' . __( 'please wait for the rescheduled attempt', 'backupplus' ) : '';
 			$backupplus->log( 'Error: No WordPress database tables found (SHOW TABLES returned nothing)' . $extra );
 			$backupplus->log( __( 'No database tables found', 'backupplus' ) . $extra, 'error' );
@@ -1989,10 +2017,10 @@ class BackupPlus_Backup {
 			}
 
 			// === is needed with strpos/stripos, otherwise 'false' matches (i.e. prefix does not match)
-			if ( empty( $this->table_prefix ) || ( ! $this->duplicate_tables_exist && 0 === stripos( $table, $this->table_prefix ) ) || ( $this->duplicate_tables_exist && 0 === strpos( $table, $this->table_prefix ) ) ) {
+			if ( null !== $exact_tables || empty( $this->table_prefix ) || ( ! $this->duplicate_tables_exist && 0 === stripos( $table, $this->table_prefix ) ) || ( $this->duplicate_tables_exist && 0 === strpos( $table, $this->table_prefix ) ) ) {
 
 				// Skip table due to filter?
-				if ( ! apply_filters( 'backupplus_backup_table', true, $table, $this->table_prefix, $whichdb, $dbinfo ) ) {
+				if ( null === $exact_tables && ! apply_filters( 'backupplus_backup_table', true, $table, $this->table_prefix, $whichdb, $dbinfo ) ) {
 					$backupplus->log( "Skipping table (filtered): $table" );
 					if ( empty( $this->skipped_tables ) ) {
 						$this->skipped_tables = array();
@@ -2171,7 +2199,7 @@ class BackupPlus_Backup {
 		}
 
 		if ( 'wp' == $whichdb ) {
-			if ( ! $found_options_table ) {
+			if ( ! $found_options_table && ( ! isset( $coverage[ $whichdb ] ) || 'selected' !== $coverage[ $whichdb ]['mode'] ) ) {
 				if ( $is_multisite ) {
 					$backupplus->log( __( 'The database backup has failed', 'backupplus' ) . ' - ' . __( 'no options or sitemeta table was found', 'backupplus' ), 'warning', 'optstablenotfound' );
 				} else {
@@ -2313,7 +2341,7 @@ class BackupPlus_Backup {
 		}
 
 		// DB Stored Routines
-		$stored_routines = BackupPlus_Database_Utility::get_stored_routines();
+		$stored_routines = isset( $coverage[ $whichdb ] ) && 'selected' === $coverage[ $whichdb ]['mode'] ? array() : BackupPlus_Database_Utility::get_stored_routines( $this->wpdb_obj, $this->dbinfo['name'] );
 		if ( is_array( $stored_routines ) && ! empty( $stored_routines ) ) {
 			$stored_routines_log               = $inaccessible_routines = '';
 			$stored_routines_delimiter_printed = false;
@@ -2536,7 +2564,7 @@ class BackupPlus_Backup {
 
 		$exec = apply_filters( 'backupplus_mysqldump_arguments', $exec, $table_name, $potsql );
 
-		$exec .= $this->dbinfo['name'] . ' ' . escapeshellarg( $table_name );
+		$exec .= escapeshellarg( $this->dbinfo['name'] ) . ' ' . escapeshellarg( $table_name );
 
 		$ret         = false;
 		$any_output  = false;
@@ -3305,6 +3333,11 @@ class BackupPlus_Backup {
 	private function backup_db_header() {
 
 		global $backupplus;
+		$coverage = $backupplus->jobdata_get( 'database_coverage', array() );
+		if ( isset( $coverage[ $this->whichdb ] ) ) {
+			$this->stow( '# BackupPlus database coverage: ' . json_encode( $coverage[ $this->whichdb ] ) . "\n" );
+		}
+
 		$wp_version    = $backupplus->get_wordpress_version();
 		$mysql_version = $this->wpdb_obj->get_var( 'SELECT VERSION()' );
 		if ( '' == $mysql_version ) {
@@ -3444,6 +3477,8 @@ class BackupPlus_Backup {
 		// De-reference. Important to do to both, because on Windows only doing it to one can make them non-equal, where they were previously equal - something which we later rely upon
 		$fullpath          = realpath( $fullpath );
 		$original_fullpath = realpath( $original_fullpath );
+
+		if ( BackupPlus_Backup_Sources::exclude( false, $fullpath ) || BackupPlus_Credential_Key_Store::exclude( false, $fullpath ) ) { return true; }
 
 		// Is the place we've ended up above the original base? That leads to infinite recursion
 		if ( ( $fullpath !== $original_fullpath && strpos( $original_fullpath, $fullpath ) === 0 ) || ( $original_fullpath == $fullpath && ( ( 1 == $startlevels && strpos( $use_path_when_storing, '/' ) !== false ) || ( 2 == $startlevels && substr_count( $use_path_when_storing, '/' ) > 1 ) ) ) ) {
@@ -4120,6 +4155,19 @@ class BackupPlus_Backup {
 
 		}
 
+		if ( 'wpcore' === $whichone || BackupPlus_Backup_Sources::custom( $whichone ) ) {
+			$source_root = is_array( $source ) ? reset( $source ) : $source;
+			$root        = basename( realpath( $source_root ) ?: $source_root );
+			$prefix      = 'wpcore' === $whichone ? '' : $whichone . '/';
+			$rewrite     = function ( $stored ) use ( $root, $prefix ) {
+				return $prefix . ( $stored === $root ? '' : substr( $stored, strlen( $root ) + 1 ) );
+			};
+			foreach ( $this->zipfiles_batched as $path => &$stored ) {
+				$stored = is_file( is_array( $source ) ? reset( $source ) : $source ) ? $prefix . 'payload' : $rewrite( $stored );
+			}
+			unset( $stored );
+			$this->zipfiles_dirbatched = array_values( array_filter( array_map( $rewrite, $this->zipfiles_dirbatched ) ) );
+		}
 		$this->incremental_manifest = null;
 		if ( $backupplus->jobdata_get( 'incremental_configuration' ) ) {
 			$this->incremental_manifest = BackupPlus_Incremental_Backups::scan( $whichone, $this->zipfiles_batched, $this->zipfiles_dirbatched, $this->zipfiles_skipped_notaltered );

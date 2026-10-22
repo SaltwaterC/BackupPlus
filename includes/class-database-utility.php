@@ -884,19 +884,20 @@ class BackupPlus_Database_Utility {
 	 *         ]
 	 *     ]
 	 */
-	public static function get_stored_routines() {
+	public static function get_stored_routines( $connection = null, $database = null ) {
 
-		global $wpdb;
+		$wpdb     = null === $connection ? $GLOBALS['wpdb'] : $connection;
+		$database = null === $database ? DB_NAME : $database;
 
 		$old_val = $wpdb->suppress_errors();
 		try {
 			/* translators: 1: Last database error, 2: Additional error details. */
 			$err_msg         = __( 'An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'backupplus' );
-			$function_status = $wpdb->get_results( $wpdb->prepare( 'SHOW FUNCTION STATUS WHERE DB = %s', DB_NAME ), ARRAY_A );
+			$function_status = $wpdb->get_results( $wpdb->prepare( 'SHOW FUNCTION STATUS WHERE DB = %s', $database ), ARRAY_A );
 			if ( ! empty( $wpdb->last_error ) ) {
 				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
 			}
-			$procedure_status = $wpdb->get_results( $wpdb->prepare( 'SHOW PROCEDURE STATUS WHERE DB = %s', DB_NAME ), ARRAY_A );
+			$procedure_status = $wpdb->get_results( $wpdb->prepare( 'SHOW PROCEDURE STATUS WHERE DB = %s', $database ), ARRAY_A );
 			if ( ! empty( $wpdb->last_error ) ) {
 				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
 			}

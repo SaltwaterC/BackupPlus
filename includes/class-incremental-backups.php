@@ -19,7 +19,12 @@ class BackupPlus_Incremental_Backups {
 		unset( $ids );
 		ksort( $instances );
 		foreach ( $entities as $entity ) {
-			$configuration[ $entity ] = array( $paths[ $entity ], $backupplus->get_exclude( $entity ) );
+			$configuration[ $entity ] = array( $paths[ $entity ], $backupplus->get_exclude( $entity ), BackupPlus_Backup_Sources::custom( $entity ) ? ( is_file( $paths[ $entity ] ) ? 'file' : 'directory' ) : null );
+		}
+		$configuration['_protected_paths'] = array( $backupplus->backups_dir_location(), BackupPlus_Credential_Key_Store::directory() );
+		if ( in_array( 'wpcore', $entities, true ) ) {
+			$uploads                         = $backupplus->wp_upload_dir();
+			$configuration['_content_paths'] = array( WP_CONTENT_DIR, WP_PLUGIN_DIR, WPMU_PLUGIN_DIR, $uploads['basedir'] );
 		}
 		return hash( 'sha256', serialize( array( site_url(), $configuration, $services, $instances, $credentials, BackupPlus_Options::get_backupplus_option( 'backupplus_database_encryption' ) ) ) );
 	}
@@ -125,8 +130,8 @@ class BackupPlus_Incremental_Backups {
 		// Keep cumulative deletions so restoring the final archive also removes files deleted in earlier increments.
 		$old_paths           = array_unique( array_merge( array_map( 'strval', array_keys( $previous['files'] ) ), $previous['directories'], $previous['deleted'] ) );
 		$paths               = $backupplus->get_backupable_file_entities( true );
-		$root                = basename( $paths[ $entity ] );
-		$snapshot['deleted'] = array_values( array_diff( $old_paths, array_keys( $snapshot['files'] ), $snapshot['directories'], 'others' === $entity ? array() : array( $root ) ) );
+		$root                = BackupPlus_Backup_Sources::custom( $entity ) ? $entity : basename( $paths[ $entity ] );
+		$snapshot['deleted'] = array_values( array_diff( $old_paths, array_keys( $snapshot['files'] ), $snapshot['directories'], in_array( $entity, array( 'others', 'wpcore' ), true ) ? array() : array( $root, $root . '/' ) ) );
 		$name                = 'incremental_' . $backupplus->nonce . '_' . $entity . '.php';
 		$path                = $backupplus->backups_dir_location() . '/' . $name;
 		// Freeze the scan's inventory across resumptions. A file changed after it was archived
@@ -144,6 +149,7 @@ class BackupPlus_Incremental_Backups {
 		$snapshots[ $entity ] = $name;
 		$backupplus->jobdata_set( 'incremental_snapshots', $snapshots );
 		return array(
+			'source'  => isset( $backupplus->jobdata_get( 'file_sources', array() )[ $entity ] ) ? $backupplus->jobdata_get( 'file_sources' )[ $entity ] : null,
 			'version' => 2,
 			'type'    => $entity,
 			'root'    => $root,
