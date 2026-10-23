@@ -81,6 +81,7 @@ test-wordpress:
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-sources.php pclzip
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-pre-update-backups.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
+	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-restore.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-schedule.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-credential-storage.php
 	"$(PODMAN)" exec "$(WP_TEST_CONTAINER)" wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-dropbox-token-storage.php

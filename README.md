@@ -16,7 +16,10 @@ Restoring a backup chain applies its full backup and increments in order, includ
 
 ```sh
 podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-backups.php
+podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-incremental-restore.php
 ```
+
+`check-incremental-restore.php` takes a real full backup and two increments of the content directory and WordPress core, then restores each to the latest, middle and full-backup restore points. It confirms changes, additions, cumulative deletions, `-old` copies, live-only files and `wp-config.php` handling. A dangling symlink in the source also confirms that harmless warnings do not stop a chain from being reused.
 
 ## Backup times and retention cleanup
 
