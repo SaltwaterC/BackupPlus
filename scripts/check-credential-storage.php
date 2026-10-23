@@ -204,7 +204,17 @@ foreach ( array( 'ftp', 'sftp', 'webdav', 's3' ) as $provider ) {
 }
 // Legacy settings imports use the same policy as ordinary settings writes.
 $import_settings = array(
-	'updraft_ftp' => array(
+	'updraft_dropbox' => array(
+		'version'  => 1,
+		'settings' => array(
+			'imported-dropbox' => array(
+				'folder'          => 'imported-backups',
+				'secret'          => 'synthetic-sec005-imported-Dropbox-secret',
+				'tk_access_token' => $dropbox_legacy['ciphertext'],
+			),
+		),
+	),
+	'updraft_ftp'     => array(
 		'version'  => 1,
 		'settings' => array(
 			'test-instance' => array(
@@ -222,8 +232,50 @@ $import          = $backupplus_admin->import_settings(
 	),
 	true
 );
+credential_wp_expect( ! empty( $import['saved'] ), 'An UpdraftPlus configuration export must import successfully' );
 credential_wp_expect( false === strpos( serialize( get_option( $isolated['backupplus_ftp'] ) ), 'synthetic-sec005-import' ), 'Imported credentials must be encrypted before persistence' );
 credential_wp_expect( 'synthetic-sec005-import' === BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' )['settings']['test-instance']['pass'], 'Legacy imported credentials must remain usable' );
+$imported_dropbox = get_option( $isolated['backupplus_dropbox'] )['settings']['imported-dropbox'];
+$imported_token   = $imported_dropbox['tk_access_token'];
+credential_wp_expect( 0 === strpos( $imported_token, BackupPlus_Credential_Encrypter::PREFIX ), 'Imported UpdraftPlus AES-CBC tokens must be replaced with authenticated envelopes before persistence' );
+credential_wp_expect( base64_decode( $dropbox_legacy['plaintext'] ) === Dropbox_Encrypter::from_config( 'imported-dropbox' )->decrypt( $imported_token ), 'The imported Dropbox access and refresh tokens must retain their original values' );
+credential_wp_expect( false === strpos( serialize( $imported_dropbox ), 'synthetic-sec005-' ), 'Imported Dropbox app secrets must also be encrypted' );
+$import_parts = explode( ':', $imported_token );
+$import_raw   = base64_decode( $import_parts[3] );
+$import_keys  = BackupPlus_Credential_Key_Store::configuration();
+credential_wp_expect( base64_decode( $dropbox_legacy['plaintext'] ) === openssl_decrypt( substr( $import_raw, 12, -16 ), 'chacha20-poly1305', base64_decode( $import_keys['keys'][ $import_parts[2] ] ), OPENSSL_RAW_DATA, substr( $import_raw, 0, 12 ), substr( $import_raw, -16 ), implode( ':', array_slice( $import_parts, 0, 3 ) ) . ':dropbox:' . get_current_blog_id() . ':imported-dropbox' ), 'Imported UpdraftPlus tokens must use interoperable ChaCha20-Poly1305 encryption' );
+// A bad later token must abort before any imported provider settings are saved.
+$before_dropbox = get_option( $isolated['backupplus_dropbox'] );
+$before_ftp     = get_option( $isolated['backupplus_ftp'] );
+$invalid_import = $import_settings;
+$invalid_import['updraft_dropbox']['settings']['broken']            = array( 'tk_access_token' => base64_encode( 'short' ) );
+$invalid_import['updraft_ftp']['settings']['test-instance']['pass'] = 'synthetic-sec005-rejected-import';
+credential_wp_reject(
+	function () use ( $backupplus_admin, $backupplus, $invalid_import ) {
+		$backupplus_admin->import_settings(
+			array(
+				'settings'           => json_encode( $invalid_import ),
+				'backupplus_version' => $backupplus->version,
+			),
+			true
+		);
+	},
+	'A malformed UpdraftPlus CBC token must reject the configuration import'
+);
+credential_wp_expect( $before_dropbox === get_option( $isolated['backupplus_dropbox'] ) && $before_ftp === get_option( $isolated['backupplus_ftp'] ), 'A rejected import must preserve existing provider credentials' );
+// Pre-multi-instance exports need a new instance ID before token encryption.
+$flat_import                    = $import_settings;
+$flat_import['updraft_dropbox'] = $import_settings['updraft_dropbox']['settings']['imported-dropbox'];
+$backupplus_admin->import_settings(
+	array(
+		'settings'           => json_encode( $flat_import ),
+		'backupplus_version' => $backupplus->version,
+	),
+	true
+);
+$flat_settings = get_option( $isolated['backupplus_dropbox'] )['settings'];
+$flat_id       = key( $flat_settings );
+credential_wp_expect( base64_decode( $dropbox_legacy['plaintext'] ) === Dropbox_Encrypter::from_config( $flat_id )->decrypt( $flat_settings[ $flat_id ]['tk_access_token'] ), 'Flat UpdraftPlus exports must migrate tokens using their generated storage instance ID' );
 $backupplus->nonce = $job_id;
 $backupplus->jobdata_reset();
 $backupplus->jobdata_set( 'option_cache', array( 'backupplus_ftp' => BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' ) ) );

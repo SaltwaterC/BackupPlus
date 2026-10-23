@@ -68,6 +68,7 @@ test-unit:
 	php -d disable_functions=curl_init scripts/test-webdav.php
 	php -d disable_functions=curl_init scripts/test-cloud-http.php
 	php -d disable_functions=openssl_encrypt,openssl_decrypt scripts/test-encryption.php --portable
+	php -d disable_functions=openssl_encrypt,openssl_decrypt,sodium_crypto_aead_chacha20poly1305_ietf_encrypt,sodium_crypto_aead_chacha20poly1305_ietf_decrypt scripts/test-dropbox-encryption.php --portable
 	php -d disable_functions=openssl_encrypt,openssl_decrypt,sodium_crypto_aead_chacha20poly1305_ietf_encrypt,sodium_crypto_aead_chacha20poly1305_ietf_decrypt,sodium_crypto_scalarmult,sodium_crypto_box_publickey_from_secretkey scripts/test-age.php --portable
 
 test-integration: $(TEST_VENV)/.requirements-installed

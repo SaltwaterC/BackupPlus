@@ -5028,7 +5028,20 @@ class BackupPlus_Admin {
 		}
 		$timestamps = array_keys( $backup['incremental_sets'] );
 		$points     = array();
+		$encrypted  = false;
 		foreach ( $timestamps as $index => $timestamp ) {
+			// A restore point needs the full backup and every increment up to that point.
+			// Keep the status cumulative so a later unencrypted increment does not hide
+			// encryption in an earlier archive required for the restore.
+			foreach ( $backup['incremental_sets'][ $timestamp ] as $entity_archives ) {
+				foreach ( (array) $entity_archives as $filename ) {
+					if ( BackupPlus_Encryption::is_file_encrypted( $filename ) ) {
+						$encrypted = true;
+						break 2;
+					}
+				}
+			}
+
 			$label = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $timestamp ), 'M d, Y G:i' ) . ' - ';
 			if ( 0 === $index ) {
 				$label .= __( 'full backup', 'backupplus' );
@@ -5042,6 +5055,7 @@ class BackupPlus_Admin {
 			$points[] = array(
 				'timestamp' => (int) $timestamp,
 				'label'     => $label,
+				'encrypted' => $encrypted,
 			);
 		}
 		return array_reverse( $points );

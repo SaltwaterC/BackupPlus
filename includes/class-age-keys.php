@@ -190,8 +190,8 @@ class BackupPlus_Age_Keys {
 
 	/** RFC 8439 AEAD, 128-bit tags, empty additional data. */
 	public static function aead( $data, $key, $nonce, $decrypt = false ) {
-		require_once __DIR__ . '/class-age-chacha20.php';
-		$cipher = new BackupPlus_Age_ChaCha20();
+		require_once __DIR__ . '/class-chacha20-poly1305.php';
+		$cipher = new BackupPlus_ChaCha20_Poly1305();
 		// Select a tested engine explicitly, including phpseclib's portable path.
 		$openssl = function_exists( 'openssl_encrypt' ) && in_array( 'chacha20', openssl_get_cipher_methods(), true );
 		$cipher->setPreferredEngine( defined( 'BACKUPPLUS_ENCRYPTION_ENGINE' ) ? BACKUPPLUS_ENCRYPTION_ENGINE : ( $openssl ? 'OpenSSL' : 'PHP' ) );

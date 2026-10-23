@@ -32,6 +32,18 @@ if ( is_array( $potential_options ) && isset( $potential_options['version'] ) &&
 class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 	use BackupPlus_dropbox_Admin;
 
+	/** Convert UpdraftPlus tokens only during an explicit configuration import. */
+	public function normalize_imported_settings( $settings ) {
+		if ( isset( $settings['updraft_dropbox'] ) && ! isset( $settings['backupplus_dropbox'] ) ) {
+			$options = $settings['updraft_dropbox'];
+			if ( is_array( $options ) && empty( $options['settings'] ) ) {
+				$options = BackupPlus_Storage_Methods_Interface::wrap_remote_storage_options( $options );
+			}
+			$settings['updraft_dropbox'] = BackupPlus_Dropbox_Token_Migration::import_options( $options );
+		}
+		return $settings;
+	}
+
 	/** Repair files written by the historical Dropbox upload bug. */
 	public function download_complete( $handle, $path ) {
 		if ( filesize( $path ) < 4 ) {

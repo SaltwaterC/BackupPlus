@@ -4,10 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** RFC 8439 setup and constant-time full-tag verification for phpseclib 3.0.57. */
-class BackupPlus_Age_ChaCha20 extends \phpseclib3\Crypt\ChaCha20 {
+class BackupPlus_ChaCha20_Poly1305 extends \phpseclib3\Crypt\ChaCha20 {
 	public function setTag( $tag ) {
 		if ( 16 !== strlen( $tag ) ) {
-			throw new \LengthException( 'Age requires a full 128-bit authentication tag.' );
+			throw new \LengthException( 'ChaCha20-Poly1305 requires a full 128-bit authentication tag.' );
 		}
 		// Initialize before setTag generates a key: 3.0.57 otherwise fails to set
 		// usingGeneratedPoly1305Key and selects a different MAC construction.
@@ -18,7 +18,7 @@ class BackupPlus_Age_ChaCha20 extends \phpseclib3\Crypt\ChaCha20 {
 	public function decrypt( $ciphertext ) {
 		$this->setup();
 		if ( false === $this->oldtag || ! hash_equals( $this->poly1305( $ciphertext ), $this->oldtag ) ) {
-			throw new \phpseclib3\Exception\BadDecryptionException( 'Age authentication failed.' );
+			throw new \phpseclib3\Exception\BadDecryptionException( 'ChaCha20-Poly1305 authentication failed.' );
 		}
 		// The parent now sees only an already-verified, full-length tag.
 		return parent::decrypt( $ciphertext );

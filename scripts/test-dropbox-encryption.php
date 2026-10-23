@@ -4,6 +4,10 @@ define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 define( 'BACKUPPLUS_DIR', dirname( __DIR__ ) );
 define( 'BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION', '5.6.1' );
 define( 'WP_CLI', true );
+if ( in_array( '--portable', $argv, true ) ) {
+	define( 'BACKUPPLUS_ENCRYPTION_ENGINE', 'PHP' );
+	require __DIR__ . '/fixtures/without-crypto-extensions.php';
+}
 function __( $text, $domain = null ) {
 	return $text; }
 function is_wp_error( $value ) {
@@ -264,14 +268,26 @@ $raw        = base64_decode( $parts[3] );
 $nonce      = substr( $raw, 0, 12 );
 $ciphertext = substr( $raw, 12, -16 );
 $tag        = substr( $raw, -16 );
-expect_dropbox( $plain === openssl_decrypt( $ciphertext, 'aes-256-gcm', base64_decode( $keys['new'] ), OPENSSL_RAW_DATA, $nonce, $tag, 'bpcred:v1:new:' . $context ), 'Envelope must interoperate with native AES-256-GCM' );
-$internal = new \phpseclib3\Crypt\AES( 'gcm' );
+if ( function_exists( 'openssl_decrypt' ) && in_array( 'chacha20-poly1305', openssl_get_cipher_methods(), true ) ) {
+	expect_dropbox( $plain === openssl_decrypt( $ciphertext, 'chacha20-poly1305', base64_decode( $keys['new'] ), OPENSSL_RAW_DATA, $nonce, $tag, 'bpcred:v1:new:' . $context ), 'Envelope must interoperate with native ChaCha20-Poly1305' );
+}
+$internal = new BackupPlus_ChaCha20_Poly1305();
 $internal->setPreferredEngine( 'PHP' );
+$internal->enablePoly1305();
+$internal->setCounter( 1 );
 $internal->setKey( base64_decode( $keys['new'] ) );
 $internal->setNonce( $nonce );
 $internal->setAAD( 'bpcred:v1:new:' . $context );
+expect_dropbox( $ciphertext === $internal->encrypt( $plain ) && $tag === $internal->getTag( 16 ), 'The portable PHP implementation must produce the same ciphertext and tag' );
 $internal->setTag( $tag );
 expect_dropbox( $plain === $internal->decrypt( $ciphertext ), 'The portable PHP implementation must read the same envelope' );
+expect_dropbox( 'PHP' === $internal->getEngine(), 'The portable implementation must use the PHP engine' );
+// Fixed independent OpenSSL fixture, including nonempty AAD and binary plaintext.
+$vector = new Dropbox_Encrypter( array( 'vector' => base64_encode( hex2bin( '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f' ) ) ), 'vector', $context );
+expect_dropbox( "credential vector\0\xff" === $vector->decrypt( 'bpcred:v1:vector:AAECAwQFBgcICQoL6oltZEx50SnW7x+F/X56DLtwTSWX59AVodieqaNRHpOaN6w=' ), 'Credentials must match the independent ChaCha20-Poly1305 fixture without native extensions' );
+foreach ( array( '', "\0\xff", str_repeat( 'x', 64 ), str_repeat( 'x', 65 ) ) as $message ) {
+	expect_dropbox( $message === $encrypter->decrypt( $encrypter->encrypt( $message ) ), 'Empty, binary and block-boundary credentials must roundtrip' );
+}
 for ( $i = 0; $i < strlen( $raw ); $i++ ) {
 	$modified       = $raw;
 	$modified[ $i ] = chr( ord( $modified[ $i ] ) ^ 1 );
@@ -298,7 +314,7 @@ expect_dropbox_failure(
 	},
 	'Missing active key must fail'
 );
-echo "PASS: AES-GCM interoperability, portable engine, nonce uniqueness, tampering, context binding and configuration failures\n";
+echo "PASS: ChaCha20-Poly1305 interoperability, portable engine, nonce uniqueness, tampering, context binding and configuration failures\n";
 
 $module  = new DropboxTestModule();
 $storage = new Dropbox_WordPress( $encrypter, 'tk_', 'backupplus_dropbox', $module );
@@ -335,11 +351,11 @@ echo "PASS: WordPress token storage and failure paths preserve credentials witho
 
 $legacy = json_decode( file_get_contents( __DIR__ . '/fixtures/dropbox-legacy-token.json' ), true );
 expect_dropbox( false === $encrypter->decrypt( $legacy['ciphertext'] ), 'The runtime must reject shared-key CBC credentials' );
-$run_migration               = function ( $mode ) {
+$run_migration = function ( $mode ) {
 	$args = array( $mode );
 	require __DIR__ . '/migrate-dropbox-tokens.php';
 };
-$base                        = array(
+$base          = array(
 	'version'  => 1,
 	'settings' => array(
 		'instance' => array(
@@ -349,6 +365,10 @@ $base                        = array(
 		),
 	),
 );
+$imported      = BackupPlus_Dropbox_Token_Migration::import_options( $base );
+expect_dropbox( base64_decode( $legacy['plaintext'] ) === $encrypter->decrypt( $imported['settings']['instance']['tk_access_token'] ), 'An explicit UpdraftPlus import must convert the hardcoded-key CBC fixture to ChaCha20-Poly1305' );
+expect_dropbox( $plain === $encrypter->decrypt( $imported['settings']['instance']['tk_request_token'] ), 'An explicit import must encrypt legacy plaintext request tokens too' );
+expect_dropbox( $imported === BackupPlus_Dropbox_Token_Migration::import_options( $imported ), 'Importing current authenticated tokens must preserve them' );
 BackupPlus_Options::$options = $base;
 expect_dropbox_failure(
 	function () use ( $run_migration ) {

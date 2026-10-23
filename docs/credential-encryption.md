@@ -1,6 +1,6 @@
 # Stored credential encryption
 
-BackupPlus uses one installation key store and AES-256-GCM implementation for storage credentials. Dropbox's existing authenticated tokens remain readable through a compatibility adapter; other providers use the same cipher and key lifecycle through `BackupPlus_Credential_Storage`.
+BackupPlus uses one installation key store and ChaCha20-Poly1305 implementation for storage credentials. Dropbox tokens use a provider-specific authenticated context; other providers use the same cipher and key lifecycle through `BackupPlus_Credential_Storage`. Credential reads and writes support only ChaCha20-Poly1305. The legacy AES-CBC decoder is reserved for importing Dropbox tokens from UpdraftPlus configuration exports.
 
 Provider passwords, SFTP private identities and key passphrases, S3 secrets/session tokens, API keys, OAuth credentials and legacy credential-bearing URLs are encrypted before WordPress saves them. Structured secret values retain their types. Extra database passwords and saved legacy backup phrases are covered too. Legacy phrases remain available only for restoring old archives; new archives use age public recipients.
 

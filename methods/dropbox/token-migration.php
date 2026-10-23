@@ -28,6 +28,12 @@ class BackupPlus_Dropbox_Token_Migration {
 	public static function rotate() {
 		return self::rewrite( false ); }
 
+	/** Prepare an explicit UpdraftPlus import without persisting legacy ciphertext. */
+	public static function import_options( $options ) {
+		list( $updated ) = self::prepare( $options, true );
+		return $updated;
+	}
+
 	public static function verify( $config ) {
 		$options = class_exists( 'BackupPlus_Credential_Storage' ) ? get_option( 'backupplus_dropbox' ) : BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' );
 		if ( empty( $options['settings'] ) ) {
@@ -52,8 +58,22 @@ class BackupPlus_Dropbox_Token_Migration {
 		if ( class_exists( 'BackupPlus_Credential_Storage' ) ) {
 			$original = $allow_legacy ? BackupPlus_Credential_Storage::incoming( $original, 'backupplus_dropbox' ) : BackupPlus_Credential_Storage::reading( $original, 'backupplus_dropbox', true );
 		}
+		list( $updated, $count ) = self::prepare( $original, $allow_legacy );
+		if ( $updated !== $original ) {
+			if ( ( class_exists( 'BackupPlus_Credential_Storage' ) ? get_option( 'backupplus_dropbox' ) : BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) ) !== $raw_original ) {
+				throw new RuntimeException( 'Dropbox settings changed during the upgrade. Please retry.' );
+			}
+			BackupPlus_Options::update_backupplus_option( 'backupplus_dropbox', $updated );
+			if ( BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) !== $updated ) {
+				throw new RuntimeException( 'The upgraded Dropbox credentials could not be saved. Please retry in BackupPlus Settings.' );
+			}
+		}
+		return $count;
+	}
+
+	private static function prepare( $original, $allow_legacy ) {
 		if ( empty( $original ) ) {
-			return 0;
+			return array( $original, 0 );
 		}
 		if ( ! is_array( $original ) || ! isset( $original['settings'] ) || ! is_array( $original['settings'] ) ) {
 			throw new RuntimeException( 'The saved Dropbox settings could not be upgraded. Reconnect Dropbox in BackupPlus Settings.' );
@@ -97,19 +117,10 @@ class BackupPlus_Dropbox_Token_Migration {
 		} catch ( Exception $e ) {
 			throw new RuntimeException( 'The Dropbox credential upgrade could not be completed. Your saved credentials are unchanged. Restore a recovery key or reconnect Dropbox in BackupPlus Settings.' );
 		}
-		if ( $updated !== $original ) {
-			if ( ( class_exists( 'BackupPlus_Credential_Storage' ) ? get_option( 'backupplus_dropbox' ) : BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) ) !== $raw_original ) {
-				throw new RuntimeException( 'Dropbox settings changed during the upgrade. Please retry.' );
-			}
-			BackupPlus_Options::update_backupplus_option( 'backupplus_dropbox', $updated );
-			if ( BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) !== $updated ) {
-				throw new RuntimeException( 'The upgraded Dropbox credentials could not be saved. Please retry in BackupPlus Settings.' );
-			}
-		}
-		return $count;
+		return array( $updated, $count );
 	}
 
-	/** Invoked only by the upgrade before its persisted completion marker. */
+	/** Invoked only by an upgrade or explicit UpdraftPlus configuration import. */
 	private static function legacy( $stored, $field ) {
 		global $backupplus;
 		if ( is_wp_error( $backupplus->ensure_phpseclib() ) ) {

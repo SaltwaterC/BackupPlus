@@ -39,7 +39,7 @@ class BackupPlus_Credential_Encrypter {
 		return new self( $config['keys'], $config['active'], $context );
 	}
 
-	/** AES-256-GCM with a full authentication tag and a fresh random nonce. */
+	/** ChaCha20-Poly1305 with a full authentication tag and a fresh random nonce. */
 	public function encrypt( $plaintext ) {
 		$this->ensure_crypto();
 		$nonce      = \phpseclib3\Crypt\Random::string( self::NONCE_SIZE );
@@ -80,7 +80,13 @@ class BackupPlus_Credential_Encrypter {
 	}
 
 	private function cipher( $id, $nonce, $header ) {
-		$cipher = new \phpseclib3\Crypt\AES( 'gcm' );
+		require_once __DIR__ . '/class-chacha20-poly1305.php';
+		$cipher = new BackupPlus_ChaCha20_Poly1305();
+		// Use the same tested native/portable engines as archive encryption.
+		$openssl = function_exists( 'openssl_encrypt' ) && function_exists( 'openssl_decrypt' ) && in_array( 'chacha20', openssl_get_cipher_methods(), true );
+		$cipher->setPreferredEngine( defined( 'BACKUPPLUS_ENCRYPTION_ENGINE' ) ? BACKUPPLUS_ENCRYPTION_ENGINE : ( $openssl ? 'OpenSSL' : 'PHP' ) );
+		$cipher->enablePoly1305();
+		$cipher->setCounter( 1 );
 		$cipher->setKey( $this->keys[ $id ] );
 		$cipher->setNonce( $nonce );
 		$cipher->setAAD( $header . $this->context );

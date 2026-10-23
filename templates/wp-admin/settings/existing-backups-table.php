@@ -67,6 +67,25 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 					<div tabindex="0" class="backup_date_label">
 						<?php
 							echo wp_kses_post( $date_label );
+							$restore_points = $backupplus_admin->restore_points( $backup );
+						if ( ! empty( $restore_points ) ) {
+							$encrypted_points = count( array_filter( $restore_points, function ( $point ) { return ! empty( $point['encrypted'] ); } ) );
+							$point_count      = count( $restore_points );
+							$summary           = sprintf(
+								/* translators: 1: Number of encrypted recovery points, 2: Total number of recovery points. */
+								__( 'Encrypted points: %1$d/%2$d', 'backupplus' ),
+								$encrypted_points,
+								$point_count
+							);
+							?>
+							<span class="backupplus-chain-badge backupplus-encryption-badge"><?php echo esc_html( $summary ); ?></span>
+							<?php
+						} else {
+							$backup_encrypted = BackupPlus_Age_Restore::has_encrypted( $backup );
+							?>
+							<span class="backupplus-chain-badge backupplus-encryption-badge"><?php echo esc_html( $backup_encrypted ? __( 'Encrypted', 'backupplus' ) : __( 'Not encrypted', 'backupplus' ) ); ?></span>
+							<?php
+						}
 						if ( ! empty( $backup['always_keep'] ) ) {
 							$wp_version = $backupplus->get_wordpress_version();
 							if ( version_compare( $wp_version, '3.8.0', '<' ) ) {
