@@ -383,7 +383,7 @@ class BackupPlus_Backup_History {
 			foreach ( $bdata as $key => $values ) {
 				// make sure we also handle multiple databases, which has a different array structure compared to other entities (e.g. plugins, themes, etc.)
 				// we don't do strict comparison using identical operator (===) here because we want to catch boolean false or a non-boolean value which evaluates to false, hence we use equal operator (==)
-				if ( false == preg_match( '/^db[0-9]*$/i', $key ) && ! BackupPlus_Backup_Sources::custom( $key ) && ! isset( $backupable_entities[ $key ] ) ) {
+				if ( false == preg_match( '/^db[0-9]*$/i', $key ) && ! BackupPlus_Backup_Sources::custom( $key ) && BackupPlus_Credential_Key_Store::BACKUP_ENTITY !== $key && ! isset( $backupable_entities[ $key ] ) ) {
 					continue;
 				}
 				// Record which set this file is found in
@@ -882,7 +882,10 @@ class BackupPlus_Backup_History {
 		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 
 		foreach ( $backupable_entities as $key => $info ) {
-			if ( ! BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", false ) ) {
+			$included = BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $key
+				? BackupPlus_Backup_Sources::included( $key )
+				: BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", false );
+			if ( ! $included ) {
 				unset( $backupable_entities[ $key ] );
 			}
 		}

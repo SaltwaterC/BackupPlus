@@ -299,6 +299,18 @@ class BackupPlus_Backup_Sources {
 					'kind'        => $source['kind'],
 					'description' => __( 'Additional files', 'backupplus' ) . ': ' . ( $source['path'] ?: $id ),
 				);
+			} elseif ( BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $id ) {
+				$path = BackupPlus_Credential_Key_Store::backup_directory();
+				if ( ! $path ) {
+					$path = BackupPlus_Credential_Key_Store::directory();
+				}
+				if ( ! $path && defined( 'WP_CONTENT_DIR' ) ) {
+					$path = WP_CONTENT_DIR . '/backupplus-private';
+				}
+				$entities[ $id ] = array(
+					'path'        => $path,
+					'description' => __( 'BackupPlus key store', 'backupplus' ),
+				);
 			} elseif ( preg_match( '/^db[1-9][0-9]*$/D', (string) $id ) ) {
 				$entities[ $id ] = array(
 					'path'        => '',

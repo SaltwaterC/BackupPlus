@@ -13,6 +13,7 @@ class BackupPlus_Credential_Key_Rotation {
 
 	public static function register() {
 		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) );
+		add_filter( 'backupplus_report_extramessages', array( __CLASS__, 'report_messages' ) );
 		add_action( 'init', array( __CLASS__, 'schedule' ), 21 );
 		add_action( self::HOOK, array( __CLASS__, 'run' ) );
 		add_action( self::RETRY_HOOK, array( __CLASS__, 'run' ) );
@@ -29,6 +30,12 @@ class BackupPlus_Credential_Key_Rotation {
 	}
 
 	public static function schedule() {
+		if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+			// Environment key rings are read-only in WordPress; their owner controls rotation.
+			wp_clear_scheduled_hook( self::HOOK );
+			wp_clear_scheduled_hook( self::RETRY_HOOK );
+			return;
+		}
 		try {
 			$due  = BackupPlus_Credential_Key_Store::rotation_time() + BackupPlus_Credential_Key_Store::ROTATION_INTERVAL;
 			$next = wp_next_scheduled( self::HOOK );
@@ -53,15 +60,23 @@ class BackupPlus_Credential_Key_Rotation {
 	}
 
 	public static function run() {
+		if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+			self::schedule();
+			return;
+		}
 		// Schedule recovery before making changes, including for a PHP timeout.
 		self::queue_retry();
 		try {
 			// The shared file lock and timestamp guard prevent duplicate jobs or
 			// different sites in a network from minting extra annual keys.
+			$previous = BackupPlus_Credential_Key_Store::configuration();
 			BackupPlus_Credential_Key_Store::rotation_time();
 			$config = BackupPlus_Credential_Key_Store::rotate( true );
 			self::reencrypt_credentials( $config['active'] );
 			self::finish();
+			if ( $config['active'] !== $previous['active'] ) {
+				self::notify_rotation( $config );
+			}
 		} catch ( Exception $e ) {
 			// Key publication retains all old keys; retry the rewrite with that
 			// active key rather than generating another key on every failure.
@@ -71,6 +86,115 @@ class BackupPlus_Credential_Key_Rotation {
 			}
 		}
 		self::schedule();
+	}
+
+	/** Rotate disk-managed keys immediately and keep the ordinary retry behavior. */
+	public static function rotate_manually() {
+		if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+			throw new RuntimeException( 'Use the generated environment key value to rotate environment-managed credentials.' );
+		}
+		self::queue_retry();
+		try {
+			$config = BackupPlus_Credential_Key_Store::rotate();
+			self::reencrypt_credentials( $config['active'] );
+			self::finish();
+			self::notify_rotation( $config );
+			self::schedule();
+			return $config;
+		} catch ( Exception $e ) {
+			update_option( self::ERROR_OPTION, $e->getMessage(), false );
+			if ( ! wp_next_scheduled( self::RETRY_HOOK ) ) {
+				wp_schedule_single_event( time() + 86400, self::RETRY_HOOK );
+			}
+			throw $e;
+		}
+	}
+
+	/** Add an age warning to the normal report when a key has reached its annual limit. */
+	public static function report_messages( $messages ) {
+		if ( ! is_array( $messages ) ) {
+			$messages = array();
+		}
+		if ( get_option( 'backupplus_credential_setup_error', '' ) || get_option( self::ERROR_OPTION, '' ) ) {
+			$messages[] = array(
+				'key' => __( 'Credential key maintenance alert', 'backupplus' ),
+				'val' => __( 'BackupPlus could not confirm that credential key maintenance completed. Check the key status in Settings → Expert settings → Credential encryption.', 'backupplus' ),
+			);
+		}
+		try {
+			$config = BackupPlus_Credential_Key_Store::configuration();
+		} catch ( Exception $e ) {
+			return $messages;
+		}
+		$age = max( 0, time() - $config['issued_at'] );
+		if ( $age < BackupPlus_Credential_Key_Store::ROTATION_INTERVAL ) {
+			return $messages;
+		}
+		$days     = (int) floor( $age / DAY_IN_SECONDS );
+		$issued   = date_i18n( get_option( 'date_format' ), $config['issued_at'] );
+		$guidance = BackupPlus_Credential_Key_Store::environment_managed()
+			? __( 'Rotate it in the service environment configuration; WordPress cannot rotate environment-managed keys.', 'backupplus' )
+			: __( 'Check that WordPress cron is running, or rotate the key in BackupPlus Settings.', 'backupplus' );
+		$messages[] = array(
+			'key' => __( 'Credential key age alert', 'backupplus' ),
+			'val' => sprintf(
+				/* translators: 1: date the active key was issued, 2: age in days, 3: rotation guidance */
+				__( 'The active credential encryption key was issued on %1$s and is %2$s days old. %3$s', 'backupplus' ),
+				$issued,
+				number_format_i18n( $days ),
+				$guidance
+			),
+		);
+		return $messages;
+	}
+
+	/** Send successful disk-key rotations to the addresses enabled for backup reports. */
+	public static function notify_rotation( $config ) {
+		if ( empty( $config['issued_at'] ) || ! class_exists( 'BackupPlus_Options' ) ) {
+			return;
+		}
+		$email = BackupPlus_Options::get_backupplus_option( 'backupplus_email' );
+		if ( empty( $email ) ) {
+			return;
+		}
+		global $backupplus;
+		if ( ! is_object( $backupplus ) || ! is_callable( array( $backupplus, 'just_one_email' ) ) ) {
+			return;
+		}
+		$recipients = $backupplus->just_one_email( $email, true );
+		$recipients = is_array( $recipients ) ? $recipients : array( $recipients );
+		$addresses  = array();
+		foreach ( $recipients as $recipient ) {
+			foreach ( explode( ',', (string) $recipient ) as $address ) {
+				$address = trim( $address );
+				if ( is_email( $address ) ) {
+					$addresses[] = $address;
+				}
+			}
+		}
+		$addresses = array_unique( $addresses );
+		if ( ! $addresses ) {
+			return;
+		}
+		$issued  = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $config['issued_at'] );
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( 'BackupPlus credential key rotated for %s', 'backupplus' ),
+			wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+		);
+		$body = sprintf(
+			/* translators: 1: site URL, 2: date and time */
+			__( 'The credential encryption key for %1$s was rotated successfully. The active key was issued on %2$s. Previous keys were retained so existing credentials and jobs remain readable. Download a fresh recovery key from BackupPlus Settings.', 'backupplus' ),
+			site_url(),
+			$issued
+		);
+		foreach ( $addresses as $address ) {
+			try {
+				wp_mail( $address, $subject, $body );
+			} catch ( Exception $e ) {
+				// Mail delivery is separate from key publication and must not trigger a rotation retry.
+			}
+		}
 	}
 
 	public static function queue_retry() {

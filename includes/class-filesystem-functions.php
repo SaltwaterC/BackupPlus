@@ -22,7 +22,7 @@ class BackupPlus_Filesystem_Functions {
 	 * @param String       $format        Return format - 'text' or 'numeric'
 	 * @return String|Integer
 	 */
-	public static function recursive_directory_size( $directorieses, $exclude = array(), $basedirs = '', $format = 'text' ) {
+	public static function recursive_directory_size( $directorieses, $exclude = array(), $basedirs = '', $format = 'text', $include_private_key = false ) {
 
 		$size = 0;
 
@@ -47,7 +47,7 @@ class BackupPlus_Filesystem_Functions {
 					$size += @filesize( $dir );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 				} else {
 					$suffix = ( '' != $basedir ) ? ( ( 0 === strpos( $dir, $basedir . '/' ) ) ? substr( $dir, 1 + strlen( $basedir ) ) : '' ) : '';
-					$size  += self::recursive_directory_size_raw( $basedir, $exclude, $suffix );
+					$size  += self::recursive_directory_size_raw( $basedir, $exclude, $suffix, $include_private_key );
 				}
 			}
 		}
@@ -422,7 +422,7 @@ class BackupPlus_Filesystem_Functions {
 		return $what_to_return;
 	}
 
-	public static function recursive_directory_size_raw( $prefix_directory, &$exclude = array(), $suffix_directory = '' ) {
+	public static function recursive_directory_size_raw( $prefix_directory, &$exclude = array(), $suffix_directory = '', $include_private_key = false ) {
 
 		$directory = $prefix_directory . ( '' == $suffix_directory ? '' : '/' . $suffix_directory );
 		$size      = 0;
@@ -433,7 +433,7 @@ class BackupPlus_Filesystem_Functions {
 		if ( ! file_exists( $directory ) || ! is_dir( $directory ) || ! is_readable( $directory ) ) {
 			return -1;
 		}
-		if ( file_exists( $directory . '/.donotbackup' ) ) {
+		if ( file_exists( $directory . '/.donotbackup' ) && ( ! $include_private_key || ! BackupPlus_Credential_Key_Store::include_private_directory_in_age_backup( $directory, false ) ) ) {
 			return 0;
 		}
 
@@ -449,7 +449,7 @@ class BackupPlus_Filesystem_Functions {
 					if ( is_file( $path ) ) {
 						$size += filesize( $path );
 					} elseif ( is_dir( $path ) ) {
-						$handlesize = self::recursive_directory_size_raw( $prefix_directory, $exclude, $suffix_directory . ( '' == $suffix_directory ? '' : '/' ) . $file );
+						$handlesize = self::recursive_directory_size_raw( $prefix_directory, $exclude, $suffix_directory . ( '' == $suffix_directory ? '' : '/' ) . $file, $include_private_key );
 						if ( $handlesize >= 0 ) {
 							$size += $handlesize;
 						}
@@ -483,7 +483,7 @@ class BackupPlus_Filesystem_Functions {
 				// Might be an array
 				$basedir = $backupable_entities[ $entity ];
 				$dirs    = apply_filters( 'backupplus_dirlist_' . $entity, $basedir );
-				$size    = self::recursive_directory_size( $dirs, $backupplus->get_exclude( $entity ), $basedir, 'numeric' );
+				$size    = self::recursive_directory_size( $dirs, $backupplus->get_exclude( $entity ), $basedir, 'numeric', BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $entity );
 				if ( is_numeric( $size ) && $size > 0 ) {
 					$total_size += $size;
 				}
@@ -498,7 +498,7 @@ class BackupPlus_Filesystem_Functions {
 			// Might be an array
 			$basedir = $backupable_entities[ $entity ];
 			$dirs    = apply_filters( 'backupplus_dirlist_' . $entity, $basedir );
-			return self::recursive_directory_size( $dirs, $backupplus->get_exclude( $entity ), $basedir, $format );
+			return self::recursive_directory_size( $dirs, $backupplus->get_exclude( $entity ), $basedir, $format, BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $entity );
 		}
 
 		// Default fallback

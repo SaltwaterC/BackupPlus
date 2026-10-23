@@ -6142,6 +6142,7 @@ class BackupPlus {
 				'backupplus_include_themes',
 				'backupplus_include_uploads',
 				'backupplus_include_others',
+				'backupplus_include_credential-keys',
 				'backupplus_include_wpcore',
 				'backupplus_include_wpcore_exclude',
 				'backupplus_include_more',

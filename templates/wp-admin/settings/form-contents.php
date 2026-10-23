@@ -235,10 +235,10 @@ if ( is_string( $report_rows ) ) {
 			}
 			?>
 				<div id="cb_not_email_storage_label" <?php echo ( $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
-				<?php echo esc_html__( 'Check this box to have a basic report sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . ').'; ?>
+				<?php echo esc_html__( 'Check this box to have a basic report sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . '). ' . esc_html__( 'Credential key rotation and age alerts also use this email setting.', 'backupplus' ); ?>
 				</div>
 				<div id="cb_email_storage_label" <?php echo ( ! $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
-				<?php echo esc_html__( 'Your email backup and a report will be sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . ').'; ?>
+				<?php echo esc_html__( 'Your email backup and a report will be sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . '). ' . esc_html__( 'Credential key rotation and age alerts also use this email setting.', 'backupplus' ); ?>
 				</div>
 			</label>
 

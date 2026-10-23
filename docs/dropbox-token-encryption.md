@@ -1,14 +1,14 @@
 # Dropbox credential encryption
 
-BackupPlus creates its installation encryption key automatically when activated. Existing installations get the same setup on the first request after upgrading. Dropbox requires no manual key generation, SSH, file uploads or server configuration.
+BackupPlus creates its installation encryption key automatically when activated. Existing installations get the same setup on the first request after upgrading. Dropbox requires no manual key generation, SSH or file uploads. Hosts that manage secrets centrally can use the optional environment key source described in [stored credential encryption](credential-encryption.md).
 
 Existing Dropbox credentials are upgraded automatically once. Subsequent reads accept only authenticated ciphertext; there is no legacy or plaintext fallback. Other providers now share this cipher and key lifecycle through the [generic credential policy](credential-encryption.md). Database archive encryption uses its separate age format.
 
 ## Storage on shared hosts
 
-The default key folder is `wp-content/backupplus-private`. If it cannot be created, BackupPlus automatically tries the WordPress uploads folder instead. The key lives in `credentials.php`, outside the database, settings exports and plugin directory, so plugin updates do not replace it.
+The default key folder is `wp-content/backupplus-private`. If it cannot be created, BackupPlus automatically tries the WordPress uploads folder instead. By default, the key lives in `credentials.php`, outside the database, settings exports and plugin directory, so plugin updates do not replace it. When `BACKUPPLUS_CREDENTIAL_KEYS` is set, its Base64 encoded JSON key ring becomes the sole key source and the disk file is ignored.
 
-The folder uses owner-only permissions, Apache/IIS access rules, a PHP guard that returns an empty 404 response, an index guard and a `.donotbackup` marker. BackupPlus also explicitly excludes the key folder and files from its archive traversal. A database copy and the public source do not contain the generated key. Other backup products need their own exclusion rules.
+The folder uses owner-only permissions, Apache/IIS access rules, a PHP guard that returns an empty 404 response, an index guard and a `.donotbackup` marker. BackupPlus excludes the key folder from unencrypted file archives. When age encryption is enabled, **BackupPlus key store** appears as a separate file source, selected by default. Its archive is age-encrypted and can be restored with the rest of the backup. A database copy and the public source do not contain the generated key. Other backup products need their own exclusion rules.
 
 If hosting permissions prevent writing to both content and uploads, Settings explains the problem and lets an administrator choose a writable location and retry. BackupPlus cannot bypass hosting filesystem restrictions; it never falls back to a public key or plaintext credentials.
 
@@ -32,13 +32,15 @@ The plugin reuses its key across restarts. It never silently creates a replaceme
 
 ## Rotation
 
-BackupPlus registers an annual WordPress cron job automatically on activation and for existing installations. It runs every 365 days after key creation or the last rotation. Existing key files without rotation metadata start their first annual interval when this feature initializes. WordPress cron runs when triggered by site traffic or the site's existing system cron integration, so an inactive site may execute an overdue job later.
+For disk-managed keys, BackupPlus registers an annual WordPress cron job automatically on activation and for existing installations. It runs every 365 days after key creation or the last rotation. Existing key files without rotation metadata start their first annual interval when this feature initializes. WordPress cron runs when triggered by site traffic or the site's existing system cron integration, so an inactive site may execute an overdue job later.
 
 The job creates one new random key, makes it active, and re-encrypts all saved encrypted Dropbox access and request tokens for every stored instance. It also re-encrypts other provider secret fields and saved job snapshots. On multisite it re-encrypts credentials across the network sharing the installation key file. Each rewritten token is verified before saving; each completed site's active key ID is recorded so retries skip completed work. Previous keys stay in the file so historical backups and running jobs remain readable; rotation does not retire old keys.
 
 The shared file's rotation timestamp is checked under its lock, preventing overlapping or duplicate callbacks from generating additional keys. A retry is scheduled before changes begin, so interrupted jobs can resume. Failed writes preserve the previous credential ciphertext, retain its keys, show an error in Settings and retry the rewrite after a day using the already published key. Successful completion clears the retry and error. Deactivation removes the annual and retry jobs; reactivation resumes scheduling.
 
 You can still select **Rotate encryption key** to rotate immediately. It performs the same credential re-encryption across the network and resets the annual schedule. Download a fresh recovery copy after any rotation, including automatic rotation. On multisite, only a network administrator can trigger manual rotation.
+
+When **Settings → Reporting → Email** is enabled, successful disk-key rotations send a notice to the configured report address. Backup reports warn when the active key reaches one year old and point to WordPress cron or manual rotation if it is disk-managed. For environment-managed keys, WordPress cron is disabled and the report asks the service operator to update the environment key ring. The key age comes from the active key's `issued_at` timestamp.
 
 If exposure is suspected, disconnect/reconnect Dropbox and revoke the old tokens as well. Rotation does not revoke a token or make previously leaked database copies safe.
 
@@ -58,7 +60,7 @@ The envelope is `bpcred:v1:<key-id>:<base64(nonce || ciphertext || tag)>`, using
 
 An explicit UpdraftPlus configuration import decodes shared-key AES-CBC access tokens and old plaintext request tokens, then encrypts them with ChaCha20-Poly1305 before saving. Both structured exports and older flat Dropbox settings are supported. Invalid tokens abort the import before settings are saved.
 
-The automatic one-time upgrade also prepares and verifies replacements for all saved Dropbox instances before one options update, only while the site's upgrade-completion marker in the protected key file is absent. Deleting a database marker or placing legacy ciphertext in settings cannot reopen that decoder after completion. When restoring old settings directly from a database backup, an authorized administrator can select **Upgrade restored credentials** to deliberately run that conversion again; no CLI is required. Invalid input or a save failure retains original credentials and shows recovery instructions. The optional CLI maintenance script calls the same upgrade/rotation routines; it is not required for installation or recovery.
+The automatic one-time upgrade also prepares and verifies replacements for all saved Dropbox instances before one options update, only while the site's upgrade-completion marker is absent. The marker lives in the protected key file for disk-managed keys and in a local WordPress option for environment-managed keys. When restoring old settings directly from a database backup, an authorized administrator can select **Upgrade restored credentials** to deliberately run that conversion again; no CLI is required. Invalid input or a save failure retains original credentials and shows recovery instructions. The optional CLI maintenance script calls the same upgrade/rotation routines; it is not required for installation or recovery.
 
 Key creation, relocation and rotation use file locks; writes publish a complete guarded temporary file with an atomic rename. Concurrent first installations converge on one key. Recovery uploads never execute PHP. Managed paths are private plugin metadata, not exported settings, and cannot be changed through settings imports.
 

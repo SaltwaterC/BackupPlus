@@ -7,12 +7,17 @@ wp backupplus backup
 wp backupplus backup --type=database --local --porcelain
 wp backupplus backup --files=plugins,wpcore,custom --tables=wp_posts,wp_postmeta
 wp backupplus backup --type=files --incremental
+wp backupplus credential-keys rotate
 wp backupplus list --format=json
 wp backupplus sources --format=csv
 wp backupplus delete 1792718455 --remote --yes
 ```
 
 `backup` waits through engine retries until a terminal result, without a CLI deadline. It uses saved file selections, database selections, encryption and destinations. `--local` skips uploads. `--type` accepts `all` (the default), `files` or `database`. `--incremental` uses the engine's compatible chain selection and full-backup fallback; it requires files. Ordinary completed backups with warnings exit successfully and display warnings on stderr. Failed or interrupted jobs exit with an error. Porcelain output contains only the saved history timestamp on stdout; an increment prints its chain's base timestamp.
+
+`credential-keys rotate` uses the disk key store when no environment key is configured. It rotates the key, re-encrypts saved credentials and job snapshots, schedules retries if needed, and sends the configured key rotation email. When `BACKUPPLUS_CREDENTIAL_KEYS` is set, it instead prints a new Base64 encoded JSON key-ring value to stdout. That value has a new active key and updated `issued_at` and `rotated_at` timestamps, while retaining all previous keys. It does not change the environment or rewrite stored credentials; deploy the printed value through the service's secret configuration. Treat stdout as secret material.
+
+Rotation does not remove old keys. Disk rotations and generated environment values retain them so credentials encrypted under earlier keys remain readable; there is currently no automatic key retirement command.
 
 `--files` replaces this run's file selection. Use entity IDs from `sources`, including `wpcore`; `custom` expands the saved additional paths. `--tables` selects exact WordPress tables and preserves external database selections. Neither option changes saved settings.
 

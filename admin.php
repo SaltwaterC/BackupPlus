@@ -2727,7 +2727,7 @@ class BackupPlus_Admin {
 			} else {
 				$backupable_entities = $backupplus->get_backupable_file_entities( true );
 				$type                = isset( $matches[3] ) ? $matches[3] : '';
-				if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/', $final_file ) && 'db' != $type && ! BackupPlus_Backup_Sources::custom( $type ) && ! isset( $backupable_entities[ $type ] ) ) {
+				if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/', $final_file ) && 'db' != $type && BackupPlus_Credential_Key_Store::BACKUP_ENTITY !== $type && ! BackupPlus_Backup_Sources::custom( $type ) && ! isset( $backupable_entities[ $type ] ) ) {
 					if ( isset( $status['file'] ) ) {
 						@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 					}                   echo json_encode(
@@ -5330,7 +5330,10 @@ class BackupPlus_Admin {
 		$entities['db'] = '';
 
 		foreach ( $entities as $key => $info ) {
-			if ( ! BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", false ) ) {
+			$included = BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $key
+				? BackupPlus_Backup_Sources::included( $key )
+				: BackupPlus_Options::get_backupplus_option( "backupplus_include_$key", false );
+			if ( ! $included ) {
 				unset( $entities[ $key ] );
 			}
 		}
@@ -5340,7 +5343,10 @@ class BackupPlus_Admin {
 		foreach ( $entities as $type => $info ) {
 
 			if ( $full_backup ) {
-				if ( BackupPlus_Options::get_backupplus_option( "backupplus_include_$type", false ) && ! isset( $backup[ $type ] ) ) {
+				$included = BackupPlus_Credential_Key_Store::BACKUP_ENTITY === $type
+					? BackupPlus_Backup_Sources::included( $type )
+					: BackupPlus_Options::get_backupplus_option( "backupplus_include_$type", false );
+				if ( $included && ! isset( $backup[ $type ] ) ) {
 					return false;
 				}
 			}

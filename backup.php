@@ -3555,7 +3555,7 @@ class BackupPlus_Backup {
 		$fullpath          = realpath( $fullpath );
 		$original_fullpath = realpath( $original_fullpath );
 
-		if ( BackupPlus_Backup_Sources::exclude( false, $fullpath ) || BackupPlus_Credential_Key_Store::exclude( false, $fullpath ) ) { return true; }
+		if ( BackupPlus_Backup_Sources::exclude( false, $fullpath ) || BackupPlus_Credential_Key_Store::exclude_from_backup( false, $fullpath ) ) { return true; }
 
 		// Is the place we've ended up above the original base? That leads to infinite recursion
 		if ( ( $fullpath !== $original_fullpath && strpos( $original_fullpath, $fullpath ) === 0 ) || ( $original_fullpath == $fullpath && ( ( 1 == $startlevels && strpos( $use_path_when_storing, '/' ) !== false ) || ( 2 == $startlevels && substr_count( $use_path_when_storing, '/' ) > 1 ) ) ) ) {
@@ -3609,7 +3609,7 @@ class BackupPlus_Backup {
 				return true;
 			}
 
-			if ( file_exists( $fullpath . '/.donotbackup' ) ) {
+			if ( file_exists( $fullpath . '/.donotbackup' ) && ! BackupPlus_Credential_Key_Store::include_private_directory_in_age_backup( $fullpath ) ) {
 				$backupplus->log( "Skip directory (.donotbackup file found): $use_path_when_storing" );
 				return true;
 			}

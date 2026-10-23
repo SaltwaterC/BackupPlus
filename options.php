@@ -270,6 +270,7 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_include_themes', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_uploads', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_others', 'absint' );
+		register_setting( 'backupplus-options-group', 'backupplus_include_credential-keys', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_wpcore', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_include_wpcore_exclude', array( 'BackupPlus_Manipulation_Functions', 'strip_dirslash' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_include_more', 'absint' );

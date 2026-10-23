@@ -246,8 +246,35 @@ class BackupPlus_CLI {
 	}
 }
 
-/** Manage backups, sources, exact schedules and update protection. */
+/** Manage backups, sources, exact schedules, update protection and credential keys. */
 class BackupPlus_CLI_Command {
+	/**
+	 * Rotate disk-managed keys or generate the next environment key-ring value.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <action>
+	 * : Use rotate to rotate the active credential key.
+	 *
+	 * @subcommand credential-keys
+	 */
+	public function credential_keys( $args, $assoc ) {
+		if ( ! isset( $args[0] ) || 'rotate' !== $args[0] ) {
+			WP_CLI::error( 'Use wp backupplus credential-keys rotate.' );
+		}
+		try {
+			if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+				// This value is a secret; keep stdout to the payload for safe capture by automation.
+				WP_CLI::line( BackupPlus_Credential_Key_Store::environment_rotation_value() );
+				return;
+			}
+			BackupPlus_Credential_Key_Rotation::rotate_manually();
+			WP_CLI::success( 'Credential key rotated and saved credentials were re-encrypted.' );
+		} catch ( Throwable $error ) {
+			WP_CLI::error( $error->getMessage() );
+		}
+	}
+
 	/**
 	 * Create a backup and wait through all retries.
 	 *
@@ -406,7 +433,7 @@ class BackupPlus_CLI_Command {
 		foreach ( BackupPlus_Backup_History::get_history() as $timestamp => $backup ) {
 			$components = array();
 			foreach ( $backup as $key => $value ) {
-				if ( preg_match( '/^(db[0-9]*|plugins|themes|uploads|others|mu-plugins|wpcore|custom-[a-p]{16})$/D', $key ) && $value ) { $components[] = $key; }
+				if ( preg_match( '/^(db[0-9]*|plugins|themes|uploads|others|mu-plugins|wpcore|credential-keys|custom-[a-p]{16})$/D', $key ) && $value ) { $components[] = $key; }
 			}
 			$partial = false;
 			foreach ( isset( $backup['database_coverage'] ) ? $backup['database_coverage'] : array() as $coverage ) { $partial = $partial || ! empty( $coverage['partial'] ); }

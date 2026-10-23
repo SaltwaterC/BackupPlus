@@ -3,11 +3,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
 
-/** Installation keys live in protected files, never in options or settings exports. */
+/** Installation keys live in protected files or a read-only environment source. */
 class BackupPlus_Credential_Key_Store {
 	const HEADER            = "<?php http_response_code(404); exit; __halt_compiler();\n";
 	const FILE              = 'credentials.php';
 	const OPTION            = 'backupplus_credential_key_directory';
+	const ENVIRONMENT_KEY   = 'BACKUPPLUS_CREDENTIAL_KEYS';
+	const BACKUP_ENTITY     = 'credential-keys';
 	const ROTATION_INTERVAL = 365 * 24 * 60 * 60;
 
 	/** Activation and upgrade share this path; failed initialization can be retried. */
@@ -29,6 +31,11 @@ class BackupPlus_Credential_Key_Store {
 	}
 
 	public static function configuration() {
+		$environment_config = self::environment_configuration();
+		if ( null !== $environment_config ) {
+			return $environment_config;
+		}
+
 		$directory  = self::directory();
 		$remembered = get_site_option( self::OPTION, '' );
 		if ( $directory && $remembered === $directory ) {
@@ -91,13 +98,15 @@ class BackupPlus_Credential_Key_Store {
 		if ( is_wp_error( $backupplus->ensure_phpseclib() ) ) {
 			throw new RuntimeException( 'Encryption is unavailable on this host.' );
 		}
-		$id = bin2hex( \phpseclib3\Crypt\Random::string( 8 ) );
+		$id  = bin2hex( \phpseclib3\Crypt\Random::string( 8 ) );
+		$now = time();
 		return array(
 			'active'                    => $id,
 			'keys'                      => array( $id => base64_encode( \phpseclib3\Crypt\Random::string( 32 ) ) ),
 			'upgraded_sites'            => array(),
 			'credential_upgraded_sites' => array(),
-			'rotated_at'                => time(),
+			'rotated_at'                => $now,
+			'issued_at'                 => $now,
 		);
 	}
 
@@ -129,13 +138,199 @@ class BackupPlus_Credential_Key_Store {
 		if ( ! is_int( $rotated_at ) || $rotated_at < 0 ) {
 			throw new RuntimeException( 'The recovery key file is invalid.' );
 		}
+		// Older key files only recorded the latest rotation. That date is the
+		// best available estimate of when their active key was issued.
+		$issued_at = array_key_exists( 'issued_at', $config ) ? $config['issued_at'] : $rotated_at;
+		if ( ! is_int( $issued_at ) || $issued_at < 0 ) {
+			throw new RuntimeException( 'The recovery key file is invalid.' );
+		}
 		return array(
 			'active'                    => $config['active'],
 			'keys'                      => $config['keys'],
 			'upgraded_sites'            => $sites,
 			'credential_upgraded_sites' => $credential_sites,
 			'rotated_at'                => $rotated_at,
+			'issued_at'                 => $issued_at,
 		);
+	}
+
+	/** True when the key source is explicitly controlled by the PHP environment. */
+	public static function environment_managed() {
+		return false !== getenv( self::ENVIRONMENT_KEY );
+	}
+
+	/** Encode the same validated key structure used by the protected file. */
+	public static function encode_environment( $config ) {
+		$json = json_encode( self::validate( $config ) );
+		if ( false === $json ) {
+			throw new RuntimeException( 'The environment key configuration could not be encoded.' );
+		}
+		return base64_encode( $json );
+	}
+
+	/** Generate a new environment key-ring value without changing the process environment. */
+	public static function environment_rotation_value() {
+		if ( ! self::environment_managed() ) {
+			throw new RuntimeException( 'Environment-managed credential keys are not configured.' );
+		}
+		$config = self::configuration();
+		$new    = self::new_configuration();
+		while ( isset( $config['keys'][ $new['active'] ] ) ) {
+			$new = self::new_configuration();
+		}
+		$config['active']     = $new['active'];
+		$config['keys']       = array_merge( $config['keys'], $new['keys'] );
+		$config['rotated_at'] = $new['rotated_at'];
+		$config['issued_at']  = $new['issued_at'];
+		return self::encode_environment( $config );
+	}
+
+	/** Read a read-only Base64(JSON) key ring. Never fall back to the key file. */
+	private static function environment_configuration() {
+		$encoded = getenv( self::ENVIRONMENT_KEY );
+		if ( false === $encoded ) {
+			return null;
+		}
+		$encoded = trim( $encoded );
+		$json    = '' !== $encoded ? base64_decode( $encoded, true ) : false;
+		if ( false === $json || base64_encode( $json ) !== $encoded || strlen( $json ) > 1048576 ) {
+			throw new RuntimeException( 'The ' . self::ENVIRONMENT_KEY . ' environment variable must contain a Base64 encoded JSON credential key configuration.' );
+		}
+		$decoded = json_decode( $json, true );
+		$required = array( 'active', 'keys', 'upgraded_sites', 'credential_upgraded_sites', 'rotated_at', 'issued_at' );
+		if ( ! is_array( $decoded ) || array_diff( $required, array_keys( $decoded ) ) ) {
+			throw new RuntimeException( 'The ' . self::ENVIRONMENT_KEY . ' environment variable must contain the complete credential key structure, including issued_at.' );
+		}
+		$config = self::validate( $decoded );
+		if ( 0 === $config['issued_at'] ) {
+			throw new RuntimeException( 'The ' . self::ENVIRONMENT_KEY . ' environment variable must contain a valid issued_at timestamp.' );
+		}
+		return $config;
+	}
+
+	private static function require_file_managed() {
+		if ( self::environment_managed() ) {
+			throw new RuntimeException( 'Credential keys are managed by the ' . self::ENVIRONMENT_KEY . ' environment variable. Update the service configuration to rotate them.' );
+		}
+	}
+
+	/** Whether the current backup job writes every archive with age encryption. */
+	public static function age_encryption_enabled() {
+		global $backupplus;
+		$config = is_object( $backupplus ) && is_callable( array( $backupplus, 'get_job_option' ) )
+			? $backupplus->get_job_option( 'backupplus_database_encryption' )
+			: BackupPlus_Options::get_backupplus_option( 'backupplus_database_encryption', array() );
+		return is_array( $config ) && isset( $config['mode'] ) && 'age' === $config['mode'];
+	}
+
+	/** Resolve the existing protected folder that should be offered as a backup source. */
+	public static function backup_directory() {
+		foreach ( self::private_directories() as $directory ) {
+			if ( is_dir( $directory ) ) {
+				return $directory;
+			}
+		}
+		return '';
+	}
+
+	/** Add the key folder as its own source only when age encryption can protect it. */
+	public static function add_backup_entity( $entities, $full_info ) {
+		if ( ! self::age_encryption_enabled() || ! ( $directory = self::backup_directory() ) ) {
+			return $entities;
+		}
+		$entities[ self::BACKUP_ENTITY ] = $full_info ? array(
+			'path'        => $directory,
+			'description' => __( 'BackupPlus key store', 'backupplus' ),
+			'htmltitle'   => $directory,
+		) : $directory;
+		return $entities;
+	}
+
+	/** Private key folders used by this installation, including default locations without metadata. */
+	private static function private_directories() {
+		static $cache = array();
+		$managed = self::directory();
+		$blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 0;
+		$key     = $blog_id . '|' . $managed . '|' . ( defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : '' );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
+		}
+
+		$directories = array();
+		if ( $managed ) {
+			$directories[] = $managed;
+		}
+		if ( defined( 'WP_CONTENT_DIR' ) ) {
+			$directories[] = WP_CONTENT_DIR . '/backupplus-private';
+		}
+		if ( function_exists( 'wp_upload_dir' ) ) {
+			$uploads = wp_upload_dir( null, false );
+			if ( empty( $uploads['error'] ) && ! empty( $uploads['basedir'] ) ) {
+				$directories[] = $uploads['basedir'] . '/backupplus-private';
+			}
+		}
+		$normalized_directories = array();
+		foreach ( array_unique( $directories ) as $directory ) {
+			$normalized_directories[] = self::normalized_path( $directory );
+		}
+		$cache[ $key ] = array_unique( $normalized_directories );
+		return $cache[ $key ];
+	}
+
+	private static function normalized_path( $path ) {
+		return untrailingslashit( str_replace( '\\', '/', @realpath( $path ) ?: $path ) );
+	}
+
+	/** Match the managed key folder and all of its contents, even without saved location metadata. */
+	public static function is_private_path( $path ) {
+		$path = self::normalized_path( $path );
+		foreach ( self::private_directories() as $directory ) {
+			if ( $path === $directory || 0 === strpos( $path, $directory . '/' ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The archive walker may ignore this directory's .donotbackup marker only for age-encrypted jobs. */
+	public static function include_private_directory_in_age_backup( $path, $require_backup_entity = true ) {
+		if ( ! self::age_encryption_enabled() ) {
+			return false;
+		}
+		if ( $require_backup_entity ) {
+			global $backupplus;
+			$status = is_object( $backupplus ) && is_callable( array( $backupplus, 'jobdata_get' ) )
+				? $backupplus->jobdata_get( 'filecreating_substatus', array() )
+				: array();
+			if ( ! isset( $status['e'] ) || self::BACKUP_ENTITY !== $status['e'] ) {
+				return false;
+			}
+		}
+		$path = self::normalized_path( $path );
+		foreach ( self::private_directories() as $directory ) {
+			if ( $path === $directory ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Keep the private folder out of other sources and permit its dedicated age-encrypted source. */
+	public static function exclude_from_backup( $excluded, $path ) {
+		if ( $excluded ) {
+			return true;
+		}
+		if ( self::age_encryption_enabled() ) {
+			if ( self::is_private_path( $path ) ) {
+				global $backupplus;
+				$status = is_object( $backupplus ) && is_callable( array( $backupplus, 'jobdata_get' ) )
+					? $backupplus->jobdata_get( 'filecreating_substatus', array() )
+					: array();
+				return ! isset( $status['e'] ) || self::BACKUP_ENTITY !== $status['e'];
+			}
+			return false;
+		}
+		return self::exclude( false, $path );
 	}
 
 	public static function decode( $contents ) {
@@ -154,10 +349,26 @@ class BackupPlus_Credential_Key_Store {
 		if ( false === $contents ) {
 			throw new RuntimeException( 'The encryption key file cannot be read. Restore your recovery key in BackupPlus Settings.' );
 		}
-		return self::decode( $contents );
+		$config = self::decode( $contents );
+		$stored = json_decode( substr( $contents, strlen( self::HEADER ) ), true );
+		if ( is_array( $stored ) && ! array_key_exists( 'issued_at', $stored ) ) {
+			// Older key rings approximate issuance from their last rotation date.
+			// Persist the added field when possible without making legacy reads fail
+			// on a host where the existing key file is read-only.
+			try {
+				self::write_file( $path, $config );
+			} catch ( Exception $e ) {
+				// Keep using the validated legacy configuration if only this rewrite failed.
+			}
+		}
+		return $config;
 	}
 
 	public static function read( $directory ) {
+		$environment_config = self::environment_configuration();
+		if ( null !== $environment_config ) {
+			return $environment_config;
+		}
 		if ( ! @is_file( $directory . '/' . self::FILE ) ) {
 			throw new RuntimeException( 'The encryption key file is missing. Restore your recovery key in BackupPlus Settings.' );
 		}
@@ -272,6 +483,7 @@ class BackupPlus_Credential_Key_Store {
 	}
 
 	public static function relocate( $directory ) {
+		self::require_file_managed();
 		if ( defined( 'BACKUPPLUS_CREDENTIAL_KEY_DIR' ) ) {
 			throw new RuntimeException( 'The key location is controlled by your hosting configuration.' );
 		}
@@ -338,6 +550,9 @@ class BackupPlus_Credential_Key_Store {
 
 	public static function rotation_time() {
 		$config = self::configuration();
+		if ( self::environment_managed() ) {
+			return $config['rotated_at'];
+		}
 		if ( $config['rotated_at'] ) {
 			return $config['rotated_at'];
 		}
@@ -347,6 +562,7 @@ class BackupPlus_Credential_Key_Store {
 				$config = self::read_file( $path );
 				if ( ! $config['rotated_at'] ) {
 					$config['rotated_at'] = time();
+					$config['issued_at']  = $config['issued_at'] ?: $config['rotated_at'];
 					self::write_file( $path, $config );
 				}
 				return $config['rotated_at'];
@@ -355,6 +571,7 @@ class BackupPlus_Credential_Key_Store {
 	}
 
 	public static function rotate( $only_if_due = false ) {
+		self::require_file_managed();
 		self::configuration();
 		return self::with_lock(
 			self::directory(),
@@ -365,6 +582,7 @@ class BackupPlus_Credential_Key_Store {
 				$config = self::read_file( $path );
 				if ( $only_if_due && ! $config['rotated_at'] ) {
 					$config['rotated_at'] = time();
+					$config['issued_at']  = $config['issued_at'] ?: $config['rotated_at'];
 					self::write_file( $path, $config );
 					return $config;
 				}
@@ -375,6 +593,7 @@ class BackupPlus_Credential_Key_Store {
 				$config['active']     = $new['active'];
 				$config['keys']       = array_merge( $config['keys'], $new['keys'] ); // Keep historical and in-flight jobs readable.
 				$config['rotated_at'] = $new['rotated_at'];
+				$config['issued_at']  = $new['issued_at'];
 				self::write_file( $path, $config );
 				return $config;
 			}
@@ -383,6 +602,7 @@ class BackupPlus_Credential_Key_Store {
 
 	/** Explicit recovery when no key copy survives; never overwrite an existing file. */
 	public static function replace_missing( $target_directory = '' ) {
+		self::require_file_managed();
 		$old = self::directory();
 		if ( $old && @file_exists( $old . '/' . self::FILE ) ) {
 			throw new RuntimeException( 'An encryption key file already exists. Restore a recovery copy or rotate the existing key instead.' );
@@ -416,6 +636,7 @@ class BackupPlus_Credential_Key_Store {
 	}
 
 	public static function restore( $contents, $target_directory = '' ) {
+		self::require_file_managed();
 		$imported         = self::decode( $contents );
 		$directory        = self::directory();
 		$target_directory = trim( $target_directory );
@@ -452,6 +673,7 @@ class BackupPlus_Credential_Key_Store {
 				// credentials written since that recovery copy was downloaded.
 				$config['active']                    = $imported['active'];
 				$config['rotated_at']                = $imported['rotated_at'];
+				$config['issued_at']                 = $imported['issued_at'];
 				$config['upgraded_sites']            = $config['upgraded_sites'] + $imported['upgraded_sites'];
 				$config['credential_upgraded_sites'] = $config['credential_upgraded_sites'] + $imported['credential_upgraded_sites'];
 				self::verify_credentials( $config );
@@ -496,10 +718,29 @@ class BackupPlus_Credential_Key_Store {
 	public static function upgrade_complete( $scope = 'legacy_tokens' ) {
 		$config = self::configuration();
 		$field  = 'legacy_tokens' === $scope ? 'upgraded_sites' : 'credential_upgraded_sites';
+		if ( self::environment_managed() ) {
+			$local = get_option( 'backupplus_environment_credential_upgrades', array() );
+			return ! empty( $config[ $field ][ get_current_blog_id() ] ) || ( isset( $local[ $scope ] ) && ! empty( $local[ $scope ][ get_current_blog_id() ] ) );
+		}
 		return ! empty( $config[ $field ][ get_current_blog_id() ] );
 	}
 
 	public static function mark_upgraded( $scope = 'legacy_tokens' ) {
+		if ( self::environment_managed() ) {
+			$upgrades = get_option( 'backupplus_environment_credential_upgrades', array() );
+			if ( ! is_array( $upgrades ) ) {
+				$upgrades = array();
+			}
+			if ( ! isset( $upgrades[ $scope ] ) || ! is_array( $upgrades[ $scope ] ) ) {
+				$upgrades[ $scope ] = array();
+			}
+			$upgrades[ $scope ][ get_current_blog_id() ] = true;
+			update_option( 'backupplus_environment_credential_upgrades', $upgrades, false );
+			if ( get_option( 'backupplus_environment_credential_upgrades' ) !== $upgrades ) {
+				throw new RuntimeException( 'The credential upgrade completion could not be saved.' );
+			}
+			return;
+		}
 		self::with_lock(
 			self::directory(),
 			function ( $path ) use ( $scope ) {
