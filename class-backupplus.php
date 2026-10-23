@@ -138,6 +138,7 @@ class BackupPlus {
 		add_action( 'backupplus_backupnow_backup', array( $this, 'backupnow_files' ) );
 		add_action( 'backupplus_backupnow_backup_database', array( $this, 'backupnow_database' ) );
 		add_action( 'backupplus_backupnow_backup_all', array( $this, 'backup_all' ) );
+		add_action( 'backupplus_backupnow_start', array( $this, 'dispatch_backupnow' ), 10, 2 );
 
 		// backup_all as an action is legacy (Oct 2013) - there may be some people who wrote cron scripts to use it
 		add_action( 'backupplus_backup_all', array( $this, 'backup_all' ) );
@@ -3183,6 +3184,21 @@ class BackupPlus {
 	public function backupnow_database( $options = array() ) {
 		$skip_cloud = empty( $options['nocloud'] ) ? false : true;
 		return $this->boot_backup( 0, 1, false, false, ( $skip_cloud ) ? 'none' : false, $options );
+	}
+
+	/** Run a queued manual backup from a separate WP-Cron request. */
+	public function dispatch_backupnow( $event, $options ) {
+		$allowed_events = array(
+			'backupplus_backupnow_backup',
+			'backupplus_backupnow_backup_database',
+			'backupplus_backupnow_backup_all',
+		);
+
+		if ( ! in_array( $event, $allowed_events, true ) || ! is_array( $options ) ) {
+			return;
+		}
+
+		do_action( $event, $options );
 	}
 
 	/**

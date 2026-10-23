@@ -41,7 +41,7 @@ One-off backups, age-based expiry and scheduled deletion of selected backups are
 
 ## WordPress cron
 
-WordPress starts scheduled tasks when the site receives a request. On a quiet site, backups and cleanup can start late. Optionally, see [Hooking WP-Cron into the system task scheduler](https://developer.wordpress.org/plugins/cron/hooking-wp-cron-into-the-system-task-scheduler/). It explains how to disable request-triggered cron and run `wp-cron.php` from the server's task scheduler. For example, use a crontab entry running every five minutes:
+**Backup Now** queues a one-off WP-Cron event and returns the admin request while a separate cron request starts the backup. The web server needs another PHP worker to serve admin and site requests during that job; a single-worker server serializes them. WordPress starts scheduled tasks when the site receives a request. On a quiet site, backups and cleanup can start late. For predictable starts, see [Hooking WP-Cron into the system task scheduler](https://developer.wordpress.org/plugins/cron/hooking-wp-cron-into-the-system-task-scheduler/). It explains how to disable request-triggered cron and run `wp-cron.php` from the server's task scheduler. For example, use a crontab entry running every five minutes:
 
 ```sh
 */5 * * * * curl -fsS https://example.com/wp-cron.php?doing_wp_cron >/dev/null

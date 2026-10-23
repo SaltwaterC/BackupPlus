@@ -15,6 +15,7 @@ export WP_ADMIN_USER=${WP_ADMIN_USER:-admin}
 export WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD:-backupplus_dev}
 export WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL:-admin@example.test}
 export DEV_LOGIN_TOKEN=${DEV_LOGIN_TOKEN:-backupplus-local-dev-login}
+export PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-4}
 
 host_ca_bundle=/etc/ssl/certs/host-ca-certificates.crt
 if [[ ! -r "$host_ca_bundle" ]]; then
@@ -40,7 +41,7 @@ fi
 mkdir -p "$wp_path" "$wp_path/wp-content/plugins" "$mu_plugins"
 
 if [[ ! -f "$wp_path/wp-includes/version.php" ]]; then
-	wp core download --path="$wp_path" --skip-content
+	wp core download --path="$wp_path"
 fi
 
 ln -sfn /workspace/backupplus "$plugin_link"
@@ -106,6 +107,26 @@ if ! wp core is-installed --path="$wp_path" >/dev/null 2>&1; then
 		--admin_password="$WP_ADMIN_PASSWORD" \
 		--admin_email="$WP_ADMIN_EMAIL" \
 		--skip-email
+fi
+
+# Keep the front end available when an existing development volume has no working theme.
+if ! wp theme list --status=active --field=name --path="$wp_path" | grep -q .; then
+	if ! wp theme is-installed twentytwentyfive --path="$wp_path" >/dev/null 2>&1; then
+		if wp_version=$(wp core version --path="$wp_path"); then
+			if ! timeout 30 wp core download --path="$wp_path" --version="$wp_version" --force; then
+				echo "Warning: Could not restore the bundled themes from the WordPress core package." >&2
+			fi
+		else
+			echo "Warning: Could not restore the bundled themes from the WordPress core package." >&2
+		fi
+	fi
+	if wp theme is-installed twentytwentyfive --path="$wp_path" >/dev/null 2>&1; then
+		if ! wp theme activate twentytwentyfive --path="$wp_path"; then
+			echo "Warning: Could not activate Twenty Twenty-Five; the WordPress front end may have no active theme." >&2
+		fi
+	else
+		echo "Warning: Twenty Twenty-Five is unavailable; the WordPress front end may have no active theme." >&2
+	fi
 fi
 
 wp plugin activate backupplus --path="$wp_path"

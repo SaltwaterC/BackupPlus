@@ -1,6 +1,6 @@
 # WordPress development environment
 
-This Podman setup starts WordPress and MariaDB from Ubuntu 26.04 containers. It downloads WordPress core into a persistent volume, creates the site on first launch, mounts this checkout as the `backupplus` plugin, and activates it automatically. PHP's built-in development server serves the site, and WP-CLI is available as `wp` inside the `wordpress` container.
+This Podman setup starts WordPress and MariaDB from Ubuntu 26.04 containers. It downloads WordPress core into a persistent volume, creates the site on first launch, mounts this checkout as the `backupplus` plugin, and activates it automatically. PHP's built-in development server serves the site with four workers by default, so a long WP-Cron backup request does not monopolize the single-worker development server. Change `PHP_CLI_SERVER_WORKERS` in `.env` to adjust the worker count. WP-CLI is available as `wp` inside the `wordpress` container.
 
 ## Start
 
@@ -23,7 +23,7 @@ The checkout is mounted read-only as the plugin source, so edits to BackupPlus f
 
 ## Configuration
 
-Copy `.env.example` to `.env` and change the local database and administrator credentials if desired. Changing `WP_PORT` also updates the site URL automatically; set `WP_URL` only if you want to use a custom host name. The default development login token is intentionally convenient and must only be used with the loopback-bound development server.
+Copy `.env.example` to `.env` and change the local database and administrator credentials if desired. Changing `WP_PORT` also updates the site URL automatically; set `WP_URL` only if you want to use a custom host name. If an existing site volume has no active theme, startup installs and activates Twenty Twenty-Five. The default development login token is intentionally convenient and must only be used with the loopback-bound development server.
 
 The database and application user are reconciled from `.env` whenever the MariaDB container starts. Keep `DB_ROOT_PASSWORD` unchanged for an existing database volume; changing it requires recreating that volume with `./dev/down.sh --volumes`.
 

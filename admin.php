@@ -2392,21 +2392,6 @@ class BackupPlus_Admin {
 		// The call to backup_time_nonce() allows us to know the nonce in advance, and return it
 		$nonce = $backupplus->backup_time_nonce();
 
-		$msg = array(
-			'nonce' => $nonce,
-			'm'     => apply_filters( 'backupplus_backupnow_start_message', '<strong>' . __( 'Start backup', 'backupplus' ) . ':</strong> ' . htmlspecialchars( __( 'OK.', 'backupplus' ) . ' ' . __( 'You should soon see activity in the "Last log message" field below.', 'backupplus' ) ), $nonce ),
-		);
-
-		if ( ! empty( $request['backup_nonce'] ) && 'current' != $request['backup_nonce'] ) {
-			$msg['nonce'] = $request['backup_nonce'];
-		}
-
-		if ( $close_connection_callable && is_callable( $close_connection_callable ) ) {
-			call_user_func( $close_connection_callable, $msg );
-		} else {
-			$backupplus->close_browser_connection( json_encode( $msg ) );
-		}
-
 		$options = array(
 			'nocloud'   => $backupnow_nocloud,
 			'use_nonce' => $nonce,
@@ -2430,8 +2415,35 @@ class BackupPlus_Admin {
 		$options['always_keep'] = ! empty( $request['always_keep'] );
 
 		$event = empty( $request['backupnow_nofiles'] ) ? ( empty( $request['backupnow_nodb'] ) ? 'backupplus_backupnow_backup_all' : 'backupplus_backupnow_backup' ) : 'backupplus_backupnow_backup_database';
+		$options = apply_filters( 'backupplus_backupnow_options', $options, $request );
+		if ( ! is_array( $options ) ) {
+			return new WP_Error( 'invalid_backup_options', __( 'The backup options could not be prepared.', 'backupplus' ) );
+		}
 
-		do_action( $event, apply_filters( 'backupplus_backupnow_options', $options, $request ) );
+		// Keep the event arguments unique so separate clicks are not merged by WP-Cron's duplicate-event check.
+		$queue_id = bin2hex( random_bytes( 16 ) );
+		if ( ! wp_schedule_single_event( time(), 'backupplus_backupnow_start', array( $event, $options, $queue_id ) ) ) {
+			return new WP_Error( 'backup_queue_failed', __( 'The backup could not be queued. Please try again.', 'backupplus' ) );
+		}
+
+		$msg = array(
+			'nonce' => $nonce,
+			'm'     => apply_filters( 'backupplus_backupnow_start_message', '<strong>' . __( 'Backup queued', 'backupplus' ) . ':</strong> ' . htmlspecialchars( __( 'You should soon see activity in the "Last log message" field below.', 'backupplus' ) ), $nonce ),
+		);
+
+		if ( ! empty( $request['backup_nonce'] ) && 'current' != $request['backup_nonce'] ) {
+			$msg['nonce'] = $request['backup_nonce'];
+		}
+
+		if ( $close_connection_callable && is_callable( $close_connection_callable ) ) {
+			call_user_func( $close_connection_callable, $msg );
+		} else {
+			$backupplus->close_browser_connection( json_encode( $msg ) );
+		}
+
+		spawn_cron();
+
+		return true;
 	}
 
 	/**

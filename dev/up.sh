@@ -13,6 +13,7 @@ if [[ -f .env ]]; then
 fi
 
 export WP_PORT=${WP_PORT:-8080}
+export PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-4}
 export WP_URL=${WP_URL:-http://localhost:${WP_PORT}}
 export WP_SITE_TITLE=${WP_SITE_TITLE:-BackupPlus Development}
 export WP_ADMIN_USER=${WP_ADMIN_USER:-admin}
@@ -98,6 +99,7 @@ podman run --detach \
 	--env DB_USER="$DB_USER" \
 	--env DB_PASSWORD="$DB_PASSWORD" \
 	--env WP_ENVIRONMENT_TYPE=local \
+	--env PHP_CLI_SERVER_WORKERS="$PHP_CLI_SERVER_WORKERS" \
 	--env WP_URL="$WP_URL" \
 	--env WP_SITE_TITLE="$WP_SITE_TITLE" \
 	--env WP_ADMIN_USER="$WP_ADMIN_USER" \

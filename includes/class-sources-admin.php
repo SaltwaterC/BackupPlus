@@ -4,7 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 class BackupPlus_Sources_Admin {
 	public static function register() {
 		add_action( 'wp_ajax_backupplus_source_tables', array( __CLASS__, 'tables_ajax' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		// The BackupPlus admin stylesheet is enqueued at priority 99999.
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ), 100000 );
 		add_action(
 			'backupplus_restore_form_wpcore',
 			function () {
@@ -13,6 +14,16 @@ class BackupPlus_Sources_Admin {
 		);
 	}
 	public static function assets() {
+		global $pagenow;
+		$page = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'page' );
+		if (
+			BackupPlus_Options::admin_page() !== $pagenow ||
+			'backupplus' !== $page ||
+			! BackupPlus_Options::user_can_manage()
+		) {
+			return;
+		}
+
 		wp_enqueue_style( 'backupplus-sources', BACKUPPLUS_URL . '/css/backupplus-sources.css', array( 'backupplus-admin-css' ), '1' );
 		wp_enqueue_script( 'backupplus-sources', BACKUPPLUS_URL . '/js/backupplus-sources.js', array( 'jquery' ), '1', true );
 		wp_localize_script(
