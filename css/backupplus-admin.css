@@ -473,9 +473,19 @@ button.ui-dialog-titlebar-close:before {
 
 .backupplus-delete-chain-warning {
 	margin: 0 0 12px;
-	padding: 4px 12px;
-	border-left: 4px solid #D63638;
+	padding: 10px 14px;
+	border: 1px solid #D63638;
+	border-left-width: 5px;
 	background: #FCF0F1;
+	color: #1D2327;
+}
+
+.backupplus-delete-chain-warning p:first-child {
+	margin-top: 0;
+}
+
+.backupplus-delete-chain-warning strong {
+	color: #B32D2E;
 }
 
 .backupplus-delete-chain-warning ul {

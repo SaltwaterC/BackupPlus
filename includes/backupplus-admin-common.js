@@ -2562,7 +2562,7 @@ jQuery(function($) {
 	backupplus_delete_modal_buttons[backupplus_i18n.cancel] = function() {
  jQuery(this).dialog("close"); };
 	jQuery("#backupplus-delete-modal").dialog({
-		autoOpen: false, resizeOnWindowResize: true, scrollWithViewport: true, resizeAccordingToViewport: true, useContentSize: false,
+		autoOpen: false, width: 560, height: 360, resizeOnWindowResize: true, scrollWithViewport: true, resizeAccordingToViewport: true, useContentSize: false,
 		open: function(event, ui) {
 			$(this).css('minHeight', 83);
 		},
