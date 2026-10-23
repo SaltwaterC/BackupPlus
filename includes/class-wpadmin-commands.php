@@ -86,6 +86,44 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		// return array('response' => $response['response'], 'status' => $response['status'], 'log' => $response['log'] );
 	}
 
+	/** Nonce/capability protected by the wp-admin command dispatcher. No secrets accepted. */
+	public function restore_decryption( $params ) {
+		try {
+			$operation = isset( $params['operation'] ) ? $params['operation'] : '';
+			$ticket    = isset( $params['ticket'] ) ? $params['ticket'] : '';
+			if ( 'manifest' === $operation ) {
+				$timestamp = (int) $params['timestamp'];
+				$backups   = BackupPlus_Backup_History::get_history();
+				if ( ! isset( $backups[ $timestamp ] ) || ! isset( $params['entities'] ) || ! is_array( $params['entities'] ) ) {
+					throw new \RuntimeException( 'Invalid backup selection.' );
+				}
+				return BackupPlus_Age_Restore::manifest( $backups[ $timestamp ], $timestamp, $params['entities'], $ticket );
+			}
+			if ( 'discard' === $operation ) {
+				BackupPlus_Age_Restore::discard( $ticket );
+				return array( 'discarded' => true );
+			}
+			if ( 'download' === $operation ) {
+				$path = BackupPlus_Age_Restore::download( $ticket, $params['file'] );
+				nocache_headers();
+				header( 'Content-Type: application/octet-stream' );
+				header( 'Content-Length: ' . filesize( $path ) );
+				readfile( $path );
+				die;
+			}
+			if ( 'upload' === $operation ) {
+				if ( ! isset( $params['chunk'] ) || ! is_string( $params['chunk'] ) || strlen( $params['chunk'] ) > 699052 ) {
+					throw new \RuntimeException( 'Invalid upload chunk.' );
+				}
+				$bytes = base64_decode( $params['chunk'], true );
+				return BackupPlus_Age_Restore::upload( $ticket, $params['file'], $params['offset'], $bytes, isset( $params['size'] ) ? $params['size'] : null, isset( $params['hash'] ) ? $params['hash'] : '' );
+			}
+		} catch ( \Throwable $e ) {
+			return array( 'error' => __( 'Could not transfer the restore archives. Retry the restore preparation.', 'backupplus' ) );
+		}
+		return array( 'error' => __( 'Invalid restore operation.', 'backupplus' ) );
+	}
+
 	public function restore_alldownloaded( $params ) {
 
 		$backups        = BackupPlus_Backup_History::get_history();
@@ -130,12 +168,12 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 			$age_ticket = '';
 			$info       = array();
 			try {
-				$age_ticket                   = BackupPlus_Age_Restore::prepare( $backups[ $timestamp ], $timestamp, isset( $res['backupplus_age_identity'] ) ? $res['backupplus_age_identity'] : '', isset( $res['backupplus_age_key_passphrase'] ) ? $res['backupplus_age_key_passphrase'] : '', isset( $res['backupplus_age_ticket'] ) ? $res['backupplus_age_ticket'] : '', array_keys( $elements ), isset( $res['backupplus_encryptionphrase'] ) ? $res['backupplus_encryptionphrase'] : '' );
+				$age_ticket                   = BackupPlus_Age_Restore::prepare( $backups[ $timestamp ], $timestamp, isset( $res['backupplus_age_ticket'] ) ? $res['backupplus_age_ticket'] : '', array_keys( $elements ) );
 				$res['backupplus_age_ticket'] = $age_ticket;
 			} catch ( Exception $e ) {
-				$err[] = __( 'Could not prepare the encrypted backup archives. Check the identity and passphrases, then try again.', 'backupplus' );
+				$err[] = __( 'Decrypt and upload the selected encrypted archives in your browser, then try again.', 'backupplus' );
 			} catch ( Throwable $e ) {
-				$err[] = __( 'Could not prepare the encrypted backup archives. Check the identity and passphrases, then try again.', 'backupplus' );
+				$err[] = __( 'Decrypt and upload the selected encrypted archives in your browser, then try again.', 'backupplus' );
 			}
 			unset( $res['backupplus_age_identity'], $res['backupplus_age_key_passphrase'] );
 			if ( ! $err ) {

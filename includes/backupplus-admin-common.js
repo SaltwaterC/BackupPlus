@@ -1615,7 +1615,8 @@ jQuery(document).ajaxError(function(event, jqxhr, settings, exception) {
 	}
 });
 
-function backupplus_restorer_checkstage2(doalert) {
+async function backupplus_restorer_checkstage2(doalert) {
+	if (window.backupplus_restore_preparing) return;
 	// How many left?
 	var stilldownloading = jQuery('#ud_downloadstatus2 .file').length;
 	if (stilldownloading > 0) {
@@ -1625,6 +1626,25 @@ function backupplus_restorer_checkstage2(doalert) {
 	// Allow pressing 'Restore' to proceed
 	jQuery('.backupplus-restore--next-step').prop('disabled', true);
 	jQuery('#backupplus-restore-modal-stage2a').html('<span class="dashicons dashicons-update rotate"></span> '+backupplus_i18n.preparing_backup_files);
+	window.backupplus_restore_preparing = true;
+	var prepared = false;
+	try {
+		prepared = await window.backupplus_prepare_restore();
+	} catch (error) {
+		jQuery('#backupplus-restore-modal-stage2a').text(backupplus_decryption.errors.TRANSFER_FAILED);
+	} finally {
+		window.backupplus_restore_preparing = false;
+	}
+	if (!prepared) {
+		if (jQuery('.backupplus_restore_container').is(':visible')) {
+			backupplus_restore_stage = 1;
+			jQuery('#backupplus-restore-modal-stage1').show();
+			jQuery('.backupplus-restore--stages li').removeClass('active').first().addClass('active');
+			jQuery('.backupplus-restore--next-step').text(jQuery('.backupplus-restore--next-step').data('default-text'));
+		}
+		jQuery('.backupplus-restore--next-step').prop('disabled', false);
+		return;
+	}
 	backupplus_send_command('restore_alldownloaded', {
 		timestamp: jQuery('#backupplus_restore_timestamp').val(),
 		restoreopts: jQuery('#backupplus_restore_form').serialize()
@@ -2565,6 +2585,7 @@ jQuery(function($) {
 			}.bind(this));
 
 			this.default_next_text = $('.backupplus-restore--next-step').eq(0).text();
+			$('.backupplus-restore--next-step').data('default-text', this.default_next_text);
 
 			// Setup next button event
 			$('.backupplus-restore--next-step').on('click', function(e) {
@@ -2573,6 +2594,7 @@ jQuery(function($) {
 			}.bind(this));
 		},
 		close: function() {
+			if (window.backupplus_cancel_restore_decryption) window.backupplus_cancel_restore_decryption();
 			$('.backupplus_restore_container').hide();
 			$('body').removeClass('backupplus-modal-is-opened');
 		},

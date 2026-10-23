@@ -50,97 +50,167 @@ class BackupPlus_Age_Restore {
 		return false;
 	}
 
-	/** Called only by the existing authorized, nonce-protected preflight command. */
-	public static function prepare( $backup, $timestamp, $identity, $passphrase, $ticket = '', $entities = array( 'db' ), $archive_passphrase = '' ) {
+	/** Require complete browser uploads for every selected encrypted archive. */
+	public static function prepare( $backup, $timestamp, $ticket = '', $entities = array( 'db' ) ) {
+		self::authorize();
 		global $backupplus;
+		$encrypted = false;
+		foreach ( self::archives( $backup, $entities ) as $entry ) {
+			$file = $entry[1];
+			if ( ! is_string( $file ) || $file !== basename( $file ) ) {
+				throw new \RuntimeException( 'Invalid archive filename.' );
+			}
+			if ( BackupPlus_Encryption::is_file_encrypted( $file ) ) {
+				$encrypted = true;
+				if ( ! self::file( $backupplus->backups_dir_location() . '/' . $file, $ticket, '', $timestamp ) ) {
+					throw new \RuntimeException( 'Decrypt and upload the selected archives in your browser first.' );
+				}
+			}
+		}
+		return $encrypted ? $ticket : '';
+	}
+
+	private static function authorize() {
 		if ( ! BackupPlus_Options::user_can_manage() ) {
 			throw new \RuntimeException( 'Not authorized.' );
 		}
-		if ( ! is_string( $identity ) || ! is_string( $passphrase ) || ! is_string( $ticket ) || strlen( $identity ) > 65536 || strlen( $passphrase ) > 4096 ) {
-			throw new \RuntimeException( 'Invalid identity input.' );
-		}
-		$files = self::archives( $backup, $entities );
-		if ( count( $files ) > 10000 ) {
-			throw new \RuntimeException( 'Too many backup archives.' );
-		}
-		$directory = $backupplus->backups_dir_location();
-		$prepared  = array();
-		$created   = array();
-		$previous  = self::data( $ticket );
-		$complete  = false;
-		try {
-			foreach ( $files as $entry ) {
-				list($entity, $file) = $entry;
-				if ( ! is_string( $file ) || $file !== basename( $file ) ) {
-					throw new \RuntimeException( 'Invalid archive filename.' );
-				}
-				$path = $directory . '/' . $file;
-				if ( ! BackupPlus_Encryption::is_file_encrypted( $file ) ) {
-					continue;
-				}
-				if ( is_link( $path ) || ! is_file( $path ) ) {
-					throw new \RuntimeException( 'Encrypted archive is unavailable.' );
-				}
-				$age = self::is_age( $path );
-				if ( ! $age && 'db' === $entity ) {
-					continue; // Existing passphrase database restoration.
-				}
-				if ( self::file( $path, $ticket, '', $timestamp ) ) {
-					$prepared[ $file ] = $previous['files'][ $file ];
-					continue;
-				}
-				if ( $age && '' === trim( $identity ) ) {
-					throw new \RuntimeException( 'Supply the age identity for these archives.' );
-				}
-				$key = $age ? $identity : $archive_passphrase;
-				if ( ! $age && '' === $key ) {
-					$key = BackupPlus_Options::get_backupplus_option( 'backupplus_encryptionphrase', '' );
-				}
-				if ( ! is_string( $key ) || '' === $key ) {
-					throw new \RuntimeException( 'Supply the archive passphrase.' );
-				}
-				$cipher_hash = hash_file( 'sha256', $path );
-				$plain       = BackupPlus_Encryption::decrypt( $path, $key, true, $age ? $passphrase : '' );
-				if ( false === $plain ) {
-					throw new \RuntimeException( 'Could not decrypt the archive. Check the identity or passphrase.' );
-				}
-				$created[]         = $plain['fullpath'];
-				$prepared[ $file ] = array(
-					'path'        => basename( $plain['fullpath'] ),
-					'cipher_hash' => $cipher_hash,
-					'plain_hash'  => hash_file( 'sha256', $plain['fullpath'] ),
+	}
+
+	/** Snapshot ciphertext bindings; private keys never enter this protocol. */
+	public static function manifest( $backup, $timestamp, $entities, $ticket = '' ) {
+		self::authorize();
+		global $backupplus;
+		if ( $ticket ) {
+			try {
+				return array(
+					'ticket' => self::prepare( $backup, $timestamp, $ticket, $entities ),
+					'files'  => array(),
 				);
-				$current_hash      = hash_file( 'sha256', $path );
-				if ( false === $cipher_hash || false === $current_hash || false === $prepared[ $file ]['plain_hash'] || ! hash_equals( $cipher_hash, $current_hash ) ) {
-					throw new \RuntimeException( 'Archive changed during decryption.' );
-				}
-			}
-			if ( ! $created ) {
-				$complete = true;
-				return $prepared ? $ticket : ''; }
-			$ticket = bin2hex( \phpseclib3\Crypt\Random::string( 32 ) );
-			$data   = array(
-				'user'      => get_current_user_id(),
-				'blog'      => get_current_blog_id(),
-				'timestamp' => (int) $timestamp,
-				'expires'   => time() + self::LIFETIME,
-				'job'       => '',
-				'files'     => $prepared,
-			);
-			if ( ! set_transient( 'backupplus_age_restore_' . $ticket, $data, self::LIFETIME ) ) {
-				throw new \RuntimeException( 'Could not prepare the restore reference.' );
-			}
-			$complete = true;
-			return $ticket;
-		} finally {
-			if ( ! $complete ) {
-				foreach ( $created as $plain ) {
-					if ( is_file( $plain ) ) {
-										unlink( $plain );
-					}
-				}
+			} catch ( \RuntimeException $e ) {
+				self::discard( $ticket );
 			}
 		}
+		$files = array();
+		foreach ( self::archives( $backup, $entities ) as $entry ) {
+			$file = $entry[1];
+			if ( ! is_string( $file ) || $file !== basename( $file ) ) {
+				throw new \RuntimeException( 'Invalid archive filename.' );
+			}
+			if ( ! BackupPlus_Encryption::is_file_encrypted( $file ) ) { continue; }
+			$path = $backupplus->backups_dir_location() . '/' . $file;
+			if ( is_link( $path ) || ! is_file( $path ) ) {
+				throw new \RuntimeException( 'Encrypted archive is unavailable.' );
+			}
+			$hash = hash_file( 'sha256', $path );
+			if ( false === $hash ) { throw new \RuntimeException( 'Could not read archive.' ); }
+			$files[ $file ] = array(
+				'path'        => 'decrypt_' . bin2hex( random_bytes( 16 ) ) . '.tmp',
+				'cipher_hash' => $hash,
+				'cipher_size' => filesize( $path ),
+				'plain_hash'  => '',
+			);
+		}
+		if ( count( $files ) > 10000 ) { throw new \RuntimeException( 'Too many backup archives.' ); }
+		if ( ! $files ) { return array(
+			'ticket' => '',
+			'files'  => array(),
+		); }
+		$ticket = bin2hex( random_bytes( 32 ) );
+		$data   = array(
+			'user'      => get_current_user_id(),
+			'blog'      => get_current_blog_id(),
+			'timestamp' => (int) $timestamp,
+			'expires'   => time() + self::LIFETIME,
+			'job'       => '',
+			'files'     => $files,
+		);
+		if ( ! set_transient( 'backupplus_age_restore_' . $ticket, $data, self::LIFETIME ) ) {
+			throw new \RuntimeException( 'Could not prepare the restore reference.' );
+		}
+		return array(
+			'ticket' => $ticket,
+			'files'  => array_keys( $files ),
+		);
+	}
+
+	/** Only the preparing administrator can download/upload/discard unclaimed files. */
+	private static function pending( $ticket ) {
+		self::authorize();
+		$data = self::data( $ticket );
+		if ( ! $data || '' !== $data['job'] || (int) $data['user'] !== get_current_user_id() ) {
+			throw new \RuntimeException( 'The prepared restore expired or belongs to another restore.' );
+		}
+		return $data;
+	}
+
+	public static function download( $ticket, $file ) {
+		$data = self::pending( $ticket );
+		global $backupplus;
+		if ( ! is_string( $file ) || ! isset( $data['files'][ $file ] ) ) {
+			throw new \RuntimeException( 'Invalid archive.' );
+		}
+		$path = $backupplus->backups_dir_location() . '/' . $file;
+		if ( is_link( $path ) || ! is_file( $path ) || ! hash_equals( $data['files'][ $file ]['cipher_hash'], hash_file( 'sha256', $path ) ) ) {
+			throw new \RuntimeException( 'Encrypted archive changed.' );
+		}
+		return $path;
+	}
+
+	/** Append bounded plaintext chunks, publishing only after size/hash confirmation. */
+	public static function upload( $ticket, $file, $offset, $bytes, $size = null, $hash = '' ) {
+		$data = self::pending( $ticket );
+		if ( ! is_string( $file ) || ! isset( $data['files'][ $file ] ) || ! is_string( $bytes ) || strlen( $bytes ) > 524288 || ! is_numeric( $offset ) || (int) $offset < 0 ) {
+			throw new \RuntimeException( 'Invalid archive upload.' );
+		}
+		$entry = $data['files'][ $file ];
+		if ( '' !== $entry['plain_hash'] || ! preg_match( '/\Adecrypt_[a-f0-9]{32}\.tmp\z/D', $entry['path'] ) ) {
+			throw new \RuntimeException( 'Archive already completed.' );
+		}
+		global $backupplus;
+		$path = $backupplus->backups_dir_location() . '/' . $entry['path'];
+		if ( is_link( $path ) ) { throw new \RuntimeException( 'Invalid upload path.' ); }
+		$output = fopen( $path, 0 === (int) $offset ? 'x+b' : 'r+b' );
+		if ( ! $output ) { throw new \RuntimeException( 'Could not open upload.' ); }
+		try {
+			if ( ! flock( $output, LOCK_EX ) ) { throw new \RuntimeException( 'Could not lock upload.' ); }
+			$stat = fstat( $output );
+			if ( $stat['size'] !== (int) $offset || (int) $offset + strlen( $bytes ) > $entry['cipher_size'] ) {
+				throw new \RuntimeException( 'Invalid upload offset or size.' );
+			}
+			if ( 0 === (int) $offset && ! chmod( $path, 0600 ) ) { throw new \RuntimeException( 'Could not protect upload.' ); }
+			fseek( $output, 0, SEEK_END );
+			if ( strlen( $bytes ) && strlen( $bytes ) !== fwrite( $output, $bytes ) ) {
+				throw new \RuntimeException( 'Could not write upload.' );
+			}
+			fflush( $output );
+			$end = (int) $offset + strlen( $bytes );
+			if ( null !== $size ) {
+				if ( $end !== (int) $size || ! is_string( $hash ) || ! preg_match( '/\A[a-f0-9]{64}\z/D', $hash ) || ! hash_equals( $hash, hash_file( 'sha256', $path ) ) ) {
+					throw new \RuntimeException( 'Incomplete plaintext upload.' );
+				}
+				self::download( $ticket, $file ); // Recheck the ciphertext before publishing.
+				$data['files'][ $file ]['plain_hash'] = $hash;
+				if ( ! set_transient( 'backupplus_age_restore_' . $ticket, $data, max( 1, $data['expires'] - time() ) ) ) {
+					throw new \RuntimeException( 'Could not complete upload.' );
+				}
+			}
+			return array( 'offset' => $end );
+		} finally {
+			fclose( $output );
+		}
+	}
+
+	/** Cancelled/failed uploads cannot be claimed; old .tmp files also use routine cleanup. */
+	public static function discard( $ticket ) {
+		try { $data = self::pending( $ticket );
+		} catch ( \RuntimeException $e ) { return; }
+		global $backupplus;
+		foreach ( $data['files'] as $entry ) {
+			if ( ! preg_match( '/\Adecrypt_[a-f0-9]{32}\.tmp\z/D', $entry['path'] ) ) { continue; }
+			$path = $backupplus->backups_dir_location() . '/' . $entry['path'];
+			if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+		}
+		delete_transient( 'backupplus_age_restore_' . $ticket );
 	}
 
 	private static function data( $ticket, $job = '' ) {
@@ -174,6 +244,9 @@ class BackupPlus_Age_Restore {
 		if ( ! $data || (int) $data['timestamp'] !== (int) $timestamp || ( '' !== $data['job'] ? $data['job'] !== $job : (int) $data['user'] !== get_current_user_id() ) ) {
 			throw new \RuntimeException( 'The prepared age restore expired or belongs to another restore. Prepare it again.' );
 		}
+		foreach ( $data['files'] as $entry ) {
+			if ( empty( $entry['plain_hash'] ) ) { throw new \RuntimeException( 'The plaintext upload is incomplete.' ); }
+		}
 		$data['job'] = $job;
 		set_transient( 'backupplus_age_restore_' . $ticket, $data, max( 1, $data['expires'] - time() ) );
 		$backupplus->jobdata_set(
@@ -195,7 +268,7 @@ class BackupPlus_Age_Restore {
 			return false;
 		}
 		$name = basename( $encrypted );
-		if ( ! isset( $data['files'][ $name ] ) ) {
+		if ( ! isset( $data['files'][ $name ] ) || empty( $data['files'][ $name ]['plain_hash'] ) ) {
 			return false;
 		}
 		$entry = $data['files'][ $name ];

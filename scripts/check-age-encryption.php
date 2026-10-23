@@ -207,11 +207,60 @@ try {
 	$response = $request( $url, $base, 'POST', $anonymous );
 	age_wp_expect( wp_remote_retrieve_response_code( $response ) >= 400 && '' === wp_remote_retrieve_header( $response, 'content-disposition' ), 'Anonymous requests must not decrypt files' );
 
+	// Simulate the browser protocol over real HTTP. Only plaintext crosses the upload API.
+	$browser_prepare = function ( $entities ) use ( $request, $timestamp, $directory, $fixture, &$tickets ) {
+		$command   = function ( $data ) use ( $request ) {
+			$response = $request(
+				admin_url( 'admin-ajax.php' ),
+				array_merge(
+					array(
+						'action'    => 'backupplus_ajax',
+						'subaction' => 'restore_decryption',
+						'nonce'     => wp_create_nonce( 'backupplus-credentialtest-nonce' ),
+					),
+					$data
+				)
+			);
+			$result   = json_decode( wp_remote_retrieve_body( $response ), true );
+			age_wp_expect( is_array( $result ) && ! isset( $result['error'] ), 'Browser transfer command must succeed' );
+			return $result;
+		};
+		$manifest  = $command(
+			array(
+				'operation' => 'manifest',
+				'timestamp' => $timestamp,
+				'entities'  => $entities,
+			)
+		);
+		$tickets[] = $manifest['ticket'];
+		foreach ( $manifest['files'] as $file ) {
+			$plain = BackupPlus_Encryption::decrypt( $directory . '/' . $file, $fixture['keys']['ed25519']['identity'], true, $fixture['passphrase'] );
+			age_wp_expect( is_array( $plain ), 'Test-only browser simulation must decrypt independently' );
+			$bytes = file_get_contents( $plain['fullpath'] );
+			unlink( $plain['fullpath'] );
+			for ( $offset = 0; $offset < strlen( $bytes ); $offset += 524288 ) {
+				$chunk = substr( $bytes, $offset, 524288 );
+				$data  = array(
+					'operation' => 'upload',
+					'ticket'    => $manifest['ticket'],
+					'file'      => $file,
+					'offset'    => $offset,
+					'chunk'     => base64_encode( $chunk ),
+				);
+				if ( $offset + strlen( $chunk ) === strlen( $bytes ) ) {
+					$data['size'] = strlen( $bytes );
+					$data['hash'] = hash( 'sha256', $bytes );
+				}
+				$command( $data );
+			}
+		}
+		return $manifest['ticket'];
+	};
+
 	$ajax     = admin_url( 'admin-ajax.php' );
 	$restore  = array(
-		'backupplus_restore'            => array( 'db' ),
-		'backupplus_age_identity'       => $fixture['keys']['ed25519']['identity'],
-		'backupplus_age_key_passphrase' => $fixture['passphrase'],
+		'backupplus_restore'    => array( 'db' ),
+		'backupplus_age_ticket' => $browser_prepare( array( 'db' ) ),
 	);
 	$response = $request(
 		$ajax,
@@ -387,12 +436,9 @@ try {
 			);
 			$download   = $request( $url, array_merge( $base, array( 'file' => $files['uploads'][0] ), $key_fields ) );
 			age_wp_expect( 200 === wp_remote_retrieve_response_code( $download ) && $zip_bytes[0] === wp_remote_retrieve_body( $download ) && 'application/zip' === wp_remote_retrieve_header( $download, 'content-type' ), 'Manual POST decryption must return the authenticated ZIP' );
-			$restore   = array( 'backupplus_restore' => array( 'uploads' ) );
-			$restore  += array(
-				'backupplus_age_identity'       => $fixture['keys']['ed25519']['identity'],
-				'backupplus_age_key_passphrase' => $fixture['passphrase'],
-			);
-			$preflight = $request(
+			$restore                          = array( 'backupplus_restore' => array( 'uploads' ) );
+			$restore['backupplus_age_ticket'] = $browser_prepare( array( 'uploads' ) );
+			$preflight                        = $request(
 				$ajax,
 				array(
 					'action'      => 'backupplus_ajax',
@@ -402,7 +448,7 @@ try {
 					'restoreopts' => http_build_query( $restore ),
 				)
 			);
-			$scan      = json_decode( wp_remote_retrieve_body( $preflight ), true );
+			$scan                             = json_decode( wp_remote_retrieve_body( $preflight ), true );
 			age_wp_expect( is_array( $scan ) && '' === $scan['e'], 'File-only HTTP preflight must accept the configured encryption: ' . ( is_array( $scan ) ? $scan['e'] : 'invalid response' ) );
 			$prepared_info = json_decode( $scan['i'], true );
 			$file_ticket   = $prepared_info['age_ticket'];
@@ -514,9 +560,22 @@ try {
 	BackupPlus_Database_Encryption::restore_fields();
 	$html = ob_get_clean();
 	age_wp_expect( preg_match( '/<select id="backupplus-database-encryption"[^>]*>(.*?)<\/select>/s', $html, $select ) && 2 === substr_count( $select[1], '<option ' ) && false === strpos( $select[1], 'password' ) && false === strpos( $html, 'id="backupplus_encryptionphrase"' ), 'Backup settings must offer only Disabled and age public keys without a saved passphrase field' );
-	age_wp_expect( false === strpos( $html, 'backupplus-restore-passphrase' ), 'The restore form must not offer a legacy passphrase field' );
-	age_wp_expect( BackupPlus_Age_Restore::has_encrypted( array( 'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ), 'db' => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz.crypt' ) ) && ! BackupPlus_Age_Restore::has_encrypted( array( 'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ), 'db' => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz' ) ), 'Restore key fields must be requested only for backup sets with encrypted archives' );
-	age_wp_expect( false !== strpos( $html, 'github:USERNAME' ) && false !== strpos( $html, 'backupplus_age_identity' ) && false === strpos( $html, $fixture['passphrase'] ), 'Settings and restore forms must expose public recipient and request-only key controls' );
+	age_wp_expect( false === strpos( $html, 'id="backupplus-restore-passphrase"' ) && false === strpos( $html, 'name="backupplus_age_identity"' ) && false === strpos( $html, 'name="backupplus_age_key_passphrase"' ), 'Restore credentials must be browser-only fields' );
+	age_wp_expect(
+		BackupPlus_Age_Restore::has_encrypted(
+			array(
+				'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ),
+				'db'      => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz.crypt',
+			)
+		) && ! BackupPlus_Age_Restore::has_encrypted(
+			array(
+				'plugins' => array( 'backup_2026-01-01-0000_Test_0123456789ab-plugins.zip' ),
+				'db'      => 'backup_2026-01-01-0000_Test_0123456789ab-db.gz',
+			)
+		),
+		'Restore key fields must be requested only for backup sets with encrypted archives'
+	);
+	age_wp_expect( false !== strpos( $html, 'github:USERNAME' ) && false !== strpos( $html, 'id="backupplus-age-identity"' ) && false === strpos( $html, $fixture['passphrase'] ), 'Settings and restore forms must expose public recipient and request-only key controls' );
 	echo "PASS: real WordPress age settings, backup writer, POST downloads, authorization, restore preflight and private-key-free DB continuation\n";
 } finally {
 	wp_set_current_user( $original_user );

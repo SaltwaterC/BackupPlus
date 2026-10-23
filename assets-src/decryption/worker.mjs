@@ -1,7 +1,10 @@
 import { decryptArchive } from './archive.mjs';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
 const MEMORY_LIMIT = 128 * 1024 * 1024;
 self.onmessage = async ({ data }) => {
-	const { file, id, credentials } = data;
+	const { file, id, credentials, hashOutput } = data;
+	const hash = hashOutput ? sha256.create() : null;
 	let directory,
 		writable,
 		chunks = [],
@@ -41,6 +44,7 @@ self.onmessage = async ({ data }) => {
 		const sink = {
 			async write(bytes) {
 				count += bytes.length;
+				if (hash) hash.update(bytes);
 				if (writable) await writable.write(bytes);
 				else {
 					if (count > MEMORY_LIMIT) throw new Error('MEMORY_LIMIT');
@@ -66,7 +70,7 @@ self.onmessage = async ({ data }) => {
 				lastProgress = now;
 			}
 		});
-		send({ type: 'complete', ...result });
+		send({ type: 'complete', ...result, ...(hash ? { hash: bytesToHex(hash.digest()) } : {}) });
 	} catch (e) {
 		await cleanup();
 		const known = ['SECURE_CONTEXT', 'MEMORY_LIMIT', 'UNSUPPORTED_KEY'];
@@ -80,6 +84,7 @@ self.onmessage = async ({ data }) => {
 						: 'DECRYPT_FAILED',
 		});
 	} finally {
+		if (hash) hash.destroy();
 		credentials.password = credentials.identity = credentials.keyPassword = '';
 	}
 };

@@ -5314,7 +5314,7 @@ class BackupPlus {
 
 		// Encrypted - decrypt it
 		if ( BackupPlus_Encryption::is_file_encrypted( $db_file ) ) {
-			if ( BackupPlus_Age_Restore::is_age( $db_file ) ) {
+			if ( ! empty( $res['backupplus_age_ticket'] ) || BackupPlus_Age_Restore::is_age( $db_file ) ) {
 				$decrypted_file = BackupPlus_Age_Restore::file( $db_file, isset( $res['backupplus_age_ticket'] ) ? $res['backupplus_age_ticket'] : '', '', $timestamp );
 			} else {
 				$encryption = empty( $res['backupplus_encryptionphrase'] ) ? BackupPlus_Options::get_backupplus_option( 'backupplus_encryptionphrase' ) : $res['backupplus_encryptionphrase'];

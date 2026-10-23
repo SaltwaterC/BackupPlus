@@ -165,11 +165,11 @@ class BackupPlus_Database_Encryption {
 	public static function restore_fields() {
 		?>
 		<p><label for="backupplus-age-identity"><?php esc_html_e( 'age identity or SSH/PEM private key (age-encrypted archives)', 'backupplus' ); ?></label><br>
-		<textarea id="backupplus-age-identity" name="backupplus_age_identity" rows="4" cols="65" autocomplete="off" spellcheck="false"></textarea></p>
+		<textarea id="backupplus-age-identity" rows="4" cols="65" autocomplete="off" spellcheck="false"></textarea></p>
 		<p><label for="backupplus-age-key-passphrase"><?php esc_html_e( 'Private key passphrase, if encrypted', 'backupplus' ); ?></label><br>
-		<input id="backupplus-age-key-passphrase" name="backupplus_age_key_passphrase" type="password" autocomplete="off"></p>
+		<input id="backupplus-age-key-passphrase" type="password" autocomplete="off"></p>
 		<input id="backupplus-age-ticket" name="backupplus_age_ticket" type="hidden" value="">
-		<p class="description"><?php esc_html_e( 'Private keys are used only to prepare verified archives for this restore. Neither the private key nor its passphrase is saved.', 'backupplus' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Archives are decrypted in your browser, then a plaintext copy is uploaded for this restore. Your private key and passphrases are never sent to the server.', 'backupplus' ); ?></p>
 		<?php
 	}
 

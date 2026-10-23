@@ -48,6 +48,10 @@ function set_transient( $name, $value, $lifetime ) {
 	global $age_transients;
 	$age_transients[ $name ] = $value;
 	return true; }
+function delete_transient( $name ) {
+	global $age_transients;
+	unset( $age_transients[ $name ] );
+}
 function get_transient( $name ) {
 	global $age_transients;
 	return isset( $age_transients[ $name ] ) ? $age_transients[ $name ] : false; }
@@ -284,9 +288,91 @@ foreach ( array( 'password', 'invalid' ) as $removed_mode ) {
 BackupPlus_Options::$options['backupplus_database_encryption'] = $config;
 echo "PASS: GitHub public key pinning, constrained lookup, settings failure preservation and backup writer integration\n";
 
+// Simulate a browser upload after independent decryption (no key enters the restore API).
+function age_prepare_browser( $backup, $timestamp, $identity, $passphrase, $entities = array( 'db' ), $archive_passphrase = '' ) {
+	global $backupplus;
+	$manifest = BackupPlus_Age_Restore::manifest( $backup, $timestamp, $entities );
+	foreach ( $manifest['files'] as $file ) {
+		$path   = $backupplus->backups_dir_location() . '/' . $file;
+		$is_age = BackupPlus_Age_Restore::is_age( $path );
+		$plain  = BackupPlus_Encryption::decrypt( $path, $is_age ? $identity : $archive_passphrase, true, $passphrase );
+		age_expect( is_array( $plain ), 'Test browser simulation must decrypt the archive' );
+		$bytes = file_get_contents( $plain['fullpath'] );
+		unlink( $plain['fullpath'] );
+		BackupPlus_Age_Restore::upload( $manifest['ticket'], $file, 0, $bytes, strlen( $bytes ), hash( 'sha256', $bytes ) );
+	}
+	return BackupPlus_Age_Restore::prepare( $backup, $timestamp, $manifest['ticket'], $entities );
+}
+// Partial, reordered and corrupted uploads must never become usable restore files.
+$upload_backup = array(
+	'db'      => basename( $path ),
+	'uploads' => 'unselected-missing.zip.crypt',
+);
+file_put_contents( $path, $reference );
+$manifest      = BackupPlus_Age_Restore::manifest( $upload_backup, 122, array( 'db' ) );
+$upload_ticket = $manifest['ticket'];
+$upload_file   = basename( $path );
+age_expect( array( $upload_file ) === $manifest['files'], 'Only selected encrypted archives belong to a transfer' );
+age_expect( $path === BackupPlus_Age_Restore::download( $upload_ticket, $upload_file ), 'Transfer downloads must resolve the original ciphertext' );
+$reject_upload = function ( $operation ) {
+	try { $operation();
+	} catch ( RuntimeException $e ) { return; }
+	throw new RuntimeException( 'Invalid upload operation must fail' );
+};
+$reject_upload(
+	function () use ( $upload_ticket, $upload_file ) {
+		BackupPlus_Age_Restore::upload( $upload_ticket, '../' . $upload_file, 0, 'x' );
+	}
+);
+BackupPlus_Age_Restore::upload( $upload_ticket, $upload_file, 0, substr( $plain, 0, 3 ) );
+age_expect( false === BackupPlus_Age_Restore::file( $path, $upload_ticket ), 'Partial plaintext must never be published' );
+$reject_upload(
+	function () use ( $upload_backup, $upload_ticket ) {
+		BackupPlus_Age_Restore::prepare( $upload_backup, 122, $upload_ticket );
+	}
+);
+$reject_upload(
+	function () use ( $upload_ticket ) {
+		BackupPlus_Age_Restore::claim( $upload_ticket, 122, 'partial-job' );
+	}
+);
+$reject_upload(
+	function () use ( $upload_ticket, $upload_file ) {
+		BackupPlus_Age_Restore::upload( $upload_ticket, $upload_file, 2, 'x' );
+	}
+);
+$age_user = 2;
+$reject_upload(
+	function () use ( $upload_ticket, $upload_file ) {
+		BackupPlus_Age_Restore::download( $upload_ticket, $upload_file );
+	}
+);
+$age_user = 1;
+$reject_upload(
+	function () use ( $upload_ticket, $upload_file, $plain ) {
+		BackupPlus_Age_Restore::upload( $upload_ticket, $upload_file, 3, substr( $plain, 3 ), strlen( $plain ), str_repeat( '0', 64 ) );
+	}
+);
+age_expect( false === BackupPlus_Age_Restore::file( $path, $upload_ticket ), 'Hash mismatch must not publish plaintext' );
+$pending_path = $directory . '/' . $age_transients[ 'backupplus_age_restore_' . $upload_ticket ]['files'][ $upload_file ]['path'];
+BackupPlus_Age_Restore::discard( $upload_ticket );
+age_expect( ! file_exists( $pending_path ) && false === get_transient( 'backupplus_age_restore_' . $upload_ticket ), 'Cancellation must remove plaintext and its reference' );
+$manifest      = BackupPlus_Age_Restore::manifest( $upload_backup, 122, array( 'db' ) );
+$upload_ticket = $manifest['ticket'];
+file_put_contents( $path, $reference . 'changed' );
+$reject_upload(
+	function () use ( $upload_ticket, $upload_file, $plain ) {
+		BackupPlus_Age_Restore::upload( $upload_ticket, $upload_file, 0, $plain, strlen( $plain ), hash( 'sha256', $plain ) );
+	}
+);
+age_expect( false === BackupPlus_Age_Restore::file( $path, $upload_ticket ), 'Changed ciphertext must prevent upload completion' );
+BackupPlus_Age_Restore::discard( $upload_ticket );
+file_put_contents( $path, $reference );
+echo "PASS: selected-only browser transfers; incomplete, reordered, corrupt and cross-user uploads rejected; cancellation cleanup\n";
+
 // A restore ticket holds only public file bindings, never private keys/passphrases.
 file_put_contents( $path, $reference );
-$ticket = BackupPlus_Age_Restore::prepare( array( 'db' => basename( $path ) ), 123, $native['encrypted_pem'], $password );
+$ticket = age_prepare_browser( array( 'db' => basename( $path ) ), 123, $native['encrypted_pem'], $password );
 age_expect( 64 === strlen( $ticket ), 'Restore preflight must produce an opaque ticket' );
 $cached = serialize( $age_transients );
 foreach ( array( $native['identity'], $native['encrypted_pem'], $password ) as $secret ) {
@@ -372,8 +458,8 @@ foreach ( array( 'age' ) as $mode ) {
 		'plugins' => $files['plugins'],
 		'db'      => 'unselected-unavailable-db.gz.crypt',
 	);
-	$ticket = BackupPlus_Age_Restore::prepare( $backup, 321, $native['identity'], '', '', array( 'plugins' ), 'file archive passphrase' );
-	age_expect( $ticket === BackupPlus_Age_Restore::prepare( $backup, 321, '', '', $ticket, array( 'plugins' ) ), 'File-only preflight must reuse prepared parts without retaining a key' );
+	$ticket = age_prepare_browser( $backup, 321, $native['identity'], '', array( 'plugins' ), 'file archive passphrase' );
+	age_expect( $ticket === BackupPlus_Age_Restore::prepare( $backup, 321, $ticket, array( 'plugins' ) ), 'File-only preflight must reuse prepared parts without retaining a key' );
 	$backupplus->nonce = 'restore-file-job';
 	BackupPlus_Age_Restore::claim( $ticket, 321, $backupplus->nonce );
 	unset( $age_transients[ 'backupplus_age_restore_' . $ticket ] );

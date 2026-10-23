@@ -719,17 +719,21 @@ class BackupPlus_Admin {
 			)
 		);
 		wp_enqueue_script( 'backupplus-decryption', BACKUPPLUS_URL . '/includes/backupplus-decryption.js', array(), $enqueue_version, true );
+		wp_enqueue_script( 'backupplus-restore-decryption', BACKUPPLUS_URL . '/includes/backupplus-restore-decryption.js', array( 'backupplus-decryption', 'backupplus-admin-common' ), $enqueue_version, true );
 		wp_localize_script(
 			'backupplus-decryption',
 			'backupplus_decryption',
 			array(
-				'worker'     => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
-				'decrypting' => __( 'Decrypting locally:', 'backupplus' ),
-				'download'   => __( 'Download', 'backupplus' ),
-				'complete'   => __( 'Decryption complete. Download your archives, then clear the files to remove temporary browser copies.', 'backupplus' ),
-				'cancelled'  => __( 'Decryption cancelled. Temporary output and keys have been cleared.', 'backupplus' ),
-				'legacy'     => __( 'Legacy encryption: integrity cannot be verified. Check the downloaded archive before use.', 'backupplus' ),
-				'errors'     => array(
+				'worker'      => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
+				'decrypting'  => __( 'Decrypting locally:', 'backupplus' ),
+				'downloading' => __( 'Downloading encrypted archive:', 'backupplus' ),
+				'uploading'   => __( 'Uploading plaintext restore copy:', 'backupplus' ),
+				'download'    => __( 'Download', 'backupplus' ),
+				'complete'    => __( 'Decryption complete. Download your archives, then clear the files to remove temporary browser copies.', 'backupplus' ),
+				'cancelled'   => __( 'Decryption cancelled. Temporary output and keys have been cleared.', 'backupplus' ),
+				'legacy'      => __( 'Legacy encryption: integrity cannot be verified. Check the downloaded archive before use.', 'backupplus' ),
+				'errors'      => array(
+					'TRANSFER_FAILED' => __( 'Could not transfer the restore archives. Retry the restore preparation.', 'backupplus' ),
 					'CLEANUP_FAILED'  => __( 'Temporary browser files could not be removed. Close other decryption tabs and clear files again, or clear this site’s browser storage.', 'backupplus' ),
 					'STORAGE_FAILED'  => __( 'Browser storage is full or unavailable. Free local space and try again.', 'backupplus' ),
 					'DECRYPT_FAILED'  => __( 'Unable to decrypt. Check the passphrase or identity and that the archive is complete and unmodified.', 'backupplus' ),

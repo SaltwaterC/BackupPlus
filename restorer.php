@@ -1363,7 +1363,7 @@ class BackupPlus_Restorer {
 		// Unpack package to working directory
 		if ( BackupPlus_Encryption::is_file_encrypted( $package ) ) {
 			$this->skin->feedback( $this->strings['decrypt_database'] );
-			if ( BackupPlus_Age_Restore::is_age( $backup_dir . $package ) ) {
+			if ( ! empty( $this->restore_options['backupplus_age_ticket'] ) || BackupPlus_Age_Restore::is_age( $backup_dir . $package ) ) {
 				$decrypted_file = BackupPlus_Age_Restore::file( $backup_dir . $package, isset( $this->restore_options['backupplus_age_ticket'] ) ? $this->restore_options['backupplus_age_ticket'] : '', $backupplus->nonce );
 			} else {
 				$encryption = empty( $this->restore_options['backupplus_encryptionphrase'] ) ? BackupPlus_Options::get_backupplus_option( 'backupplus_encryptionphrase' ) : $this->restore_options['backupplus_encryptionphrase'];
