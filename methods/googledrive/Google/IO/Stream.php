@@ -190,15 +190,26 @@ if (!empty($this->options['proxy'])) {
 
     $response_data = false;
     $respHttpCode = self::UNKNOWN_CODE;
+    $rawResponseHeaders = array();
     if ($fh) {
       if (isset($this->options[self::TIMEOUT])) {
         stream_set_timeout($fh, $this->options[self::TIMEOUT]);
       }
 
       $response_data = stream_get_contents($fh);
+      if (function_exists('http_get_last_response_headers')) {
+        $rawResponseHeaders = http_get_last_response_headers();
+      } else {
+        // Resolve the legacy variable dynamically so PHP 8.5 does not flag its name while compiling this file.
+        $legacyHeaderName = 'http_response_header';
+        $rawResponseHeaders = isset($$legacyHeaderName) ? $$legacyHeaderName : array();
+      }
+      if (!is_array($rawResponseHeaders)) {
+        $rawResponseHeaders = array();
+      }
       fclose($fh);
 
-      $respHttpCode = $this->getHttpResponseCode($http_response_header);
+      $respHttpCode = $this->getHttpResponseCode($rawResponseHeaders);
     }
 
     if (false === $response_data) {
@@ -211,7 +222,7 @@ if (!empty($this->options['proxy'])) {
       throw new UDP_Google_IO_Exception($error, $respHttpCode); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
-    $responseHeaders = $this->getHttpResponseHeaders($http_response_header);
+    $responseHeaders = $this->getHttpResponseHeaders($rawResponseHeaders);
 
     $this->client->getLogger()->debug(
         'Stream response',

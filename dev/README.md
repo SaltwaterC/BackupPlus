@@ -27,7 +27,7 @@ Copy `.env.example` to `.env` and change the local database and administrator cr
 
 The database and application user are reconciled from `.env` whenever the MariaDB container starts. Keep `DB_ROOT_PASSWORD` unchanged for an existing database volume; changing it requires recreating that volume with `./dev/down.sh --volumes`.
 
-The WordPress container mounts the host CA bundle read-only and configures PHP cURL, OpenSSL, and WordPress's HTTPS request API to use it. On Linux the default is `/etc/ssl/certs/ca-certificates.crt`; set `HOST_CA_BUNDLE` in `.env` if your host stores its bundle elsewhere. This lets PHP use certificates already trusted by the host, including a managed WARP CA, while keeping certificate verification enabled.
+The WordPress container mounts the host CA bundle read-only and configures PHP cURL, OpenSSL, and WordPress's HTTPS request API to use it. On Linux the default is `/etc/ssl/certs/ca-certificates.crt`; set `HOST_CA_BUNDLE` in `.env` if your host stores its bundle elsewhere. The startup script keeps `WP_ENVIRONMENT_TYPE=local` set on existing installations too, so the WordPress HTTP CA override remains active with persistent volumes. This lets PHP use certificates already trusted by the host, including a managed WARP CA, while keeping certificate verification enabled.
 
 To stop the environment while preserving the WordPress installation and database:
 
@@ -43,7 +43,7 @@ To discard the site, database, and all local settings:
 
 ## WP-CLI
 
-Run WP-CLI commands in the WordPress container, for example:
+The container uses the WP-CLI nightly build, which includes the PHP 8.5 compatibility fixes not yet present in the stable release. Run WP-CLI commands in the WordPress container, for example:
 
 ```sh
 podman exec backupplus-dev-wordpress wp plugin list --status=active

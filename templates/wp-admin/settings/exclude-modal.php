@@ -74,19 +74,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php
 		$backupplus_admin->include_template( 'wp-admin/settings/exclude-settings-modal/exclude-panel-heading.php', false, array( 'title' => __( 'All files/directories containing the given characters in their names', 'backupplus' ) ) );
 		?>
-		<div id="backupplus_exclude_jstree_info_container" class="backupplus-jstree-info-container">
+		<div id="backupplus_exclude_wildcards_jstree_info_container" class="backupplus-jstree-info-container">
 			<p>
-				<span id="backupplus_exclude_jstree_path_text">
+				<span id="backupplus_exclude_wildcards_jstree_path_text">
 					<?php esc_html_e( 'Select the folder in which the files or sub-directories you would like to exclude are located', 'backupplus' ); ?>
 				</span>
 			</p>
 		</div>
-		<div id="backupplus_exclude_files_jstree_container">
+		<div id="backupplus_exclude_wildcards_jstree_container">
 				<div id="backupplus_exclude_files_folders_wildcards_jstree" class="backupplus_jstree"></div>
 		</div>
-		<label for="backupplus_exclude_prefix_field" class="contain-clause-sub-label"><?php esc_html_e( 'All files/directories containing ', 'backupplus' ); ?></label>
+		<label for="backupplus_exclude_clause_field" class="contain-clause-sub-label"><?php esc_html_e( 'All files/directories containing ', 'backupplus' ); ?></label>
 		<div class="clause-input-container">
-			<input class="wildcards-input" type="text" size="25" placeholder="<?php esc_html_e( 'these characters', 'backupplus' ); ?>" />
+			<input id="backupplus_exclude_clause_field" class="wildcards-input" type="text" size="25" placeholder="<?php esc_html_e( 'these characters', 'backupplus' ); ?>" />
 			<select class="clause-options wildcards-input">
 				<option value="beginning"><?php esc_html_e( 'at the beginning of their names', 'backupplus' ); ?></option>
 				<option value="middle"><?php esc_html_e( 'anywhere in their names', 'backupplus' ); ?></option>

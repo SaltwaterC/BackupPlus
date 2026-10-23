@@ -97,6 +97,7 @@ podman run --detach \
 	--env DB_NAME="$DB_NAME" \
 	--env DB_USER="$DB_USER" \
 	--env DB_PASSWORD="$DB_PASSWORD" \
+	--env WP_ENVIRONMENT_TYPE=local \
 	--env WP_URL="$WP_URL" \
 	--env WP_SITE_TITLE="$WP_SITE_TITLE" \
 	--env WP_ADMIN_USER="$WP_ADMIN_USER" \

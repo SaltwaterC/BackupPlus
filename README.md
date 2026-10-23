@@ -150,3 +150,5 @@ array(
 ```
 
 Focused checks: `php scripts/test-backup-sources.php`, `wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-sources.php`, and `node scripts/test-backup-sources-browser.mjs`. These also run through the existing `make test` targets.
+
+WP-CLI commands for backups, restores, source selection, schedules, retention and native update protection are documented in [docs/wp-cli.md](docs/wp-cli.md).

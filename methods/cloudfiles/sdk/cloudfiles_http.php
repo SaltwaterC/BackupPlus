@@ -335,7 +335,7 @@ class BackupPlus_CF_Http
 
     # (CDN) POST /v1/Account/Container
     function update_cdn_container($container_name, $ttl=86400, $cdn_log_retention=False,
-                                  $cdn_acl_user_agent="", $cdn_acl_referrer)
+                                  $cdn_acl_user_agent="", $cdn_acl_referrer="")
     {
         if ($container_name == "")
             throw new SyntaxException("Container name not set.");

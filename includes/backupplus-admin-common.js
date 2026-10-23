@@ -3530,7 +3530,7 @@ jQuery(function($) {
 		}
 	});
 	
-	jQuery('#backupplus_activejobs_table, #backupplus-navtab-backups-content .backupplus_existing_backups, #backupplus-backupnow-inpage-modal').on('click', '.backupplus-log-link', function(e) {
+	jQuery(document).on('click', '.backupplus-log-link[data-jobid], .backupplus-log-link[data-fileid]', function(e) {
 		e.preventDefault();
 		var file_id = jQuery(this).data('fileid');
 		var job_id = jQuery(this).data('jobid');

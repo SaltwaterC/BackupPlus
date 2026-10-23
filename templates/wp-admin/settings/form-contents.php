@@ -234,10 +234,10 @@ if ( is_string( $report_rows ) ) {
 				echo '<input type="hidden" name="backupplus_email" value="' . esc_attr( get_bloginfo( 'admin_email' ) ) . '">';
 			}
 			?>
-				<div id="cb_not_email_storage_label "<?php echo ( $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
+				<div id="cb_not_email_storage_label" <?php echo ( $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
 				<?php echo esc_html__( 'Check this box to have a basic report sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . ').'; ?>
 				</div>
-				<div id="cb_email_storage_label "<?php echo ( ! $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
+				<div id="cb_email_storage_label" <?php echo ( ! $is_email_storage ) ? 'style="display: none"' : 'style="display: inline"'; ?>>
 				<?php echo esc_html__( 'Your email backup and a report will be sent to', 'backupplus' ) . ' <a href="' . esc_url( admin_url( 'options-general.php' ) ) . '">' . esc_html__( "your site's admin address", 'backupplus' ) . '</a> (' . esc_html( get_bloginfo( 'admin_email' ) ) . ').'; ?>
 				</div>
 			</label>

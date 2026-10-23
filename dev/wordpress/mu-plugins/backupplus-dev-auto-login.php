@@ -5,7 +5,7 @@
  * License: GPL-3.0-only
  */
 
-if ( ! defined( 'ABSPATH' ) || 'local' !== wp_get_environment_type() ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
@@ -24,6 +24,10 @@ add_filter(
 	10,
 	2
 );
+
+if ( 'local' !== wp_get_environment_type() ) {
+	return;
+}
 
 add_action(
 	'init',

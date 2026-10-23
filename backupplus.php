@@ -393,3 +393,6 @@ require_once BACKUPPLUS_DIR . '/includes/class-retention-cleanup.php';
 BackupPlus_Backup_Schedule::instance();
 BackupPlus_Retention_Cleanup::instance();
 add_action( 'admin_enqueue_scripts', array( 'BackupPlus_Backup_Schedule', 'assets' ) );
+
+require_once BACKUPPLUS_DIR . '/includes/class-cli.php';
+BackupPlus_CLI::register();

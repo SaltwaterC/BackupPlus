@@ -3394,10 +3394,12 @@ class BackupPlus {
 		if ( false === $restrict_files_to_override && isset( $options['restrict_files_to_override'] ) ) {
 			$restrict_files_to_override = $options['restrict_files_to_override'];
 		}
+		BackupPlus_Backup_Sources::set_run_sources( isset( $options['file_sources'] ) ? $options['file_sources'] : null, isset( $options['file_entity_paths'] ) ? $options['file_entity_paths'] : null );
 		// Generate backup information
 		$use_nonce     = empty( $options['use_nonce'] ) ? false : $options['use_nonce'];
 		$use_timestamp = empty( $options['use_timestamp'] ) ? false : $options['use_timestamp'];
 		$this->backup_time_nonce( $use_nonce, $use_timestamp );
+		$this->jobdata_reset();
 		// The current_resumption is consulted within logfile_open()
 		$this->current_resumption = 0;
 		$this->logfile_open( $this->nonce );
@@ -3675,7 +3677,7 @@ class BackupPlus {
 		// Save what *should* be done, to make it resumable from this point on
 		if ( $backup_database ) {
 			try {
-				list( $dbs, $coverage ) = BackupPlus_Backup_Sources::plan_databases( $options );
+				list( $dbs, $coverage ) = isset( $options['database_plan'] ) ? $options['database_plan'] : BackupPlus_Backup_Sources::plan_databases( $options );
 				array_push( $initial_jobdata, 'database_coverage', $coverage );
 			} catch ( Exception $e ) {
 				$this->log( $e->getMessage(), 'error' );
@@ -3688,7 +3690,8 @@ class BackupPlus {
 
 		$file_exclusions = array();
 		foreach ( $job_file_entities as $entity => $unused ) { $file_exclusions[ $entity ] = $this->get_exclude( $entity ); }
-		array_push( $initial_jobdata, 'file_sources', $file_sources, 'file_exclusions', $file_exclusions );
+		array_push( $initial_jobdata, 'file_sources', $file_sources, 'file_exclusions', $file_exclusions, 'file_entity_paths', $this->get_backupable_file_entities( true ) );
+		BackupPlus_Backup_Sources::set_run_sources( null );
 		array_push( $initial_jobdata, 'backup_database', $dbs );
 		array_push( $initial_jobdata, 'backup_files', ( ( $backup_files ) ? 'begun' : 'no' ) );
 
@@ -3910,7 +3913,30 @@ class BackupPlus {
 		// Emit a terminal result while archive and upload metadata are still available.
 		if ( $do_cleanup && ( $force_abort || 0 === $this->error_count() || ! $this->newresumption_scheduled || $this->current_resumption + 1 == $this->jobdata_get( 'fail_on_resume' ) ) ) {
 			$outcome = $force_abort ? 'aborted' : ( 0 === $this->error_count() && 0 === $this->error_count( 'warning' ) ? 'success' : 'failed' );
-			do_action( 'backupplus_backup_finished', $this->nonce, $outcome, $this->jobdata );
+			$this->jobdata_set( 'terminal_outcome', $outcome );
+			$diagnostics = array(
+				'errors'   => $this->error_count(),
+				'warnings' => $this->error_count( 'warning' ),
+				'messages' => array(),
+			);
+			foreach ( $this->errors as $error ) {
+				if ( is_array( $error ) ) {
+					$diagnostics['messages'][] = $error;
+				} elseif ( is_wp_error( $error ) ) {
+					foreach ( $error->get_error_messages() as $message ) {
+						$diagnostics['messages'][] = array(
+							'level'   => 'error',
+							'message' => $message,
+						);
+					}
+				} elseif ( is_string( $error ) ) {
+					$diagnostics['messages'][] = array(
+						'level'   => 'error',
+						'message' => $error,
+					);
+				}
+			}
+			do_action( 'backupplus_backup_finished', $this->nonce, $outcome, $this->jobdata, $diagnostics );
 		}
 
 		// This is left until last for the benefit of the front-end UI, which then gets maximum chance to display the 'finished' status
@@ -4669,20 +4695,21 @@ class BackupPlus {
 	public function backup_uploads_dirlist( $log_it = false ) {
 		// Create an array of directories to be skipped
 		// Make the values into the keys
-		$exclude = BackupPlus_Options::get_backupplus_option( 'backupplus_include_uploads_exclude', BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE );
+		$exclude = implode( ',', $this->get_exclude( 'uploads' ) );
 		if ( $log_it ) {
 			$this->log( 'Exclusion option setting (uploads): ' . $exclude );
 		}
 		$skip          = array_flip( preg_split( '/,/', $exclude ) );
 		$wp_upload_dir = $this->wp_upload_dir();
-		$uploads_dir   = $wp_upload_dir['basedir'];
+		$paths         = $this->get_backupable_file_entities( true );
+		$uploads_dir   = isset( $paths['uploads'] ) ? $paths['uploads'] : $wp_upload_dir['basedir'];
 		return $this->compile_folder_list_for_backup( $uploads_dir, array(), $skip );
 	}
 
 	public function backup_others_dirlist( $log_it = false ) {
 		// Create an array of directories to be skipped
 		// Make the values into the keys
-		$exclude = BackupPlus_Options::get_backupplus_option( 'backupplus_include_others_exclude', BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE );
+		$exclude = implode( ',', $this->get_exclude( 'others' ) );
 		if ( $log_it ) {
 			$this->log( 'Exclusion option setting (others): ' . $exclude );
 		}
@@ -4701,7 +4728,8 @@ class BackupPlus {
 				}
 			}
 		}
-		return $this->compile_folder_list_for_backup( WP_CONTENT_DIR, $avoid_these_dirs, $skip );
+		$paths = $this->get_backupable_file_entities( true );
+		return $this->compile_folder_list_for_backup( isset( $paths['others'] ) ? $paths['others'] : WP_CONTENT_DIR, $avoid_these_dirs, $skip );
 	}
 
 	/**
@@ -5911,8 +5939,8 @@ class BackupPlus {
 				$disabled = $is_user_table ? ' disabled="disabled"' : '';
 				$style    = $is_user_table ? ' style="opacity: 0.5;"' : '';
 
-				$select_restore_tables .= '<input class="backupplus_restore_tables_options" id="backupplus_restore_table_' . $table . ' ' . $checked . $disabled . ' type="checkbox" name="backupplus_restore_tables_options[]" value="' . $table . '"> ';
-				$select_restore_tables .= '<label for="backupplus_restore_table_' . $table . '' . $style . '">' . $table . '</label><br>';
+				$select_restore_tables .= '<input class="backupplus_restore_tables_options" id="backupplus_restore_table_' . esc_attr( $table ) . '" ' . $checked . $disabled . ' type="checkbox" name="backupplus_restore_tables_options[]" value="' . esc_attr( $table ) . '"> ';
+				$select_restore_tables .= '<label for="backupplus_restore_table_' . esc_attr( $table ) . '"' . $style . '>' . esc_html( $table ) . '</label><br>';
 			}
 
 			$select_restore_tables .= $select_table_button;

@@ -260,6 +260,9 @@ class BackupPlus_Age_Restore {
 
 	/** Resolve only server-generated paths, bound to both ciphertext and plaintext. */
 	public static function file( $encrypted, $ticket, $job = '', $timestamp = null ) {
+		if ( 'cli' === $ticket && defined( 'WP_CLI' ) && WP_CLI && class_exists( 'BackupPlus_CLI_Restore', false ) ) {
+			return BackupPlus_CLI_Restore::prepared( $encrypted, $job );
+		}
 		$data = self::data( $ticket, $job );
 		if ( ! $data || ( null !== $timestamp && (int) $data['timestamp'] !== (int) $timestamp ) ) {
 			return false;

@@ -56,13 +56,15 @@ if [[ ! -f "$wp_path/wp-config.php" ]]; then
 		--dbhost="$DB_HOST" \
 		--dbcharset=utf8mb4 \
 		--skip-check
-	wp config set WP_ENVIRONMENT_TYPE local --type=constant --path="$wp_path"
 	wp config set WP_DEBUG true --raw --type=constant --path="$wp_path"
 	wp config set WP_DEBUG_LOG true --raw --type=constant --path="$wp_path"
 	wp config set WP_DEBUG_DISPLAY true --raw --type=constant --path="$wp_path"
 	wp config set WP_HOME "$WP_URL" --type=constant --path="$wp_path"
 	wp config set WP_SITEURL "$WP_URL" --type=constant --path="$wp_path"
 fi
+
+# Reconcile this for existing wp-config.php files in the persistent site volume too.
+wp config set WP_ENVIRONMENT_TYPE local --type=constant --path="$wp_path"
 
 ready=0
 for ((attempt = 1; attempt <= 60; attempt++)); do

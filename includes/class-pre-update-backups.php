@@ -10,6 +10,8 @@ class BackupPlus_Pre_Update_Backups {
 	private $automatic_batch = '';
 	private $request_id      = '';
 	private $claims          = array();
+	private $cli_targets     = array();
+	private $cli_batch       = '';
 
 	public static function instance() {
 		if ( ! self::$instance ) {
@@ -125,7 +127,35 @@ class BackupPlus_Pre_Update_Backups {
 		return $offers;
 	}
 
+	/** Only in-process WP-CLI code may establish this context; HTTP inputs cannot. */
+	public function prepare_cli( $targets ) {
+		if ( ! defined( 'WP_CLI' ) || ! WP_CLI || ! $targets ) { return $this->error( 'backupplus_forbidden' ); }
+		$this->cli_targets = $targets;
+		$batch             = $this->prepare( array_keys( $targets ), 'cli' );
+		if ( ! is_wp_error( $batch ) ) { $this->cli_batch = $batch['id']; }
+		return $batch;
+	}
+
+	public function finish_cli() {
+		$this->release_claims();
+		if ( $this->cli_batch && $this->lock() ) {
+			try {
+				$batch = $this->batch();
+				if ( isset( $batch['id'] ) && $batch['id'] === $this->cli_batch && in_array( $batch['state'], array( 'ready', 'updating' ), true ) ) {
+					$batch['state'] = 'complete';
+					$this->save( $batch );
+				}
+			} finally { $this->unlock(); }
+		}
+		$this->cli_batch   = '';
+		$this->cli_targets = array();
+	}
+
 	public function can_manage( $batch ) {
+		if ( 'cli' === $batch['mode'] ) {
+			return $this->cli_batch && $this->cli_batch === $batch['id'] && $this->cli_targets === $batch['targets'];
+		}
+
 		if ( empty( $batch['targets'] ) ) {
 			return false;
 		}
@@ -139,7 +169,7 @@ class BackupPlus_Pre_Update_Backups {
 
 	/** Queue exactly one standalone full backup for a selected batch. */
 	public function prepare( $keys, $mode = 'manual' ) {
-		$offers  = $this->offers();
+		$offers  = 'cli' === $mode ? $this->cli_targets : $this->offers();
 		$targets = array();
 		foreach ( array_unique( (array) $keys ) as $key ) {
 			if ( ! is_string( $key ) || ! isset( $offers[ $key ] ) ) {
@@ -178,7 +208,7 @@ class BackupPlus_Pre_Update_Backups {
 			if ( $old && in_array( $old['state'], array( 'queued', 'backing_up', 'ready', 'updating' ), true ) ) {
 				$expired = $old['completed'] && time() >= $old['completed'] + HOUR_IN_SECONDS && ( empty( $old['request'] ) || time() >= ( isset( $old['request_started'] ) ? $old['request_started'] : $old['completed'] ) + HOUR_IN_SECONDS );
 				if ( ! $expired ) {
-					if ( $old['targets'] === $targets && $old['mode'] === $mode && $old['user'] === $batch['user'] ) {
+					if ( 'cli' !== $mode && $old['targets'] === $targets && $old['mode'] === $mode && $old['user'] === $batch['user'] ) {
 						return $old;
 					}
 					return $this->error( 'backupplus_busy' );
@@ -189,7 +219,7 @@ class BackupPlus_Pre_Update_Backups {
 		} finally {
 			$this->unlock();
 		}
-		spawn_cron();
+		if ( 'cli' !== $mode ) { spawn_cron(); }
 		return $batch;
 	}
 
@@ -234,7 +264,7 @@ class BackupPlus_Pre_Update_Backups {
 		$destinations = $this->destinations();
 		$entities     = array();
 		foreach ( $backupplus->get_backupable_file_entities( true ) as $entity => $path ) {
-			if ( 'others' === $entity || is_dir( $path ) ) {
+			if ( 'others' === $entity || BackupPlus_Backup_Sources::custom( $entity ) || is_dir( $path ) || is_file( $path ) ) {
 				$entities[] = $entity;
 			}
 		}
@@ -276,6 +306,16 @@ class BackupPlus_Pre_Update_Backups {
 				}
 			),
 		);
+		if ( 'cli' === $batch['mode'] ) {
+			// CLI protection always includes all eligible WordPress tables, even if saved coverage is disabled.
+			$options['database_selection'] = array(
+				'wp' => array(
+					'enabled' => true,
+					'mode'    => 'all',
+					'tables'  => array(),
+				),
+			);
+		}
 		try {
 			$result = $backupplus->boot_backup( 1, 1, $entities, false, array_keys( $destinations ), $options );
 			if ( false === $result ) {
@@ -438,7 +478,7 @@ class BackupPlus_Pre_Update_Backups {
 
 	/** Bind a download to a verified batch and consume its target once per request. */
 	public function pre_download( $reply, $package, $upgrader, $extra = array() ) {
-		if ( ! self::enabled() || is_a( $upgrader, 'Language_Pack_Upgrader' ) || ( isset( $extra['action'] ) && 'update' !== $extra['action'] ) || is_a( $upgrader->skin, 'Plugin_Installer_Skin' ) || is_a( $upgrader->skin, 'Theme_Installer_Skin' ) ) {
+		if ( ( ! self::enabled() && ! $this->cli_batch ) || is_a( $upgrader, 'Language_Pack_Upgrader' ) || ( ! $this->cli_batch && ( ( isset( $extra['action'] ) && 'update' !== $extra['action'] ) || is_a( $upgrader->skin, 'Plugin_Installer_Skin' ) || is_a( $upgrader->skin, 'Theme_Installer_Skin' ) ) ) ) {
 			return $reply;
 		}
 		$type = is_a( $upgrader, 'Core_Upgrader' ) ? 'core' : ( is_a( $upgrader, 'Plugin_Upgrader' ) ? 'plugin' : ( is_a( $upgrader, 'Theme_Upgrader' ) ? 'theme' : '' ) );
@@ -457,7 +497,7 @@ class BackupPlus_Pre_Update_Backups {
 		if ( 'core' === $type && isset( $this->claims[ $object ] ) && in_array( $package, $this->claims[ $object ]['packages'], true ) ) {
 			return $reply;
 		}
-		$id = $this->automatic_batch ? $this->automatic_batch : ( isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backupplus_batch'] ) ) : '' );
+		$id = $this->cli_batch ? $this->cli_batch : ( $this->automatic_batch ? $this->automatic_batch : ( isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backupplus_batch'] ) ) : '' ) );
 		if ( ! $this->lock() ) {
 			return $this->error( 'backupplus_busy' );
 		}
@@ -472,11 +512,16 @@ class BackupPlus_Pre_Update_Backups {
 			if ( $batch['request'] && $batch['request'] !== $this->request_id ) {
 				return $this->error( 'backupplus_busy' );
 			}
-			$offers = $this->offers();
+			$offers = $this->cli_batch ? $this->cli_targets : $this->offers();
 			foreach ( $batch['remaining'] as $key ) {
 				$target = $batch['targets'][ $key ];
 				if ( $type !== $target['type'] || ( isset( $extra[ $type ] ) && $extra[ $type ] !== $target['id'] ) || ! in_array( $package, $target['packages'], true ) || ! isset( $offers[ $key ] ) || $offers[ $key ]['version'] !== $target['version'] || $offers[ $key ]['packages'] !== $target['packages'] ) {
 					continue;
+				}
+				if ( isset( $target['package_hashes'] ) ) {
+					foreach ( $target['package_hashes'] as $path => $hash ) {
+						if ( ! is_readable( $path ) || ! hash_equals( $hash, hash_file( 'sha256', $path ) ) ) { return $this->error( 'backupplus_update_changed' ); }
+					}
 				}
 				$batch['state']           = 'updating';
 				$batch['request']         = $this->request_id;

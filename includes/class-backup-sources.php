@@ -3,7 +3,30 @@
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
 class BackupPlus_Backup_Sources {
+	private static $run_sources = null;
+	private static $run_paths   = null;
+
+	/** Temporary source map; the engine persists this with the job for resumptions. */
+	public static function set_run_sources( $sources, $paths = null ) {
+		self::$run_sources = $sources;
+		self::$run_paths   = $paths;
+	}
+
+	/** Apply the resolved registry from the first execution to retries. */
+	public static function frozen_entities( $entities, $full_info ) {
+		global $backupplus;
+		$paths = is_array( self::$run_paths ) ? self::$run_paths : $backupplus->jobdata_get( 'file_entity_paths', null );
+		if ( ! is_array( $paths ) ) { return $entities; }
+		if ( ! array_key_exists( 'others', $entities ) ) { unset( $paths['others'] ); }
+		if ( ! $full_info ) { return $paths; }
+		foreach ( $paths as $id => $path ) {
+			$entities[ $id ] = array_merge( isset( $entities[ $id ] ) ? $entities[ $id ] : array( 'description' => $id ), array( 'path' => $path ) );
+		}
+		return array_intersect_key( $entities, $paths );
+	}
+
 	public static function register() {
+		add_filter( 'backupplus_backupable_file_entities_final', array( __CLASS__, 'frozen_entities' ), PHP_INT_MAX, 2 );
 		add_filter( 'backupplus_backupable_file_entities_final', array( __CLASS__, 'entities' ), 5, 2 );
 		add_filter( 'backupplus_backupnow_options', array( __CLASS__, 'request_options' ), 5, 2 );
 		add_filter( 'backupplus_exclude_directory', array( __CLASS__, 'exclude' ), 20, 2 );
@@ -37,6 +60,7 @@ class BackupPlus_Backup_Sources {
 
 	public static function sources() {
 		global $backupplus;
+		if ( is_array( self::$run_sources ) ) { return self::$run_sources; }
 		$frozen = $backupplus->jobdata_get( 'file_sources', null );
 		if ( is_array( $frozen ) ) { return $frozen; }
 		$sources = array();

@@ -559,7 +559,7 @@ class BackupPlus_Admin {
 		// TODO: This is not the best way.
 		var backupplus_credentialtest_nonce='<?php echo esc_js( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>';
 		</script>
-		<div id="backupplus-poplog ">
+		<div id="backupplus-poplog">
 			<pre id="backupplus-poplog-content" style="white-space: pre-wrap;"></pre>
 		</div>
 		
@@ -1815,6 +1815,10 @@ class BackupPlus_Admin {
 	 * @return Array - as from remove_backup_set_cleanup()
 	 */
 	public function delete_set( $opts ) {
+		if ( ! empty( $opts['strict'] ) ) {
+			require_once BACKUPPLUS_DIR . '/includes/class-backup-deletion.php';
+			return BackupPlus_Backup_Deletion::delete( $opts );
+		}
 
 		global $backupplus;
 
@@ -3074,7 +3078,7 @@ class BackupPlus_Admin {
 			);
 		?>
 		
-		<div id="backupplus-poplog ">
+		<div id="backupplus-poplog">
 			<pre id="backupplus-poplog-content"></pre>
 		</div>
 		
@@ -3319,9 +3323,10 @@ class BackupPlus_Admin {
 				echo 'hidden';
 			}
 			if ( $wide_format ) {
-				echo '.minimum-height';
+				echo 'minimum-height';
 			}
 			?>
+			">
 				<div id="backupplus_activejobs" class="<?php echo $wide_format ? 'wide-format' : ''; ?>">
 					<?php echo wp_kses_post( $active_jobs ); ?>
 				</div>
@@ -3746,7 +3751,7 @@ class BackupPlus_Admin {
 				// if the file exists, the backup was booted. Check if the information about completion is found in the log, or if it was modified at least 2 minutes ago.
 				if ( file_exists( $log_file ) && ( $backupplus->found_backup_complete_in_logfile( $this_job_only ) || ( time() - filemtime( $log_file ) ) > 120 ) ) {
 					// The presence of the exact ID matters to the front-end - indicates that the backup job has at least begun
-					$ret = '<div class="active-jobs backupplus_finished" id="backupplus-jobid-"' . $this_job_only . '><em>' . __( 'The backup has finished running', 'backupplus' ) . '</em> - <a class="backupplus-log-link" data-jobid="' . $this_job_only . '">' . __( 'View Log', 'backupplus' ) . '</a></div>';
+					$ret = '<div class="active-jobs backupplus_finished" id="backupplus-jobid-' . esc_attr( $this_job_only ) . '"><em>' . __( 'The backup has finished running', 'backupplus' ) . '</em> - <a class="backupplus-log-link" data-jobid="' . esc_attr( $this_job_only ) . '">' . __( 'View Log', 'backupplus' ) . '</a></div>';
 				}
 			}
 		}
@@ -3950,7 +3955,7 @@ class BackupPlus_Admin {
 
 		$ret .= '<div class="backupplus_col backupplus_progress_container">';
 			// Existence of the 'backupplus-jobid-(id)' id is checked for in other places, so do not modify this
-			$ret .= '<div class="job-id" id="backupplus-jobid-"' . $job_id . '>';
+			$ret .= '<div class="job-id" id="backupplus-jobid-' . esc_attr( $job_id ) . '">';
 
 			$ret .= apply_filters( 'backupplus_printjob_beforewarnings', '', $jobdata, $job_id );
 

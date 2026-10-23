@@ -96,7 +96,9 @@ register_shutdown_function(
 			if ( null === $value ) { delete_option( $name );
 			} else { update_option( $name, $value ); }
 		}
-		$remove_tree( $directory );
+		if ( is_dir( $directory ) ) {
+			$remove_tree( $directory );
+		}
 	}
 );
 global $backupplus;
@@ -186,7 +188,9 @@ try {
 		$options  = $point ? array( 'backupplus_incremental_restore_point' => $point ) : array();
 		$restorer = new BackupPlus_Restorer( new BackupPlus_Restorer_Skin(), $set, false, $options );
 		$backup   = new ReflectionProperty( $restorer, 'ud_backup_set' );
-		$backup->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 ) {
+			$backup->setAccessible( true );
+		}
 		$files = $backup->getValue( $restorer )[ $entity ];
 		ksort( $files );
 		$info = array( 'path' => $destination );

@@ -1,4 +1,4 @@
-/** Chromium checks for backup source controls and responsive connection layouts. */
+/** Chromium checks for admin actions, backup source controls and responsive connection layouts. */
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -55,6 +55,35 @@ try {
 	await call('Page.navigate', {url: origin + '/wp-admin/options-general.php?page=backupplus&tab=settings'});
 	await wait('document.readyState === "complete" && window.jQuery && window.backupplus_database_override && document.querySelector(".bp-databases")');
 	assert.equal(await evaluate(`/Fatal error:|Warning:|Notice:|Deprecated:/.test(document.body.innerText)`), false, 'Settings render without PHP errors');
+	assert.deepEqual(await evaluate(`(() => {
+		const ids = [...document.querySelectorAll('[id]')].map(element => element.id);
+		return ids.filter((id, index) => id.trim() !== id || ids.indexOf(id) !== index);
+	})()`), [], 'Admin controls must have unique IDs without surrounding whitespace');
+	assert.deepEqual(await evaluate(`(() => {
+		const original = window.backupplus_popuplog, calls = [];
+		const panel = jQuery('<div><div><a class="backupplus-log-link" data-jobid="test-job">Log</a></div></div>').appendTo('body');
+		window.backupplus_popuplog = id => calls.push(id);
+		try {
+			panel.find('a')[0].click();
+			panel.html('<div><a class="backupplus-log-link" data-jobid="test-job" data-fileid="test-file">Log</a></div>');
+			panel.find('a')[0].click();
+			return calls;
+		} finally {
+			window.backupplus_popuplog = original;
+			panel.remove();
+		}
+	})()`), ['test-job', 'test-file'], 'Refreshed log links open once and use the file ID when provided');
+	for (const email of [true, false]) {
+		await evaluate(`set_email_report_storage_interface(${email}); true`);
+		assert.deepEqual(await evaluate(`[
+			jQuery('#cb_email_storage_label').css('display') !== 'none',
+			jQuery('#cb_not_email_storage_label').css('display') !== 'none',
+			jQuery('#backupplus_email').prop('disabled')
+		]`), [email, !email, email], 'Email reporting text and controls follow the storage selection');
+	}
+	await evaluate(`backupplus_open_main_tab('settings'); jQuery('.backupplus_add_exclude_item').first().trigger('click'); jQuery('.backupplus-exclude-link[data-panel="contain-clause"]').trigger('click'); document.querySelector('label.contain-clause-sub-label').click(); true`);
+	assert.equal(await evaluate(`document.activeElement.id`), 'backupplus_exclude_clause_field', 'The wildcard label focuses its own field');
+	await evaluate(`jQuery('#backupplus_exclude_modal').dialog('close'); true`);
 	assert.equal(await evaluate(`(() => {
 		const files = document.querySelector('#backupplus_include_wpcore').closest('tr');
 		const databases = document.querySelector('#backupplus-database-settings');
@@ -86,7 +115,7 @@ try {
 		await wait(`jQuery('#backupplus_exclude_files_folders_jstree .jstree-anchor').length > 0`);
 		await evaluate(`jQuery('#backupplus_exclude_modal').dialog('close'); true`);
 		await evaluate(`jQuery('#backupplus_include_${entity}').trigger('click'); true`);
-		assert.equal(await evaluate(`jQuery('#backupplus_include_${entity}_exclude_container').is(':visible')`), false, entity + ' panel follows its inclusion checkbox');
+		await wait(`!jQuery('#backupplus_include_${entity}_exclude_container').is(':visible')`);
 		await evaluate(`jQuery('#backupplus_include_${entity}').trigger('click'); true`);
 	}
 	if (process.env.BACKUPPLUS_FILES_SCREENSHOT) {

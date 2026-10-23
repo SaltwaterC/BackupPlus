@@ -74,7 +74,7 @@ class UDP_Google_Http_REST
    * @param UDP_Google_Client $client
    * @return mixed|null
    */
-  public static function decodeHttpResponse($response, UDP_Google_Client $client = null)
+  public static function decodeHttpResponse($response, ?UDP_Google_Client $client = null)
   {
     $code = $response->getResponseHttpCode();
     $body = $response->getResponseBody();

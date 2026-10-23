@@ -28,6 +28,46 @@ foreach ( array(
 }
 add_filter( 'pre_option_backupplus_autobackup_default', '__return_true', 100 );
 add_filter(
+	'pre_http_request',
+	function ( $response, $args, $url ) {
+		$update_response = null;
+		if ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/plugins/update-check/' ) ) {
+			$update_response = array(
+				'plugins'      => array(),
+				'translations' => array(),
+				'no_update'    => array(),
+			);
+		} elseif ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/themes/update-check/' ) ) {
+			$update_response = array(
+				'themes'       => array(),
+				'translations' => array(),
+				'no_update'    => array(),
+			);
+		} elseif ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/core/version-check/' ) ) {
+			$update_response = array( 'offers' => array() );
+		}
+		if ( null === $update_response ) {
+			$host = is_string( $url ) ? parse_url( $url, PHP_URL_HOST ) : null;
+			if ( in_array( $host, array( 'localhost', '127.0.0.1', '::1' ), true ) ) {
+				return $response;
+			}
+			return new WP_Error( 'test_offline', 'External requests disabled in this test.' );
+		}
+		return array(
+			'headers'  => array(),
+			'body'     => wp_json_encode( $update_response ),
+			'response' => array(
+				'code'    => 200,
+				'message' => 'OK',
+			),
+			'cookies'  => array(),
+			'filename' => null,
+		);
+	},
+	100,
+	3
+);
+add_filter(
 	'pre_transient_doing_cron',
 	function () {
 		return microtime( true );

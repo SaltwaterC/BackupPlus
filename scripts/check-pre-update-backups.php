@@ -98,10 +98,39 @@ add_filter(
 	},
 	100
 );
-$offline = function () {
+
+$offline = function ( $response, $args, $url ) {
+	$update_response = null;
+	if ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/plugins/update-check/' ) ) {
+		$update_response = array(
+			'plugins'      => array(),
+			'translations' => array(),
+			'no_update'    => array(),
+		);
+	} elseif ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/themes/update-check/' ) ) {
+		$update_response = array(
+			'themes'       => array(),
+			'translations' => array(),
+			'no_update'    => array(),
+		);
+	} elseif ( is_string( $url ) && false !== strpos( $url, 'api.wordpress.org/core/version-check/' ) ) {
+		$update_response = array( 'offers' => array() );
+	}
+	if ( null !== $update_response ) {
+		return array(
+			'headers'  => array(),
+			'body'     => wp_json_encode( $update_response ),
+			'response' => array(
+				'code'    => 200,
+				'message' => 'OK',
+			),
+			'cookies'  => array(),
+			'filename' => null,
+		);
+	}
 	return new WP_Error( 'test_offline', 'External requests disabled in this test.' );
 };
-add_filter( 'pre_http_request', $offline, 100 );
+add_filter( 'pre_http_request', $offline, 100, 3 );
 add_filter(
 	'backupplus_get_option',
 	function ( $value, $name ) use ( &$services, &$encryption ) {
@@ -175,12 +204,22 @@ $core_offers   = (object) array(
 add_filter(
 	'pre_site_transient_update_plugins',
 	function () use ( &$plugin_offers ) {
+		$plugin_offers->last_checked = time();
+		$plugin_offers->checked      = array();
+		foreach ( get_plugins() as $plugin_file => $plugin_data ) {
+			$plugin_offers->checked[ $plugin_file ] = $plugin_data['Version'];
+		}
 		return $plugin_offers;
 	}
 );
 add_filter(
 	'pre_site_transient_update_themes',
 	function () use ( &$theme_offers ) {
+		$theme_offers->last_checked = time();
+		$theme_offers->checked      = array();
+		foreach ( wp_get_themes() as $theme_stylesheet => $theme ) {
+			$theme_offers->checked[ $theme_stylesheet ] = $theme->get( 'Version' );
+		}
 		return $theme_offers;
 	}
 );
@@ -373,9 +412,7 @@ $zip          = new ZipArchive();
 $zip->open( $package_path, ZipArchive::CREATE );
 $zip->addFromString( $auto_slug . '/fixture.php', str_replace( 'Version: 1.0', 'Version: 2.0', $plugin_header ) );
 $zip->close();
-$plugin_offers->last_checked  = time();
-$plugin_offers->checked       = array( $auto_slug . '/fixture.php' => '1.0' );
-$theme_offers->last_checked   = time();
+wp_clean_plugins_cache( false );
 $core_offers->last_checked    = time();
 $core_offers->version_checked = $GLOBALS['wp_version'];
 $plugin_offers->response      = array(

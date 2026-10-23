@@ -180,20 +180,21 @@ $within_day = function ( $timestamp ) {
 	return $timestamp > time() && $timestamp <= time() + DAY_IN_SECONDS + HOUR_IN_SECONDS;
 };
 $base       = array(
-	'backupplus_interval'               => 'daily',
-	'backupplus_interval_database'      => 'daily',
-	'backupplus_interval_increments'    => 'none',
-	'backupplus_schedule_exact_files'   => '1',
-	'backupplus_starttime_files'        => '02:15',
-	'backupplus_startday_files'         => '',
-	'backupplus_schedule_exact_db'      => '1',
-	'backupplus_starttime_db'           => '03:40',
-	'backupplus_startday_db'            => '',
-	'backupplus_retention_cleanup_mode' => 'daily',
-	'backupplus_retention_cleanup_time' => '04:05',
-	'backupplus_retain'                 => '2',
-	'backupplus_retain_db'              => '2',
-	'backupplus_service'                => array( 'none' ),
+	'backupplus_interval'                  => 'daily',
+	'backupplus_interval_database'         => 'daily',
+	'backupplus_interval_increments'       => 'none',
+	'backupplus_schedule_exact_increments' => '0',
+	'backupplus_schedule_exact_files'      => '1',
+	'backupplus_starttime_files'           => '02:15',
+	'backupplus_startday_files'            => '',
+	'backupplus_schedule_exact_db'         => '1',
+	'backupplus_starttime_db'              => '03:40',
+	'backupplus_startday_db'               => '',
+	'backupplus_retention_cleanup_mode'    => 'daily',
+	'backupplus_retention_cleanup_time'    => '04:05',
+	'backupplus_retain'                    => '2',
+	'backupplus_retain_db'                 => '2',
+	'backupplus_service'                   => array( 'none' ),
 );
 
 // Independent daily times for files, database and cleanup, with the refreshed displays.

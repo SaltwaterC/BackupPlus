@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				if ( '' == $value ) {
 					continue;
 				}
-				echo '<input class="backupplus_remote_storage_destination" id="backupplus_remote_"' . esc_attr( $value ) . ' checked="checked" type="checkbox" name="backupplus_remote_storage_destination_' . esc_attr( $value ) . '" value="' . esc_attr( $value ) . '"> <label for="backupplus_remote_"' . esc_attr( $value ) . '>' . esc_html( $backupplus->backup_methods[ $value ] ) . ' <span style="display: none">(' . esc_html__( 'already uploaded', 'backupplus' ) . ')</span></label><br>';
+				echo '<input class="backupplus_remote_storage_destination" id="backupplus_remote_' . esc_attr( $value ) . '" checked="checked" type="checkbox" name="backupplus_remote_storage_destination_' . esc_attr( $value ) . '" value="' . esc_attr( $value ) . '"> <label for="backupplus_remote_' . esc_attr( $value ) . '">' . esc_html( $backupplus->backup_methods[ $value ] ) . ' <span style="display: none">(' . esc_html__( 'already uploaded', 'backupplus' ) . ')</span></label><br>';
 			}
 			?>
 		</fieldset>
