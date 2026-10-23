@@ -161,6 +161,9 @@ abstract class BackupPlus_Remote_Storage_Module extends BackupPlus_BackupModule 
 		foreach ( $this->fields as $key => $field ) {
 			$properties[ 'input_' . $key . '_label' ] = $field[0];
 			$properties[ 'input_' . $key . '_type' ]  = $field[2] ?? 'text';
+			if ( 'select' === ( $field[2] ?? '' ) ) {
+				$properties[ 'input_' . $key . '_option_labels' ] = $field[3];
+			}
 		}
 		return $properties;
 	}
@@ -169,7 +172,9 @@ abstract class BackupPlus_Remote_Storage_Module extends BackupPlus_BackupModule 
 		foreach ( $this->fields as $key => $field ) {
 			$html      .= '<tr class="{{get_template_css_classes true}}"><th>{{input_' . $key . '_label}}:</th><td>';
 			$attributes = ' data-backupplus_settings_test="' . $key . '" id="{{get_template_input_attribute_value "id" "' . $key . '"}}" name="{{get_template_input_attribute_value "name" "' . $key . '"}}" autocomplete="off"';
-			if ( 'textarea' === ( $field[2] ?? '' ) ) {
+			if ( 'select' === ( $field[2] ?? '' ) ) {
+				$html .= '<select' . $attributes . '>{{#each input_' . $key . '_option_labels}}<option value="{{@key}}" {{#ifeq @key ../' . $key . '}}selected="selected"{{/ifeq}}>{{this}}</option>{{/each}}</select>';
+			} elseif ( 'textarea' === ( $field[2] ?? '' ) ) {
 				$html .= '<textarea class="backupplus_input--wide" rows="5"' . $attributes . '>{{' . $key . '}}</textarea>';
 			} else {
 				$html .= '<input class="backupplus_input--wide" type="{{input_' . $key . '_type}}" value="{{' . $key . '}}"' . $attributes . ' />';

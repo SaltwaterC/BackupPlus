@@ -54,6 +54,7 @@ try {
 
 	await call('Page.navigate', {url: origin + '/wp-admin/options-general.php?page=backupplus&tab=settings'});
 	await wait('document.readyState === "complete" && window.jQuery && window.backupplus_database_override && document.querySelector(".bp-databases")');
+	assert.equal(await evaluate(`/Fatal error:|Warning:|Notice:|Deprecated:/.test(document.body.innerText)`), false, 'Settings render without PHP errors');
 	assert.equal(await evaluate(`(() => {
 		const files = document.querySelector('#backupplus_include_wpcore').closest('tr');
 		const databases = document.querySelector('#backupplus-database-settings');
@@ -62,6 +63,37 @@ try {
 	})()`), true, 'Database connections follow file inclusion and precede Email');
 	assert.equal(await evaluate(`!!document.querySelector('#backupplus_include_wpcore')`), true, 'Core opt-in checkbox is rendered with a valid ID');
 	assert.equal(await evaluate(`!!document.querySelector('[name="backupplus_include_more_path"]')`), true, 'Additional paths editor is rendered');
+	for (const entity of ['wpcore', 'more']) {
+		await evaluate(`jQuery.fx.off = true; jQuery('#backupplus_include_${entity}').prop('checked', false).trigger('click'); true`);
+		await wait(`jQuery('#backupplus_include_${entity}_exclude_container').is(':visible')`);
+		await evaluate(`jQuery('#backupplus_include_${entity}_exclude_container .backupplus_add_exclude_item').trigger('click'); jQuery('.backupplus-exclude-link[data-panel="extension"]').trigger('click'); jQuery('#backupplus_exclude_extension_field').val('bptest'); jQuery('.backupplus-exclude-submit[data-panel="extension"]').trigger('click'); true`);
+		assert.equal(await evaluate(`jQuery('#backupplus_include_${entity}_exclude').val().split(',').includes('ext:bptest')`), true, entity + ' modal adds a rule to the submitted value');
+		await evaluate(`(() => {
+			const row = jQuery('#backupplus_include_${entity}_exclude_container .backupplus_exclude_entity_wrapper').last();
+			row.find('.backupplus_exclude_entity_edit').trigger('click');
+			row.find('input').val('ext:bpedited');
+			row.find('.backupplus_exclude_entity_update').trigger('click');
+		})()`);
+		assert.equal(await evaluate(`jQuery('#backupplus_include_${entity}_exclude').val().split(',').includes('ext:bpedited')`), true, entity + ' rule edits update the submitted value');
+		await evaluate(`(() => {
+			const confirm = window.confirm;
+			window.confirm = () => true;
+			jQuery('#backupplus_include_${entity}_exclude_container .backupplus_exclude_entity_delete').last().trigger('click');
+			window.confirm = confirm;
+		})()`);
+		assert.equal(await evaluate(`jQuery('#backupplus_include_${entity}_exclude').val().split(',').includes('ext:bpedited')`), false, entity + ' rule deletion updates the submitted value');
+		await evaluate(`jQuery('#backupplus_include_${entity}_exclude_container .backupplus_add_exclude_item').trigger('click'); jQuery('.backupplus-exclude-link[data-panel="file-dir"]').trigger('click'); true`);
+		await wait(`jQuery('#backupplus_exclude_files_folders_jstree .jstree-anchor').length > 0`);
+		await evaluate(`jQuery('#backupplus_exclude_modal').dialog('close'); true`);
+		await evaluate(`jQuery('#backupplus_include_${entity}').trigger('click'); true`);
+		assert.equal(await evaluate(`jQuery('#backupplus_include_${entity}_exclude_container').is(':visible')`), false, entity + ' panel follows its inclusion checkbox');
+		await evaluate(`jQuery('#backupplus_include_${entity}').trigger('click'); true`);
+	}
+	if (process.env.BACKUPPLUS_FILES_SCREENSHOT) {
+		await evaluate(`document.querySelector('#backupplus_include_wpcore').scrollIntoView(); window.scrollBy(0,-80); true`);
+		const screenshot = await call('Page.captureScreenshot', {format:'png'});
+		await writeFile(process.env.BACKUPPLUS_FILES_SCREENSHOT, Buffer.from(screenshot.data,'base64'));
+	}
 	assert.equal(await evaluate(`fetch(backupplus_sources.ajax, {method:'POST',body:new URLSearchParams({action:'backupplus_source_tables',nonce:'invalid'})}).then(r=>r.status)`), 403, 'Table discovery rejects invalid nonces');
 	await evaluate(`jQuery('.bp-add-database').first().trigger('click'); jQuery('.bp-add-database').first().trigger('click'); true`);
 	assert.equal(await evaluate(`new Set(jQuery('.bp-databases[data-manual="0"] .bp-connection').map(function(){return jQuery(this).data('id')}).get()).size`), await evaluate(`jQuery('.bp-databases[data-manual="0"] .bp-connection').length`), 'New database IDs are unique');
@@ -80,6 +112,11 @@ try {
 		await writeFile(process.env.BACKUPPLUS_SOURCES_SCREENSHOT, Buffer.from(screenshot.data,'base64'));
 	}
 	await call('Emulation.setDeviceMetricsOverride', {width:390,height:844,deviceScaleFactor:1,mobile:true});
+	assert.equal(await evaluate(`['wpcore', 'more'].every(entity => {
+		const panel = document.querySelector('#backupplus_include_' + entity + '_exclude_container');
+		const bounds = panel.getBoundingClientRect();
+		return bounds.left >= 0 && bounds.right <= innerWidth && [...panel.querySelectorAll('input:not([type="hidden"]), textarea, .backupplus_add_exclude_item')].every(input => input.getBoundingClientRect().right <= bounds.right);
+	})`), true, 'Core and Additional files controls fit the mobile viewport');
 	await evaluate(`jQuery('#backupplus-database-settings .bp-connection .bp-table-mode').first().val('selected').trigger('change'); true`);
 	const mobileLayout = await evaluate(`(() => {
 		const card = document.querySelector('#backupplus-database-settings .bp-connection');

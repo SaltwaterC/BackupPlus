@@ -18,7 +18,15 @@ class BackupPlus_BackupModule_pcloud extends BackupPlus_Remote_Storage_Module {
 
 	protected $fields       = array(
 		'pclauth'       => array( 'OAuth access token (or connect after saving)', '', 'password' ),
-		'location'      => array( 'Data region (1 = United States, 2 = Europe)', '1' ),
+		'location'      => array(
+			'Data region',
+			'1',
+			'select',
+			array(
+				'1' => 'United States',
+				'2' => 'Europe',
+			),
+		),
 		'path'          => array( 'Backup folder path', 'BackupPlus' ),
 		'client_id'     => array( 'OAuth application ID (optional with an access token)', '' ),
 		'client_secret' => array( 'OAuth application secret', '', 'password' ),

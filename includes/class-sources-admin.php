@@ -125,14 +125,30 @@ class BackupPlus_Sources_Admin {
 		echo '</div>';
 	}
 
-	public static function file_settings() {
-		echo '<p><input type="hidden" name="backupplus_include_more" value="0"><label><input type="checkbox" name="backupplus_include_more" value="1" ' . checked( BackupPlus_Options::get_backupplus_option( 'backupplus_include_more', false ), true, false ) . '> ' . esc_html__( 'Additional files', 'backupplus' ) . '</label></p><p>' . esc_html__( 'Absolute local file or directory paths, one per line. Directories restore by merging their contents.', 'backupplus' ) . '</p><textarea name="backupplus_include_more_path" rows="5" class="large-text">' . esc_textarea( implode( "\n", BackupPlus_Backup_Sources::paths( BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path', array() ) ) ) ) . '</textarea>';
-		foreach ( array(
-			'wpcore' => 'WordPress core exclusions',
-			'more'   => 'Additional file exclusions',
-		) as $entity => $label ) {
-			echo '<p><label>' . esc_html( $label ) . ' <input class="large-text" name="backupplus_include_' . esc_attr( $entity ) . '_exclude" value="' . esc_attr( BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . $entity . '_exclude', '' ) ) . '"></label></p>';
-		}
+	/** Render the shared file exclusion panel used by each backup source. */
+	public static function file_exclusions( $key, $description, $path, $prefix = '', $default = '', $paths = null ) {
+		global $backupplus_admin;
+		$backupplus_admin->include_template(
+			'wp-admin/settings/file-backup-exclude-container.php',
+			false,
+			array(
+				'key'             => $key,
+				'description'     => $description,
+				'path'            => BackupPlus_Manipulation_Functions::wp_normalize_path( $path ),
+				'prefix'          => $prefix,
+				'included'        => 'more' === $key ? (bool) BackupPlus_Options::get_backupplus_option( 'backupplus_include_more', false ) : BackupPlus_Backup_Sources::included( $key ),
+				'include_exclude' => BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . $key . '_exclude', $default ),
+				'paths'           => $paths,
+			)
+		);
+	}
+
+	public static function file_settings( $prefix = '' ) {
+		$paths = BackupPlus_Backup_Sources::paths( BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path', array() ) );
+		$path  = $paths ? reset( $paths ) : untrailingslashit( ABSPATH );
+		if ( is_file( $path ) ) { $path = dirname( $path ); }
+		echo '<input type="hidden" name="backupplus_include_more" value="0"><label for="' . esc_attr( $prefix . 'backupplus_include_more' ) . '" class="backupplus_checkbox"><input class="backupplus_include_entity" id="' . esc_attr( $prefix . 'backupplus_include_more' ) . '" data-toggle_exclude_field="more" type="checkbox" name="backupplus_include_more" value="1" ' . checked( BackupPlus_Options::get_backupplus_option( 'backupplus_include_more', false ), true, false ) . '> ' . esc_html__( 'Additional files', 'backupplus' ) . '</label>';
+		self::file_exclusions( 'more', __( 'Additional files', 'backupplus' ), $path, $prefix, '', $paths );
 	}
 	public static function restore_fields( $id, $info ) {
 		if ( BackupPlus_Backup_Sources::custom( $id ) ) {

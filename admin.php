@@ -4454,7 +4454,7 @@ class BackupPlus_Admin {
 		foreach ( $backupable_entities as $key => $info ) {
 			if ( $show_exclusion_options && BackupPlus_Backup_Sources::custom( $key ) ) { continue; }
 			$included = ( BackupPlus_Backup_Sources::included( $key ) ) ? 'checked="checked"' : '';
-			if ( 'others' == $key || 'uploads' == $key ) {
+			if ( in_array( $key, array( 'others', 'uploads', 'wpcore' ), true ) ) {
 
 				$data_toggle_exclude_field = $show_exclusion_options ? 'data-toggle_exclude_field="' . $key . '"' : '';
 
@@ -4464,39 +4464,8 @@ class BackupPlus_Admin {
 						'</label>';
 
 				if ( $show_exclusion_options ) {
-					$include_exclude = BackupPlus_Options::get_backupplus_option( 'backupplus_include_' . $key . '_exclude', ( 'others' == $key ) ? BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE : BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE );
-
-					$display                  = ( $included ) ? 'class="backupplus_exclude_container"' : 'class="backupplus-hidden backupplus_exclude_container" style="display:none;"';
-					$exclude_container_class  = $prefix . 'backupplus_include_' . $key . '_exclude';
-					$exclude_container_class .= '_container';
-
-					echo '<div id="' . esc_attr( $exclude_container_class ) . '" ' . wp_kses( $display, array() ) . '>';
-
-					echo '<label class="backupplus-exclude-label" for="' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '">' . esc_html( __( 'Exclude these from', 'backupplus' ) . ' ' . $info['description'] ) . ':</label> <span class="backupplus-fs-italic">' . esc_html__( '(the asterisk character matches zero or more characters)', 'backupplus' ) . '</span>';
-
-					echo '<input type="hidden" id="' . esc_attr( $prefix . 'backupplus_include_' . $key . '_exclude' ) . '" name="' . esc_attr( 'backupplus_include_' . $key . '_exclude' ) . '" value="' . esc_attr( $include_exclude ) . '" />';
-
-						global $backupplus;
-						$backupable_file_entities = $backupplus->get_backupable_file_entities();
-
-					if ( 'uploads' == $key ) {
-						$path = BackupPlus_Manipulation_Functions::wp_normalize_path( $backupable_file_entities['uploads'] );
-					} elseif ( 'others' == $key ) {
-						$path = BackupPlus_Manipulation_Functions::wp_normalize_path( $backupable_file_entities['others'] );
-					}
-					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Already escaped HTML.
-					echo $this->include_template(
-						'wp-admin/settings/file-backup-exclude.php',
-						true,
-						array(
-							'key'                    => $key,
-							'include_exclude'        => $include_exclude,
-							'path'                   => $path,
-							'show_exclusion_options' => $show_exclusion_options,
-						)
-					);
-					// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo '</div>';
+					$default_exclude = 'others' === $key ? BACKUPPLUS_DEFAULT_OTHERS_EXCLUDE : ( 'uploads' === $key ? BACKUPPLUS_DEFAULT_UPLOADS_EXCLUDE : '' );
+					BackupPlus_Sources_Admin::file_exclusions( $key, $info['description'], $info['path'], $prefix, $default_exclude );
 				}
 			} else {
 
@@ -4520,7 +4489,7 @@ class BackupPlus_Admin {
 			}
 		}
 
-		if ( $show_exclusion_options ) { BackupPlus_Sources_Admin::file_settings(); }
+		if ( $show_exclusion_options ) { BackupPlus_Sources_Admin::file_settings( $prefix ); }
 		if ( ! $echo_instead_of_return ) {
 			return ob_get_clean();
 		}
