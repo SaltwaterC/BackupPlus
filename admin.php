@@ -807,6 +807,9 @@ class BackupPlus_Admin {
 					'nocloudserviceschosen'                => __( 'You have chosen to send this backup to remote storage, but no remote storage locations have been selected', 'backupplus' ),
 					'restore_proceeding'                   => __( 'The restore operation has begun.', 'backupplus' ) . ' ' . __( 'Do not close your browser until it reports itself as having finished.', 'backupplus' ),
 					'unexpectedresponse'                   => __( 'Unexpected response:', 'backupplus' ),
+					'backup_locked_title'                  => __( 'Locked: retention never deletes this backup. Click to unlock.', 'backupplus' ),
+					'backup_unlocked_title'                => __( 'Unlocked: retention may delete this backup. Click to lock.', 'backupplus' ),
+					'backup_lock_failed'                   => __( 'Some backups could not be changed:', 'backupplus' ),
 					'servererrorcode'                      => __( 'The web server returned an error code (try again, or check your web server logs)', 'backupplus' ),
 					'newuserpass'                          => __( "The new user's RackSpace console password is (this will not be shown again):", 'backupplus' ),
 					'trying'                               => __( 'Trying...', 'backupplus' ),
@@ -5168,7 +5171,7 @@ class BackupPlus_Admin {
 
 		$pretty_date = $simple_format ? $pretty_date : '<div class="clear-right">' . $pretty_date . '</div>';
 		if ( ! empty( $backup['pitr'] ) && ! $simple_format ) {
-			$increments  = max( 0, count( isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array() ) - 1 );
+			$increments = max( 0, count( isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array() ) - 1 );
 			// Not "Full backup": that reads as an ordinary database dump, which restores without a database login.
 			/* translators: %d: Number of incremental database recovery points */
 			$label       = $increments ? sprintf( _n( 'Recovery chain + %d incremental', 'Recovery chain + %d incrementals', $increments, 'backupplus' ), $increments ) : __( 'Recovery chain', 'backupplus' );

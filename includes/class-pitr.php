@@ -645,7 +645,7 @@ class BackupPlus_PITR {
 			$instances[ $destination['service'] ][] = $destination['instance'];
 		}
 		$history[ $time ] = array_merge(
-			isset( $history[ $time ] ) ? $history[ $time ] : array(),
+			isset( $history[ $time ] ) ? $history[ $time ] : ( ! empty( $chain['pinned'] ) ? array( 'always_keep' => true ) : array() ),
 			array(
 				'db'                   => $artifact['name'],
 				'db-size'              => $artifact['size'],
@@ -1473,6 +1473,14 @@ class BackupPlus_PITR {
 		return $progress;
 	}
 
+	/** A restore's pin holds only while its history row stays locked, so unlocking in the backups list needs no worker lock. Without a row the pin alone applies. */
+	private function retention_locked( $chain, $history ) {
+		if ( isset( $chain['history_time'], $history[ $chain['history_time'] ] ) ) {
+			return ! empty( $history[ $chain['history_time'] ]['always_keep'] );
+		}
+		return ! empty( $chain['pinned'] );
+	}
+
 	public function prune() {
 		$history = BackupPlus_Backup_History::get_history();
 		$keep    = max( 1, (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', 2 ) );
@@ -1492,7 +1500,7 @@ class BackupPlus_PITR {
 				continue;
 			}
 			++$count;
-			if ( $count <= $keep || $id === $this->state['active'] || in_array( $id, isset( $this->state['protected_previous'] ) ? $this->state['protected_previous'] : array(), true ) || ! empty( $chain['pinned'] ) || ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) || ( isset( $chain['history_time'] ) && ! empty( $history[ $chain['history_time'] ]['always_keep'] ) ) ) {
+			if ( $count <= $keep || $id === $this->state['active'] || in_array( $id, isset( $this->state['protected_previous'] ) ? $this->state['protected_previous'] : array(), true ) || $this->retention_locked( $chain, $history ) || ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) ) {
 				continue;
 			}
 			$this->delete( $id );

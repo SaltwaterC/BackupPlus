@@ -31,7 +31,7 @@ Existing installations keep their current timing. Saved start times do not enabl
 - **After each backup** (default) keeps the existing behaviour.
 - **Daily at a chosen time** runs a separate cleanup job at that local time. Backups then skip retention pruning. The cleanup creates no archive, backup history entry, or backup report.
 
-Cleanup uses the same retention counts and rules as backups. It skips **Always Keep** backups, imported backups and pre-update restore points. Incremental chains are deleted as a whole. With local storage only, it respects the setting that disables local deletion. Deleting temporary local copies after a successful upload is unchanged.
+Cleanup uses the same retention counts and rules as backups. It skips **Always Keep** backups (the lock icon in **Existing backups**, or **Lock**/**Unlock** on selected rows, toggles this), imported backups and pre-update restore points. Incremental chains are deleted as a whole. With local storage only, it respects the setting that disables local deletion. Deleting temporary local copies after a successful upload is unchanged.
 
 The cleanup waits five minutes when a backup is running. If a backup starts while cleanup is running, the cleanup saves its progress, stops, and continues five minutes later. An interrupted cleanup resumes through the normal backup resumption mechanism.
 

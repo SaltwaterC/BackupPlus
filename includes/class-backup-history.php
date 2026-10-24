@@ -318,6 +318,33 @@ class BackupPlus_Backup_History {
 	}
 
 	/**
+	 * Lock or unlock backups so that retention skips them. A recovery chain's automatic pre-restore pin only counts while its row here is locked (see BackupPlus_PITR::retention_locked()).
+	 *
+	 * @param Array   $timestamps - history keys to change.
+	 * @param Boolean $keep       - true to lock, false to unlock.
+	 *
+	 * @return Array - 'locked' maps each changed timestamp to its new state; 'errors' maps each unchanged timestamp to a message.
+	 */
+	public static function set_always_keep( $timestamps, $keep ) {
+		$history = self::get_history();
+		$result  = array(
+			'locked' => array(),
+			'errors' => array(),
+		);
+		foreach ( array_unique( $timestamps ) as $timestamp ) {
+			if ( ! isset( $history[ $timestamp ] ) ) {
+				$result['errors'][ $timestamp ] = __( 'Backup set not found.', 'backupplus' );
+				continue;
+			}
+			if ( $keep ) { $history[ $timestamp ]['always_keep'] = true; }
+			else { unset( $history[ $timestamp ]['always_keep'] ); }
+			$result['locked'][ $timestamp ] = (bool) $keep;
+		}
+		if ( $result['locked'] ) { self::save_history( $history ); }
+		return $result;
+	}
+
+	/**
 	 * Used by self::always_get_from_db()
 	 *
 	 * @return Mixed - the database option

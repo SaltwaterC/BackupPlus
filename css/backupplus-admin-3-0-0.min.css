@@ -3,3 +3,4 @@
 .backupplus_restore_container .backupplus--one-half,.backupplus_restore_container fieldset{min-width:0}.backupplus_restore_container select,.backupplus_restore_container textarea,.backupplus_restore_container input[type="password"]{box-sizing:border-box;max-width:100%}
 
 .backupplus_next_scheduled_cleanup,.backupplus_time_now_wrapper{clear:both}
+.backupplus-lock-toggle{margin:0 4px;padding:0;border:0;background:none;color:#787C82;cursor:pointer;vertical-align:middle}.backupplus-lock-toggle[data-locked="1"]{color:#2271B1}.backupplus-lock-toggle:hover,.backupplus-lock-toggle:focus{color:#135E96}.backupplus-lock-toggle.disabled{opacity:.5;pointer-events:none}

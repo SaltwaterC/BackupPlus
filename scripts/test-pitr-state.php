@@ -300,8 +300,14 @@ try {
 	$decorated = BackupPlus_PITR::decorate_history( $legacy );
 	state_expect( 2 === count( $decorated[100]['pitr']['points'] ), 'Existing history did not acquire recovery endpoints from its chain index.' );
 	state_expect( array( $log['name'], $manifest['name'], $locator_file['name'] ) === $provider->uploads, 'Retry uploaded completed objects again or reordered publication.' );
-	$retained_state   = state_property( $worker, 'state' );
-	$retained_history = BackupPlus_Backup_History::$history;
+	$retained_state         = state_property( $worker, 'state' );
+	$retained_history       = BackupPlus_Backup_History::$history;
+	$pinned_chain           = array( 'history_time' => 100 ) + $retained_state['chains'][ $chain_id ];
+	$unpinned               = $pinned_chain;
+	$pinned_chain['pinned'] = true;
+	state_expect( true === state_call( $worker, 'retention_locked', array( $pinned_chain, array() ) ) && false === state_call( $worker, 'retention_locked', array( $unpinned, array() ) ), 'The pin alone must protect a chain without a history row.' );
+	state_expect( false === state_call( $worker, 'retention_locked', array( $pinned_chain, array( 100 => array( 'db' => 'x' ) ) ) ), 'Unlocking the history row must release a restore pin.' );
+	state_expect( true === state_call( $worker, 'retention_locked', array( $unpinned, array( 100 => array( 'always_keep' => true ) ) ) ), 'A locked history row must protect an unpinned chain.' );
 	state_reject(
 		function () use ( $worker, $chain_id ) {
 			$worker->delete( $chain_id );

@@ -165,6 +165,6 @@ This standalone emergency command prompts for credentials again and does not boo
 
 ## Retention and verification
 
-Retention keeps/deletes entire dependency chains and preserves active, pinned and in-use chains. Existing backups deletion removes a complete selected chain through the UI, including its selected remote destinations. Rescan reconstructs history from portable locators/manifests after verifying required artifacts.
+Retention keeps/deletes entire dependency chains and preserves active, pinned and in-use chains. The pre-restore backup is locked automatically; the lock icon in **Existing backups**, or **Lock**/**Unlock** on a selection, changes it manually. Unlocking releases the pin, so later retention may delete that chain. Existing backups deletion removes a complete selected chain through the UI, including its selected remote destinations. Rescan reconstructs history from portable locators/manifests after verifying required artifacts.
 
 `make test` includes formatting, PHP/assets, unit, integration, WordPress, browser and native PITR suites. `make test-pitr-native` runs disposable MySQL GTID off/on and MariaDB 10.11/11.4 pairs. It checks coordinated snapshots, online writers, guard loss, coordinates, rotations, historical overwritten values, whole/selected-table recovery, age, corruption, rescan, encrypted backup credentials, request-only restore transport and application protection. It does not restore into the development site's database.

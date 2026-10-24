@@ -764,10 +764,10 @@ var backupplus_backups_selection = {};
 		// toggles actions upon seleted items
 		if (num_selected > 0) {
 			$('#ud_massactions').addClass('active');
-			$('.js--deselect-all-backups, .js--delete-selected-backups').prop('disabled', false);
+			$('.js--deselect-all-backups, .js--delete-selected-backups, .js--lock-selected-backups, .js--unlock-selected-backups').prop('disabled', false);
 		} else {
 			$('#ud_massactions').removeClass('active');
-			$('.js--deselect-all-backups, .js--delete-selected-backups').prop('disabled', true);
+			$('.js--deselect-all-backups, .js--delete-selected-backups, .js--lock-selected-backups, .js--unlock-selected-backups').prop('disabled', true);
 		}
 		// if all rows are selected, check the headind's checkbox
 		if (num_rows === num_selected) {
@@ -2050,6 +2050,44 @@ jQuery(function($) {
 	$('#backupplus-navtab-backups-content').on('click', '.js--delete-selected-backups', function(e) {
 		e.preventDefault();
 		backupplus_deleteallselected();
+	});
+
+	/**
+	 * Lock or unlock backups so that retention skips (or stops skipping) them, then refresh the lock icons in place
+	 *
+	 * @param {Array}   keys   - backup timestamps
+	 * @param {Boolean} locked - true to lock, false to unlock
+	 * @param {jQuery}  $busy  - controls to disable until the request completes
+	 */
+	function backupplus_set_backups_locked(keys, locked, $busy) {
+		$busy.prop('disabled', true).addClass('disabled');
+		backupplus_send_command('always_keep_backups', {backup_keys: keys.join(','), always_keep: locked ? 1 : 0}, function(resp) {
+			$busy.prop('disabled', false).removeClass('disabled');
+			if (!resp.hasOwnProperty('locked')) {
+				alert(resp.hasOwnProperty('error_message') ? resp.error_message : backupplus_i18n.unexpectedresponse+' '+JSON.stringify(resp));
+				return;
+			}
+			$.each(resp.locked, function(key, is_locked) {
+				$('.backupplus_existing_backups_row_'+key+' .backupplus-lock-toggle')
+					.attr('data-locked', is_locked ? '1' : '0')
+					.attr('title', is_locked ? backupplus_i18n.backup_locked_title : backupplus_i18n.backup_unlocked_title)
+					.find('.dashicons').toggleClass('dashicons-lock', is_locked).toggleClass('dashicons-unlock', !is_locked);
+			});
+			var failures = $.map(resp.errors, function(message, key) { return key+': '+message; });
+			if (failures.length) { alert(backupplus_i18n.backup_lock_failed+"\n"+failures.join("\n")); }
+		});
+	}
+
+	$('#backupplus-navtab-backups-content').on('click', '.backupplus-lock-toggle', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		backupplus_set_backups_locked([$(this).data('key')], '1' !== String($(this).attr('data-locked')), $(this));
+	});
+
+	$('#backupplus-navtab-backups-content').on('click', '.js--lock-selected-backups, .js--unlock-selected-backups', function(e) {
+		e.preventDefault();
+		var keys = $('#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected').map(function() { return $(this).data('key'); }).get();
+		if (keys.length) { backupplus_set_backups_locked(keys, $(this).hasClass('js--lock-selected-backups'), $(this)); }
 	});
 
 	$('#backupplus-navtab-backups-content').on('click', '.backupplus_existing_backups .backup-select input', function(e) {

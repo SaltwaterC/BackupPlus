@@ -52,7 +52,16 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 
 			$rawbackup = $backupplus_admin->raw_backup_info( $backup_history, $key, $nonce, $jobdata );
 
-			$date_label = $backupplus_admin->date_label( $pretty_date, $key, $backup, $jobdata, $nonce );
+			$is_locked = ! empty( $backup['always_keep'] );
+			ob_start();
+			?>
+			<button type="button" class="backupplus-lock-toggle" data-key="<?php echo esc_attr( $key ); ?>" data-locked="<?php echo $is_locked ? '1' : '0'; ?>" title="<?php echo esc_attr( $is_locked ? __( 'Locked: retention never deletes this backup. Click to unlock.', 'backupplus' ) : __( 'Unlocked: retention may delete this backup. Click to lock.', 'backupplus' ) ); ?>">
+				<span class="dashicons <?php echo $is_locked ? 'dashicons-lock' : 'dashicons-unlock'; ?>"></span>
+				<span class="screen-reader-text"><?php echo esc_html( $is_locked ? __( 'Unlock this backup', 'backupplus' ) : __( 'Lock this backup', 'backupplus' ) ); ?></span>
+			</button>
+			<?php
+			$lock_toggle = ob_get_clean();
+			$date_label  = $backupplus_admin->date_label( $pretty_date . $lock_toggle, $key, $backup, $jobdata, $nonce );
 
 
 			?>
@@ -92,17 +101,6 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 							?>
 							<span class="backupplus-chain-badge backupplus-encryption-badge"><?php echo esc_html( $backup_encrypted ? __( 'Encrypted', 'backupplus' ) : __( 'Not encrypted', 'backupplus' ) ); ?></span>
 							<?php
-						}
-						if ( ! empty( $backup['always_keep'] ) ) {
-							$wp_version = $backupplus->get_wordpress_version();
-							if ( version_compare( $wp_version, '3.8.0', '<' ) ) {
-								$image_url = $image_folder_url . 'lock.png';
-								?>
-									<img class="stored_icon" src="<?php echo esc_url( $image_url ); ?>" title="<?php esc_attr_e( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ); ?>">
-									<?php
-							} else {
-								echo '<span class="dashicons dashicons-lock"  title="' . esc_attr( __( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ) ) . '"></span>';
-							}
 						}
 						if ( ! isset( $backup['service'] ) ) {
 							$backup['service'] = array();
@@ -189,6 +187,8 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 <div id="ud_massactions">
 	<strong><?php esc_html_e( 'Actions upon selected backups', 'backupplus' ); ?></strong>
 	<div class="backupplus-remove"><button title="<?php esc_attr_e( 'Delete selected backups', 'backupplus' ); ?>" type="button" class="button button-remove js--delete-selected-backups"><?php esc_html_e( 'Delete', 'backupplus' ); ?></button></div>
+	<div class="backupplus-viewlogdiv"><button title="<?php esc_attr_e( 'Lock selected backups so retention never deletes them', 'backupplus' ); ?>" type="button" class="button js--lock-selected-backups"><?php esc_html_e( 'Lock', 'backupplus' ); ?></button></div>
+	<div class="backupplus-viewlogdiv"><button title="<?php esc_attr_e( 'Unlock selected backups so retention may delete them', 'backupplus' ); ?>" type="button" class="button js--unlock-selected-backups"><?php esc_html_e( 'Unlock', 'backupplus' ); ?></button></div>
 	<div class="backupplus-viewlogdiv"><button title="<?php esc_attr_e( 'Select all backups', 'backupplus' ); ?>" type="button" class="button js--select-all-backups" href="#"><?php esc_html_e( 'Select all', 'backupplus' ); ?></button></div>
 	<div class="backupplus-viewlogdiv"><button title="<?php esc_attr_e( 'Deselect all backups', 'backupplus' ); ?>" type="button" class="button js--deselect-all-backups" href="#"><?php esc_html_e( 'Deselect', 'backupplus' ); ?></button></div>
 	<small class="ud_massactions-tip"><?php esc_html_e( 'Use ctrl / cmd + press to select several items, or ctrl / cmd + shift + press to select all in between', 'backupplus' ); ?></small>

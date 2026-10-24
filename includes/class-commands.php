@@ -167,19 +167,32 @@ class BackupPlus_Commands {
 		if ( false === ( $backupplus_admin = $this->_load_ud_admin() ) ) {
 			return new WP_Error( 'no_backupplus' );
 		}
-		$backup_key     = $params['backup_key'];
+		$backup_key = $params['backup_key'];
+		$result     = BackupPlus_Backup_History::set_always_keep( array( $backup_key ), ! empty( $params['always_keep'] ) );
+		if ( $result['errors'] ) { return new WP_Error( 'always_keep_failed', reset( $result['errors'] ) ); }
 		$backup_history = BackupPlus_Backup_History::get_history();
-		if ( empty( $params['always_keep'] ) ) {
-			unset( $backup_history[ $backup_key ]['always_keep'] );
-		} else {
-			$backup_history[ $backup_key ]['always_keep'] = true;
-		}
-		BackupPlus_Backup_History::save_history( $backup_history );
-		$nonce     = $backup_history[ $backup_key ]['nonce'];
-		$rawbackup = $backupplus_admin->raw_backup_info( $backup_history, $backup_key, $nonce );
+		$nonce          = $backup_history[ $backup_key ]['nonce'];
+		$rawbackup      = $backupplus_admin->raw_backup_info( $backup_history, $backup_key, $nonce );
 		return array(
 			'rawbackup' => html_entity_decode( $rawbackup ),
 		);
+	}
+
+	/**
+	 * Lock or unlock several backups at once so that retention skips (or stops skipping) them
+	 *
+	 * @param array $params this is an array of parameters sent via ajax it can include the following:
+	 * backup_keys - String - comma-separated backup timestamps
+	 * always_keep - Boolean - "Always keep" value
+	 * @return array with 'locked' (timestamp => new state) and 'errors' (timestamp => message)
+	 */
+	public function always_keep_backups( $params ) {
+		$keys = isset( $params['backup_keys'] ) ? array_filter( explode( ',', (string) $params['backup_keys'] ) ) : array();
+		foreach ( $keys as $key ) {
+			if ( ! ctype_digit( $key ) ) { return new WP_Error( 'invalid_backup_key', 'Invalid backup key.' ); }
+		}
+		if ( ! $keys ) { return new WP_Error( 'no_backups_selected', 'No backups selected.' ); }
+		return BackupPlus_Backup_History::set_always_keep( $keys, ! empty( $params['always_keep'] ) );
 	}
 
 	/**

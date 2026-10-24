@@ -471,6 +471,29 @@ button.ui-dialog-titlebar-close:before {
 	line-height: 18px;
 }
 
+.backupplus-lock-toggle {
+	margin: 0 4px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #787C82;
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.backupplus-lock-toggle[data-locked="1"] {
+	color: #2271B1;
+}
+
+.backupplus-lock-toggle:hover, .backupplus-lock-toggle:focus {
+	color: #135E96;
+}
+
+.backupplus-lock-toggle.disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 .backupplus-delete-chain-warning {
 	margin: 0 0 12px;
 	padding: 10px 14px;
