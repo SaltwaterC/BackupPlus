@@ -230,6 +230,8 @@ endif;
 // http://codex.wordpress.org/Plugin_API/Filter_Reference/cron_schedules. Raised priority because some plugins wrongly over-write all prior schedule changes (including BackupBuddy!)
 add_filter( 'cron_schedules', 'backupplus_modify_cron_schedules', 30 );
 
+require_once BACKUPPLUS_DIR . '/includes/class-sql.php';
+
 // Move persisted settings and scheduled jobs into the BackupPlus namespace.
 require_once BACKUPPLUS_DIR . '/includes/class-legacy-compatibility.php';
 BackupPlus_Legacy_Compatibility::migrate();
@@ -397,3 +399,5 @@ add_action( 'admin_enqueue_scripts', array( 'BackupPlus_Backup_Schedule', 'asset
 
 require_once BACKUPPLUS_DIR . '/includes/class-cli.php';
 BackupPlus_CLI::register();
+require_once BACKUPPLUS_DIR . '/includes/class-pitr.php';
+BackupPlus_PITR::register();

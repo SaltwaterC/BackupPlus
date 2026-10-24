@@ -99,6 +99,14 @@ class CredentialTestDB {
 		return array_keys( $site_options ); }
 }
 $wpdb = new CredentialTestDB();
+// No database here: job lookups list the in-memory site options.
+class BackupPlus_SQL {
+	public static function wpdb() {
+		return new self(); }
+	public function column( $template, $parts = array(), $values = array() ) {
+		global $site_options;
+		return array_keys( $site_options ); }
+}
 require BACKUPPLUS_DIR . '/class-backupplus.php';
 require BACKUPPLUS_DIR . '/options.php';
 require BACKUPPLUS_DIR . '/methods/backup-module.php';

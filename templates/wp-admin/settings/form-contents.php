@@ -91,8 +91,8 @@ foreach ( $default_options as $k => $v ) {
 				</select>
 				<label class="backupplus-schedule-retention" for="backupplus_retain_db">
 					<span class="backupplus-field-prefix"><?php esc_html_e( 'Keep', 'backupplus' ); ?></span>
-					<input id="backupplus_retain_db" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many scheduled database backups', 'backupplus' ); ?>" name="backupplus_retain_db" value="<?php echo esc_attr( $backupplus_retain_db ); ?>" class="retain-files">
-					<span><?php esc_html_e( 'backups', 'backupplus' ); ?></span>
+					<input id="backupplus_retain_db" type="number" min="1" step="1" title="<?php esc_attr_e( 'Retain this many database backup chains', 'backupplus' ); ?>" name="backupplus_retain_db" value="<?php echo esc_attr( $backupplus_retain_db ); ?>" class="retain-files">
+					<span><?php esc_html_e( 'backup chains', 'backupplus' ); ?></span>
 				</label>
 			</div>
 			<span class="backupplus_same_schedules_message"><?php echo esc_html( apply_filters( 'backupplus_schedule_sametimemsg', '' ) ); ?></span>
@@ -102,6 +102,7 @@ foreach ( $default_options as $k => $v ) {
 			<?php do_action( 'backupplus_after_dbconfig' ); ?>
 		</td>
 	</tr>
+	<?php do_action( 'backupplus_pitr_status' ); ?>
 	<tr>
 		<th scope="row"><label for="backupplus_retention_cleanup_mode"><?php esc_html_e( 'Delete old backups', 'backupplus' ); ?></label></th>
 		<td class="js-retention-cleanup-schedule">

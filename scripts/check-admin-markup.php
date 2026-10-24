@@ -70,6 +70,30 @@ require dirname( __DIR__ ) . '/backupplus.php';
 backupplus_try_include_file( 'admin.php', 'include_once' );
 
 try {
+	$recovery_fixture = function () {
+		return array(
+			'username'    => 'fixture-recovery',
+			'credentials' => 'fixture-recovery-password-must-not-appear',
+		);
+	};
+	add_filter( 'pre_option_backupplus_pitr_capture', $recovery_fixture, 100 );
+	try {
+		$diagnostics = $backupplus_admin->show_raw_backups();
+		admin_markup_expect( false !== strpos( $diagnostics['html'], 'backupplus_pitr_capture' ) && false === strpos( $diagnostics['html'], 'fixture-recovery-password-must-not-appear' ), 'Diagnostic output must redact backup credentials.' );
+	} finally { remove_filter( 'pre_option_backupplus_pitr_capture', $recovery_fixture, 100 ); }
+	ob_start();
+	$backupplus_admin->delete_button(
+		100,
+		'0123456789ab',
+		array(
+			'service' => array( 'none' ),
+			'pitr'    => array( 'points' => array( array(), array(), array() ) ),
+		)
+	);
+	$delete_markup = ob_get_clean();
+	$delete_xpath  = admin_markup_document( $delete_markup );
+	$delete_links  = $delete_xpath->query( '//a[contains(@class,"backupplus-delete-link")]' );
+	admin_markup_expect( 1 === $delete_links->length && false !== strpos( $delete_links->item( 0 )->getAttribute( 'data-chain' ), 'Full + 2 incrementals' ), 'PITR Delete must supply its entire chain to the existing confirmation dialog.' );
 	$job_id   = '0123456789ab';
 	$job_data = array(
 		'backup_time' => time(),

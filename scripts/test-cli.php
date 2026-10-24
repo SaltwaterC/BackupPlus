@@ -142,6 +142,7 @@ class BackupPlus_Options {
 
 
 class BackupPlus_Credential_Key_Store {
+	const BACKUP_ENTITY = 'credential-keys';
 
 
 	public static function exclude() {

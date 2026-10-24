@@ -1931,7 +1931,7 @@ class BackupPlus {
 
 	public function option_filter_get( $which ) {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", $which ) );
+		$row = BackupPlus_SQL::wpdb()->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $wpdb->options ), array( $which ) );
 		// Has to be get_row instead of get_var because of funkiness with 0, false, null values
 		return ( is_object( $row ) ) ? $row->option_value : false;
 	}
@@ -3196,6 +3196,18 @@ class BackupPlus {
 
 		if ( ! in_array( $event, $allowed_events, true ) || ! is_array( $options ) ) {
 			return;
+		}
+
+		if ( ! empty( $options['pitr_capture'] ) ) {
+			if ( empty( $options['incremental'] ) || 'backupplus_backupnow_backup' === $event ) {
+				return;
+			}
+			$result = BackupPlus_PITR::manual_capture( $options );
+			if ( false !== $result && 'backupplus_backupnow_backup_all' === $event ) {
+				unset( $options['pitr_capture'] );
+				do_action( 'backupplus_backupnow_backup', $options );
+			}
+			return $result;
 		}
 
 		do_action( $event, $options );
@@ -6143,6 +6155,9 @@ class BackupPlus {
 				'backupplus_retain',
 				'backupplus_retain_db',
 				'backupplus_database_encryption',
+				'backupplus_pitr',
+				'backupplus_pitr_capture',
+				'backupplus_pitr_controls',
 				'backupplus_service',
 				'backupplus_googledrive_clientid',
 				'backupplus_googledrive_secret',
@@ -6258,6 +6273,7 @@ class BackupPlus {
 				'backupplus_backup',
 				'backupplus_backup_database',
 				'backupplus_backup_increments',
+				'backupplus_pitr_capture',
 				'backupplus_retention_cleanup',
 				'backupplus_retention_cleanup_retry',
 				'backupplus_clean_temporary_files',
@@ -6522,16 +6538,24 @@ class BackupPlus {
 		if ( ! class_exists( 'BackupPlus_Database_Utility' ) ) {
 			backupplus_try_include_file( 'includes/class-database-utility.php', 'include_once' );
 		}
-		$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $table );
+		$sql = BackupPlus_SQL::wpdb();
 		if ( $include_locks ) {
-			$wpdb->query( $wpdb->prepare( "DELETE FROM $escaped_table_name WHERE ($field LIKE %s OR $field LIKE %s OR $field LIKE %s OR $field LIKE %s OR $field LIKE %s OR $field LIKE %s)", BackupPlus_Database_Utility::esc_like( 'backupplus_unlocked_' ) . '%', BackupPlus_Database_Utility::esc_like( 'backupplus_locked_' ) . '%', BackupPlus_Database_Utility::esc_like( 'backupplus_last_lock_time_' ) . '%', BackupPlus_Database_Utility::esc_like( 'backupplus_semaphore_' ) . '%', BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%', BackupPlus_Database_Utility::esc_like( 'backupplus_last_scheduled_' ) . '%' ) );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via escape_table_name().
+			$sql->execute(
+				'DELETE FROM %i WHERE (%i LIKE ? OR %i LIKE ? OR %i LIKE ? OR %i LIKE ? OR %i LIKE ? OR %i LIKE ?)',
+				array( $table, $field, $field, $field, $field, $field, $field ),
+				array(
+					BackupPlus_Database_Utility::esc_like( 'backupplus_unlocked_' ) . '%',
+					BackupPlus_Database_Utility::esc_like( 'backupplus_locked_' ) . '%',
+					BackupPlus_Database_Utility::esc_like( 'backupplus_last_lock_time_' ) . '%',
+					BackupPlus_Database_Utility::esc_like( 'backupplus_semaphore_' ) . '%',
+					BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%',
+					BackupPlus_Database_Utility::esc_like( 'backupplus_last_scheduled_' ) . '%',
+				)
+			);
+		} elseif ( ! empty( $this->nonce ) ) {
+			$sql->execute( 'DELETE FROM %i WHERE %i LIKE ? AND %i != ?', array( $table, $field, $field ), array( BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%', "backupplus_jobdata_{$this->nonce}" ) );
 		} else {
-			if ( ! empty( $this->nonce ) ) {
-				$sql = $wpdb->prepare( "DELETE FROM $escaped_table_name WHERE $field LIKE %s AND $field != %s", BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%', "backupplus_jobdata_{$this->nonce}" );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safely escaped via escape_table_name().
-			} else {
-				$sql = $wpdb->prepare( "DELETE FROM $escaped_table_name WHERE $field LIKE %s", BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%' );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safely escaped via escape_table_name().
-			}
-			$wpdb->query( $sql );// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), $wpdb->prepare() not recommended for SQL identifiers.
+			$sql->execute( 'DELETE FROM %i WHERE %i LIKE ?', array( $table, $field ), array( BackupPlus_Database_Utility::esc_like( 'backupplus_jobdata_' ) . '%' ) );
 		}
 	}
 

@@ -90,18 +90,32 @@ add_filter(
 	10,
 	2
 );
-// The generic credential upgrade must not inspect or rewrite unrelated real jobs.
-add_filter(
-	'query',
-	function ( $query ) {
-		global $wpdb;
-		if ( 0 === strpos( $query, "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE " ) ) {
-			return $query . ' AND 1=0';
-		}
-		return $query;
-	}
-);
+// The generic credential upgrade must not inspect or rewrite unrelated real jobs, whose ciphertext uses the site's real key.
+global $wpdb;
+foreach ( $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'backupplus_jobdata_' ) . '%' ) ) as $job_name ) {
+	add_filter( 'pre_site_option_' . $job_name, '__return_empty_array' );
+	add_filter(
+		'pre_update_site_option_' . $job_name,
+		function ( $value, $old ) {
+			return $old;
+		},
+		10,
+		2
+	);
+}
 require dirname( __DIR__ ) . '/backupplus.php';
+// The site's other saved credentials belong to its real key, not this fixture's; hide them and drop writes.
+foreach ( array_diff( BackupPlus_Credential_Storage::option_names(), array( 'backupplus_dropbox' ) ) as $name ) {
+	add_filter( 'pre_option_' . $name, '__return_empty_array' );
+	add_filter(
+		'pre_update_option_' . $name,
+		function ( $value, $old ) {
+			return $old;
+		},
+		10,
+		2
+	);
+}
 require_once BACKUPPLUS_DIR . '/methods/dropbox/Dropbox2/OAuth/Storage/StorageInterface.php';
 require_once BACKUPPLUS_DIR . '/methods/dropbox/Dropbox2/OAuth/Storage/WordPress.php';
 wp_set_current_user( 1 );

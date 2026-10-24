@@ -272,11 +272,11 @@ add_action(
 	3
 );
 $keys  = array( 'plugin:sample/sample.php', 'theme:sample', 'core:99.0:en_US' );
-$batch = $coordinator->prepare( $keys );
+$batch = $coordinator->queue_batch( $keys );
 pre_update_expect( ! is_wp_error( $batch ) && 'queued' === $batch['state'], 'Manual batch must queue' );
 $jobs[] = $batch['job'];
-pre_update_expect( $coordinator->prepare( $keys )['id'] === $batch['id'], 'Repeated requests must share one job' );
-pre_update_expect( is_wp_error( $coordinator->prepare( array( $keys[0] ) ) ), 'Competing batch must be blocked' );
+pre_update_expect( $coordinator->queue_batch( $keys )['id'] === $batch['id'], 'Repeated requests must share one job' );
+pre_update_expect( is_wp_error( $coordinator->queue_batch( array( $keys[0] ) ) ), 'Competing batch must be blocked' );
 require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 $plugin_upgrader = new Plugin_Upgrader( new Automatic_Upgrader_Skin() );
 $extra           = array(
@@ -466,13 +466,13 @@ $plugin_offers->response = array(
 $batch_option = array();
 $services     = array( 'missing-provider' );
 $backupplus   = new Pre_Update_Test_BackupPlus();
-$batch        = $coordinator->prepare( array( $keys[0] ) );
+$batch        = $coordinator->queue_batch( array( $keys[0] ) );
 $jobs[]       = $batch['job'];
 $coordinator->run_backup( $batch['id'] );
 pre_update_expect( 'failed' === $coordinator->batch()['state'], 'Unavailable provider must block even if engine would omit it' );
 $services              = array();
 $batch_option          = array();
-$batch                 = $coordinator->prepare( array( $keys[0] ) );
+$batch                 = $coordinator->queue_batch( array( $keys[0] ) );
 $jobs[]                = $batch['job'];
 $batch_option['state'] = 'cancelled';
 $coordinator->run_backup( $batch['id'] );
@@ -528,7 +528,7 @@ add_filter( 'backupplus_get_option', $s3_settings, 110, 2 );
 $services     = array( 's3', 'ftp' );
 $batch_option = array();
 $backupplus   = new Pre_Update_Test_BackupPlus();
-$remote_batch = $coordinator->prepare( array( 'plugin:sample/sample.php' ) );
+$remote_batch = $coordinator->queue_batch( array( 'plugin:sample/sample.php' ) );
 $jobs[]       = $remote_batch['job'];
 $coordinator->run_backup( $remote_batch['id'] );
 pre_update_expect( 'backing_up' === $coordinator->batch()['state'], 'Upload failure with a scheduled resumption must keep the batch waiting' );
@@ -557,7 +557,7 @@ $encryption     = array(
 	'recipients' => array( 'invalid-recipient' ),
 );
 $backupplus     = new Pre_Update_Test_BackupPlus();
-$bad_encryption = $coordinator->prepare( array( 'plugin:sample/sample.php' ) );
+$bad_encryption = $coordinator->queue_batch( array( 'plugin:sample/sample.php' ) );
 $jobs[]         = $bad_encryption['job'];
 $coordinator->run_backup( $bad_encryption['id'] );
 pre_update_expect( 'ready' !== $coordinator->batch()['state'], 'Encryption errors must block updates' );
@@ -570,7 +570,7 @@ $encryption   = array(
 );
 $batch_option = array();
 $backupplus   = new Pre_Update_Test_BackupPlus();
-$encrypted    = $coordinator->prepare( array( 'plugin:sample/sample.php' ) );
+$encrypted    = $coordinator->queue_batch( array( 'plugin:sample/sample.php' ) );
 $jobs[]       = $encrypted['job'];
 $coordinator->run_backup( $encrypted['id'] );
 pre_update_expect( 'ready' === $coordinator->batch()['state'], 'Encrypted pre-update backup must complete' );

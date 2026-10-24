@@ -6,7 +6,7 @@ const source = readFileSync(new URL('../includes/backupplus-admin-common.js', im
 const start = source.indexOf('\tfunction export_settings()');
 const end = source.indexOf('\n\tfunction import_settings(', start);
 assert(start > 0 && end > start);
-const omitted = ['backupplus_ftp', 'backupplus_sftp', 'backupplus_dropbox', 'backupplus_future', 'backupplus_encryptionphrase', 'backupplus_extradbs'];
+const omitted = ['backupplus_ftp', 'backupplus_sftp', 'backupplus_dropbox', 'backupplus_future', 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_pitr_capture', 'backupplus_pitr_recovery'];
 const data = {backupplus_interval: 'daily', backupplus_database_encryption: {mode: 'age', recipients: ['public recipient']}};
 for (const option of omitted) data[option] = {settings: {instance: {pass: `synthetic-export-secret-${option}`, hidden_oauth: 'synthetic-export-hidden-token'}}};
 let download;

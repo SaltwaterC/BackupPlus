@@ -13,11 +13,14 @@ class BackupPlus_Search_Replace {
 
 	private $use_wpdb = false;
 
-	private $use_mysqli = false;
-
 	private $wpdb_obj = null;
 
 	private $mysql_dbh = null;
+
+	private $fetch_error = '';
+
+	// The searched columns, named explicitly: SELECT * leaves out INVISIBLE columns
+	private $select_columns = array();
 
 	protected $max_recursion = 0;
 
@@ -40,24 +43,21 @@ class BackupPlus_Search_Replace {
 		$this->use_wpdb = $backupplus_restorer->use_wpdb();
 		$this->wpdb_obj = $wpdb;
 
-		$mysql_dbh  = false;
-		$use_mysqli = false;
+		$mysql_dbh = false;
 
 		if ( ! $this->use_wpdb ) {
 			// We have our own extension which drops lots of the overhead on the query
 			$wpdb_obj = $backupplus_restorer->get_db_object();
 			// Was that successful?
-			if ( ! $wpdb_obj->is_mysql || ! $wpdb_obj->ready ) {
+			if ( ! $wpdb_obj->is_mysql || ! $wpdb_obj->ready || ! $wpdb_obj->backupplus_use_mysqli() ) {
 				$this->use_wpdb = true;
 			} else {
 				$this->wpdb_obj = $wpdb_obj;
 				$mysql_dbh      = $wpdb_obj->backupplus_get_database_handle();
-				$use_mysqli     = $wpdb_obj->backupplus_use_mysqli();
 			}
 		}
 
-		$this->mysql_dbh  = $mysql_dbh;
-		$this->use_mysqli = $use_mysqli;
+		$this->mysql_dbh = $mysql_dbh;
 	}
 
 	/**
@@ -74,7 +74,7 @@ class BackupPlus_Search_Replace {
 			return false;
 		}
 
-		global $wpdb, $backupplus;
+		global $backupplus;
 
 		$report = array(
 			'tables'  => 0,
@@ -103,12 +103,13 @@ class BackupPlus_Search_Replace {
 
 			$backupplus->check_db_connection( $this->wpdb_obj, true );
 
+			$sql = BackupPlus_SQL::wpdb();
+
 			// Get a list of columns in this table
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DESCRIBE is a DDL command that cannot be parameterized; $table is a SQL identifier sanitized using backquote().
-			$fields = $wpdb->get_results( 'DESCRIBE ' . BackupPlus_Manipulation_Functions::backquote( $table ), ARRAY_A );
+			$fields = $sql->rows( 'DESCRIBE %i', array( $table ), array(), ARRAY_A );
 
 			$prikey_field = false;
-			foreach ( $fields as $column ) {
+			foreach ( is_array( $fields ) ? $fields : array() as $column ) {
 				$primary_key = ( 'PRI' == $column['Key'] ) ? true : false;
 				if ( $primary_key ) {
 					$prikey_field = $column['Field'];
@@ -119,38 +120,31 @@ class BackupPlus_Search_Replace {
 				}
 				$this->columns[ $column['Field'] ] = $primary_key;
 			}
+			$this->select_columns = array();
+			foreach ( array_keys( $this->columns ) as $column ) {
+				$this->select_columns[] = BackupPlus_SQL::fragment( '%i', array( $column ) );
+			}
+			if ( ! $this->select_columns ) {
+				$this->select_columns[] = BackupPlus_SQL::fragment( '*' );
+			}
 
 			// Count the number of rows we have in the table if large we'll split into blocks, This is a mod from Simon Wheatley
 
 			// InnoDB does not do count(*) quickly. You can use an index for more speed - see: http://www.cloudspace.com/blog/2009/08/06/fast-mysql-innodb-count-really-fast/
 
-			$where = '';
-			// Opportunity to use internal knowledge on tables which may be huge
-			if ( 'postmeta' == $stripped_table && ( ( is_array( $search ) && 0 === strpos( $search[0], 'http' ) ) || ( is_string( $search ) && 0 === strpos( $search, 'http' ) ) ) ) {
-				$where = " WHERE meta_value LIKE '%http%'";
-			}
+			// Opportunity to use internal knowledge on tables which may be huge: only rows matching meta_value LIKE '%http%' are searched
+			$http_only = 'postmeta' == $stripped_table && ( ( is_array( $search ) && 0 === strpos( $search[0], 'http' ) ) || ( is_string( $search ) && 0 === strpos( $search, 'http' ) ) );
 
-			$count_rows_sql = 'SELECT COUNT(*) FROM ' . $table;
-			if ( $prikey_field ) {
-				$count_rows_sql .= ' USE INDEX (PRIMARY)';
-			}
-			$count_rows_sql .= $where;
-
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_rows_sql is constructed from safe table identifiers; SQL identifiers cannot be parameterized with $wpdb->prepare().
-			$row_countr = $wpdb->get_results( $count_rows_sql, ARRAY_N );
+			$row_count = $this->count_rows( $sql, $table, $prikey_field ? 'PRIMARY' : null, $http_only );
 
 			// If that failed, try this
-			if ( false !== $prikey_field && $wpdb->last_error ) {
-				$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $table );
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $escaped_table_name and $prikey_field are SQL identifiers; identifiers cannot be parameterized with $wpdb->prepare(), table name is safely escaped via escape_table_name().
-				$row_countr = $wpdb->get_results( "SELECT COUNT(*) FROM $escaped_table_name USE INDEX ($prikey_field)" . $where, ARRAY_N );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via escape_table_name().
-				if ( $wpdb->last_error ) {
-					$row_countr = $wpdb->get_results( "SELECT COUNT(*) FROM $escaped_table_name", ARRAY_N );
+			if ( false !== $prikey_field && false === $row_count ) {
+				$row_count = $this->count_rows( $sql, $table, $prikey_field, $http_only );
+				if ( false === $row_count ) {
+					$row_count = $this->count_rows( $sql, $table, null, false );
 				}
 			}
 
-			$row_count = $row_countr[0][0];
 			/* translators: %d: Number of rows. */
 			$print_line .= ': ' . sprintf( __( 'rows: %d', 'backupplus' ), $row_count );
 			$backupplus->log( $print_line, 'notice-restore', 'restoring-table-' . $table );
@@ -169,17 +163,15 @@ class BackupPlus_Search_Replace {
 				}
 
 				// Grab the contents of the table
-				list($data, $page_size) = $this->fetch_sql_result( $table, $on_row, $page_size, $where );
+				list($data, $page_size) = $this->fetch_sql_result( $table, $on_row, $page_size, $http_only );
 				// $sql_line is calculated here only for the purpose of logging errors
-				// $where might contain a %, so don't place it inside the main parameter
-
-				$sql_line = sprintf( 'SELECT * FROM %s LIMIT %d, %d', $table . $where, $on_row, $on_row + $page_size );
+				$sql_line = $this->page_sql( $table, $on_row, $on_row + $page_size, $http_only );
 
 				// Our strategy here is to minimise memory usage if possible; to process one row at a time if we can, rather than reading everything into memory
 				if ( $this->use_wpdb ) {
 
-					if ( $wpdb->last_error ) {
-						$report['errors'][] = $this->print_error( $sql_line );
+					if ( false === $data ) {
+						$report['errors'][] = $this->print_error( $sql_line, $this->fetch_error );
 					} else {
 						foreach ( $data as $row ) {
 							$rowrep = $this->process_row( $table, $row, $search, $replace, $stripped_table );
@@ -195,30 +187,16 @@ class BackupPlus_Search_Replace {
 					if ( false === $data ) {
 						$report['errors'][] = $this->print_error( $sql_line );
 					} elseif ( true !== $data && null !== $data ) {
-						if ( $this->use_mysqli ) {
-							while ( $row = mysqli_fetch_array( $data ) ) { // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_array -- Using mysqli directly for streaming large result sets during restore to avoid high memory usage with $wpdb
-								$rowrep = $this->process_row( $table, $row, $search, $replace, $stripped_table );
-								++$report['rows'];
-								$report['updates'] += $rowrep['updates'];
-								$report['change']  += $rowrep['change'];
-								foreach ( $rowrep['errors'] as $err ) {
-									$report['errors'][] = $err;
-								}
+						while ( $row = mysqli_fetch_array( $data ) ) { // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_array -- Using mysqli directly for streaming large result sets during restore to avoid high memory usage with $wpdb
+							$rowrep = $this->process_row( $table, $row, $search, $replace, $stripped_table );
+							++$report['rows'];
+							$report['updates'] += $rowrep['updates'];
+							$report['change']  += $rowrep['change'];
+							foreach ( $rowrep['errors'] as $err ) {
+								$report['errors'][] = $err;
 							}
-							mysqli_free_result( $data ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_free_result -- Using mysqli directly for streaming large result sets during restore to avoid high memory usage with $wpdb
-						} else {
-							// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_fetch_array -- Ignore removed extension compatibility, direct mysql function used for low-level database operations outside of $wpdb.
-							while ( $row = mysql_fetch_array( $data ) ) {
-								$rowrep = $this->process_row( $table, $row, $search, $replace, $stripped_table );
-								++$report['rows'];
-								$report['updates'] += $rowrep['updates'];
-								$report['change']  += $rowrep['change'];
-								foreach ( $rowrep['errors'] as $err ) {
-									$report['errors'][] = $err;
-								}
-							}
-							@mysql_free_result( $data ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_free_result -- If an error occurs during mysql free result and it fails to free result, it will not impact anything at all. mysql_* function used in the scenario in which the mysqli extension doesn't exist.
 						}
+						mysqli_free_result( $data ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_free_result -- Using mysqli directly for streaming large result sets during restore to avoid high memory usage with $wpdb
 					}
 				}
 			}
@@ -230,36 +208,64 @@ class BackupPlus_Search_Replace {
 	}
 
 	/**
+	 * Count the rows of a table, as the search and replace will page through them
+	 *
+	 * @param BackupPlus_SQL $sql       - the connection to count on
+	 * @param string         $table     - the table name
+	 * @param string|null    $index     - the index to count with, or null to let the server choose
+	 * @param boolean        $http_only - whether to count only postmeta rows whose meta_value contains http
+	 *
+	 * @return string|false|null - the number of rows, or false on error
+	 */
+	private function count_rows( $sql, $table, $index, $http_only ) {
+		if ( null === $index ) {
+			return $http_only ? $sql->value( "SELECT COUNT(*) FROM %i WHERE meta_value LIKE '%http%'", array( $table ) ) : $sql->value( 'SELECT COUNT(*) FROM %i', array( $table ) );
+		}
+		return $http_only ? $sql->value( "SELECT COUNT(*) FROM %i USE INDEX (%i) WHERE meta_value LIKE '%http%'", array( $table, $index ) ) : $sql->value( 'SELECT COUNT(*) FROM %i USE INDEX (%i)', array( $table, $index ) );
+	}
+
+	/**
+	 * The text of the statement fetching a page of rows, for logging
+	 *
+	 * @param string  $table     - the table name
+	 * @param integer $on_row    - the row to start from
+	 * @param integer $page_size - the page size
+	 * @param boolean $http_only - whether only postmeta rows whose meta_value contains http are fetched
+	 *
+	 * @return string
+	 */
+	private function page_sql( $table, $on_row, $page_size, $http_only ) {
+		return $http_only ? BackupPlus_SQL::render( "SELECT %l FROM %i WHERE meta_value LIKE '%http%' LIMIT %d, %d", array( $this->select_columns, $table, (int) $on_row, (int) $page_size ) ) : BackupPlus_SQL::render( 'SELECT %l FROM %i LIMIT %d, %d', array( $this->select_columns, $table, (int) $on_row, (int) $page_size ) );
+	}
+
+	/**
 	 * This function will get data from the passed in table ready to be search and replaced
 	 *
 	 * @param string  $table     - the table name
 	 * @param integer $on_row    - the row to start from
 	 * @param integer $page_size - the page size
-	 * @param string  $where     - the where condition
+	 * @param boolean $http_only - whether to fetch only postmeta rows whose meta_value contains http
 	 *
 	 * @return array - an array of data or an array with a false value
 	 */
-	private function fetch_sql_result( $table, $on_row, $page_size, $where = '' ) {
-
-		$sql_line = sprintf( 'SELECT * FROM %s%s LIMIT %d, %d', $table, $where, $on_row, $page_size );
+	private function fetch_sql_result( $table, $on_row, $page_size, $http_only = false ) {
 
 		global $backupplus;
 		$backupplus->check_db_connection( $this->wpdb_obj, true );
 
 		if ( $this->use_wpdb ) {
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql_line is a SELECT query built from safe table identifiers and paginated offsets; SQL identifiers and LIMIT/OFFSET values cannot be parameterized with $wpdb->prepare().
-			$data = $wpdb->get_results( $sql_line, ARRAY_A );
-			if ( ! $wpdb->last_error ) {
+			$sql  = BackupPlus_SQL::wpdb();
+			$data = $http_only ? $sql->rows( "SELECT %l FROM %i WHERE meta_value LIKE '%http%' LIMIT %d, %d", array( $this->select_columns, $table, (int) $on_row, (int) $page_size ), array(), ARRAY_A ) : $sql->rows( 'SELECT %l FROM %i LIMIT %d, %d', array( $this->select_columns, $table, (int) $on_row, (int) $page_size ), array(), ARRAY_A );
+			if ( false !== $data ) {
 				return array( $data, $page_size );
 			}
+			$this->fetch_error = $sql->last_error();
 		} else {
-			if ( $this->use_mysqli ) {
-				// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli call required; this uses a dedicated low-level database handle ($this->mysql_dbh) outside $wpdb for search-replace operations.
-				$data = mysqli_query( $this->mysql_dbh, $sql_line );
+			// Streamed from the result set rather than copied into PHP arrays; the statement holds only identifiers and integers.
+			if ( $http_only ) {
+				$data = mysqli_query( $this->mysql_dbh, BackupPlus_SQL::render( "SELECT %l FROM %i WHERE meta_value LIKE '%http%' LIMIT %d, %d", array( $this->select_columns, $table, (int) $on_row, (int) $page_size ) ) ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli call required; this uses a dedicated low-level database handle ($this->mysql_dbh) outside $wpdb for search-replace operations.
 			} else {
-				// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_query -- Ignore removed extension compatibility, direct mysql function used for low-level database operations outside of $wpdb.
-				$data = mysql_query( $sql_line, $this->mysql_dbh );
+				$data = mysqli_query( $this->mysql_dbh, BackupPlus_SQL::render( 'SELECT %l FROM %i LIMIT %d, %d', array( $this->select_columns, $table, (int) $on_row, (int) $page_size ) ) ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli call required; this uses a dedicated low-level database handle ($this->mysql_dbh) outside $wpdb for search-replace operations.
 			}
 			if ( false !== $data ) {
 				return array( $data, $page_size );
@@ -267,10 +273,10 @@ class BackupPlus_Search_Replace {
 		}
 
 		if ( 5000 <= $page_size ) {
-			return $this->fetch_sql_result( $table, $on_row, 2000, $where );
+			return $this->fetch_sql_result( $table, $on_row, 2000, $http_only );
 		}
 		if ( 2000 <= $page_size ) {
-			return $this->fetch_sql_result( $table, $on_row, 500, $where );
+			return $this->fetch_sql_result( $table, $on_row, 500, $http_only );
 		}
 
 		// At this point, $page_size should be 500; and that failed
@@ -290,7 +296,7 @@ class BackupPlus_Search_Replace {
 	 */
 	private function process_row( $table, $row, $search, $replace, $stripped_table ) {
 
-		global $backupplus, $wpdb, $backupplus_restorer;
+		global $backupplus, $backupplus_restorer;
 
 		$report = array(
 			'change'  => 0,
@@ -338,32 +344,20 @@ class BackupPlus_Search_Replace {
 			// Something was changed
 			if ( $successful && $edited_data != $data_to_fix ) {
 				++$report['change'];
-				$ed = $edited_data;
-				$wpdb->escape_by_ref( $ed );
-				// Undo breakage introduced in WP 4.8.3 core
-				if ( is_callable( array( $wpdb, 'remove_placeholder_escape' ) ) ) {
-					$ed = $wpdb->remove_placeholder_escape( $ed );
-				}
-				$update_sql[] = BackupPlus_Manipulation_Functions::backquote( $column ) . ' = "' . $ed . '"';
+				$update_sql[] = BackupPlus_SQL::fragment( '%i = ?', array( $column ), array( (string) $edited_data ) );
 				$upd          = true;
 			}
 
 			if ( $primary_key ) {
-				$df = $data_to_fix;
-				$wpdb->escape_by_ref( $df );
-				// Undo breakage introduced in WP 4.8.3 core
-				if ( is_callable( array( $wpdb, 'remove_placeholder_escape' ) ) ) {
-					$df = $wpdb->remove_placeholder_escape( $df );
-				}
-				$where_sql[] = BackupPlus_Manipulation_Functions::backquote( $column ) . ' = "' . $df . '"';
+				$where_sql[] = BackupPlus_SQL::fragment( '%i = ?', array( $column ), array( (string) $data_to_fix ) );
 			}
 		}
 
 		if ( $upd && ! empty( $where_sql ) ) {
-			$sql    = 'UPDATE ' . BackupPlus_Manipulation_Functions::backquote( $table ) . ' SET ' . implode( ', ', $update_sql ) . ' WHERE ' . implode( ' AND ', array_filter( $where_sql ) );
+			$sql    = BackupPlus_SQL::fragment( 'UPDATE %i SET %l WHERE %w', array( $table, $update_sql, $where_sql ) );
 			$result = $backupplus_restorer->sql_exec( $sql, 5, '', false );
 			if ( false === $result || is_wp_error( $result ) ) {
-				$last_error         = $this->print_error( $sql );
+				$last_error         = $this->print_error( (string) $sql, $backupplus_restorer->last_sql_error() );
 				$report['errors'][] = $last_error;
 			} else {
 				++$report['updates'];
@@ -501,17 +495,16 @@ class BackupPlus_Search_Replace {
 	/**
 	 * This function will get the last database error and log it
 	 *
-	 * @param string $sql_line - the sql line that caused the error
+	 * @param string      $sql_line   - the sql line that caused the error
+	 * @param string|null $last_error - the error, when it is not the connection's last one
 	 *
 	 * @return void
 	 */
-	public function print_error( $sql_line ) {
+	public function print_error( $sql_line, $last_error = null ) {
 		global $wpdb, $backupplus;
-		if ( $this->use_wpdb ) {
-			$last_error = $wpdb->last_error;
-		} else {
-			// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_error, WordPress.DB.RestrictedFunctions.mysql_mysqli_error -- Ignore removed extension compatibility, direct mysql/mysqli function used for low-level database operations outside of $wpdb.
-			$last_error = ( $this->use_mysqli ) ? mysqli_error( $this->mysql_dbh ) : mysql_error( $this->mysql_dbh );
+		if ( null === $last_error ) {
+			// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_error -- direct mysqli function used for low-level database operations outside of $wpdb.
+			$last_error = $this->use_wpdb ? $wpdb->last_error : mysqli_error( $this->mysql_dbh );
 		}
 		$backupplus->log( __( 'Error:', 'backupplus' ) . ' ' . $last_error . ' - ' . __( 'the database query being run was:', 'backupplus' ) . ' ' . $sql_line, 'warning-restore' );
 		return $last_error;

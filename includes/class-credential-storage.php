@@ -54,7 +54,7 @@ class BackupPlus_Credential_Storage {
 				},
 				array_keys( BackupPlus_Storage_Provider_Factory::get_methods() )
 			),
-			array( 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' )
+			array( 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_pitr_capture', 'backupplus_pitr_recovery', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' )
 		);
 	}
 
@@ -180,6 +180,17 @@ class BackupPlus_Credential_Storage {
 		}
 	}
 
+	/** A failed restore must be recoverable even while its WordPress options table is absent. */
+	public static function recovery_reference( $option, $field ) {
+		$raw = get_option( $option, array() );
+		if ( ! isset( $raw[ $field ] ) || ! self::envelope( $raw[ $field ] ) ) { throw new RuntimeException( 'The saved recovery credential is not encrypted.' ); }
+		return array(
+			'ciphertext'    => $raw[ $field ],
+			'context'       => self::context( $option, array( $field ) ),
+			'key_directory' => BackupPlus_Credential_Key_Store::directory(),
+		);
+	}
+
 	/** Jobs keep ordinary progress metadata readable; credentials use job-bound envelopes. */
 	public static function job( $data, $job_id, $mode, $config = null ) {
 		if ( ! is_array( $data ) ) {
@@ -271,14 +282,12 @@ class BackupPlus_Credential_Storage {
 
 	private static function job_names() {
 		global $wpdb;
-		$table  = is_multisite() ? $wpdb->sitemeta : $wpdb->options;
-		$column = is_multisite() ? 'meta_key' : 'option_name';
-		// Table and column names come only from WordPress's own metadata schema.
-		$query = $wpdb->prepare( "SELECT $column FROM $table WHERE $column LIKE %s", $wpdb->esc_like( 'backupplus_jobdata_' ) . '%' );
-		if ( is_multisite() ) {
-			$query .= $wpdb->prepare( ' AND site_id = %d', get_current_network_id() );
-		}
-		return array_unique( $wpdb->get_col( $query ) );
+		$pattern = $wpdb->esc_like( 'backupplus_jobdata_' ) . '%';
+		$names   = is_multisite()
+			? BackupPlus_SQL::wpdb()->column( 'SELECT meta_key FROM %i WHERE meta_key LIKE ? AND site_id = ?', array( $wpdb->sitemeta ), array( $pattern, (int) get_current_network_id() ) )
+			: BackupPlus_SQL::wpdb()->column( 'SELECT option_name FROM %i WHERE option_name LIKE ?', array( $wpdb->options ), array( $pattern ) );
+		// Like $wpdb->get_col(), a failed lookup finds no jobs.
+		return array_unique( false === $names ? array() : $names );
 	}
 
 	public static function has_ciphertext() {

@@ -242,6 +242,26 @@ class BackupPlus_Backup {
 	}
 
 	/**
+	 * A name as written in a dump comment line: quoted, with line breaks escaped so that it cannot end the comment
+	 *
+	 * @param String $name - the table or database name
+	 *
+	 * @return String
+	 */
+	private function comment_name( $name ) {
+		return str_replace( array( "\r", "\n" ), array( '\r', '\n' ), BackupPlus_SQL::identifier( $name ) );
+	}
+
+	/**
+	 * Statements on the connection of the database currently being dumped
+	 *
+	 * @return BackupPlus_SQL
+	 */
+	private function sql() {
+		return new BackupPlus_SQL( $this->wpdb_obj->dbh );
+	}
+
+	/**
 	 * Get a site name suitable for use in the backup filename
 	 *
 	 * @return String
@@ -886,7 +906,7 @@ class BackupPlus_Backup {
 		$functional_backup_history = $backup_history;
 		// Pre-update restore points are retained as complete sets by their coordinator.
 		foreach ( $functional_backup_history as $time => $set ) {
-			if ( ! empty( $set['pre_update'] ) ) {
+			if ( ! empty( $set['pre_update'] ) || ! empty( $set['pitr'] ) ) {
 				unset( $functional_backup_history[ $time ] );
 			}
 		}
@@ -2136,10 +2156,10 @@ class BackupPlus_Backup {
 					return false;
 				}
 
-				$table_status = $this->wpdb_obj->get_row( "SHOW TABLE STATUS WHERE Name='$table'" );
+				$table_status = $this->sql()->row( 'SELECT TABLE_ROWS AS `Rows` FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', array(), array( $table ) );
 
 				// Create the preceding SQL statements for the table
-				$this->stow( '# ' . sprintf( 'Table: %s', BackupPlus_Manipulation_Functions::backquote( $table ) ) . "\n" );
+				$this->stow( '# ' . sprintf( 'Table: %s', $this->comment_name( $table ) ) . "\n" );
 
 				// Meaning: false = don't yet know; true = know and have logged it; integer = the expected number
 				$this->expected_rows = false;
@@ -2385,6 +2405,19 @@ class BackupPlus_Backup {
 			// N.B. DELIMITER is not a valid SQL command; you cannot pass it to the server. It has to be interpreted by the interpreter - e.g. /usr/bin/mysql, or BackupPlus, and used to interpret what follows. The effect of this is that using it means that some SQL clients will stumble; but, on the other hand, failure to use it means that others that don't have special support for CREATE TRIGGER may stumble, because they may feed incomplete statements to the SQL server. Since /usr/bin/mysql uses it, we choose to support it too (both reading and writing).
 			// Whatever the delimiter is set to needs to be used in the DROP TRIGGER and CREATE TRIGGER commands in this section further down.
 			$this->stow( "DELIMITER ;;\n\n" );
+			$all_triggers    = $this->sql()->rows( 'SHOW TRIGGERS', array(), array(), ARRAY_A );
+			$trigger_moments = array(
+				'BEFORE' => array(
+					'INSERT' => BackupPlus_SQL::fragment( 'BEFORE INSERT' ),
+					'UPDATE' => BackupPlus_SQL::fragment( 'BEFORE UPDATE' ),
+					'DELETE' => BackupPlus_SQL::fragment( 'BEFORE DELETE' ),
+				),
+				'AFTER'  => array(
+					'INSERT' => BackupPlus_SQL::fragment( 'AFTER INSERT' ),
+					'UPDATE' => BackupPlus_SQL::fragment( 'AFTER UPDATE' ),
+					'DELETE' => BackupPlus_SQL::fragment( 'AFTER DELETE' ),
+				),
+			);
 			foreach ( $all_tables as $ti ) {
 				$table = $ti['name'];
 				if ( ! empty( $this->skipped_tables ) ) {
@@ -2398,19 +2431,27 @@ class BackupPlus_Backup {
 						}
 					}
 				}
-				$table_triggers = $this->wpdb_obj->get_results( $wpdb->prepare( 'SHOW TRIGGERS LIKE %s', $table ), ARRAY_A );
+				// Matched exactly: SHOW TRIGGERS LIKE treated "_" and "%" in the table name as wildcards.
+				$table_triggers = array_filter(
+					is_array( $all_triggers ) ? $all_triggers : array(),
+					function ( $trigger ) use ( $table ) {
+						return $trigger['Table'] === $table;
+					}
+				);
 				if ( $table_triggers ) {
-					$this->stow( "\n\n# Triggers of  " . BackupPlus_Manipulation_Functions::backquote( $table ) . "\n\n" );
+					$this->stow( "\n\n# Triggers of  " . $this->comment_name( $table ) . "\n\n" );
 					foreach ( $table_triggers as $trigger ) {
 						$trigger_name      = $trigger['Trigger'];
 						$trigger_time      = $trigger['Timing'];
 						$trigger_event     = $trigger['Event'];
 						$trigger_statement = $trigger['Statement'];
-						// Since trigger name can include backquotes and trigger name is typically enclosed with backquotes as well, the backquote escaping for the trigger name can be done by adding a leading backquote
-						$quoted_escaped_trigger_name = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $trigger_name ) );
-						$this->stow( "DROP TRIGGER IF EXISTS $quoted_escaped_trigger_name;;\n" );
-						$trigger_query = "CREATE TRIGGER $quoted_escaped_trigger_name $trigger_time $trigger_event ON " . BackupPlus_Manipulation_Functions::backquote( $table ) . " FOR EACH ROW $trigger_statement;;";
-						$this->stow( "$trigger_query\n\n" );
+						if ( ! isset( $trigger_moments[ $trigger_time ][ $trigger_event ] ) ) {
+							$backupplus->log( "Skipping trigger $trigger_name of table $table: unrecognised timing ($trigger_time) or event ($trigger_event)", 'warning' );
+							continue;
+						}
+						$this->stow( BackupPlus_SQL::render( 'DROP TRIGGER IF EXISTS %i;;', array( $trigger_name ) ) . "\n" );
+						// The trigger body is the server's own SQL text, copied into the dump
+						$this->stow( BackupPlus_SQL::render( 'CREATE TRIGGER %i %f ON %i FOR EACH ROW ', array( $trigger_name, $trigger_moments[ $trigger_time ][ $trigger_event ], $table ) ) . $trigger_statement . ";;\n\n" );
 					}
 				}
 			}
@@ -2430,14 +2471,15 @@ class BackupPlus_Backup {
 				}
 				$stored_routines_log = "Dumping routine: {$routine['Name']}";
 				if ( ! $stored_routines_delimiter_printed ) {
-					$this->stow( "\n\n# Dumping routines for database " . BackupPlus_Manipulation_Functions::backquote( $this->dbinfo['name'] ) . "\n\n" );
+					$this->stow( "\n\n# Dumping routines for database " . $this->comment_name( $this->dbinfo['name'] ) . "\n\n" );
 					$this->stow( "DELIMITER ;;\n\n" );
 					$stored_routines_delimiter_printed = true;
 				}
-				$routine_name = $routine['Name'];
-				// Since routine name can include backquotes and routine name is typically enclosed with backquotes as well, the backquote escaping for the routine name can be done by adding a leading backquote
-				$quoted_escaped_routine_name = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $routine_name ) );
-				$this->stow( "DROP {$routine['Type']} IF EXISTS $quoted_escaped_routine_name;;\n\n" );
+				if ( 'FUNCTION' === $routine['Type'] ) {
+					$this->stow( BackupPlus_SQL::render( 'DROP FUNCTION IF EXISTS %i;;', array( $routine['Name'] ) ) . "\n\n" );
+				} else {
+					$this->stow( BackupPlus_SQL::render( 'DROP PROCEDURE IF EXISTS %i;;', array( $routine['Name'] ) ) . "\n\n" );
+				}
 				$this->stow( $routine[ 'Create ' . ucfirst( strtolower( $routine['Type'] ) ) ] . "\n\n;;\n\n" );
 				$backupplus->log( $stored_routines_log . ' - (Successful)' );
 			}
@@ -2538,21 +2580,32 @@ class BackupPlus_Backup {
 		global $backupplus;
 		$table_prefix = $backupplus->get_table_prefix( false ); // or we can just use $this->table_prefix_raw ??
 		if ( 'wp' == $this->whichdb && ( ! empty( $table_prefix ) && strtolower( $table_prefix . 'sitemeta' ) == strtolower( $table ) ) ) {
-			$where[] = 'meta_key NOT LIKE "backupplus_jobdata_%"';
+			$where[] = BackupPlus_SQL::fragment( "meta_key NOT LIKE 'backupplus_jobdata_%'" );
 		} elseif ( 'wp' == $this->whichdb && ( ! empty( $table_prefix ) && strtolower( $table_prefix . 'options' ) == strtolower( $table ) ) ) {
-			// These might look similar, but the quotes are different
-			if ( 'win' == strtolower( substr( PHP_OS, 0, 3 ) ) ) {
-				$backupplus_jobdata    = "'backupplus_jobdata_%'";
-				$site_transient_update = "'_site_transient_update_%'";
-			} else {
-				$backupplus_jobdata    = '"backupplus_jobdata_%"';
-				$site_transient_update = '"_site_transient_update_%"';
-			}
-
-			$where[] = 'option_name NOT LIKE ' . $backupplus_jobdata . ' AND option_name NOT LIKE ' . $site_transient_update . '';
+			$where[] = BackupPlus_SQL::fragment( "option_name NOT LIKE 'backupplus_jobdata_%' AND option_name NOT LIKE '_site_transient_update_%'" );
 		}
 
 		return $where;
+	}
+
+	/**
+	 * Row conditions for a table's dump, from the backupplus_backup_table_sql_where filter
+	 *
+	 * @param String $table - the table being dumped
+	 *
+	 * @return Array|WP_Error - BackupPlus_SQL fragments without bound values (both the SELECT and mysqldump --where use text), or an error
+	 */
+	private function table_conditions( $table ) {
+		$conditions = apply_filters( 'backupplus_backup_table_sql_where', array(), $table, $this );
+		if ( ! is_array( $conditions ) ) {
+			return array();
+		}
+		foreach ( $conditions as $condition ) {
+			if ( ! $condition instanceof BackupPlus_SQL_Fragment || $condition->values() ) {
+				return new WP_Error( 'table_conditions_error', "Table $table: backupplus_backup_table_sql_where must return BackupPlus_SQL::fragment() conditions without bound values" );
+			}
+		}
+		return array_values( $conditions );
 	}
 
 	/**
@@ -2576,23 +2629,16 @@ class BackupPlus_Backup {
 		$pfile = md5( time() . wp_rand() ) . '.tmp';
 		file_put_contents( $this->backupplus_dir . '/' . $pfile, "[mysqldump]\npassword=\"" . addslashes( $this->dbinfo['pass'] ) . "\"\n" );
 
-		$where_array = apply_filters( 'backupplus_backup_table_sql_where', array(), $table_name, $this );
+		$conditions = $this->table_conditions( $table_name );
+		if ( is_wp_error( $conditions ) ) {
+			$backupplus->log( $conditions->get_error_message(), 'error' );
+			return false;
+		}
+		// N.B. Don't add a WHERE prefix here; most versions of mysqldump silently strip it out, but one was encountered that didn't.
+		$where = $conditions ? BackupPlus_SQL::render( '%w', array( $conditions ) ) : '';
 		if ( 'win' === strtolower( substr( PHP_OS, 0, 3 ) ) ) {
 			// On Windows, the PHP escapeshellarg() replaces % char with white space, so we change the % char to [percent_sign] but change it back later after escapeshellarg finish processing it
-			$where_array = str_replace( '%', '[percent_sign]', $where_array );
-		}
-		$where = '';
-
-		if ( ! empty( $where_array ) && is_array( $where_array ) ) {
-			// N.B. Don't add a WHERE prefix here; most versions of mysqldump silently strip it out, but one was encountered that didn't.
-			$first_loop = true;
-			foreach ( $where_array as $condition ) {
-				if ( ! $first_loop ) {
-					$where .= ' AND ';
-				}
-				$where     .= $condition;
-				$first_loop = false;
-			}
+			$where = str_replace( '%', '[percent_sign]', $where );
 		}
 
 		// Note: escapeshellarg() adds quotes around the string
@@ -2703,19 +2749,19 @@ class BackupPlus_Backup {
 	 */
 	private function write_table_backup_beginning( $table, $dump_as_table, $table_type, $table_structure ) {
 
-		$this->stow( "\n# Delete any existing table " . BackupPlus_Manipulation_Functions::backquote( $table ) . "\n\nDROP TABLE IF EXISTS " . BackupPlus_Manipulation_Functions::backquote( $dump_as_table ) . ";\n" );
+		$this->stow( "\n# Delete any existing table " . $this->comment_name( $table ) . "\n\n" . BackupPlus_SQL::render( 'DROP TABLE IF EXISTS %i;', array( $dump_as_table ) ) . "\n" );
 
 		if ( 'VIEW' == $table_type ) {
-			$this->stow( 'DROP VIEW IF EXISTS ' . BackupPlus_Manipulation_Functions::backquote( $dump_as_table ) . ";\n" );
+			$this->stow( BackupPlus_SQL::render( 'DROP VIEW IF EXISTS %i;', array( $dump_as_table ) ) . "\n" );
 		}
 
 		$description = ( 'VIEW' == $table_type ) ? 'view' : 'table';
 
-		$this->stow( "\n# Table structure of $description " . BackupPlus_Manipulation_Functions::backquote( $table ) . "\n\n" );
+		$this->stow( "\n# Table structure of $description " . $this->comment_name( $table ) . "\n\n" );
 
-		$create_table = $this->wpdb_obj->get_results( 'SHOW CREATE TABLE ' . BackupPlus_Manipulation_Functions::backquote( $table ), ARRAY_N );
+		$create_table = $this->sql()->rows( 'SHOW CREATE TABLE %i', array( $table ), array(), ARRAY_N );
 		if ( false === $create_table ) {
-			$this->stow( "#\n# Error with SHOW CREATE TABLE for $table\n#\n" );
+			$this->stow( "#\n# Error with SHOW CREATE TABLE for " . $this->comment_name( $table ) . "\n#\n" );
 		}
 		$create_line = BackupPlus_Manipulation_Functions::str_lreplace( 'TYPE=', 'ENGINE=', $create_table[0][1] );
 
@@ -2738,7 +2784,7 @@ class BackupPlus_Backup {
 		}
 
 		// Add a comment preceding the beginning of the data
-		$this->stow( "\n\n# " . sprintf( "Data contents of $description %s", BackupPlus_Manipulation_Functions::backquote( $table ) ) . "\n\n" );
+		$this->stow( "\n\n# " . sprintf( "Data contents of $description %s", $this->comment_name( $table ) ) . "\n\n" );
 	}
 
 	/**
@@ -2892,9 +2938,7 @@ class BackupPlus_Backup {
 		// Allow over-ride via a constant
 		$oversized_row_size = defined( 'BACKUPPLUS_OVERSIZED_ROW_SIZE' ) ? BACKUPPLUS_OVERSIZED_ROW_SIZE : 2048576;
 
-		$sql = $this->wpdb_obj->prepare( 'SELECT ' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ' FROM ' . BackupPlus_Manipulation_Functions::backquote( $table ) . ' WHERE LENGTH(' . BackupPlus_Manipulation_Functions::backquote( $use_field ) . ') > %d ORDER BY ' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ' ASC', $oversized_row_size );
-
-		$oversized_rows = $this->wpdb_obj->get_col( $sql );
+		$oversized_rows = $this->sql()->column( 'SELECT %i FROM %i WHERE LENGTH(%i) > ? ORDER BY %i ASC', array( $primary_key, $table, $use_field, $primary_key ), array( (int) $oversized_row_size ) );
 
 		// Upon an error, just return an empty list
 		if ( ! is_array( $oversized_rows ) ) {
@@ -2935,12 +2979,13 @@ class BackupPlus_Backup {
 		// Deal with Windows/old MySQL setups with erroneous table prefixes differing in case
 		$dump_as_table = ( false == $this->duplicate_tables_exist && 0 === stripos( $table, $this->table_prefix ) && 0 !== strpos( $table, $this->table_prefix ) ) ? $this->table_prefix . substr( $table, strlen( $this->table_prefix ) ) : $table;
 
-		$table_structure = $this->wpdb_obj->get_results( 'DESCRIBE ' . BackupPlus_Manipulation_Functions::backquote( $table ) );
+		$sql             = $this->sql();
+		$table_structure = $sql->rows( 'DESCRIBE %i', array( $table ) );
 		if ( ! $table_structure ) {
 			// $backupplus->log(__('Error getting table details', 'backupplus') . ": $table", 'error');
 			$error_message = '';
-			if ( $this->wpdb_obj->last_error ) {
-				$error_message .= ' (' . $this->wpdb_obj->last_error . ')';
+			if ( $sql->last_error() ) {
+				$error_message .= ' (' . $sql->last_error() . ')';
 			}
 			return new WP_Error( 'table_details_error', $error_message );
 		}
@@ -2993,7 +3038,7 @@ class BackupPlus_Backup {
 					$binary_fields[ strtolower( $struct->Field ) ] = true;
 				}
 
-				$insert_selected_fields[] = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $struct->Field ) );
+				$insert_selected_fields[] = BackupPlus_SQL::fragment( '%i', array( $struct->Field ) );
 
 				if ( preg_match( '/^bit(?:\(([0-9]+)\))?$/i', trim( $struct->Type ), $matches ) ) {
 					if ( ! $bit_field_exists ) {
@@ -3001,10 +3046,9 @@ class BackupPlus_Backup {
 					}
 					$bit_fields[ strtolower( $struct->Field ) ] = ! empty( $matches[1] ) ? max( 1, (int) $matches[1] ) : 1;
 					// the reason why if bit fields are found then the fields need to be cast into binary type is that if mysqli_query function is being used, mysql will convert the bit field value to a decimal number and represent it in a string format whereas, if mysql_query function is being used, mysql will not convert it to a decimal number but instead will keep it retained as it is
-					$struct->Field            = 'CAST(' . BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $struct->Field ) ) . ' AS BINARY) AS ' . BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $struct->Field ) );
-					$select_selected_fields[] = $struct->Field;
+					$select_selected_fields[] = BackupPlus_SQL::fragment( 'CAST(%i AS BINARY) AS %i', array( $struct->Field, $struct->Field ) );
 				} else {
-					$select_selected_fields[] = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $struct->Field ) );
+					$select_selected_fields[] = BackupPlus_SQL::fragment( '%i', array( $struct->Field ) );
 				}
 
 				if ( isset( $struct->Extra ) && preg_match( '/\binvisible\b/i', $struct->Extra ) ) {
@@ -3021,7 +3065,7 @@ class BackupPlus_Backup {
 
 				// We don't bother re-counting if it's likely to be so large that we're not going to do anything with the result
 				if ( is_bool( $this->expected_rows ) || $this->expected_rows < 1000 ) {
-					$expected_rows = $this->wpdb_obj->get_var( 'SELECT COUNT(' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ') FROM ' . BackupPlus_Manipulation_Functions::backquote( $table ) );
+					$expected_rows = $sql->value( 'SELECT COUNT(%i) FROM %i', array( $primary_key, $table ) );
 					if ( ! is_bool( $expected_rows ) ) {
 						$this->expected_rows = $expected_rows;
 						$expected_via_count  = true;
@@ -3036,7 +3080,7 @@ class BackupPlus_Backup {
 					}
 				} else {
 					if ( true === $start_record ) {
-						$min_value    = $this->wpdb_obj->get_var( 'SELECT MIN(' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ') FROM ' . BackupPlus_Manipulation_Functions::backquote( $table ) );
+						$min_value    = $sql->value( 'SELECT MIN(%i) FROM %i', array( $primary_key, $table ) );
 						$start_record = ( is_numeric( $min_value ) && $min_value ) ? (int) $min_value - 1 : -1;
 					}
 				}
@@ -3050,10 +3094,9 @@ class BackupPlus_Backup {
 			$search  = array( "\x00", "\x0a", "\x0d", "\x1a" );
 			$replace = array( '\0', '\n', '\r', '\Z' );
 
-			$where_array = apply_filters( 'backupplus_backup_table_sql_where', array(), $table, $this );
-			$where       = '';
-			if ( ! empty( $where_array ) && is_array( $where_array ) ) {
-				$where = 'WHERE ' . implode( ' AND ', $where_array );
+			$conditions = $this->table_conditions( $table );
+			if ( is_wp_error( $conditions ) ) {
+				return $conditions;
 			}
 
 			// Experimentation here shows that on large tables (we tested with 180,000 rows) on MyISAM, 1000 makes the table dump out 3x faster than the previous value of 100. After that, the benefit diminishes (increasing to 4000 only saved another 12%)
@@ -3066,7 +3109,7 @@ class BackupPlus_Backup {
 
 			$original_fetch_rows = $fetch_rows;
 
-			$select_selected_fields = $bit_field_exists || $invisible_field_exists ? implode( ', ', $select_selected_fields ) : '*';
+			$select_selected_fields = $bit_field_exists || $invisible_field_exists ? $select_selected_fields : array( BackupPlus_SQL::fragment( '*' ) );
 
 			$enough_for_now = false;
 
@@ -3082,15 +3125,13 @@ class BackupPlus_Backup {
 					@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 				}
 				// Reset back to that which has constructed before the loop began
-				$final_where = $where;
+				$final_where = $conditions;
 
 				if ( $use_primary_key ) {
 
 					// The point of this is to leverage the indexing on the private key to make the SELECT much faster than index-less paging
-					$final_where = $where . ( $where ? ' AND ' : 'WHERE ' );
-
 					// If it's -1, then we avoid mentioning a negative value, as the value may be unsigned
-					$final_where .= BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ( ( -1 === $start_record ) ? ' >= 0' : " > $start_record" );
+					$final_where[] = ( -1 === $start_record ) ? BackupPlus_SQL::fragment( '%i >= 0', array( $primary_key ) ) : BackupPlus_SQL::fragment( '%i > %d', array( $primary_key, $start_record ) );
 
 					$oversized_last_row_id = false;
 					// Remove ones we've gone past
@@ -3107,34 +3148,35 @@ class BackupPlus_Backup {
 					$oversized_rows = array_values( $oversized_rows );
 
 					if ( $oversized_last_row_id ) {
-						$final_where .= ' AND ' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . " <= $oversized_last_row_id";
+						$final_where[] = BackupPlus_SQL::fragment( '%i <= %d', array( $primary_key, $oversized_last_row_id ) );
 					}
 
-					$limit_statement = sprintf( 'LIMIT %d', $fetch_rows );
-
-					$order_by = 'ORDER BY ' . BackupPlus_Manipulation_Functions::backquote( $primary_key ) . ' ASC';
+					$order_and_limit = BackupPlus_SQL::fragment( 'ORDER BY %i ASC LIMIT %d', array( $primary_key, (int) $fetch_rows ) );
 
 				} else {
-					$order_by = '';
 					if ( true === $start_record ) {
 						$start_record = 0;
 					}
-					$limit_statement = sprintf( 'LIMIT %d, %d', $start_record, $fetch_rows );
+					$order_and_limit = BackupPlus_SQL::fragment( 'LIMIT %d, %d', array( (int) $start_record, (int) $fetch_rows ) );
 				}
 
-				// $this->wpdb_obj->prepare() not needed (will throw a notice) as there are no parameters (all parts are already sanitised or cast to known-safe types if not sanitised here)
-				$select_sql = "SELECT $select_selected_fields FROM " . BackupPlus_Manipulation_Functions::backquote( $table ) . " $final_where $order_by $limit_statement";
+				// Text protocol (no bound values), so that values reach the dump exactly as the server formats them
+				$select_sql = $final_where ? BackupPlus_SQL::fragment( 'SELECT %l FROM %i WHERE %w %f', array( $select_selected_fields, $table, $final_where, $order_and_limit ) ) : BackupPlus_SQL::fragment( 'SELECT %l FROM %i %f', array( $select_selected_fields, $table, $order_and_limit ) );
 
 				if ( defined( 'BACKUPPLUS_LOG_BACKUP_SELECTS' ) && BACKUPPLUS_LOG_BACKUP_SELECTS ) {
-					$backupplus->log( $select_sql );
+					$backupplus->log( (string) $select_sql );
+				}
+
+				$sql        = $this->sql();
+				$table_data = $sql->rows( '%f', array( $select_sql ), array(), ARRAY_A );
+				if ( false === $table_data ) {
+					$backupplus->log( 'Database fetch error (' . $sql->last_error() . ") when running: $select_sql" );
+					// As $wpdb->get_results() did, a failed fetch is passed on as no rows
+					$table_data = array();
 				}
 
 				// Allow the data to be filtered (e.g. anonymisation)
-				$table_data = apply_filters( 'backupplus_backup_table_results', $this->wpdb_obj->get_results( $select_sql, ARRAY_A ), $table, $this->table_prefix, $this->whichdb );
-
-				if ( null === $table_data ) {
-					$backupplus->log( "Database fetch error (null returned) when running: $select_sql" );
-				}
+				$table_data = apply_filters( 'backupplus_backup_table_results', $table_data, $table, $this->table_prefix, $this->whichdb );
 
 				$oversized_changes = false;
 
@@ -3151,8 +3193,7 @@ class BackupPlus_Backup {
 					}
 					continue;
 				}
-				$insert_columns_sql = $invisible_field_exists ? ' (' . implode( ', ', $insert_selected_fields ) . ')' : '';
-				$entries            = 'INSERT INTO ' . BackupPlus_Manipulation_Functions::backquote( $dump_as_table ) . $insert_columns_sql . ' VALUES ';
+				$entries = $invisible_field_exists ? BackupPlus_SQL::render( 'INSERT INTO %i (%l) VALUES ', array( $dump_as_table, $insert_selected_fields ) ) : BackupPlus_SQL::render( 'INSERT INTO %i VALUES ', array( $dump_as_table ) );
 
 				// \x08\\x09, not required
 
@@ -3275,7 +3316,7 @@ class BackupPlus_Backup {
 
 		// If all data has been fetched, then write out the closing comment
 		if ( -1 == $process_pages || 0 == count( $table_data ) ) {
-			$this->stow( "\n# End of data contents of table " . BackupPlus_Manipulation_Functions::backquote( $table ) . "\n\n" );
+			$this->stow( "\n# End of data contents of table " . $this->comment_name( $table ) . "\n\n" );
 			// Keep the keyname here in sync with what is in self::get_oversized_rows()
 			$backupplus->jobdata_delete( 'oversized_rows_' . $table );
 			return is_numeric( $start_record ) ? array( 'next_record' => (int) $start_record ) : array();
@@ -3501,7 +3542,7 @@ class BackupPlus_Backup {
 
 		$this->stow( "\n# Generated: " . gmdate( 'l j. F Y H:i T' ) . "\n" );
 		$this->stow( '# Hostname: ' . $this->dbinfo['host'] . "\n" );
-		$this->stow( '# Database: ' . BackupPlus_Manipulation_Functions::backquote( $this->dbinfo['name'] ) . "\n" );
+		$this->stow( '# Database: ' . $this->comment_name( $this->dbinfo['name'] ) . "\n" );
 
 		if ( ! empty( $this->skipped_tables[ $this->whichdb ] ) ) {
 			if ( 'wp' == $this->whichdb ) {

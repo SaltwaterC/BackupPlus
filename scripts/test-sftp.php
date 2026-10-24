@@ -1,5 +1,5 @@
 <?php
-/** SSH storage checks without WordPress. Run live checks via test-sftp-integration.py. */
+/** SSH storage checks without WordPress. Run live checks via scripts/integration/test-sftp.php. */
 define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 define( 'BACKUPPLUS_DIR', dirname( __DIR__ ) );
 
@@ -134,7 +134,7 @@ if ( ! function_exists( 'fsockopen' ) ) {
 	exit;
 }
 if ( ! getenv( 'BACKUPPLUS_TEST_SFTP_PORT' ) ) {
-	echo "PASS: SSH settings, validation, migration and UI; live tests skipped (run scripts/test-sftp-integration.py)\n";
+	echo "PASS: SSH settings, validation, migration and UI; live tests skipped (run scripts/integration/test-sftp.php)\n";
 	exit;
 }
 

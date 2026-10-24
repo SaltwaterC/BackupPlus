@@ -82,6 +82,8 @@ class BackupPlus_External_Importer {
 		if ( $state['complete'] ) { return true; }
 		$index = 0;
 		try {
+			// Dump statements run verbatim on the target's own connection.
+			$target = new BackupPlus_SQL( $db->dbh );
 			foreach ( BackupPlus_SQL_Stream::statements( $path ) as $sql ) {
 				++$index;
 				// Session settings must be replayed on every new connection.
@@ -94,7 +96,7 @@ class BackupPlus_External_Importer {
 					$progress[ $id ] = $state;
 					$backupplus->jobdata_set( 'external_restore_progress', $progress );
 				}
-				if ( false === $db->query( $sql ) ) { throw new RuntimeException( 'External database restore failed at statement ' . $index . '. Check the target permissions and database compatibility, then resume.' ); }
+				if ( false === $target->script( $sql ) ) { throw new RuntimeException( 'External database restore failed at statement ' . $index . '. Check the target permissions and database compatibility, then resume.' ); }
 				do_action( 'backupplus_external_restore_statement', $id, $index );
 				if ( 0 === $index % 100 ) { $backupplus->log( 'External database ' . $id . ': restored ' . $index . ' statements.' ); }
 			}

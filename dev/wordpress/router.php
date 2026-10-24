@@ -1,7 +1,12 @@
 <?php
 
-$request_path  = parse_url( $_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH );
-$request_path  = is_string( $request_path ) ? rawurldecode( $request_path ) : '/';
+$request_path = parse_url( $_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH );
+$request_path = is_string( $request_path ) ? rawurldecode( $request_path ) : '/';
+// Private development configuration and repository metadata are never web assets.
+if ( preg_match( '~(?:^|/)\.~', $request_path ) ) {
+	http_response_code( 404 );
+	exit;
+}
 $document_root = realpath( $_SERVER['DOCUMENT_ROOT'] ?? '/var/www/html' );
 if ( false === $document_root ) {
 	http_response_code( 500 );

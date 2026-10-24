@@ -86,7 +86,22 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		// return array('response' => $response['response'], 'status' => $response['status'], 'log' => $response['log'] );
 	}
 
-	/** Nonce/capability protected by the wp-admin command dispatcher. No secrets accepted. */
+	/** Backup-account credentials are accepted only through the protected admin dispatcher. */
+	public function pitr_setup( $params ) {
+		try {
+			require_once __DIR__ . '/class-pitr-setup.php';
+			return BackupPlus_PITR_Setup::request( $params );
+		} catch ( Throwable $error ) { return array( 'error' => 'The backup-account check could not finish. Check that the private backup folder is writable, then retry.' ); }
+	}
+
+	/** Browser PITR restore accepts database credentials only for the current request. Private archive keys stay in the browser. */
+	public function pitr_restore( $params ) {
+		try {
+			require_once __DIR__ . '/class-pitr-restore.php';
+			return BackupPlus_PITR_Restore::request( $params );
+		} catch ( Throwable $error ) { return array( 'error' => $error->getMessage() ); }
+	}
+
 	public function restore_decryption( $params ) {
 		try {
 			$operation = isset( $params['operation'] ) ? $params['operation'] : '';
@@ -96,6 +111,10 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				$backups   = BackupPlus_Backup_History::get_history();
 				if ( ! isset( $backups[ $timestamp ] ) || ! isset( $params['entities'] ) || ! is_array( $params['entities'] ) ) {
 					throw new \RuntimeException( 'Invalid backup selection.' );
+				}
+				if ( ! empty( $backups[ $timestamp ]['pitr'] ) ) {
+					require_once __DIR__ . '/class-pitr-restore.php';
+					return BackupPlus_PITR_Restore::manifest( $timestamp, isset( $params['point'] ) ? $params['point'] : '', $ticket );
 				}
 				return BackupPlus_Age_Restore::manifest( $backups[ $timestamp ], $timestamp, $params['entities'], $ticket );
 			}
@@ -119,6 +138,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				return BackupPlus_Age_Restore::upload( $ticket, $params['file'], $params['offset'], $bytes, isset( $params['size'] ) ? $params['size'] : null, isset( $params['hash'] ) ? $params['hash'] : '' );
 			}
 		} catch ( \Throwable $e ) {
+			if ( ! empty( $params['point'] ) && $e instanceof \RuntimeException ) { return array( 'error' => $e->getMessage() ); }
 			return array( 'error' => __( 'Could not transfer the restore archives. Retry the restore preparation.', 'backupplus' ) );
 		}
 		return array( 'error' => __( 'Invalid restore operation.', 'backupplus' ) );
@@ -890,8 +910,8 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		}
 		// Default collation for changed character set
 		if ( empty( $similar_type_collate ) ) {
-			$charset_row = $GLOBALS['wpdb']->get_row( $GLOBALS['wpdb']->prepare( "SHOW CHARACTER SET LIKE '%s'", $backupplus_restorer_charset ) );
-			if ( null !== $charset_row && ! empty( $charset_row->{'Default collation'} ) ) {
+			$charset_row = BackupPlus_SQL::wpdb()->row( 'SELECT DEFAULT_COLLATE_NAME AS `Default collation` FROM information_schema.CHARACTER_SETS WHERE CHARACTER_SET_NAME = ?', array(), array( $backupplus_restorer_charset ) );
+			if ( is_object( $charset_row ) && ! empty( $charset_row->{'Default collation'} ) ) {
 				$similar_type_collate = $charset_row->{'Default collation'};
 			}
 		}
@@ -943,26 +963,23 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		$db_size_info  = array();
 
 		if ( $wpdb->num_rows > 0 ) {
-			$key_field_name = BackupPlus_Manipulation_Functions::backquote( 'Key' );
+			$sql = BackupPlus_SQL::wpdb();
 
 			foreach ( $db_table_res as $row ) {
 				// Try search from transient
 				$rows_count = get_transient( 'wpo_' . $row['Name'] . '_count' );
 				if ( false === $rows_count ) {
 					// If not found, try search primary key first
-					$table_name = BackupPlus_Manipulation_Functions::backquote( $row['Name'] );
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table_name and $key_field_name are SQL identifiers; identifiers cannot be parameterized with $wpdb->prepare(), $table_name and $key_field_name are safe.
-					$primary_key = $wpdb->get_row( $wpdb->prepare( "SHOW COLUMNS FROM $table_name WHERE $key_field_name = %s", 'PRI' ), ARRAY_A );
+					$primary_key = $sql->row( "SHOW COLUMNS FROM %i WHERE `Key` = 'PRI'", array( $row['Name'] ), array(), ARRAY_A );
 					if ( $primary_key ) {
 						// Count rows by primary key
-						$primary_key_field = BackupPlus_Manipulation_Functions::backquote( $primary_key['Field'] );
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table_name and $primary_key_field are SQL identifiers; identifiers cannot be parameterized with $wpdb->prepare(), $table_name and $primary_key_field are safe.
-						$rows_count = $wpdb->get_var( "SELECT COUNT($primary_key_field) FROM " . $table_name );
+						$rows_count = $sql->value( 'SELECT COUNT(%i) FROM %i', array( $primary_key['Field'], $row['Name'] ) );
 					}
 
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table_name is SQL identifiers; identifiers cannot be parameterized with $wpdb->prepare(), $table_name is are safe.
 					if ( is_null( $rows_count ) || false === $rows_count ) {
-						$rows_count = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table_name );
+						$rows_count = $sql->value( 'SELECT COUNT(*) FROM %i', array( $row['Name'] ) );
+						// No count is reported as null, as before
+						$rows_count = false === $rows_count ? null : $rows_count;
 					}
 				}
 
@@ -1035,7 +1052,8 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 		// Loop through the cron schedules
 		foreach ( $cron as $timestamp => $cron_hooks ) {
 			foreach ( $cron_hooks as $hook => $events ) {
-				if ( ! preg_match( '/^backupplus_(backup(_database|_resume|_increments)?|retention_cleanup(_retry)?|clean_temporary_files|rotate_credential_keys|retry_credential_key_rotation)$/', $hook ) ) {
+				// Every BackupPlus hook shares this prefix, so new schedules (PITR capture, pre-update backups) are listed too.
+				if ( 0 !== strpos( $hook, 'backupplus_' ) ) {
 					continue;
 				}
 

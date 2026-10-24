@@ -196,7 +196,7 @@ class BackupPlus_Credential_Key_Store {
 		if ( false === $json || base64_encode( $json ) !== $encoded || strlen( $json ) > 1048576 ) {
 			throw new RuntimeException( 'The ' . self::ENVIRONMENT_KEY . ' environment variable must contain a Base64 encoded JSON credential key configuration.' );
 		}
-		$decoded = json_decode( $json, true );
+		$decoded  = json_decode( $json, true );
 		$required = array( 'active', 'keys', 'upgraded_sites', 'credential_upgraded_sites', 'rotated_at', 'issued_at' );
 		if ( ! is_array( $decoded ) || array_diff( $required, array_keys( $decoded ) ) ) {
 			throw new RuntimeException( 'The ' . self::ENVIRONMENT_KEY . ' environment variable must contain the complete credential key structure, including issued_at.' );
@@ -249,9 +249,9 @@ class BackupPlus_Credential_Key_Store {
 	/** Private key folders used by this installation, including default locations without metadata. */
 	private static function private_directories() {
 		static $cache = array();
-		$managed = self::directory();
-		$blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 0;
-		$key     = $blog_id . '|' . $managed . '|' . ( defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : '' );
+		$managed      = self::directory();
+		$blog_id      = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 0;
+		$key          = $blog_id . '|' . $managed . '|' . ( defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : '' );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -589,11 +589,13 @@ class BackupPlus_Credential_Key_Store {
 				if ( $only_if_due && time() < $config['rotated_at'] + self::ROTATION_INTERVAL ) {
 					return $config;
 				}
-				$new                  = self::new_configuration();
-				$config['active']     = $new['active'];
-				$config['keys']       = array_merge( $config['keys'], $new['keys'] ); // Keep historical and in-flight jobs readable.
-				$config['rotated_at'] = $new['rotated_at'];
-				$config['issued_at']  = $new['issued_at'];
+				$new              = self::new_configuration();
+				$config['active'] = $new['active'];
+				// Assign by ID: array_merge() renumbers numeric-string keys, which can
+				// make an all-decimal hexadecimal ID disappear from the key ring.
+				$config['keys'][ $new['active'] ] = $new['keys'][ $new['active'] ]; // Keep historical and in-flight jobs readable.
+				$config['rotated_at']             = $new['rotated_at'];
+				$config['issued_at']              = $new['issued_at'];
 				self::write_file( $path, $config );
 				return $config;
 			}

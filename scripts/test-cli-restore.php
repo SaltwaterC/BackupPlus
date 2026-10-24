@@ -46,6 +46,7 @@ class CLI_Restore_Backup {
 		return $this->directory; }
 }
 require BACKUPPLUS_DIR . '/includes/class-backup-sources.php';
+require_once BACKUPPLUS_DIR . '/includes/class-credential-key-store.php';
 require BACKUPPLUS_DIR . '/includes/class-cli-restore.php';
 function restore_cli_expect( $value, $message ) {
 	if ( ! $value ) { throw new RuntimeException( $message ); } }

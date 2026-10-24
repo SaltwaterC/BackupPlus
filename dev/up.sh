@@ -24,6 +24,10 @@ export DB_NAME=${DB_NAME:-backupplus}
 export DB_USER=${DB_USER:-backupplus}
 export DB_PASSWORD=${DB_PASSWORD:-backupplus_dev}
 export DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-backupplus_root}
+export DB_BACKUP_USER=${DB_BACKUP_USER:-backupplus_backup}
+export DB_BACKUP_PASSWORD=${DB_BACKUP_PASSWORD:-backupplus_backup_dev}
+export DB_RESTORE_USER=${DB_RESTORE_USER:-backupplus_restore}
+export DB_RESTORE_PASSWORD=${DB_RESTORE_PASSWORD:-backupplus_restore_dev}
 export HOST_CA_BUNDLE=${HOST_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
 
 if [[ ! -r "$HOST_CA_BUNDLE" ]]; then
@@ -43,19 +47,26 @@ if ! podman network exists backupplus-dev; then
 	podman network create backupplus-dev >/dev/null
 fi
 podman volume exists backupplus-dev-mariadb >/dev/null 2>&1 || podman volume create backupplus-dev-mariadb >/dev/null
+podman volume exists backupplus-dev-db-socket >/dev/null 2>&1 || podman volume create backupplus-dev-db-socket >/dev/null
 podman volume exists backupplus-dev-wordpress >/dev/null 2>&1 || podman volume create backupplus-dev-wordpress >/dev/null
 
-podman rm --force backupplus-dev-wordpress backupplus-dev-database >/dev/null 2>&1 || true
+# --ignore covers containers that do not exist yet; any other failure (such as an active `podman exec`) must stop here.
+podman rm --force --ignore backupplus-dev-wordpress backupplus-dev-database >/dev/null
 
 podman run --detach \
 	--name backupplus-dev-database \
 	--network backupplus-dev \
 	--network-alias database \
 	--volume backupplus-dev-mariadb:/var/lib/mysql \
+	--volume backupplus-dev-db-socket:/run/mysqld \
 	--env MARIADB_DATABASE="$DB_NAME" \
 	--env MARIADB_USER="$DB_USER" \
 	--env MARIADB_PASSWORD="$DB_PASSWORD" \
 	--env MARIADB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
+	--env MARIADB_BACKUP_USER="$DB_BACKUP_USER" \
+	--env MARIADB_BACKUP_PASSWORD="$DB_BACKUP_PASSWORD" \
+	--env MARIADB_RESTORE_USER="$DB_RESTORE_USER" \
+	--env MARIADB_RESTORE_PASSWORD="$DB_RESTORE_PASSWORD" \
 	--health-cmd='mariadb --protocol=tcp --host=127.0.0.1 --user="$MARIADB_USER" --password="$MARIADB_PASSWORD" "$MARIADB_DATABASE" --execute="SELECT 1" >/dev/null' \
 	--health-interval=5s \
 	--health-timeout=3s \
@@ -92,9 +103,11 @@ podman run --detach \
 	--network backupplus-dev \
 	--publish "127.0.0.1:${WP_PORT}:8080" \
 	--volume backupplus-dev-wordpress:/var/www/html \
+	--volume backupplus-dev-db-socket:/run/mysqld \
 	--volume "$repo_root:/workspace/backupplus:ro,z" \
+	--volume "$repo_root/dev/wordpress/env-mask:/workspace/backupplus/.env:ro" \
 	--volume "$HOST_CA_BUNDLE:/etc/ssl/certs/host-ca-certificates.crt:ro" \
-	--env DB_HOST=database \
+	--env DB_HOST=localhost:/run/mysqld/mysqld.sock \
 	--env DB_NAME="$DB_NAME" \
 	--env DB_USER="$DB_USER" \
 	--env DB_PASSWORD="$DB_PASSWORD" \

@@ -29,13 +29,20 @@ function delete_option( $name ) {
 function wp_cache_delete() {}
 class Pre_Update_Lock_DB {
 	public $options = 'wp_options';
-	public function prepare( $sql, $key, $old ) {
-		return array( $key, $old ); }
-	public function query( $args ) {
-		global $compat_options;
-		if ( isset( $compat_options[ $args[0] ] ) && $compat_options[ $args[0] ] === $args[1] ) { unset( $compat_options[ $args[0] ] ); } }
 }
 $wpdb = new Pre_Update_Lock_DB();
+// No database here: the stale-lock DELETE acts on the in-memory options.
+class BackupPlus_SQL {
+	public static function wpdb() {
+		return new self(); }
+	public function execute( $template, $parts = array(), $values = array() ) {
+		global $compat_options;
+		if ( isset( $compat_options[ $values[0] ] ) && (string) $compat_options[ $values[0] ] === $values[1] ) {
+			unset( $compat_options[ $values[0] ] );
+			return 1;
+		}
+		return 0; }
+}
 function add_action() {}
 function add_filter() {}
 class BackupPlus_Options {

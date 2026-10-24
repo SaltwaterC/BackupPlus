@@ -8,6 +8,24 @@ class BackupPlus_Backup_Deletion {
 		$timestamp = $opts['backup_timestamp'];
 		$backup    = BackupPlus_Backup_History::get_history( $timestamp );
 		$errors    = array();
+		if ( ! empty( $backup['pitr'] ) ) {
+			try {
+				$worker   = new BackupPlus_PITR();
+				$progress = $worker->delete( $backup['pitr']['chain_id'], ! empty( $opts['delete_remote'] ), isset( $opts['deadline'] ) ? $opts['deadline'] : null );
+				return array_merge(
+					$progress,
+					array(
+						'result'  => $progress['complete'] ? 'success' : 'continue',
+						'message' => 'Database recovery chain deleted.',
+						'errors'  => array(),
+					)
+				);
+			} catch ( RuntimeException $error ) { return array(
+				'result'  => 'error',
+				'message' => $error->getMessage(),
+				'errors'  => array( array( 'code' => 'pitr_chain' ) ),
+			); }
+		}
 		if ( ! $backup ) { return array(
 			'result'  => 'error',
 			'message' => 'Backup set not found.',
@@ -107,6 +125,58 @@ class BackupPlus_Backup_Deletion {
 			'errors'  => $errors,
 			'message' => $errors ? 'Some deletions failed; backup history was retained for retry: ' . json_encode( $errors ) : 'Backup deleted.',
 		);
+	}
+
+	/** Share the normal admin deletion response for PITR, ordinary and mixed selections. */
+	public static function delete_selection( $opts ) {
+		global $backupplus_admin;
+		$timestamps = array_values( array_unique( explode( ',', (string) $opts['backup_timestamp'] ) ) );
+		$history    = BackupPlus_Backup_History::get_history();
+		foreach ( $timestamps as $timestamp ) {
+			if ( ! ctype_digit( $timestamp ) || ! isset( $history[ $timestamp ] ) ) { return array(
+				'result'  => 'error',
+				'message' => 'Backup set not found.',
+			); }
+		}
+		$deadline = microtime( true ) + max( 1, isset( $opts['remote_delete_limit'] ) ? (int) $opts['remote_delete_limit'] : 20 );
+		$response = array(
+			'result'                 => 'success',
+			'backup_local'           => 0,
+			'backup_remote'          => 0,
+			'backup_sets'            => 0,
+			'deleted_timestamps'     => '',
+			'timestamps'             => '',
+			'processed_instance_ids' => array(),
+			'set_message'            => __( 'Backup sets removed:', 'backupplus' ),
+			'local_message'          => __( 'Local files deleted:', 'backupplus' ),
+			'remote_message'         => __( 'Remote files deleted:', 'backupplus' ),
+			'error_messages'         => '',
+		);
+		$deleted  = array();
+		foreach ( $timestamps as $index => $timestamp ) {
+			$single                        = $opts;
+			$single['backup_timestamp']    = $timestamp;
+			$single['deadline']            = $deadline;
+			$single['remote_delete_limit'] = max( 1, (int) ceil( $deadline - microtime( true ) ) );
+			if ( ! empty( $history[ $timestamp ]['pitr'] ) ) {
+				$result = self::delete( $single );
+				if ( 'success' === $result['result'] ) { $result['backup_sets'] = 1; }
+			} else { $result = $backupplus_admin->delete_set( $single ); }
+			foreach ( array( 'backup_local', 'backup_remote', 'backup_sets' ) as $counter ) { $response[ $counter ] += isset( $result[ $counter ] ) ? $result[ $counter ] : 0; }
+			if ( 'success' === $result['result'] ) { $deleted[] = $timestamp; }
+			else {
+				$response['result']                 = $result['result'];
+				$response['message']                = isset( $result['message'] ) ? $result['message'] : '';
+				$response['processed_instance_ids'] = isset( $result['processed_instance_ids'] ) ? $result['processed_instance_ids'] : array();
+				break;
+			}
+			if ( microtime( true ) >= $deadline && $index < count( $timestamps ) - 1 ) { $response['result'] = 'continue';
+				break; }
+		}
+		$response['deleted_timestamps'] = implode( ',', $deleted );
+		$response['timestamps']         = implode( ',', array_diff( $timestamps, $deleted ) );
+		$response['count_backups']      = count( BackupPlus_Backup_History::get_history() );
+		return $response;
 	}
 
 	public static function protected_set( $timestamp, $backup ) {

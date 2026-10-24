@@ -64,17 +64,17 @@ add_filter(
 	'backupplus_get_option',
 	function ( $value, $name ) use ( &$encryption ) {
 		$overrides = array(
-			'backupplus_service'             => array(),
-			'backupplus_delete_local'        => 0,
-			'backupplus_debug_mode'          => false,
-			'backupplus_email'               => '',
-			'backupplus_database_encryption' => $encryption,
-			'backupplus_interval'            => 'manual',
-			'backupplus_interval_database'   => 'manual',
-			'backupplus_retain'              => 2,
-			'backupplus_include_wpcore'      => 1,
+			'backupplus_service'                => array(),
+			'backupplus_delete_local'           => 0,
+			'backupplus_debug_mode'             => false,
+			'backupplus_email'                  => '',
+			'backupplus_database_encryption'    => $encryption,
+			'backupplus_interval'               => 'manual',
+			'backupplus_interval_database'      => 'manual',
+			'backupplus_retain'                 => 2,
+			'backupplus_include_wpcore'         => 1,
 			'backupplus_include_wpcore_exclude' => 'wp-content',
-			'backupplus_include_others'      => 1,
+			'backupplus_include_others'         => 1,
 		);
 		return array_key_exists( $name, $overrides ) ? $overrides[ $name ] : $value;
 	},
@@ -110,10 +110,10 @@ class Restore_Chain_Test_BackupPlus extends BackupPlus {
 }
 
 // The destinations must sit on the same filesystem as the restorer's working folder in wp-content/upgrade.
-$marker       = 'zz-restore-check-' . $token; // Default exclusions skip content folders named backup*
-$content_dir  = WP_CONTENT_DIR . '/' . $marker;
-$core_names   = array( 'keep', 'change', 'gone', 'new1', 'new2' );
-$cleanup      = function () use ( $remove_tree, $marker, $core_names ) {
+$marker      = 'zz-restore-check-' . $token; // Default exclusions skip content folders named backup*
+$content_dir = WP_CONTENT_DIR . '/' . $marker;
+$core_names  = array( 'keep', 'change', 'gone', 'new1', 'new2' );
+$cleanup     = function () use ( $remove_tree, $marker, $core_names ) {
 	foreach ( glob( WP_CONTENT_DIR . '/' . $marker . '*' ) as $path ) { $remove_tree( $path ); }
 	foreach ( $core_names as $name ) { @unlink( ABSPATH . $marker . '-' . $name . '.txt' ); }
 };
@@ -153,7 +153,7 @@ try {
 		restore_chain_expect( $ok, 'Backup must run successfully' );
 		restore_chain_expect( 0 === $backupplus->error_count(), 'Backup must have no errors: ' . json_encode( $backupplus->errors ) );
 	};
-	$start = time() - 3600;
+	$start    = time() - 3600;
 	$run( $start );
 	restore_chain_expect( 'backup' === $backupplus->jobdata_get( 'job_type' ), 'First incremental request must create a full backup' );
 	file_put_contents( $content_dir . '/change.txt', 'v2' );
@@ -214,10 +214,10 @@ try {
 		remove_filter( 'backupplus_logline', array( $restorer, 'backupplus_logline' ), 10 );
 		return $applied;
 	};
-	$read    = function ( $path ) {
+	$read          = function ( $path ) {
 		return is_file( $path ) ? file_get_contents( $path ) : null;
 	};
-	$tree     = function ( $root ) use ( &$tree ) {
+	$tree          = function ( $root ) use ( &$tree ) {
 		$found = array();
 		foreach ( is_dir( $root ) ? scandir( $root ) : array() as $entry ) {
 			if ( '.' !== $entry && '..' !== $entry ) {
@@ -230,10 +230,28 @@ try {
 		}
 		return $found;
 	};
-	$expected = array(
-		'latest' => array( 'point' => 0, 'archives' => 3, 'change' => 'v3', 'present' => array( 'keep', 'new2' ), 'absent' => array( 'gone', 'new1' ) ),
-		'inc1'   => array( 'point' => $points[1], 'archives' => 2, 'change' => 'v2', 'present' => array( 'keep', 'new1' ), 'absent' => array( 'gone', 'new2' ) ),
-		'full'   => array( 'point' => $points[0], 'archives' => 1, 'change' => 'v1', 'present' => array( 'keep', 'gone' ), 'absent' => array( 'new1', 'new2' ) ),
+	$expected      = array(
+		'latest' => array(
+			'point'    => 0,
+			'archives' => 3,
+			'change'   => 'v3',
+			'present'  => array( 'keep', 'new2' ),
+			'absent'   => array( 'gone', 'new1' ),
+		),
+		'inc1'   => array(
+			'point'    => $points[1],
+			'archives' => 2,
+			'change'   => 'v2',
+			'present'  => array( 'keep', 'new1' ),
+			'absent'   => array( 'gone', 'new2' ),
+		),
+		'full'   => array(
+			'point'    => $points[0],
+			'archives' => 1,
+			'change'   => 'v1',
+			'present'  => array( 'keep', 'gone' ),
+			'absent'   => array( 'new1', 'new2' ),
+		),
 	);
 	foreach ( $expected as $label => $want ) {
 		// Others: the first archive moves the existing directory aside, increments merge into the restored one.

@@ -69,9 +69,16 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 							echo wp_kses_post( $date_label );
 							$restore_points = $backupplus_admin->restore_points( $backup );
 						if ( ! empty( $restore_points ) ) {
-							$encrypted_points = count( array_filter( $restore_points, function ( $point ) { return ! empty( $point['encrypted'] ); } ) );
+							$encrypted_points = count(
+								array_filter(
+									$restore_points,
+									function ( $point ) {
+										return ! empty( $point['encrypted'] );
+									}
+								)
+							);
 							$point_count      = count( $restore_points );
-							$summary           = sprintf(
+							$summary          = sprintf(
 								/* translators: 1: Number of encrypted recovery points, 2: Total number of recovery points. */
 								__( 'Encrypted points: %1$d/%2$d', 'backupplus' ),
 								$encrypted_points,

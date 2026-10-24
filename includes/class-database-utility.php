@@ -147,8 +147,7 @@ class BackupPlus_Database_Utility {
 
 		$wpdb = ( null === $wpdb_obj ) ? $GLOBALS['wpdb'] : $wpdb_obj;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DESCRIBE is a DDL command that cannot be parameterized; $table is a SQL identifier sanitized using backquote().
-		$table_structure = $wpdb->get_results( 'DESCRIBE ' . BackupPlus_Manipulation_Functions::backquote( $table ) );
+		$table_structure = ( new BackupPlus_SQL( $wpdb->dbh ) )->rows( 'DESCRIBE %i', array( $table ) );
 		if ( ! $table_structure ) {
 			return false;
 		}
@@ -170,61 +169,38 @@ class BackupPlus_Database_Utility {
 	/**
 	 * Set MySQL server system variable
 	 *
-	 * @param String          $variable  The name of the system variable
-	 * @param String          $value     The variable value
-	 * @param Resource|Object $db_handle The database link identifier(resource) given by mysqli_init or mysql_connect
+	 * Only sql_mode is supported: variable names cannot be bound as parameters, so each one needs its own template.
+	 *
+	 * @param String $variable  The name of the system variable
+	 * @param String $value     The variable value
+	 * @param Object $db_handle The mysqli link
 	 * @return Boolean Returns true on success, false otherwise
 	 */
 	public static function set_system_variable( $variable, $value, $db_handle ) {
 
-		$is_mysqli = is_a( $db_handle, 'mysqli' );
-		if ( ! is_resource( $db_handle ) && ! $is_mysqli ) {
+		if ( 'sql_mode' !== $variable || ! is_a( $db_handle, 'mysqli' ) ) {
 			return false;
 		}
 
-		$sql = "SET SESSION %s='%s'";
-		if ( $is_mysqli ) {
-			$res = @mysqli_query( $db_handle, sprintf( $sql, mysqli_real_escape_string( $db_handle, $variable ), mysqli_real_escape_string( $db_handle, $value ) ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
-		} else {
-			$res = @mysql_query( sprintf( $sql, mysql_real_escape_string( $variable, $db_handle ), mysql_real_escape_string( $value, $db_handle ) ), $db_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
-		}
-
-		return $res;
+		return false !== ( new BackupPlus_SQL( $db_handle ) )->execute( 'SET SESSION sql_mode = ?', array(), array( $value ) );
 	}
 
 	/**
 	 * Get MySQL server system variable.
 	 *
-	 * @param String          $variable  The name of the system variable
-	 * @param Resource|Object $db_handle The database link identifier(resource) given by mysqli_init or mysql_connect
+	 * Only sql_mode is supported: variable names cannot be bound as parameters, so each one needs its own template.
+	 *
+	 * @param String $variable  The name of the system variable
+	 * @param Object $db_handle The mysqli link
 	 * @return String|Boolean|Null Returns value of the system variable, false on query failure or null if there is no result for the corresponding variable
 	 */
 	public static function get_system_variable( $variable, $db_handle ) {
 
-		$is_mysqli = is_a( $db_handle, 'mysqli' );
-		if ( ! is_resource( $db_handle ) && ! $is_mysqli ) {
+		if ( 'sql_mode' !== $variable || ! is_a( $db_handle, 'mysqli' ) ) {
 			return false;
 		}
 
-		$sql = 'SELECT @@SESSION.%s';
-
-		if ( $is_mysqli ) {
-			$res = @mysqli_query( $db_handle, sprintf( $sql, mysqli_real_escape_string( $db_handle, $variable ) ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
-		} else {
-			$res = @mysql_query( sprintf( $sql, mysql_real_escape_string( $variable, $db_handle ) ), $db_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query, WordPress.DB.RestrictedFunctions.mysql_mysql_real_escape_string -- Silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
-		}
-		if ( false === $res ) {
-			return $res;
-		}
-		if ( $is_mysqli ) {
-			// @codingStandardsIgnoreLine
-			$res = mysqli_fetch_array( $res );// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_array -- direct mysql function used for low-level database operations outside of $wpdb.
-			return isset( $res[0] ) ? $res[0] : null;
-		} else {
-			// @codingStandardsIgnoreLine
-			$res = mysql_result( $res, 0 );// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysql_result -- direct mysql function used for low-level database operations outside of $wpdb.
-			return false === $res ? null : $res;
-		}
+		return ( new BackupPlus_SQL( $db_handle ) )->value( 'SELECT @@SESSION.sql_mode' );
 	}
 
 	/**
@@ -457,7 +433,7 @@ class BackupPlus_Database_Utility {
 
 		// We don't examine the return code, because we re-check status afterwards
 		if ( is_null( $db_handle ) || is_a( $db_handle, 'WPDB' ) ) {
-			$wpdb_handle_if_used->query( $wpdb_handle_if_used->prepare( 'SET SESSION sql_mode = %s', $modes_str ) );
+			( new BackupPlus_SQL( $wpdb_handle_if_used->dbh ) )->execute( 'SET SESSION sql_mode = ?', array(), array( $modes_str ) );
 		} else {
 			call_user_func_array( array( __CLASS__, 'set_system_variable' ), array( 'sql_mode', $modes_str, $db_handle ) );
 		}
@@ -685,40 +661,30 @@ class BackupPlus_Database_Utility {
 		global $table_prefix, $wpdb;
 
 		$random_table_name = $table_prefix . 'backupplus_tmp_' . wp_rand( 0, 9999999 ) . md5( microtime( true ) );
-
-		$drop_statement = "DROP TABLE IF EXISTS `$random_table_name`;";
+		$sql               = new BackupPlus_SQL( $wpdb->dbh );
 
 		// both mysql and mariadb support generated column, virtual is the default type and the other option type is called stored, mariadb has an alias for stored type which is called persistent, whereas mysql doesn't have such thing.
 		// MySQL supports NULL and NOT NULL constraints. On the other hand, MariaDB doesn't support it.
-		$sql = array(
-			"CREATE TABLE `$random_table_name` (`virtual_column` varchar(17) GENERATED ALWAYS AS ('virtual_column') VIRTUAL COMMENT 'virtual_column')" . ( ! empty( $engine ) ? " ENGINE=$engine" : '' ) . ';',
-			"ALTER TABLE `$random_table_name` ADD `persistent_column` VARCHAR(17) AS ('persistent_column') PERSISTENT COMMENT 'generated_column';",
-			"ALTER TABLE `$random_table_name` ADD `virtual_column_not_null` VARCHAR(17) AS ('virtual_column_not_null') VIRTUAL NOT NULL COMMENT 'virtual_column_not_null';",
-			// check if we can get through this: Error Code: 3105. The value specified for generated column 'generated_column' in table 'wp_generated_column_test' is not allowed.
-			// DEFAULT is the only allowed value for virtual and stored type (i.e INSERT IGNORE INTO `wp_generated_column_test` (`virtual_column`) VALUES(DEFAULT)), other than that will produce an error, luckily insert ignore works fine on MariaDB but not on MySQL
-			"INSERT IGNORE INTO `$random_table_name` (`virtual_column`) VALUES('virtual_column');",
-			// MySQL does not support the create option 'Index on virtual generated column' on MyISAM storage engine
-			"CREATE INDEX `idx_wp_udp_generated_column_test_generated_column` ON `$random_table_name` (virtual_column) COMMENT 'virtual_column' ALGORITHM DEFAULT LOCK DEFAULT;",
-		);
-
-		$old_val = $wpdb->suppress_errors();
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP TABLE statement; $drop_statement uses an internally-generated table name and cannot be parameterized.
-		$wpdb->query( $drop_statement );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE TABLE statement; these DDL statements cannot use $wpdb->prepare().
-		$is_generated_column_supported = $wpdb->query( $sql[0] );
-		if ( $is_generated_column_supported ) {
+		$sql->execute( 'DROP TABLE IF EXISTS %i', array( $random_table_name ) );
+		if ( empty( $engine ) ) {
+			$is_generated_column_supported = $sql->execute( "CREATE TABLE %i (`virtual_column` varchar(17) GENERATED ALWAYS AS ('virtual_column') VIRTUAL COMMENT 'virtual_column')", array( $random_table_name ) );
+		} else {
+			$is_generated_column_supported = $sql->execute( "CREATE TABLE %i (`virtual_column` varchar(17) GENERATED ALWAYS AS ('virtual_column') VIRTUAL COMMENT 'virtual_column') ENGINE=%i", array( $random_table_name, $engine ) );
+		}
+		if ( false !== $is_generated_column_supported ) {
 			$is_generated_column_supported = array(
-				'is_persistent_supported'               => $wpdb->query( $sql[1] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
-				'is_not_null_supported'                 => $wpdb->query( $sql[2] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL ALTER TABLE statements; cannot be parameterized.
-				'can_insert_ignore_to_generated_column' => (bool) $wpdb->query( $sql[3] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL INSERT IGNORE statement; cannot be parameterized.
-				'is_virtual_index_supported'            => $wpdb->query( $sql[4] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE INDEX statement; cannot be parameterized.
+				'is_persistent_supported'               => false !== $sql->execute( "ALTER TABLE %i ADD `persistent_column` VARCHAR(17) AS ('persistent_column') PERSISTENT COMMENT 'generated_column'", array( $random_table_name ) ),
+				'is_not_null_supported'                 => false !== $sql->execute( "ALTER TABLE %i ADD `virtual_column_not_null` VARCHAR(17) AS ('virtual_column_not_null') VIRTUAL NOT NULL COMMENT 'virtual_column_not_null'", array( $random_table_name ) ),
+				// check if we can get through this: Error Code: 3105. The value specified for generated column 'generated_column' in table 'wp_generated_column_test' is not allowed.
+				// DEFAULT is the only allowed value for virtual and stored type (i.e INSERT IGNORE INTO `wp_generated_column_test` (`virtual_column`) VALUES(DEFAULT)), other than that will produce an error, luckily insert ignore works fine on MariaDB but not on MySQL
+				'can_insert_ignore_to_generated_column' => (bool) $sql->execute( "INSERT IGNORE INTO %i (`virtual_column`) VALUES('virtual_column')", array( $random_table_name ) ),
+				// MySQL does not support the create option 'Index on virtual generated column' on MyISAM storage engine
+				'is_virtual_index_supported'            => false !== $sql->execute( "CREATE INDEX `idx_wp_udp_generated_column_test_generated_column` ON %i (virtual_column) COMMENT 'virtual_column' ALGORITHM DEFAULT LOCK DEFAULT", array( $random_table_name ) ),
 			);
 		} else {
 			$is_generated_column_supported = false;
 		}
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP TABLE statement; cannot be parameterized.
-		$wpdb->query( $drop_statement );
-		$wpdb->suppress_errors( $old_val );
+		$sql->execute( 'DROP TABLE IF EXISTS %i', array( $random_table_name ) );
 
 		return $is_generated_column_supported;
 	}
@@ -786,45 +752,32 @@ class BackupPlus_Database_Utility {
 
 		global $wpdb;
 
-		$function_name = 'backupplus_test_stored_routine';
-		$sql           = array(
-			'DROP_FUNCTION'                 => 'DROP FUNCTION IF EXISTS ' . $function_name,
-			// sql to check whether stored routines is supported
-			'CREATE_FUNCTION'               => 'CREATE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
-			// sql to check whether create or replace syntax is supported
-			'CREATE_REPLACE_FUNCTION'       => 'CREATE OR REPLACE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
-			// sql to check whether if not exists syntax is supported (mariadb starting with 10.1.3)
-			'CREATE_FUNCTION_IF_NOT_EXISTS' => 'CREATE FUNCTION IF NOT EXISTS ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true',
-			// sql to check whether aggregate function is supported (mariadb starting with 10.3.3)
-			'CREATE_REPLACE_AGGREGATE'      => 'CREATE OR REPLACE AGGREGATE FUNCTION ' . $function_name . '() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA BEGIN RETURN true; FETCH GROUP NEXT ROW; END;',
-		);
-
-		$old_val = $wpdb->suppress_errors();
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP FUNCTION statement; cannot be parameterized.
-		$wpdb->query( $sql['DROP_FUNCTION'] );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION statement; cannot be parameterized.
-		$is_stored_routine_supported = $wpdb->query( $sql['CREATE_FUNCTION'] );
+		$sql = new BackupPlus_SQL( $wpdb->dbh );
+		$sql->execute( 'DROP FUNCTION IF EXISTS backupplus_test_stored_routine' );
+		// sql to check whether stored routines is supported
+		$is_stored_routine_supported = false !== $sql->execute( 'CREATE FUNCTION backupplus_test_stored_routine() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true' );
 		if ( $is_stored_routine_supported ) {
-			$is_binary_logging_enabled = 1 == $wpdb->get_var( 'SELECT @@GLOBAL.log_bin' );
+			$is_binary_logging_enabled = 1 == $sql->value( 'SELECT @@GLOBAL.log_bin' );
 			// not sure why the log_bin variable cant be retrieved on mysql 5.0, seems like there's a bug on that version, so we use another alternative to check whether or not binary logging is enabled
-			$is_binary_logging_enabled   = false === $is_binary_logging_enabled ? $wpdb->get_results( "SHOW GLOBAL VARIABLES LIKE 'log_bin'", ARRAY_A ) : $is_binary_logging_enabled;
+			$is_binary_logging_enabled   = false === $is_binary_logging_enabled ? $sql->rows( "SHOW GLOBAL VARIABLES LIKE 'log_bin'", array(), array(), ARRAY_A ) : $is_binary_logging_enabled;
 			$is_binary_logging_enabled   = is_array( $is_binary_logging_enabled ) && isset( $is_binary_logging_enabled[0]['Value'] ) && '' != $is_binary_logging_enabled[0]['Value'] ? $is_binary_logging_enabled[0]['Value'] : $is_binary_logging_enabled;
 			$is_binary_logging_enabled   = is_string( $is_binary_logging_enabled ) && ( 'ON' === strtoupper( $is_binary_logging_enabled ) || '1' === $is_binary_logging_enabled ) ? true : $is_binary_logging_enabled;
 			$is_binary_logging_enabled   = is_string( $is_binary_logging_enabled ) && ( 'OFF' === strtoupper( $is_binary_logging_enabled ) || '0' === $is_binary_logging_enabled ) ? false : $is_binary_logging_enabled;
 			$is_stored_routine_supported = array(
-				'is_create_or_replace_supported'      => $wpdb->query( $sql['CREATE_REPLACE_FUNCTION'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
-				'is_if_not_exists_function_supported' => $wpdb->query( $sql['CREATE_FUNCTION_IF_NOT_EXISTS'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE FUNCTION variants; cannot be parameterized.
-				'is_aggregate_function_supported'     => $wpdb->query( $sql['CREATE_REPLACE_AGGREGATE'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL CREATE AGGREGATE FUNCTION variant; cannot be parameterized.
+				// sql to check whether create or replace syntax is supported
+				'is_create_or_replace_supported'      => false !== $sql->execute( 'CREATE OR REPLACE FUNCTION backupplus_test_stored_routine() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true' ),
+				// sql to check whether if not exists syntax is supported (mariadb starting with 10.1.3)
+				'is_if_not_exists_function_supported' => false !== $sql->execute( 'CREATE FUNCTION IF NOT EXISTS backupplus_test_stored_routine() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true' ),
+				// sql to check whether aggregate function is supported (mariadb starting with 10.3.3)
+				'is_aggregate_function_supported'     => false !== $sql->execute( 'CREATE OR REPLACE AGGREGATE FUNCTION backupplus_test_stored_routine() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA BEGIN RETURN true; FETCH GROUP NEXT ROW; END;' ),
 				'is_binary_logging_enabled'           => $is_binary_logging_enabled,
-				'is_function_creators_trusted'        => 1 == $wpdb->get_var( 'SELECT @@GLOBAL.log_bin_trust_function_creators' ),
+				'is_function_creators_trusted'        => 1 == $sql->value( 'SELECT @@GLOBAL.log_bin_trust_function_creators' ),
 			);
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL DROP FUNCTION statement; cannot be parameterized.
-			$wpdb->query( $sql['DROP_FUNCTION'] );
+			$sql->execute( 'DROP FUNCTION IF EXISTS backupplus_test_stored_routine' );
 		} else {
 			/* translators: 1: Last database error, 2: SQL create function statement. */
-			$is_stored_routine_supported = new WP_Error( 'routine_creation_error', sprintf( __( 'An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'backupplus' ), $wpdb->last_error . ' -', $sql['CREATE_FUNCTION'] ) );
+			$is_stored_routine_supported = new WP_Error( 'routine_creation_error', sprintf( __( 'An error occurred while attempting to check the support of stored routines creation (%1$s %2$s)', 'backupplus' ), $sql->last_error() . ' -', 'CREATE FUNCTION backupplus_test_stored_routine() RETURNS tinyint(1) DETERMINISTIC READS SQL DATA RETURN true' ) );
 		}
-		$wpdb->suppress_errors( $old_val );
 
 		return $is_stored_routine_supported;
 	}
@@ -889,47 +842,56 @@ class BackupPlus_Database_Utility {
 		$wpdb     = null === $connection ? $GLOBALS['wpdb'] : $connection;
 		$database = null === $database ? DB_NAME : $database;
 
-		$old_val = $wpdb->suppress_errors();
+		$sql = new BackupPlus_SQL( $wpdb->dbh );
 		try {
 			/* translators: 1: Last database error, 2: Additional error details. */
 			$err_msg         = __( 'An error occurred while attempting to retrieve routine status (%1$s %2$s)', 'backupplus' );
-			$function_status = $wpdb->get_results( $wpdb->prepare( 'SHOW FUNCTION STATUS WHERE DB = %s', $database ), ARRAY_A );
-			if ( ! empty( $wpdb->last_error ) ) {
-				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
+			$function_status = $sql->rows( 'SHOW FUNCTION STATUS', array(), array(), ARRAY_A );
+			if ( false === $function_status ) {
+				throw new Exception( sprintf( $err_msg, $sql->last_error() . ' -', 'SHOW FUNCTION STATUS' ), 0 );
 			}
-			$procedure_status = $wpdb->get_results( $wpdb->prepare( 'SHOW PROCEDURE STATUS WHERE DB = %s', $database ), ARRAY_A );
-			if ( ! empty( $wpdb->last_error ) ) {
-				throw new Exception( sprintf( $err_msg, $wpdb->last_error . ' -', $wpdb->last_query ), 0 );
+			$procedure_status = $sql->rows( 'SHOW PROCEDURE STATUS', array(), array(), ARRAY_A );
+			if ( false === $procedure_status ) {
+				throw new Exception( sprintf( $err_msg, $sql->last_error() . ' -', 'SHOW PROCEDURE STATUS' ), 0 );
 			}
-			$stored_routines = array_merge( (array) $function_status, (array) $procedure_status );
-			foreach ( (array) $stored_routines as $key => $routine ) {
+			// The Db column compares case-insensitively, as SHOW ... STATUS WHERE Db = '...' did.
+			$stored_routines = array_values(
+				array_filter(
+					array_merge( $function_status, $procedure_status ),
+					function ( $routine ) use ( $database ) {
+						return isset( $routine['Db'] ) && 0 === strcasecmp( $routine['Db'], $database );
+					}
+				)
+			);
+			foreach ( $stored_routines as $key => $routine ) {
 				if ( empty( $routine['Name'] ) || empty( $routine['Type'] ) ) {
 					continue;
 				}
-				$routine_name = $routine['Name'];
-				// Since routine name can include backquotes and routine name is typically enclosed with backquotes as well, the backquote escaping for the routine name can be done by adding a leading backquote
-				$quoted_escaped_routine_name = BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $routine_name ) );
-				$routine                     = $wpdb->get_results( $wpdb->prepare( 'SHOW CREATE %1$s %2$s', $routine['Type'], $quoted_escaped_routine_name ), ARRAY_A );// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQLPlaceholders.UnquotedComplexPlaceholder -- No direct schema change here; this is a false positive. We use the unquoted placeholders because they are used for identifiers (the routine name and type).
-				/* translators: 1: Last database error, 2: Last executed SQL query. */
-				if ( ! empty( $wpdb->last_error ) ) {
-					throw new Exception( sprintf( __( 'An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'backupplus' ), $wpdb->last_error . ' -', $wpdb->last_query ), 1 );
+				if ( 'FUNCTION' === strtoupper( $routine['Type'] ) ) {
+					$routine = $sql->rows( 'SHOW CREATE FUNCTION %i', array( $routine['Name'] ), array(), ARRAY_A );
+				} elseif ( 'PROCEDURE' === strtoupper( $routine['Type'] ) ) {
+					$routine = $sql->rows( 'SHOW CREATE PROCEDURE %i', array( $routine['Name'] ), array(), ARRAY_A );
+				} else {
+					continue;
+				}
+				if ( false === $routine ) {
+					/* translators: 1: Last database error, 2: Name of the routine. */
+					throw new Exception( sprintf( __( 'An error occurred while attempting to retrieve the routine SQL/DDL statement (%1$s %2$s)', 'backupplus' ), $sql->last_error() . ' -', $stored_routines[ $key ]['Name'] ), 1 );
 				}
 				$stored_routines[ $key ] = array_merge( $stored_routines[ $key ], $routine ? $routine[0] : array() );
 			}
 		} catch ( Exception $ex ) {
 			$stored_routines = new WP_Error( 1 === $ex->getCode() ? 'routine_sql_error' : 'routine_status_error', $ex->getMessage() );
 		}
-		$wpdb->suppress_errors( $old_val );
 
 		return $stored_routines;
 	}
 
 	/**
-	 * First half of escaping for LIKE special characters % and _ before preparing for MySQL.
-	 * Use this only before wpdb::prepare() or esc_sql(). Reversing the order is very bad for security. This is a shim function for WP versions before 4.0.
+	 * Escape the LIKE special characters % and _ in text that is matched literally.
 	 *
 	 * @param String $text The raw text to be escaped. The input typed by the user should have no extra or deleted slashes.
-	 * @return String Text in the form of a LIKE phrase. The output is not SQL safe. Call wpdb::prepare() or wpdb::_real_escape() next.
+	 * @return String Text in the form of a LIKE phrase, to be bound as a value with BackupPlus_SQL.
 	 */
 	public static function esc_like( $text ) {
 		return function_exists( 'esc_like' ) ? esc_like( $text ) : addcslashes( $text, '_%\\' );
@@ -991,16 +953,6 @@ class BackupPlus_Database_Utility {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Safely escape and backquote a table name.
-	 *
-	 * @param string $table Table name.
-	 * @return string Escaped and backquoted table name.
-	 */
-	public static function escape_table_name( $table ) {
-		return BackupPlus_Manipulation_Functions::backquote( str_replace( '`', '``', $table ) );
 	}
 }
 

@@ -396,6 +396,15 @@ class BackupPlus_Restorer {
 	 *
 	 * @return BackupPlus_WPDB|Boolean
 	 */
+	/**
+	 * The error of the last statement sql_exec() ran
+	 *
+	 * @return String
+	 */
+	public function last_sql_error() {
+		return (string) $this->last_error;
+	}
+
 	public function get_db_object() {
 		return $this->wpdb_obj;
 	}
@@ -508,10 +517,20 @@ class BackupPlus_Restorer {
 			if ( defined( 'BACKUPPLUS_USE_WPDB' ) ) {
 				$this->use_wpdb = (bool) BACKUPPLUS_USE_WPDB;
 			} else {
-				$this->use_wpdb = ( ( ! function_exists( 'mysql_query' ) && ! function_exists( 'mysqli_query' ) ) || ! $wpdb->is_mysql || ! $wpdb->ready ) ? true : false;
+				$this->use_wpdb = ( ! function_exists( 'mysqli_query' ) || ! $wpdb->is_mysql || ! $wpdb->ready ) ? true : false;
 			}
 		}
 		return $this->use_wpdb;
+	}
+
+	/**
+	 * The restore connection: WordPress's own when use_wpdb(), otherwise the direct handle. Built per use, because
+	 * restore_database_connection() replaces the handle after the server drops it.
+	 *
+	 * @return BackupPlus_SQL
+	 */
+	private function sql() {
+		return $this->use_wpdb() ? BackupPlus_SQL::wpdb() : new BackupPlus_SQL( $this->mysql_dbh );
 	}
 
 	/**
@@ -2881,11 +2900,12 @@ class BackupPlus_Restorer {
 				$initial_value = '1' === $creators_val || 'on' === strtolower( $creators_val ) ? 'ON' : 'OFF';
 			}
 			if ( ( is_null( $saved_value ) || ( $saved_value != $value ) ) ) {
-				$res = $wpdb->query( $wpdb->prepare( 'SET GLOBAL log_bin_trust_function_creators = %s', $value ) );
+				$sql = BackupPlus_SQL::wpdb();
+				$res = $sql->execute( 'SET GLOBAL log_bin_trust_function_creators = ?', array(), array( $value ) );
 				if ( false === $res ) {
 					$saved_value = null;
-					/* translators: %s: Last error and last query information from $wpdb */
-					throw new Exception( sprintf( __( 'An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s', 'backupplus' ), '(' . $wpdb->last_error . ' - ' . $wpdb->last_query . ')' ), 0 );
+					/* translators: %s: Last error information */
+					throw new Exception( sprintf( __( 'An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s', 'backupplus' ), '(' . $sql->last_error() . ')' ), 0 );
 				}
 				if ( ! is_null( $saved_value ) ) {
 					$initial_value = $saved_value;
@@ -2948,16 +2968,14 @@ class BackupPlus_Restorer {
 			// After restoring the options table, we can set old_siteurl if on legacy (i.e. not already set)
 			if ( $this->restoring_table == $import_table_prefix . 'options' ) {
 				if ( '' == $this->old_siteurl || '' == $this->old_home || '' == $this->old_content ) {
-					$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . 'options' );
+					$options_table = $import_table_prefix . 'options';
 
 					if ( '' == $this->old_siteurl ) {
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-						$this->old_siteurl = untrailingslashit( $wpdb->get_row( "SELECT option_value FROM $escaped_table_name WHERE option_name='siteurl'" )->option_value );
+						$this->old_siteurl = untrailingslashit( BackupPlus_SQL::wpdb()->row( "SELECT option_value FROM %i WHERE option_name='siteurl'", array( $options_table ) )->option_value );
 						do_action( 'backupplus_restore_db_record_old_siteurl', $this->old_siteurl );
 					}
 					if ( '' == $this->old_home ) {
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-						$this->old_home = untrailingslashit( $wpdb->get_row( "SELECT option_value FROM $escaped_table_name WHERE option_name='home'" )->option_value );
+						$this->old_home = untrailingslashit( BackupPlus_SQL::wpdb()->row( "SELECT option_value FROM %i WHERE option_name='home'", array( $options_table ) )->option_value );
 						do_action( 'backupplus_restore_db_record_old_home', $this->old_home );
 					}
 					if ( '' == $this->old_content ) {
@@ -3369,11 +3387,8 @@ class BackupPlus_Restorer {
 			$backupplus->log_e( 'Database access: Direct MySQL access is not available, so we are falling back to wpdb (this will be considerably slower)' );
 		} else {
 			$backupplus->log( 'Using direct MySQL access; value of use_mysqli is: ' . ( $this->use_mysqli ? '1' : '0' ) );
-			if ( $this->use_mysqli ) {
-				@mysqli_query( $this->mysql_dbh, 'SET SESSION query_cache_type = OFF;' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Silenced to suppress errors that may arise because of the function.
-			} else {
-				@mysql_query( 'SET SESSION query_cache_type = OFF;', $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.RestrictedFunctions.mysql_mysql_query -- Legacy compatibility for very old PHP versions, silenced to suppress errors that may arise because of the function, direct mysql function used for low-level database operations outside of $wpdb.
-			}
+			// Servers without a query cache reject this; that is fine.
+			$this->sql()->execute( 'SET SESSION query_cache_type = OFF' );
 		}
 
 		// NO_BACKSLASH_ESCAPES is also in the default list, but it's good to make it explicit
@@ -3438,46 +3453,19 @@ class BackupPlus_Restorer {
 		$this->last_error                     = '';
 		$random_table_name                    = 'backupplus_tmp_' . wp_rand( 0, 9999999 ) . md5( microtime( true ) );
 		$renamed_random_table_name            = 'backupplus_tmp_' . wp_rand( 0, 9999999 ) . md5( microtime( true ) );
-		$escaped_random_table_name            = BackupPlus_Database_Utility::escape_table_name( $random_table_name );
 		$last_created_generated_columns_table = '';
 
 		// The only purpose in funnelling queries directly here is to be able to get the error number
+		$sql = $this->sql();
+		$req = false !== $sql->execute( 'CREATE TABLE %i (test INT)', array( $random_table_name ) );
+		if ( ! $req ) {
+			$this->last_error    = $sql->last_error();
+			$this->last_error_no = $sql->last_errno();
+		} elseif ( false !== $sql->execute( 'CREATE TRIGGER test_trigger BEFORE INSERT ON %i FOR EACH ROW SET @sum = @sum + NEW.test', array( $random_table_name ) ) ) {
+			$this->db_permissons_forbidden['triggers'] = false;
+		}
 		if ( $this->use_wpdb() ) {
-
-			$req = $wpdb->query( "CREATE TABLE $escaped_random_table_name (test INT)" );// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Direct schema change is required here and handled carefully. Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name()., SQL identifiers cannot be parameterized with $wpdb->prepare().
-			// WPDB, for several query types, returns the number of rows changed; in distinction from an error, indicated by (bool)false
-			if ( 0 === $req ) {
-				$req = true;
-			}
-			if ( ! $req ) {
-				$this->last_error = $wpdb->last_error;
-			}
 			$this->last_error_no = false;
-
-			if ( $req && false !== $wpdb->query( "CREATE TRIGGER test_trigger BEFORE INSERT ON $escaped_random_table_name FOR EACH ROW SET @sum = @sum + NEW.test" ) ) {
-				$this->db_permissons_forbidden['triggers'] = false;// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Direct schema change is required here and handled carefully. Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name()., SQL identifiers cannot be parameterized with $wpdb->prepare().
-			}
-		} else {
-
-			if ( $this->use_mysqli ) {
-				$req = mysqli_query( $this->mysql_dbh, "CREATE TABLE $escaped_random_table_name (test INT)" ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli used for low-level restore operations outside of $wpdb
-			} else {
-				$req = mysql_unbuffered_query( "CREATE TABLE $escaped_random_table_name (test INT)", $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-			}
-
-			if ( ! $req ) {
-				$this->last_error    = $this->use_mysqli ? mysqli_error( $this->mysql_dbh ) : mysql_error( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysqli_error, WordPress.DB.RestrictedFunctions.mysql_mysql_error -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-				$this->last_error_no = $this->use_mysqli ? mysqli_errno( $this->mysql_dbh ) : mysql_errno( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysqli_errno, WordPress.DB.RestrictedFunctions.mysql_mysql_errno -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-			} else {
-				if ( $this->use_mysqli ) {
-					$reqtrigger = mysqli_query( $this->mysql_dbh, "CREATE TRIGGER test_trigger BEFORE INSERT ON $escaped_random_table_name FOR EACH ROW SET @sum = @sum + NEW.test" ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli used for low-level restore operations outside of $wpdb
-				} else {
-					$reqtrigger = mysql_unbuffered_query( "CREATE TRIGGER test_trigger BEFORE INSERT ON $escaped_random_table_name FOR EACH ROW SET @sum = @sum + NEW.test", $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-				}
-				if ( $reqtrigger ) {
-					$this->db_permissons_forbidden['triggers'] = false;
-				}
-			}
 		}
 
 		if ( ! $req && ( $this->use_wpdb() || 1142 === $this->last_error_no ) ) {
@@ -3502,8 +3490,7 @@ class BackupPlus_Restorer {
 				$backupplus->log( 'Database user has no permission to rename tables - restoration will be non-atomic', 'warning-restore' );
 			} else {
 				// We renamed the table so update the $random_table_name
-				$random_table_name         = $renamed_random_table_name;
-				$escaped_random_table_name = BackupPlus_Database_Utility::escape_table_name( $random_table_name );
+				$random_table_name = $renamed_random_table_name;
 			}
 
 			if ( 1142 === $this->lock_table( $random_table_name ) ) {
@@ -3511,26 +3498,15 @@ class BackupPlus_Restorer {
 				$backupplus->log( 'Database user has no permission to lock tables - will not lock after CREATE', 'warning-restore' );
 			}
 
+			// rename_table() runs through sql_exec(), which may have reconnected.
+			$sql = $this->sql();
+			$req = false !== $sql->execute( 'DROP TABLE %i', array( $random_table_name ) );
+			if ( ! $req ) {
+				$this->last_error    = $sql->last_error();
+				$this->last_error_no = $sql->last_errno();
+			}
 			if ( $this->use_wpdb() ) {
-				$req = $wpdb->query( "DROP TABLE $escaped_random_table_name" );// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Direct schema change is required here and handled carefully. Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name()., SQL identifiers cannot be parameterized with $wpdb->prepare().
-				// WPDB, for several query types, returns the number of rows changed; in distinction from an error, indicated by (bool)false
-				if ( 0 === $req ) {
-					$req = true;
-				}
-				if ( ! $req ) {
-					$this->last_error = $wpdb->last_error;
-				}
 				$this->last_error_no = false;
-			} else {
-				if ( $this->use_mysqli ) {
-					$req = mysqli_query( $this->mysql_dbh, "DROP TABLE $escaped_random_table_name" ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli used for low-level restore operations outside of $wpdb
-				} else {
-					$req = mysql_unbuffered_query( "DROP TABLE $escaped_random_table_name", $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-				}
-				if ( ! $req ) {
-					$this->last_error    = ( $this->use_mysqli ) ? mysqli_error( $this->mysql_dbh ) : mysql_error( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysqli_error, WordPress.DB.RestrictedFunctions.mysql_mysql_error -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-					$this->last_error_no = ( $this->use_mysqli ) ? mysqli_errno( $this->mysql_dbh ) : mysql_errno( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysqli_errno, WordPress.DB.RestrictedFunctions.mysql_mysql_errno -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-				}
 			}
 			if ( ! $req && ( $this->use_wpdb() || 1142 === $this->last_error_no ) ) {
 				$this->db_permissons_forbidden['drop']   = true;
@@ -3578,6 +3554,7 @@ class BackupPlus_Restorer {
 		$delimiter             = ';';
 		$delimiter_regex       = ';';
 		$virtual_columns_exist = false;
+		$native_trigger_prefix = '/^\s*\/\*![0-9]{5,6}\s+CREATE\s*\*\/\s*(?:\/\*![0-9]{5,6}\s+DEFINER=.*?\*\/\s*)?\/\*![0-9]{5,6}\s+TRIGGER\b/is';
 
 		$old_log_bin_trust_function_creators = null;
 
@@ -3728,7 +3705,7 @@ class BackupPlus_Restorer {
 				$delimiter = $matches[1];
 				// Obviously, what is supported here is quite limited
 				$delimiter_regex = str_replace( array( '$', '#', '/' ), array( '\$', '\#', '\/' ), $delimiter );
-			} elseif ( preg_match( '/^\s*create trigger /i', $sql_line . $buffer ) ) {
+			} elseif ( preg_match( '/^\s*create trigger /i', $sql_line . $buffer ) || preg_match( $native_trigger_prefix, $sql_line . $buffer ) ) {
 				$sql_type = 9;
 				$buffer   = $buffer . "\n";
 			} elseif ( preg_match( "/^\s*CREATE\s\s*(?:DEFINER\s*=\s*(?:`.{1,17}`@`[^\s]+`\s*|'.{1,17}'@'[^\s]+'\s*|[^\s]+?\s))?(?:AGGREGATE\s\s*)?(?:PROCEDURE|FUNCTION)((?:\s\s*[^\(`]+|\s*`(?:[^`]|``)+`))\s*\(/is", $sql_line . $buffer ) ) {
@@ -3805,6 +3782,14 @@ class BackupPlus_Restorer {
 
 			if ( ! BackupPlus_Database_Utility::sql_statement_is_finished( $sql_line ) ) {
 				continue;
+			}
+
+			// Native dumpers wrap CREATE, DEFINER and the trigger body separately.
+			// Recognize that form so table selection and atomic table names apply too.
+			$native_trigger = preg_match( $native_trigger_prefix, $sql_line );
+			if ( $native_trigger ) {
+				$sql_line = preg_replace( $native_trigger_prefix, 'CREATE TRIGGER', $sql_line, 1 );
+				$sql_line = preg_replace( '/\*\/(?=\s*' . $delimiter_regex . '\s*$)/', '', $sql_line, 1 );
 			}
 
 			++$this->line;
@@ -3964,27 +3949,64 @@ class BackupPlus_Restorer {
 			} elseif ( preg_match( '#^\s*/\*\!40\d+ (SET NAMES) (.*)\*\/#i', $sql_line, $smatches ) ) {
 				$sql_type           = 8;
 				$charset            = rtrim( $smatches[2] );
+				$names              = $charset;
 				$connection_charset = $backupplus->get_connection_charset();
 				if ( 'utf8' === $charset && 'utf8mb4' === $connection_charset ) {
-					$sql_line = BackupPlus_Manipulation_Functions::str_lreplace( "SET NAMES $charset", "SET NAMES $connection_charset", $sql_line );
+					$names = $connection_charset;
 					/* translators: 1: Charset found, 2: Changed charset to */
 					$backupplus->log( sprintf( __( 'Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset().', 'backupplus' ), $charset, $connection_charset ), 'notice-restore' );
 					$charset = $connection_charset;
 				}
 				$this->set_names = $charset;
 				if ( ! isset( $supported_charsets[ strtolower( $charset ) ] ) ) {
-					$sql_line = BackupPlus_Manipulation_Functions::str_lreplace( $smatches[1] . ' ' . $charset, 'SET NAMES ' . $this->restore_options['backupplus_restorer_charset'], $sql_line );
+					$names = (string) $this->restore_options['backupplus_restorer_charset'];
 					/* translators: 1: Requested charset, 2: Fallback charset */
-					$backupplus->log( 'SET NAMES: ' . sprintf( __( 'Requested character set (%1$s) is not present - changing to %2$s.', 'backupplus' ), esc_html( $charset ), esc_html( $this->restore_options['backupplus_restorer_charset'] ) ), 'notice-restore' );
+					$backupplus->log( 'Connection character set: ' . sprintf( __( 'Requested character set (%1$s) is not present - changing to %2$s.', 'backupplus' ), esc_html( $charset ), esc_html( $names ) ), 'notice-restore' );
+				}
+				// A changed character set replaces the dump's statement; an unchanged one runs as written.
+				if ( '' !== $names && rtrim( $smatches[2] ) !== $names ) {
+					$sql_line = BackupPlus_SQL::render( 'SET NAMES %i', array( $names ) );
 				}
 			} elseif ( preg_match( '/^\s*create trigger /i', $sql_line ) ) {
-				$sql_type = 9;
+				$sql_type   = 9;
+				$identifier = '(?:`(?:[^`]|``)+`|[A-Za-z0-9_$]+)';
+				if ( preg_match( '/^\s*CREATE TRIGGER\s+(' . $identifier . ')\s+(?:BEFORE|AFTER)\s+(?:INSERT|UPDATE|DELETE)\s+ON\s+(' . $identifier . ')\s+FOR EACH ROW\b/is', $sql_line, $trigger ) ) {
+					$owner = '`' === $trigger[2][0] ? str_replace( '``', '`', substr( $trigger[2], 1, -1 ) ) : $trigger[2];
+					if ( $this->table_should_be_skipped( $owner ) ) {
+						$sql_line = '';
+						$sql_type = -1;
+						continue;
+					}
+					if ( $native_trigger ) {
+						$target = $this->old_table_prefix ? BackupPlus_Manipulation_Functions::str_replace_once( $this->old_table_prefix, $import_table_prefix, $owner ) : $import_table_prefix . $owner;
+						if ( $target === $owner && $import_table_prefix !== $this->old_table_prefix && empty( $this->db_permissons_forbidden['rename'] ) ) {
+							$target = $import_table_prefix . $owner;
+						}
+						$sql_line = preg_replace_callback(
+							'/\bON\s+' . $identifier . '\s+FOR EACH ROW\b/i',
+							function () use ( $target ) {
+								return BackupPlus_SQL::render( 'ON %i FOR EACH ROW', array( $target ) );
+							},
+							$sql_line,
+							1
+						);
+						if ( empty( $this->db_permissons_forbidden['triggers'] ) ) {
+							$trigger_name = '`' === $trigger[1][0] ? str_replace( '``', '`', substr( $trigger[1], 1, -1 ) ) : $trigger[1];
+							$dropped      = $this->sql_exec( BackupPlus_SQL::render( 'DROP TRIGGER IF EXISTS %i', array( $trigger_name ) ), 9, '', false );
+							if ( is_wp_error( $dropped ) ) {
+								return $dropped;
+							}
+						}
+					}
+				} elseif ( $native_trigger ) {
+					return new WP_Error( 'native_trigger', 'Cannot determine the owning table of a native trigger.' );
+				}
 				// If the statement is not yet complete, then continue (to get the next line)
 				if ( ! preg_match( '/(?:END)?\s*' . $delimiter_regex . '\s*$/', $sql_line ) ) {
 					continue;
 				}
 				// If it's a comment then continue;
-				if ( preg_match( '/(?:--|#).+?' . $delimiter_regex . '\s*$/i', $buffer ) ) {
+				if ( ! $native_trigger && preg_match( '/(?:--|#).+?' . $delimiter_regex . '\s*$/i', $buffer ) ) {
 					continue;
 				}
 				$backupplus->log_restore_update(
@@ -3997,7 +4019,7 @@ class BackupPlus_Restorer {
 						),
 					)
 				);
-				if ( $import_table_prefix != $this->old_table_prefix ) {
+				if ( ! $native_trigger && $import_table_prefix != $this->old_table_prefix ) {
 					if ( '' != $this->old_table_prefix ) {
 						$sql_line = BackupPlus_Manipulation_Functions::str_replace_once( $this->old_table_prefix, $import_table_prefix, $sql_line );
 					} else {
@@ -4200,7 +4222,8 @@ class BackupPlus_Restorer {
 				}
 				if ( ( $generated_column_db_info = $this->supported_generated_column_engines[ strtolower( $this->table_engine ) ] ) && ! $generated_column_db_info['can_insert_ignore_to_generated_column'] && isset( $this->generated_columns_exist_in_the_statement[ $this->table_name ] ) && true === $this->generated_columns_exist_in_the_statement[ $this->table_name ] ) {
 					foreach ( (array) $this->generated_columns[ $this->table_name ]['columns'] as $generated_column ) {
-						$new_data_type_definition = "`{$generated_column['column_name']}`";
+						// Column options after the name, from the table's own CREATE statement in the dump.
+						$new_data_type_definition = '';
 						foreach ( (array) $generated_column['column_data_type_definition'] as $key => $data_type_definition ) {
 							if ( empty( $data_type_definition ) || 0 === strlen( trim( $data_type_definition[0] ) ) ) {
 								continue;
@@ -4218,7 +4241,8 @@ class BackupPlus_Restorer {
 						}
 						$new_data_type_definition = preg_replace( '/\bvirtual\b/i', 'STORED', $new_data_type_definition );
 						// altering table could take minutes or hours to complete depending on the size of the rows of the table
-						$do_exec = $this->sql_exec( sprintf( 'alter table `%s` change `%s` %s', $this->new_table_name, $generated_column['column_name'], $new_data_type_definition ), -1 );
+						$statement = BackupPlus_SQL::render( 'ALTER TABLE %i CHANGE %i %i', array( $this->new_table_name, $generated_column['column_name'], $generated_column['column_name'] ) ) . $new_data_type_definition;
+						$do_exec   = $this->sql_exec( $statement, -1 );
 						if ( is_wp_error( $do_exec ) ) {
 							return $do_exec;
 						}
@@ -4420,49 +4444,16 @@ class BackupPlus_Restorer {
 	 * @return boolean|integer - returns true if successful otherwise an error number
 	 */
 	private function rename_table( $current_table_name, $new_table_name ) {
-		$current_table_name = BackupPlus_Manipulation_Functions::backquote( $current_table_name );
-		$new_table_name     = BackupPlus_Manipulation_Functions::backquote( $new_table_name );
-
-		return $this->sql_exec( "ALTER TABLE $current_table_name RENAME TO $new_table_name;", 14, '', false );
+		return $this->sql_exec( BackupPlus_SQL::render( 'ALTER TABLE %i RENAME TO %i', array( $current_table_name, $new_table_name ) ), 14, '', false );
 	}
 
-	private function lock_table( $table ) {
-
+	private function lock_table( $table ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Function isnt being used yet
 		// Not yet working
-		return true;
-
-		global $backupplus;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Function isnt being used yet
-		$table = BackupPlus_Manipulation_Functions::backquote( $table );
-
-		if ( $this->use_wpdb() ) {
-			$req = $wpdb->query( "LOCK TABLES $table WRITE;" );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Function isnt being used yet, $table is safely escaped via backquote(), SQL identifiers cannot be parameterized with $wpdb->prepare().
-		} else {
-			if ( $this->use_mysqli ) {
-				$req = mysqli_query( $this->mysql_dbh, "LOCK TABLES $table WRITE;" ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct mysqli used for low-level restore operations outside of $wpdb. $table is safely escaped via backquote().
-			} else {
-				$req = mysql_unbuffered_query( "LOCK TABLES $table WRITE;", $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions. $table is safely escaped via backquote(), direct mysql function used for low-level database operations outside of $wpdb.
-			}
-			if ( ! $req ) {
-				$lock_error_no = $this->use_mysqli ? mysqli_errno( $this->mysql_dbh ) : mysql_errno( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysqli_errno, WordPress.DB.RestrictedFunctions.mysql_mysql_errno -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-			}
-		}
-		if ( ! $req && ( $this->use_wpdb() || 1142 === $lock_error_no ) ) {
-			// Permission denied
-			return 1142;
-		}
 		return true;
 	}
 
 	public function unlock_tables() {
-		return;
 		// Not yet working
-		if ( $this->use_wpdb() ) {
-			$wpdb->query( 'UNLOCK TABLES;' );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- Function isnt being used yet
-		} elseif ( $this->use_mysqli ) {
-			$req = mysqli_query( $this->mysql_dbh, 'UNLOCK TABLES;' );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable, WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Function isnt being used yet, Direct mysqli used for low-level restore operations outside of $wpdb, direct mysqli used for low-level restore operations outside of $wpdb
-		} else {
-			$req = mysql_unbuffered_query( 'UNLOCK TABLES;' );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable, PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Variable isnt being used yet, legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-		}
 	}
 
 	/**
@@ -4634,7 +4625,7 @@ class BackupPlus_Restorer {
 				// We choose, for now, to be very conservative - we only do the apparently-missing drop if we have never seen any drop - i.e. assume that in SQL dumps with missing DROPs, that it's because there are no DROPs at all
 				if ( ! in_array( $this->new_table_name, $this->tables_been_dropped ) ) {
 					$backupplus->log_e( 'Table to be implicitly dropped: %s', $this->new_table_name );
-					$this->sql_exec( 'DROP TABLE IF EXISTS ' . BackupPlus_Manipulation_Functions::backquote( $this->new_table_name ), 1, '', false );
+					$this->sql_exec( BackupPlus_SQL::render( 'DROP TABLE IF EXISTS %i', array( $this->new_table_name ) ), 1, '', false );
 					$this->tables_been_dropped[] = $this->new_table_name;
 				}
 			}
@@ -4642,7 +4633,7 @@ class BackupPlus_Restorer {
 			// Type 1 = DROP TABLE
 			if ( 1 == $sql_type ) {
 				if ( ! empty( $this->db_permissons_forbidden['drop'] ) ) {
-					$sql_line = 'DELETE FROM ' . BackupPlus_Manipulation_Functions::backquote( $this->new_table_name );
+					$sql_line = BackupPlus_SQL::render( 'DELETE FROM %i', array( $this->new_table_name ) );
 					$backupplus->log_e( 'Cannot drop tables, so deleting instead (%s)', $sql_line );
 					$ignore_errors = true;
 				}
@@ -4673,28 +4664,11 @@ class BackupPlus_Restorer {
 				$backupplus->log( 'Restoring STORED ROUTINES...' );
 			}
 
-			if ( $this->use_wpdb() ) {
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $sql_line is constructed as necessary throughout the database restoration process. Each specific SQL statement is sanitized or prepared appropriately before being added to $sql_line.
-				$req = $wpdb->query( $sql_line );
-				// WPDB, for several query types, returns the number of rows changed; in distinction from an error, indicated by (bool)false
-				if ( 0 === $req ) {
-					$req = true;
-				}
-				if ( ! $req ) {
-					$this->last_error = $wpdb->last_error;
-				}
-			} else {
-				if ( $this->use_mysqli ) {
-					$req = mysqli_query( $this->mysql_dbh, $sql_line ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysqli used for low-level restore operations outside of $wpdb
-					if ( ! $req ) {
-						$this->last_error = mysqli_error( $this->mysql_dbh ); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_error -- Direct mysqli used for low-level restore operations outside of $wpdb
-					}
-				} else {
-					$req = mysql_unbuffered_query( $sql_line, $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-					if ( ! $req ) {
-						$this->last_error = mysql_error( $this->mysql_dbh );// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_error -- Legacy compatibility for very old PHP versions, direct mysql function used for low-level database operations outside of $wpdb.
-					}
-				}
+			$sql = $this->sql();
+			// Fragments are BackupPlus statements with bound values; text is a statement read from the dump
+			$req = false !== ( $sql_line instanceof BackupPlus_SQL_Fragment ? $sql->execute( '%f', array( $sql_line ) ) : $sql->script( $sql_line ) );
+			if ( ! $req ) {
+				$this->last_error = $sql->last_error();
 			}
 			if ( 3 == $sql_type ) {
 				++$this->insert_statements_run;
@@ -4917,18 +4891,17 @@ class BackupPlus_Restorer {
 
 				$mprefix = empty( $matches[1] ) ? '' : $matches[1];
 
-				$new_table_name     = $import_table_prefix . $mprefix . 'options';
-				$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $new_table_name );
+				$new_table_name = $import_table_prefix . $mprefix . 'options';
+				$sql            = BackupPlus_SQL::wpdb();
 
 				// WordPress has an option name predicated upon the table prefix. Yuk.
 				if ( $import_table_prefix != $old_table_prefix ) {
 					$backupplus->log( 'Table prefix has changed: changing options table field(s) accordingly (' . $mprefix . 'options)' );
 					/* translators: %s: String 'option' for table */
 					$print_line = sprintf( __( 'Table prefix has changed: changing %s table field(s) accordingly:', 'backupplus' ), 'option' ) . ' ';
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-					if ( false === $wpdb->query( $wpdb->prepare( "UPDATE $escaped_table_name SET option_name=%s WHERE option_name=%s LIMIT 1", $import_table_prefix . $mprefix . 'user_roles', $old_table_prefix . $mprefix . 'user_roles' ) ) ) {
+					if ( false === $sql->execute( 'UPDATE %i SET option_name = ? WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( $import_table_prefix . $mprefix . 'user_roles', $old_table_prefix . $mprefix . 'user_roles' ) ) ) {
 						$print_line .= __( 'Error', 'backupplus' );
-						$backupplus->log( 'Error when changing options table fields: ' . $wpdb->last_error );
+						$backupplus->log( 'Error when changing options table fields: ' . $sql->last_error() );
 					} else {
 						$backupplus->log( 'Options table fields changed OK' );
 						$print_line .= __( 'OK', 'backupplus' );
@@ -4937,8 +4910,7 @@ class BackupPlus_Restorer {
 				}
 
 				// Now deal with the situation where the imported database sets a new over-ride upload_path that is absolute - which may not be wanted
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-				$new_upload_path = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $escaped_table_name WHERE option_name = %s LIMIT 1", 'upload_path' ) );
+				$new_upload_path = $sql->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( 'upload_path' ) );
 				$new_upload_path = ( is_object( $new_upload_path ) ) ? $new_upload_path->option_value : '';
 				// The danger situation is absolute and points somewhere that is now perhaps not accessible at all
 
@@ -4952,10 +4924,9 @@ class BackupPlus_Restorer {
 						} else {
 							$backupplus->log_e( 'Uploads path (%s) has changed during a migration - resetting (to: %s)', $new_upload_path, $this->prior_upload_path );
 						}
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-						if ( false === $wpdb->query( $wpdb->prepare( "UPDATE $escaped_table_name SET option_value=%s WHERE option_name='upload_path' LIMIT 1", $this->prior_upload_path ) ) ) {
+						if ( false === $sql->execute( "UPDATE %i SET option_value = ? WHERE option_name = 'upload_path' LIMIT 1", array( $new_table_name ), array( $this->prior_upload_path ) ) ) {
 							$backupplus->log( __( 'Error', 'backupplus' ), 'notice-restore' );
-							$backupplus->log( 'Error when changing upload path: ' . $wpdb->last_error );
+							$backupplus->log( 'Error when changing upload path: ' . $sql->last_error() );
 							$backupplus->log( 'Failed' );
 						}
 					}
@@ -4964,8 +4935,7 @@ class BackupPlus_Restorer {
 				// TODO:Do on all WPMU tables
 				if ( $table == $import_table_prefix . 'options' ) {
 					// Bad plugin that hard-codes path references - https://wordpress.org/plugins/custom-content-type-manager/
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-					$cctm_data = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $escaped_table_name WHERE option_name = %s LIMIT 1", 'cctm_data' ) );
+					$cctm_data = $sql->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( 'cctm_data' ) );
 					if ( ! empty( $cctm_data->option_value ) ) {
 						$cctm_data = empty( $cctm_data->option_value ) ? array() : $backupplus->unserialize( $cctm_data->option_value );
 						if ( is_array( $cctm_data ) && ! empty( $cctm_data['cache'] ) && is_array( $cctm_data['cache'] ) ) {
@@ -4978,8 +4948,7 @@ class BackupPlus_Restorer {
 
 				if ( $table == $import_table_prefix . $mprefix . 'options' ) {
 					// Another - http://www.elegantthemes.com/gallery/elegant-builder/
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-					$elegant_data = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $escaped_table_name WHERE option_name = %s LIMIT 1", 'et_images_temp_folder' ) );
+					$elegant_data = $sql->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( 'et_images_temp_folder' ) );
 					if ( ! empty( $elegant_data->option_value ) ) {
 						$dbase         = basename( $elegant_data->option_value );
 						$wp_upload_dir = wp_upload_dir();
@@ -4993,8 +4962,7 @@ class BackupPlus_Restorer {
 
 					// check if current restoration is a migration
 					if ( ! empty( $this->restore_options['backupplus_restorer_replacesiteurl'] ) ) {
-						// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-						$wp_rocket_settings = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $escaped_table_name WHERE option_name = %s LIMIT 1", 'wp_rocket_settings' ) );
+						$wp_rocket_settings = $sql->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( 'wp_rocket_settings' ) );
 
 						if ( ! empty( $wp_rocket_settings->option_value ) ) {
 							$wp_rocket_settings = empty( $wp_rocket_settings->option_value ) ? array() : $backupplus->unserialize( $wp_rocket_settings->option_value );
@@ -5012,13 +4980,11 @@ class BackupPlus_Restorer {
 
 				// The gantry menu plugin sometimes uses too-long transient names, causing the timeout option to be missing; and hence the transient becomes permanent.
 				// WP 3.4 onwards has $wpdb->delete(). But we support 3.2 onwards.
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-				$wpdb->query( "DELETE FROM $escaped_table_name WHERE option_name LIKE '_transient_gantry-menu%' OR option_name LIKE '_transient_timeout_gantry-menu%'" );
+				$sql->execute( "DELETE FROM %i WHERE option_name LIKE '_transient_gantry-menu%' OR option_name LIKE '_transient_timeout_gantry-menu%'", array( $new_table_name ) );
 
 				// Jetpack: see: https://wordpress.org/support/topic/issues-with-dev-site
 				if ( $this->old_siteurl != $this->our_siteurl ) {
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-					$wpdb->query( "DELETE FROM $escaped_table_name WHERE option_name = 'jetpack_options'" );
+					$sql->execute( "DELETE FROM %i WHERE option_name = 'jetpack_options'", array( $new_table_name ) );
 				}
 			}
 		} elseif ( $import_table_prefix != $old_table_prefix && preg_match( '/^([\d+]_)?usermeta$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
@@ -5031,36 +4997,32 @@ class BackupPlus_Restorer {
 
 			$errors_occurred = false;
 
-			$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( "{$import_table_prefix}usermeta" );
+			$usermeta_table = $import_table_prefix . 'usermeta';
+			$old_keys       = BackupPlus_Database_Utility::esc_like( $old_table_prefix ) . '%';
+			$sql            = BackupPlus_SQL::wpdb();
 
 			if ( false === strpos( $old_table_prefix, '_' ) ) {
 				// Old, slow way: do it row-by-row
 				// A large database can take several minutes to process on a slow test machine.
 				$old_prefix_length = strlen( $old_table_prefix );
 
-				$um_sql = "SELECT umeta_id, meta_key 
-					FROM {$import_table_prefix}usermeta 
-					WHERE meta_key 
-					LIKE '" . BackupPlus_Database_Utility::esc_like( $old_table_prefix ) . "%'";
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $um_sql is constructed above with escaped parameters and cannot be parameterized further.
-				$meta_keys = $wpdb->get_results( $um_sql );
+				$meta_keys = $sql->rows( 'SELECT umeta_id, meta_key FROM %i WHERE meta_key LIKE ?', array( $usermeta_table ), array( $old_keys ) );
+				if ( false === $meta_keys ) {
+					$errors_occurred = true;
+					$meta_keys       = array();
+				}
 
 				foreach ( $meta_keys as $meta_key ) {
 					// Create new meta key
 					$new_meta_key = $import_table_prefix . substr( $meta_key->meta_key, $old_prefix_length );
 
-					$query = $wpdb->prepare( "UPDATE {$escaped_table_name} SET meta_key=%s WHERE umeta_id=%s", $new_meta_key, $meta_key->umeta_id );// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-
-					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $query is constructed above with escaped parameters and cannot be parameterized further.
-					if ( false === $wpdb->query( $query ) ) {
+					if ( false === $sql->execute( 'UPDATE %i SET meta_key = ? WHERE umeta_id = ?', array( $usermeta_table ), array( $new_meta_key, $meta_key->umeta_id ) ) ) {
 						$errors_occurred = true;
 					}
 				}
 			} else {
 				// New, fast way: do it in a single query
-				$sql = "UPDATE {$import_table_prefix}usermeta SET meta_key = REPLACE(meta_key, '$old_table_prefix', '{$import_table_prefix}') WHERE meta_key LIKE '" . BackupPlus_Database_Utility::esc_like( $old_table_prefix ) . "%';";
-				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $sql is constructed above with escaped parameters and cannot be parameterized further.
-				if ( false === $wpdb->query( $sql ) ) {
+				if ( false === $sql->execute( 'UPDATE %i SET meta_key = REPLACE(meta_key, ?, ?) WHERE meta_key LIKE ?', array( $usermeta_table ), array( $old_table_prefix, $import_table_prefix, $old_keys ) ) ) {
 					$errors_occurred = true;
 				}
 			}
@@ -5174,15 +5136,14 @@ class BackupPlus_Restorer {
 	private function check_active_plugins( $import_table_prefix ) {
 		global $wpdb;
 
+		$sql = BackupPlus_SQL::wpdb();
 		if ( $this->is_multisite ) {
 			// Get the site wide active plugins
-			$escaped_sitemeta_table = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . 'sitemeta' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-			$plugins = $wpdb->get_row( "SELECT meta_value FROM $escaped_sitemeta_table WHERE meta_key = 'active_sitewide_plugins'" );
+			$sitemeta_table = $import_table_prefix . 'sitemeta';
+			$plugins        = $sql->row( "SELECT meta_value FROM %i WHERE meta_key = 'active_sitewide_plugins'", array( $sitemeta_table ) );
 			if ( ! empty( $plugins->meta_value ) ) {
 				$plugins = $this->deactivate_missing_plugins( $plugins->meta_value );
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-				$wpdb->query( $wpdb->prepare( "UPDATE $escaped_sitemeta_table SET meta_value=%s WHERE meta_key='active_sitewide_plugins'", $plugins ) );
+				$sql->execute( "UPDATE %i SET meta_value = ? WHERE meta_key = 'active_sitewide_plugins'", array( $sitemeta_table ), array( $plugins ) );
 			}
 
 			$offset = 0;
@@ -5190,7 +5151,7 @@ class BackupPlus_Restorer {
 
 			while ( true ) {
 				// Loop over and get each sites active plugins
-				$blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ), ARRAY_A );
+				$blogs = $sql->rows( 'SELECT blog_id FROM %i LIMIT ?, ?', array( $wpdb->blogs ), array( $offset, $limit ), ARRAY_A );
 
 				if ( empty( $blogs ) ) {
 					break;
@@ -5200,23 +5161,20 @@ class BackupPlus_Restorer {
 					if ( ! apply_filters( 'backupplus_restore_this_site', true, $row['blog_id'], '', $this->restore_options ) ) {
 						continue;
 					}
-					$safe_blog_id = absint( $row['blog_id'] );
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The 'get_blog_prefix()' method returns a safe table prefix.
-					$plugins = $wpdb->get_row( 'SELECT option_value FROM ' . $wpdb->get_blog_prefix( $safe_blog_id ) . "options WHERE option_name = 'active_plugins'" );
+					$options_table = $wpdb->get_blog_prefix( absint( $row['blog_id'] ) ) . 'options';
+					$plugins       = $sql->row( "SELECT option_value FROM %i WHERE option_name = 'active_plugins'", array( $options_table ) );
 					if ( empty( $plugins->option_value ) ) {
 						continue;
 					}
 					$plugins = $this->deactivate_missing_plugins( $plugins->option_value );
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The 'get_blog_prefix()' method returns a safe table prefix.
-					$wpdb->query( $wpdb->prepare( 'UPDATE ' . $wpdb->get_blog_prefix( $safe_blog_id ) . "options SET option_value=%s WHERE option_name='active_plugins'", $plugins ) );
+					$sql->execute( "UPDATE %i SET option_value = ? WHERE option_name = 'active_plugins'", array( $options_table ), array( $plugins ) );
 				}
 
 				$offset += $limit;
 			}
 		} else {
-			$escaped_options_table = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . 'options' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-			$plugins = $wpdb->get_row( "SELECT option_value FROM $escaped_options_table WHERE option_name = 'active_plugins'" );
+			$options_table = $import_table_prefix . 'options';
+			$plugins       = $sql->row( "SELECT option_value FROM %i WHERE option_name = 'active_plugins'", array( $options_table ) );
 			if ( empty( $plugins->option_value ) ) {
 				return;
 			}
@@ -5233,8 +5191,7 @@ class BackupPlus_Restorer {
 				$plugins[] = $old_backupplus_plugin_slug;
 			}
 			$plugins = serialize( $plugins );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is safely escaped via BackupPlus_Database_Utility::escape_table_name().
-			$wpdb->query( $wpdb->prepare( "UPDATE $escaped_options_table SET option_value=%s WHERE option_name='active_plugins'", $plugins ) );
+			$sql->execute( "UPDATE %i SET option_value = ? WHERE option_name = 'active_plugins'", array( $options_table ), array( $plugins ) );
 		}
 	}
 
@@ -5276,12 +5233,11 @@ class BackupPlus_Restorer {
 	 * @return String - the random prefix
 	 */
 	public function backupplus_random_restore_table_prefix( $string ) {
-		global $wpdb;
 		while ( true ) {
 			$random_string = BackupPlus_Manipulation_Functions::generate_random_string( 2 ) . '_';
 			if ( $string != $random_string ) {
-				if ( 0 === $wpdb->query( "SHOW TABLES LIKE '" . esc_sql( BackupPlus_Database_Utility::esc_like( $random_string ) ) . "%'" ) ) {
-					return $random_string; // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $random_string is properly escaped via esc_sql($wpdb->esc_like()).
+				if ( array() === BackupPlus_SQL::wpdb()->rows( 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE ?', array(), array( BackupPlus_Database_Utility::esc_like( $random_string ) . '%' ) ) ) {
+					return $random_string;
 				}
 			}
 		}
@@ -5294,7 +5250,7 @@ class BackupPlus_Restorer {
 	 */
 	private function drop_tables( $tables ) {
 		foreach ( $tables as $table ) {
-			$this->sql_exec( 'DROP TABLE IF EXISTS ' . BackupPlus_Manipulation_Functions::backquote( $table ), 1, '', false );
+			$this->sql_exec( BackupPlus_SQL::render( 'DROP TABLE IF EXISTS %i', array( $table ) ), 1, '', false );
 		}
 	}
 

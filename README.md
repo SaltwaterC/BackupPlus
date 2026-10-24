@@ -6,7 +6,7 @@ Start with `cp .env.example .env && ./dev/up.sh`. See [the development environme
 
 ## Incremental backups
 
-Choose an **Incremental file backups** interval in Settings, or click **Incremental Backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. Database backups continue to use their existing full-backup schedule.
+Choose an **Incremental file backups** interval in Settings, or click **Incremental Backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. When Database point-in-time recovery is enabled, the button also offers an immediate PITR capture; uncheck files to capture only the database. Ordinary database backups continue to use their existing full-backup schedule.
 
 An incremental request automatically creates a full backup when the base is seven days old, incomplete, incompatible with the current file selection/exclusions/encryption/storage settings, or unavailable. Incremental schedules run at least daily, optionally at an exact time (see [backup times](docs/backup-scheduling.md)); the weekly limit uses the original full backup's time, so adding increments never extends it. Scheduled backups depend on WordPress cron running. The normal file schedule still creates full backups and can run more frequently.
 
@@ -20,6 +20,8 @@ podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-c
 ```
 
 `check-incremental-restore.php` takes a real full backup and two increments of the content directory and WordPress core, then restores each to the latest, middle and full-backup restore points. It confirms changes, additions, cumulative deletions, `-old` copies, live-only files and `wp-config.php` handling. A dangling symlink in the source also confirms that harmless warnings do not stop a chain from being reused.
+
+Optional [binary-log database backups](docs/binary-log-backups.md) add guarded transactional full snapshots, MySQL/MariaDB log capture and recovery at saved transaction coordinates. Configure an encrypted **Backup account** in Settings when the WordPress account lacks capture privileges. The Restore screen requests temporary restore credentials and can replay a complete chain onto the source database. Ordinary full-dump and selected-table backups/restores require neither PITR account. See the [account design](docs/database-scoped-pitr-design.md) for the permission boundaries and current recovery limits.
 
 ## Backup times and retention cleanup
 
@@ -45,7 +47,7 @@ make check-format  # Report violations without changing files
 make format FORMAT_PATHS='includes/class-age-keys.php methods/ftp'
 ```
 
-Both targets use the same explicit subset of WordPress formatting rules in `.phpcs.xml.dist`: indentation, whitespace, braces, argument spacing, array layout, and line endings. Bundled libraries, dependencies, and generated assets are excluded. Comparisons, naming conventions, SQL checks, and other code-quality rules are outside the formatter's scope. Heredoc/nowdoc contents and closing-marker indentation are preserved. `make check-format` exits nonzero for outstanding formatting violations. `make format` treats the fixer's successful "files changed" status as success and still fails if fixes could not be completed. Formatting is separate from `make test`.
+Both targets use the same explicit subset of WordPress formatting rules in `.phpcs.xml.dist`: indentation, whitespace, braces, argument spacing, array layout, and line endings. Bundled libraries, dependencies, and generated assets are excluded. Comparisons, naming conventions, SQL checks, and other code-quality rules are outside the formatter's scope. Heredoc/nowdoc contents and closing-marker indentation are preserved. `make check-format` exits nonzero for outstanding formatting violations and is included in `make test`. `make format` treats the fixer's successful "files changed" status as success and still fails if fixes could not be completed.
 
 The formatter uses a 512 MB PHP memory limit for the larger source files. Override it with `PHP_TOOLS_MEMORY_LIMIT`, for example `make check-format PHP_TOOLS_MEMORY_LIMIT=1G`.
 
@@ -57,13 +59,13 @@ Run the complete suite with:
 make test
 ```
 
-This runs all standalone PHP tests, missing-extension checks, live FTP/FTPS, SFTP/SCP and WebDAV integration tests, asset checks, client cryptography and Chromium decryption checks, and WordPress provider checks with every provider removed individually and all providers removed together. Failures return a nonzero exit status; missing prerequisites fail instead of skipping a suite.
+This runs PHP formatting and syntax checks, all standalone PHP tests, missing-extension checks, live FTP/FTPS, SFTP/SCP and WebDAV integration tests, asset checks, client cryptography and Chromium decryption checks, native MySQL/MariaDB PITR tests, and WordPress provider checks with every provider removed individually and all providers removed together. Failures return a nonzero exit status; missing prerequisites fail instead of skipping a suite.
 
-Prerequisites are PHP with cURL, DOM, OpenSSL and ctype (libcurl must support FTP and TLS), Python 3.8+ with `venv` and pip, the `openssl`, `scp`, and `age` commands, and the running Podman WordPress development environment (`./dev/up.sh`). The first run installs Python test dependencies into `.cache/test-venv`; subsequent runs reuse them. Live storage tests create disposable loopback servers and need no external storage accounts.
+Prerequisites are PHP with cURL, DOM, OpenSSL, ctype and sodium (libcurl must support FTP and TLS), Node.js, the `openssl`, `scp`, `ssh-keygen`, and `age` commands, and the running Podman WordPress development environment (`./dev/up.sh`). Live storage tests start disposable loopback FTP/FTPS, SSH (SFTP and SCP) and HTTP(S) servers written in PHP (`scripts/integration/lib/`) and need no external storage accounts or other language runtimes.
 
-For a focused run, use `make test-unit`, `make test-integration`, `make test-wordpress`, or `make check-assets`. Override `PYTHON`, `TEST_VENV`, `PODMAN`, or `WP_TEST_CONTAINER` on the Make command line if needed, for example `make test PYTHON=python3.12`.
+For a focused run, use `make test-unit`, `make test-integration`, `make test-wordpress`, or `make check-assets`. Override `PODMAN` or `WP_TEST_CONTAINER` on the Make command line if needed, for example `make test PODMAN=docker`.
 
-Provider behavior tests cover all 16 implemented backends. `scripts/test-s3.php` exercises Amazon S3, S3-compatible storage and DreamObjects; `scripts/test-swift.php` exercises OpenStack and Rackspace Cloud Files. Dropbox, Google Drive, Email, Azure, Backblaze B2, Google Cloud Storage, OneDrive and pCloud each have a `scripts/test-<provider>.php` suite. Run them directly with PHP or together with the FTP, SFTP/SCP and WebDAV checks through `make test-unit`. Cloud API responses and email delivery use fakes, so no external accounts or real emails are needed. Coverage includes binary/empty transfers, pagination, chunk boundaries, retention deletion, credential tests, failure handling and provider isolation. `scripts/test-cloud-http-integration.py` additionally exercises real streaming uploads against a disposable loopback HTTPS server, including TLS trust, hostname verification and redirect refusal.
+Provider behavior tests cover all 16 implemented backends. `scripts/test-s3.php` exercises Amazon S3, S3-compatible storage and DreamObjects; `scripts/test-swift.php` exercises OpenStack and Rackspace Cloud Files. Dropbox, Google Drive, Email, Azure, Backblaze B2, Google Cloud Storage, OneDrive and pCloud each have a `scripts/test-<provider>.php` suite. Run them directly with PHP or together with the FTP, SFTP/SCP and WebDAV checks through `make test-unit`. Cloud API responses and email delivery use fakes, so no external accounts or real emails are needed. Coverage includes binary/empty transfers, pagination, chunk boundaries, retention deletion, credential tests, failure handling and provider isolation. `scripts/integration/test-cloud-http.php` additionally exercises real streaming uploads against a disposable loopback HTTPS server, including TLS trust, hostname verification and redirect refusal.
 
 ## Storage providers
 
@@ -73,7 +75,7 @@ The **WebDAV** provider supports HTTP and HTTPS with Basic or Digest authenticat
 
 WebDAV supports backup uploads, restore downloads, backup discovery, retention deletion, and a settings test that lists the directory, uploads a disposable file, reads it back, and deletes it. Transfers stream through PHP cURL. Retried uploads restart in full; downloads replace local files only after a successful complete transfer. Configure the final WebDAV endpoint because redirects are rejected. PHP cURL and DOM XML are required. HTTPS verifies server certificates and hostnames by default, honoring the plugin's expert settings for certificate verification and system CA selection (`curl.cainfo`); disabling SSL rejects HTTPS connections.
 
-Run `php scripts/test-webdav.php` and `php -d disable_functions=curl_init scripts/test-webdav.php` for settings and missing-support checks. Run `python3 scripts/test-webdav-integration.py` for disposable HTTP/HTTPS servers, Basic and Digest authentication, binary and empty files, special characters, malformed XML, failed transfers, and certificate verification. The integration checks require PHP cURL/DOM, Python's standard library, and `openssl`; no external WebDAV service is needed.
+Run `php scripts/test-webdav.php` and `php -d disable_functions=curl_init scripts/test-webdav.php` for settings and missing-support checks. Run `php scripts/integration/test-webdav.php` for disposable HTTP/HTTPS servers, Basic and Digest authentication, binary and empty files, special characters, malformed XML, failed transfers, and certificate verification. The integration checks require PHP cURL/DOM; no external WebDAV service is needed.
 
 The **SFTP / SCP** provider uses the bundled phpseclib 3 library; PHP's SSH2 extension and a local SSH executable are not required. Select SFTP (the default) or SCP, enter the SSH server, port (default 22), username, and password or private key. Both RSA and Ed25519 keys are supported, including encrypted OpenSSH Ed25519 keys. Paste the complete private key into the private-key field and enter its passphrase separately when encrypted. A supplied private key takes precedence over the password. Hostnames with a port, bracketed IPv6 addresses, and `sftp://` or `scp://` host prefixes are accepted. A prefix also selects that protocol.
 
@@ -92,9 +94,7 @@ Both modes use PHP's cURL extension with libcurl FTP support; FTPS also requires
 Run `php scripts/test-ftp.php` and `php -d disable_functions=curl_init scripts/test-ftp.php` for FTP settings and failure handling checks. To test live transfers and certificate verification against disposable loopback servers:
 
 ```sh
-python3 -m venv /tmp/backupplus-ftp-tests
-/tmp/backupplus-ftp-tests/bin/pip install pyftpdlib pyOpenSSL
-/tmp/backupplus-ftp-tests/bin/python scripts/test-ftp-integration.py
+php scripts/integration/test-ftp.php
 ```
 
 The integration checks disable the native PHP FTP functions and exercise both active and passive modes, transfer resumption, relative and absolute paths, filenames with URL metacharacters, and rejection of untrusted, expired and mismatched certificates. No external FTP service is needed.
@@ -134,7 +134,7 @@ WordPress core and **Additional files** are opt-in in Settings. Core includes th
 
 Database Options provides saved external MySQL/MariaDB connections, connection testing and table discovery. Connections use stable numeric IDs (`db1`, `db2`, etc. in archive names). For each database, choose **All eligible tables** or **Only selected tables**. WordPress eligibility defaults to its table prefix; the non-WordPress checkbox expands it to the whole database. New external connections default to all tables; an imported prefix restriction still applies to eligible mode. Selected mode uses exact names regardless of prefix, permits omitting WordPress core tables, and adds no related tables automatically. Empty selected lists and missing selected tables fail without falling back to a broader backup.
 
-Scheduled backups use saved selections. **Backup Now** has independent temporary choices. Each job snapshots its resolved table list, source paths and exclusions for resumptions. Databases are full dumps of the chosen tables, even during incremental file backups. Dump headers and backup history record partial coverage, and unencrypted local rescans or encrypted restore verification recover that metadata.
+Scheduled backups use saved selections. **Backup Now** has independent temporary choices. Each job snapshots its resolved table list, source paths and exclusions for resumptions. Ordinary database backups are full dumps of the chosen tables. **Incremental Backup** uses the complete PITR database chain when its database checkbox is selected, independently of ordinary table selections. Dump headers and backup history record partial coverage for ordinary dumps, and unencrypted local rescans or encrypted restore verification recover that metadata.
 
 The existing restore wizard offers core, individual additional sources and each external dump. Directory destinations merge archived contents; standalone files accept a destination filename. The current `wp-config.php` is preserved unless replacement is explicitly selected. External dumps require an explicit saved or newly entered connection to an existing database. Verification displays destinations and replacement details. External imports run before the WordPress database, preserve table names and values without WordPress transformations, and leave tables absent from the dump untouched. Interrupted imports restart the current table. Restore connection passwords use the existing credential encryption, recovery and rotation mechanisms; archive metadata and history contain no passwords.
 

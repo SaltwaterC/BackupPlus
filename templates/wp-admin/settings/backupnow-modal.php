@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 	global $backupplus;
+	$pitr_config = BackupPlus_PITR::config();
 
 	$free_ret = '<em>' . __( 'All WordPress tables will be backed up.', 'backupplus' ) . '</em>' . "\n";
 ?>
@@ -13,14 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<h3 class="incremental-backups-only"><?php esc_html_e( 'Take an incremental backup', 'backupplus' ); ?></h3>
 </p>
 
-<p class="incremental-backups-only"><?php esc_html_e( 'Back up only file changes since the previous backup. A full backup is taken automatically when no usable base exists or the base is seven days old.', 'backupplus' ); ?></p>
+<p class="incremental-backups-only"><?php esc_html_e( 'Back up changes since the previous backup. A full backup is created automatically when a new baseline is needed.', 'backupplus' ); ?></p>
 
-<p id="backupnow_database_container" class="new-backups-only">
+<p id="backupnow_database_container" data-pitr-enabled="<?php echo empty( $pitr_config['enabled'] ) ? '0' : '1'; ?>">
 
 	<input type="checkbox" id="backupnow_includedb" checked="checked">
-	<label for="backupnow_includedb"><?php esc_html_e( 'Include your database in the backup', 'backupplus' ); ?></label>
+	<label id="backupnow_includedb_label" for="backupnow_includedb"><?php esc_html_e( 'Include your database in the backup', 'backupplus' ); ?></label>
 
-	(<a href="#" id="backupnow_database_showmoreoptions">...</a>)<br>
+	<span class="new-backups-only">(<a href="#" id="backupnow_database_showmoreoptions">...</a>)</span><br>
+	<span class="incremental-backups-only"><?php esc_html_e( 'Captures the complete database using your saved point-in-time recovery encryption and storage settings.', 'backupplus' ); ?></span>
 
 	<div id="backupnow_database_moreoptions" class="backupplus-hidden" style="display:none;">
 
@@ -31,9 +33,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 
 </p>
+<p id="backupnow_pitr_disabled" class="incremental-backups-only"><?php esc_html_e( 'Enable Database point-in-time recovery in Settings to include database changes.', 'backupplus' ); ?></p>
 	
 <p>
-	<input type="checkbox" class="new-backups-only" id="backupnow_includefiles" checked="checked">
+	<input type="checkbox" id="backupnow_includefiles" checked="checked">
 	<label id="backupnow_includefiles_label" for="backupnow_includefiles"><?php esc_html_e( 'Include your files in the backup', 'backupplus' ); ?></label>
 	
 	(<a href="<?php echo esc_url( $backupplus->get_current_clean_url() ); ?>" id="backupnow_includefiles_showmoreoptions">...</a>)<br>

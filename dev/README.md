@@ -27,6 +27,30 @@ Copy `.env.example` to `.env` and change the local database and administrator cr
 
 The database and application user are reconciled from `.env` whenever the MariaDB container starts. Keep `DB_ROOT_PASSWORD` unchanged for an existing database volume; changing it requires recreating that volume with `./dev/down.sh --volumes`.
 
+WordPress and the native backup clients connect through a Unix socket shared between the containers at `/run/mysqld/mysqld.sock`. Startup updates existing `DB_HOST` settings and enabled PITR connection files to use this socket. Local PITR therefore needs no database TLS certificates. Remote database connections still require verified TLS.
+
+MariaDB starts with ROW binary logging, CRC32 checksums, server ID 1 and two days of source-log retention. The WordPress account receives only privileges on its application database. Startup removes the previous development recovery account and file and resets the development application's old experimental grants. The database event scheduler is disabled. The shared socket volume is removed by `./dev/down.sh --volumes`.
+
+Startup also provisions two socket-only PITR test logins from `.env`, with defaults for existing `.env` files that do not contain the new keys:
+
+| Purpose | Username variable (default) | Password variable (default) |
+| --- | --- | --- |
+| Saved backup account | `DB_BACKUP_USER=backupplus_backup` | `DB_BACKUP_PASSWORD=backupplus_backup_dev` |
+| Restore account | `DB_RESTORE_USER=backupplus_restore` | `DB_RESTORE_PASSWORD=backupplus_restore_dev` |
+
+The backup login has the [capture grants](../docs/binary-log-backups.md) and no application data-write privileges. The restore login has application-schema restore and server-administration grants. Startup reconciles their passwords and grants on existing volumes too. All three application/backup/restore usernames must differ and cannot use system-account names. These credentials are passed only to MariaDB; they are not injected into the WordPress container, `wp-config.php`, plugin settings or restore jobs. A harmless file masks the checkout's private `.env` inside WordPress, and the development router refuses hidden-file URLs.
+
+To test the full flow yourself:
+
+1. Set the four PITR variables in `.env` if you want different credentials, then run `./dev/up.sh` (existing site data is preserved). With Compose, use `podman compose up --build -d`.
+2. In **Settings → Database point-in-time recovery → Backup account**, enter the backup username/password and click **Verify and save backup account**. The plugin saves this login using credential encryption.
+3. Select **Every minute** or another PITR interval and save Settings. Click **Incremental Backup** with only the database selected to create the initial full baseline immediately.
+4. Make a recognizable content change, take another database incremental, then make another change and take a further incremental. The recovery points appear together under the full database chain in Existing backups.
+5. Click **Restore** for that database chain, select an earlier recovery point, and enter the restore username/password only in that screen. Supply your archive decryption identity if encryption is enabled. Verify, restore and click **Done**, then check that the later content change is absent.
+6. PITR keeps its previous setting after recovery and starts a new chain on its next run. Restore credentials are not saved by WordPress; enter them again for another recovery.
+
+Ordinary full-dump backups/restores need neither PITR login. The disposable native test matrix provisions separate fixture accounts and does not restore into the development database.
+
 The WordPress container mounts the host CA bundle read-only and configures PHP cURL, OpenSSL, and WordPress's HTTPS request API to use it. On Linux the default is `/etc/ssl/certs/ca-certificates.crt`; set `HOST_CA_BUNDLE` in `.env` if your host stores its bundle elsewhere. The startup script keeps `WP_ENVIRONMENT_TYPE=local` set on existing installations too, so the WordPress HTTP CA override remains active with persistent volumes. This lets PHP use certificates already trusted by the host, including a managed WARP CA, while keeping certificate verification enabled.
 
 To stop the environment while preserving the WordPress installation and database:

@@ -64,7 +64,7 @@ class BackupPlus_Pre_Update_Backups {
 			return false;
 		}
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $key, $old ) );
+		BackupPlus_SQL::wpdb()->execute( 'DELETE FROM %i WHERE option_name = ? AND option_value = ?', array( $wpdb->options ), array( $key, (string) $old ) );
 		wp_cache_delete( $key, 'options' );
 		wp_cache_delete( 'notoptions', 'options' );
 		return add_option( $key, time(), '', 'no' );
@@ -131,7 +131,7 @@ class BackupPlus_Pre_Update_Backups {
 	public function prepare_cli( $targets ) {
 		if ( ! defined( 'WP_CLI' ) || ! WP_CLI || ! $targets ) { return $this->error( 'backupplus_forbidden' ); }
 		$this->cli_targets = $targets;
-		$batch             = $this->prepare( array_keys( $targets ), 'cli' );
+		$batch             = $this->queue_batch( array_keys( $targets ), 'cli' );
 		if ( ! is_wp_error( $batch ) ) { $this->cli_batch = $batch['id']; }
 		return $batch;
 	}
@@ -168,7 +168,7 @@ class BackupPlus_Pre_Update_Backups {
 	}
 
 	/** Queue exactly one standalone full backup for a selected batch. */
-	public function prepare( $keys, $mode = 'manual' ) {
+	public function queue_batch( $keys, $mode = 'manual' ) {
 		$offers  = 'cli' === $mode ? $this->cli_targets : $this->offers();
 		$targets = array();
 		foreach ( array_unique( (array) $keys ) as $key ) {
@@ -611,7 +611,7 @@ class BackupPlus_Pre_Update_Backups {
 		if ( $batch && 'automatic' === $batch['mode'] && in_array( $batch['state'], array( 'failed', 'cancelled' ), true ) ) {
 			return;
 		}
-		$result = $this->prepare( $keys, 'automatic' );
+		$result = $this->queue_batch( $keys, 'automatic' );
 		if ( ! is_wp_error( $result ) && 'ready' === $result['state'] ) {
 			$this->continue_automatic( $result['id'] );
 		}
@@ -694,7 +694,7 @@ class BackupPlus_Pre_Update_Backups {
 		}
 		if ( 'prepare' === $operation ) {
 			$keys   = isset( $_POST['targets'] ) && is_array( $_POST['targets'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['targets'] ) ) : array();
-			$result = $this->prepare( $keys );
+			$result = $this->queue_batch( $keys );
 			if ( is_wp_error( $result ) ) {
 				wp_send_json_error( array( 'message' => $result->get_error_message() ), 409 );
 			}

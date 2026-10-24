@@ -55,7 +55,7 @@ if ( ! function_exists( 'curl_init' ) ) {
 echo "PASS: generic endpoint/TLS policy, redirect refusal and error redaction\n";
 $url = getenv( 'BACKUPPLUS_TEST_CLOUD_HTTPS' );
 if ( ! $url ) {
-	echo "SKIP: real streaming upload (run scripts/test-cloud-http-integration.py)\n";
+	echo "SKIP: real streaming upload (run scripts/integration/test-cloud-http.php)\n";
 	exit; }
 $http     = new BackupPlus_Remote_Storage_HTTP( array( 'useservercerts' => true ) );
 $progress = array();

@@ -532,8 +532,7 @@ class BackupPlus_Restore_Search_Replace {
 		}
 
 		if ( is_multisite() ) {
-			$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $this->base_prefix . 'site' );
-			$sites              = $wpdb->get_results( 'SELECT id, domain, path FROM ' . $escaped_table_name, ARRAY_N ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(); $wpdb->prepare() not recommended for SQL identifiers.
+			$sites = BackupPlus_SQL::wpdb()->rows( 'SELECT id, domain, path FROM %i', array( $this->base_prefix . 'site' ), array(), ARRAY_N );
 			if ( is_array( $sites ) ) {
 				$nsites = array();
 				foreach ( $sites as $site ) {
@@ -555,8 +554,7 @@ class BackupPlus_Restore_Search_Replace {
 
 	public function backupplus_restored_db_table( $table, $import_table_prefix, $engine = '' ) {
 
-		global $backupplus, $wpdb, $backupplus_restorer;
-		$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $table );
+		global $backupplus, $backupplus_restorer;
 
 		// Anything else to do?
 		if ( empty( $this->restore_options['backupplus_restorer_replacesiteurl'] ) || version_compare( PHP_VERSION, '5.3', '<' ) ) {
@@ -644,7 +642,7 @@ class BackupPlus_Restore_Search_Replace {
 		// If we just replaced either the blogs or site table, then populate our records of what is *now* (i.e. post-restore) in them
 		if ( ! empty( $try_site_blog_replace ) ) {
 			if ( $table == $this->base_prefix . 'blogs' ) {
-				$blogs = $wpdb->get_results( 'SELECT blog_id, domain, path, site_id FROM ' . $escaped_table_name, ARRAY_N ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), $wpdb->prepare() not recommended for SQL identifiers.
+				$blogs = BackupPlus_SQL::wpdb()->rows( 'SELECT blog_id, domain, path, site_id FROM %i', array( $table ), array(), ARRAY_N );
 				if ( is_array( $blogs ) ) {
 					$nblogs = array();
 					foreach ( $blogs as $blog ) {
@@ -657,7 +655,7 @@ class BackupPlus_Restore_Search_Replace {
 					$this->restored_blogs = $nblogs;
 				}
 			} elseif ( $table == $this->base_prefix . 'site' ) {
-				$sites = $wpdb->get_results( 'SELECT id, domain, path FROM ' . $escaped_table_name . ' ORDER BY id ASC', ARRAY_N ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), $wpdb->prepare() not recommended for SQL identifiers.
+				$sites = BackupPlus_SQL::wpdb()->rows( 'SELECT id, domain, path FROM %i ORDER BY id ASC', array( $table ), array(), ARRAY_N );
 				if ( is_array( $sites ) ) {
 					$nsites = array();
 					foreach ( $sites as $site ) {
@@ -697,12 +695,10 @@ class BackupPlus_Restore_Search_Replace {
 				if ( $any_site_changes ) {
 					$backupplus->log_e( 'Adjusting multisite paths' );
 					foreach ( $this->restored_sites as $site_id => $osite ) {
-						$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $this->base_prefix . 'site' );
-						$wpdb->query( $wpdb->prepare( 'UPDATE ' . $escaped_table_name . ' SET path=%s WHERE id=%d', array( $osite[1], (int) $site_id ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+						BackupPlus_SQL::wpdb()->execute( 'UPDATE %i SET path = ? WHERE id = ?', array( $this->base_prefix . 'site' ), array( $osite[1], (int) $site_id ) );
 					}
 					foreach ( $this->restored_blogs as $blog_id => $blog ) {
-						$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $this->base_prefix . 'blogs' );
-						$wpdb->query( $wpdb->prepare( 'UPDATE ' . $escaped_table_name . ' SET path=%s WHERE blog_id=%d', array( $blog['path'], (int) $blog_id ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+						BackupPlus_SQL::wpdb()->execute( 'UPDATE %i SET path = ? WHERE blog_id = ?', array( $this->base_prefix . 'blogs' ), array( $blog['path'], (int) $blog_id ) );
 					}
 				}
 			}
@@ -902,7 +898,7 @@ class BackupPlus_Restore_Search_Replace {
 
 	public function backupplus_restored_db( $info, $import_table_prefix ) {
 
-		global $wpdb, $backupplus;
+		global $backupplus;
 
 		if ( version_compare( PHP_VERSION, '5.3', '<' ) ) {
 			$unsupported_search_replace_msg = 'The search and replace operation was disregarded due to the PHP version being unsupported (' . PHP_VERSION . ')';
@@ -921,11 +917,11 @@ class BackupPlus_Restore_Search_Replace {
 
 		// Don't call site_url() - the result may/will have been cached.
 		$options_table      = 'options';
-		$escaped_table_name = BackupPlus_Database_Utility::escape_table_name( $this->base_prefix . $options_table );
+		$options_table_name = $this->base_prefix . $options_table;
 
-		$db_siteurl_thissite = $wpdb->get_row( 'SELECT option_value FROM ' . $escaped_table_name . " WHERE option_name='siteurl'" )->option_value; // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+		$db_siteurl_thissite = BackupPlus_SQL::wpdb()->value( "SELECT option_value FROM %i WHERE option_name='siteurl'", array( $options_table_name ) );
 
-		$db_home_thissite = $wpdb->get_row( 'SELECT option_value FROM ' . $escaped_table_name . " WHERE option_name='home'" )->option_value; // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+		$db_home_thissite = BackupPlus_SQL::wpdb()->value( "SELECT option_value FROM %i WHERE option_name='home'", array( $options_table_name ) );
 
 		if ( ! $replace_this_siteurl ) {
 			$replace_this_siteurl = $db_siteurl_thissite;
@@ -997,7 +993,7 @@ class BackupPlus_Restore_Search_Replace {
 			$backupplus->log_e( sprintf( __( 'Warning: the database\'s site URL (%1$s) is different to what we expected (%2$s)', 'backupplus' ), $db_siteurl_thissite, $info['expected_oldsiteurl'] ) );
 			// Here, we change only the site URL entry; we don't run a full search/replace based on it. In theory, if someone developed using two different URLs, then this might be needed.
 			if ( ! empty( $this->base_prefix ) && ! empty( $this->siteurl ) ) {
-				$wpdb->query( $wpdb->prepare( 'UPDATE ' . $escaped_table_name . " SET option_value=%s WHERE option_name='siteurl'", array( $this->siteurl ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+				BackupPlus_SQL::wpdb()->execute( "UPDATE %i SET option_value = ? WHERE option_name='siteurl'", array( $options_table_name ), array( $this->siteurl ) );
 			}
 		}
 
@@ -1005,7 +1001,7 @@ class BackupPlus_Restore_Search_Replace {
 			/* translators: 1: Actual database home URL, 2: Expected home URL */
 			$backupplus->log_e( sprintf( __( 'Warning: the database\'s home URL (%1$s) is different to what we expected (%2$s)', 'backupplus' ), $db_home_thissite, $info['expected_oldhome'] ) );
 			if ( ! empty( $this->base_prefix ) && ! empty( $this->home ) ) {
-				$wpdb->query( $wpdb->prepare( 'UPDATE ' . $escaped_table_name . " SET option_value=%s WHERE option_name='home'", array( $this->home ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+				BackupPlus_SQL::wpdb()->execute( "UPDATE %i SET option_value = ? WHERE option_name='home'", array( $options_table_name ), array( $this->home ) );
 			}
 		}
 
@@ -1036,19 +1032,17 @@ class BackupPlus_Restore_Search_Replace {
 
 		$is_multisite = is_multisite();
 		if ( $examine_siteurls && $is_multisite ) {
-			$escaped_table_name_sites = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . 'site' );
-			$sites                    = $wpdb->get_results( 'SELECT id, domain, path FROM ' . $escaped_table_name_sites . ' ORDER BY id ASC', ARRAY_N ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
-			$nsites                   = array();
-			foreach ( $sites as $site ) {
+			$sites  = BackupPlus_SQL::wpdb()->rows( 'SELECT id, domain, path FROM %i ORDER BY id ASC', array( $import_table_prefix . 'site' ), array(), ARRAY_N );
+			$nsites = array();
+			foreach ( (array) $sites as $site ) {
 				$nsites[ $site[0] ] = array(
 					'dom'  => $site[1],
 					'path' => $site[2],
 				);
 			}
-			$escaped_table_name_blogs = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . 'blogs' );
-			$blogs                    = $wpdb->get_results( 'SELECT blog_id, domain, path, site_id FROM ' . $escaped_table_name_blogs . ' ORDER BY blog_id ASC', ARRAY_N ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
-			$nblogs                   = array();
-			foreach ( $blogs as $blog ) {
+			$blogs  = BackupPlus_SQL::wpdb()->rows( 'SELECT blog_id, domain, path, site_id FROM %i ORDER BY blog_id ASC', array( $import_table_prefix . 'blogs' ), array(), ARRAY_N );
+			$nblogs = array();
+			foreach ( (array) $blogs as $blog ) {
 				$nblogs[ $blog[0] ] = array(
 					'dom'     => $blog[1],
 					'path'    => $blog[2],
@@ -1096,8 +1090,7 @@ class BackupPlus_Restore_Search_Replace {
 						$blog_id = $tmatches[1];
 						if ( empty( $multisite_processed_sites[ $blog_id ] ) ) {
 							$multisite_processed_sites[ $blog_id ] = true;
-							$escaped_table_name                    = BackupPlus_Database_Utility::escape_table_name( $import_table_prefix . $blog_id . '_options' );
-							$site_url_current                      = $wpdb->get_var( 'SELECT option_value FROM ' . $escaped_table_name . " WHERE option_name='siteurl'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- Table name is safely escaped via escape_table_name(), table name is a dynamic identifier placeholders cannot be used.
+							$site_url_current                      = BackupPlus_SQL::wpdb()->value( "SELECT option_value FROM %i WHERE option_name='siteurl'", array( $import_table_prefix . $blog_id . '_options' ) );
 							if ( is_string( $site_url_current ) ) {
 								$bpath = $this->restored_blogs[ $blog_id ]['path'];
 								// Jan 2016: This line is old, and removes the main site's path, if present, from the front of this site's path - but why? I suspect it was so that images could be referenced directly without help from .htaccess - perhaps from when media used to be differently organised?

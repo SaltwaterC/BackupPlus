@@ -8,7 +8,7 @@
  * server must require TLS on both control and data connections, and the plain
  * server must reject TLS. BACKUPPLUS_TEST_FTP_CA supplies the test CA bundle.
  * Use disposable servers with an empty writable login directory and root.
- * scripts/test-ftp-integration.py creates these fixtures and runs this script.
+ * scripts/integration/test-ftp.php creates these fixtures and runs this script.
  */
 $fixture = sys_get_temp_dir() . '/backupplus-ftp-' . uniqid();
 mkdir( $fixture );

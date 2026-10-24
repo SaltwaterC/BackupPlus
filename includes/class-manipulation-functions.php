@@ -189,28 +189,6 @@ class BackupPlus_Manipulation_Functions {
 	}
 
 	/**
-	 * Add backquotes to tables and db-names in SQL queries. Taken from phpMyAdmin.
-	 *
-	 * @param  string $a_name - the table name
-	 * @return string - the quoted table name
-	 */
-	public static function backquote( $a_name ) {
-		if ( ! empty( $a_name ) && '*' != $a_name ) {
-			if ( is_array( $a_name ) ) {
-				$result = array();
-				foreach ( $a_name as $key => $val ) {
-					$result[ $key ] = '`' . $val . '`';
-				}
-				return $result;
-			} else {
-				return '`' . $a_name . '`';
-			}
-		} else {
-			return $a_name;
-		}
-	}
-
-	/**
 	 * Remove empty (according to empty()) members of an array
 	 *
 	 * @param Array $list - input array

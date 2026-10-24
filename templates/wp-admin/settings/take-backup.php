@@ -52,6 +52,14 @@
 			</div>
 			<div class="backupplus_next_scheduled_entity">
 				<div class="backupplus_next_scheduled_heading">
+					<strong><?php echo esc_html__( 'Point in time recovery', 'backupplus' ) . ':'; ?></strong>
+				</div>
+				<div id="backupplus-next-pitr-backup-inner">
+					<?php $backupplus_admin->next_scheduled_pitr_backups_output(); ?>
+				</div>
+			</div>
+			<div class="backupplus_next_scheduled_entity backupplus_next_scheduled_cleanup">
+				<div class="backupplus_next_scheduled_heading">
 					<strong><?php echo esc_html__( 'Cleanup', 'backupplus' ) . ':'; ?></strong>
 				</div>
 				<div id="backupplus-next-cleanup-inner">

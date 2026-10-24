@@ -1,0 +1,1 @@
+# The host's private .env is deliberately hidden from the WordPress container.

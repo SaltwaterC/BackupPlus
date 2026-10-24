@@ -160,15 +160,15 @@ class BackupPlus_Filesystem_Functions {
 		if ( $older_than > 10000 ) {
 
 			global $wpdb;
+			$sql          = BackupPlus_SQL::wpdb();
 			$table        = is_multisite() ? $wpdb->sitemeta : $wpdb->options;
 			$key_column   = is_multisite() ? 'meta_key' : 'option_name';
 			$value_column = is_multisite() ? 'meta_value' : 'option_value';
 
 			// Limit the maximum number for performance (the rest will get done next time, if for some reason there was a back-log)
-			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared  -- $key_column, $value_column are safe string literals ('meta_key'/'option_name', 'meta_value'/'option_value'); $table is $wpdb->sitemeta or $wpdb->options, both are trusted wpdb properties.
-			$all_jobs = $wpdb->get_results( $wpdb->prepare( "SELECT $key_column, $value_column FROM $table WHERE $key_column LIKE %s LIMIT 100", 'backupplus_jobdata_%' ), ARRAY_A );
+			$all_jobs = $sql->rows( 'SELECT %i, %i FROM %i WHERE %i LIKE ? LIMIT 100', array( $key_column, $value_column, $table, $key_column ), array( 'backupplus_jobdata_%' ), ARRAY_A );
 
-			foreach ( $all_jobs as $job ) {
+			foreach ( (array) $all_jobs as $job ) {
 				$nonce = str_replace( 'backupplus_jobdata_', '', $job[ $key_column ] );
 				$val   = empty( $job[ $value_column ] ) ? array() : $backupplus->unserialize( $job[ $value_column ] );
 				// TODO: Can simplify this after a while (now all jobs use job_time_ms) - 1 Jan 2014
@@ -185,18 +185,12 @@ class BackupPlus_Filesystem_Functions {
 					$delete = true;
 				}
 				if ( isset( $val['temp_import_table_prefix'] ) && '' != $val['temp_import_table_prefix'] && $wpdb->prefix != $val['temp_import_table_prefix'] ) {
-					$tables_to_remove = array();
-					$prefix           = BackupPlus_Database_Utility::esc_like( $val['temp_import_table_prefix'] ) . '%';
-					$sql              = $wpdb->prepare( 'SHOW TABLES LIKE %s', $prefix );
+					$prefix = BackupPlus_Database_Utility::esc_like( $val['temp_import_table_prefix'] ) . '%';
+					// SHOW cannot take bound values.
+					$tables_to_remove = $sql->column( 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE ?', array(), array( $prefix ) );
 
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built using $wpdb->prepare() on the line above.
-					foreach ( $wpdb->get_results( $sql ) as $table ) {
-						$tables_to_remove = array_merge( $tables_to_remove, array_values( get_object_vars( $table ) ) );
-					}
-
-					foreach ( $tables_to_remove as $table_name ) {
-						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- DDL DROP TABLE statement; $table_name is a SQL identifier sanitized using backquote(), Direct schema change is required here and handled carefully.
-						$wpdb->query( 'DROP TABLE ' . BackupPlus_Manipulation_Functions::backquote( $table_name ) );
+					foreach ( (array) $tables_to_remove as $table_name ) {
+						$sql->execute( 'DROP TABLE %i', array( $table_name ) );
 					}
 				}
 				if ( $delete ) {
@@ -204,7 +198,7 @@ class BackupPlus_Filesystem_Functions {
 					delete_site_option( 'backupplus_semaphore_' . $nonce );
 				}
 			}
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE (option_name REGEXP %s AND CAST(option_value AS UNSIGNED) < %d) OR (option_name REGEXP %s AND UNIX_TIMESTAMP() > CAST(option_value AS UNSIGNED) + %d) LIMIT 1000", '^backupplus_lock_[a-f0-9A-F]{12}$', strtotime( '2025-03-01' ), '^backupplus_lock_udp_backupjob_[a-f0-9A-F]{12}$', $older_than ) );
+			$sql->execute( 'DELETE FROM %i WHERE (option_name REGEXP ? AND CAST(option_value AS UNSIGNED) < ?) OR (option_name REGEXP ? AND UNIX_TIMESTAMP() > CAST(option_value AS UNSIGNED) + ?) LIMIT 1000', array( $wpdb->options ), array( '^backupplus_lock_[a-f0-9A-F]{12}$', (int) strtotime( '2025-03-01' ), '^backupplus_lock_udp_backupjob_[a-f0-9A-F]{12}$', (int) $older_than ) );
 		}
 		$backupplus_dir    = $backupplus->backups_dir_location();
 		$now_time          = time();

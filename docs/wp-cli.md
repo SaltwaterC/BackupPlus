@@ -79,6 +79,8 @@ The restore point includes all eligible WordPress tables even if saved WordPress
 
 ## Restore
 
+For optional coordinated full snapshots and MySQL/MariaDB binary-log recovery, use [`wp backupplus pitr`](binary-log-backups.md). It has separate setup, capture, chain verification, isolated historical reconstruction and replacement commands. Both full snapshots and increments retain portable file/position metadata. Existing `backup` and `restore` commands continue to handle ordinary logical backups.
+
 ```sh
 wp backupplus restore 1792718455
 wp backupplus restore 1792718455 --type=database

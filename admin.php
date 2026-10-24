@@ -424,6 +424,18 @@ class BackupPlus_Admin {
 		}
 	}
 
+	/** Render the next scheduled PITR worker using the same date style as other backups. */
+	public function next_scheduled_pitr_backups_output( $return_instead_of_echo = false ) {
+		$config = BackupPlus_PITR::config();
+		$next   = empty( $config['enabled'] ) ? false : wp_next_scheduled( BackupPlus_PITR::HOOK );
+		if ( $next ) {
+			$date = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next ), 'D, F j, Y H:i' );
+			$html = '<span class="backupplus_next_scheduled_date_time">' . esc_html( $date ) . '</span>';
+		} else { $html = '<span>' . esc_html__( 'Nothing currently scheduled', 'backupplus' ) . '</span>'; }
+		if ( $return_instead_of_echo ) { return $html; }
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Date and fallback text are escaped above.
+	}
+
 	/**
 	 * Used to output the information for the next scheduled database backup.
 	 * moved to function for the ajax saves
@@ -923,6 +935,19 @@ class BackupPlus_Admin {
 					'duplicate_exclude_rule_error_msg'     => __( 'The exclusion rule which you are trying to add already exists', 'backupplus' ),
 					'files_new_backup'                     => __( 'Include your files in the backup', 'backupplus' ),
 					'files_incremental_backup'             => __( 'File backup options', 'backupplus' ),
+					'database_new_backup'                  => __( 'Include your database in the backup', 'backupplus' ),
+					'database_incremental_backup'          => __( 'Include your database (point-in-time recovery)', 'backupplus' ),
+					'send_backup_remote'                   => __( 'Send this backup to remote storage', 'backupplus' ),
+					'send_files_remote'                    => __( 'Send file backup to remote storage', 'backupplus' ),
+					'pitr_verify_success'                  => __( 'The backup chain and automatic restore protection checks passed. Restoring will take the site offline, block application database writes, and replace this site’s entire database. A pinned pre-restore backup will be created first.', 'backupplus' ),
+					'pitr_restore_database'                => __( 'Restore database', 'backupplus' ),
+					'pitr_setup_working'                   => __( 'Checking PITR backup access…', 'backupplus' ),
+					'pitr_setup_failed'                    => __( 'The backup-account check could not contact the server. Retry the check.', 'backupplus' ),
+					'pitr_restore_running'                 => __( 'Restoring the database and replaying incremental stages…', 'backupplus' ),
+					'pitr_restore_complete'                => __( 'Database recovery completed', 'backupplus' ),
+					'restore_done'                         => __( 'Done', 'backupplus' ),
+					'pitr_restore_success'                 => __( 'Database recovery completed. PITR capture keeps its previous setting and starts a new chain.', 'backupplus' ),
+					'pitr_unavailable'                     => __( 'This database recovery chain has no verified points. Rescan its artifacts before restoring.', 'backupplus' ),
 					'ajax_restore_invalid_response'        => __( 'HTML was detected in the response.', 'backupplus' ) . ' ' . __( 'You may have a security module on your webserver blocking the restoration operation.', 'backupplus' ),
 					'emptyrestorepath'                     => __( 'You have not selected a restore path for your chosen backups', 'backupplus' ),
 					'credentials'                          => __( 'credentials', 'backupplus' ),
@@ -1832,7 +1857,13 @@ class BackupPlus_Admin {
 		$processed_instance_ids = ! empty( $opts['processed_instance_ids'] ) && is_array( $opts['processed_instance_ids'] ) ? $opts['processed_instance_ids'] : array();
 		$is_continuation        = $opts['is_continuation'];
 
-		$timestamps         = explode( ',', $timestamps );
+		$timestamps = explode( ',', $timestamps );
+		foreach ( $timestamps as $timestamp ) {
+			if ( ! empty( $backups[ $timestamp ]['pitr'] ) ) {
+				require_once BACKUPPLUS_DIR . '/includes/class-backup-deletion.php';
+				return BackupPlus_Backup_Deletion::delete_selection( $opts );
+			}
+		}
 		$deleted_timestamps = '';
 		$delete_remote      = empty( $opts['delete_remote'] ) ? false : true;
 
@@ -2366,9 +2397,18 @@ class BackupPlus_Admin {
 	public function request_backupnow( $request, $close_connection_callable = false ) {
 		global $backupplus;
 
+		$pitr_capture = ! empty( $request['incremental'] ) && empty( $request['backupnow_nodb'] );
+		if ( $pitr_capture ) {
+			$config = BackupPlus_PITR::config();
+			if ( empty( $config['enabled'] ) ) {
+				return new WP_Error( 'pitr_disabled', __( 'Enable Database point-in-time recovery in Settings before taking an incremental database backup.', 'backupplus' ) );
+			}
+			// PITR always covers the complete database, independently of logical dump selections.
+			unset( $request['database_selection'], $request['onlythesetableentities'] );
+		}
 		try {
 			$source_options = BackupPlus_Backup_Sources::request_options( array(), $request );
-			if ( empty( $request['backupnow_nodb'] ) ) { BackupPlus_Backup_Sources::plan_databases( $source_options ); }
+			if ( ! $pitr_capture && empty( $request['backupnow_nodb'] ) ) { BackupPlus_Backup_Sources::plan_databases( $source_options ); }
 		} catch ( Exception $e ) { return new WP_Error( 'invalid_backup_selection', $e->getMessage() ); }
 
 		$backupnow_nocloud = ! empty( $request['backupnow_nocloud'] );
@@ -2403,6 +2443,9 @@ class BackupPlus_Admin {
 		}
 
 		$options['incremental'] = $request['incremental'];
+		if ( $pitr_capture ) {
+			$options['pitr_capture'] = true;
+		}
 
 		if ( ! empty( $request['extradata'] ) ) {
 			$options['extradata'] = $request['extradata'];
@@ -2414,7 +2457,7 @@ class BackupPlus_Admin {
 
 		$options['always_keep'] = ! empty( $request['always_keep'] );
 
-		$event = empty( $request['backupnow_nofiles'] ) ? ( empty( $request['backupnow_nodb'] ) ? 'backupplus_backupnow_backup_all' : 'backupplus_backupnow_backup' ) : 'backupplus_backupnow_backup_database';
+		$event   = empty( $request['backupnow_nofiles'] ) ? ( empty( $request['backupnow_nodb'] ) ? 'backupplus_backupnow_backup_all' : 'backupplus_backupnow_backup' ) : 'backupplus_backupnow_backup_database';
 		$options = apply_filters( 'backupplus_backupnow_options', $options, $request );
 		if ( ! is_array( $options ) ) {
 			return new WP_Error( 'invalid_backup_options', __( 'The backup options could not be prepared.', 'backupplus' ) );
@@ -3810,6 +3853,10 @@ class BackupPlus_Admin {
 			case 'begun':
 				$curstage = __( 'Backup begun', 'backupplus' );
 				break;
+			case 'pitrcreating':
+				$stage    = 2;
+				$curstage = __( 'Capturing database recovery point', 'backupplus' );
+				break;
 			// Stage 1
 			case 'filescreating':
 				$stage    = 1;
@@ -3856,7 +3903,7 @@ class BackupPlus_Admin {
 			// Stage 6
 			case 'finished':
 				$stage    = 6;
-				$curstage = __( 'Backup finished', 'backupplus' );
+				$curstage = ! empty( $jobdata['pitr_error'] ) ? sprintf( __( 'Database recovery point failed: %s', 'backupplus' ), $jobdata['pitr_error'] ) : __( 'Backup finished', 'backupplus' );
 				break;
 			default:
 				// Database creation and encryption occupies the space from 2 to 4. Databases are created then encrypted, then the next database is created/encrypted, etc.
@@ -5035,6 +5082,17 @@ class BackupPlus_Admin {
 	 * @return array - Restore points as arrays with keys 'timestamp' and 'label'; empty if the backup has no increments.
 	 */
 	public function restore_points( $backup ) {
+		if ( ! empty( $backup['pitr'] ) ) {
+			$points = array();
+			$stored = isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array();
+			foreach ( $stored as $point ) {
+				$label  = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $point['timestamp'] ), 'M d, Y G:i:s' ) . ' - ';
+				$label .= $point['increment'] ? sprintf( __( 'database incremental %d', 'backupplus' ), $point['increment'] ) : __( 'full database backup', 'backupplus' );
+				if ( $point === end( $stored ) ) { $label .= ' (' . __( 'latest', 'backupplus' ) . ')'; }
+				$points[] = array_merge( $point, array( 'label' => $label ) );
+			}
+			return array_reverse( $points );
+		}
 		if ( $this->incremental_count( $backup ) < 1 ) {
 			return array();
 		}
@@ -5109,7 +5167,22 @@ class BackupPlus_Admin {
 	public function date_label( $pretty_date, $key, $backup, $jobdata, $nonce, $simple_format = false ) {
 
 		$pretty_date = $simple_format ? $pretty_date : '<div class="clear-right">' . $pretty_date . '</div>';
-		$increments  = $this->incremental_count( $backup );
+		if ( ! empty( $backup['pitr'] ) && ! $simple_format ) {
+			$increments  = max( 0, count( isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array() ) - 1 );
+			// Not "Full backup": that reads as an ordinary database dump, which restores without a database login.
+			/* translators: %d: Number of incremental database recovery points */
+			$label       = $increments ? sprintf( _n( 'Recovery chain + %d incremental', 'Recovery chain + %d incrementals', $increments, 'backupplus' ), $increments ) : __( 'Recovery chain', 'backupplus' );
+			$description = __( 'Database point-in-time recovery', 'backupplus' );
+			if ( ! empty( $backup['pitr']['points'] ) ) {
+				$latest       = end( $backup['pitr']['points'] );
+				$description .= '. ' . sprintf( __( 'Latest recovery point: %s', 'backupplus' ), get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $latest['timestamp'] ), 'M d, Y G:i:s' ) );
+			}
+			$pretty_date .= '<span class="backupplus-chain-badge backupplus-pitr-badge" title="' . esc_attr( $description ) . '">' . esc_html( $label ) . '</span>';
+			if ( in_array( $backup['pitr']['state'], array( 'deleting', 'unavailable' ), true ) ) {
+				$pretty_date .= '<div role="alert">' . esc_html__( 'Database recovery chain unavailable', 'backupplus' ) . '</div>';
+			}
+		}
+		$increments = $this->incremental_count( $backup );
 		if ( $increments > 0 && ! $simple_format ) {
 			$pretty_date .= '<span class="backupplus-chain-badge" title="' . esc_attr( $this->chain_description( $increments ) ) . '">' . esc_html( $this->chain_label( $increments ) ) . '</span>';
 		}
@@ -5171,7 +5244,7 @@ class BackupPlus_Admin {
 				$entities .= '/crypted=1/';
 			}
 			?>
-			<button data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" data-restorepoints="<?php echo esc_attr( wp_json_encode( $this->restore_points( $backup ) ) ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
+			<button data-pitr="<?php echo empty( $backup['pitr'] ) ? '0' : '1'; ?>" data-showdata="<?php echo esc_attr( $show_data ); ?>" data-backup_timestamp="<?php echo esc_attr( $key ); ?>" data-entities="<?php echo esc_attr( $entities ); ?>" data-restorepoints="<?php echo esc_attr( wp_json_encode( $this->restore_points( $backup ) ) ); ?>" title="<?php esc_attr_e( 'After pressing this button, you will be given the option to choose which components you wish to restore', 'backupplus' ); ?>" type="button" class="button button-primary choose-components-button">
 				<?php esc_html_e( 'Restore', 'backupplus' ); ?>
 			</button>
 			<?php
@@ -5278,9 +5351,11 @@ class BackupPlus_Admin {
 		$services   = $backupplus->get_canonical_service_list( $backup['service'] );
 		$sval       = array_diff( $services, array( 'email' ) ) ? 1 : 0;
 		$increments = $this->incremental_count( $backup );
+		if ( ! empty( $backup['pitr']['points'] ) ) { $increments = max( 0, count( $backup['pitr']['points'] ) - 1 ); }
+		$chain_label = $increments > 0 ? $this->chain_label( $increments ) : ( ! empty( $backup['pitr'] ) ? __( 'Full database recovery backup', 'backupplus' ) : '' );
 		?>
 		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr( $sval ); ?>">
-			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-chain="<?php echo esc_attr( $increments > 0 ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $backup_time ), 'M d, Y G:i' ) . ': ' . $this->chain_label( $increments ) : '' ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
+			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-chain="<?php echo esc_attr( $chain_label ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $backup_time ), 'M d, Y G:i' ) . ': ' . $chain_label : '' ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
 				<?php esc_html_e( 'Delete', 'backupplus' ); ?>
 			</a>
 		</div>
@@ -6429,6 +6504,7 @@ class BackupPlus_Admin {
 		$return_array['files_scheduled']       = $this->next_scheduled_files_backups_output( true );
 		$return_array['incremental_scheduled'] = $this->next_scheduled_incremental_backups_output( true );
 		$return_array['database_scheduled']    = $this->next_scheduled_database_backups_output( true );
+		$return_array['pitr_scheduled']        = $this->next_scheduled_pitr_backups_output( true );
 		$return_array['cleanup_scheduled']     = BackupPlus_Retention_Cleanup::instance()->summary_html();
 
 		// Add the updated options to the return message, so we can update on screen
@@ -6714,7 +6790,10 @@ class BackupPlus_Admin {
 		// <tr><th>'.__('Key', 'backupplus').'</th><th>'.__('Value', 'backupplus').'</th></tr>
 		$response['html'] .= '<table><thead></thead><tbody>';
 		foreach ( $opts as $opt ) {
-			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( BackupPlus_Options::get_backupplus_option( $opt ), true ) ) . '</td>';
+			$pitr_credentials = in_array( $opt, array( 'backupplus_pitr_capture', 'backupplus_pitr_recovery' ), true );
+			$value            = $pitr_credentials ? get_option( $opt ) : BackupPlus_Options::get_backupplus_option( $opt );
+			if ( $pitr_credentials && $value ) { $value = '[redacted]'; }
+			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( $value, true ) ) . '</td>';
 		}
 
 		// Get the option saved by yahnis-elsts/plugin-update-checker

@@ -72,6 +72,7 @@ require BACKUPPLUS_DIR . '/class-backupplus.php';
 require BACKUPPLUS_DIR . '/includes/class-backupplus-encryption.php';
 require BACKUPPLUS_DIR . '/includes/class-database-encryption.php';
 require BACKUPPLUS_DIR . '/includes/class-age-restore.php';
+require_once BACKUPPLUS_DIR . '/includes/class-credential-key-store.php';
 require BACKUPPLUS_DIR . '/backup.php';
 class AgeTestBackupPlus extends BackupPlus {
 	public $directory;

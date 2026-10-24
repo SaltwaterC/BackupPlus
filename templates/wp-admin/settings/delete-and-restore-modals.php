@@ -9,6 +9,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 </div>
 
+<div id="backupplus-pitr-setup-modal" title="<?php esc_attr_e( 'PITR backup account', 'backupplus' ); ?>" style="display:none;">
+	<p><?php esc_html_e( 'Use a backup account supplied by your host for PITR snapshots and binary-log capture. Its credentials are stored using BackupPlus credential encryption. The database server is detected automatically.', 'backupplus' ); ?></p>
+	<p><?php esc_html_e( 'Leave the WordPress account unchanged. Restore credentials are requested separately in the restore screen and are never saved.', 'backupplus' ); ?></p>
+	<p id="backupplus-pitr-setup-status" role="status" aria-live="polite"></p>
+	<div id="backupplus-pitr-setup-signin">
+		<p><label for="backupplus-pitr-setup-user"><?php esc_html_e( 'Backup database username', 'backupplus' ); ?></label><br><input type="text" id="backupplus-pitr-setup-user" class="widefat" autocomplete="off"></p>
+		<p><label for="backupplus-pitr-setup-password"><?php esc_html_e( 'Backup database password', 'backupplus' ); ?></label><br><input type="password" id="backupplus-pitr-setup-password" class="widefat" autocomplete="new-password"></p>
+	</div>
+	<p>
+		<button type="button" class="button button-primary" id="backupplus-pitr-setup-connect"><?php esc_html_e( 'Verify and save backup account', 'backupplus' ); ?></button>
+		<button type="button" class="button" id="backupplus-pitr-setup-wordpress"><?php esc_html_e( 'Use WordPress account', 'backupplus' ); ?></button>
+		<button type="button" class="button" id="backupplus-pitr-setup-check"><?php esc_html_e( 'Check access', 'backupplus' ); ?></button>
+		<button type="button" class="button" id="backupplus-pitr-setup-close"><?php esc_html_e( 'Close', 'backupplus' ); ?></button>
+	</p>
+</div>
+
 <div id="backupplus-delete-modal" title="<?php esc_html_e( 'Delete backup set', 'backupplus' ); ?>">
 	<form id="backupplus_delete_form" method="post">
 		<p id="backupplus_delete_question_singular">
@@ -42,13 +58,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 </div>
 
 <div class="backupplus_restore_container" style="display: none;">
-	<div class="backupplus_restore_main--header"><?php esc_html_e( 'BackupPlus Restoration', 'backupplus' ); ?> — <strong><?php esc_html_e( 'Restore files from', 'backupplus' ); ?>:</strong> <span class="backupplus_restore_date"></span></div>
+	<div class="backupplus_restore_main--header"><?php esc_html_e( 'BackupPlus Restoration', 'backupplus' ); ?> — <strong id="backupplus_restore_heading" data-original-label="<?php esc_attr_e( 'Restore files from', 'backupplus' ); ?>" data-pitr-label="<?php esc_attr_e( 'Restore database to', 'backupplus' ); ?>"><?php esc_html_e( 'Restore files from', 'backupplus' ); ?>:</strong> <span class="backupplus_restore_date"></span></div>
 	<div class="backupplus_restore_main">
 		<div id="backupplus-restore-modal" title="BackupPlus - <?php esc_html_e( 'Restore backup', 'backupplus' ); ?>">
 
 			<div class="backupplus-restore-modal--stage backupplus--flex" id="backupplus-restore-modal-stage2">
 				<div class="backupplus--two-halves">
-					<p><strong><?php esc_html_e( 'Retrieving (if necessary) and preparing backup files...', 'backupplus' ); ?></strong></p>
+					<p><strong id="backupplus-restore-stage-heading"><?php esc_html_e( 'Retrieving (if necessary) and preparing backup files...', 'backupplus' ); ?></strong></p>
 					<div id="backupplus-restore-modal-stage2a"></div>
 					<div id="ud_downloadstatus2"></div>
 				</div>
@@ -76,6 +92,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 								echo wp_kses_post( '<p><em>' . __( "Your web server has PHP's so-called safe_mode active.", 'backupplus' ) . ' ' . __( 'This makes time-outs much more likely. Turn it off if possible, or restore only one entity at a time.', 'backupplus' ) . '</em></p>' );
 							}
 							?>
+							<div id="backupplus_pitr_restore_row" class="udp-notice backupplus-restore-option" style="display:none;">
+								<p><strong><label for="backupplus_pitr_restore_point"><?php esc_html_e( 'Restore the database to:', 'backupplus' ); ?></label></strong></p>
+								<select id="backupplus_pitr_restore_point" name="backupplus_pitr_restore_point" disabled="disabled"></select>
+								<p><label for="backupplus-pitr-restore-user"><?php esc_html_e( 'Restore database username', 'backupplus' ); ?></label><br><input type="text" id="backupplus-pitr-restore-user" autocomplete="off" disabled></p>
+								<p><label for="backupplus-pitr-restore-password"><?php esc_html_e( 'Restore database password', 'backupplus' ); ?></label><br><input type="password" id="backupplus-pitr-restore-password" autocomplete="new-password" disabled></p>
+								<p><?php esc_html_e( 'Used only for this recovery. Restore credentials are never saved in settings, jobs, logs or credential files. They are not needed for ordinary full-dump restores.', 'backupplus' ); ?></p>
+								<p><?php esc_html_e( 'Applies the full snapshot and every required binary-log stage directly to this site’s database. A pre-restore backup is retained. Historical selected-table recovery requires a staged reconstruction.', 'backupplus' ); ?></p>
+								<p><?php esc_html_e( 'BackupPlus will temporarily take the site offline and block application database writes during recovery. Compatibility and permissions are checked before restoring.', 'backupplus' ); ?></p>
+							</div>
 							<div id="backupplus_restore_point_row" class="udp-notice backupplus-restore-option" style="display:none;">
 								<p><strong><label for="backupplus_incremental_restore_point"><?php esc_html_e( 'Restore files to this point in the backup chain:', 'backupplus' ); ?></label></strong></p>
 								<select name="backupplus_incremental_restore_point" id="backupplus_incremental_restore_point" disabled="disabled"></select>

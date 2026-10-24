@@ -9,15 +9,30 @@ database=${MARIADB_DATABASE:-backupplus}
 database_user=${MARIADB_USER:-backupplus}
 database_password=${MARIADB_PASSWORD:-backupplus_dev}
 root_password=${MARIADB_ROOT_PASSWORD:-backupplus_root}
+backup_user=${MARIADB_BACKUP_USER:-backupplus_backup}
+backup_password=${MARIADB_BACKUP_PASSWORD:-backupplus_backup_dev}
+restore_user=${MARIADB_RESTORE_USER:-backupplus_restore}
+restore_password=${MARIADB_RESTORE_PASSWORD:-backupplus_restore_dev}
 
-for value in "$database" "$database_user"; do
+for value in "$database" "$database_user" "$backup_user" "$restore_user"; do
 	if [[ ! "$value" =~ ^[A-Za-z0-9_.-]+$ ]]; then
 		echo "Database names and users may contain only letters, numbers, dot, underscore, and hyphen." >&2
 		exit 1
 	fi
 done
 
-if [[ -z "$database_password" || -z "$root_password" ]]; then
+if [[ "$database_user" == "$backup_user" || "$database_user" == "$restore_user" || "$backup_user" == "$restore_user" ]]; then
+	echo "WordPress, PITR backup and PITR restore usernames must be different." >&2
+	exit 1
+fi
+for value in "$database_user" "$backup_user" "$restore_user"; do
+	if [[ "$value" == root || "$value" == mysql || "$value" == mariadb.sys ]]; then
+		echo "Use application-specific usernames instead of database system accounts." >&2
+		exit 1
+	fi
+done
+
+if [[ -z "$database_password" || -z "$root_password" || -z "$backup_password" || -z "$restore_password" ]]; then
 	echo "Database passwords must not be empty." >&2
 	exit 1
 fi
@@ -31,6 +46,8 @@ escape_sql_string() {
 
 database_password_sql=$(escape_sql_string "$database_password")
 root_password_sql=$(escape_sql_string "$root_password")
+backup_password_sql=$(escape_sql_string "$backup_password")
+restore_password_sql=$(escape_sql_string "$restore_password")
 
 mkdir -p /run/mysqld "$data_dir"
 chown -R mysql:mysql /run/mysqld "$data_dir"
@@ -50,8 +67,7 @@ mariadbd \
 	--datadir="$data_dir" \
 	--socket="$socket" \
 	--pid-file="$pid_file" \
-	--skip-networking \
-	--log-error=/dev/stderr &
+	--skip-networking &
 bootstrap_pid=$!
 
 root_client_args=(--protocol=socket --socket="$socket" --user=root)
@@ -83,12 +99,38 @@ fi
 
 mariadb "${root_client_args[@]}" <<SQL
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${root_password_sql}';
+DROP USER IF EXISTS 'backupplus_recovery'@'localhost';
 CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${database_user}'@'%' IDENTIFIED BY '${database_password_sql}';
 ALTER USER '${database_user}'@'%' IDENTIFIED BY '${database_password_sql}';
+CREATE USER IF NOT EXISTS '${database_user}'@'localhost' IDENTIFIED BY '${database_password_sql}';
+ALTER USER '${database_user}'@'localhost' IDENTIFIED BY '${database_password_sql}';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${database_user}'@'%', '${database_user}'@'localhost';
 GRANT ALL PRIVILEGES ON \`${database}\`.* TO '${database_user}'@'%';
+GRANT ALL PRIVILEGES ON \`${database}\`.* TO '${database_user}'@'localhost';
+CREATE USER IF NOT EXISTS '${backup_user}'@'localhost' IDENTIFIED BY '${backup_password_sql}';
+ALTER USER '${backup_user}'@'localhost' IDENTIFIED BY '${backup_password_sql}';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${backup_user}'@'localhost';
+GRANT SELECT, SHOW VIEW, TRIGGER, EVENT ON \`${database}\`.* TO '${backup_user}'@'localhost';
+GRANT RELOAD, REPLICATION SLAVE, BINLOG MONITOR ON *.* TO '${backup_user}'@'localhost';
+GRANT SELECT ON mysql.proc TO '${backup_user}'@'localhost';
+CREATE USER IF NOT EXISTS '${restore_user}'@'localhost' IDENTIFIED BY '${restore_password_sql}';
+ALTER USER '${restore_user}'@'localhost' IDENTIFIED BY '${restore_password_sql}';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${restore_user}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${database}\`.* TO '${restore_user}'@'localhost';
+GRANT RELOAD, REPLICATION SLAVE, BINLOG MONITOR, SUPER, PROCESS, CREATE USER, CONNECTION ADMIN, SET USER, BINLOG ADMIN, BINLOG REPLAY, REPLICA MONITOR ON *.* TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.proc TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.global_priv TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.user TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.db TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.tables_priv TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.columns_priv TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.procs_priv TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.proxies_priv TO '${restore_user}'@'localhost';
+GRANT SELECT ON mysql.roles_mapping TO '${restore_user}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
+rm -f /run/mysqld/backupplus-recovery.cnf
 
 mariadb-admin --protocol=socket --socket="$socket" --user=root --password="$root_password" shutdown
 wait "$bootstrap_pid" || true
@@ -100,4 +142,9 @@ exec mariadbd \
 	--pid-file="$pid_file" \
 	--bind-address=0.0.0.0 \
 	--port=3306 \
-	--log-error=/dev/stderr
+	--server-id=1 \
+	--event-scheduler=OFF \
+	--log-bin="$data_dir/binlog" \
+	--binlog-format=ROW \
+	--binlog-checksum=CRC32 \
+	--binlog-expire-logs-seconds=172800

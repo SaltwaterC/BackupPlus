@@ -28,6 +28,9 @@ class BackupPlus_Backup_History {
 		if ( ! is_array( $backup_history ) ) {
 			$backup_history = array();
 		}
+		if ( class_exists( 'BackupPlus_PITR' ) ) {
+			$backup_history = BackupPlus_PITR::decorate_history( $backup_history );
+		}
 
 		$backup_history = self::build_incremental_sets( $backup_history );
 
@@ -81,21 +84,15 @@ class BackupPlus_Backup_History {
 				break;
 			}
 
-			$columns_sql = '';
+			$option_names = array();
 			foreach ( $columns as $nonce ) {
-				if ( $columns_sql ) {
-					$columns_sql .= ',';
-				}
-				$columns_sql .= "'backupplus_jobdata_" . esc_sql( $nonce ) . "'";
+				$option_names[] = 'backupplus_jobdata_' . $nonce;
 			}
 
-			$escaped_table = BackupPlus_Database_Utility::escape_table_name( $table );
-			$sql           = 'SELECT ' . $key_column . ', ' . $value_column . ' FROM ' . $escaped_table . ' WHERE ' . $key_column . ' IN (' . $columns_sql . ')'; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is from $wpdb->options/$wpdb->sitemeta (safe), column names are hardcoded, nonces are escaped via esc_sql().
-			$all_jobdata   = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed above.
+			$all_jobdata = BackupPlus_SQL::wpdb()->rows( 'SELECT %i, %i FROM %i WHERE %i IN (?)', array( $key_column, $value_column, $table, $key_column ), array( $option_names ) );
 
-			foreach ( $all_jobdata as $values ) {
-				// The 16 here is the length of 'backupplus_jobdata_'
-				$nonce = substr( $values->$key_column, 16 );
+			foreach ( (array) $all_jobdata as $values ) {
+				$nonce = substr( $values->$key_column, strlen( 'backupplus_jobdata_' ) );
 				if ( empty( $nonces_map[ $nonce ] ) || empty( $values->$value_column ) ) {
 					continue;
 				}
@@ -327,7 +324,7 @@ class BackupPlus_Backup_History {
 	 */
 	public static function filter_backupplus_backup_history() {
 		global $wpdb, $backupplus;
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", 'backupplus_backup_history' ) );
+		$row = BackupPlus_SQL::wpdb()->row( 'SELECT option_value FROM %i WHERE option_name = ? LIMIT 1', array( $wpdb->options ), array( 'backupplus_backup_history' ) );
 		if ( is_object( $row ) && ! empty( $row->option_value ) ) {
 			return $backupplus->unserialize( $row->option_value );
 		}

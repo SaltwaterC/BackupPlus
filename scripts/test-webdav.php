@@ -1,7 +1,7 @@
 <?php
 /**
  * WebDAV regression checks without WordPress. Run: php scripts/test-webdav.php
- * Run live HTTP/HTTPS transfers with: python3 scripts/test-webdav-integration.py
+ * Run live HTTP/HTTPS transfers with: php scripts/integration/test-webdav.php
  */
 $fixture = sys_get_temp_dir() . '/backupplus-webdav-' . uniqid();
 mkdir( $fixture );
@@ -210,7 +210,7 @@ echo "PASS: endpoint, TLS policy and filename validation\n";
 
 $host = getenv( 'BACKUPPLUS_TEST_DAV_HOST' );
 if ( ! $host ) {
-	echo "SKIP: live transfers (run python3 scripts/test-webdav-integration.py)\n";
+	echo "SKIP: live transfers (run php scripts/integration/test-webdav.php)\n";
 	exit;
 }
 $contents = str_repeat( "WebDAV binary\0\xff\n", 65536 );

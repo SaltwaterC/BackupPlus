@@ -33,7 +33,7 @@
 			return response.blob();
 		}
 		var result = await response.json();
-		if (result.error || result.fatal_error) throw new Error('TRANSFER_FAILED');
+		if (result.error || result.fatal_error) { var error = new Error('TRANSFER_FAILED'); if (typeof result.error === 'string') error.publicMessage = result.error; throw error; }
 		return result;
 	}
 	window.backupplus_cancel_restore_decryption = function () {
@@ -70,7 +70,8 @@
 		}
 		try {
 			var entities = Array.from(document.querySelectorAll('#backupplus_restore_form [name="backupplus_restore[]"]:checked:not(:disabled)')).map(function (field) { return field.value; });
-			var manifest = await request({ operation: 'manifest', timestamp: document.getElementById('backupplus_restore_timestamp').value, entities: entities, ticket: ticketField.value }, signal);
+			var pointField = document.getElementById('backupplus_pitr_restore_point');
+			var manifest = await request({ operation: 'manifest', timestamp: document.getElementById('backupplus_restore_timestamp').value, point: pointField && !pointField.disabled ? pointField.value : '', entities: entities, ticket: ticketField.value }, signal);
 			state.ticket = manifest.ticket;
 			check();
 			if (manifest.files.length && (!window.isSecureContext || !window.Worker || !window.crypto || !crypto.subtle || !crypto.randomUUID)) throw new Error('SECURE_CONTEXT');
@@ -125,7 +126,7 @@
 			if (state.worker) state.worker.terminate();
 			try { await remove(state.job); } catch (cleanupError) { e = cleanupError; }
 			if (state.ticket) await request({ operation: 'discard', ticket: state.ticket }).catch(function () {});
-			if (!signal.aborted) status.textContent = config.errors[e.message] || config.errors.TRANSFER_FAILED;
+			if (!signal.aborted) status.textContent = e.publicMessage || config.errors[e.message] || config.errors.TRANSFER_FAILED;
 			return false;
 		} finally {
 			credentials.password = credentials.identity = credentials.keyPassword = '';

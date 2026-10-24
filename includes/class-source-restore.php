@@ -32,6 +32,8 @@ class BackupPlus_Source_Restore {
 	}
 
 	public static function preflight( $entities, $backup, $options ) {
+		if ( ! empty( $backup['pitr'] ) ) { throw new RuntimeException( 'Use the database PITR recovery-point selector to restore this chain. The ordinary database importer cannot replay its incremental stages.' ); }
+		if ( ! empty( $backup['pitr'] ) && isset( $backup['pitr']['state'] ) && 'deleting' === $backup['pitr']['state'] ) { throw new RuntimeException( 'This database recovery chain is being deleted.' ); }
 		foreach ( $entities as $id => $unused ) {
 			if ( BackupPlus_Backup_Sources::custom( $id ) ) {
 				$source      = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : array(

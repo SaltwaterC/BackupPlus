@@ -542,21 +542,38 @@ function backupplus_backup_dialog_open(type) {
 		jQuery('#backupnow_label').val('');
 		if ('incremental' == type) {
 			update_file_entities_checkboxes(true, impossible_increment_entities);
-			jQuery('#backupnow_includedb').prop('checked', false);
+			jQuery('#backupnow_includedb').prop('checked', 1 == jQuery('#backupnow_database_container').data('pitr-enabled'));
 			jQuery('#backupnow_includefiles').prop('checked', true);
 			jQuery('#backupnow_includefiles_label').text(backupplus_i18n.files_incremental_backup);
+			jQuery('#backupnow_includedb_label').text(backupplus_i18n.database_incremental_backup);
+			jQuery('#backupnow_database_moreoptions').hide();
 			jQuery('#backupplus-backupnow-modal .new-backups-only').hide();
 			jQuery('#backupplus-backupnow-modal .incremental-backups-only').show();
 		} else {
 			update_file_entities_checkboxes(false, impossible_increment_entities);
 			jQuery('#backupnow_includedb').prop('checked', true);
 			jQuery('#backupnow_includefiles_label').text(backupplus_i18n.files_new_backup);
+			jQuery('#backupnow_includedb_label').text(backupplus_i18n.database_new_backup);
 			jQuery('#backupplus-backupnow-modal .new-backups-only').show();
 			jQuery('#backupplus-backupnow-modal .incremental-backups-only').hide();
 		}
 		jQuery('#backupplus-backupnow-modal').data('backup-type', type);
+		var pitr_enabled = 1 == jQuery('#backupnow_database_container').data('pitr-enabled');
+		jQuery('#backupnow_database_container').toggle('incremental' != type || pitr_enabled);
+		jQuery('#backupnow_pitr_disabled').toggle('incremental' == type && !pitr_enabled);
+		backupplus_backupnow_update_selection();
 		jQuery('#backupplus-backupnow-modal').dialog('open');
 	}
+}
+
+function backupplus_backupnow_pitr_selected() {
+	return 'incremental' == jQuery('#backupplus-backupnow-modal').data('backup-type') && jQuery('#backupnow_includedb').is(':checked');
+}
+
+function backupplus_backupnow_update_selection() {
+	// PITR destinations belong to the saved chain; these temporary controls apply to files.
+	jQuery('#backupnow_remote_container').toggle(!backupplus_backupnow_pitr_selected() || jQuery('#backupnow_includefiles').is(':checked'));
+	jQuery('label[for="backupnow_includecloud"]').text(backupplus_backupnow_pitr_selected() ? backupplus_i18n.send_files_remote : backupplus_i18n.send_backup_remote);
 }
 /**
  * Open the 'Backup Now' dialog box
@@ -1862,7 +1879,7 @@ function backupplus_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_no
 		params.onlythisfileentity = onlythesefileentities;
 	}
 
-	if ('' != onlythesetableentities) {
+	if (null != onlythesetableentities && '' != onlythesetableentities) {
 		params.onlythesetableentities = onlythesetableentities;
 	}
 
@@ -1873,8 +1890,8 @@ function backupplus_backupnow_go(backupnow_nodb, backupnow_nofiles, backupnow_no
 	params.always_keep = (typeof extradata.always_keep !== 'undefined') ? extradata.always_keep : 0;
 	delete extradata.always_keep;
 
-	if (window.backupplus_database_override) { params.database_selection = JSON.stringify(window.backupplus_database_override()); }
 	params.incremental = (typeof extradata.incremental !== 'undefined') ? extradata.incremental : 0;
+	if (!params.incremental && window.backupplus_database_override) { params.database_selection = JSON.stringify(window.backupplus_database_override()); }
 	delete extradata.incremental;
 
 	params.db_anon_all = (typeof extradata.db_anon !== 'undefined' && typeof extradata.db_anon.all !== 'undefined') ? extradata.db_anon.all : 0;
@@ -2445,6 +2462,60 @@ jQuery(function($) {
 	});
 	
 	var backupplus_delete_modal_buttons = {};
+	var pitr_setup_busy = false;
+	var pitr_setup_modal = jQuery('#backupplus-pitr-setup-modal').dialog({
+		autoOpen: false, modal: true, closeOnEscape: true,
+		width: 720, height: 'auto', minWidth: 0, minHeight: 0,
+		useAnimation: false, resizeAccordingToViewport: false,
+		open: function() { pitr_setup_size(); },
+		close: function() { jQuery('#backupplus-pitr-setup-user,#backupplus-pitr-setup-password').val(''); }
+	});
+	function pitr_setup_size() {
+		if (!pitr_setup_modal.dialog('isOpen')) return;
+		pitr_setup_modal.dialog('option', {
+			width: Math.min(720, Math.max(0, jQuery(window).width() - 32)),
+			height: 'auto', maxHeight: Math.max(0, jQuery(window).height() - 40),
+			position: {my: 'center', at: 'center', of: window}
+		});
+	}
+	jQuery(window).on('resize.pitrSetup', pitr_setup_size);
+	function pitr_setup_request(operation) {
+		if (pitr_setup_busy) return;
+		pitr_setup_busy = true;
+		var status = jQuery('#backupplus-pitr-setup-status');
+		var request = {operation:operation};
+		// Check access tests typed credentials without saving them; with empty fields it tests the account capture uses.
+		if (operation === 'connect' || (operation === 'status' && jQuery('#backupplus-pitr-setup-user').val() !== '')) {
+			request.username = jQuery('#backupplus-pitr-setup-user').val();
+			request.password = jQuery('#backupplus-pitr-setup-password').val();
+		}
+		pitr_setup_modal.find('button,input').prop('disabled',true);
+		// Keep keyboard events inside the dialog when disabling the focused input.
+		pitr_setup_modal.dialog('widget').trigger('focus');
+		status.text(backupplus_i18n.pitr_setup_working);
+		function finish(result) {
+			result = result || {};
+			delete request.password;
+			delete request.username;
+			pitr_setup_busy = false;
+			pitr_setup_modal.find('button,input').prop('disabled',false);
+			status.text(result.error || result.message || backupplus_i18n.emptyresponse);
+			// A saved choice is reported beside the Backup account button; closing clears the typed login.
+			// Failures and checks keep the dialog and its fields open for correction.
+			if ((operation === 'connect' || operation === 'wordpress') && result.ready) {
+				jQuery('#backupplus-pitr-setup-summary').text(result.message);
+				pitr_setup_modal.dialog('close');
+				return;
+			}
+			pitr_setup_size();
+		}
+		backupplus_send_command('pitr_setup',request,finish,{alert_on_error:false,error_callback:function(){finish({error:backupplus_i18n.pitr_setup_failed});}});
+	}
+	jQuery(document).on('click','#backupplus-pitr-setup-open',function(){pitr_setup_modal.dialog('open');pitr_setup_request('status');});
+	jQuery('#backupplus-pitr-setup-wordpress').on('click',function(){pitr_setup_request('wordpress');});
+	jQuery('#backupplus-pitr-setup-connect').on('click',function(){pitr_setup_request('connect');});
+	jQuery('#backupplus-pitr-setup-check').on('click',function(){pitr_setup_request('status');});
+	jQuery('#backupplus-pitr-setup-close').on('click',function(){jQuery('#backupplus-pitr-setup-user,#backupplus-pitr-setup-password').val('');pitr_setup_modal.dialog('close');});
 	backupplus_delete_modal_buttons[backupplus_i18n.deletebutton] = function() {
 		backupplus_remove_backup_sets(0, 0, 0, 0, [], false);
 	};
@@ -2505,6 +2576,8 @@ jQuery(function($) {
 			}
 			if (resp.result == 'error') {
 				jQuery('#backupplus-delete-waitwarning').slideUp();
+				backupplus_history_lastchecksum = false;
+				backupplus_updatehistory(0, 0);
 				alert(backupplus_i18n.error+' '+resp.message);
 			} else if (resp.result == 'continue') {
 				deleted_files_counter = deleted_files_counter + resp.backup_local + resp.backup_remote;
@@ -2585,32 +2658,104 @@ jQuery(function($) {
 			}.bind(this));
 
 			this.default_next_text = $('.backupplus-restore--next-step').eq(0).text();
+			this.default_stage_heading = $('#backupplus-restore-stage-heading').text();
 			$('.backupplus-restore--next-step').data('default-text', this.default_next_text);
 
 			// Setup next button event
 			$('.backupplus-restore--next-step').on('click', function(e) {
 				e.preventDefault();
+				if (this.pitr_completed) { this.close(); return; }
 				this.process_next_action();
 			}.bind(this));
 		},
 		close: function() {
+			if (this.pitr_restoring) return;
+			$('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').val('');
+			this.pitr_generation = (this.pitr_generation || 0) + 1;
 			if (window.backupplus_cancel_restore_decryption) window.backupplus_cancel_restore_decryption();
 			$('.backupplus_restore_container').hide();
 			$('body').removeClass('backupplus-modal-is-opened');
+			if (this.pitr_completed) {
+				this.pitr_completed = false;
+				backupplus_history_lastchecksum = false;
+				backupplus_updatehistory(0, 0);
+			}
 		},
 		open: function() {
 			this.init();
+			this.pitr_generation = (this.pitr_generation || 0) + 1;
+			this.pitr_completed = false;
 			// reset elements
+			$('#backupplus-restore-stage-heading').text(this.default_stage_heading);
+			$('.backupplus-restore--cancel').prop('disabled', false).show();
 			$('#backupplus-restore-modal-stage1').show();
 			$('#backupplus-restore-modal-stage2').hide();
 			$('#backupplus-restore-modal-stage2a').html('');
 			$('.backupplus-restore--next-step').text(this.default_next_text);
+			$('.backupplus-restore--next-step').prop('disabled', false).show();
 			$('.backupplus-restore--stages li').removeClass('active').first().addClass('active');
 			// Show restoration window
 			$('.backupplus_restore_container').show();
 			$('body').addClass('backupplus-modal-is-opened');
 		},
+		process_pitr: async function() {
+			if (this.pitr_busy) return;
+			if (!$('#backupplus_restore_db').is(':checked')) { alert(backupplus_i18n.excludedeverything); return; }
+			var generation = this.pitr_generation;
+			var status = $('#backupplus-restore-modal-stage2a');
+			var params = {timestamp: $('#backupplus_restore_timestamp').val(), point: $('#backupplus_pitr_restore_point').val(), ticket: $('#backupplus-age-ticket').val(), username: $('#backupplus-pitr-restore-user').val(), password: $('#backupplus-pitr-restore-password').val()};
+			if (!params.point) { alert(backupplus_i18n.pitr_unavailable); return; }
+			this.pitr_busy = true;
+			$('.backupplus-restore--next-step').prop('disabled', true);
+			var command = function(data) { return new Promise(function(resolve, reject) {
+				backupplus_send_command('pitr_restore', data, function(result) { if (!result || result.error) reject(new Error(result && result.error || backupplus_i18n.emptyresponse)); else resolve(result); }, {error_callback: function() { reject(new Error(backupplus_i18n.servererrorcode)); }});
+			}); };
+			try {
+				if (1 == backupplus_restore_stage) {
+					$('#backupplus-restore-modal-stage1').hide();
+					$('#backupplus-restore-modal-stage2').show();
+					$('.backupplus-restore--stages li').removeClass('active').eq(1).addClass('active');
+					status.text(backupplus_i18n.preparing_backup_files);
+					if (!await window.backupplus_prepare_restore()) {
+						$('#backupplus-restore-modal-stage1').show();
+						return;
+					}
+					if (generation !== this.pitr_generation) return;
+					params.ticket = $('#backupplus-age-ticket').val();
+					await command(Object.assign(params, {operation: 'verify'}));
+					if (generation !== this.pitr_generation) return;
+					status.text(backupplus_i18n.pitr_verify_success);
+					backupplus_restore_stage = 3;
+					$('.backupplus-restore--next-step').text(backupplus_i18n.pitr_restore_database);
+				} else if (3 == backupplus_restore_stage) {
+					this.pitr_restoring = true;
+					$('.backupplus-restore--cancel').prop('disabled', true);
+					$('#backupplus-restore-stage-heading').text(backupplus_i18n.pitr_restore_database);
+					$('.backupplus-restore--stages li').removeClass('active').eq(2).addClass('active');
+					status.text(backupplus_i18n.pitr_restore_running);
+					$('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').val('');
+					await command(Object.assign(params, {operation: 'restore'}));
+					$('#backupplus-age-ticket').val('');
+					status.text(backupplus_i18n.pitr_restore_success);
+					$('#backupplus-restore-stage-heading').text(backupplus_i18n.pitr_restore_complete);
+					backupplus_restore_stage = 4;
+					this.pitr_completed = true;
+					$('.backupplus-restore--cancel').hide();
+					$('.backupplus-restore--next-step').text(backupplus_i18n.restore_done);
+				}
+			} catch (error) {
+				status.text(error.message);
+				if (1 == backupplus_restore_stage) $('#backupplus-restore-modal-stage1').show();
+			} finally {
+				delete params.password;
+				delete params.username;
+				this.pitr_busy = this.pitr_restoring = false;
+				$('.backupplus-restore--cancel').prop('disabled', false);
+				$('.backupplus-restore--next-step').prop('disabled', false);
+			}
+		},
 		process_next_action: function() {
+			if ($('#backupplus_restore_form').data('pitr')) { this.process_pitr(); return; }
 			var anyselected = 0;
 			var moreselected = 0;
 			var dbselected = 0;
@@ -2885,6 +3030,7 @@ jQuery(function($) {
 	});
 	
 	var backupnow_modal_buttons = {};
+	jQuery('#backupnow_includedb, #backupnow_includefiles').on('change', backupplus_backupnow_update_selection);
 	backupnow_modal_buttons[backupplus_i18n.backupnow] = function() {
 
 		var backupnow_nodb = jQuery('#backupnow_includedb').is(':checked') ? 0 : 1;
@@ -2893,8 +3039,9 @@ jQuery(function($) {
 		var db_anon_all = jQuery('#backupnow_db_anon_all').is(':checked') ? 1 : 0;
 		var db_anon_non_staff = jQuery('#backupnow_db_anon_non_staff').is(':checked') ? 1 : 0;
 		var db_anon_wc_orders = jQuery('#backupnow_db_anon_wc_order_data').is(':checked') ? 1 : 0;
-		var onlythesetableentities = backupnow_whichtables_checked('');
-		if (window.backupplus_database_override && !backupplus_database_override() && !backupnow_nodb) { alert(backupplus_i18n.notableschosen); return; }
+		var pitr_capture = backupplus_backupnow_pitr_selected();
+		var onlythesetableentities = pitr_capture ? null : backupnow_whichtables_checked('');
+		if (!pitr_capture && window.backupplus_database_override && !backupplus_database_override() && !backupnow_nodb) { alert(backupplus_i18n.notableschosen); return; }
 		var always_keep = jQuery('#always_keep').is(':checked') ? 1 : 0;
 		var incremental = ('incremental' == jQuery('#backupplus-backupnow-modal').data('backup-type')) ? 1 : 0;
 
@@ -2928,7 +3075,7 @@ jQuery(function($) {
 
 		var only_these_cloud_services = jQuery("input[name^='backupplus_include_remote_service_']").serializeArray();
 
-		if ('' == only_these_cloud_services && 0 == backupnow_nocloud) {
+		if ('' == only_these_cloud_services && 0 == backupnow_nocloud && !(pitr_capture && backupnow_nofiles)) {
 			alert(backupplus_i18n.nocloudserviceschosen);
 			jQuery('#backupnow_includecloud_moreoptions').show();
 			return;
@@ -3543,7 +3690,23 @@ jQuery(function($) {
 		}
 	});
 	
-	function backupplus_restore_setup(entities, key, show_data, restore_points) {
+	function backupplus_restore_setup(entities, key, show_data, restore_points, pitr) {
+		pitr = 1 == pitr;
+		var heading = jQuery('#backupplus_restore_heading');
+		heading.text(heading.data(pitr ? 'pitr-label' : 'original-label') + ':');
+		jQuery('#backupplus_restore_form').data('pitr', pitr);
+		jQuery('#backupplus_pitr_restore_row').toggle(pitr);
+		jQuery('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').val('').prop('disabled', !pitr);
+		var pitr_select = jQuery('#backupplus_pitr_restore_point').empty().prop('disabled', !pitr);
+		if (pitr) {
+			jQuery.each(restore_points || [], function(index, point) { pitr_select.append(jQuery('<option>').val(point.backup_id).text(point.label).data('encrypted', !!point.encrypted)); });
+			pitr_select.off('change.pitr').on('change.pitr', function() {
+				if (window.backupplus_cancel_restore_decryption) window.backupplus_cancel_restore_decryption();
+				jQuery('.backupplus_restore_date').text(pitr_select.find('option:selected').text().split(' - ')[0]);
+				jQuery('.backupplus-restore-encryption').toggle(!!pitr_select.find('option:selected').data('encrypted'));
+			});
+			restore_points = [];
+		}
 		var point_select = jQuery('#backupplus_incremental_restore_point').empty();
 		restore_points = Array.isArray(restore_points) ? restore_points : [];
 		jQuery.each(restore_points, function(index, point) {
@@ -3561,9 +3724,12 @@ jQuery(function($) {
 		jQuery('#backupplus-age-ticket').val('');
 		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
+		if (pitr) jQuery('#backupplus_restore_db').prop('checked', true);
+		jQuery('#backupplus_restorer_dboptions').toggle(!pitr && jQuery('#backupplus_restore_db').is(':checked'));
 		if (key.toString().match(/^[0-9]+$/i)) jQuery('#backupplus_restore_timestamp').val(key);
 		jQuery('.backupplus_restore_date').text(show_data);
 		if (restore_points.length > 0) point_select.trigger('change.backupplus_restore_point');
+		if (pitr) pitr_select.trigger('change.pitr');
 		
 		backupplus_restore_stage = 1;
 		
@@ -3576,7 +3742,7 @@ jQuery(function($) {
 		var entities = jQuery(this).data('entities');
 		var backup_timestamp = jQuery(this).data('backup_timestamp');
 		var show_data = jQuery(this).data('showdata');
-		backupplus_restore_setup(entities, backup_timestamp, show_data, jQuery(this).data('restorepoints'));
+		backupplus_restore_setup(entities, backup_timestamp, show_data, jQuery(this).data('restorepoints'), jQuery(this).data('pitr'));
 	});
 	
 	/**
@@ -4450,6 +4616,9 @@ jQuery(function($) {
 			$('#backupplus-next-incremental-backup-inner').html(resp.incremental_scheduled);
 		}
 		$('#backupplus-next-database-backup-inner').html(resp.database_scheduled);
+		if (resp.hasOwnProperty('pitr_scheduled')) {
+			$('#backupplus-next-pitr-backup-inner').html(resp.pitr_scheduled);
+		}
 		if (resp.hasOwnProperty('cleanup_scheduled')) {
 			$('#backupplus-next-cleanup-inner').html(resp.cleanup_scheduled);
 		}

@@ -130,9 +130,9 @@ class BackupPlus_Credential_Key_Rotation {
 		if ( $age < BackupPlus_Credential_Key_Store::ROTATION_INTERVAL ) {
 			return $messages;
 		}
-		$days     = (int) floor( $age / DAY_IN_SECONDS );
-		$issued   = date_i18n( get_option( 'date_format' ), $config['issued_at'] );
-		$guidance = BackupPlus_Credential_Key_Store::environment_managed()
+		$days       = (int) floor( $age / DAY_IN_SECONDS );
+		$issued     = date_i18n( get_option( 'date_format' ), $config['issued_at'] );
+		$guidance   = BackupPlus_Credential_Key_Store::environment_managed()
 			? __( 'Rotate it in the service environment configuration; WordPress cannot rotate environment-managed keys.', 'backupplus' )
 			: __( 'Check that WordPress cron is running, or rotate the key in BackupPlus Settings.', 'backupplus' );
 		$messages[] = array(

@@ -8,8 +8,13 @@ services:
       MARIADB_USER: ${DB_USER:-backupplus}
       MARIADB_PASSWORD: ${DB_PASSWORD:-backupplus_dev}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-backupplus_root}
+      MARIADB_BACKUP_USER: ${DB_BACKUP_USER:-backupplus_backup}
+      MARIADB_BACKUP_PASSWORD: ${DB_BACKUP_PASSWORD:-backupplus_backup_dev}
+      MARIADB_RESTORE_USER: ${DB_RESTORE_USER:-backupplus_restore}
+      MARIADB_RESTORE_PASSWORD: ${DB_RESTORE_PASSWORD:-backupplus_restore_dev}
     volumes:
       - mariadb_data:/var/lib/mysql
+      - database_socket:/run/mysqld
     healthcheck:
       test:
         - CMD-SHELL
@@ -27,7 +32,7 @@ services:
       database:
         condition: service_healthy
     environment:
-      DB_HOST: database
+      DB_HOST: localhost:/run/mysqld/mysqld.sock
       DB_NAME: ${DB_NAME:-backupplus}
       DB_USER: ${DB_USER:-backupplus}
       DB_PASSWORD: ${DB_PASSWORD:-backupplus_dev}
@@ -43,7 +48,9 @@ services:
       - "127.0.0.1:${WP_PORT:-8080}:8080"
     volumes:
       - wordpress_data:/var/www/html
+      - database_socket:/run/mysqld
       - .:/workspace/backupplus:ro,z
+      - ./dev/wordpress/env-mask:/workspace/backupplus/.env:ro
       - ${HOST_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}:/etc/ssl/certs/host-ca-certificates.crt:ro
     healthcheck:
       test: [CMD, php, -r, "exit(@file_get_contents('http://127.0.0.1:8080/wp-login.php') === false ? 1 : 0);"]
@@ -54,4 +61,5 @@ services:
 
 volumes:
   mariadb_data:
+  database_socket:
   wordpress_data:

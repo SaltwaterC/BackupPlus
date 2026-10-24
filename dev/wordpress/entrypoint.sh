@@ -5,7 +5,7 @@ wp_path=/var/www/html
 plugin_link="$wp_path/wp-content/plugins/backupplus"
 mu_plugins="$wp_path/wp-content/mu-plugins"
 
-export DB_HOST=${DB_HOST:-database}
+export DB_HOST=${DB_HOST:-localhost:/run/mysqld/mysqld.sock}
 export DB_NAME=${DB_NAME:-backupplus}
 export DB_USER=${DB_USER:-backupplus}
 export DB_PASSWORD=${DB_PASSWORD:-backupplus_dev}
@@ -66,6 +66,8 @@ fi
 
 # Reconcile this for existing wp-config.php files in the persistent site volume too.
 wp config set WP_ENVIRONMENT_TYPE local --type=constant --path="$wp_path"
+wp config set DB_HOST "$DB_HOST" --type=constant --path="$wp_path"
+wp config delete BACKUPPLUS_PITR_RECOVERY_CONFIG --type=constant --path="$wp_path" >/dev/null 2>&1 || true
 
 ready=0
 for ((attempt = 1; attempt <= 60; attempt++)); do
@@ -130,6 +132,19 @@ if ! wp theme list --status=active --field=name --path="$wp_path" | grep -q .; t
 fi
 
 wp plugin activate backupplus --path="$wp_path"
+
+# Refresh saved native connection files after migrating an existing site to the shared socket.
+wp eval '
+if (class_exists("BackupPlus_PITR")) {
+	$config = BackupPlus_PITR::config();
+	if (!empty($config["enabled"])) {
+		$prepared = BackupPlus_PITR_Admin::sanitize(array("interval" => (string) $config["interval"]));
+		$errors = get_settings_errors(BackupPlus_PITR::OPTION);
+		if ($errors) { WP_CLI::error($errors[0]["message"]); }
+		BackupPlus_Options::update_backupplus_option(BackupPlus_PITR::OPTION, $prepared);
+	}
+}
+' --path="$wp_path"
 
 login_url="${WP_URL%/}/?backupplus_dev_login=${DEV_LOGIN_TOKEN}"
 echo "BackupPlus WordPress: ${WP_URL}"

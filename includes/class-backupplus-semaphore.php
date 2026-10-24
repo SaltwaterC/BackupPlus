@@ -67,16 +67,14 @@ class BackupPlus_Semaphore_3_0 {
 
 		global $wpdb;
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name = %s", $this->option_name );
+		$sql = BackupPlus_SQL::wpdb();
 
-		if ( 1 === (int) $wpdb->get_var( $sql ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is already prepared via $wpdb->prepare() above
+		if ( 1 === (int) $sql->value( 'SELECT COUNT(*) FROM %i WHERE option_name = ?', array( $wpdb->options ), array( $this->option_name ) ) ) {
 			$this->log( 'Lock option (' . $this->option_name . ', ' . $wpdb->options . ') already existed in the database', 'debug' );
 			return 1;
 		}
 
-		$sql = $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES(%s, '0', 'no');", $this->option_name );
-
-		$rows_affected = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is already prepared via $wpdb->prepare() above
+		$rows_affected = $sql->execute( "INSERT INTO %i (option_name, option_value, autoload) VALUES (?, '0', 'no')", array( $wpdb->options ), array( $this->option_name ) );
 
 		if ( $rows_affected > 0 ) {
 			$this->log( 'Lock option (' . $this->option_name . ', ' . $wpdb->options . ') was created in the database', 'debug' );
@@ -102,12 +100,11 @@ class BackupPlus_Semaphore_3_0 {
 
 		global $wpdb;
 
+		$sql           = BackupPlus_SQL::wpdb();
 		$time_now      = time();
 		$acquire_until = $time_now + $this->locked_for;
 
-		$sql = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value < %d", $acquire_until, $this->option_name, $time_now );
-
-		if ( 1 === $wpdb->query( $sql ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is already prepared via $wpdb->prepare() above
+		if ( 1 === $sql->execute( 'UPDATE %i SET option_value = ? WHERE option_name = ? AND option_value < ?', array( $wpdb->options ), array( (string) $acquire_until, $this->option_name, $time_now ) ) ) {
 			$this->log( 'Lock (' . $this->option_name . ', ' . $wpdb->options . ') acquired', 'info' );
 			$this->acquired = true;
 			return true;
@@ -120,7 +117,7 @@ class BackupPlus_Semaphore_3_0 {
 
 		do {
 			// Now that the row has been created, try again
-			if ( 1 === $wpdb->query( $sql ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is already prepared via $wpdb->prepare() above
+			if ( 1 === $sql->execute( 'UPDATE %i SET option_value = ? WHERE option_name = ? AND option_value < ?', array( $wpdb->options ), array( (string) $acquire_until, $this->option_name, $time_now ) ) ) {
 				$this->log( 'Lock (' . $this->option_name . ', ' . $wpdb->options . ') acquired after initialising the database', 'info' );
 				$this->acquired = true;
 				return true;
@@ -132,7 +129,6 @@ class BackupPlus_Semaphore_3_0 {
 				// As a second has passed, update the time we are aiming for
 				$time_now      = time();
 				$acquire_until = $time_now + $this->locked_for;
-				$sql           = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value < %d", $acquire_until, $this->option_name, $time_now );
 			}
 		} while ( $retries >= 0 );
 
@@ -153,11 +149,10 @@ class BackupPlus_Semaphore_3_0 {
 			return false;
 		}
 		global $wpdb;
-		$sql = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = '0' WHERE option_name = %s", $this->option_name );
 
 		$this->log( 'Lock option (' . $this->option_name . ', ' . $wpdb->options . ') released', 'info' );
 
-		$result = (int) $wpdb->query( $sql ) === 1; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is already prepared via $wpdb->prepare() above
+		$result = (int) BackupPlus_SQL::wpdb()->execute( "UPDATE %i SET option_value = '0' WHERE option_name = ?", array( $wpdb->options ), array( $this->option_name ) ) === 1;
 
 		$this->acquired = false;
 
@@ -171,7 +166,7 @@ class BackupPlus_Semaphore_3_0 {
 		$this->acquired = false;
 
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", $this->option_name ) );
+		BackupPlus_SQL::wpdb()->execute( 'DELETE FROM %i WHERE option_name = ?', array( $wpdb->options ), array( $this->option_name ) );
 
 		$this->log( 'Lock option (' . $this->option_name . ', ' . $wpdb->options . ') was deleted from the database' );
 	}

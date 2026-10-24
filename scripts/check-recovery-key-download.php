@@ -2,6 +2,7 @@
 /** Exercise the real download and restore endpoints with disposable credentials. */
 call_user_func(
 	function ( $directory, $option ) {
+		global $wpdb;
 		$gate    = bin2hex( random_bytes( 16 ) );
 		$mu_file = WPMU_PLUGIN_DIR . '/backupplus-recovery-test-' . $gate . '.php';
 		$user_id = wp_insert_user(
@@ -30,11 +31,15 @@ call_user_func(
 <?php
 if (!isset($_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST']) || !hash_equals(TEST_GATE, $_SERVER['HTTP_X_BACKUPPLUS_RECOVERY_TEST'])) return;
 define('BACKUPPLUS_CREDENTIAL_KEY_DIR', TEST_DIRECTORY);
-add_filter('query', function($query) {
-    global $wpdb;
-    if (0 === strpos($query, "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE ")) return $query.' AND 1=0';
-    return $query;
-});
+// The site's own saved credentials and jobs use its real key; hide them and drop writes.
+foreach (TEST_HIDDEN_OPTIONS as $test_name) {
+    add_filter('pre_option_'.$test_name, '__return_empty_array');
+    add_filter('pre_update_option_'.$test_name, function($value, $old) { return $old; }, 10, 2);
+}
+foreach (TEST_HIDDEN_JOBS as $test_name) {
+    add_filter('pre_site_option_'.$test_name, '__return_empty_array');
+    add_filter('pre_update_site_option_'.$test_name, function($value, $old) { return $old; }, 10, 2);
+}
 $test_metadata = array('backupplus_credential_key_directory' => TEST_DIRECTORY, 'backupplus_dropbox_token_format' => 1, 'backupplus_credential_setup_error' => '', 'backupplus_credential_rotation_key' => '', 'backupplus_credential_rotation_error' => '');
 foreach (array_keys($test_metadata) as $test_name) {
     add_filter('pre_option_'.$test_name, function($value) use (&$test_metadata, $test_name) { return $test_metadata[$test_name]; });
@@ -48,9 +53,11 @@ MU;
 			$fixture = strtr(
 				$fixture,
 				array(
-					'TEST_GATE'      => var_export( $gate, true ),
-					'TEST_DIRECTORY' => var_export( $directory, true ),
-					'TEST_OPTION'    => var_export( $option, true ),
+					'TEST_GATE'           => var_export( $gate, true ),
+					'TEST_DIRECTORY'      => var_export( $directory, true ),
+					'TEST_OPTION'         => var_export( $option, true ),
+					'TEST_HIDDEN_OPTIONS' => var_export( array_values( array_diff( BackupPlus_Credential_Storage::option_names(), array( 'backupplus_dropbox' ) ) ), true ),
+					'TEST_HIDDEN_JOBS'    => var_export( $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'backupplus_jobdata_' ) . '%' ) ), true ),
 				)
 			);
 			dropbox_wp_expect( false !== file_put_contents( $mu_file, $fixture ), 'HTTP test isolation must be installed' );
@@ -100,6 +107,8 @@ MU;
 			BackupPlus_Credential_Key_Rotation::queue_retry();
 			wp_schedule_single_event( time() + 600, 'backupplus_backup_resume' );
 			wp_schedule_single_event( time() + 600, 'unrelated_fixture_cron' );
+			$pitr_fixture_time = time() + 601;
+			wp_schedule_single_event( $pitr_fixture_time, BackupPlus_PITR::HOOK );
 			$cron_response = $request(
 				admin_url( 'admin-ajax.php' ),
 				$headers,
@@ -116,9 +125,12 @@ MU;
 			dropbox_wp_expect( isset( $cron_by_hook[ BackupPlus_Credential_Key_Rotation::RETRY_HOOK ] ) && 'Non-repeating' === $cron_by_hook[ BackupPlus_Credential_Key_Rotation::RETRY_HOOK ]['name'], 'The Cron events page must show pending credential rotation retries as non-repeating' );
 			dropbox_wp_expect( isset( $cron_by_hook['backupplus_backup_resume'] ) && 'Non-repeating' === $cron_by_hook['backupplus_backup_resume']['name'], 'The Cron events page must still show one-off backup tasks' );
 			dropbox_wp_expect( ! isset( $cron_by_hook['unrelated_fixture_cron'] ), 'The Cron events page must continue to exclude unrelated tasks' );
+			dropbox_wp_expect( isset( $cron_by_hook[ BackupPlus_PITR::HOOK ] ), 'The Cron events page must show database PITR capture' );
 			wp_clear_scheduled_hook( BackupPlus_Credential_Key_Rotation::RETRY_HOOK );
 			wp_clear_scheduled_hook( 'backupplus_backup_resume' );
 			wp_clear_scheduled_hook( 'unrelated_fixture_cron' );
+			// Remove only the fixture event; a site's own PITR schedule stays.
+			wp_unschedule_event( $pitr_fixture_time, BackupPlus_PITR::HOOK );
 			echo "PASS: Cron events HTTP listing includes annual rotation and one-off retries\n";
 			$response = $request( $url, $headers, $body );
 			dropbox_wp_expect( 200 === wp_remote_retrieve_response_code( $response ), 'An authorized recovery download must succeed over HTTP' );

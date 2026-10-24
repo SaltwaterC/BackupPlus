@@ -27,6 +27,8 @@ if ( ! is_file( $class_backupplus_file_path ) ) {
 }
 
 require_once $class_backupplus_file_path;
+// The plugin bootstrap is not loaded during uninstall.
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-sql.php';
 
 if ( ! function_exists( 'backupplus_uninstall_clear_options_transients' ) ) {
 	/**
@@ -34,20 +36,19 @@ if ( ! function_exists( 'backupplus_uninstall_clear_options_transients' ) ) {
 	 */
 	function backupplus_uninstall_clear_options_transients() {
 		global $udp_settings_keys, $wpdb;
-		$options_list = implode( ',', array_fill( 0, count( array_merge( $udp_settings_keys['options'], $udp_settings_keys['meta'] ) ), '%s' ) );
-		$sql          = $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name IN ($options_list)", array_merge( $udp_settings_keys['options'], $udp_settings_keys['meta'] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for IN clause are prepared; interpolation is required for variable number of keys.
-		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The query is prepared above with dynamic placeholders, so this direct query execution is intentional and safe.
+		$sql = BackupPlus_SQL::wpdb();
+		$sql->execute( 'DELETE FROM %i WHERE option_name IN (?)', array( $wpdb->options ), array( array_merge( $udp_settings_keys['options'], $udp_settings_keys['meta'] ) ) );
 
 		foreach ( $udp_settings_keys['prefixed_options'] as $pattern ) {
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $pattern ) );
+			$sql->execute( 'DELETE FROM %i WHERE option_name LIKE ?', array( $wpdb->options ), array( $pattern ) );
 		}
 
 		foreach ( $udp_settings_keys['transients'] as $pattern ) {
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s OR option_name = %s OR option_name = %s OR option_name = %s", '_transient_' . $pattern, '_site_transient_' . $pattern, '_transient_timeout_' . $pattern, '_site_transient_timeout_' . $pattern ) );
+			$sql->execute( 'DELETE FROM %i WHERE option_name = ? OR option_name = ? OR option_name = ? OR option_name = ?', array( $wpdb->options ), array( '_transient_' . $pattern, '_site_transient_' . $pattern, '_transient_timeout_' . $pattern, '_site_transient_timeout_' . $pattern ) );
 		}
 
 		foreach ( $udp_settings_keys['prefixed_transients'] as $pattern ) {
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s", '_transient_' . $pattern, '_site_transient_' . $pattern, '_transient_timeout_' . $pattern, '_site_transient_timeout_' . $pattern ) );
+			$sql->execute( 'DELETE FROM %i WHERE option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ?', array( $wpdb->options ), array( '_transient_' . $pattern, '_site_transient_' . $pattern, '_transient_timeout_' . $pattern, '_site_transient_timeout_' . $pattern ) );
 		}
 	}
 }
@@ -67,16 +68,17 @@ if ( is_multisite() ) {
 	array_walk( $udp_settings_keys['meta'], 'delete_site_option' );
 
 	// remove any data in the sitemeta table that has meta_key prefixed with "backupplus_" (e.g. backupplus_options, backupplus_product_key, backupplus_product_keymeta, etc.)
+	$sitemeta = BackupPlus_SQL::wpdb();
 	foreach ( $udp_settings_keys['prefixed_options'] as $pattern ) {
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s", $pattern ) );
+		$sitemeta->execute( 'DELETE FROM %i WHERE meta_key LIKE ?', array( $wpdb->sitemeta ), array( $pattern ) );
 	}
 
 	foreach ( $udp_settings_keys['transients'] as $pattern ) {
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->sitemeta} WHERE meta_key = %s OR meta_key = %s", '_site_transient_' . $pattern, '_site_transient_timeout_' . $pattern ) );
+		$sitemeta->execute( 'DELETE FROM %i WHERE meta_key = ? OR meta_key = ?', array( $wpdb->sitemeta ), array( '_site_transient_' . $pattern, '_site_transient_timeout_' . $pattern ) );
 	}
 
 	foreach ( $udp_settings_keys['prefixed_transients'] as $pattern ) {
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s OR meta_key LIKE %s", '_site_transient_' . $pattern, '_site_transient_timeout_' . $pattern ) );
+		$sitemeta->execute( 'DELETE FROM %i WHERE meta_key LIKE ? OR meta_key LIKE ?', array( $wpdb->sitemeta ), array( '_site_transient_' . $pattern, '_site_transient_timeout_' . $pattern ) );
 	}
 
 	$main_blog_id = function_exists( 'get_main_site_id' ) ? get_main_site_id() : get_current_site()->blog_id;

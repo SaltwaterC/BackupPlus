@@ -77,13 +77,7 @@ class BackupPlus_Legacy_Compatibility {
 
 		$like_updraft     = $wpdb->esc_like( 'updraft_' ) . '%';
 		$like_updraftplus = $wpdb->esc_like( 'updraftplus_' ) . '%';
-		$names            = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-				$like_updraft,
-				$like_updraftplus
-			)
-		);
+		$names            = BackupPlus_SQL::wpdb()->column( 'SELECT option_name FROM %i WHERE option_name LIKE ? OR option_name LIKE ?', array( $wpdb->options ), array( $like_updraft, $like_updraftplus ) );
 
 		if ( ! is_array( $names ) ) {
 			return;
@@ -130,14 +124,7 @@ class BackupPlus_Legacy_Compatibility {
 
 		$like_updraft     = $wpdb->esc_like( 'updraft_' ) . '%';
 		$like_updraftplus = $wpdb->esc_like( 'updraftplus_' ) . '%';
-		$names            = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT meta_key FROM {$wpdb->sitemeta} WHERE site_id = %d AND (meta_key LIKE %s OR meta_key LIKE %s)",
-				get_current_network_id(),
-				$like_updraft,
-				$like_updraftplus
-			)
-		);
+		$names            = BackupPlus_SQL::wpdb()->column( 'SELECT meta_key FROM %i WHERE site_id = ? AND (meta_key LIKE ? OR meta_key LIKE ?)', array( $wpdb->sitemeta ), array( (int) get_current_network_id(), $like_updraft, $like_updraftplus ) );
 
 		if ( ! is_array( $names ) ) {
 			return;

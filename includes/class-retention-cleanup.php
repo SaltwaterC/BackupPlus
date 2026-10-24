@@ -189,6 +189,7 @@ class BackupPlus_Retention_Cleanup {
 				return;
 			}
 		}
+		if ( class_exists( 'BackupPlus_PITR' ) ) { BackupPlus_PITR::cleanup_retention(); }
 		$this->finish( 'complete' );
 	}
 
