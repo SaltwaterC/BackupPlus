@@ -95,11 +95,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<div id="backupplus_pitr_restore_row" class="udp-notice backupplus-restore-option" style="display:none;">
 								<p><strong><label for="backupplus_pitr_restore_point"><?php esc_html_e( 'Restore the database to:', 'backupplus' ); ?></label></strong></p>
 								<select id="backupplus_pitr_restore_point" name="backupplus_pitr_restore_point" disabled="disabled"></select>
-								<p><label for="backupplus-pitr-restore-user"><?php esc_html_e( 'Restore database username', 'backupplus' ); ?></label><br><input type="text" id="backupplus-pitr-restore-user" autocomplete="off" disabled></p>
-								<p><label for="backupplus-pitr-restore-password"><?php esc_html_e( 'Restore database password', 'backupplus' ); ?></label><br><input type="password" id="backupplus-pitr-restore-password" autocomplete="new-password" disabled></p>
-								<p><?php esc_html_e( 'Used only for this recovery. Restore credentials are never saved in settings, jobs, logs or credential files. They are not needed for ordinary full-dump restores.', 'backupplus' ); ?></p>
-								<p><?php esc_html_e( 'Applies the full snapshot and every required binary-log stage directly to this site’s database. A pre-restore backup is retained. Historical selected-table recovery requires a staged reconstruction.', 'backupplus' ); ?></p>
-								<p><?php esc_html_e( 'BackupPlus will temporarily take the site offline and block application database writes during recovery. Compatibility and permissions are checked before restoring.', 'backupplus' ); ?></p>
+								<div id="backupplus-pitr-restore-baseline" style="display:none;">
+									<p><?php esc_html_e( 'Restores the full SQL snapshot using the standard database restore process. No restore account is required.', 'backupplus' ); ?></p>
+								</div>
+								<div id="backupplus-pitr-restore-replay">
+									<p><label for="backupplus-pitr-restore-user"><?php esc_html_e( 'Restore database username', 'backupplus' ); ?></label><br><input type="text" id="backupplus-pitr-restore-user" autocomplete="off" disabled></p>
+									<p><label for="backupplus-pitr-restore-password"><?php esc_html_e( 'Restore database password', 'backupplus' ); ?></label><br><input type="password" id="backupplus-pitr-restore-password" autocomplete="new-password" disabled></p>
+									<p><?php esc_html_e( 'Used only for this recovery. Restore credentials are never saved in settings, jobs, logs or credential files. They are not needed for ordinary full-dump restores.', 'backupplus' ); ?></p>
+									<p><?php esc_html_e( 'Applies the full snapshot and every required binary-log stage directly to this site’s database. A pre-restore backup is retained. Historical selected-table recovery requires a staged reconstruction.', 'backupplus' ); ?></p>
+									<p><?php esc_html_e( 'BackupPlus will temporarily take the site offline and block application database writes during recovery. Compatibility and permissions are checked before restoring.', 'backupplus' ); ?></p>
+								</div>
 							</div>
 							<div id="backupplus_restore_point_row" class="udp-notice backupplus-restore-option" style="display:none;">
 								<p><strong><label for="backupplus_incremental_restore_point"><?php esc_html_e( 'Restore files to this point in the backup chain:', 'backupplus' ); ?></label></strong></p>

@@ -661,6 +661,18 @@ class BackupPlus_PITR {
 		$this->save();
 	}
 
+	/** Republish verified local index metadata without decrypting or changing backup artifacts. */
+	public function rebuild_history() {
+		$ids = array();
+		foreach ( $this->state['chains'] as $id => $chain ) {
+			if ( 'deleting' === $chain['state'] || empty( $chain['entries'] ) ) { continue; }
+			self::chain_metadata( $id, $chain );
+			$ids[] = $id;
+		}
+		foreach ( $ids as $id ) { $this->history( $id ); }
+		return count( $ids );
+	}
+
 	/** Recovery endpoints are identified by immutable backup IDs, never rounded timestamps. */
 	public static function chain_metadata( $id, $chain ) {
 		$cursor = BackupPlus_PITR_Manifest::chain( $chain['entries'] );
@@ -897,6 +909,7 @@ class BackupPlus_PITR {
 			}
 		}
 		$this->save();
+		$this->rebuild_history();
 		return $this->summary();
 	}
 

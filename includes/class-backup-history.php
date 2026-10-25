@@ -403,6 +403,11 @@ class BackupPlus_Backup_History {
 
 		// First, process the database backup history to get a record of what is already known there. This means populating the arrays $backup_nonces_by_filename and $backup_times_by_nonce
 		foreach ( $backup_history as $btime => $bdata ) {
+			// PITR inventory and deletion are managed by the chain index. Its archive names
+			// do not follow the ordinary backup format checked below.
+			if ( ! empty( $bdata['pitr'] ) ) {
+				continue;
+			}
 			$found_file = false;
 			foreach ( $bdata as $key => $values ) {
 				// make sure we also handle multiple databases, which has a different array structure compared to other entities (e.g. plugins, themes, etc.)
@@ -596,6 +601,10 @@ class BackupPlus_Backup_History {
 		while ( false !== ( $entry = readdir( $handle ) ) ) {
 
 			if ( '.' == $entry || '..' == $entry ) {
+				continue;
+			}
+			// The PITR scanner owns these files; a plaintext full snapshot is not a foreign backup.
+			if ( 0 === strpos( $entry, 'backup_pitr_' ) ) {
 				continue;
 			}
 

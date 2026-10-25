@@ -160,7 +160,7 @@ const scryptVector = parseAgeTestVector(
 await decode(scryptVector.ciphertext, credentials('wrong passphrase'), false, true);
 console.log('PASS: scrypt archive rejects a wrong passphrase without publishing plaintext');
 for (const [type, key] of Object.entries(age.keys)) {
-	for (const form of ['identity', 'encrypted_pem'])
+	for (const form of ['identity', 'encrypted_pem', ...(key.encrypted_openssh_gcm ? ['encrypted_openssh_gcm'] : [])])
 		assert.deepEqual(
 			(await decode(b(key.ciphertext), credentials('', key[form], age.passphrase))).output,
 			b(age.plaintext),
@@ -172,6 +172,8 @@ for (const [type, key] of Object.entries(age.keys)) {
 	if (type !== 'native')
 		await decode(b(key.ciphertext), credentials('', key.identity, 'wrong'), false, true);
 	await decode(b(key.ciphertext), credentials('', key.encrypted_pem, 'wrong'), false, true);
+	if (key.encrypted_openssh_gcm)
+		await decode(b(key.ciphertext), credentials('', key.encrypted_openssh_gcm, 'wrong'), false, true);
 }
 console.log(
 	'PASS: age CLI fixtures for X25519, RSA and Ed25519; encrypted OpenSSH/PKCS#8; portable X25519 fallback',

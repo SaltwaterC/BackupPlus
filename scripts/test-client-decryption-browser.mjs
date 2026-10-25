@@ -282,6 +282,7 @@ try {
 		...hybridVector.metadata.identity,
 		...Object.values(age.keys).map((k) => k.identity),
 		...Object.values(age.keys).map((k) => k.encrypted_pem),
+		...Object.values(age.keys).flatMap((k) => k.encrypted_openssh_gcm ? [k.encrypted_openssh_gcm] : []),
 	];
 	function assertNoSecrets(content, label) {
 		for (const secret of secrets)
@@ -416,7 +417,7 @@ try {
 		{ legacy: true },
 	);
 	for (const [type, key] of Object.entries(age.keys))
-		for (const form of ['identity', 'encrypted_pem']) {
+		for (const form of ['identity', 'encrypted_pem', ...(key.encrypted_openssh_gcm ? ['encrypted_openssh_gcm'] : [])]) {
 			await run(from(key.ciphertext), from(age.plaintext), {
 				identity: key[form],
 				keyPassword: age.passphrase,
@@ -671,7 +672,7 @@ try {
 	);
 	assert.equal(
 		await evaluate(
-			"['backupplus-age-identity','backupplus-age-key-passphrase','backupplus-age-archive-passphrase'].some(id=>document.getElementById(id).hasAttribute('name'))",
+			"['backupplus-age-identity','backupplus-age-key-passphrase'].some(id=>document.getElementById(id).hasAttribute('name'))",
 		),
 		false,
 		'Restore secrets must never be successful form controls',
@@ -683,8 +684,8 @@ try {
 	);
 	assert.equal(
 		await evaluate("!!document.getElementById('backupplus-age-archive-passphrase')"),
-		true,
-		'Restore must offer a private age -p passphrase field',
+		false,
+		'Restore must not offer an age -p archive passphrase field',
 	);
 	const transferStart = proxyRequests.length;
 	await evaluate(
@@ -723,7 +724,7 @@ try {
 		`window.fetch=window.restoreOriginalFetch;document.querySelector('button.choose-components-button[data-backup_timestamp="${restorePoint.timestamp}"]').click();document.getElementById('backupplus_restore_uploads').checked=true;`,
 	);
 	await evaluate(
-		`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.native.encrypted_pem)};document.getElementById('backupplus-age-key-passphrase').value=${JSON.stringify(age.passphrase)};document.querySelector('.backupplus-restore--next-step').click();`,
+		`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.ed25519.encrypted_openssh_gcm)};document.getElementById('backupplus-age-key-passphrase').value=${JSON.stringify(age.passphrase)};document.querySelector('.backupplus-restore--next-step').click();`,
 	);
 	await wait('backupplus_restore_stage === 3');
 	const restoreTicket = await evaluate("document.getElementById('backupplus-age-ticket').value");
@@ -752,7 +753,7 @@ try {
 	);
 	assert.equal(
 		await evaluate(
-			"['backupplus-age-identity','backupplus-age-key-passphrase','backupplus-age-archive-passphrase'].every(id=>document.getElementById(id).value==='')",
+			"['backupplus-age-identity','backupplus-age-key-passphrase'].every(id=>document.getElementById(id).value==='')",
 		),
 		true,
 	);

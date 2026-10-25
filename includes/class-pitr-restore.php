@@ -10,14 +10,17 @@ class BackupPlus_PITR_Restore {
 		if ( empty( $backup['pitr']['points'] ) || in_array( $backup['pitr']['state'], array( 'deleting', 'unavailable' ), true ) ) { throw new RuntimeException( 'The database recovery chain is unavailable. Rescan and verify its artifacts before restoring.' ); }
 		BackupPlus_PITR_Manifest::id( $point );
 		foreach ( $backup['pitr']['points'] as $candidate ) {
-			if ( $candidate['backup_id'] === $point ) { return array( $backup['pitr']['chain_id'], $candidate['coordinate'] ); }
+			if ( $candidate['backup_id'] === $point ) { return array( $backup['pitr']['chain_id'], $candidate['coordinate'], 0 === $candidate['increment'] ); }
 		}
 		throw new RuntimeException( 'The selected point is not part of this database recovery chain.' );
 	}
 
 	public static function manifest( $timestamp, $point, $ticket ) {
-		list( $id, $target ) = self::selection( $timestamp, $point );
-		$worker              = new BackupPlus_PITR();
+		list( $id, $target, $baseline ) = self::selection( $timestamp, $point );
+		if ( $baseline ) {
+			return BackupPlus_Age_Restore::manifest( BackupPlus_Backup_History::get_history( $timestamp ), $timestamp, array( 'db' ), $ticket );
+		}
+		$worker = new BackupPlus_PITR();
 		return $worker->browser_manifest( $id, $target, $timestamp, $ticket );
 	}
 

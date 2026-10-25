@@ -4,7 +4,7 @@
  * Starts database containers next to the development container and runs check-pitr.php there.
  *
  * Environment: PODMAN, WP_TEST_CONTAINER, MYSQL_IMAGE, MYSQL_CLIENT_DIRECTORY, HOST_CA_BUNDLE,
- * PITR_CASE (index of one matrix entry), PITR_EXTERNAL_ONLY=1 and PITR_ISOLATION_ONLY=1.
+ * PITR_CASE (index of one matrix entry), PITR_EXTERNAL_ONLY=1, PITR_ISOLATION_ONLY=1 and PITR_BROWSER_FULL_ONLY=1.
  */
 require __DIR__ . '/lib/support.php';
 
@@ -138,7 +138,7 @@ try {
 		if ( $gtid ) {
 			pitr_command( array( 'exec', $worker, $binary, '--no-defaults', '--host=127.0.0.1', '--port=' . $source_port, '--user=root', '--execute=SET GLOBAL enforce_gtid_consistency=ON; SET GLOBAL gtid_mode=OFF_PERMISSIVE; SET GLOBAL gtid_mode=ON_PERMISSIVE; SET GLOBAL gtid_mode=ON' ) );
 		}
-		$checks = '1' === getenv( 'PITR_EXTERNAL_ONLY' ) ? array( 'external-only' ) : ( '1' === getenv( 'PITR_ISOLATION_ONLY' ) ? array( 'isolation-only' ) : array() );
+		$checks = '1' === getenv( 'PITR_BROWSER_FULL_ONLY' ) ? array( 'browser-full-only' ) : ( '1' === getenv( 'PITR_EXTERNAL_ONLY' ) ? array( 'external-only' ) : ( '1' === getenv( 'PITR_ISOLATION_ONLY' ) ? array( 'isolation-only' ) : array() ) );
 		pitr_command( array_merge( array( 'exec', $worker, 'wp', '--skip-plugins=backupplus', 'eval-file', 'wp-content/plugins/backupplus/scripts/check-pitr.php', $engine, $source_port, $recovery_port, $binary_directory ), $checks ) );
 		foreach ( array( $source, $recovery ) as $name ) {
 			pitr_command( array( 'rm', '--force', '--volumes', $name ) );
@@ -156,6 +156,8 @@ try {
 }
 if ( false !== getenv( 'PITR_CASE' ) ) {
 	echo "Selected PITR native case passed.\n";
+} elseif ( '1' === getenv( 'PITR_BROWSER_FULL_ONLY' ) ) {
+	echo "PITR encrypted full-snapshot browser job matrix passed.\n";
 } elseif ( '1' === getenv( 'PITR_EXTERNAL_ONLY' ) ) {
 	echo "PITR account/shared-server capture matrix passed.\n";
 } elseif ( '1' === getenv( 'PITR_ISOLATION_ONLY' ) ) {

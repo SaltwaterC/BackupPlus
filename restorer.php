@@ -1988,7 +1988,7 @@ class BackupPlus_Restorer {
 		// Based upon how WP updates work, the following code unpacks the "package" (the backup archive) and then later its contents are moved to their destination.
 
 		// If successful, this returns the WP_Filesystem path for the unpacked zip or unencrypted database
-		if ( preg_match( '/-db(\.gz(\.crypt)?)?$/i', $backup_file ) || preg_match( '/\.sql(\.gz|\.bz2)?$/i', $backup_file ) ) {
+		if ( preg_match( '/-db(\.gz(\.crypt)?)?$/i', $backup_file ) || preg_match( '/\.sql(\.gz|\.bz2)?(\.crypt)?$/i', $backup_file ) ) {
 			$working_dir = $this->unpack_package_database( $backup_file );
 		} else {
 			$working_dir = $this->unpack_package_archive( $backup_file, $type );
@@ -4463,12 +4463,12 @@ class BackupPlus_Restorer {
 		$this->configuration_bundle = array();
 		// Some items must always be saved + restored; others only when restoring to a different site.
 		// Remember, if modifying this, that a restoration can include restoring a destroyed site from a backup onto a fresh WP install on the same URL. So, it is not necessarily desirable to retain the current settings and drop the ones in the backup.
-		$keys_to_save = array( 'backupplus_restore_in_progress' );
+		// Backup history describes artifacts outside the database and must survive same-site restores too.
+		$keys_to_save = array( 'backupplus_restore_in_progress', 'backupplus_backup_history' );
 
 		if ( $this->old_siteurl != $this->our_siteurl || ( defined( 'BACKUPPLUS_RESTORE_ALL_SETTINGS' ) && BACKUPPLUS_RESTORE_ALL_SETTINGS ) ) {
 			global $backupplus;
-			$keys_to_save   = array_merge( $keys_to_save, $backupplus->get_settings_keys() );
-			$keys_to_save[] = 'backupplus_backup_history';
+			$keys_to_save = array_merge( $keys_to_save, $backupplus->get_settings_keys() );
 		}
 
 		foreach ( $keys_to_save as $key ) {

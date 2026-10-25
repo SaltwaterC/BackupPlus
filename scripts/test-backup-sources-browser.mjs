@@ -192,7 +192,7 @@ try {
 				requests.push({...params});
 				done({verified: true});
 			};
-			const points = [3,2,1].map((n,index) => ({backup_id: String(n).repeat(32),timestamp:100,encrypted:true,label:'Point '+n+' - '+(n===1?'full database backup':'database incremental '+(n-1))}));
+			const points = [3,2,1].map((n,index) => ({backup_id: String(n).repeat(32),increment:n-1,timestamp:100,encrypted:true,label:'Point '+n+' - '+(n===1?'full database backup':'database incremental '+(n-1))}));
 			button.data({pitr:1,backup_timestamp:100,entities:'/db=0/crypted=1/',showdata:'Full date',restorepoints:points}).trigger('click');
 			const selector = jQuery('#backupplus_pitr_restore_point');
 			const visible = jQuery('#backupplus_pitr_restore_row').is(':visible') && !jQuery('#backupplus_restore_point_row').is(':visible');
@@ -226,6 +226,60 @@ try {
 			backupplus_open_main_tab('settings');
 		}
 	})()`), {visible:true,values:['3'.repeat(32),'2'.repeat(32),'1'.repeat(32)],databaseSelected:true,deselected:true,automatic:true,verified:true,completed:true,dismissed:true,ordinary:true,requests:[{operation:'verify',point:'2'.repeat(32),keys:['operation','password','point','ticket','timestamp','username']},{operation:'restore',point:'2'.repeat(32),keys:['operation','password','point','ticket','timestamp','username']}]}, 'PITR restore verifies points, completes with Done, refreshes history on dismissal, and resets ordinary restore controls');
+	assert.deepEqual(await evaluate(`(async () => {
+		backupplus_open_main_tab('backups');
+		const row = jQuery('<tr><td><button type="button" class="choose-components-button">Baseline fixture</button></td></tr>').appendTo('#backupplus-navtab-backups-content .backupplus_existing_backups tbody:first');
+		const button = row.find('button');
+		const send = window.backupplus_send_command, prepare = window.backupplus_prepare_restore, animations = jQuery.fx.off, skippedScan = skipped_db_scan;
+		const requests = [], cases = [];
+		try {
+			jQuery.fx.off = true;
+			skipped_db_scan = 1;
+			jQuery('#backupplus_restore_form').on('submit.baseline_test', event => event.preventDefault());
+			window.backupplus_prepare_restore = async () => true;
+			window.backupplus_send_command = (command, params, done, options) => {
+				if (!['whichdownloadsneeded', 'restore_alldownloaded', 'pitr_restore'].includes(command)) return send(command, params, done, options);
+				requests.push(command);
+				if (command === 'whichdownloadsneeded') done({downloads: []});
+				else if (command === 'restore_alldownloaded') done({m: '', w: '', e: '', i: '{}'});
+				else throw new Error('Full snapshot was sent to native replay');
+			};
+			for (const encrypted of [false, true]) {
+				const baseline = {backup_id: '1'.repeat(32), increment: 0, timestamp: 100, encrypted, label: 'First - full database backup'};
+				const increment = {backup_id: '2'.repeat(32), increment: 1, timestamp: 200, encrypted, label: 'Second - database incremental 1'};
+				button.data({pitr: 1, backup_timestamp: 100, entities: '/db=0/crypted='+(encrypted?1:0)+'/', showdata: 'First', restorepoints: [increment, baseline]}).trigger('click');
+				const selector = jQuery('#backupplus_pitr_restore_point');
+				jQuery('#backupplus-pitr-restore-user').val('stale-user');
+				jQuery('#backupplus-pitr-restore-password').val('stale-password');
+				selector.val(baseline.backup_id).trigger('change');
+				const full = !jQuery('#backupplus_restore_form').data('pitr') && jQuery('#backupplus-pitr-restore-baseline').is(':visible') && !jQuery('#backupplus-pitr-restore-replay').is(':visible') && jQuery('#backupplus_restorer_dboptions').is(':visible');
+				const credentials = jQuery('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').get().every(input => input.disabled && !input.value);
+				const decryption = jQuery('.backupplus-restore-encryption').is(':visible') === encrypted;
+				selector.val(increment.backup_id).trigger('change');
+				const replay = jQuery('#backupplus_restore_form').data('pitr') && jQuery('#backupplus-pitr-restore-replay').is(':visible') && !jQuery('#backupplus-pitr-restore-user').prop('disabled') && !jQuery('#backupplus_restorer_dboptions').is(':visible');
+				selector.val(baseline.backup_id).trigger('change');
+				jQuery('.backupplus-restore--next-step').trigger('click');
+				await new Promise(resolve => setTimeout(resolve, 50));
+				cases.push({encrypted, full, credentials, decryption, replay, ordinary: backupplus_restore_stage === 3});
+				jQuery('.backupplus-restore--next-step').trigger('click');
+				cases[cases.length-1].submittedPoint = new URLSearchParams(jQuery('#backupplus_restorer_restore_options').val()).get('backupplus_pitr_restore_point') === baseline.backup_id;
+				jQuery('.backupplus-restore--cancel').trigger('click');
+				// A chain with only its full snapshot must open without asking for restore credentials.
+				button.data('restorepoints', [baseline]).trigger('click');
+				cases[cases.length-1].fullOnly = !jQuery('#backupplus_restore_form').data('pitr') && jQuery('#backupplus-pitr-restore-user').prop('disabled');
+				jQuery('.backupplus-restore--cancel').trigger('click');
+			}
+			return {cases, requests};
+		} finally {
+			jQuery('.backupplus-restore--cancel').trigger('click');
+			window.backupplus_send_command = send;
+			window.backupplus_prepare_restore = prepare;
+			jQuery.fx.off = animations;
+			skipped_db_scan = skippedScan;
+			jQuery('#backupplus_restore_form').off('submit.baseline_test');
+			row.remove();
+		}
+	})()`), {cases: [false,true].map(encrypted => ({encrypted, full:true, credentials:true, decryption:true, replay:true, ordinary:true, submittedPoint:true, fullOnly:true})), requests:['whichdownloadsneeded','restore_alldownloaded','whichdownloadsneeded','restore_alldownloaded']}, 'PITR full snapshots use ordinary database restore without restore credentials, including encrypted and full-only chains');
 	assert.deepEqual(await evaluate(`(async () => {
 		backupplus_open_main_tab('backups');
 		const root = jQuery('#backupplus-navtab-backups-content .backupplus_existing_backups tbody').first();

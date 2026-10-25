@@ -300,11 +300,34 @@ try {
 	$decorated = BackupPlus_PITR::decorate_history( $legacy );
 	state_expect( 2 === count( $decorated[100]['pitr']['points'] ), 'Existing history did not acquire recovery endpoints from its chain index.' );
 	state_expect( array( $log['name'], $manifest['name'], $locator_file['name'] ) === $provider->uploads, 'Retry uploaded completed objects again or reordered publication.' );
-	$retained_state         = state_property( $worker, 'state' );
-	$retained_history       = BackupPlus_Backup_History::$history;
-	$pinned_chain           = array( 'history_time' => 100 ) + $retained_state['chains'][ $chain_id ];
-	$unpinned               = $pinned_chain;
-	$pinned_chain['pinned'] = true;
+	$retained_state                     = state_property( $worker, 'state' );
+	$retained_history                   = BackupPlus_Backup_History::$history;
+	$ordinary_history                   = array(
+		100 => array(
+			'db'          => 'ordinary.sql.gz',
+			'label'       => 'Ordinary backup',
+			'always_keep' => true,
+		),
+	);
+	BackupPlus_Backup_History::$history = $ordinary_history;
+	$uploads_before                     = $provider->uploads;
+	state_expect( 1 === $worker->rebuild_history(), 'Local index recovery did not republish its existing chain.' );
+	$repaired      = BackupPlus_Backup_History::$history;
+	$repaired_time = state_property( $worker, 'state' )['chains'][ $chain_id ]['history_time'];
+	state_expect( $ordinary_history[100] === $repaired[100] && 100 !== $repaired_time, 'Index recovery overwrote an ordinary backup at a colliding timestamp.' );
+	state_expect( 2 === count( $repaired[ $repaired_time ]['pitr']['points'] ) && $full['artifacts'][0]['name'] === $repaired[ $repaired_time ]['db'], 'Local index recovery lost the full dump or incremental points.' );
+	state_expect( $uploads_before === $provider->uploads, 'Index recovery uploaded backup artifacts.' );
+	$deleting_state                                 = state_property( $worker, 'state' );
+	$deleting_state['chains'][ $chain_id ]['state'] = 'deleting';
+	state_property( $worker, 'state', $deleting_state );
+	BackupPlus_Backup_History::$history = $ordinary_history;
+	state_expect( 0 === $worker->rebuild_history() && $ordinary_history === BackupPlus_Backup_History::$history, 'History recovery resurrected a chain being deleted.' );
+	state_property( $worker, 'state', $retained_state );
+	state_call( $worker, 'save' );
+	BackupPlus_Backup_History::$history = $retained_history;
+	$pinned_chain                       = array( 'history_time' => 100 ) + $retained_state['chains'][ $chain_id ];
+	$unpinned                           = $pinned_chain;
+	$pinned_chain['pinned']             = true;
 	state_expect( true === state_call( $worker, 'retention_locked', array( $pinned_chain, array() ) ) && false === state_call( $worker, 'retention_locked', array( $unpinned, array() ) ), 'The pin alone must protect a chain without a history row.' );
 	state_expect( false === state_call( $worker, 'retention_locked', array( $pinned_chain, array( 100 => array( 'db' => 'x' ) ) ) ), 'Unlocking the history row must release a restore pin.' );
 	state_expect( true === state_call( $worker, 'retention_locked', array( $unpinned, array( 100 => array( 'always_keep' => true ) ) ) ), 'A locked history row must protect an unpinned chain.' );

@@ -43,7 +43,7 @@ if ( 'setup' === $operation ) {
 	$backupplus->ensure_phpseclib();
 	$input  = fopen( $directory . '/' . $plain, 'rb' );
 	$output = fopen( $directory . '/' . $plain . '.crypt', 'wb' );
-	BackupPlus_Age_Crypto::encrypt( $input, $output, array( $fixture['keys']['native']['recipient'] ) );
+	BackupPlus_Age_Crypto::encrypt( $input, $output, array( $fixture['keys']['native']['recipient'], $fixture['keys']['ed25519']['recipient'] ) );
 	fclose( $input );
 	fclose( $output );
 	unlink( $directory . '/' . $plain );

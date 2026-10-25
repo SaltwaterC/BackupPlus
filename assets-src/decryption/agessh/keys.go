@@ -4,6 +4,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdh"
 	"crypto/ed25519"
 	"crypto/rsa"
@@ -19,6 +21,7 @@ import (
 
 	"filippo.io/age"
 	"filippo.io/age/agessh"
+	"github.com/dchest/bcrypt_pbkdf"
 	"github.com/youmark/pkcs8"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/ssh"
@@ -27,6 +30,13 @@ import (
 type importedIdentity struct {
 	ssh    age.Identity
 	native []byte
+}
+
+type openSSHEnvelope struct {
+	Cipher, KDF, Options string
+	Count                uint32
+	Public, Private      []byte
+	Tag                  []byte `ssh:"rest"`
 }
 
 // Register the library's KDF extension to preserve all existing PRFs, optional
@@ -104,18 +114,27 @@ func allowedOpenSSH(der []byte) bool {
 	if !bytes.HasPrefix(der, magic) {
 		return false
 	}
-	var envelope struct {
-		Cipher, KDF, Options string
-		Count                uint32
-		Public, Private      []byte
-	}
-	if ssh.Unmarshal(der[len(magic):], &envelope) != nil || envelope.Count != 1 {
+	var envelope openSSHEnvelope
+	if ssh.Unmarshal(der[len(magic):], &envelope) != nil || envelope.Count != 1 || len(envelope.Private) == 0 {
 		return false
 	}
 	if envelope.Cipher == "none" {
-		return envelope.KDF == "none" && envelope.Options == "" && len(envelope.Private)%8 == 0
+		return envelope.KDF == "none" && envelope.Options == "" && len(envelope.Private)%8 == 0 && len(envelope.Tag) == 0
 	}
-	if envelope.Cipher != "aes256-ctr" || envelope.KDF != "bcrypt" || len(envelope.Private)%16 != 0 {
+	switch envelope.Cipher {
+	case "aes256-ctr":
+		if len(envelope.Tag) != 0 {
+			return false
+		}
+	case "aes256-gcm@openssh.com":
+		// OpenSSH stores the authentication tag after the encrypted SSH string.
+		if len(envelope.Tag) != 16 {
+			return false
+		}
+	default:
+		return false
+	}
+	if envelope.KDF != "bcrypt" || len(envelope.Private)%16 != 0 {
 		return false
 	}
 	var kdf struct {
@@ -123,6 +142,47 @@ func allowedOpenSSH(der []byte) bool {
 		Rounds uint32
 	}
 	return ssh.Unmarshal([]byte(envelope.Options), &kdf) == nil && len(kdf.Salt) >= 16 && len(kdf.Salt) <= 1024 && kdf.Rounds > 0 && kdf.Rounds <= 1024
+}
+
+// x/crypto/ssh does not unlock OpenSSH GCM envelopes. Authenticate that envelope
+// with standard AES-GCM, then let its existing parser validate the private key.
+// The caller has already checked allowedOpenSSH's cipher and KDF work budgets.
+func parseOpenSSHGCM(envelope openSSHEnvelope, password []byte) (any, error) {
+	var kdf struct {
+		Salt   []byte
+		Rounds uint32
+	}
+	if err := ssh.Unmarshal([]byte(envelope.Options), &kdf); err != nil {
+		return nil, err
+	}
+	material, err := bcrypt_pbkdf.Key(password, kdf.Salt, int(kdf.Rounds), 32+12)
+	if err != nil {
+		return nil, err
+	}
+	defer clear(material[:cap(material)])
+	block, err := aes.NewCipher(material[:32])
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	sealed := append(append([]byte(nil), envelope.Private...), envelope.Tag...)
+	plain, err := gcm.Open(nil, material[32:], sealed, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer clear(plain)
+	envelope.Cipher, envelope.KDF, envelope.Options = "none", "none", ""
+	envelope.Private, envelope.Tag = plain, nil
+	body := ssh.Marshal(envelope)
+	defer clear(body)
+	wire := append([]byte("openssh-key-v1\x00"), body...)
+	defer clear(wire)
+	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "OPENSSH PRIVATE KEY", Bytes: wire})
+	defer clear(pemBytes)
+	return ssh.ParseRawPrivateKey(pemBytes)
 }
 
 func parseIdentity(input, passphrase string) (importedIdentity, string) {
@@ -139,8 +199,14 @@ func parseIdentity(input, passphrase string) (importedIdentity, string) {
 		return fail, "UNSUPPORTED_KEY"
 	}
 	defer clear(block.Bytes)
-	if block.Type == "OPENSSH PRIVATE KEY" && !allowedOpenSSH(block.Bytes) {
-		return fail, "UNSUPPORTED_KEY"
+	var envelope openSSHEnvelope
+	if block.Type == "OPENSSH PRIVATE KEY" {
+		if !allowedOpenSSH(block.Bytes) {
+			return fail, "UNSUPPORTED_KEY"
+		}
+		if ssh.Unmarshal(block.Bytes[len("openssh-key-v1\x00"):], &envelope) != nil {
+			return fail, "UNSUPPORTED_KEY"
+		}
 	}
 	if len(block.Headers) > 0 {
 		cipher := strings.Split(block.Headers["DEK-Info"], ",")[0]
@@ -150,7 +216,15 @@ func parseIdentity(input, passphrase string) (importedIdentity, string) {
 	}
 	var parsed any
 	var err error
-	if block.Type == "ENCRYPTED PRIVATE KEY" {
+	if block.Type == "OPENSSH PRIVATE KEY" && envelope.Cipher == "aes256-gcm@openssh.com" {
+		if len(password) == 0 {
+			return fail, "KEY_PASSPHRASE_REQUIRED"
+		}
+		parsed, err = parseOpenSSHGCM(envelope, password)
+		if err != nil {
+			return fail, "KEY_UNLOCK_FAILED"
+		}
+	} else if block.Type == "ENCRYPTED PRIVATE KEY" {
 		if !allowedPKCS8(block.Bytes) {
 			return fail, "UNSUPPORTED_KEY"
 		}
@@ -185,14 +259,6 @@ func parseIdentity(input, passphrase string) (importedIdentity, string) {
 	// Go parses OpenSSH's public envelope separately from the private material.
 	// Preserve the previous decoder's consistency check before using the key.
 	if block.Type == "OPENSSH PRIVATE KEY" {
-		var envelope struct {
-			Cipher, KDF, Options string
-			Count                uint32
-			Public, Private      []byte
-		}
-		if ssh.Unmarshal(block.Bytes[len("openssh-key-v1\x00"):], &envelope) != nil {
-			return fail, "UNSUPPORTED_KEY"
-		}
 		signer, err := ssh.NewSignerFromKey(parsed)
 		if err != nil || !bytes.Equal(signer.PublicKey().Marshal(), envelope.Public) {
 			return fail, "UNSUPPORTED_KEY"

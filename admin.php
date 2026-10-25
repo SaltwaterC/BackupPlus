@@ -731,16 +731,17 @@ class BackupPlus_Admin {
 			)
 		);
 		wp_enqueue_script( 'backupplus-decryption', BACKUPPLUS_URL . '/includes/backupplus-decryption.js', array(), $enqueue_version, true );
-		wp_enqueue_script( 'backupplus-restore-decryption', BACKUPPLUS_URL . '/includes/backupplus-restore-decryption.js', array( 'backupplus-decryption', 'backupplus-admin-common' ), $enqueue_version, true );
+		wp_enqueue_script( 'backupplus-restore-decryption', BACKUPPLUS_URL . '/includes/backupplus-restore-decryption.js', array( 'backupplus-decryption', 'backupplus-admin-common' ), $enqueue_version . '.' . filemtime( BACKUPPLUS_DIR . '/includes/backupplus-restore-decryption.js' ), true );
+		$agessh_enqueue_version = $enqueue_version . '.' . filemtime( BACKUPPLUS_DIR . '/js/backupplus-agessh.wasm' );
 		wp_localize_script(
 			'backupplus-decryption',
 			'backupplus_decryption',
 			array(
 				'worker'      => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
 				'agessh'      => array(
-					'compressedWasmURL' => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm.gz?ver=' . rawurlencode( $enqueue_version ),
-					'wasmURL'           => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm?ver=' . rawurlencode( $enqueue_version ),
-					'runtimeURL'        => BACKUPPLUS_URL . '/js/backupplus-agessh-wasm_exec.js?ver=' . rawurlencode( $enqueue_version ),
+					'compressedWasmURL' => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm.gz?ver=' . rawurlencode( $agessh_enqueue_version ),
+					'wasmURL'           => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm?ver=' . rawurlencode( $agessh_enqueue_version ),
+					'runtimeURL'        => BACKUPPLUS_URL . '/js/backupplus-agessh-wasm_exec.js?ver=' . rawurlencode( $agessh_enqueue_version ),
 				),
 				'decrypting'  => __( 'Decrypting locally:', 'backupplus' ),
 				'downloading' => __( 'Downloading encrypted archive:', 'backupplus' ),
@@ -754,7 +755,7 @@ class BackupPlus_Admin {
 					'CLEANUP_FAILED'  => __( 'Temporary browser files could not be removed. Close other decryption tabs and clear files again, or clear this site’s browser storage.', 'backupplus' ),
 					'STORAGE_FAILED'  => __( 'Browser storage is full or unavailable. Free local space and try again.', 'backupplus' ),
 					'DECRYPT_FAILED'  => __( 'Unable to decrypt. Check the passphrase or identity and that the archive is complete and unmodified.', 'backupplus' ),
-					'UNSUPPORTED_KEY' => __( 'Unsupported private key format or cipher. Use a native age identity, an OpenSSH RSA/Ed25519 key (unencrypted or bcrypt/aes256-ctr), or a PEM key (unencrypted or PBES2/PBKDF2/AES-CBC).', 'backupplus' ),
+					'UNSUPPORTED_KEY' => __( 'Unsupported private key format or cipher. Use a native age identity, an OpenSSH RSA/Ed25519 key (unencrypted or bcrypt with AES-256-CTR/AES-256-GCM), or a PEM key (unencrypted or PBES2/PBKDF2/AES-CBC).', 'backupplus' ),
 					'SECURE_CONTEXT'  => __( 'Local decryption requires HTTPS (or localhost), Web Crypto and Web Workers in a modern browser.', 'backupplus' ),
 					'MEMORY_LIMIT'    => __( 'This browser cannot stage large files locally. Allow private browser storage or use a browser with Origin Private File System support. Files above 128 MiB require that storage.', 'backupplus' ),
 					'WORKER_FAILED'   => __( 'The local decryption worker could not run. Check browser storage, memory and site policy, then try again.', 'backupplus' ),
@@ -5729,7 +5730,7 @@ class BackupPlus_Admin {
 			echo '<p class="backupplus_restore_error">';
 			$backupplus->log_e( 'Restore failed...' );
 			echo '</p>';
-			$backupplus->log_wp_error( $backup_success );
+			$backupplus->log_wp_error( $backup_success, false, true );
 			$backupplus->log( 'Restore failed' );
 			echo '<div class="backupplus_restore_errors">';
 			$backupplus->list_errors();
@@ -5879,6 +5880,10 @@ class BackupPlus_Admin {
 		$restore_options = $backupplus->jobdata_get( 'backupplus_restorer_restore_options' );
 		if ( ! is_array( $restore_options ) ) {
 			$restore_options = array();
+		}
+		$pitr_point = $backupplus->jobdata_get( 'backupplus_pitr_restore_point', '' );
+		if ( '' !== $pitr_point ) {
+			$restore_options['backupplus_pitr_restore_point'] = $pitr_point;
 		}
 		$age_ticket = $backupplus->jobdata_get( 'backupplus_age_ticket', '' );
 		if ( '' !== $age_ticket ) {

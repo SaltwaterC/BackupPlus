@@ -184,7 +184,8 @@ try {
 	$admin->query( 'SET GLOBAL log_bin_trust_function_creators=1' );
 	try {
 		$application->query( 'CREATE TABLE IF NOT EXISTS `' . DB_NAME . '`.`' . $wpdb->options . '` (option_id bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY, option_name varchar(191) NOT NULL UNIQUE, option_value longtext NOT NULL, autoload varchar(20) NOT NULL) ENGINE=InnoDB' );
-		$application->query( 'INSERT INTO `' . DB_NAME . '`.`' . $wpdb->options . '` (option_name, option_value, autoload) VALUES (\'blogname\',\'PITR Fixture\',\'off\'), (\'siteurl\',\'http://localhost:8080\',\'off\'), (\'home\',\'http://localhost:8080\',\'off\') ON DUPLICATE KEY UPDATE option_value=VALUES(option_value)' );
+		$application->query( 'CREATE TABLE IF NOT EXISTS `' . DB_NAME . '`.`' . $wpdb->postmeta . '` (meta_id bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY, post_id bigint unsigned NOT NULL DEFAULT 0, meta_key varchar(255), meta_value longtext) ENGINE=InnoDB' );
+		$application->query( 'INSERT INTO `' . DB_NAME . '`.`' . $wpdb->options . '` (option_name, option_value, autoload) VALUES (\'blogname\',\'PITR Fixture\',\'on\'), (\'siteurl\',\'http://localhost:8080\',\'on\'), (\'home\',\'http://localhost:8080\',\'on\') ON DUPLICATE KEY UPDATE option_value=VALUES(option_value), autoload=VALUES(autoload)' );
 		$application->query( 'DROP TABLE IF EXISTS `' . DB_NAME . '`.pitr_a, `' . DB_NAME . '`.pitr_b, `' . DB_NAME . '`.pitr_future, `' . DB_NAME . '`.pitr_consistency_a, `' . DB_NAME . '`.pitr_consistency_b' );
 		$application->query( 'CREATE TABLE `' . DB_NAME . '`.pitr_a (id int PRIMARY KEY, value varbinary(100)) ENGINE=InnoDB; CREATE TABLE `' . DB_NAME . '`.pitr_b (id int PRIMARY KEY, value int) ENGINE=InnoDB; INSERT INTO `' . DB_NAME . '`.pitr_a VALUES (1, 0x62617365); INSERT INTO `' . DB_NAME . '`.pitr_b VALUES (1, 0)' );
 		$application->query( 'USE `' . DB_NAME . '`; CREATE OR REPLACE VIEW pitr_view AS SELECT value FROM pitr_b; DROP PROCEDURE IF EXISTS pitr_proc; CREATE PROCEDURE pitr_proc() SELECT value FROM pitr_b; DROP EVENT IF EXISTS pitr_event; CREATE EVENT pitr_event ON SCHEDULE EVERY 1 DAY DISABLE DO SET @pitr_event=1; CREATE TRIGGER pitr_trigger BEFORE UPDATE ON pitr_b FOR EACH ROW SET @pitr_trigger=1' );
@@ -207,6 +208,27 @@ try {
 	$wpdb               = new wpdb( 'pitr_application', 'fixture-app', DB_NAME, '127.0.0.1:' . $source_port );
 	$wpdb->set_prefix( $development_wpdb->prefix );
 	wp_cache_flush();
+	if ( in_array( 'browser-full-only', $args, true ) ) {
+		// Exercise real history persistence on the disposable database, without the suite's in-memory history filters.
+		remove_all_filters( 'pre_option_backupplus_backup_history' );
+		remove_all_filters( 'pre_update_option_backupplus_backup_history' );
+		BackupPlus_Backup_History::save_history( $history );
+		BackupPlus_Backup_History::always_get_from_db();
+		$fixture        = json_decode( file_get_contents( __DIR__ . '/fixtures/age-keys.json' ), true );
+		$key            = $fixture['keys']['native'];
+		$encryption     = array(
+			'mode'       => 'age',
+			'recipients' => array( $key['recipient'] ),
+		);
+		$worker         = new BackupPlus_PITR( $config );
+		$encrypted_full = $worker->run( 'full' );
+		unset( $worker );
+		( function () use ( $config, $encrypted_full, $key, $application, $observer ) {
+			global $backupplus, $wpdb;
+			require __DIR__ . '/check-pitr-browser-full.php';
+		} )();
+		return;
+	}
 	if ( ! in_array( 'isolation-only', $args, true ) ) {
 		require __DIR__ . '/check-pitr-external.php';
 		if ( in_array( 'external-only', $args, true ) ) { return; }
@@ -477,6 +499,15 @@ try {
 		$imported = $import->invoke( $trigger_importer, $baseline_set['db'], 'db', array(), true, true );
 		pitr_check( true === $imported && ! $errors->getValue( $trigger_importer ), 'Importing the native trigger owner failed.' );
 		pitr_check( '0' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0] && '1' === $application->query( "SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='" . DB_NAME . "' AND TRIGGER_NAME='pitr_trigger' AND EVENT_OBJECT_TABLE='pitr_b'" )[0][0], 'Native trigger was not preserved on its restored table.' );
+		// Publish a fresh root for the browser-job test after earlier imports have replaced history.
+		unset( $worker );
+		$worker         = new BackupPlus_PITR( $config );
+		$encrypted_full = $worker->run( 'full' );
+		unset( $worker );
+		( function () use ( $config, $encrypted_full, $key, $application, $observer ) {
+			global $backupplus, $wpdb;
+			require __DIR__ . '/check-pitr-browser-full.php';
+		} )();
 		$backupplus->initiate_restore_job();
 		$whole_importer                 = new BackupPlus_Restorer( new BackupPlus_Restorer_Skin(), $baseline_set );
 		$GLOBALS['backupplus_restorer'] = $whole_importer;
@@ -484,6 +515,7 @@ try {
 		$imported = $import->invoke( $whole_importer, $baseline_set['db'], 'db', array(), true, true );
 		pitr_check( true === $imported && ! $errors->getValue( $whole_importer ), 'The ordinary whole-database importer reported SQL errors for a native baseline.' );
 		pitr_check( '0' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_view' )[0][0] && '0' === $application->query( 'CALL `' . DB_NAME . '`.pitr_proc()' )[0][0], 'Ordinary whole-baseline import lost views or routines.' );
+
 	} finally {
 		$admin->query( 'SET GLOBAL log_bin_trust_function_creators=' . $trust_creators );
 		$wpdb = $original_wpdb;

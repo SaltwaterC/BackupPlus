@@ -6,6 +6,7 @@ toolchain go1.27.3
 
 require (
 	filippo.io/age v1.3.2
+	github.com/dchest/bcrypt_pbkdf v1.0.0
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	golang.org/x/crypto v0.55.0
 )

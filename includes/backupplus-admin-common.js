@@ -1693,7 +1693,7 @@ async function backupplus_restorer_checkstage2(doalert) {
 					}
 					if (info.age_ticket) {
 						jQuery('#backupplus-age-ticket').val(info.age_ticket);
-						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase, #backupplus-age-archive-passphrase').val('').prop('disabled', true);
+						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', true);
 					}
 // if (info.hasOwnProperty('multisite') && info.multisite && info.hasOwnProperty('same_url') && info.same_url) {
 					if (info.hasOwnProperty('addui')) {
@@ -2989,7 +2989,7 @@ jQuery(function($) {
 					}
 
 					if (!continue_restore) return;
-					var restore_options = $('#backupplus_restoreoptions_ui select, #backupplus_restoreoptions_ui input, #backupplus_incremental_restore_point').serialize();
+					var restore_options = $('#backupplus_restoreoptions_ui select, #backupplus_restoreoptions_ui input, #backupplus_incremental_restore_point, #backupplus_pitr_restore_point').serialize();
 
 					// jQuery serialize does not pick up unchecked checkboxes, but we want to include these so that we have a list of table/plugins/themes the user does not want to restore we prepend these with udp-skip-{entity}- and check this on the backend
 					var entities = ['tables', 'plugins', 'themes'];
@@ -3737,9 +3737,17 @@ jQuery(function($) {
 		jQuery('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').val('').prop('disabled', !pitr);
 		var pitr_select = jQuery('#backupplus_pitr_restore_point').empty().prop('disabled', !pitr);
 		if (pitr) {
-			jQuery.each(restore_points || [], function(index, point) { pitr_select.append(jQuery('<option>').val(point.backup_id).text(point.label).data('encrypted', !!point.encrypted)); });
+			jQuery.each(restore_points || [], function(index, point) { pitr_select.append(jQuery('<option>').val(point.backup_id).text(point.label).data('encrypted', !!point.encrypted).data('baseline', 0 === point.increment)); });
 			pitr_select.off('change.pitr').on('change.pitr', function() {
 				if (window.backupplus_cancel_restore_decryption) window.backupplus_cancel_restore_decryption();
+				// The baseline is an ordinary SQL dump; only later points need native replay.
+				var baseline = !!pitr_select.find('option:selected').data('baseline');
+				jQuery('#backupplus_restore_form').data('pitr', !baseline);
+				jQuery('#backupplus-pitr-restore-replay').toggle(!baseline);
+				jQuery('#backupplus-pitr-restore-baseline').toggle(baseline);
+				jQuery('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').prop('disabled', baseline);
+				if (baseline) jQuery('#backupplus-pitr-restore-user,#backupplus-pitr-restore-password').val('');
+				jQuery('#backupplus_restorer_dboptions').toggle(baseline && jQuery('#backupplus_restore_db').is(':checked'));
 				jQuery('.backupplus_restore_date').text(pitr_select.find('option:selected').text().split(' - ')[0]);
 				jQuery('.backupplus-restore-encryption').toggle(!!pitr_select.find('option:selected').data('encrypted'));
 			});
@@ -3760,7 +3768,7 @@ jQuery(function($) {
 		point_select.prop('disabled', 0 == restore_points.length);
 		jQuery('#backupplus_restore_point_row').toggle(restore_points.length > 0);
 		jQuery('#backupplus-age-ticket').val('');
-		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase, #backupplus-age-archive-passphrase').val('').prop('disabled', false);
+		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
 		if (pitr) jQuery('#backupplus_restore_db').prop('checked', true);
 		jQuery('#backupplus_restorer_dboptions').toggle(!pitr && jQuery('#backupplus_restore_db').is(':checked'));

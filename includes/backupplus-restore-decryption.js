@@ -2,7 +2,7 @@
 (function () {
 	'use strict';
 	var active = null;
-	var ids = ['backupplus-age-identity', 'backupplus-age-key-passphrase', 'backupplus-age-archive-passphrase'];
+	var ids = ['backupplus-age-identity', 'backupplus-age-key-passphrase'];
 	function wipe() {
 		ids.forEach(function (id) { var field = document.getElementById(id); if (field) field.value = ''; });
 	}
@@ -55,15 +55,14 @@
 		var config = window.backupplus_decryption;
 		var state = { controller: new AbortController(), worker: null, job: null, ticket: '' };
 		active = state;
-		var credentials = { password: '', identity: '', keyPassword: '' };
+		var credentials = { identity: '', keyPassword: '' };
 		var fields = ids.map(function (id) { return document.getElementById(id); });
 		credentials.identity = fields[0].value;
 		credentials.keyPassword = fields[1].value;
-		credentials.password = fields[2].value;
 		wipe();
 		fields.forEach(function (field) { field.disabled = true; });
 		var signal = state.controller.signal;
-		signal.addEventListener('abort', function () { credentials.password = credentials.identity = credentials.keyPassword = ''; }, { once: true });
+		signal.addEventListener('abort', function () { credentials.identity = credentials.keyPassword = ''; }, { once: true });
 		var status = document.getElementById('backupplus-restore-modal-stage2a');
 		var ticketField = document.getElementById('backupplus-age-ticket');
 		function check() { signal.throwIfAborted(); }
@@ -152,7 +151,7 @@
 			if (!signal.aborted) status.textContent = e.publicMessage || config.errors[e.message] || config.errors.TRANSFER_FAILED;
 			return false;
 		} finally {
-			credentials.password = credentials.identity = credentials.keyPassword = '';
+			credentials.identity = credentials.keyPassword = '';
 			wipe();
 			fields.forEach(function (field) { field.disabled = false; });
 			active = null;

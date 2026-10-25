@@ -2,13 +2,13 @@
 
 BackupPlus saves coordinated MySQL/MariaDB full snapshots and incremental binary-log stages using its existing storage providers, age encryption, scheduling and chain-aware retention. Full snapshots and increments retain binary-log filenames and positions. Complete transaction boundaries remain recoverable within archived coverage, including values overwritten between captures. Whole-database recovery runs from the restore screen on the source database; historical selected-table recovery uses the existing isolated reconstruction commands.
 
-Ordinary logical full dumps and ordinary full-dump/table restores remain independent and need no PITR backup or restore account. See the [account design](database-scoped-pitr-design.md) for credential lifetimes and restore protection.
+Ordinary logical full dumps and ordinary full-dump/table restores remain independent and need no PITR backup or restore account. Selecting the full snapshot in a PITR chain uses the standard database restore process and needs no restore account; encrypted snapshots still need archive decryption. Database restores preserve the current backup history, including newer PITR points and file backups, because the archives remain outside the database. See the [account design](database-scoped-pitr-design.md) for credential lifetimes and restore protection.
 
 ## Accounts
 
 Keep WordPress's normal database-scoped account. If it already has the capture privileges below, **Backup account → Use WordPress account** avoids an additional capture login. Otherwise provide a separate backup account through **Settings → Database point-in-time recovery → Backup account**. BackupPlus verifies access and saves its credentials using the existing credential encryption and key-rotation mechanism. It does not provision users or grant privileges.
 
-Provide the restore account username and password only in the PITR restore screen. Verification and final restoration receive them separately over HTTPS (local development is exempt). They remain in request memory; native tools receive them through inherited pipes. They are never written to options, jobs, logs, files, browser storage or recovery receipts. No saved restore account or `wp-config.php` recovery credential file is used. Retrying a restore requires supplying credentials again.
+For recovery points requiring binary-log replay, provide the restore account username and password only in the PITR restore screen. Verification and final restoration receive them separately over HTTPS (local development is exempt). They remain in request memory; native tools receive them through inherited pipes. They are never written to options, jobs, logs, files, browser storage or recovery receipts. No saved restore account or `wp-config.php` recovery credential file is used. Retrying a restore requires supplying credentials again.
 
 ### Backup account grants
 
@@ -132,6 +132,8 @@ WordPress cron depends on traffic; a host cron trigger improves scheduling relia
 The optional CLI supports `capabilities`, `enable`, `disable`, `run`, `full`, `capture`, `status --points`, `plan`, `verify`, `rescan`, `abandon-pending`, `delete` and `prune`. Run `wp help backupplus pitr COMMAND` for arguments. Legacy CLI capture configurations can still use an owner-only source `[client]` file. Archive decryption identities are read through hidden terminal prompts.
 
 ## Restore
+
+Selecting the full snapshot restores its SQL dump through the ordinary database importer, without a restore account or binary-log replay. Current backup history, recovery points, labels and retention locks survive replacement of the options table. Ordinary local and remote rescans leave PITR chains to the chain index rather than pruning them as unrecognized filenames.
 
 Select a PITR chain, recovery point and restore credentials. The browser authenticates and decrypts encrypted archives without sending private age keys or passphrases to the server, then uploads prepared plaintext. BackupPlus validates all dependencies, hashes and transaction boundaries. An incomplete chain never falls back to restoring only its baseline.
 

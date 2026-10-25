@@ -32,8 +32,16 @@ class BackupPlus_Source_Restore {
 	}
 
 	public static function preflight( $entities, $backup, $options ) {
-		if ( ! empty( $backup['pitr'] ) ) { throw new RuntimeException( 'Use the database PITR recovery-point selector to restore this chain. The ordinary database importer cannot replay its incremental stages.' ); }
-		if ( ! empty( $backup['pitr'] ) && isset( $backup['pitr']['state'] ) && 'deleting' === $backup['pitr']['state'] ) { throw new RuntimeException( 'This database recovery chain is being deleted.' ); }
+		if ( ! empty( $backup['pitr'] ) ) {
+			if ( isset( $backup['pitr']['state'] ) && in_array( $backup['pitr']['state'], array( 'deleting', 'unavailable' ), true ) ) { throw new RuntimeException( 'This database recovery chain is unavailable.' ); }
+			$point    = isset( $options['backupplus_pitr_restore_point'] ) ? $options['backupplus_pitr_restore_point'] : '';
+			$baseline = false;
+			foreach ( isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array() as $candidate ) {
+				if ( $candidate['backup_id'] === $point && 0 === $candidate['increment'] ) { $baseline = true;
+					break; }
+			}
+			if ( ! $baseline ) { throw new RuntimeException( 'Select the full database snapshot to use the ordinary importer. Incremental recovery points require binary-log replay.' ); }
+		}
 		foreach ( $entities as $id => $unused ) {
 			if ( BackupPlus_Backup_Sources::custom( $id ) ) {
 				$source      = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : array(

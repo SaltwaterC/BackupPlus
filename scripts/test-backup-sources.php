@@ -71,6 +71,40 @@ sources_rejects(
 );
 sources_expect( BackupPlus_Backup_Sources::source_id( '/a/data' ) !== BackupPlus_Backup_Sources::source_id( '/b/data' ), 'Identical basenames have separate namespaces.' );
 sources_expect( BackupPlus_Backup_Sources::custom( BackupPlus_Backup_Sources::source_id( '/a/data' ) ), 'Namespaces remain compatible with the archive filename parser.' );
+$pitr_backup = array(
+	'db'   => 'backup_pitr_full.sql.gz',
+	'pitr' => array(
+		'state'  => 'active',
+		'points' => array(
+			array(
+				'backup_id' => str_repeat( 'a', 32 ),
+				'increment' => 0,
+			),
+			array(
+				'backup_id' => str_repeat( 'b', 32 ),
+				'increment' => 1,
+			),
+		),
+	),
+);
+BackupPlus_Source_Restore::preflight( array( 'db' => true ), $pitr_backup, array( 'backupplus_pitr_restore_point' => str_repeat( 'a', 32 ) ) );
+foreach ( array( array(), array( 'backupplus_pitr_restore_point' => str_repeat( 'b', 32 ) ), array( 'backupplus_pitr_restore_point' => str_repeat( 'c', 32 ) ) ) as $options ) {
+	sources_rejects(
+		function () use ( $pitr_backup, $options ) {
+			BackupPlus_Source_Restore::preflight( array( 'db' => true ), $pitr_backup, $options );
+		},
+		'Ordinary PITR preflight must reject missing, incremental and forged recovery-point selections.'
+	);
+}
+foreach ( array( 'deleting', 'unavailable' ) as $state ) {
+	$pitr_backup['pitr']['state'] = $state;
+	sources_rejects(
+		function () use ( $pitr_backup ) {
+			BackupPlus_Source_Restore::preflight( array( 'db' => true ), $pitr_backup, array( 'backupplus_pitr_restore_point' => str_repeat( 'a', 32 ) ) );
+		},
+		'An unavailable PITR chain must not bypass preflight through its full snapshot.'
+	);
+}
 sources_rejects(
 	function () {
 		BackupPlus_Backup_Sources::paths( array( '/a/../secret' ) );

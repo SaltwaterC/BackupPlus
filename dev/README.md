@@ -46,7 +46,7 @@ To test the full flow yourself:
 2. In **Settings → Database point-in-time recovery → Backup account**, enter the backup username/password and click **Verify and save backup account**. The plugin saves this login using credential encryption.
 3. Select **Every minute** or another PITR interval and save Settings. Click **Incremental Backup** with only the database selected to create the initial full baseline immediately.
 4. Make a recognizable content change, take another database incremental, then make another change and take a further incremental. The recovery points appear together under the full database chain in Existing backups.
-5. Click **Restore** for that database chain, select an earlier recovery point, and enter the restore username/password only in that screen. Supply your archive decryption identity if encryption is enabled. Verify, restore and click **Done**, then check that the later content change is absent.
+5. Click **Restore** for that database chain, select an earlier incremental recovery point, and enter the restore username/password only in that screen. Selecting the full database backup instead uses the standard SQL dump restore and requires no restore account. Supply your archive decryption identity if encryption is enabled. Verify, restore and click **Done**, then check that the later content change is absent.
 6. PITR keeps its previous setting after recovery and starts a new chain on its next run. Restore credentials are not saved by WordPress; enter them again for another recovery.
 
 Ordinary full-dump backups/restores need neither PITR login. The disposable native test matrix provisions separate fixture accounts and does not restore into the development database.

@@ -36,21 +36,53 @@ try {
 		},
 		'PITR preparation accepted a forged recovery point.'
 	);
+	$upload   = function ( $prepared ) use ( $key ) {
+		$ticket = $prepared['ticket'];
+		foreach ( $prepared['files'] as $filename ) {
+			$cipher = BackupPlus_Age_Restore::download( $ticket, $filename );
+			$plain  = BackupPlus_Encryption::decrypt( $cipher, $key['identity'], true, '' );
+			pitr_check( is_array( $plain ), 'The fixture could not authenticate a browser PITR archive.' );
+			$bytes = file_get_contents( $plain['fullpath'] );
+			unlink( $plain['fullpath'] );
+			for ( $offset = 0; $offset < strlen( $bytes ) || 0 === $offset; $offset += 524288 ) {
+				$chunk = substr( $bytes, $offset, 524288 );
+				$last  = $offset + strlen( $chunk ) === strlen( $bytes );
+				BackupPlus_Age_Restore::upload( $ticket, $filename, $offset, $chunk, $last ? strlen( $bytes ) : null, $last ? hash( 'sha256', $bytes ) : '' );
+			}
+		}
+	};
+	$baseline = BackupPlus_PITR_Restore::manifest( $timestamp, $encrypted_full['backup_id'], '' );
+	pitr_check( array( $encrypted_full['artifacts'][0]['name'] ) === $baseline['files'], 'Full snapshot preparation requested binary logs or PITR manifests.' );
+	$ticket = $baseline['ticket'];
+	$upload( $baseline );
+	$backupplus->admin_menu();
+	require_once BACKUPPLUS_DIR . '/includes/class-wpadmin-commands.php';
+	$commands  = new BackupPlus_WPAdmin_Commands( null );
+	$options   = array(
+		'backupplus_restore'            => array( 'db' ),
+		'backupplus_pitr_restore_point' => $encrypted_full['backup_id'],
+		'backupplus_age_ticket'         => $ticket,
+	);
+	$preflight = $commands->restore_alldownloaded(
+		array(
+			'timestamp'   => $timestamp,
+			'restoreopts' => http_build_query( $options ),
+		)
+	);
+	pitr_check( '' === $preflight['e'], 'Full-snapshot browser preflight rejected the root SQL dump: ' . $preflight['e'] );
+	$options['backupplus_pitr_restore_point'] = $encrypted_increment['backup_id'];
+	$preflight                                = $commands->restore_alldownloaded(
+		array(
+			'timestamp'   => $timestamp,
+			'restoreopts' => http_build_query( $options ),
+		)
+	);
+	pitr_check( false !== strpos( $preflight['e'], 'Incremental recovery points require binary-log replay' ), 'Ordinary browser preflight accepted a binlog recovery point.' );
+	BackupPlus_Age_Restore::discard( $ticket );
 	$prepared = BackupPlus_PITR_Restore::manifest( $timestamp, $encrypted_increment['backup_id'], '' );
 	$ticket   = $prepared['ticket'];
 	pitr_check( count( $prepared['files'] ) >= 4, 'Browser preparation omitted the full backup, log stages or encrypted manifests.' );
-	foreach ( $prepared['files'] as $filename ) {
-		$cipher = BackupPlus_Age_Restore::download( $ticket, $filename );
-		$plain  = BackupPlus_Encryption::decrypt( $cipher, $key['identity'], true, '' );
-		pitr_check( is_array( $plain ), 'The fixture could not authenticate a browser PITR archive.' );
-		$bytes = file_get_contents( $plain['fullpath'] );
-		unlink( $plain['fullpath'] );
-		for ( $offset = 0; $offset < strlen( $bytes ) || 0 === $offset; $offset += 524288 ) {
-			$chunk = substr( $bytes, $offset, 524288 );
-			$last  = $offset + strlen( $chunk ) === strlen( $bytes );
-			BackupPlus_Age_Restore::upload( $ticket, $filename, $offset, $chunk, $last ? strlen( $bytes ) : null, $last ? hash( 'sha256', $bytes ) : '' );
-		}
-	}
+	$upload( $prepared );
 	$params              = array(
 		'timestamp' => $timestamp,
 		'point'     => $encrypted_increment['backup_id'],
