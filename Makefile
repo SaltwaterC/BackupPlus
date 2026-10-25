@@ -12,10 +12,12 @@ INTEGRATION_TESTS := $(wildcard scripts/integration/test-*.php)
 
 build-assets:
 	php scripts/build-assets.php --build
+	PODMAN="$(PODMAN)" node scripts/build-agessh-wasm.mjs
 	node scripts/build-decryptor.mjs
 
 check-assets:
 	php scripts/build-assets.php --check
+	PODMAN="$(PODMAN)" node scripts/build-agessh-wasm.mjs --check
 	node scripts/build-decryptor.mjs --check
 
 check-php:

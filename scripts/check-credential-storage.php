@@ -20,12 +20,23 @@ $job_name  = 'backupplus_jobdata_' . $job_id;
 $created   = array( $job_name );
 $metadata  = array();
 $old_user  = get_current_user_id();
+// Keep credential and job scans away from options left by earlier WordPress checks.
+global $wpdb;
+$original_options_table = $wpdb->options;
+$test_options_table     = $original_options_table . '_sec005_' . bin2hex( random_bytes( 8 ) );
+if ( ! preg_match( '/^[A-Za-z0-9_]+$/D', $test_options_table ) || false === $wpdb->query( 'CREATE TEMPORARY TABLE `' . $test_options_table . '` LIKE `' . $original_options_table . '`' ) ) {
+	throw new RuntimeException( 'Could not create isolated WordPress options for the credential check.' );
+}
+$wpdb->options = $test_options_table;
 
 register_shutdown_function(
-	function () use ( &$created, $directory, $old_user ) {
+	function () use ( &$created, $directory, $old_user, &$test_options_table, $original_options_table ) {
+		global $wpdb;
 		foreach ( $created as $name ) {
 			delete_option( $name );
 		}
+		$wpdb->options = $original_options_table;
+		$wpdb->query( 'DROP TEMPORARY TABLE IF EXISTS `' . $test_options_table . '`' );
 		if ( is_dir( $directory ) ) {
 			foreach ( scandir( $directory ) as $file ) {
 				if ( '.' !== $file && '..' !== $file ) {
@@ -36,7 +47,7 @@ register_shutdown_function(
 	}
 );
 define( 'BACKUPPLUS_CREDENTIAL_KEY_DIR', $directory );
-$names = array( 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' );
+$names = array( 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_pitr_capture', 'backupplus_pitr_recovery', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' );
 foreach ( glob( dirname( __DIR__ ) . '/methods/*.php' ) as $file ) {
 	$headers = get_file_data( $file, array( 'id' => 'Provider ID' ) );
 	if ( $headers['id'] ) {
@@ -80,16 +91,6 @@ foreach ( array( 'backupplus_credential_key_directory', 'backupplus_dropbox_toke
 		2
 	);
 }
-add_filter(
-	'query',
-	function ( $query ) use ( $job_name ) {
-		global $wpdb;
-		if ( 0 === strpos( $query, "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE " ) ) {
-			return $query . $wpdb->prepare( ' AND option_name = %s', $job_name );
-		}
-		return $query;
-	}
-);
 $fixtures = array(
 	'dropbox'      => array( 'secret' => 'synthetic-sec005-Dropbox-app-secret' ),
 	'ftp'          => array( 'pass' => 'synthetic-sec005-FTP' ),

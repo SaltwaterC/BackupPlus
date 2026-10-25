@@ -93,12 +93,21 @@ const keygenToken = randomBytes(12).toString('hex');
 let keygenIsolated = false;
 let restoreIsolated = false;
 function restoreFixture(operation, ticket) {
-	const result = spawnSync(process.env.PODMAN || 'podman', [
-		'exec', process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress',
-		'wp', '--skip-plugins=backupplus', 'eval-file',
-		'wp-content/plugins/backupplus/scripts/fixtures/restore-browser.php', keygenToken, operation,
-		...(ticket ? [ticket] : []),
-	], { encoding: 'utf8' });
+	const result = spawnSync(
+		process.env.PODMAN || 'podman',
+		[
+			'exec',
+			process.env.WP_TEST_CONTAINER || 'backupplus-dev-wordpress',
+			'wp',
+			'--skip-plugins=backupplus',
+			'eval-file',
+			'wp-content/plugins/backupplus/scripts/fixtures/restore-browser.php',
+			keygenToken,
+			operation,
+			...(ticket ? [ticket] : []),
+		],
+		{ encoding: 'utf8' },
+	);
 	assert.equal(result.status, 0, 'Restore fixture must succeed: ' + result.stderr);
 	return ['setup', 'verify', 'cancelled'].includes(operation) ? JSON.parse(result.stdout) : null;
 }
@@ -118,7 +127,7 @@ function keygenSettings(operation) {
 		{ encoding: 'utf8' },
 	);
 	assert.equal(result.status, 0, 'Settings test isolation must succeed: ' + result.stderr);
-	return ['read', 'original'].includes(operation) ? JSON.parse(result.stdout) : null;
+	return ['read', 'snapshot'].includes(operation) ? JSON.parse(result.stdout) : null;
 }
 try {
 	let port;
@@ -180,7 +189,15 @@ try {
 			} catch {}
 			await sleep(100);
 		}
-		throw new Error('Browser condition timed out: ' + expression);
+		const state = await evaluate(
+			`(async()=>{const opfs=[];try{const dir=await(await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');for await(const entry of dir.values()){const f=await entry.getFile();opfs.push({name:entry.name,size:f.size});}}catch{}const files=document.getElementById('backupplus-decrypt-files');return {status:document.getElementById('backupplus-decrypt-status')?.textContent,busy:document.querySelector('.backupplus-decryption-tool')?.getAttribute('aria-busy'),progress:document.getElementById('backupplus-decrypt-progress')?.value,results:document.querySelectorAll('#backupplus-decrypt-results a').length,startDisabled:document.getElementById('backupplus-decrypt-start')?.disabled,inputDisabled:files?.disabled,fileCount:files?.files?.length,selection:document.getElementById('backupplus-decrypt-selection')?.textContent,opfs};})()`,
+		).catch(() => null);
+		throw new Error('Browser condition timed out: ' + expression + ' ' + JSON.stringify(state));
+	}
+	async function waitForNoStagedFiles() {
+		await wait(
+			`(async()=>{const dir=await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');for await(const e of dir.values())if(e.name.startsWith('job-'))return false;return true;})()`,
+		);
 	}
 	async function navigate(url) {
 		await call('Page.navigate', { url });
@@ -219,7 +236,7 @@ try {
 	assert.equal(await evaluate('document.querySelectorAll("#backupplus_db_decrypt").length'), 1);
 	assert.equal(
 		await evaluate("document.querySelector('label[for=backupplus_db_decrypt]').textContent"),
-		'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives)',
+		'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives or age -p archives)',
 	);
 	assert.deepEqual(
 		await evaluate(
@@ -239,14 +256,30 @@ try {
 	);
 	const fixture = async (name) =>
 		JSON.parse(await readFile(new URL('./fixtures/' + name + '.json', import.meta.url), 'utf8'));
+	const ageVector = async (name) => {
+		const raw = await readFile(new URL('./fixtures/age-testkit/testdata/' + name, import.meta.url));
+		const separator = raw.indexOf(Buffer.from('\n\n'));
+		assert(separator >= 0, 'Invalid age test vector: ' + name);
+		const metadata = {};
+		for (const line of raw.subarray(0, separator).toString('utf8').split('\n')) {
+			const index = line.indexOf(': ');
+			assert(index >= 0, 'Invalid age test vector metadata: ' + name);
+			const key = line.slice(0, index);
+			(metadata[key] ??= []).push(line.slice(index + 2));
+		}
+		return { metadata, ciphertext: raw.subarray(separator + 2) };
+	};
 	const age = await fixture('age-keys'),
-		legacy = (await fixture('phpseclib2-compat')).database[8];
+		legacy = (await fixture('phpseclib2-compat')).database[8],
+		scryptVector = await ageVector('scrypt'),
+		hybridVector = await ageVector('hybrid');
 	let index = 0;
 	const sentinel = 'SEC003/+?&=' + randomBytes(10).toString('hex') + '!';
 	const secrets = [
 		sentinel,
 		Buffer.from(legacy.key, 'base64').toString(),
 		age.passphrase,
+		...hybridVector.metadata.identity,
 		...Object.values(age.keys).map((k) => k.identity),
 		...Object.values(age.keys).map((k) => k.encrypted_pem),
 	];
@@ -326,7 +359,7 @@ try {
 		const actual = await evaluate(
 			`(async()=>{const a=document.querySelector('#backupplus-decrypt-results a');if(!a.href.startsWith('blob:'))throw Error('Download must be local');const b=await (await fetch(a.href)).arrayBuffer();const hash=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(hash)].map(v=>v.toString(16).padStart(2,'0')).join('');})()`,
 		);
-		assert.equal(actual, createHash('sha256').update(plain).digest('hex'));
+		assert.equal(actual, typeof plain === 'string' ? plain : createHash('sha256').update(plain).digest('hex'));
 		assert.equal(await evaluate('!!document.querySelector(".backupplus-decrypt-legacy")'), legacy);
 	}
 	const from = (s) => Buffer.from(s, 'base64');
@@ -390,6 +423,22 @@ try {
 			});
 			console.log('PASS: actual browser worker ' + type + ' ' + form);
 		}
+	await run(
+		scryptVector.ciphertext,
+		scryptVector.metadata.payload[0],
+		{ password: scryptVector.metadata.passphrase[0] },
+	);
+	console.log('PASS: actual browser worker age -p scrypt archive');
+	await run(
+		hybridVector.ciphertext,
+		hybridVector.metadata.payload[0],
+		{ identity: hybridVector.metadata.identity[0] },
+	);
+	console.log('PASS: actual browser worker hybrid ML-KEM-768/X25519 archive');
+	assert(
+		!JSON.stringify(proxyRequests.slice(networkStart)).includes(scryptVector.metadata.passphrase[0]),
+		'The age -p passphrase must never be sent in a request',
+	);
 	const corrupt = from(age.keys.native.ciphertext);
 	corrupt[corrupt.length - 1] ^= 1;
 	await run(corrupt, null, { identity: age.keys.native.identity }, { failure: true });
@@ -448,6 +497,79 @@ try {
 	);
 	console.log(
 		'PASS: late authentication failure and cancellation during OPFS writes remove staged plaintext',
+	);
+	// Fail a real OPFS write after a valid chunk has already been staged.
+	await evaluate(`(async()=>{
+		window.productionWorkerURL = backupplus_decryption.worker;
+		window.productionWorkerSource = await (await fetch(backupplus_decryption.worker)).text();
+		const harness = "const create=FileSystemFileHandle.prototype.createWritable;FileSystemFileHandle.prototype.createWritable=async function(...args){const output=await create.apply(this,args);const write=output.write.bind(output);let count=0;output.write=async bytes=>{if(++count===2)throw new DOMException('Test quota exhausted','QuotaExceededError');return write(bytes);};return output;};";
+		backupplus_decryption.worker=URL.createObjectURL(new Blob([harness,window.productionWorkerSource],{type:'text/javascript'}));
+	})()`);
+	await run(
+		await readFile(largeCipher),
+		null,
+		{ identity: age.keys.native.identity },
+		{ failure: true },
+	);
+	assert.equal(
+		await evaluate('document.getElementById("backupplus-decrypt-status").textContent'),
+		await evaluate('backupplus_decryption.errors.STORAGE_FAILED'),
+	);
+	await wait(
+		`(async()=>{const dir=await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');for await(const e of dir.values())if(e.name.startsWith('job-'))return false;return true;})()`,
+	);
+	await evaluate(
+		'URL.revokeObjectURL(backupplus_decryption.worker);backupplus_decryption.worker=window.productionWorkerURL;',
+	);
+
+	// Signal immediately before the actual Go key-unlock call, then cancel while
+	// a deliberately slower, independently re-encrypted OpenSSH key is unlocking.
+	const slowKeyPath = path.join(directory, 'slow-rsa-key');
+	await writeFile(slowKeyPath, age.keys.rsa.identity, { mode: 0o600 });
+	const slowKeygen = spawnSync(
+		'ssh-keygen',
+		['-p', '-q', '-a', '128', '-P', age.passphrase, '-N', age.passphrase, '-f', slowKeyPath],
+		{ encoding: 'utf8' },
+	);
+	assert.equal(slowKeygen.status, 0, slowKeygen.stderr);
+	const slowIdentity = await readFile(slowKeyPath, 'utf8');
+	secrets.push(slowIdentity);
+	await evaluate(`(()=>{
+		const harness = "let testJob,apiValue;self.addEventListener('message',e=>{testJob=e.data.id;});Object.defineProperty(globalThis,'BackupPlusAgeSSH',{configurable:true,get(){return apiValue;},set(api){apiValue=api;const open=api.open;api.open=(...args)=>{self.postMessage({id:testJob,type:'progress',fraction:0.000001});return open(...args);};}});";
+		backupplus_decryption.worker=URL.createObjectURL(new Blob([harness,window.productionWorkerSource],{type:'text/javascript'}));
+	})()`);
+	await clear();
+	await select(from(age.keys.rsa.ciphertext));
+	await evaluate(
+		`document.getElementById('backupplus-manual-age-identity').value=${JSON.stringify(slowIdentity)};document.getElementById('backupplus-manual-age-passphrase').value=${JSON.stringify(age.passphrase)};document.getElementById('backupplus-decrypt-start').click();`,
+	);
+	await wait(
+		'document.querySelector(".backupplus-decryption-tool").getAttribute("aria-busy") === "true" && document.getElementById("backupplus-decrypt-progress").value > 0',
+	);
+	await evaluate('document.getElementById("backupplus-decrypt-cancel").click()');
+	await wait(
+		'document.getElementById("backupplus-decrypt-status").textContent === backupplus_decryption.cancelled',
+	);
+	assert.equal(
+		await evaluate('document.querySelectorAll("#backupplus-decrypt-results a").length'),
+		0,
+	);
+	await wait(
+		`(async()=>{const dir=await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');for await(const e of dir.values())if(e.name.startsWith('job-'))return false;return true;})()`,
+	);
+	await evaluate(
+		'URL.revokeObjectURL(backupplus_decryption.worker);backupplus_decryption.worker=window.productionWorkerURL;',
+	);
+	await run(from(age.keys.rsa.ciphertext), from(age.plaintext), {
+		identity: age.keys.rsa.identity,
+		keyPassword: age.passphrase,
+	});
+	assert(
+		proxyRequests.some((request) => request.url.includes('/backupplus-agessh.wasm.gz')),
+		'The production worker must fetch the precompressed module',
+	);
+	console.log(
+		'PASS: OPFS quota failure cleanup, cancellation during Go key unlocking, retry and compressed WASM loading',
 	);
 	// Simulate a browser without X25519 Web Crypto or OPFS, using the exact shipping bundle.
 	await evaluate(`(async()=>{
@@ -539,41 +661,107 @@ try {
 	// Prepare an isolated recovery point through the actual restore screen and worker.
 	restoreIsolated = true;
 	const restorePoint = restoreFixture('setup');
-	await call('Network.setExtraHTTPHeaders', { headers: { 'X-BackupPlus-Restore-Test': keygenToken } });
+	await call('Network.setExtraHTTPHeaders', {
+		headers: { 'X-BackupPlus-Restore-Test': keygenToken },
+	});
 	await navigate(origin + '/wp-admin/options-general.php?page=backupplus');
 	await wait('!!window.backupplus_prepare_restore');
-	await evaluate(`document.querySelector('button.choose-components-button[data-backup_timestamp="${restorePoint.timestamp}"]').click();document.getElementById('backupplus_restore_uploads').checked=true;`);
-	assert.equal(await evaluate("document.getElementById('backupplus-age-identity').hasAttribute('name') || document.getElementById('backupplus-age-key-passphrase').hasAttribute('name')"), false, 'Restore secrets must never be successful form controls');
-	assert.equal(await evaluate("!!document.getElementById('backupplus-restore-passphrase')"), false, 'Restore must not offer a legacy backup passphrase field');
+	await evaluate(
+		`document.querySelector('button.choose-components-button[data-backup_timestamp="${restorePoint.timestamp}"]').click();document.getElementById('backupplus_restore_uploads').checked=true;`,
+	);
+	assert.equal(
+		await evaluate(
+			"['backupplus-age-identity','backupplus-age-key-passphrase','backupplus-age-archive-passphrase'].some(id=>document.getElementById(id).hasAttribute('name'))",
+		),
+		false,
+		'Restore secrets must never be successful form controls',
+	);
+	assert.equal(
+		await evaluate("!!document.getElementById('backupplus-restore-passphrase')"),
+		false,
+		'Restore must not offer a legacy backup passphrase field',
+	);
+	assert.equal(
+		await evaluate("!!document.getElementById('backupplus-age-archive-passphrase')"),
+		true,
+		'Restore must offer a private age -p passphrase field',
+	);
 	const transferStart = proxyRequests.length;
-	await evaluate(`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.ed25519.identity)};document.querySelector('.backupplus-restore--next-step').click();`);
-	await wait('!window.backupplus_restore_preparing && document.getElementById("backupplus-restore-modal-stage2a").textContent === backupplus_decryption.errors.DECRYPT_FAILED');
-	assert.equal(await evaluate("jQuery('#backupplus-age-identity').is(':visible')"), true, 'A decryption failure must show the key controls for retry');
-	assert.equal(proxyRequests.slice(transferStart).filter(r=>r.body.includes('operation=upload')).length, 0, 'Failed authentication must not upload partial plaintext');
+	await evaluate(
+		`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.ed25519.identity)};document.querySelector('.backupplus-restore--next-step').click();`,
+	);
+	await wait(
+		'!window.backupplus_restore_preparing && document.getElementById("backupplus-restore-modal-stage2a").textContent === backupplus_decryption.errors.DECRYPT_FAILED',
+	);
+	assert.equal(
+		await evaluate("jQuery('#backupplus-age-identity').is(':visible')"),
+		true,
+		'A decryption failure must show the key controls for retry',
+	);
+	assert.equal(
+		proxyRequests.slice(transferStart).filter((r) => r.body.includes('operation=upload')).length,
+		0,
+		'Failed authentication must not upload partial plaintext',
+	);
+	await waitForNoStagedFiles();
 	assert.equal(await evaluate("document.getElementById('backupplus-age-identity').value"), '');
 	// Cancel after the first plaintext chunk reaches the server, before completion.
-	await evaluate(`window.restoreOriginalFetch=window.fetch;window.fetch=async function(url, options){if(options && options.body instanceof URLSearchParams && options.body.get('operation')==='upload' && Number(options.body.get('offset'))>0){window.heldRestoreTicket=options.body.get('ticket');return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true}));}return window.restoreOriginalFetch(url,options);};document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.native.identity)};document.querySelector('.backupplus-restore--next-step').click();`);
+	await evaluate(
+		`window.restoreOriginalFetch=window.fetch;window.fetch=async function(url, options){if(options && options.body instanceof URLSearchParams && options.body.get('operation')==='upload' && Number(options.body.get('offset'))>0){window.heldRestoreTicket=options.body.get('ticket');return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true}));}return window.restoreOriginalFetch(url,options);};document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.native.identity)};document.querySelector('.backupplus-restore--next-step').click();`,
+	);
 	await wait('!!window.heldRestoreTicket');
 	const cancelledTicket = await evaluate('window.heldRestoreTicket');
 	await evaluate("document.querySelector('.backupplus-restore--cancel').click()");
 	await wait('!window.backupplus_restore_preparing');
-	assert.deepEqual(restoreFixture('cancelled', cancelledTicket), { exists: false, files: [] }, 'Cancellation must delete partially uploaded plaintext and its ticket');
-	await evaluate(`window.fetch=window.restoreOriginalFetch;document.querySelector('button.choose-components-button[data-backup_timestamp="${restorePoint.timestamp}"]').click();document.getElementById('backupplus_restore_uploads').checked=true;`);
-	await evaluate(`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.native.encrypted_pem)};document.getElementById('backupplus-age-key-passphrase').value=${JSON.stringify(age.passphrase)};document.querySelector('.backupplus-restore--next-step').click();`);
+	assert.deepEqual(
+		restoreFixture('cancelled', cancelledTicket),
+		{ exists: false, files: [] },
+		'Cancellation must delete partially uploaded plaintext and its ticket',
+	);
+	await waitForNoStagedFiles();
+	await evaluate(
+		`window.fetch=window.restoreOriginalFetch;document.querySelector('button.choose-components-button[data-backup_timestamp="${restorePoint.timestamp}"]').click();document.getElementById('backupplus_restore_uploads').checked=true;`,
+	);
+	await evaluate(
+		`document.getElementById('backupplus-age-identity').value=${JSON.stringify(age.keys.native.encrypted_pem)};document.getElementById('backupplus-age-key-passphrase').value=${JSON.stringify(age.passphrase)};document.querySelector('.backupplus-restore--next-step').click();`,
+	);
 	await wait('backupplus_restore_stage === 3');
 	const restoreTicket = await evaluate("document.getElementById('backupplus-age-ticket').value");
 	assert.match(restoreTicket, /^[a-f0-9]{64}$/);
-	assert.equal(restoreFixture('verify', restoreTicket)[restorePoint.file], restorePoint.hash, 'Server staging must contain the exact browser-decrypted archive');
-	const uploadRequests = proxyRequests.slice(transferStart).filter(r=>r.body.includes('operation=upload') && new URLSearchParams(r.body).get('ticket') === restoreTicket);
+	assert.equal(
+		restoreFixture('verify', restoreTicket)[restorePoint.file],
+		restorePoint.hash,
+		'Server staging must contain the exact browser-decrypted archive',
+	);
+	const uploadRequests = proxyRequests
+		.slice(transferStart)
+		.filter(
+			(r) =>
+				r.body.includes('operation=upload') &&
+				new URLSearchParams(r.body).get('ticket') === restoreTicket,
+		);
 	assert(uploadRequests.length >= 3, 'Large restore copies must upload in bounded chunks');
-	assert.deepEqual(uploadRequests.map(r=>Number(new URLSearchParams(r.body).get('offset'))), [0, 524288, 1048576]);
-	await wait(`(async()=>{const dir=await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');for await(const e of dir.values())if(e.name.startsWith('job-'))return false;return true;})()`);
-	assertNoSecrets(JSON.stringify(proxyRequests.slice(transferStart)), 'Restore transfer and preflight requests');
-	assert.equal(await evaluate("['backupplus-age-identity','backupplus-age-key-passphrase'].every(id=>document.getElementById(id).value==='')"), true);
+	assert.deepEqual(
+		uploadRequests.map((r) => Number(new URLSearchParams(r.body).get('offset'))),
+		[0, 524288, 1048576],
+	);
+	await waitForNoStagedFiles();
+	assertNoSecrets(
+		JSON.stringify(proxyRequests.slice(transferStart)),
+		'Restore transfer and preflight requests',
+	);
+	assert.equal(
+		await evaluate(
+			"['backupplus-age-identity','backupplus-age-key-passphrase','backupplus-age-archive-passphrase'].every(id=>document.getElementById(id).value==='')",
+		),
+		true,
+	);
 	await evaluate("document.querySelector('.backupplus-restore--cancel').click()");
 	restoreFixture('cleanup');
 	restoreIsolated = false;
-	console.log('PASS: restore screen decrypts locally, rejects wrong keys without upload, transfers exact age plaintext in chunks, cleans cancelled transfers and browser staging and keeps keys out of HTTP');
+	console.log(
+		'PASS: restore screen decrypts locally, rejects wrong keys without upload, transfers exact age plaintext in chunks, cleans cancelled transfers and browser staging and keeps keys out of HTTP',
+	);
 	// Generate and save through the real settings UI, using disposable server options.
 	keygenSettings('setup');
 	keygenIsolated = true;
@@ -585,11 +773,12 @@ try {
 		'document.getElementById("backupplus-age-generate") && !document.getElementById("backupplus-age-generate").disabled',
 	);
 	const originalSettings = keygenSettings('read');
-	const originalOptionsHash = keygenSettings('original');
+	const originalOptionRows = keygenSettings('snapshot');
 	const formWasDirty = await evaluate('backupplus_settings_form_changed');
 	assert.equal(originalSettings.mode, 'none');
 	const generatedNetworkStart = requests.length;
 	await evaluate('document.getElementById("backupplus-age-generate").click()', true);
+	await wait('document.getElementById("backupplus-age-key-dialog").open');
 	assert.equal(await evaluate('document.getElementById("backupplus-age-key-dialog").open'), true);
 	assert.equal(
 		await evaluate(
@@ -601,10 +790,32 @@ try {
 		'document.getElementById("backupplus-age-key-public").textContent',
 	);
 	assert.match(generatedRecipient, /^age1[0-9a-z]{58}$/);
-	await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-	assert.equal(await evaluate("(()=>{const r=document.getElementById('backupplus-age-key-dialog').getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;})()"),true,'The private-key prompt must fit a narrow screen');
-	await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
-	await writeFile('/tmp/backupplus-age-keygen-dialog.png',Buffer.from((await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+	await call('Emulation.setDeviceMetricsOverride', {
+		width: 390,
+		height: 844,
+		deviceScaleFactor: 1,
+		mobile: false,
+	});
+	assert.equal(
+		await evaluate(
+			"(()=>{const r=document.getElementById('backupplus-age-key-dialog').getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;})()",
+		),
+		true,
+		'The private-key prompt must fit a narrow screen',
+	);
+	await call('Emulation.setDeviceMetricsOverride', {
+		width: 1440,
+		height: 1100,
+		deviceScaleFactor: 1,
+		mobile: false,
+	});
+	await writeFile(
+		'/tmp/backupplus-age-keygen-dialog.png',
+		Buffer.from(
+			(await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })).data,
+			'base64',
+		),
+	);
 
 	assert.equal(await evaluate('document.getElementById("backupplus-age-recipients").value'), '');
 	assert.deepEqual(
@@ -666,12 +877,15 @@ try {
 	await evaluate('document.getElementById("backupplus-settings-save").click()', true);
 	await wait('!document.querySelector(".blockUI.blockOverlay")');
 	const savedSettings = keygenSettings('read');
-	assert.equal(savedSettings.mode, 'age');
-	assert.equal(
-		keygenSettings('original'),
-		originalOptionsHash,
-		'The Save Changes test must not alter real WordPress settings',
+	const currentOptionRows = keygenSettings('snapshot');
+	const originalOptionValues = new Map(originalOptionRows.map((row) => [row.option_name, row.value_hash]));
+	const currentOptionValues = new Map(currentOptionRows.map((row) => [row.option_name, row.value_hash]));
+	const optionNames = new Set([...originalOptionValues.keys(), ...currentOptionValues.keys()]);
+	const changedOptions = [...optionNames].filter(
+		(name) => originalOptionValues.get(name) !== currentOptionValues.get(name),
 	);
+	assert.deepEqual(changedOptions, [], 'The Save Changes test must not alter real WordPress settings');
+	assert.equal(savedSettings.mode, 'age');
 	assert.deepEqual(savedSettings.recipients, [generatedRecipient]);
 	assert(
 		!JSON.stringify(savedSettings).includes('SECRET-KEY'),
@@ -697,10 +911,9 @@ try {
 		generatedRecipient,
 	);
 	// Cancelling a second key leaves the saved recipient untouched and clears its local download.
-	await evaluate(
-		'document.getElementById("backupplus-age-generate").click();document.getElementById("backupplus-age-key-cancel").click()',
-		true,
-	);
+	await evaluate('document.getElementById("backupplus-age-generate").click()', true);
+	await wait('document.getElementById("backupplus-age-key-dialog").open');
+	await evaluate('document.getElementById("backupplus-age-key-cancel").click()', true);
 	assert.equal(
 		await evaluate('document.getElementById("backupplus-age-recipients").value'),
 		generatedRecipient,

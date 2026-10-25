@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<div class="backupplus-decryption-credentials">
 		<p>
-			<label for="backupplus_db_decrypt"><?php esc_html_e( 'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives)', 'backupplus' ); ?></label>
+			<label for="backupplus_db_decrypt"><?php esc_html_e( 'Backup passphrase (UpdraftPlus legacy passphrase-encrypted archives or age -p archives)', 'backupplus' ); ?></label>
 			<input id="backupplus_db_decrypt" type="password" class="regular-text" autocomplete="off">
 		</p>
 		<p>

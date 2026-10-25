@@ -148,7 +148,14 @@ MU;
 			);
 			$rotate          = $request( $maintenance_url, $headers, $maintenance + array( 'operation' => 'rotate' ) );
 			$rotate_result   = json_decode( wp_remote_retrieve_body( $rotate ), true );
-			dropbox_wp_expect( ! empty( $rotate_result['success'] ), 'Rotation after downloading a recovery copy must succeed over HTTP' );
+			dropbox_wp_expect(
+				! empty( $rotate_result['success'] ),
+				sprintf(
+					'Rotation after downloading a recovery copy must succeed over HTTP (HTTP %d: %s)',
+					wp_remote_retrieve_response_code( $rotate ),
+					isset( $rotate_result['message'] ) ? $rotate_result['message'] : 'invalid response'
+				)
+			);
 			$newer = BackupPlus_Credential_Key_Store::configuration();
 			dropbox_wp_expect( $newer['active'] !== $config['active'], 'HTTP rotation must activate a newer key' );
 			wp_cache_delete( $option, 'options' );

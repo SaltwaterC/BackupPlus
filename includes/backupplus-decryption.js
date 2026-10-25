@@ -29,17 +29,31 @@
 			crypto.randomUUID;
 		var files = [],
 			worker = null,
+			workerId = null,
+			workerStopped = null,
 			busy = false,
 			generation = 0,
 			urls = [],
-			jobs = new Set(),
-			cancellation = null;
+			jobs = new Map();
 		function wipe() {
 			fields.forEach(function (field) {
 				field.value = '';
 			});
 		}
+		async function prepareStorage(id) {
+			try {
+				var directory = await (
+					await navigator.storage.getDirectory()
+				).getDirectoryHandle('backupplus-decryption', { create: true });
+				return await directory.getFileHandle(id, { create: true });
+			} catch (e) {
+				return null;
+			}
+		}
 		async function remove(id) {
+			// Creation belongs to the page: even a worker still returning from WASM
+			// after terminate() cannot recreate a file once cleanup removes it.
+			await jobs.get(id);
 			if (!navigator.storage || !navigator.storage.getDirectory) {
 				jobs.delete(id);
 				return true;
@@ -49,14 +63,16 @@
 					var dir = await (
 						await navigator.storage.getDirectory()
 					).getDirectoryHandle('backupplus-decryption');
-					await dir.removeEntry(id);
+					for (var name of [id, id + '.crswap']) {
+						try {
+							await dir.removeEntry(name);
+						} catch (e) {
+							if (e.name !== 'NotFoundError') throw e;
+						}
+					}
 					jobs.delete(id);
 					return true;
 				} catch (e) {
-					if (e.name === 'NotFoundError') {
-						jobs.delete(id);
-						return true;
-					}
 					// Worker termination can take a moment to release a writable file lock.
 					await new Promise(function (resolve) {
 						setTimeout(resolve, 50 * (attempt + 1));
@@ -64,6 +80,31 @@
 				}
 			}
 			return false;
+		}
+		async function stopWorker() {
+			if (!worker) return;
+			var current = worker,
+				id = workerId,
+				stopped = workerStopped;
+			if (id) {
+				try {
+					current.postMessage({ type: 'cancel', id: id });
+				} catch (e) {}
+			}
+			var timer,
+				finished = stopped
+					? await Promise.race([
+							stopped.then(function () { return true; }),
+							new Promise(function (resolve) { timer = setTimeout(function () { resolve(false); }, 10000); }),
+						])
+					: false;
+			clearTimeout(timer);
+			if (!finished) current.terminate();
+			if (worker === current) {
+				worker = null;
+				workerId = null;
+				workerStopped = null;
+			}
 		}
 		function controls() {
 			input.disabled = busy || !supported;
@@ -76,10 +117,7 @@
 		}
 		async function reset(keepBusy) {
 			generation++;
-			if (worker) worker.terminate();
-			worker = null;
-			if (cancellation) cancellation();
-			cancellation = null;
+			await stopWorker();
 			urls.forEach(function (url) {
 				URL.revokeObjectURL(url);
 			});
@@ -88,7 +126,7 @@
 			busy = Boolean(keepBusy);
 			progress.hidden = true;
 			controls();
-			return (await Promise.all(Array.from(jobs, remove))).every(Boolean);
+			return (await Promise.all(Array.from(jobs.keys(), remove))).every(Boolean);
 		}
 		function select(list) {
 			if (busy) return;
@@ -165,30 +203,50 @@
 					if (run !== generation) return;
 					var id = 'job-' + crypto.randomUUID();
 					activeJob = id;
-					jobs.add(id);
+					jobs.set(id, prepareStorage(id));
+					var stagingFile = await jobs.get(id);
+					if (run !== generation) return;
 					progress.value = 0;
 					status.textContent = config.decrypting + ' ' + file.name;
 					var result = await new Promise(function (resolve, reject) {
-						cancellation = function () {
-							reject(new Error('CANCELLED'));
-						};
-						worker = new Worker(config.worker);
-						worker.onerror = function (e) {
+						var current = (worker = new Worker(config.worker)),
+							finishStop;
+						workerId = id;
+						workerStopped = new Promise(function (done) { finishStop = done; });
+						function finish(error, value) {
+							current.terminate();
+							if (worker === current) {
+								worker = null;
+								workerId = null;
+								workerStopped = null;
+							}
+							finishStop();
+							if (error) reject(error);
+							else resolve(value);
+						}
+					current.onerror = function (e) {
 							e.preventDefault();
-							reject(new Error('WORKER_FAILED'));
+							finish(new Error('WORKER_FAILED'));
 						};
-						worker.onmessage = function (e) {
-							if (e.data.id !== id || run !== generation) return;
-							if (e.data.type === 'storage' && !e.data.persisted) jobs.delete(id);
-							else if (e.data.type === 'progress') progress.value = e.data.fraction;
-							else if (e.data.type === 'error') reject(new Error(e.data.code));
-							else if (e.data.type === 'complete') resolve(e.data);
+						current.onmessage = function (e) {
+							if (e.data.id !== id) return;
+							if (e.data.type === 'cancelled') {
+								finish(new Error('CANCELLED'));
+								return;
+							}
+							if (run !== generation) return;
+							if (e.data.type === 'progress') progress.value = e.data.fraction;
+							else if (e.data.type === 'error') finish(new Error(e.data.code));
+							else if (e.data.type === 'complete') finish(null, e.data);
 						};
-						worker.postMessage({ id: id, file: file, credentials: credentials });
+						current.postMessage({
+							id: id,
+							file: file,
+							credentials: credentials,
+							stagingFile: stagingFile,
+							agessh: config.agessh,
+						});
 					});
-					worker.terminate();
-					worker = null;
-					cancellation = null;
 					if (run !== generation) return;
 					var row = document.createElement('p'),
 						link = document.createElement('a');
@@ -212,9 +270,7 @@
 				status.textContent = config.complete;
 			} catch (e) {
 				if (run === generation) {
-					if (worker) worker.terminate();
-					worker = null;
-					cancellation = null;
+					await stopWorker();
 					var removed = !activeJob || !jobs.has(activeJob) || (await remove(activeJob));
 					if (run !== generation) return;
 					status.textContent = !removed
@@ -243,12 +299,13 @@
 					await navigator.storage.getDirectory()
 				).getDirectoryHandle('backupplus-decryption');
 				for await (var entry of dir.values()) {
+					var name = entry.name.replace(/\.crswap$/, '');
 					if (
-						/^job-[a-f0-9-]{36}$/.test(entry.name) &&
+						/^job-[a-f0-9-]{36}$/.test(name) &&
 						entry.kind === 'file' &&
 						Date.now() - (await entry.getFile()).lastModified > 86400000
 					)
-						await remove(entry.name);
+						await remove(name);
 				}
 			} catch (e) {}
 		})();

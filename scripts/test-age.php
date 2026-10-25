@@ -20,6 +20,32 @@ function age_expect( $condition, $message ) {
 	if ( ! $condition ) {
 		throw new RuntimeException( $message );
 	} }
+function age_testkit_vector( $raw, $name ) {
+	$parts = explode( "\n\n", $raw, 2 );
+	age_expect( 2 === count( $parts ), 'Test kit vector must have metadata and ciphertext: ' . $name );
+	$metadata = array();
+	foreach ( explode( "\n", $parts[0] ) as $line ) {
+		$separator = strpos( $line, ': ' );
+		age_expect( false !== $separator, 'Invalid test kit metadata in ' . $name );
+		$key                = substr( $line, 0, $separator );
+		$metadata[ $key ][] = substr( $line, $separator + 2 ); }
+	return array( $metadata, $parts[1] ); }
+function age_testkit_decrypt( $raw, $identity ) {
+	$input  = fopen( 'php://temp', 'w+b' );
+	$output = fopen( 'php://temp', 'w+b' );
+	age_expect( is_resource( $input ) && is_resource( $output ), 'Could not create age test kit streams' );
+	age_expect( strlen( $raw ) === fwrite( $input, $raw ), 'Could not stage age test kit vector' );
+	rewind( $input );
+	$failed = false;
+	try {
+		BackupPlus_Age_Crypto::decrypt( $input, $output, $identity );
+	} catch ( Throwable $e ) {
+		$failed = true; }
+	rewind( $output );
+	$plaintext = stream_get_contents( $output );
+	fclose( $input );
+	fclose( $output );
+	return array( $failed, $plaintext ); }
 class WP_Error {}
 class wpdb {}
 class BackupPlus_Options {
@@ -121,10 +147,74 @@ register_shutdown_function(
 		rmdir( $directory );
 	}
 );
-$fixture  = json_decode( file_get_contents( __DIR__ . '/fixtures/age-keys.json' ), true );
-$password = $fixture['passphrase'];
-$plain    = base64_decode( $fixture['plaintext'] );
-$path     = $directory . '/backup_2026-10-22-1200_fixture_0123456789ab-db.gz.crypt';
+$fixture           = json_decode( file_get_contents( __DIR__ . '/fixtures/age-keys.json' ), true );
+$password          = $fixture['passphrase'];
+$plain             = base64_decode( $fixture['plaintext'] );
+$path              = $directory . '/backup_2026-10-22-1200_fixture_0123456789ab-db.gz.crypt';
+$testkit_directory = __DIR__ . '/fixtures/age-testkit/testdata';
+$testkit_vectors   = glob( $testkit_directory . '/*' );
+age_expect( is_array( $testkit_vectors ) && $testkit_vectors, 'The pinned age test kit must be present' );
+$testkit_count = 0;
+$testkit_skips = array(
+	'armor'        => 0,
+	'scrypt'       => 0,
+	'post-quantum' => 0,
+);
+foreach ( $testkit_vectors as $vector_path ) {
+	$name                        = basename( $vector_path );
+	list($metadata, $ciphertext) = age_testkit_vector( file_get_contents( $vector_path ), $name );
+	if ( isset( $metadata['armored'] ) && 'yes' === $metadata['armored'][0] ) {
+		$testkit_skips['armor']++;
+		continue; }
+	if ( isset( $metadata['passphrase'] ) ) {
+		$testkit_skips['scrypt']++;
+		continue; }
+	$has_unsupported_identity = false;
+	foreach ( isset( $metadata['identity'] ) ? $metadata['identity'] : array() as $identity ) {
+		if ( 0 === strpos( $identity, 'AGE-SECRET-KEY-PQ-' ) ) {
+			$has_unsupported_identity = true;
+			break; }
+	}
+	if ( $has_unsupported_identity ) {
+		$testkit_skips['post-quantum']++;
+		continue; }
+	$expected   = isset( $metadata['expect'][0] ) ? $metadata['expect'][0] : '';
+	$identities = isset( $metadata['identity'] ) ? $metadata['identity'] : array( $fixture['keys']['native']['identity'] );
+	if ( isset( $metadata['compressed'][0] ) && 'zlib' === $metadata['compressed'][0] ) {
+		$ciphertext = gzuncompress( $ciphertext );
+		age_expect( false !== $ciphertext, 'Could not inflate age test kit vector ' . $name ); }
+	if ( 'success' === $expected ) {
+		$decrypted = false;
+		foreach ( $identities as $identity ) {
+			list($failed, $output) = age_testkit_decrypt( $ciphertext, $identity );
+			if ( ! $failed ) {
+				age_expect( isset( $metadata['payload'][0] ) && strtolower( $metadata['payload'][0] ) === hash( 'sha256', $output ), 'Age test kit plaintext hash mismatch: ' . $name );
+				$decrypted = true;
+				break; }
+		}
+		age_expect( $decrypted, 'Age test kit vector should decrypt: ' . $name );
+	} elseif ( 'payload failure' === $expected ) {
+		$partial_payload_matches = false;
+		foreach ( $identities as $identity ) {
+			list($failed, $output) = age_testkit_decrypt( $ciphertext, $identity );
+			age_expect( $failed, 'Age test kit payload failure must reject: ' . $name );
+			if ( isset( $metadata['payload'][0] ) && strtolower( $metadata['payload'][0] ) === hash( 'sha256', $output ) ) {
+				$partial_payload_matches = true; }
+		}
+		age_expect( $partial_payload_matches, 'Age test kit partial plaintext hash mismatch: ' . $name );
+	} else {
+		age_expect( in_array( $expected, array( 'no match', 'HMAC failure', 'header failure' ), true ), 'Unknown age test kit expectation: ' . $name );
+		foreach ( $identities as $identity ) {
+			list($failed, $output) = age_testkit_decrypt( $ciphertext, $identity );
+			age_expect( $failed && '' === $output, 'Age test kit failure must not release plaintext: ' . $name );
+		}
+	}
+	$testkit_count++;
+}
+$skip_summary = array();
+foreach ( $testkit_skips as $feature => $count ) {
+	$skip_summary[] = $feature . ' ' . $count; }
+echo 'PASS: age C2SP test kit (' . $testkit_count . ' vectors; skipped ' . implode( ', ', $skip_summary ) . ")\n";
 foreach ( $fixture['keys'] as $type => $key ) {
 	file_put_contents( $path, base64_decode( $key['ciphertext'] ) );
 	foreach ( array( 'identity', 'encrypted_pem' ) as $format ) {

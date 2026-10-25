@@ -41,10 +41,15 @@ PHP;
 	if ( false === file_put_contents( $path, $code ) ) {
 		throw new RuntimeException( 'Cannot create settings isolation.' );
 	}
-} elseif ( 'original' === $operation ) {
+} elseif ( 'snapshot' === $operation ) {
 	global $wpdb;
 	$rows = $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE (option_name LIKE 'backupplus_%' OR option_name = 'rewrite_rules') AND option_name NOT LIKE 'backupplus_keygen_test_%' AND option_name NOT LIKE 'backupplus_jobdata_%' ORDER BY option_name", ARRAY_A );
-	echo json_encode( hash( 'sha256', serialize( $rows ) ) );
+	foreach ( $rows as &$row ) {
+		$row['value_hash'] = hash( 'sha256', $row['option_value'] );
+		unset( $row['option_value'] );
+	}
+	unset( $row );
+	echo json_encode( $rows );
 } elseif ( 'read' === $operation ) {
 	echo json_encode( get_option( $option ) );
 } elseif ( 'cleanup' === $operation ) {

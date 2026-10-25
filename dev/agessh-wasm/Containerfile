@@ -1,0 +1,8 @@
+ARG GO_VERSION=1.27.3
+
+FROM docker.io/library/golang:${GO_VERSION}-bookworm AS go
+FROM docker.io/library/node:24-bookworm-slim
+
+COPY --from=go /usr/local/go /usr/local/go
+ENV PATH="/usr/local/go/bin:${PATH}"
+WORKDIR /workspace

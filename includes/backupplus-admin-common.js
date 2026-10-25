@@ -1693,7 +1693,7 @@ async function backupplus_restorer_checkstage2(doalert) {
 					}
 					if (info.age_ticket) {
 						jQuery('#backupplus-age-ticket').val(info.age_ticket);
-						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', true);
+						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase, #backupplus-age-archive-passphrase').val('').prop('disabled', true);
 					}
 // if (info.hasOwnProperty('multisite') && info.multisite && info.hasOwnProperty('same_url') && info.same_url) {
 					if (info.hasOwnProperty('addui')) {
@@ -3760,7 +3760,7 @@ jQuery(function($) {
 		point_select.prop('disabled', 0 == restore_points.length);
 		jQuery('#backupplus_restore_point_row').toggle(restore_points.length > 0);
 		jQuery('#backupplus-age-ticket').val('');
-		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', false);
+		jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase, #backupplus-age-archive-passphrase').val('').prop('disabled', false);
 		backupplus_restore_setoptions(entities);
 		if (pitr) jQuery('#backupplus_restore_db').prop('checked', true);
 		jQuery('#backupplus_restorer_dboptions').toggle(!pitr && jQuery('#backupplus_restore_db').is(':checked'));

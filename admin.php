@@ -737,6 +737,11 @@ class BackupPlus_Admin {
 			'backupplus_decryption',
 			array(
 				'worker'      => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
+				'agessh'      => array(
+					'compressedWasmURL' => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm.gz?ver=' . rawurlencode( $enqueue_version ),
+					'wasmURL'           => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm?ver=' . rawurlencode( $enqueue_version ),
+					'runtimeURL'        => BACKUPPLUS_URL . '/js/backupplus-agessh-wasm_exec.js?ver=' . rawurlencode( $enqueue_version ),
+				),
 				'decrypting'  => __( 'Decrypting locally:', 'backupplus' ),
 				'downloading' => __( 'Downloading encrypted archive:', 'backupplus' ),
 				'uploading'   => __( 'Uploading plaintext restore copy:', 'backupplus' ),

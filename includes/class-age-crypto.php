@@ -145,7 +145,21 @@ class BackupPlus_Age_Crypto {
 				throw new \RuntimeException( 'Truncated age payload.' );
 			}
 			$nonce = $counter . ( $final ? "\x01" : "\x00" );
-			BackupPlus_Archive_IO::write_all( $output, BackupPlus_Age_Keys::aead( $data, $key, $nonce, $decrypt ) );
+			try {
+				$plaintext = BackupPlus_Age_Keys::aead( $data, $key, $nonce, $decrypt );
+			} catch ( \Throwable $e ) {
+				if ( $decrypt && self::CHUNK_SIZE + 16 === strlen( $data ) ) {
+					// Full chunks are ambiguous until their tag is checked: a valid
+					// final chunk can have trailing bytes, and a non-final chunk can
+					// be the last available chunk in a truncated stream.
+					$alternate_nonce = $counter . ( $final ? "\x00" : "\x01" );
+					$plaintext       = BackupPlus_Age_Keys::aead( $data, $key, $alternate_nonce, true );
+					BackupPlus_Archive_IO::write_all( $output, $plaintext );
+					throw new \RuntimeException( $final ? 'Truncated age payload.' : 'Trailing data after final age payload chunk.' );
+				}
+				throw $e;
+			}
+			BackupPlus_Archive_IO::write_all( $output, $plaintext );
 			$first = false;
 			for ( $i = 10; $i >= 0; $i-- ) {
 				$counter[ $i ] = chr( ( ord( $counter[ $i ] ) + 1 ) & 255 );

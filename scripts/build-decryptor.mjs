@@ -46,8 +46,9 @@ const packages = [
 	'@noble/ciphers',
 	'@noble/curves',
 	'@noble/hashes',
-	'bcrypt-pbkdf',
-	'tweetnacl',
+	'@noble/post-quantum',
+	'@scure/base',
+	'age-encryption',
 	'crypto-js',
 ];
 let notices = 'BackupPlus browser cryptography — third-party licenses\n\n';

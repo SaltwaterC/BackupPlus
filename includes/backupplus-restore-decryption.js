@@ -2,7 +2,7 @@
 (function () {
 	'use strict';
 	var active = null;
-	var ids = ['backupplus-age-identity', 'backupplus-age-key-passphrase'];
+	var ids = ['backupplus-age-identity', 'backupplus-age-key-passphrase', 'backupplus-age-archive-passphrase'];
 	function wipe() {
 		ids.forEach(function (id) { var field = document.getElementById(id); if (field) field.value = ''; });
 	}
@@ -11,10 +11,12 @@
 		for (var attempt = 0; attempt < 5; attempt++) {
 			try {
 				var directory = await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption');
-				await directory.removeEntry(id);
+				for (var name of [id, id + '.crswap']) {
+					try { await directory.removeEntry(name); }
+					catch (e) { if (e.name !== 'NotFoundError') throw e; }
+				}
 				return;
 			} catch (e) {
-				if (e.name === 'NotFoundError') return;
 				await new Promise(function (resolve) { setTimeout(resolve, 50 * (attempt + 1)); });
 			}
 		}
@@ -57,6 +59,7 @@
 		var fields = ids.map(function (id) { return document.getElementById(id); });
 		credentials.identity = fields[0].value;
 		credentials.keyPassword = fields[1].value;
+		credentials.password = fields[2].value;
 		wipe();
 		fields.forEach(function (field) { field.disabled = true; });
 		var signal = state.controller.signal;
@@ -80,26 +83,46 @@
 				var ciphertext = await request({ operation: 'download', ticket: state.ticket, file: file }, signal, true);
 				check();
 				state.job = 'job-' + crypto.randomUUID();
+				// The worker may finish synchronous WASM work after termination.
+				// Only the page creates entries, so cleanup cannot race a late create.
+				var stagingFile = null;
+				try {
+					var directory = await (await navigator.storage.getDirectory()).getDirectoryHandle('backupplus-decryption', { create: true });
+					stagingFile = await directory.getFileHandle(state.job, { create: true });
+				} catch (storageError) {}
+				check();
 				show(config.decrypting, file, 0);
 				var result = await new Promise(function (resolve, reject) {
 					var id = state.job;
-					var worker = state.worker = new Worker(config.worker);
-					function abort() { worker.terminate(); reject(new DOMException('Cancelled', 'AbortError')); }
+					var worker = state.worker = new Worker(config.worker),
+						cancelTimer;
+					function abort() {
+						try { worker.postMessage({ type: 'cancel', id: id }); } catch (e) {}
+						cancelTimer = setTimeout(function () { finish(new DOMException('Cancelled', 'AbortError')); }, 10000);
+					}
 					signal.addEventListener('abort', abort, { once: true });
 					function finish(error, value) {
+						clearTimeout(cancelTimer);
 						signal.removeEventListener('abort', abort);
-						worker.terminate();
-						state.worker = null;
+						if (state.worker === worker) {
+							worker.terminate();
+							state.worker = null;
+						}
 						if (error) reject(error); else resolve(value);
 					}
 					worker.onerror = function (e) { e.preventDefault(); finish(new Error('WORKER_FAILED')); };
 					worker.onmessage = function (e) {
-						if (e.data.id !== id || signal.aborted) return;
+						if (e.data.id !== id) return;
+						if (e.data.type === 'cancelled' || (signal.aborted && e.data.type === 'error')) {
+							finish(new DOMException('Cancelled', 'AbortError'));
+							return;
+						}
+						if (signal.aborted) return;
 						if (e.data.type === 'progress') show(config.decrypting, file, e.data.fraction);
 						else if (e.data.type === 'error') finish(new Error(e.data.code));
 						else if (e.data.type === 'complete') finish(null, e.data);
 					};
-					worker.postMessage({ id: id, file: ciphertext, credentials: credentials, hashOutput: true });
+					worker.postMessage({ id: id, file: ciphertext, credentials: credentials, hashOutput: true, stagingFile: stagingFile, agessh: config.agessh });
 				});
 				ciphertext = null;
 				check();

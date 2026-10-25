@@ -1,193 +1,120 @@
-import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
+import { Decrypter } from 'age-encryption';
+import { base64nopad } from '@scure/base';
 import CryptoJS from 'crypto-js/core.js';
 import 'crypto-js/lib-typedarrays.js';
 import 'crypto-js/aes.js';
 import 'crypto-js/pad-nopadding.js';
-import { utf8, text, concat, equal, check, unbase64, hash, hkdf, hmac } from './bytes.mjs';
-import { identities, publicX, sharedX } from './keys.mjs';
-const empty = new Uint8Array();
-const starts = (b, s) => equal(b.subarray(0, s.length), utf8.encode(s));
-async function read(file, offset, n) {
-	check(offset + n <= file.size);
-	const b = new Uint8Array(await file.slice(offset, offset + n).arrayBuffer());
-	check(b.length === n);
-	return b;
+import { utf8, text, equal, check } from './bytes.mjs';
+import { identities } from './keys.mjs';
+
+const starts = (bytes, prefix) => equal(bytes.subarray(0, prefix.length), utf8.encode(prefix));
+async function read(file, offset, length) {
+	check(offset + length <= file.size);
+	const bytes = new Uint8Array(await file.slice(offset, offset + length).arrayBuffer());
+	check(bytes.length === length);
+	return bytes;
 }
-function chacha(key, nonce, body) {
-	check(body.length >= 16 && body.length <= 65552);
-	return chacha20poly1305(key, nonce).decrypt(body);
-}
-function parseAgeHeader(bytes) {
-	let pos = 0;
-	const line = () => {
-		const end = bytes.indexOf(10, pos);
-		check(end >= pos && end - pos <= 4095);
-		const result = text(bytes.subarray(pos, end));
-		check(!result.includes('\r'));
-		pos = end + 1;
-		return result;
-	};
-	check(line() === 'age-encryption.org/v1');
-	const stanzas = [];
-	let current = line();
-	while (current.startsWith('-> ')) {
-		check(stanzas.length < 100);
-		const fields = current.slice(3).split(' ');
-		check(fields.length > 0 && fields.every((s) => /^[!-~]+$/.test(s)));
-		let body = '',
-			bodyLine;
-		do {
-			bodyLine = line();
-			check(/^[A-Za-z0-9+/]*$/.test(bodyLine) && bodyLine.length <= 64);
-			body += bodyLine;
-		} while (bodyLine.length === 64);
-		const stanza = { type: fields[0], args: fields.slice(1), body: unbase64(body, true) };
-		if (stanza.type === 'X25519')
-			check(
-				stanza.args.length === 1 &&
-					unbase64(stanza.args[0], true).length === 32 &&
-					stanza.body.length === 32,
-			);
-		if (stanza.type === 'ssh-rsa')
-			check(
-				stanza.args.length === 1 &&
-					unbase64(stanza.args[0], true).length === 4 &&
-					stanza.body.length >= 256 &&
-					stanza.body.length <= 1024,
-			);
-		if (stanza.type === 'ssh-ed25519')
-			check(
-				stanza.args.length === 2 &&
-					unbase64(stanza.args[0], true).length === 4 &&
-					unbase64(stanza.args[1], true).length === 32 &&
-					stanza.body.length === 32,
-			);
-		stanzas.push(stanza);
-		current = line();
-	}
-	check(/^--- [A-Za-z0-9+/]{43}$/.test(current));
-	const mac = unbase64(current.slice(4), true),
-		authenticated = bytes.slice(0, pos - current.length - 1 + 3);
-	check(pos <= 65536);
-	return { stanzas, mac, authenticated, offset: pos };
-}
-async function unwrap(stanza, identity, portable) {
-	const { type, args, body } = stanza;
-	if (type === 'X25519') {
-		check(args.length === 1 && body.length === 32);
-		const ephemeral = unbase64(args[0], true);
-		check(ephemeral.length === 32);
-		if (identity.type !== type) return null;
-		const shared = await sharedX(identity.secret, ephemeral, portable);
-		const key = await hkdf(
-			shared,
-			concat(ephemeral, publicX(identity.secret)),
-			'age-encryption.org/v1/X25519',
-		);
-		shared.fill(0);
-		try {
-			return chacha(key, new Uint8Array(12), body);
-		} finally {
-			key.fill(0);
+
+// Bound the upstream parser's input before it allocates its header transcript.
+// This guard only enforces application budgets; typage parses/authenticates age.
+function checkHeaderBudget(bytes) {
+	let offset = 0,
+		stanzas = 0;
+	while (offset < bytes.length) {
+		const end = bytes.indexOf(10, offset);
+		check(end >= offset && end - offset <= 4095);
+		const line = text(bytes.subarray(offset, end));
+		check(!line.includes('\r'));
+		if (line.startsWith('-> ')) check(++stanzas <= 100);
+		if (line.startsWith('--- ')) {
+			check(/^--- [A-Za-z0-9+/]{43}$/.test(line));
+			return;
 		}
+		offset = end + 1;
 	}
-	if (type === 'ssh-rsa' || type === 'ssh-ed25519') {
-		check(args.length === (type === 'ssh-rsa' ? 1 : 2) && unbase64(args[0], true).length === 4);
-		const ephemeral = type === 'ssh-ed25519' ? unbase64(args[1], true) : null;
-		if (ephemeral) check(ephemeral.length === 32 && body.length === 32);
-		else check(body.length >= 256 && body.length <= 1024);
-		if (
-			identity.type !== type ||
-			!equal(unbase64(args[0], true), (await hash(identity.wire)).subarray(0, 4))
-		)
-			return null;
-		const label = 'age-encryption.org/v1/' + type;
-		if (type === 'ssh-rsa')
-			return new Uint8Array(
-				await crypto.subtle.decrypt(
-					{ name: 'RSA-OAEP', label: utf8.encode(label) },
-					identity.key,
-					body,
-				),
-			);
-		const shared = await sharedX(identity.secret, ephemeral, portable),
-			tweak = await hkdf(empty, identity.wire, label);
-		let tweaked;
-		try {
-			tweaked = await sharedX(tweak, shared, portable);
-		} finally {
-			shared.fill(0);
-			tweak.fill(0);
-		}
-		const key = await hkdf(tweaked, concat(ephemeral, publicX(identity.secret)), label);
-		tweaked.fill(0);
-		try {
-			return chacha(key, new Uint8Array(12), body);
-		} finally {
-			key.fill(0);
-		}
-	}
-	return null;
+	check(false);
 }
-async function age(file, input, keyPassword, sink, progress, portable) {
-	const header = parseAgeHeader(await read(file, 0, Math.min(file.size, 65536)));
-	const keys = await identities(input, keyPassword);
-	let fileKey;
+
+// Preserve validation of every recognized stanza, including unmatched recipients.
+const stanzaPolicy = {
+	unwrapFileKey(stanzas) {
+		check(stanzas.length <= 100);
+		for (const { args, body } of stanzas) {
+			if (args[0] === 'X25519')
+				check(args.length === 2 && base64nopad.decode(args[1]).length === 32 && body.length === 32);
+			if (args[0] === 'ssh-rsa')
+				check(
+					args.length === 2 &&
+						base64nopad.decode(args[1]).length === 4 &&
+						body.length >= 256 &&
+						body.length <= 1024,
+				);
+			if (args[0] === 'ssh-ed25519')
+				check(
+					args.length === 3 &&
+						base64nopad.decode(args[1]).length === 4 &&
+						base64nopad.decode(args[2]).length === 32 &&
+						body.length === 32,
+				);
+			if (args[0] === 'scrypt') {
+				check(stanzas.length === 1 && args.length === 3);
+				check(/^[1-9][0-9]*$/.test(args[2]));
+				const logN = Number(args[2]);
+				check(Number.isSafeInteger(logN) && logN <= 20);
+				check(base64nopad.decode(args[1]).length === 16 && body.length === 32);
+			}
+			if (args[0] === 'mlkem768x25519')
+				check(args.length === 2 && base64nopad.decode(args[1]).length === 1120 && body.length === 32);
+		}
+		return null;
+	},
+};
+
+async function age(file, input, keyPassword, archivePassphrase, sink, progress, options) {
+	const head = await read(file, 0, Math.min(file.size, 65536));
+	checkHeaderBudget(head);
+	const imported = await identities(input, keyPassword, options);
+	let reader;
 	try {
-		for (const stanza of header.stanzas) {
-			// Validate recognized stanzas even if no identity matches; unknown extensions are ignored.
-			for (const identity of keys) {
-				let candidate;
-				try {
-					candidate = await unwrap(stanza, identity, portable);
-					if (!candidate) continue;
-					check(candidate.length === 16);
-					const macKey = await hkdf(candidate, empty, 'header');
-					let actual;
-					try {
-						actual = await hmac(macKey, header.authenticated);
-					} finally {
-						macKey.fill(0);
-					}
-					if (equal(actual, header.mac) && !fileKey) fileKey = candidate.slice();
-				} catch {
-					/* A different recipient or a failed unwrap cannot authenticate this header. */
-				} finally {
-					if (candidate) candidate.fill(0);
+		const decrypter = new Decrypter();
+		decrypter.addIdentity(stanzaPolicy);
+		if (archivePassphrase) {
+			check(typeof archivePassphrase === 'string' && archivePassphrase.length <= 65536);
+			decrypter.addPassphrase(archivePassphrase);
+		}
+		for (const key of imported.keys) decrypter.addIdentity(key);
+		let offset = 0;
+		const source = new ReadableStream({
+			async pull(controller) {
+				if (offset === file.size) {
+					controller.close();
+					return;
 				}
+				const bytes =
+					offset === 0 ? head : await read(file, offset, Math.min(65536, file.size - offset));
+				offset += bytes.length;
+				controller.enqueue(bytes);
+				progress(offset / file.size);
+			},
+		});
+		reader = (await decrypter.decrypt(source)).getReader();
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			try {
+				await sink.write(value);
+			} finally {
+				value.fill(0);
 			}
 		}
-		check(fileKey);
-		const nonce = await read(file, header.offset, 16),
-			key = await hkdf(fileKey, nonce, 'payload');
-		let offset = header.offset + 16,
-			index = 0n;
-		try {
-			do {
-				const length = Math.min(65552, file.size - offset),
-					last = offset + length === file.size;
-				check(length >= 16 && (index === 0n || length > 16));
-				const chunkNonce = new Uint8Array(12);
-				let n = index;
-				for (let i = 10; i >= 0; i--) {
-					chunkNonce[i] = Number(n & 255n);
-					n >>= 8n;
-				}
-				check(n === 0n);
-				chunkNonce[11] = last ? 1 : 0;
-				const plain = chacha(key, chunkNonce, await read(file, offset, length));
-				await sink.write(plain);
-				plain.fill(0);
-				offset += length;
-				index++;
-				progress(offset / file.size);
-			} while (offset < file.size);
-		} finally {
-			key.fill(0);
-		}
 	} finally {
-		if (fileKey) fileKey.fill(0);
-		for (const key of keys) if (key.secret) key.secret.fill(0);
+		if (reader) {
+			try {
+				await reader.cancel();
+			} catch {}
+			reader.releaseLock();
+		}
+		await imported.close();
 	}
 }
 const words = (bytes) => CryptoJS.lib.WordArray.create(bytes);
@@ -238,28 +165,30 @@ async function legacy(file, password, sink, progress) {
 		key.fill(0);
 	}
 }
-/** Reads bounded slices and only finishes the sink after the entire archive is verified. */
-export async function decryptArchive(
-	file,
-	credentials,
-	sink,
-	progress = () => {},
-	portable = false,
-) {
+/** Publish only after the entire upstream stream has authenticated. */
+export async function decryptArchive(file, credentials, sink, progress = () => {}, options = {}) {
 	let format;
 	try {
 		check(globalThis.crypto?.subtle);
 		const prefix = await read(file, 0, Math.min(file.size, 21));
 		if (starts(prefix, 'age-encryption.org/')) {
 			format = 'age';
-			await age(file, credentials.identity, credentials.keyPassword, sink, progress, portable);
+			await age(
+				file,
+				credentials.identity,
+				credentials.keyPassword,
+				credentials.password,
+				sink,
+				progress,
+				options,
+			);
 		} else {
 			format = 'legacy';
 			await legacy(file, credentials.password, sink, progress);
 		}
 		return { output: await sink.finish(), format };
-	} catch (e) {
+	} catch (error) {
 		await sink.abort();
-		throw e;
+		throw error;
 	}
 }

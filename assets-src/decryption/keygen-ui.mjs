@@ -29,15 +29,24 @@ function init() {
 		clear();
 		generate.focus();
 	}
-	generate.addEventListener('click', () => {
+	let generation = 0,
+		generating = false;
+	generate.addEventListener('click', async () => {
+		const request = ++generation;
 		clear();
 		status.textContent = '';
 		if (recipients.value.split(/\r?\n/).filter((line) => line.trim()).length >= 100) {
 			status.textContent = config.limit;
 			return;
 		}
+		generate.disabled = true;
+		generating = true;
 		try {
-			const key = generateAgeIdentity();
+			const key = await generateAgeIdentity();
+			if (request !== generation) {
+				key.identity = '';
+				return;
+			}
 			pending = key.recipient;
 			const contents =
 				'# created: ' +
@@ -57,6 +66,11 @@ function init() {
 		} catch {
 			clear();
 			status.textContent = config.failed;
+		} finally {
+			if (request === generation) {
+				generate.disabled = false;
+				generating = false;
+			}
 		}
 	});
 	download.addEventListener('click', () => {
@@ -84,6 +98,9 @@ function init() {
 		if (!dialog.open) clear();
 	});
 	window.addEventListener('pagehide', () => {
+		generation++;
+		if (generating) generate.disabled = false;
+		generating = false;
 		if (dialog.open) dialog.close();
 		clear();
 	});

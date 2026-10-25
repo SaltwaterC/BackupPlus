@@ -2,15 +2,19 @@
   "name": "backupplus-browser-decryptor",
   "private": true,
   "scripts": {
+    "build:agessh": "node scripts/build-agessh-wasm.mjs",
     "build:decryptor": "node scripts/build-decryptor.mjs",
+    "check:agessh": "node scripts/build-agessh-wasm.mjs --check",
     "check:decryptor": "node scripts/build-decryptor.mjs --check",
+    "test:agessh": "node scripts/test-agessh-wasm.mjs",
+    "test:agessh:browser": "node scripts/test-agessh-wasm-browser.mjs",
     "test:decryptor": "node scripts/test-client-decryption.mjs",
     "test:decryptor:browser": "node scripts/test-client-decryption-browser.mjs"
   },
   "dependencies": {
-    "@noble/ciphers": "2.4.0",
-    "@noble/curves": "2.4.0",
-    "bcrypt-pbkdf": "1.0.2",
+    "@noble/hashes": "2.4.0",
+    "@scure/base": "2.4.0",
+    "age-encryption": "0.3.1",
     "crypto-js": "4.2.0"
   },
   "devDependencies": {
