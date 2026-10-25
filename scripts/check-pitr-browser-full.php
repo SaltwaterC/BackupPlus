@@ -13,7 +13,7 @@ $browser_config = function ( $value, $name ) use ( $config ) {
 };
 add_filter( 'backupplus_get_option', $browser_config, 200, 2 );
 // Core cache cleanup expects the postmeta table, even in this minimal WordPress fixture.
-$application->query( 'CREATE TABLE IF NOT EXISTS `' . DB_NAME . '`.`' . $wpdb->postmeta . '` (meta_id bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY, post_id bigint unsigned NOT NULL DEFAULT 0, meta_key varchar(255), meta_value longtext) ENGINE=InnoDB' );
+$application->query( 'USE `' . DB_NAME . '`; CREATE TABLE IF NOT EXISTS `' . $wpdb->postmeta . '` (meta_id bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY, post_id bigint unsigned NOT NULL DEFAULT 0, meta_key varchar(255), meta_value longtext) ENGINE=InnoDB' );
 $expected_value = $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0];
 $application->query( 'UPDATE `' . DB_NAME . '`.pitr_b SET value=999' );
 $history_worker = new BackupPlus_PITR( $config );
