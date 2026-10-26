@@ -25,7 +25,7 @@ Optional [binary-log database backups](docs/binary-log-backups.md) add guarded t
 
 ## Backup times and retention cleanup
 
-File, database and incremental schedules can each run at an exact time in the site timezone. Hourly schedules choose the minute past the hour, and schedules of two to twelve hours choose which hours they run at and the minute. Weekly and fortnightly schedules also use a weekday, and monthly schedules a day from 1 to 28. Old backups can be deleted after each backup or by a separate daily cleanup that creates no backup. Existing schedules keep their timing until exact times are selected. Runs can be late without site traffic; running WordPress cron from the server's task scheduler is optional. See [backup times and retention cleanup](docs/backup-scheduling.md) for the scheduling rules, cleanup behaviour, server cron setup and checks.
+File, database, incremental and Database point-in-time recovery schedules can each run at an exact time in the site timezone. Hourly schedules choose the minute past the hour, and schedules of two to twelve hours choose which hours they run at and the minute. Weekly and fortnightly schedules also use a weekday, and monthly schedules a day from 1 to 28. Old backups can be deleted after each backup or by a separate daily cleanup that creates no backup. Existing schedules keep their timing until exact times are selected. Runs can be late without site traffic; running WordPress cron from the server's task scheduler is optional. See [backup times and retention cleanup](docs/backup-scheduling.md) for the scheduling rules, cleanup behaviour, server cron setup and checks.
 
 ## Code layout
 

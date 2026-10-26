@@ -175,6 +175,26 @@ function backupplus_list_cron_schedules() {
 	}
 
 	return array(
+		'everyminute'    => array(
+			'interval' => 60,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every minute', 'backupplus' ), 'everyminute' ),
+		),
+		'every5minutes'  => array(
+			'interval' => 5 * 60,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every 5 minutes', 'backupplus' ), 'every5minutes' ),
+		),
+		'every10minutes' => array(
+			'interval' => 10 * 60,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every 10 minutes', 'backupplus' ), 'every10minutes' ),
+		),
+		'every15minutes' => array(
+			'interval' => 15 * 60,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every 15 minutes', 'backupplus' ), 'every15minutes' ),
+		),
+		'every30minutes' => array(
+			'interval' => 30 * 60,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every 30 minutes', 'backupplus' ), 'every30minutes' ),
+		),
 		'everyhour'   => array(
 			'interval' => 3600,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', $every_hour, 'everyhour' ),
@@ -183,9 +203,17 @@ function backupplus_list_cron_schedules() {
 			'interval' => 7200,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '2' ), 'every2hours' ),
 		),
+		'every3hours' => array(
+			'interval' => 3 * 3600,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '3' ), 'every3hours' ),
+		),
 		'every4hours' => array(
 			'interval' => 14400,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '4' ), 'every4hours' ),
+		),
+		'every6hours' => array(
+			'interval' => 6 * 3600,
+			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '6' ), 'every6hours' ),
 		),
 		'every8hours' => array(
 			'interval' => 28800,

@@ -355,7 +355,9 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			} else {
 				$adapter = $this->database( $this->config, $this->work );
 				$active  = ! empty( $this->state['active'] ) && isset( $this->state['chains'][ $this->state['active'] ] ) ? $this->state['chains'][ $this->state['active'] ] : null;
-				$due     = ! $active || 'complete' !== $active['state'] || $active['fingerprint'] !== $fingerprint || time() - $active['entries'][0]['manifest']['created_at'] >= 23 * 3600;
+				$due     = 'baseline' === $mode
+					? ( $active && 'complete' === $active['state'] && $active['fingerprint'] === $fingerprint && time() - $active['entries'][0]['manifest']['created_at'] >= 23 * 3600 )
+					: ( ! $active || 'complete' !== $active['state'] || $active['fingerprint'] !== $fingerprint || time() - $active['entries'][0]['manifest']['created_at'] >= 23 * 3600 );
 				if ( 'full' === $mode || $due ) {
 					// Preserve old-chain coverage up to rollover when the same source/configuration is still usable.
 					if ( $active && 'complete' === $active['state'] && $active['fingerprint'] === $fingerprint ) {
@@ -371,7 +373,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 						}
 					}
 					$this->full( $adapter, $storage, $fingerprint, $destinations, $encryption );
-				} elseif ( 'capture' === $mode || time() - $active['last_capture'] >= $this->config['interval'] * 60 ) {
+				} elseif ( 'capture' === $mode || ( 'run' === $mode && time() - $active['last_capture'] >= $this->config['interval'] * 60 ) ) {
 					try {
 						$this->capture( $adapter, $storage, $fingerprint, $destinations, $encryption );
 					} catch ( Throwable $error ) {

@@ -368,7 +368,7 @@ trait BackupPlus_Core_Backup_Dispatch {
 	}
 
 	/**
-	 * Filter callback for saving the backupplus_interval_increments option: increments run from hourly to daily. The cron event is updated by BackupPlus_Backup_Schedule::reconcile(); see schedule_backup().
+	 * Filter callback for saving the backupplus_interval_increments option: increments run from one minute to daily. The cron event is updated by BackupPlus_Backup_Schedule::reconcile(); see schedule_backup().
 	 *
 	 * @param  String $interval
 	 * @return String - filtered value

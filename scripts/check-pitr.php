@@ -428,7 +428,7 @@ try {
 		$direct = $worker->restore( $id, $first_end, '', array(), null, false, true );
 		pitr_check( '1' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0] && '666972737400FF' === $observer->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0], 'Direct source replay missed the selected historical transaction.' );
 		pitr_check( 2 === count( $observer->query( 'SHOW COLUMNS FROM `' . DB_NAME . '`.pitr_a' ) ) && ! $observer->query( 'SHOW TABLES FROM `' . DB_NAME . '` LIKE \'pitr_future\'' ), 'Direct source replay included later schema changes.' );
-		pitr_check( ! file_exists( ABSPATH . '.maintenance' ) && $direct['capture_enabled'] && ! empty( BackupPlus_PITR::config()['enabled'] ) && wp_next_scheduled( BackupPlus_PITR::HOOK ) && ! empty( $direct['pre_restore_chain'] ), 'Direct source recovery did not retain protection and exit maintenance safely.' );
+		pitr_check( ! file_exists( ABSPATH . '.maintenance' ) && $direct['capture_enabled'] && ! empty( BackupPlus_PITR::config()['enabled'] ) && BackupPlus_PITR::next_scheduled() && ! empty( $direct['pre_restore_chain'] ), 'Direct source recovery did not retain protection and exit maintenance safely.' );
 		unset( $worker );
 		$worker = new BackupPlus_PITR( $config );
 		$application->query( 'USE `' . DB_NAME . '`; UPDATE pitr_b SET value=99; CREATE TABLE pitr_future (id int) ENGINE=InnoDB' );
@@ -436,7 +436,7 @@ try {
 		$restored = $worker->restore( $encrypted_full['chain_id'], $encrypted_increment['end_coordinate'], $recovery_config['source_config'], array(), $reader, true );
 		pitr_check( '3' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0], 'Whole-database replacement did not restore the historical row value.' );
 		pitr_check( array() === $observer->query( 'SHOW TABLES FROM `' . DB_NAME . '` LIKE \'pitr_future\'' ), 'Whole-database replacement left a future table behind.' );
-		pitr_check( ! file_exists( ABSPATH . '.maintenance' ) && $restored['capture_enabled'] && ! empty( BackupPlus_PITR::config()['enabled'] ) && wp_next_scheduled( BackupPlus_PITR::HOOK ), 'Successful replacement left maintenance active or reused the old capture cursor.' );
+		pitr_check( ! file_exists( ABSPATH . '.maintenance' ) && $restored['capture_enabled'] && ! empty( BackupPlus_PITR::config()['enabled'] ) && BackupPlus_PITR::next_scheduled(), 'Successful replacement left maintenance active or reused the old capture cursor.' );
 		unset( $worker );
 		$application->query( 'USE `' . DB_NAME . '`; UPDATE pitr_b SET value=99' );
 		require __DIR__ . '/check-pitr-web.php';

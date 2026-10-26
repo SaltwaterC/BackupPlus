@@ -2,13 +2,15 @@
 
 ## Exact backup times
 
-File, database and incremental file schedules can each run at an exact time. In Settings, choose a schedule, select **Run at an exact time**, then choose when it runs. Database timing stays editable when the database uses the same frequency as files.
+File, database, incremental file and Database point-in-time recovery schedules can each run at an exact time. In Settings, choose a schedule, select **Run at an exact time**, then choose when it runs. Database timing stays editable when the database uses the same frequency as files.
 
 - Daily, weekly, fortnightly and monthly schedules run once at the chosen local time. Weekly and fortnightly schedules also need a weekday; monthly schedules need a day from 1 to 28.
 - Hourly schedules take only the minute past the hour, for example every hour at :15.
 - Schedules of whole hours, from every two hours to every twelve hours, take which hours they run at and the minute. Every four hours offers 00, 04, 08, 12, 16 and 20 through 03, 07, 11, 15, 19 and 23; each choice lists its run times with the chosen minute, such as 01:30, 05:30, 09:30, 13:30, 17:30 and 21:30.
 - Custom intervals shorter than an hour take the minutes past the hour from their choices, such as :05, :20, :35 and :50 every 15 minutes. Other custom intervals take a time of day, which sets the day's runs. Custom intervals qualify only if they divide a day exactly into whole minutes.
-- Incremental file backups run hourly to daily, so they never take a day. **Incremental file backups** offers each schedule once: WordPress's own "Once Hourly" duplicates **Every hour**, and a saved "Once Hourly" choice runs as **Every hour** without moving its next run.
+- Incremental file backups can run every minute, 5, 10, 15 or 30 minutes; every 1, 2, 3, 4, 6, 8 or 12 hours; or daily. **Incremental file backups** offers each schedule once: WordPress's own "Once Hourly" duplicates **Every hour**, and a saved "Once Hourly" choice runs as **Every hour** without moving its next run.
+- The every-minute incremental schedule has no exact-time control because it already runs in every minute slot.
+- Database point-in-time recovery uses the same exact-time controls for its selected interval. Its every-minute interval has no exact-time control because it already runs in every minute slot.
 
 Schedules shorter than a day store their first run of the day as the start time. For example, choosing 13:30 every four hours is saved as 01:30, the same schedule.
 - Fortnightly schedules keep their two-week phase when the time or weekday changes. The phase is set by the first run after fortnightly exact timing is chosen.

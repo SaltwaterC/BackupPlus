@@ -6,12 +6,17 @@
 	var interval_selectors = {
 		files: '#backupplus-navtab-settings-content select.backupplus_interval',
 		db: '#backupplus-navtab-settings-content select.backupplus_interval_database',
-		increments: '#backupplus_interval_increments'
+		increments: '#backupplus_interval_increments',
+		pitr: '#backupplus-pitr-interval'
 	};
-	var disabled = { files: 'manual', db: 'manual', increments: 'none' };
+	var disabled = { files: 'manual', db: 'manual', increments: 'none', pitr: '0' };
 
 	function interval_info(interval) {
 		return settings.intervals[interval] || { exact: false, day: null };
+	}
+
+	function timing_info(which, interval) {
+		return interval_info('pitr' === which ? 'backupplus_pitr_' + interval : interval);
 	}
 
 	function pad(number) {
@@ -122,11 +127,12 @@
 		var $timing = $('.backupplus-schedule-timing[data-schedule="' + which + '"]');
 		if (!$timing.length) return;
 		var interval = $(interval_selectors[which]).val();
-		var info = interval_info(interval);
+		var info = timing_info(which, interval);
 		var $toggle = $timing.find('.backupplus-exact-toggle');
 		var $startday = $timing.find('input.backupplus-startday');
 
-		$timing.toggle(disabled[which] !== interval);
+		$timing.toggle(disabled[which] !== interval && !!info.exact);
+		if (!info.exact) $toggle.prop('checked', false);
 
 		$toggle.closest('label').toggle(!!info.exact);
 		$timing.find('.backupplus-exact-fields').toggle(!!info.exact && $toggle.prop('checked'));
@@ -164,6 +170,7 @@
 		refresh_timing('files');
 		refresh_timing('db');
 		refresh_timing('increments');
+		refresh_timing('pitr');
 		refresh_same_schedule();
 		refresh_cleanup();
 	}
@@ -177,7 +184,7 @@
 			refresh();
 		});
 		$content.on('change', '.backupplus-schedule-timing select[data-part]', select_start_time);
-		$content.on('change', '.backupplus-exact-toggle, ' + interval_selectors.files + ', ' + interval_selectors.db + ', ' + interval_selectors.increments, refresh);
+		$content.on('change', '.backupplus-exact-toggle, ' + interval_selectors.files + ', ' + interval_selectors.db + ', ' + interval_selectors.increments + ', ' + interval_selectors.pitr, refresh);
 		$content.on('change', '.backupplus-schedule-timing select[data-day-for]', function() {
 			$(this).closest('.backupplus-schedule-timing').find('input.backupplus-startday').val($(this).val());
 			refresh();

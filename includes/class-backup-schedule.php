@@ -73,16 +73,23 @@ class BackupPlus_Backup_Schedule {
 			return (int) $schedules[ $interval ]['interval'];
 		}
 		$known = array(
-			'everyhour'   => 3600,
-			'hourly'      => 3600,
-			'every2hours' => 7200,
-			'every4hours' => 14400,
-			'every8hours' => 28800,
-			'twicedaily'  => 43200,
-			'daily'       => 86400,
-			'weekly'      => 604800,
-			'fortnightly' => 1209600,
-			'monthly'     => 2592000,
+			'everyminute'    => 60,
+			'every5minutes'  => 300,
+			'every10minutes' => 600,
+			'every15minutes' => 900,
+			'every30minutes' => 1800,
+			'everyhour'      => 3600,
+			'hourly'         => 3600,
+			'every2hours'    => 7200,
+			'every3hours'    => 10800,
+			'every4hours'    => 14400,
+			'every6hours'    => 21600,
+			'every8hours'    => 28800,
+			'twicedaily'     => 43200,
+			'daily'          => 86400,
+			'weekly'         => 604800,
+			'fortnightly'    => 1209600,
+			'monthly'        => 2592000,
 		);
 		return isset( $known[ $interval ] ) ? $known[ $interval ] : 0;
 	}
@@ -93,7 +100,8 @@ class BackupPlus_Backup_Schedule {
 			return true;
 		}
 		$seconds = self::seconds( $interval );
-		return $seconds >= 60 && $seconds < DAY_IN_SECONDS && 0 === $seconds % 60 && 0 === DAY_IN_SECONDS % $seconds;
+		// A one-minute schedule already runs in every minute slot, so an exact-time offset has no effect.
+		return $seconds > 60 && $seconds < DAY_IN_SECONDS && 0 === $seconds % 60 && 0 === DAY_IN_SECONDS % $seconds;
 	}
 
 	public static function valid_time( $time ) {
@@ -148,7 +156,7 @@ class BackupPlus_Backup_Schedule {
 	}
 
 	/**
-	 * The incremental schedule to run: null when disabled; intervals outside one hour to one day run daily.
+	 * The incremental schedule to run: null when disabled; intervals outside one minute to one day run daily.
 	 * WordPress's own "hourly" schedule duplicates "everyhour", which the settings offer instead.
 	 *
 	 * @param String $interval - the saved or submitted incremental interval
@@ -161,8 +169,11 @@ class BackupPlus_Backup_Schedule {
 		if ( 'hourly' === $interval ) {
 			return 'everyhour';
 		}
+		if ( ! is_string( $interval ) ) {
+			return 'daily';
+		}
 		$seconds = self::seconds( $interval );
-		return ( ! is_string( $interval ) || $seconds < HOUR_IN_SECONDS || $seconds > DAY_IN_SECONDS ) ? 'daily' : $interval;
+		return ( $seconds < 60 || $seconds > DAY_IN_SECONDS ) ? 'daily' : $interval;
 	}
 
 	/**

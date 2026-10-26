@@ -59,7 +59,7 @@ foreach ( $default_options as $k => $v ) {
 					$increment_interval = BackupPlus_Backup_Schedule::increments_interval( BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' ) );
 					// The plugin's own list, as for full backups: WordPress's "Once Hourly" would duplicate "Every hour".
 					foreach ( array_intersect_key( backupplus_list_cron_schedules(), wp_get_schedules() ) as $schedule => $details ) {
-						if ( $details['interval'] >= HOUR_IN_SECONDS && $details['interval'] <= DAY_IN_SECONDS ) {
+						if ( $details['interval'] >= MINUTE_IN_SECONDS && $details['interval'] <= DAY_IN_SECONDS ) {
 							echo '<option value="' . esc_attr( $schedule ) . '" ' . selected( $increment_interval, $schedule, false ) . '>' . esc_html( $details['display'] ) . '</option>';
 						}
 					}

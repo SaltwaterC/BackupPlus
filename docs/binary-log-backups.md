@@ -123,7 +123,7 @@ Native connections inherit the WordPress endpoint and verified TLS settings. Loc
 ## Configure and capture
 
 1. Configure the backup account when the WordPress account lacks capture grants.
-2. Choose the Database point-in-time recovery interval: Disabled, every minute, 5, 10, 15 or 30 minutes, or 1, 2, 3, 4, 6, 8 or 12 hours.
+2. Choose the Database point-in-time recovery interval: Disabled, every minute, 5, 10, 15 or 30 minutes, or 1, 2, 3, 4, 6, 8 or 12 hours. For intervals longer than a minute, optionally select **Run at an exact time** and choose when captures run in the site timezone.
 3. Save Settings. Scheduled workers create an initial coordinated full snapshot, renew daily baselines and archive intervening transactions.
 4. Click **Incremental Backup** to capture immediately. Uncheck files for a database-only capture. A new baseline is created when required.
 

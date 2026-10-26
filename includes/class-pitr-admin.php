@@ -44,6 +44,24 @@ class BackupPlus_PITR_Admin {
 			return $current;
 		}
 		$enabled = '0' !== $interval;
+		$exact   = array_key_exists( 'exact', $value ) ? $value['exact'] : ( isset( $current['exact'] ) ? $current['exact'] : 0 );
+		if ( ! in_array( $exact, array( '', '0', '1', 0, 1, false, true ), true ) ) {
+			self::error( __( 'The exact time setting for database point-in-time recovery is invalid.', 'backupplus' ) );
+			return $current;
+		}
+		$exact = $enabled && 1 !== (int) $interval && ! empty( $exact );
+		$time  = isset( $value['time'] ) && is_scalar( $value['time'] ) ? (string) $value['time'] : ( isset( $current['time'] ) ? (string) $current['time'] : '' );
+		if ( $exact ) {
+			$recurrence = 'backupplus_pitr_' . (int) $interval;
+			if ( ! BackupPlus_Backup_Schedule::supports_exact( $recurrence ) || ! BackupPlus_Backup_Schedule::valid_time( $time ) ) {
+				self::error( __( 'Choose a valid exact time for database point-in-time recovery.', 'backupplus' ) );
+				return $current;
+			}
+			$timing = BackupPlus_Backup_Schedule::normalize( $recurrence, true, $time, null );
+			$time   = $timing['time'];
+		} else {
+			$time = BackupPlus_Backup_Schedule::valid_time( $time ) ? BackupPlus_Backup_Schedule::sanitize_time( $time ) : '';
+		}
 
 		if ( $enabled ) {
 			try {
@@ -60,6 +78,8 @@ class BackupPlus_PITR_Admin {
 		}
 		$current['enabled']  = $enabled;
 		$current['interval'] = $enabled ? (int) $interval : ( isset( $current['interval'] ) ? $current['interval'] : 15 );
+		$current['exact']    = $exact;
+		$current['time']     = $time;
 		unset( $current['global_read_lock'] );
 		return $current;
 	}
@@ -287,9 +307,29 @@ class BackupPlus_PITR_Admin {
 		}
 		echo '</select>';
 		echo ' <button type="button" class="button" id="backupplus-pitr-setup-open">' . esc_html__( 'Backup account', 'backupplus' ) . '</button>';
+		self::timing_controls( $config );
 		require_once __DIR__ . '/class-pitr-setup.php';
 		$capture = get_option( BackupPlus_PITR_Setup::OPTION, null );
 		$summary = is_array( $capture ) && ! empty( $capture['credentials'] ) ? __( 'A separate backup account is saved.', 'backupplus' ) : __( 'Capture uses the WordPress database account.', 'backupplus' );
 		echo '<p id="backupplus-pitr-setup-summary" class="description" role="status" aria-live="polite">' . esc_html( $summary ) . '</p>';
+	}
+
+	/** Exact local-time controls for PITR, using the shared schedule settings behavior. */
+	private static function timing_controls( $config ) {
+		$interval = self::form_defaults( $config );
+		$exact    = $interval > 1 && ! empty( $config['exact'] );
+		$time     = isset( $config['time'] ) && BackupPlus_Backup_Schedule::valid_time( $config['time'] ) ? BackupPlus_Backup_Schedule::sanitize_time( $config['time'] ) : '';
+		$hidden   = in_array( $interval, array( 0, 1 ), true ) ? ' style="display:none"' : '';
+		$html     = '<span class="backupplus-schedule-timing" data-schedule="pitr"' . $hidden . '>';
+		$html    .= '<input type="hidden" name="backupplus_pitr[exact]" value="0">';
+		$html    .= '<label><input type="checkbox" class="backupplus-exact-toggle" id="backupplus-pitr-exact" name="backupplus_pitr[exact]" value="1"' . checked( $exact, true, false ) . '> ' . esc_html__( 'Run at an exact time', 'backupplus' ) . '</label>';
+		$html    .= '<span class="backupplus-exact-fields">';
+		$html    .= '<label class="backupplus-exact-time"><span class="backupplus-field-prefix">' . esc_html__( 'at', 'backupplus' ) . '</span> <input type="time" step="60" id="backupplus-pitr-time" value="' . esc_attr( $time ) . '"></label>';
+		$html    .= '<label class="backupplus-exact-minute"><span class="backupplus-field-prefix">' . esc_html__( 'at', 'backupplus' ) . '</span> <select data-part="minute" aria-label="' . esc_attr__( 'Minutes past the hour', 'backupplus' ) . '"></select> ' . esc_html__( 'past every hour', 'backupplus' ) . '</label>';
+		$html    .= '<label class="backupplus-exact-hours"><span class="backupplus-field-prefix">' . esc_html__( 'at', 'backupplus' ) . '</span> <select data-part="hours" aria-label="' . esc_attr__( 'Run times', 'backupplus' ) . '"></select></label>';
+		$html    .= '<label class="backupplus-exact-hours">' . esc_html__( 'minute', 'backupplus' ) . ' <select data-part="hour-minute" aria-label="' . esc_attr__( 'Minute', 'backupplus' ) . '"></select></label>';
+		$html    .= '<input type="hidden" class="backupplus-starttime" name="backupplus_pitr[time]" value="' . esc_attr( $time ) . '">';
+		$html    .= '</span></span>';
+		echo $html;
 	}
 }

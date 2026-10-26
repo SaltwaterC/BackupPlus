@@ -113,14 +113,14 @@ try {
 		$document = new DOMDocument();
 		$document->loadHTML( '<!doctype html><html><body>' . $html . '</body></html>' );
 		$xpath = new DOMXPath( $document );
-		if ( 1 !== $xpath->query( '//select' )->length || $xpath->query( '//input' )->length ) {
-			throw new RuntimeException( 'PITR settings rendered controls beyond the single dropdown.' );
+		if ( 1 !== $xpath->query( '//select[@id="backupplus-pitr-interval"]' )->length || 1 !== $xpath->query( '//input[@type="checkbox" and @name="backupplus_pitr[exact]"]' )->length || 1 !== $xpath->query( '//input[@type="time"]' )->length || 1 !== $xpath->query( '//input[@name="backupplus_pitr[time]"]' )->length ) {
+			throw new RuntimeException( 'PITR settings must render the interval and exact-time controls.' );
 		}
 		$actual = array();
-		foreach ( $xpath->query( '//select/option' ) as $option ) {
+		foreach ( $xpath->query( '//select[@id="backupplus-pitr-interval"]/option' ) as $option ) {
 			$actual[ (int) $option->getAttribute( 'value' ) ] = $option->textContent;
 		}
-		if ( $expected !== $actual || (string) $minutes !== $xpath->query( '//option[@selected]' )->item( 0 )->getAttribute( 'value' ) ) {
+		if ( $expected !== $actual || (string) $minutes !== $xpath->query( '//select[@id="backupplus-pitr-interval"]/option[@selected]' )->item( 0 )->getAttribute( 'value' ) ) {
 			throw new RuntimeException( 'Dropdown choices or selected value differed from the requested UI.' );
 		}
 	}
@@ -142,7 +142,7 @@ try {
 	}
 	update_option( BackupPlus_PITR::OPTION, array( 'interval' => '0' ) );
 	do_action( 'updated_option', BackupPlus_PITR::OPTION, $previous, $current );
-	if ( $current['enabled'] || wp_next_scheduled( BackupPlus_PITR::HOOK ) || ! is_file( $current['source_config'] ) ) {
+	if ( $current['enabled'] || BackupPlus_PITR::next_scheduled() || ! is_file( $current['source_config'] ) ) {
 		throw new RuntimeException( 'Disabling PITR failed to pause capture and preserve its configuration.' );
 	}
 	backupplus_try_include_file( 'admin.php', 'include_once' );
@@ -150,7 +150,7 @@ try {
 	$current['enabled']  = true;
 	$current['interval'] = 1;
 	BackupPlus_PITR::reconcile_schedule();
-	$next_pitr = wp_next_scheduled( BackupPlus_PITR::HOOK );
+	$next_pitr = BackupPlus_PITR::next_scheduled();
 	$pitr_html = $admin->next_scheduled_pitr_backups_output( true );
 	if ( ! $next_pitr || false === strpos( $pitr_html, wp_date( 'D, F j, Y H:i', $next_pitr ) ) || false === strpos( $pitr_html, 'backupplus_next_scheduled_date_time' ) ) {
 		throw new RuntimeException( 'The PITR schedule display did not use the next cron run and site timezone.' );
@@ -239,7 +239,7 @@ SH;
 	} finally {
 		delete_site_option( 'backupplus_jobdata_' . $manual_nonce );
 	}
-	echo "PITR single-dropdown settings, native engine detection and all capture schedules passed.\n";
+	echo "PITR interval and exact-time settings, native engine detection and all capture schedules passed.\n";
 } finally {
 	$remove( $directory );
 }

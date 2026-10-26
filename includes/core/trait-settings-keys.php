@@ -183,6 +183,7 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_backup_database',
 				'backupplus_backup_increments',
 				'backupplus_pitr_capture',
+				'backupplus_pitr_baseline_check',
 				'backupplus_retention_cleanup',
 				'backupplus_retention_cleanup_retry',
 				'backupplus_clean_temporary_files',

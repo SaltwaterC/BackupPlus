@@ -36,6 +36,8 @@ class BackupPlus_PITR {
 	const OPTION = 'backupplus_pitr';
 	const STATUS = 'backupplus_pitr_status';
 	const HOOK   = 'backupplus_pitr_capture';
+	const BASELINE_HOOK = 'backupplus_pitr_baseline_check';
+	const SCHEDULE_STATE = 'backupplus_pitr_schedule_state';
 	private $root;
 	protected $work;
 	private $lock;

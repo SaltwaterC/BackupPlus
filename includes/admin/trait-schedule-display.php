@@ -135,7 +135,7 @@ trait BackupPlus_Admin_Schedule_Display {
 	/** Render the next scheduled PITR worker using the same date style as other backups. */
 	public function next_scheduled_pitr_backups_output( $return_instead_of_echo = false ) {
 		$config = BackupPlus_PITR::config();
-		$next   = empty( $config['enabled'] ) ? false : wp_next_scheduled( BackupPlus_PITR::HOOK );
+		$next   = empty( $config['enabled'] ) ? false : BackupPlus_PITR::next_scheduled();
 		if ( $next ) {
 			$date = function_exists( 'wp_date' ) ? wp_date( 'D, F j, Y H:i', $next ) : get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next ), 'D, F j, Y H:i' );
 			$html = '<span class="backupplus_next_scheduled_date_time">' . esc_html( $date ) . '</span>';
@@ -254,6 +254,10 @@ trait BackupPlus_Admin_Schedule_Display {
 		global $backupplus;
 
 		$intervals = wp_get_schedules();
+		// These added recurrences belong to incremental backups, not full file or database backups.
+		foreach ( array( 'everyminute', 'every5minutes', 'every10minutes', 'every15minutes', 'every30minutes', 'every3hours', 'every6hours' ) as $incremental_interval ) {
+			unset( $intervals[ $incremental_interval ] );
+		}
 
 		if ( $backupplus->is_restricted_hosting( 'only_one_backup_per_month' ) ) {
 			$intervals = array_intersect_key( $intervals, array( 'monthly' => array() ) );

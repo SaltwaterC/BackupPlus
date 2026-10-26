@@ -126,7 +126,7 @@ trait BackupPlus_PITR_Orchestrator_State {
 		}
 		$configuration = $this->config;
 		// Ignore the legacy external-worker flag so its removal does not force a new baseline.
-		unset( $configuration['enabled'], $configuration['interval'], $configuration['server_cron'], $configuration['restore_connection'] );
+		unset( $configuration['enabled'], $configuration['interval'], $configuration['exact'], $configuration['time'], $configuration['server_cron'], $configuration['restore_connection'] );
 		if ( ! empty( $configuration['capture_account'] ) ) { $configuration['capture_credentials'] = get_option( 'backupplus_pitr_capture', null ); }
 		$configuration['snapshot_policy'] = 'transactional-ddl-guard-v1';
 		return hash( 'sha256', serialize( array( $configuration, $destinations, $encryption, $options, hash( 'sha256', serialize( BackupPlus_PITR_Process::connection_options( $this->config['source_config'] ) ) ) ) ) );

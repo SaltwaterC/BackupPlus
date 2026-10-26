@@ -55,7 +55,7 @@ wp backupplus retention status --format=json
 wp backupplus retention set --files=7 --database=14 --mode=daily --time=04:00
 ```
 
-Schedule types are `files`, `database` and `incremental`. `--interval` is required for `schedule set`; use registered WordPress intervals, `manual` for disabled file/database schedules, or `none` for disabled incremental schedules. Existing incremental interval restrictions and normalization apply. `--time` enables exact scheduling and cannot be combined with `--no-exact`. Timing fields omitted from a submission keep saved values. Weekly and fortnightly days run from Sunday `0` to Saturday `6`; monthly days run from `1` to `28`.
+Schedule types are `files`, `database` and `incremental`. `--interval` is required for `schedule set`; use registered WordPress intervals, `manual` for disabled file/database schedules, or `none` for disabled incremental schedules. Incremental intervals from one minute to one day are scheduled directly; shorter or longer intervals normalize to daily. `--time` enables exact scheduling and cannot be combined with `--no-exact`. Timing fields omitted from a submission keep saved values. Weekly and fortnightly days run from Sunday `0` to Saturday `6`; monthly days run from `1` to `28`.
 
 All proposed settings are validated before any writes, then reconciled once. Unchanged schedules retain queued times. Exact times use the site's timezone and the existing DST and fortnightly phase rules. Equal file/database schedules run together. The effective schedule listing includes timezone and next runs.
 
