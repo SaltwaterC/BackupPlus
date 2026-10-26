@@ -26,6 +26,11 @@ function get_current_blog_id() {
 	return $dropbox_blog_id; }
 function get_current_network_id() {
 	return 1; }
+function get_main_site_id() {
+	return 1; }
+function wp_cache_delete( $key, $group ) {}
+function untrailingslashit( $path ) {
+	return rtrim( $path, '/\\' ); }
 function get_sites( $args ) {
 	return array( 1, 2, 3 ); }
 function switch_to_blog( $id ) {
@@ -65,6 +70,12 @@ function apply_filters( $hook, $value ) {
 class WP_Error {}
 function get_option( $name, $default = false ) {
 	global $dropbox_test_options, $dropbox_other_blog_options;
+	if ( ! empty( $GLOBALS['dropbox_directory_option_file'] ) ) {
+		$value = dropbox_shared_directory_option( $name );
+		if ( null !== $value ) {
+			return $value;
+		}
+	}
 	$options = 1 === get_current_blog_id() ? $dropbox_test_options : ( isset( $dropbox_other_blog_options[ get_current_blog_id() ] ) ? $dropbox_other_blog_options[ get_current_blog_id() ] : array() );
 	return isset( $options[ $name ] ) ? $options[ $name ] : $default; }
 function update_option( $name, $value, $autoload = null ) {
@@ -86,6 +97,45 @@ function delete_option( $name ) {
 function get_site_option( $name, $default = false ) {
 	global $dropbox_test_options;
 	return isset( $dropbox_test_options[ $name ] ) ? $dropbox_test_options[ $name ] : $default; }
+$GLOBALS['wpdb'] = (object) array( 'options' => 'wp_options' );
+class BackupPlus_SQL {
+	public static function wpdb() {
+		return new self();
+	}
+	public function execute( $template, $parts, $values ) {
+		list( $name, $value ) = $values;
+		if ( ! empty( $GLOBALS['dropbox_directory_option_file'] ) ) {
+			return dropbox_shared_directory_option( $name, $value ) ? 1 : 0;
+		}
+		if ( false !== get_option( $name ) ) {
+			return 0;
+		}
+		update_option( $name, $value );
+		return 1;
+	}
+}
+/** Model the database's atomic insertion of a folder name across fresh test processes. */
+function dropbox_shared_directory_option( $name, $value = null ) {
+	$handle = fopen( $GLOBALS['dropbox_directory_option_file'], 'c+b' );
+	flock( $handle, LOCK_EX );
+	try {
+		$options = json_decode( stream_get_contents( $handle ), true ) ?: array();
+		if ( null === $value ) {
+			return $options[ $name ] ?? null;
+		}
+		if ( isset( $options[ $name ] ) ) {
+			return false;
+		}
+		$options[ $name ] = $value;
+		rewind( $handle );
+		ftruncate( $handle, 0 );
+		fwrite( $handle, json_encode( $options ) );
+		return true;
+	} finally {
+		flock( $handle, LOCK_UN );
+		fclose( $handle );
+	}
+}
 function update_site_option( $name, $value ) {
 	global $dropbox_test_options;
 	$dropbox_test_options[ $name ] = $value;

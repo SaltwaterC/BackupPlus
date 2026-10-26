@@ -305,7 +305,7 @@ class BackupPlus_Backup_Sources {
 					$path = BackupPlus_Credential_Key_Store::directory();
 				}
 				if ( ! $path && defined( 'WP_CONTENT_DIR' ) ) {
-					$path = WP_CONTENT_DIR . '/backupplus-private';
+					$path = WP_CONTENT_DIR . '/' . BackupPlus_Storage_Directory::name( 'backupplus-private' );
 				}
 				$entities[ $id ] = array(
 					'path'        => $path,

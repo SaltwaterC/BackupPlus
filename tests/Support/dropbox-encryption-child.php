@@ -50,6 +50,7 @@ if ( 'restricted' === $mode ) {
 }
 if ( 'managed' === $mode ) {
 	define( 'WP_CONTENT_DIR', $argv[2] );
+	$GLOBALS['dropbox_directory_option_file'] = dirname( WP_CONTENT_DIR ) . '/directory-options.json';
 	echo 'KEY-FINGERPRINT:' . hash( 'sha256', json_encode( BackupPlus_Credential_Key_Store::configuration() ) ) . "\n";
 	exit( 0 );
 }

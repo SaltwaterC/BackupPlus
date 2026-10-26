@@ -73,7 +73,7 @@ if ( ! empty( $options['include_header'] ) ) {
 		?>
 	
 		<div id="backupplus-plupload-modal" style="display:none;" title="<?php echo esc_attr( __( 'BackupPlus - Upload backup files', 'backupplus' ) ); ?>">
-		<p class="upload"><em><?php echo esc_html( __( 'Upload files into BackupPlus.', 'backupplus' ) . ' ' . __( 'Or, you can place them manually into your BackupPlus directory (usually wp-content/backupplus), e.g. via FTP, and then use the "rescan" link above.', 'backupplus' ) ); ?></em></p>
+		<p class="upload"><em><?php echo esc_html( __( 'Upload files into BackupPlus.', 'backupplus' ) . ' ' . __( 'Or, you can place them manually into your BackupPlus directory (shown in Settings), e.g. via FTP, and then use the "rescan" link above.', 'backupplus' ) ); ?></em></p>
 		<?php
 		if ( version_compare( $backupplus->get_wordpress_version(), '3.3', '<' ) ) {
 			/* translators: 1: Software name (WordPress), 2: Required version (3.3) */

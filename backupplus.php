@@ -331,6 +331,7 @@ if ( ! file_exists( BACKUPPLUS_DIR . '/class-backupplus.php' ) || ! file_exists(
 	$backupplus              = new BackupPlus();
 	$GLOBALS['backupplus']   = $backupplus;
 	$backupplus->have_addons = $backupplus_have_addons;
+	register_activation_hook( __FILE__, array( $backupplus, 'backups_dir_location' ) );
 
 	if ( ! $backupplus->memory_check( 192 ) ) {
 		// Experience appears to show that the memory limit is only likely to be hit (unless it is very low) by single files that are larger than available memory (when compressed)

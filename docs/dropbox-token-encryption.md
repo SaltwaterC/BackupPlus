@@ -6,7 +6,7 @@ Existing Dropbox credentials are upgraded automatically once. Subsequent reads a
 
 ## Storage on shared hosts
 
-The default key folder is `wp-content/backupplus-private`. If it cannot be created, BackupPlus automatically tries the WordPress uploads folder instead. By default, the key lives in `credentials.php`, outside the database, settings exports and plugin directory, so plugin updates do not replace it. When `BACKUPPLUS_CREDENTIAL_KEYS` is set, its Base64 encoded JSON key ring becomes the sole key source and the disk file is ignored.
+New installations use `wp-content/backupplus-private-{hex}` as the default key folder, where `{hex}` is a persistent, cryptographically random 32-character hexadecimal string. If it cannot be created, BackupPlus automatically tries the WordPress uploads folder with the same name instead. Existing key folders retain their paths. By default, the key lives in `credentials.php`, outside the database, settings exports and plugin directory, so plugin updates do not replace it. When `BACKUPPLUS_CREDENTIAL_KEYS` is set, its Base64 encoded JSON key ring becomes the sole key source and the disk file is ignored.
 
 The folder uses owner-only permissions, Apache/IIS access rules, a PHP guard that returns an empty 404 response, an index guard and a `.donotbackup` marker. BackupPlus excludes the key folder from unencrypted file archives. When age encryption is enabled, **BackupPlus key store** appears as a separate file source, selected by default. Its archive is age-encrypted and can be restored with the rest of the backup. A database copy and the public source do not contain the generated key. Other backup products need their own exclusion rules.
 

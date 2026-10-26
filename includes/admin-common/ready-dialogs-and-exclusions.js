@@ -138,7 +138,7 @@ jQuery(function($) {
 	});
 	
 	jQuery('#backupplus-navtab-settings-content .backupdirrow').on('click', 'a.backupplus_backup_dir_reset', function() {
-		jQuery('#backupplus_dir').val('backupplus'); return false;
+		jQuery('#backupplus_dir').val(''); return false;
 	});
 
 	function setup_file_entity_exclude_field(field, instant) {

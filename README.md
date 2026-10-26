@@ -4,6 +4,8 @@ BackupPlus is a WordPress backup and restore plugin. To move a site, create a ba
 
 Start with `cp .env.example .env && ./dev/up.sh`. See [the development environment guide](dev/README.md) for configuration, WP-CLI commands, and cleanup.
 
+On first installation, BackupPlus creates `wp-content/backupplus-{hex}` for backups and `wp-content/backupplus-private-{hex}` for credential keys. Each folder has its own cryptographically random 32-character hexadecimal suffix, saved for reuse. Existing installations keep their current folders. The private folder falls back to uploads if the content directory is not writable; both folders retain their HTTP access protections.
+
 ## Incremental backups
 
 Choose an **Incremental file backups** interval in Settings, or click **Incremental Backup** beside Backup Now. The first run creates a full file backup. Later runs archive only files whose SHA-256 content hashes have changed, including new files and edits with preserved timestamps. When Database point-in-time recovery is enabled, the button also offers an immediate PITR capture; uncheck files to capture only the database. Ordinary database backups continue to use their existing full-backup schedule.

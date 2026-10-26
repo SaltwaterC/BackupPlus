@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
 
+require_once __DIR__ . '/class-storage-directory.php';
+
 /** Installation keys live in protected files or a read-only environment source. */
 class BackupPlus_Credential_Key_Store {
 	const HEADER            = "<?php http_response_code(404); exit; __halt_compiler();\n";
@@ -45,10 +47,16 @@ class BackupPlus_Credential_Key_Store {
 			// A host override moves the managed file without changing its keys.
 			return self::move_file( $remembered, $directory );
 		}
-		$uploads    = wp_upload_dir( null, false );
-		$candidates = $directory ? array( $directory ) : array( WP_CONTENT_DIR . '/backupplus-private' );
+		$uploads = wp_upload_dir( null, false );
+		$roots   = array( WP_CONTENT_DIR );
 		if ( ! $directory && empty( $uploads['error'] ) ) {
-			$candidates[] = $uploads['basedir'] . '/backupplus-private';
+			$roots[] = $uploads['basedir'];
+		}
+		$candidates = $directory ? array( $directory ) : array();
+		if ( ! $directory ) {
+			foreach ( array_unique( $roots ) as $root ) {
+				$candidates = array_merge( $candidates, BackupPlus_Storage_Directory::existing( $root, 'backupplus-private' ) );
+			}
 		}
 		// A restored database may omit location metadata while the original file survives.
 		foreach ( array_unique( $candidates ) as $candidate ) {
@@ -64,6 +72,13 @@ class BackupPlus_Credential_Key_Store {
 		}
 		if ( self::has_stored_ciphertext() ) {
 			throw new RuntimeException( 'The encryption key is missing. Restore your recovery key in BackupPlus Settings.' );
+		}
+		if ( ! $directory ) {
+			$name       = BackupPlus_Storage_Directory::name( 'backupplus-private' );
+			$candidates = array();
+			foreach ( array_unique( $roots ) as $root ) {
+				$candidates[] = $root . '/' . $name;
+			}
 		}
 		foreach ( array_unique( $candidates ) as $candidate ) {
 			try {
@@ -261,12 +276,12 @@ class BackupPlus_Credential_Key_Store {
 			$directories[] = $managed;
 		}
 		if ( defined( 'WP_CONTENT_DIR' ) ) {
-			$directories[] = WP_CONTENT_DIR . '/backupplus-private';
+			$directories = array_merge( $directories, BackupPlus_Storage_Directory::existing( WP_CONTENT_DIR, 'backupplus-private' ) );
 		}
 		if ( function_exists( 'wp_upload_dir' ) ) {
 			$uploads = wp_upload_dir( null, false );
 			if ( empty( $uploads['error'] ) && ! empty( $uploads['basedir'] ) ) {
-				$directories[] = $uploads['basedir'] . '/backupplus-private';
+				$directories = array_merge( $directories, BackupPlus_Storage_Directory::existing( $uploads['basedir'], 'backupplus-private' ) );
 			}
 		}
 		$normalized_directories = array();
@@ -615,7 +630,7 @@ class BackupPlus_Credential_Key_Store {
 		}
 		if ( ! $directory ) {
 			$uploads   = wp_upload_dir( null, false );
-			$directory = empty( $uploads['error'] ) ? $uploads['basedir'] . '/backupplus-private' : WP_CONTENT_DIR . '/backupplus-private';
+			$directory = ( empty( $uploads['error'] ) ? $uploads['basedir'] : WP_CONTENT_DIR ) . '/' . BackupPlus_Storage_Directory::name( 'backupplus-private' );
 		}
 		$config = self::with_lock(
 			$directory,
@@ -656,7 +671,7 @@ class BackupPlus_Credential_Key_Store {
 		}
 		if ( ! $directory ) {
 			$uploads   = wp_upload_dir( null, false );
-			$directory = empty( $uploads['error'] ) ? $uploads['basedir'] . '/backupplus-private' : WP_CONTENT_DIR . '/backupplus-private';
+			$directory = ( empty( $uploads['error'] ) ? $uploads['basedir'] : WP_CONTENT_DIR ) . '/' . BackupPlus_Storage_Directory::name( 'backupplus-private' );
 		}
 		$config = self::with_lock(
 			$directory,

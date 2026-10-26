@@ -86,7 +86,7 @@ final class CredentialKeyStoreTest extends CredentialEncryptionTestCase {
 	public function test_the_default_installation_creates_a_protected_key_file(): void {
 		$this->install();
 		$directory = $this->directory;
-		$this->assertSame( WP_CONTENT_DIR . '/backupplus-private', $directory, 'Default installation must create a dedicated protected file' );
+		$this->assertMatchesRegularExpression( '#^' . preg_quote( WP_CONTENT_DIR, '#' ) . '/backupplus-private-[a-f0-9]{32}$#', $directory );
 		foreach ( array( 'credentials.php', '.donotbackup', '.htaccess', 'web.config' ) as $file ) {
 			$this->assertFileExists( $directory . '/' . $file, 'Installation must add backup and HTTP protections' );
 		}
@@ -97,7 +97,33 @@ final class CredentialKeyStoreTest extends CredentialEncryptionTestCase {
 	public function test_restoring_location_metadata_rediscovers_a_surviving_key_file(): void {
 		$this->install();
 		delete_option( BackupPlus_Credential_Key_Store::OPTION );
+		delete_option( 'backupplus_storage_directory_backupplus_private' );
 		$this->assertSame( $this->config, BackupPlus_Credential_Key_Store::configuration(), 'Restoring location metadata must rediscover a surviving key file' );
+		$this->assertSame( $this->directory, BackupPlus_Credential_Key_Store::directory() );
+	}
+
+	public function test_a_legacy_key_folder_is_reused_without_location_metadata(): void {
+		$this->install();
+		$legacy = WP_CONTENT_DIR . '/backupplus-private';
+		rename( $this->directory, $legacy );
+		delete_option( BackupPlus_Credential_Key_Store::OPTION );
+		$this->assertSame( $this->config, BackupPlus_Credential_Key_Store::configuration() );
+		$this->assertSame( $legacy, BackupPlus_Credential_Key_Store::directory() );
+	}
+
+	public function test_a_randomized_key_folder_is_excluded_without_location_metadata(): void {
+		$this->install();
+		delete_option( BackupPlus_Credential_Key_Store::OPTION );
+		$this->assertTrue( BackupPlus_Credential_Key_Store::is_private_path( $this->directory . '/credentials.php' ) );
+	}
+
+	public function test_subsites_reuse_the_network_folder_name_and_restore_blog_context(): void {
+		$this->install();
+		$GLOBALS['dropbox_is_multisite'] = true;
+		switch_to_blog( 2 );
+		$this->assertSame( basename( $this->directory ), \BackupPlus_Storage_Directory::name( 'backupplus-private' ) );
+		$this->assertSame( 2, get_current_blog_id() );
+		restore_current_blog();
 	}
 
 	public function test_installation_upgrades_existing_credentials_and_repeated_initialization_preserves_everything(): void {
@@ -106,6 +132,7 @@ final class CredentialKeyStoreTest extends CredentialEncryptionTestCase {
 		$this->assertSame( 1, (int) get_option( BackupPlus_Dropbox_Token_Migration::OPTION ), 'Upgrade must record completion' );
 		BackupPlus_Credential_Key_Store::initialize();
 		$this->assertSame( $this->config, BackupPlus_Credential_Key_Store::configuration(), 'Repeated installation must preserve keys and ciphertext' );
+		$this->assertSame( $this->directory, BackupPlus_Credential_Key_Store::directory() );
 		$this->assertSame( $this->encrypted, BackupPlus_Options::$options['settings']['instance']['tk_access_token'], 'Repeated installation must preserve keys and ciphertext' );
 	}
 
@@ -315,10 +342,11 @@ final class CredentialKeyStoreTest extends CredentialEncryptionTestCase {
 
 	/** Simulate a shared host where wp-content itself is not writable to the plugin. */
 	public function test_restricted_hosts_fall_back_to_writable_uploads_storage(): void {
-		file_put_contents( WP_CONTENT_DIR . '/backupplus-private', 'blocked' );
+		$name = \BackupPlus_Storage_Directory::name( 'backupplus-private' );
+		file_put_contents( WP_CONTENT_DIR . '/' . $name, 'blocked' );
 		BackupPlus_Options::$options = array();
 		$fallback                    = BackupPlus_Credential_Key_Store::configuration();
-		$this->assertSame( WP_CONTENT_DIR . '/uploads/backupplus-private', BackupPlus_Credential_Key_Store::directory(), 'Restricted hosts must automatically use writable uploads storage' );
+		$this->assertSame( WP_CONTENT_DIR . '/uploads/' . $name, BackupPlus_Credential_Key_Store::directory(), 'Restricted hosts must automatically use writable uploads storage' );
 		$this->assertNotEmpty( $fallback['keys'], 'Fallback installation must create usable keys' );
 	}
 

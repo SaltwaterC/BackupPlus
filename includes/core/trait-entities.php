@@ -342,9 +342,20 @@ trait BackupPlus_Core_Entities {
 			$backupplus_dir = WP_CONTENT_DIR . '/' . $matches[1];
 		}
 
-		// Default
+		// Preserve historical installations; new default folders get a persistent random name.
 		if ( ! $backupplus_dir ) {
-			$backupplus_dir = WP_CONTENT_DIR . '/backupplus';
+			require_once BACKUPPLUS_DIR . '/includes/class-storage-directory.php';
+			foreach ( BackupPlus_Storage_Directory::existing( WP_CONTENT_DIR, 'backupplus' ) as $candidate ) {
+				if ( is_dir( $candidate ) ) {
+					$backupplus_dir = basename( $candidate );
+					break;
+				}
+			}
+			if ( ! $backupplus_dir ) {
+				$backupplus_dir = BackupPlus_Storage_Directory::name( 'backupplus' );
+			}
+			BackupPlus_Options::update_backupplus_option( 'backupplus_dir', $backupplus_dir );
+			$backupplus_dir = WP_CONTENT_DIR . '/' . $backupplus_dir;
 		}
 
 		// Do a test for a relative path
