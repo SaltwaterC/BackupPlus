@@ -68,11 +68,33 @@ trait BackupPlus_PITR_Orchestrator_History {
 			throw new RuntimeException( 'The PITR chain index has an inconsistent endpoint.' );
 		}
 		$points    = array();
+		$downloads = array();
 		$encrypted = false;
 		foreach ( $chain['entries'] as $index => $entry ) {
 			$manifest = $entry['manifest'];
 			foreach ( $manifest['artifacts'] as $artifact ) {
 				$encrypted = $encrypted || '.crypt' === substr( $artifact['name'], -6 );
+			}
+			// Keep the full dump at index zero for ordinary full-database restores.
+			// Include the metadata needed to discover and recover a downloaded chain.
+			$locator = json_encode( $entry['locator'], JSON_UNESCAPED_SLASHES );
+			$files   = array_merge(
+				$manifest['artifacts'],
+				array(
+					$entry['locator']['manifest'],
+					array(
+						'name' => 'backup_pitr_' . $id . '_' . $manifest['backup_id'] . '_locator.json',
+						'size' => strlen( $locator ),
+					),
+				)
+			);
+			foreach ( $files as $file ) {
+				$downloads[] = array(
+					'name'      => $file['name'],
+					'size'      => $file['size'],
+					'increment' => $index,
+					'timestamp' => $manifest['created_at'],
+				);
 			}
 			$points[] = array(
 				'backup_id'  => $manifest['backup_id'],
@@ -88,6 +110,7 @@ trait BackupPlus_PITR_Orchestrator_History {
 			'end_coordinate'      => $cursor,
 			'state'               => $chain['state'],
 			'points'              => $points,
+			'downloads'           => $downloads,
 		);
 	}
 
@@ -118,6 +141,7 @@ trait BackupPlus_PITR_Orchestrator_History {
 			} catch ( Throwable $error ) {
 				$backup['pitr']['state']  = 'unavailable';
 				$backup['pitr']['points'] = array();
+				unset( $backup['pitr']['downloads'] );
 			}
 		}
 		unset( $backup );

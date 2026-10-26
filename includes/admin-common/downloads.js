@@ -133,8 +133,54 @@ function zip_files_jstree(entity, timestamp, type, findex) {
  * @param {string} what - the file entity
  */
 function remove_backupplus_downloader(item, what) {
-	jQuery(item).closest('.backupplus_downloader').fadeOut().remove();
-	if (0 == jQuery('.backupplus_downloader_container_'+what+' .backupplus_downloader').length) jQuery('.backupplus_downloader_container_'+what).remove();
+	var container = jQuery(item).closest('.backupplus_downloader_container');
+	jQuery(item).closest('.backupplus_downloader').remove();
+	backupplus_download_controls_update(container);
+}
+
+// Dismissing a row only removes its download status; it never deletes an archive.
+function backupplus_download_controls_update(container) {
+	var rows = container.find('.backupplus_downloader');
+	if (!rows.length) {
+		container.remove();
+		return;
+	}
+	var selected = rows.filter(function() { return jQuery(this).find('.backupplus-download-select').prop('checked'); });
+	var ready = function() { return jQuery(this).data('download-ready') === true; };
+	container.find('.backupplus-download-all').prop('disabled', rows.filter(ready).length !== rows.length);
+	container.find('.backupplus-download-selected').prop('disabled', !selected.length || selected.filter(ready).length !== selected.length);
+	container.find('.backupplus-dismiss-selected').prop('disabled', !selected.length);
+	container.find('.backupplus-download-select-all').prop('checked', selected.length === rows.length).prop('indeterminate', selected.length > 0 && selected.length < rows.length);
+}
+
+function backupplus_download_bulk(container, selected_only) {
+	container.find('.backupplus_downloader').each(function() {
+		var row = jQuery(this);
+		if (!row.data('download-ready') || (selected_only && !row.find('.backupplus-download-select').prop('checked'))) return;
+		var data = row.data('downloaderfor');
+		// Each attachment needs its own browsing context so downloads do not replace each other.
+		jQuery('<iframe hidden title=""></iframe>').attr('src', ajaxurl + '?_wpnonce=' + encodeURIComponent(backupplus_download_nonce) + '&timestamp=' + data.nonce + '&type=' + encodeURIComponent(data.what) + '&stage=2&findex=' + data.index).on('load', function() { jQuery(this).remove(); }).appendTo(document.body);
+	});
+}
+
+function backupplus_download_controls(container) {
+	if (container.find('.backupplus-download-controls').length) return;
+	var controls = jQuery('<div class="backupplus-download-controls"></div>').prependTo(container);
+	jQuery('<label></label>').append(jQuery('<input type="checkbox" class="backupplus-download-select-all">').on('change', function() {
+		container.find('.backupplus-download-select').prop('checked', this.checked);
+		backupplus_download_controls_update(container);
+	})).append(document.createTextNode(backupplus_i18n.download_select_all)).appendTo(controls);
+	var button = function(label, class_name, action) {
+		jQuery('<button type="button" class="button"></button>').addClass(class_name).text(label).on('click', action).appendTo(controls);
+	};
+	button(backupplus_i18n.download_all, 'backupplus-download-all', function() { backupplus_download_bulk(container, false); });
+	button(backupplus_i18n.download_selected, 'backupplus-download-selected', function() { backupplus_download_bulk(container, true); });
+	button(backupplus_i18n.dismiss_selected, 'backupplus-dismiss-selected', function() {
+		container.find('.backupplus-download-select:checked').closest('.backupplus_downloader').remove();
+		backupplus_download_controls_update(container);
+	});
+	button(backupplus_i18n.dismiss_all, 'backupplus-dismiss-all', function() { container.remove(); });
+	container.on('change', '.backupplus-download-select', function() { backupplus_download_controls_update(container); });
 }
 
 /**
@@ -147,8 +193,9 @@ function remove_backupplus_downloader(item, what) {
  * @param {string}  set_contents     - the contents we want to download
  * @param {string}  prettydate       - the pretty backup date
  * @param {boolean} async            - boolean to indicate if this is a async request or not
+ * @param {Array|object} download_files - optional file metadata for download labels
  */
-function backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async) {
+function backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async, download_files) {
 	
 	if (typeof set_contents !== "string") set_contents = set_contents.toString();
 
@@ -159,11 +206,13 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 
 	// Old-style, from when it was a form
 	// var data = jQuery('#backupplus-navtab-backups-content .uddownloadform_'+what+'_'+backup_timestamp+'_'+set_contents[i]).serialize();
-	var nonce = jQuery('#backupplus-navtab-backups-content .uddownloadform_'+what+'_'+backup_timestamp+'_'+set_contents[0]).data('wp_nonce').toString();
+	var nonce = jQuery('#backupplus-navtab-backups-content .uddownloadform_'+what+'_'+backup_timestamp+'_0').data('wp_nonce').toString();
 	
-	if (!jQuery('.backupplus_downloader_container_'+what).length) {
-		jQuery(whicharea).append('<div class="backupplus_downloader_container_' + what + ' postbox"></div>');
-		jQuery('.backupplus_downloader_container_' + what).append('<strong style="clear:left; padding: 8px; margin-top: 4px;">' + backupplus_i18n.download + ' ' + what + ' (' + prdate + '):</strong>');
+	var group = base + backup_timestamp + '_' + what;
+	var container = jQuery(whicharea).find('.backupplus_downloader_container').filter(function() { return jQuery(this).data('download-group') === group; });
+	if (!container.length) {
+		container = jQuery('<div class="backupplus_downloader_container postbox"></div>').addClass('backupplus_downloader_container_' + what).data('download-group', group).appendTo(jQuery(whicharea).first());
+		jQuery('<strong class="backupplus-download-heading"></strong>').text(backupplus_i18n.download + ' ' + what + ' (' + prdate + '):').appendTo(container);
 	}
 
 	for (var i = 0; i < set_contents.length; i++) {
@@ -173,7 +222,9 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 		var show_index = parseInt(set_contents[i]); show_index++;
 		var itext = (0 == set_contents[i]) ? '' : ' ('+show_index+')';
 		if (!jQuery(stid_selector).length) {
-			jQuery('.backupplus_downloader_container_'+what).append('<div style="clear:left; padding: 8px; margin-top: 4px;" class="'+stid+' backupplus_downloader"><button onclick="remove_backupplus_downloader(this, \''+what+'\');" type="button" style="float:right; margin-bottom: 8px;" class="ud_downloadstatus__close" aria-label="Close"><span class="dashicons dashicons-no-alt"></span></button><strong>'+what+itext+'</strong>:<div class="raw">'+backupplus_i18n.begunlooking+'</div><div class="file '+stid+'_st"><div class="dlfileprogress" style="width: 0;"></div></div></div>');
+			container.append('<div style="clear:left; padding: 8px; margin-top: 4px;" class="'+stid+' backupplus_downloader"><button onclick="remove_backupplus_downloader(this, \''+what+'\');" type="button" style="float:right; margin-bottom: 8px;" class="ud_downloadstatus__close" aria-label="Close"><span class="dashicons dashicons-no-alt"></span></button><label class="backupplus-download-label"><input type="checkbox" class="backupplus-download-select"> <strong></strong></label>:<div class="raw">'+backupplus_i18n.begunlooking+'</div><div class="file '+stid+'_st"><div class="dlfileprogress" style="width: 0;"></div></div></div>');
+			var file = download_files && download_files[set_contents[i]];
+			jQuery(stid_selector).find('.backupplus-download-label strong').text(file ? file.name : what + itext);
 			jQuery(stid_selector).data('downloaderfor', { base: base, nonce: backup_timestamp, what: what, index: set_contents[i] });
 			setTimeout(function() {
 					backupplus_activejobs_update(true);
@@ -181,6 +232,12 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 			1500);
 		}
 		jQuery(stid_selector).data('lasttimebegan', (new Date).getTime());
+	}
+	if ('uddlstatus_' === base) {
+		backupplus_download_controls(container);
+		backupplus_download_controls_update(container);
+	} else {
+		container.find('.backupplus-download-select').hide();
 	}
 
 	// Now send the actual request to kick it all off

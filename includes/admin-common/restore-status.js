@@ -129,6 +129,7 @@ function backupplus_downloader_status_update(download_status, response_raw) {
 		
 		var stid = dstatus.base + dstatus.timestamp + '_' + dstatus.what + '_' + dstatus.findex;
 		var stid_selector = '.' + stid;
+		jQuery(stid_selector).data('download-ready', dstatus.e == null && dstatus.p >= 100 && !!dstatus.f);
 		
 		if (dstatus.e != null) {
 			jQuery(stid_selector + ' .raw').html('<strong>' + backupplus_i18n.error + '</strong> ' + dstatus.e);
@@ -149,7 +150,7 @@ function backupplus_downloader_status_update(download_status, response_raw) {
 					console.log(dstatus.timestamp + " " + dstatus.what + " " + dstatus.findex + ": restarting download: file_age=" + dstatus.a + ", sincelastrestart_ms=" + sincelastrestart);
 					jQuery(stid_selector).data('lasttimebegan', (new Date).getTime());
 
-					var $original_button = jQuery('#backupplus-navtab-backups-content .uddownloadform_' + dstatus.what + '_' + dstatus.timestamp + '_' + dstatus.findex);
+					var $original_button = jQuery('#backupplus-navtab-backups-content .uddownloadform_' + dstatus.what + '_' + dstatus.timestamp + '_0');
 
 					var data = {
 						type: dstatus.what,
@@ -199,6 +200,7 @@ function backupplus_downloader_status_update(download_status, response_raw) {
 			cancel_repeat = 1;
 		}
 	});
+	jQuery('.backupplus_downloader_container').each(function() { backupplus_download_controls_update(jQuery(this)); });
 
 	return cancel_repeat;
 }

@@ -57,6 +57,54 @@ try {
 	assert.equal(await evaluate(`/Fatal error:|Warning:|Notice:|Deprecated:/.test(document.body.innerText)`), false, 'Settings render without PHP errors');
 	assert.match(await evaluate(`jQuery('label[for="backupplus_retain_db"]').text().replace(/\\s+/g,' ').trim()`), /^Keep backup chains$/, 'Database retention uses the same chain wording as file backups');
 	await evaluate(`backupplus_open_main_tab('backups'); true`);
+	assert.deepEqual(await evaluate(`(() => {
+		const send = window.backupplus_send_command, active = window.backupplus_activejobs_update, url = window.ajaxurl;
+		const requests = [], fixtures = jQuery('<div></div>').appendTo('#backupplus-navtab-backups-content .backupplus_existing_backups');
+		const groups = () => jQuery('.ud_downloadstatus .backupplus_downloader_container');
+		const group = (timestamp, what) => groups().filter(function() { return jQuery(this).data('download-group') === 'uddlstatus_' + timestamp + '_' + what; });
+		const add = (timestamp, what, indices) => jQuery('<button type="button" class="backupplus_download_button"></button>')
+			.addClass('uddownloadform_' + what + '_' + timestamp + '_0')
+			.data({backup_timestamp:timestamp, what, set_contents:indices, wp_nonce:'fixture', prettydate:'Fixture', download_files:[{name:'full.sql.gz'}, {name:'increment.bin.gz'}, {name:'manifest.json'}]}).appendTo(fixtures);
+		const status = (timestamp, what, index, extra = {}) => ({base:'uddlstatus_',timestamp,what,findex:index,p:100,f:'/fixture',s:10,m:'Ready',...extra});
+		try {
+			window.backupplus_send_command = (command, data, done, options) => requests.push({command, data, options});
+			window.backupplus_activejobs_update = () => {};
+			window.ajaxurl = '/backupplus-download-browser-fixture';
+			const first = add(110, 'db', '0,1,2'), second = add(111, 'db', '0,1,2'), files = add(112, 'plugins', '0,2');
+			first.trigger('click'); second.trigger('click'); files.trigger('click'); first.trigger('click');
+			const separate = groups().length === 3 && group(110,'db').find('.backupplus_downloader').length === 3 && group(111,'db').find('.backupplus_downloader').length === 3;
+			const allIndices = requests[0].data.findex.join(',') === '0,1,2' && requests[2].data.findex.join(',') === '0,2';
+			const pendingDisabled = group(110,'db').find('.backupplus-download-all').prop('disabled');
+			group(110,'db').find('.backupplus-download-select').first().prop('checked',true).trigger('change');
+			const partial = group(110,'db').find('.backupplus-download-select-all').prop('indeterminate');
+			backupplus_downloader_status_update([status(110,'db',0), status(110,'db',1,{p:50,f:null}), status(110,'db',2)], '');
+			const selectedReady = !group(110,'db').find('.backupplus-download-selected').prop('disabled') && group(110,'db').find('.backupplus-download-all').prop('disabled');
+			group(110,'db').find('.backupplus-download-selected').trigger('click');
+			const selectedFrames = jQuery('iframe[hidden]').filter(function() { return this.src.includes('backupplus-download-browser-fixture'); });
+			const selectedDownloaded = selectedFrames.length === 1 && selectedFrames[0].src.includes('findex=0'); selectedFrames.remove();
+			backupplus_downloader_status_update([status(110,'db',1)], '');
+			const readyEnabled = !group(110,'db').find('.backupplus-download-all').prop('disabled');
+			group(110,'db').find('.backupplus-download-all').trigger('click');
+			const frames = jQuery('iframe[hidden]').filter(function() { return this.src.includes('backupplus-download-browser-fixture'); });
+			const allDownloaded = frames.length === 3 && new Set(frames.map(function() { return this.src; }).get()).size === 3; frames.remove();
+			group(110,'db').find('.backupplus-download-select-all').prop('checked',true).trigger('change');
+			const allSelected = group(110,'db').find('.backupplus-download-select:checked').length === 3 && group(111,'db').find('.backupplus-download-select:checked').length === 0;
+			group(110,'db').find('.backupplus-download-select').last().prop('checked',false).trigger('change');
+			group(110,'db').find('.backupplus-dismiss-selected').trigger('click');
+			const dismissedSelected = group(110,'db').find('.backupplus_downloader').length === 1 && group(111,'db').find('.backupplus_downloader').length === 3;
+			backupplus_downloader_status_update([status(110,'db',0)], '');
+			const stayedDismissed = group(110,'db').find('.backupplus_downloader').length === 1;
+			group(110,'db').find('.ud_downloadstatus__close').trigger('click');
+			const lastRemoved = !group(110,'db').length && group(111,'db').length === 1;
+			group(111,'db').find('.backupplus-dismiss-all').trigger('click');
+			const dismissedAll = !group(111,'db').length && group(112,'plugins').find('.backupplus_downloader').length === 2;
+			const noDeletion = requests.every(r => r.command === 'backupplus_download_backup' && !r.data.stage);
+			return {separate,allIndices,pendingDisabled,partial,selectedReady,selectedDownloaded,readyEnabled,allDownloaded,allSelected,dismissedSelected,stayedDismissed,lastRemoved,dismissedAll,noDeletion};
+		} finally {
+			fixtures.remove(); groups().remove();
+			window.backupplus_send_command = send; window.backupplus_activejobs_update = active; window.ajaxurl = url;
+		}
+	})()`), {separate:true,allIndices:true,pendingDisabled:true,partial:true,selectedReady:true,selectedDownloaded:true,readyEnabled:true,allDownloaded:true,allSelected:true,dismissedSelected:true,stayedDismissed:true,lastRemoved:true,dismissedAll:true,noDeletion:true}, 'Backup downloads support isolated groups, ready-only bulk downloads and non-destructive bulk dismissal');
 	const scheduledLayout = await evaluate(`(() => {
 		const box=id=>document.getElementById(id).closest('.backupplus_next_scheduled_entity').getBoundingClientRect();
 		const files=box('backupplus-next-files-backup-inner'), increments=box('backupplus-next-incremental-backup-inner'), db=box('backupplus-next-database-backup-inner'), pitr=box('backupplus-next-pitr-backup-inner'), cleanup=box('backupplus-next-cleanup-inner');

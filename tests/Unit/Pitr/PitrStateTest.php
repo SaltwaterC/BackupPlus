@@ -328,6 +328,125 @@ final class PitrStateTest extends PitrTestCase {
 		$this->assertCount( 2, $decorated[100]['pitr']['points'], 'Existing history did not acquire recovery endpoints from its chain index.' );
 	}
 
+	public function test_database_downloads_include_the_complete_recovery_chain(): void {
+		$this->publish_chain();
+		$history   = BackupPlus_PITR::decorate_history( BackupPlus_Backup_History::$history );
+		$backup    = reset( $history );
+		$downloads = $backup['pitr']['downloads'];
+		$this->assertSame( $this->full['artifacts'][0]['name'], $backup['db'], 'Download metadata must preserve the full-dump restore entity.' );
+		$this->assertSame(
+			array(
+				$this->full['artifacts'][0]['name'],
+				$this->full_manifest['name'],
+				'backup_pitr_' . $this->chain_id . '_' . $this->full_id . '_locator.json',
+				$this->log['name'],
+				$this->manifest['name'],
+				$this->locator_file['name'],
+			),
+			array_column( $downloads, 'name' )
+		);
+		$this->assertSame( array( 0, 0, 0, 1, 1, 1 ), array_column( $downloads, 'increment' ) );
+		foreach ( $downloads as $file ) {
+			$this->assertSame( filesize( $this->directory . '/' . $file['name'] ), $file['size'] );
+		}
+		require_once dirname( __DIR__, 3 ) . '/includes/admin/trait-downloads.php';
+		$admin = new class {
+			use \BackupPlus_Admin_Downloads;
+		};
+		$this->assertSame( $downloads, $admin->download_files( $backup, 'db' ) );
+		$this->assertSame(
+			array(
+				array(
+					'name' => 'ordinary.gz',
+					'size' => 123,
+				),
+			),
+			$admin->download_files(
+				array(
+					'db'      => 'ordinary.gz',
+					'db-size' => 123,
+				),
+				'db'
+			)
+		);
+		$this->assertSame(
+			array( 0, 2 ),
+			array_keys(
+				$admin->download_files(
+					array(
+						'plugins' => array(
+							0 => 'base.zip',
+							2 => 'increment.zip',
+						),
+					),
+					'plugins'
+				)
+			)
+		);
+	}
+
+	public function test_unavailable_index_does_not_offer_stale_increment_downloads(): void {
+		$this->publish_chain();
+		unlink( $this->directory . '/pitr/state.php' );
+		$history = BackupPlus_PITR::decorate_history( BackupPlus_Backup_History::$history );
+		$backup  = reset( $history );
+		$this->assertSame( 'unavailable', $backup['pitr']['state'] );
+		$this->assertArrayNotHasKey( 'downloads', $backup['pitr'] );
+	}
+
+	public function test_download_requests_route_each_index_to_its_chain_file(): void {
+		$this->publish_chain();
+		require_once dirname( __DIR__, 3 ) . '/includes/admin/trait-downloads.php';
+		define( 'BACKUPPLUS_SET_TIME_LIMIT', 30 );
+		$admin                 = new class {
+			use \BackupPlus_Admin_Downloads;
+		};
+		$GLOBALS['backupplus'] = new class( $this->directory ) {
+			public $nonce;
+			public $job_time_ms = 0;
+			public $logfile_name;
+			private $directory;
+			private $jobs = array();
+			public function __construct( $directory ) {
+				$this->directory    = $directory;
+				$this->logfile_name = $directory . '/unused.log';
+			}
+			public function backups_dir_location() {
+				return $this->directory; }
+			public function backup_time_nonce( $nonce ) {
+				$this->nonce = $nonce; }
+			public function jobdata_set( $key, $value ) {
+				$this->jobs[ $this->nonce ][ $key ] = $value; }
+			public function jobdata_get( $key ) {
+				return $this->jobs[ $this->nonce ][ $key ] ?? null; }
+			public function jobdata_reset() {}
+			public function log( $message ) {}
+			public function php_error() {}
+			public function get_canonical_service_list( $services ) {
+				return array(); }
+			public function spool_file( $path ) {
+				throw new \RuntimeException( $path ); }
+		};
+		$history               = BackupPlus_Backup_History::$history;
+		$timestamp             = key( $history );
+		$files                 = $history[ $timestamp ]['pitr']['downloads'];
+		$result                = $admin->do_backupplus_download_backup( array_keys( $files ), 'db', $timestamp, '' );
+		$this->assertSame( 'downloaded', $result['result'] );
+		foreach ( $files as $index => $file ) {
+			$status = $admin->get_download_statuses( array( 'uddlstatus_,' . $timestamp . ',db,' . $index ) );
+			$this->assertSame( $this->directory . '/' . $file['name'], $status[0]['f'] );
+			$this->assertSame( 100, $status[0]['p'] );
+			$spooled = $this->assertRejected(
+				function () use ( $admin, $timestamp, $index ) {
+					$admin->do_backupplus_download_backup( $index, 'db', $timestamp, 2 );
+				},
+				'The download should reach the spooler.'
+			);
+			$this->assertSame( $this->directory . '/' . $file['name'], $spooled->getMessage() );
+		}
+		$this->assertSame( 'no_such_file', $admin->do_backupplus_download_backup( count( $files ), 'db', $timestamp, '' )['code'] );
+	}
+
 	public function test_index_recovery_republishes_the_chain_without_touching_an_ordinary_backup(): void {
 		$this->publish_chain();
 		$ordinary_history                   = $this->ordinary_history();

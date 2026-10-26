@@ -197,7 +197,7 @@
 	margin-top: 8px;
 }
 
-div[class^="backupplus_downloader_container_"] {
+.backupplus_downloader_container {
 	padding: 10px;
 }
 

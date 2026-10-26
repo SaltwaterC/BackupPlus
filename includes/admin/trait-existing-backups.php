@@ -138,7 +138,8 @@ trait BackupPlus_Admin_Existing_Backups {
 			$dbt = __( 'External database', 'backupplus' ) . ' (' . substr( $bkey, 2 ) . ')';
 		}
 
-		$this->download_button( $bkey, $key, 0, null, '', $dbt, $esc_pretty_date, '0' );
+		$files = $this->download_files( $backup, $bkey );
+		$this->download_button( $bkey, $key, 0, null, '', $dbt, $esc_pretty_date, implode( ',', array_keys( $files ) ), $files );
 	}
 
 	/**
@@ -270,10 +271,11 @@ trait BackupPlus_Admin_Existing_Backups {
 						$entities .= '/dbcrypted=1/';
 					}
 					$button_data[ $key ]['downloads']['db'] = array(
-						'pretty_date'  => $pretty_date,
-						'entities'     => $entities,
-						'set_contents' => '0',
-						'title'        => __( 'Database', 'backupplus' ),
+						'pretty_date'    => $pretty_date,
+						'entities'       => $entities,
+						'set_contents'   => implode( ',', array_keys( $this->download_files( $backup, 'db' ) ) ),
+						'download_files' => $this->download_files( $backup, 'db' ),
+						'title'          => __( 'Database', 'backupplus' ),
 					);
 				}
 
@@ -570,14 +572,15 @@ trait BackupPlus_Admin_Existing_Backups {
 	 * @param string $pdescrip         Button text.
 	 * @param string $esc_pretty_date  Escaped pretty date.
 	 * @param string $set_contents     Custom data attribute called set.
+	 * @param array  $download_files   Download file metadata, including PITR artifacts.
 	 * @return void - Display download button for backups.
 	 */
-	public function download_button( $type, $backup_timestamp, $findex, $info, $title, $pdescrip, $esc_pretty_date, $set_contents ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
+	public function download_button( $type, $backup_timestamp, $findex, $info, $title, $pdescrip, $esc_pretty_date, $set_contents, $download_files = array() ) {// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
 
 		$wp_nonce = wp_create_nonce( 'backupplus_download' );
 
 		// backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async)
-			echo '<button data-wp_nonce="' . esc_attr( $wp_nonce ) . '" data-backup_timestamp="' . esc_attr( $backup_timestamp ) . '" data-what="' . esc_attr( $type ) . '" data-set_contents="' . esc_attr( $set_contents ) . '" data-prettydate="' . esc_attr( $esc_pretty_date ) . '" type="button" class="button backupplus_download_button ' . esc_attr( "uddownloadform_{$type}_{$backup_timestamp}_{$findex}" ) . '" title="' . esc_attr( $title ) . '">' . esc_html( $pdescrip ) . '</button>';
+			echo '<button data-download_files="' . esc_attr( wp_json_encode( $download_files ) ) . '" data-wp_nonce="' . esc_attr( $wp_nonce ) . '" data-backup_timestamp="' . esc_attr( $backup_timestamp ) . '" data-what="' . esc_attr( $type ) . '" data-set_contents="' . esc_attr( $set_contents ) . '" data-prettydate="' . esc_attr( $esc_pretty_date ) . '" type="button" class="button backupplus_download_button ' . esc_attr( "uddownloadform_{$type}_{$backup_timestamp}_{$findex}" ) . '" title="' . esc_attr( $title ) . '">' . esc_html( $pdescrip ) . '</button>';
 		// onclick="'."return backupplus_downloader('uddlstatus_', '$backup_timestamp', '$type', '.ud_downloadstatus', '$set_contents', '$esc_pretty_date', true)".'"
 	}
 

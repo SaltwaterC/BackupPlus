@@ -8,6 +8,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait BackupPlus_Admin_Downloads {
 
+	/** Download archives are separate from the database entity used by restore. */
+	public function download_files( $backup, $type ) {
+		if ( 'db' === $type && ! empty( $backup['pitr']['downloads'] ) ) {
+			return $backup['pitr']['downloads'];
+		}
+		$files = array();
+		foreach ( isset( $backup[ $type ] ) ? (array) $backup[ $type ] : array() as $index => $name ) {
+			$size_key        = $type . ( $index ? $index : '' ) . '-size';
+			$files[ $index ] = array(
+				'name' => $name,
+				'size' => isset( $backup[ $size_key ] ) ? $backup[ $size_key ] : 0,
+			);
+		}
+		return $files;
+	}
+
 	/**
 	 * Start a download of a backup. This method is called via the AJAX action backupplus_download_backup. May die instead of returning depending upon the mode in which it is called.
 	 */
@@ -106,6 +122,15 @@ trait BackupPlus_Admin_Downloads {
 
 		// Retrieve the information from our backup history
 		$backup_history = BackupPlus_Backup_History::get_history();
+		$files          = $this->download_files( isset( $backup_history[ $timestamp ] ) ? $backup_history[ $timestamp ] : array(), $type );
+		foreach ( $findexes as $findex ) {
+			if ( ( ! is_int( $findex ) && ! is_string( $findex ) ) || ! ctype_digit( (string) $findex ) || ! isset( $files[ $findex ] ) ) {
+				return array(
+					'result' => 'error',
+					'code'   => 'no_such_file',
+				);
+			}
+		}
 
 		foreach ( $findexes as $findex ) {
 			// This is a bit ugly; these variables get placed back into $_POST (where they may possibly have come from), so that BackupPlus::log() can detect exactly where to log the download status.
@@ -125,12 +150,7 @@ trait BackupPlus_Admin_Downloads {
 			$backupplus->jobdata_set( 'job_time_ms', $backupplus->job_time_ms );
 
 			// Base name
-			$file = $backup_history[ $timestamp ][ $type ];
-
-			// Deal with multi-archive sets
-			if ( is_array( $file ) ) {
-				$file = $file[ $findex ];
-			}
+			$file = $files[ $findex ]['name'];
 
 			if ( false !== strpos( $file_path, '..' ) ) {
 				BackupPlus_Manipulation_Functions::error_log( "BackupPlus_Admin::do_backupplus_download_backup : invalid file_path: $file_path" );
@@ -174,8 +194,7 @@ trait BackupPlus_Admin_Downloads {
 
 			$backupplus->log( "Requested to obtain file: timestamp=$timestamp, type=$type, index=$findex" );
 
-			$itext      = empty( $findex ) ? '' : $findex;
-			$known_size = isset( $backup_history[ $timestamp ][ $type . $itext . '-size' ] ) ? $backup_history[ $timestamp ][ $type . $itext . '-size' ] : 0;
+			$known_size = $files[ $findex ]['size'];
 
 			$services = isset( $backup_history[ $timestamp ]['service'] ) ? $backup_history[ $timestamp ]['service'] : false;
 

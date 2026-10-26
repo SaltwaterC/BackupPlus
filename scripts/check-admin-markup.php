@@ -94,6 +94,33 @@ try {
 	$delete_xpath  = admin_markup_document( $delete_markup );
 	$delete_links  = $delete_xpath->query( '//a[contains(@class,"backupplus-delete-link")]' );
 	admin_markup_expect( 1 === $delete_links->length && false !== strpos( $delete_links->item( 0 )->getAttribute( 'data-chain' ), 'Full + 2 incrementals' ), 'PITR Delete must supply its entire chain to the existing confirmation dialog.' );
+	$download_fixture = array(
+		'db'   => 'full.sql.gz.crypt',
+		'pitr' => array(
+			'downloads' => array(
+				array(
+					'name' => 'full.sql.gz.crypt',
+					'size' => 100,
+				),
+				array(
+					'name' => 'increment.bin.gz.crypt',
+					'size' => 50,
+				),
+				array(
+					'name' => 'manifest.json.crypt',
+					'size' => 25,
+				),
+			),
+		),
+	);
+	ob_start();
+	( new ReflectionMethod( $backupplus_admin, 'download_db_button' ) )->invoke( $backupplus_admin, 'db', 100, 'Fixture', $download_fixture );
+	$download_xpath  = admin_markup_document( ob_get_clean() );
+	$download_button = $download_xpath->query( '//button' )->item( 0 );
+	admin_markup_expect( '0,1,2' === $download_button->getAttribute( 'data-set_contents' ), 'The Database button must request every PITR download file.' );
+	admin_markup_expect( $download_fixture['pitr']['downloads'] === json_decode( $download_button->getAttribute( 'data-download_files' ), true ), 'The Database button must include download file labels.' );
+	$download_data = $backupplus_admin->get_download_buttons_data( array( 100 => $download_fixture ) );
+	admin_markup_expect( '0,1,2' === $download_data[100]['downloads']['db']['set_contents'], 'Download data must expose the same PITR files as the Database button.' );
 	$job_id   = '0123456789ab';
 	$job_data = array(
 		'backup_time' => time(),
