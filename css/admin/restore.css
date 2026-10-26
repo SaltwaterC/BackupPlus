@@ -1,0 +1,368 @@
+/* Restoration page, restore modal and stalled activity. */
+
+/* Restoration page */
+
+.backupplus_restore_container {
+	display: block;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 99999;
+	padding-top: 30px;
+	background: #F1F1F1;
+	overflow: auto;
+}
+
+.backupplus-modal-is-opened .select2-container {
+	z-index: 99999;
+}
+
+body.backupplus-modal-is-opened {
+	overflow: hidden;
+}
+
+.backupplus_restore_container h2 {
+	margin: 0;
+}
+
+.backupplus_restore_container .backupplusmessage {
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	max-width: 860px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.backupplus_restore_main {
+	max-width: 860px;
+	margin: 0 auto;
+	margin-top: 20px;
+	background: #FFF;
+	-webkit-box-shadow: 0 3px 3px rgba(0, 0, 0, 0.1);
+	        box-shadow: 0 3px 3px rgba(0, 0, 0, 0.1);
+	position: relative;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	    flex-wrap: wrap;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
+.backupplus_restore_main--header {
+	font-size: 20px;
+	font-weight: bold;
+	text-align: center;
+	padding-top: 16px;
+	line-height: 20px;
+	width: 100%;
+	max-width: 100%;
+	padding-right: 30px;
+	padding-left: 30px;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
+.backupplus_restore_main--activity {
+	position: relative;
+	width: calc(100% - 350px);
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
+.backupplus_restore_main--activity-title {
+	padding: 20px;
+	margin: 0;
+}
+
+.show-credentials-form.backupplus_restore_main .backupplus_restore_main--activity-title {
+	display: none;
+}
+
+.backupplus_restore_main--components {
+	width: 350px;
+	padding: 20px;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	background: #F8F8F8;
+	min-height: 350px;
+}
+
+.backupplus_restore_main:not(.show-credentials-form) div#backupplus_ajax_restore_output {
+	background: #23282D;
+	color: #E3E3E3;
+	font-family: monospace;
+	padding: 19px;
+	overflow: auto;
+	position: absolute;
+	top: 60px;
+	bottom: 0;
+	right: 0;
+	left: 0;
+}
+
+#backupplus_ajax_restore_output form {
+	white-space: normal;
+	font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen-sans, ubuntu, cantarell, "Helvetica Neue", sans-serif;
+}
+
+#backupplus_ajax_restore_output .backupplus_restore_errors {
+	border: 1px solid #DC3232;
+	padding: 10px 20px;
+	white-space: normal;
+}
+
+.backupplus_restore_main:not(.show-credentials-form) div#backupplus_ajax_restore_output h2 {
+	color: #00A0D2;
+	padding-top: 10px;
+	padding-bottom: 5px;
+}
+
+.backupplus_restore_main.show-credentials-form div#backupplus_ajax_restore_output {
+	padding: 20px;
+	border-left: 1px solid #EEE;
+}
+
+.backupplus_restore_main.show-credentials-form div#backupplus_ajax_restore_output #message {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.backupplus_restore_main.show-credentials-form div#backupplus_ajax_restore_output .form-table td,
+.backupplus_restore_main.show-credentials-form div#backupplus_ajax_restore_output .form-table th {
+	padding-bottom: 0;
+}
+
+.backupplus_restore_main.show-credentials-form .backupplus_restore_main--components {
+	opacity: 0.2;
+}
+
+.backupplus_restore_main.show-credentials-form div.error .restore-credential-errors--list p {
+	margin: 0;
+	list-style-type: disc;
+	display: list-item;
+	list-style-position: inside;
+}
+
+.restore-credential-errors > :first-child {
+	margin-top: 0;
+}
+
+.restore-credential-errors > :last-child {
+	margin-bottom: 0;
+}
+
+ul.backupplus_restore_components_list li {
+	color: #BABABA;
+	font-size: 1.2em;
+	margin-bottom: 1em;
+}
+
+ul.backupplus_restore_components_list li::before {
+	content: '\f469';
+	font-family: dashicons;
+	font-size: 20px;
+	vertical-align: middle;
+	display: inline-block;
+	margin-right: 7px;
+}
+
+ul.backupplus_restore_components_list li span {
+	vertical-align: middle;
+}
+
+ul.backupplus_restore_components_list li.done {
+	color: green;
+}
+
+ul.backupplus_restore_components_list li.done::before {
+	content: "\f147";
+}
+
+ul.backupplus_restore_components_list li.active {
+	color: inherit;
+}
+
+ul.backupplus_restore_components_list li.active::before {
+	content: "\f463";
+	-webkit-animation: udp_rotate 1s linear infinite;
+	        animation: udp_rotate 1s linear infinite;
+}
+
+ul.backupplus_restore_components_list li.error {
+	color: #DC3232;
+}
+
+ul.backupplus_restore_components_list li.error::before {
+	content: "\f335";
+}
+
+.backupplus_restore_result {
+	padding: 10px 0;
+	font-size: 1.3em;
+	margin-bottom: 1em;
+	vertical-align: middle;
+	display: none;
+}
+
+.backupplus_restore_result.restore-error {
+	color: #DC3232;
+}
+
+.backupplus_restore_result.restore-success {
+	color: green;
+}
+
+.backupplus_restore_result .dashicons {
+	font-size: 35px;
+	height: 35px;
+	line-height: 33px;
+	width: 35px;
+}
+
+.backupplus_restore_result span {
+	vertical-align: middle;
+}
+
+/* Restore modal */
+
+#backupplus-restore-modal {
+	width: 100%;
+}
+
+div#backupplus-restore-modal .notice {
+	background: #F8F8F8;
+}
+
+.backupplus-restore-modal--stage .backupplus--two-halves,
+.backupplus-restore-modal--stage .backupplus--one-half {
+	padding: 20px 30px;
+}
+
+.backupplus-restore-modal--header {
+	padding: 20px;
+	padding-bottom: 0px;
+	text-align: center;
+	border-bottom: 1px solid #EEE;
+}
+
+.backupplus-restore-modal--header h3 {
+	margin: 0;
+	padding: 0;
+}
+
+.backupplus-restore-item {
+	padding-bottom: 4px;
+}
+
+.backupplus-restore-buttons {
+	padding-top: 10px;
+}
+
+ul.backupplus-restore--stages {
+	display: inline-block;
+	margin: 0;
+	height: 28px;
+}
+
+ul.backupplus-restore--stages li {
+	display: inline-block;
+	position: relative;
+	width: 12px;
+	height: 12px;
+	background: #D2D2D2;
+	border-radius: 20px;
+	line-height: 1;
+	margin: 0 4px;
+	vertical-align: middle;
+}
+
+ul.backupplus-restore--stages li.active {
+	background: #444;
+}
+
+.backupplus-restore--footer {
+	border-top: 1px solid #EEE;
+	padding: 20px;
+	text-align: center;
+	position: sticky;
+	bottom: 0;
+	background: #FFF;
+	width: 100%;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	z-index: 999999;
+}
+
+.backupplus-restore--footer .backupplus-restore--cancel {
+	position: absolute;
+	left: 20px;
+	top: auto;
+}
+
+.backupplus-restore--footer .backupplus-restore--next-step {
+	position: absolute;
+	right: 20px;
+	top: auto;
+}
+
+ul.backupplus-restore--stages li span {
+	position: absolute;
+	width: 120px;
+	bottom: calc(100% + 14px);
+	left: -55px;
+	background: rgba(0,0,0,0.85882);
+	padding: 5px;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	border-radius: 4px;
+	color: #FFF;
+	text-align: center;
+	display: none;
+}
+
+ul.backupplus-restore--stages li:hover span {
+	display: inline-block;
+}
+
+.backupplus-restore-item input[type=checkbox] {
+	margin-bottom: -5px;
+}
+
+.backupplus-restore-item input[type=checkbox]:checked + label {
+	font-weight: bold;
+}
+
+/* Hide close button on download window */
+div#backupplus-restore-modal .ud_downloadstatus__close {
+	display: none;
+}
+
+#ud_downloadstatus2:not(:empty) {
+	margin-top: 15px;
+}
+
+.dashicons.rotate {
+	-webkit-animation: udp_rotate 1s linear infinite;
+	        animation: udp_rotate 1s linear infinite;
+}
+
+/* Activity stalled */
+
+span#backupplus_ajax_restore_last_activity {
+	font-size: .8rem;
+	font-weight: normal;
+	float: right;
+}
+
+.backupplus_restore_main--components .updated.show_admin_restore_in_progress_notice {
+	margin: -20px -20px 20px;
+	padding: 19px;
+}
+
+.backupplus_restore_main--components .updated.show_admin_restore_in_progress_notice button {
+	margin-right: 5px;
+}

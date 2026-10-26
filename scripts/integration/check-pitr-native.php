@@ -78,13 +78,14 @@ function pitr_start( $image, $engine, $role, $number ) {
 	$source = 'source' === $role;
 	$prefix = 'mysql' === $engine ? 'MYSQL' : 'MARIADB';
 	$allow  = 'mysql' === $engine ? 'MYSQL_ALLOW_EMPTY_PASSWORD=yes' : 'MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1';
-	$run    = array( 'run', '--detach', '--name', $name, '--network', 'container:' . $worker, '--env', $allow );
+	// The data of a disposable server lives in memory: the checks need the behavior of the server, not its durability.
+	$run = array( 'run', '--detach', '--name', $name, '--network', 'container:' . $worker, '--tmpfs', '/var/lib/mysql', '--env', $allow );
 	if ( $source ) {
 		array_push( $run, '--env', $prefix . '_DATABASE=backupplus' );
 	}
-	array_push( $run, $image, '--port=' . $number, '--bind-address=127.0.0.1', '--server-id=' . $number, '--event-scheduler=OFF' );
+	array_push( $run, $image, '--port=' . $number, '--bind-address=127.0.0.1', '--server-id=' . $number, '--event-scheduler=OFF', '--innodb-flush-log-at-trx-commit=0', '--innodb-doublewrite=OFF' );
 	if ( $source ) {
-		array_push( $run, '--log-bin=binlog', '--binlog-format=ROW', '--binlog-checksum=CRC32', '--binlog-expire-logs-seconds=172800' );
+		array_push( $run, '--log-bin=binlog', '--sync-binlog=0', '--binlog-format=ROW', '--binlog-checksum=CRC32', '--binlog-expire-logs-seconds=172800' );
 	} else {
 		$run[] = '--skip-log-bin';
 	}
@@ -101,7 +102,7 @@ function pitr_ready( $binary, $number, $container ) {
 		if ( 0 === $result['status'] ) {
 			return;
 		}
-		sleep( 1 );
+		usleep( 250000 );
 	}
 	pitr_command( array( 'logs', '--tail', '50', $container ) );
 	throw new RuntimeException( 'Disposable database did not become ready' );
@@ -111,9 +112,8 @@ pitr_command( array( 'exec', $worker, 'wp', '--skip-plugins=backupplus', 'core',
 $client_directory = null;
 $temporary        = integration_temp_dir( 'backupplus-pitr-native-' );
 try {
-	$client_directory = pitr_mysql_clients( $temporary );
-	$mysql_image      = getenv( 'MYSQL_IMAGE' ) ? getenv( 'MYSQL_IMAGE' ) : 'docker.io/library/mysql:8.4';
-	$matrix           = array(
+	$mysql_image = getenv( 'MYSQL_IMAGE' ) ? getenv( 'MYSQL_IMAGE' ) : 'docker.io/library/mysql:8.4';
+	$matrix      = array(
 		array( 'mysql', $mysql_image, false ),
 		array( 'mysql', $mysql_image, true ),
 		array( 'mariadb', 'docker.io/library/mariadb:10.11', false ),
@@ -121,6 +121,10 @@ try {
 	);
 	if ( false !== getenv( 'PITR_CASE' ) ) {
 		$matrix = array( $matrix[ (int) getenv( 'PITR_CASE' ) ] );
+	}
+	// MariaDB uses the clients that come with the site container.
+	if ( in_array( 'mysql', array_column( $matrix, 0 ), true ) ) {
+		$client_directory = pitr_mysql_clients( $temporary );
 	}
 	foreach ( $matrix as list( $engine, $image, $gtid ) ) {
 		echo 'Testing ', $image, ' GTID=', $gtid ? 'True' : 'False', "\n";

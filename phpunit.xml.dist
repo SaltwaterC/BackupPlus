@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd"
+	bootstrap="tests/bootstrap.php"
+	cacheDirectory=".cache/phpunit"
+	colors="true"
+	failOnWarning="true"
+	failOnRisky="true"
+	displayDetailsOnTestsThatTriggerWarnings="true"
+>
+	<php>
+		<ini name="memory_limit" value="1G"/>
+	</php>
+	<!-- Tests that need disposable servers (live) or PHP functions disabled (variant) run from scripts/integration and tests/Unit/DisabledFunctionsTest.php, which select them by group. -->
+	<groups>
+		<exclude>
+			<group>live</group>
+			<group>variant</group>
+		</exclude>
+	</groups>
+	<testsuites>
+		<testsuite name="unit">
+			<directory>tests/Unit</directory>
+		</testsuite>
+		<testsuite name="integration">
+			<directory>tests/Integration</directory>
+		</testsuite>
+		<testsuite name="wordpress">
+			<directory>tests/WordPress</directory>
+		</testsuite>
+		<testsuite name="client">
+			<directory>tests/Client</directory>
+		</testsuite>
+		<testsuite name="browser">
+			<directory>tests/Browser</directory>
+		</testsuite>
+		<testsuite name="pitr">
+			<directory>tests/Pitr</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

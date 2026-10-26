@@ -1,0 +1,481 @@
+/* Add-ons, headers, vault and advert boxes, advanced settings, central wizard, in-page backup. */
+
+/* Time + scheduling add-on*/
+.fix-time {
+	width: 70px;
+}
+
+.retain-files {
+	width: 70px;
+}
+
+.number-input {
+	min-width: 50px;
+	max-width: 70px;
+}
+
+.additional-rule-width {
+	min-width: 60px;
+	max-width: 70px;
+}
+
+/* Add-ons */
+/* Want to fix the WordPress icons so that they fit inline with the text, and don't push everything out of place. */
+
+#backupplus-wrap .dashicons.dashicons-adapt-size {
+	line-height: inherit;
+	font-size: inherit;
+}
+
+#backupplus-wrap .button span.dashicons:not(.dashicons-adapt-size) {
+	vertical-align: middle;
+	margin-top: -3px;
+	line-height: 1 !important;
+}
+
+.addon-logo-150 {
+	margin-left: 30px;
+	margin-top: 33px;
+	height: 125px;
+	width: 150px;
+}
+
+.margin-bottom-50 {
+	margin-bottom: 50px;
+}
+
+/* Main Header */
+
+.main-header {
+	background-color: #DF6926;
+	height: 200px;
+	width: 100%;
+}
+
+.button-add-to-cart {
+	color: white;
+	border-color: white;
+	float: none;
+	margin-right: 17px;
+}
+
+.button-add-to-cart:hover, .button-add-to-cart:focus, .button-add-to-cart:active {
+	border-color: #A0A5AA;
+	color: #A0A5AA;
+}
+
+.addon-title {
+	margin-top: 25px;
+}
+
+.addon-text {
+	margin-top: 75px;
+}
+
+.image-main-div {
+	width: 25%;
+	float: left;
+}
+
+.text-main-div {
+	width: 60%;
+	float: left;
+	text-align: center;
+	color: white;
+	margin-top: 16px;
+}
+
+.text-main-div-title {
+	font-weight: bold !important;
+	color: white;
+	text-align: center;
+}
+
+.text-main-div-paragraph {
+	color: white;
+}
+
+/* End main header */
+
+/* Vault icons */
+
+.backupplus-vault-cta {
+	width: 100%;
+	text-align: center;
+	margin-bottom: 50px;
+}
+
+.backupplus-vault-cta h1 {
+	font-weight: bold;
+}
+
+.backupplusvault-buy {
+	width: 225px;
+	height: 225px;
+	border: 2px solid #777;
+	display: inline-table;
+	margin: 0 auto;
+	margin-right: 50px;
+	position: relative;
+}
+
+.backupplus-vault-cta > .vault-options > .center-vault {
+	width: 275px;
+	height: 275px;
+}
+
+.backupplus-vault-cta > .vault-options > .center-vault > a {
+	right: 21%;
+	font-size: 16px;
+	border-width: 4px !important;
+}
+
+.backupplus-vault-cta > .vault-options > .center-vault > p {
+	font-size: 16px;
+}
+
+.backupplusvault-buy .button-purchase {
+	right: 24%;
+	margin-left: 0;
+	line-height: 1.7em;
+}
+
+.backupplusvault-buy hr {
+	height: 2px;
+	background-color: #777;
+	margin-top: 18px;
+}
+
+.right {
+	margin-right: 0px;
+}
+
+.backupplusvault-buy .addon-logo-100 {
+	height: 100px;
+	width: 125px;
+	margin-top: 7px;
+}
+
+.backupplusvault-buy .addon-logo-large {
+	margin-top: 7px;
+}
+
+.backupplusvault-buy .button-buy-vault {
+	font-size: 12px;
+	color: #DF6926;
+	border-color: #DF6926;
+	border-width: 2px !important;
+	position: absolute;
+	right: 29%;
+	bottom: 2%;
+}
+
+.backupplusvault-buy .button-buy-vault:hover {
+	border-color: darkgrey;
+	color: darkgrey;
+}
+
+.addon-list {
+	/* margin-left: 32px; */
+	display: table;
+	text-align: center;
+}
+
+.button-purchase {
+	font-size: 12px;
+	color: #DF6926;
+	border-color: #DF6926;
+	border-width: 2px !important;
+	position: absolute;
+	right: 25%;
+	bottom: 2%;
+}
+
+.button-purchase:hover {
+	color: darkgrey;
+	border-color: darkgrey;
+}
+
+/* Automation Backup Advert by B */
+.autobackup-image {
+/* 	display: inline-block; */
+/*	min-width: 10%;
+	max-width:25%;*/
+/*	float: left;*/
+	clear: left;
+	float: left;
+	width: 110px;
+	height: 110px;
+}
+
+.autobackup-description {
+	width: 100%;
+}
+
+.advert-description {
+	float: left;
+	clear: right;
+	padding: 4px 10px 8px 10px;
+	width: 70%;
+	clear: right;
+	vertical-align: top;
+}
+
+.advert-btn {
+	display: inline-block;
+	min-width: 10%;
+	vertical-align: top;
+	margin-bottom: 8px;
+}
+
+.advert-btn:first-of-type {
+	margin-top: 25px;
+}
+
+.advert-btn a {
+	display: block;
+	cursor: pointer;
+}
+
+a.btn-get-started {
+	background: #FFF;
+	border: 2px solid #DF6926;
+	border-radius: 4px;
+	color: #DF6926;
+	display: inline-block;
+	margin-left: 10px !important;
+	margin-bottom: 7px !important;
+	font-size: 18px !important;
+	line-height: 20px;
+	min-height: 28px;
+	padding: 11px 10px 5px 10px;
+	text-transform: uppercase;
+	text-decoration: none;
+}
+
+.circle-dblarrow {
+	border: 1px solid #DF6926;
+	border-radius: 100%;
+	display: inline-block;
+	font-size: 17px;
+	line-height: 17px;
+	margin-left: 5px;
+	width: 20px;
+	height: 20px;
+	text-align: center;
+}
+
+/* End Automation Backup Advert by B */
+/* New Responsive Pretty Advanced Settings */
+.expertmode .advanced_settings_container {
+	height: auto;
+	overflow: hidden;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu {
+	float: none;
+	border-bottom: 1px solid rgb(204, 204, 204);
+}
+
+.expertmode .advanced_settings_container .advanced_settings_content {
+	padding-top: 5px;
+	float: none;
+	width: auto;
+	overflow: auto;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_content h3:first-child {
+	margin-top: 5px !important;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_content .advanced_tools {
+	display: none;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_content .site_info {
+	display: block;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu .advanced_tools_button {
+	display: inline-block;
+	cursor: pointer;
+	padding: 5px;
+	color: #000;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu .advanced_tools_text {
+	font-size: 16px;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu .advanced_tools_button:hover {
+	background-color: #EAEAEA;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu .active {
+	background-color: #3498DB;
+	color: #FFF;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_menu .active:hover {
+	background-color: #72C5FD;
+	color: #FFF;
+}
+
+.expertmode .advanced_settings_container .advanced_settings_content input#import_settings {
+	height: auto !important;
+}
+
+div#backupplus-wrap a {
+	cursor: pointer !important;
+}
+
+.backuppluscentral_wizard_option {
+	width: 45%;
+	float: left;
+	text-align: center;
+}
+
+.backuppluscentral_wizard_option label {
+	margin-bottom: 8px;
+}
+
+#backuppluscentral_keys_table {
+	display: none;
+}
+
+.create_key_container {
+	border: 1px solid;
+	border-radius: 4px;
+	padding: 0 0 6px 6px;
+	margin-bottom: 8px;
+}
+
+.backuppluscentral_cloud_connect {
+	border-radius: 4px;
+	border: 1px solid #000;
+	padding: 0 20px;
+	margin-top: 30px;
+	background-color: #FFF;
+}
+
+.backuppluscentral_cloud_error {
+	border: 1px solid #000;
+	padding: 3px 10px;
+	border-left: 3px solid #F00;
+	background-color: #FFF;
+	margin-bottom: 10px;
+}
+
+.backuppluscentral_cloud_info {
+	border: 1px solid #000;
+	padding: 3px 10px;
+	border-left: 3px solid #EF8F31;
+	background-color: #FFF;
+	margin-bottom: 10px;
+}
+
+.backupplus_spinner.spinner {
+	padding-left: 25px;
+	float: none;
+}
+
+.backupplus_spinner.spinner.visible {
+	visibility: visible;
+	width: auto;
+}
+
+.backuppluscentral_cloud_notices .backupplus_spinner {
+	margin-top: -5px;
+}
+
+.backuppluscentral-subheading {
+	font-size: 14px;
+	margin-top: -10px;
+	margin-bottom: 20px;
+}
+
+#backuppluscentral_cloud_form input#email,
+#backuppluscentral_cloud_form input#password {
+	min-width: 250px;
+}
+
+.backuppluscentral-data-consent {
+	font-size: 13px;
+	margin-bottom: 10px;
+}
+
+.backuppluscentral_cloud_wizard_image {
+	float: left;
+	min-width: 100px;
+	margin-right: 25px;
+}
+
+.backuppluscentral_cloud_wizard {
+	float: left;
+}
+
+.backuppluscentral_cloud_clear {
+	clear: both;
+}
+
+.backupplus-settings-footer {
+	margin-top: 30px;
+}
+
+.backupplus-top-menu {
+	padding: 0.5em;
+}
+
+#backupplus_inpage_backup #backupplus_activejobs_table {
+	background: transparent;
+}
+
+#backupplus_inpage_backup #backupplus_lastlogmessagerow .backupplus-log-link {
+	float: none;
+}
+
+#backupplus_inpage_backup #backupplus_activejobsrow .backupplus_row {
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+#backupplus_inpage_backup #backupplus_activejobsrow .backupplus_progress_container {
+	width: 100%;
+}
+
+#backupplus_inpage_backup #backupplus_activejobs_table {
+	overflow: inherit;
+}
+
+#backupplus_inpage_backup span#backupplus_lastlogcontainer {
+	padding: 18px;
+	background: #FAFAFA;
+	display: block;
+	font-size: 90%;
+	-webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+	        box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#backupplus_inpage_backup div#backupplus_activejobsrow {
+	background: #FAFAFA;
+	-webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+	        box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#backupplus_inpage_backup #backupplus_lastlogmessagerow > div {
+	background: transparent;
+	padding: 0;
+}
+
+#backupplus_inpage_backup .last-message > strong {
+	display: block;
+	margin-top: 13px;
+}
+
+body.update-core-php #backupplus_inpage_backup h2:nth-child(1) {
+	margin-top: 1em !important;
+}

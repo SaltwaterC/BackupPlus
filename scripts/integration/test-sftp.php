@@ -89,7 +89,7 @@ try {
 	);
 	$ports  = $server->info['ports'];
 	$result = integration_run(
-		array( PHP_BINARY, '-d', 'error_reporting=24575', dirname( __DIR__ ) . '/test-sftp.php' ),
+		array( PHP_BINARY, '-d', 'error_reporting=24575', dirname( __DIR__, 2 ) . '/.cache/php-tools/vendor/bin/phpunit', '--configuration', dirname( __DIR__, 2 ) . '/phpunit.xml.dist', '--testsuite', 'unit', '--filter', getenv( 'SSH_TEST_FILTER' ) ?: 'SftpTest::test_live_', '--group', 'live', '--fail-on-skipped', '--do-not-cache-result' ),
 		'',
 		array_merge(
 			getenv(),

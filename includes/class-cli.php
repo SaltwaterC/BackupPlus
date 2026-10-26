@@ -191,7 +191,7 @@ class BackupPlus_CLI {
 			$events = self::events( $nonce, $batch );
 			if ( ! $events && (int) self::fresh( 'backupplus_lock_udp_backupjob_' . $nonce ) > time() ) {
 				// Another cron process may have consumed the event and still own this job.
-				sleep( 1 );
+				usleep( 200000 );
 				continue;
 			}
 			if ( ! $events ) { throw new RuntimeException( 'Backup worker stopped without terminal completion evidence or a scheduled retry. Review log.' . $nonce . '.txt.' ); }

@@ -18,14 +18,14 @@ AWS RDS and Percona support are deferred until needed. The [hosting and vendor g
 
 | Area | Existing behavior and integration point |
 | --- | --- |
-| Full database backups | `BackupPlus_Backup::backup_db()` in `backup.php` iterates tables, resumes table fragments and stitches a final dump. `backup_table_bindump()` invokes a native dumper for one table. Neither path establishes one coordinated snapshot for the whole database. |
+| Full database backups | `BackupPlus_Backup::backup_db()` (`includes/backup/trait-database.php`, composed into `backup.php`) iterates tables, resumes table fragments and stitches a final dump. `backup_table_bindump()` invokes a native dumper for one table. Neither path establishes one coordinated snapshot for the whole database. |
 | Incremental backups | `includes/class-incremental-backups.php` implements file inventories and file chains. Its configuration, seven-day rollover and local inventories are specific to files. Database log chains need separate state and validation. |
 | History and discovery | `includes/class-backup-history.php` builds incremental file sets and recognizes specific archive names/extensions. New artifacts require explicit discovery, import and indexing support. |
 | Storage | `includes/class-storage-methods-interface.php` and `methods/backup-module.php` supply provider selection, instances and transfer integration. Keep database capture independent of provider implementations. |
 | Encryption | `includes/class-backupplus-encryption.php`, `includes/class-database-encryption.php` and the backup dispatch pipeline support age and job configuration snapshots. Browser restore preparation is in `includes/class-age-restore.php`; interactive CLI preparation is in `includes/class-cli-restore.php`. |
 | Scheduling | `includes/class-backup-schedule.php` handles exact local schedules; `includes/class-job-scheduler.php` handles job resumptions. Add a distinct database-log job and schedule. |
-| Deletion | `backup.php` prunes database/file sets; `includes/class-retention-cleanup.php` coordinates cleanup and retries; `includes/class-backup-deletion.php` handles explicit deletion and active-set protection. All deletion paths must understand database chains. |
-| Restore | `restorer.php` supports table selection and database import. Native dumps, schema objects and regenerated recovery exports need compatibility checks before entering that path. |
+| Deletion | `includes/backup/trait-retention.php` (composed into `backup.php`) prunes database/file sets; `includes/class-retention-cleanup.php` coordinates cleanup and retries; `includes/class-backup-deletion.php` handles explicit deletion and active-set protection. All deletion paths must understand database chains. |
+| Restore | `restorer.php` (methods in `includes/restorer/`) supports table selection and database import. Native dumps, schema objects and regenerated recovery exports need compatibility checks before entering that path. |
 
 ## Coordinated full-backup mode
 

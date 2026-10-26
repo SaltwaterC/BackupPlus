@@ -55,7 +55,7 @@ or, with WP-CLI:
 
 ## Checks
 
-- `php scripts/test-backup-schedule.php` checks run-time calculation for daily, sub-daily, weekly, fortnightly and monthly schedules. It also covers timezone offsets, daylight-saving gaps and repeated times, delayed runs, validation and schedule combining, without WordPress.
+- `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter BackupScheduleTest` checks run-time calculation for daily, sub-daily, weekly, fortnightly and monthly schedules. It also covers timezone offsets, daylight-saving gaps and repeated times, delayed runs, validation and schedule combining, without WordPress.
 - `podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-backup-schedule.php` uses disposable data to check:
   - event reconciliation and repeated, unrelated and rejected saves;
   - overdue events, `options.php` validation, imports and reset;

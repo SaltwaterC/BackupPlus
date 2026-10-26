@@ -135,6 +135,12 @@ rm -f /run/mysqld/backupplus-recovery.cnf
 mariadb-admin --protocol=socket --socket="$socket" --user=root --password="$root_password" shutdown
 wait "$bootstrap_pid" || true
 
+# Disposable test sites keep their data in memory and need no durability: they skip the flushes that dominate write-heavy tests.
+durability_args=()
+if [[ "${MARIADB_RELAXED_DURABILITY:-0}" == 1 ]]; then
+	durability_args=(--innodb-flush-log-at-trx-commit=0 --innodb-doublewrite=OFF --sync-binlog=0)
+fi
+
 exec mariadbd \
 	--user=mysql \
 	--datadir="$data_dir" \
@@ -147,4 +153,5 @@ exec mariadbd \
 	--log-bin="$data_dir/binlog" \
 	--binlog-format=ROW \
 	--binlog-checksum=CRC32 \
-	--binlog-expire-logs-seconds=172800
+	--binlog-expire-logs-seconds=172800 \
+	"${durability_args[@]}"

@@ -42,6 +42,8 @@ foreach ( $assetVersionParts as $versionPart ) {
 $assetVersion = implode( '-', $assetVersionParts );
 
 // These are the checked-in minified bundles referenced through get_backupplus_file_version().
+// assets-src/includes/backupplus-admin-common.min.js is generated from includes/admin-common/ by scripts/build-admin-common.mjs,
+// and the admin, deactivation and notices stylesheets in assets-src/css/ from css/ by scripts/build-css.mjs.
 // Scripts without a minified bundle use their existing source-file fallback.
 $assets = array(
 	array(
@@ -73,6 +75,10 @@ $assets = array(
 		'source'     => 'assets-src/includes/jquery-ui.custom-v1.12.1.min.css',
 		'output'     => 'includes/jquery-ui.custom-v1.12.1-%s.min.css',
 		'source_map' => true,
+	),
+	array(
+		'source' => 'assets-src/includes/backupplus-admin-common.min.js',
+		'output' => 'includes/backupplus-admin-common-%s.min.js',
 	),
 	array(
 		'source' => 'assets-src/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended.min.js',

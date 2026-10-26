@@ -1,0 +1,118 @@
+/* RTL support, exclude modal clauses and notice styling. */
+
+/* RTL Support */
+
+.rtl .advanced_tools.total_size table td {
+	direction: ltr;
+	text-align: right;
+}
+
+.rtl #plupload-upload-ui2.drag-drop #drag-drop-area2 {
+	margin-bottom: 20px;
+}
+
+.rtl #backupplus_lastlogmessagerow .backupplus-log-link {
+	float: left;
+}
+
+.rtl label.backupplus_checkbox > input[type=checkbox] {
+	margin-right: -25px;
+	margin-left: inherit;
+}
+
+.rtl .ud_downloadstatus__close {
+	float: left !important;
+}
+
+.rtl #backupplus_backupextradbs_another_container {
+	float: right;
+}
+
+.rtl input.labelauty + label {
+	direction: ltr;
+	position: relative;
+	min-height: 29px;
+}
+
+.rtl input.labelauty + label > span.labelauty-checked-image, .rtl input.labelauty + label > span.labelauty-unchecked-image {
+	right: 8px;
+	top: 11px;
+	position: absolute;
+}
+
+.rtl .button.backupplus-close-overlay .dashicons {
+	margin-right: -5px;
+	margin-left: inherit;
+}
+
+.rtl label.backupplus_checkbox {
+	margin-right: 26px;
+	margin-left: inherit;
+}
+
+.rtl input.labelauty + label > span.labelauty-unchecked-image + span.labelauty-unchecked,
+.rtl input.labelauty + label > span.labelauty-checked-image + span.labelauty-checked {
+	margin-right: 7px;
+	margin-left: inherit;
+	padding: 7px 7px 7px 26px;
+	width: 141px;
+	text-align: right;
+}
+
+.rtl #backupplus_report_cell button.backupplus_reportbox_delete,
+.rtl .backupplus_box_delete_button,
+.rtl .backupplus_small_box .backupplus_box_delete_button {
+	left: 4px;
+	right: inherit;
+}
+
+#backupplus_exclude_modal .clause-input-container {
+	overflow: auto;
+}
+
+#backupplus_exclude_modal .clause-input-container select, #backupplus_exclude_modal .clause-input-container input {
+	float: left;
+}
+
+#backupplus_exclude_modal .clause-input-container .wildcards-input {
+	margin: 7px 7px 0 0;
+}
+
+#backupplus_exclude_modal .backupplus-exclude-panel .contain-clause-sub-label {
+	margin-top: 10px;
+	display: block;
+}
+
+/* BackupPlus Notice Styling */
+.udp-notice {
+	border: 1px solid #C3C4C7;
+	border-left-width: 4px;
+	-webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+	        box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+	background: #FFF;
+	margin: 5px 0 15px 0;
+	padding: 1px 12px;
+}
+
+.udp-notice p {
+	margin: .5em 0;
+	padding: 2px;
+}
+
+.udp-notice.notice-warning {
+	border-left-color: #DBA617;
+}
+
+.udp-notice.notice-error {
+	border-left-color: #D63638;
+}
+
+.udp-notice.backupplus-restore-option {
+	border-left-color: #CCC;
+	margin: 8px 0 4px 0;
+	padding: 12px;
+}
+
+div#backupplus-restore-modal .udp-notice, .udp-notice.backupplus-restore-option {
+	background: #F8F8F8;
+}

@@ -41,7 +41,7 @@ try {
 	}
 	// Disable the native FTP API to guard against accidental transport fallbacks.
 	$native = 'ftp_connect,ftp_ssl_connect,ftp_login,ftp_nb_fput,ftp_nb_fget,ftp_nlist,ftp_size,ftp_delete';
-	$result = integration_run( array( PHP_BINARY, '-d', 'curl.cainfo=' . $authority['path'], '-d', 'disable_functions=' . $native, dirname( __DIR__ ) . '/test-ftp.php' ), '', $environment );
+	$result = integration_run( array( PHP_BINARY, '-d', 'curl.cainfo=' . $authority['path'], '-d', 'disable_functions=' . $native, dirname( __DIR__, 2 ) . '/.cache/php-tools/vendor/bin/phpunit', '--configuration', dirname( __DIR__, 2 ) . '/phpunit.xml.dist', '--testsuite', 'unit', '--filter', '/\\\\FtpTest::test_live_/', '--group', 'live', '--fail-on-skipped', '--do-not-cache-result' ), '', $environment );
 	echo $result['stdout'], $result['stderr'];
 	integration_expect( 0 === $result['status'], 'The FTP checks failed' );
 } finally {

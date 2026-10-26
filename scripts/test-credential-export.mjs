@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const source = readFileSync(new URL('../includes/backupplus-admin-common.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../includes/admin-common/settings-save.js', import.meta.url), 'utf8');
 const start = source.indexOf('\tfunction export_settings()');
 const end = source.indexOf('\n\tfunction import_settings(', start);
 assert(start > 0 && end > start);

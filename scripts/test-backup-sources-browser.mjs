@@ -230,11 +230,13 @@ try {
 		backupplus_open_main_tab('backups');
 		const row = jQuery('<tr><td><button type="button" class="choose-components-button">Baseline fixture</button></td></tr>').appendTo('#backupplus-navtab-backups-content .backupplus_existing_backups tbody:first');
 		const button = row.find('button');
-		const send = window.backupplus_send_command, prepare = window.backupplus_prepare_restore, animations = jQuery.fx.off, skippedScan = skipped_db_scan;
+		const send = window.backupplus_send_command, prepare = window.backupplus_prepare_restore, animations = jQuery.fx.off, skippedScan = skipped_db_scan, updatehistory = window.backupplus_updatehistory;
 		const requests = [], cases = [];
 		try {
 			jQuery.fx.off = true;
 			skipped_db_scan = 1;
+			// A history refresh would replace the fixture row while the loop is running.
+			window.backupplus_updatehistory = () => {};
 			jQuery('#backupplus_restore_form').on('submit.baseline_test', event => event.preventDefault());
 			window.backupplus_prepare_restore = async () => true;
 			window.backupplus_send_command = (command, params, done, options) => {
@@ -276,6 +278,7 @@ try {
 			window.backupplus_prepare_restore = prepare;
 			jQuery.fx.off = animations;
 			skipped_db_scan = skippedScan;
+			window.backupplus_updatehistory = updatehistory;
 			jQuery('#backupplus_restore_form').off('submit.baseline_test');
 			row.remove();
 		}

@@ -125,6 +125,12 @@ MU;
 			dropbox_wp_expect( isset( $cron_by_hook[ BackupPlus_Credential_Key_Rotation::RETRY_HOOK ] ) && 'Non-repeating' === $cron_by_hook[ BackupPlus_Credential_Key_Rotation::RETRY_HOOK ]['name'], 'The Cron events page must show pending credential rotation retries as non-repeating' );
 			dropbox_wp_expect( isset( $cron_by_hook['backupplus_backup_resume'] ) && 'Non-repeating' === $cron_by_hook['backupplus_backup_resume']['name'], 'The Cron events page must still show one-off backup tasks' );
 			dropbox_wp_expect( ! isset( $cron_by_hook['unrelated_fixture_cron'] ), 'The Cron events page must continue to exclude unrelated tasks' );
+			// Every request reconciles the PITR schedule with the settings, which removes the fixture event while capture is off.
+			if ( empty( BackupPlus_PITR::config()['enabled'] ) ) {
+				backupplus_try_include_file( 'includes/class-wpadmin-commands.php', 'include_once' );
+				$commands     = new BackupPlus_WPAdmin_Commands( $GLOBALS['backupplus'] );
+				$cron_by_hook = array_column( $commands->get_cron_events(), null, 'hook' );
+			}
 			dropbox_wp_expect( isset( $cron_by_hook[ BackupPlus_PITR::HOOK ] ), 'The Cron events page must show database PITR capture' );
 			wp_clear_scheduled_hook( BackupPlus_Credential_Key_Rotation::RETRY_HOOK );
 			wp_clear_scheduled_hook( 'backupplus_backup_resume' );

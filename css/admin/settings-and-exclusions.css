@@ -1,0 +1,328 @@
+/* Include and exclude fields, report and storage boxes, info tooltips, conditional remote backup rules. */
+
+h3 .thank-you {
+	margin-top: 0px;
+}
+
+.ws_advert {
+	max-width: 800px;
+	font-size: 140%;
+	line-height: 140%;
+	padding: 14px;
+	clear: left;
+}
+
+.dismiss-dash-notice {
+	float: right;
+	position: relative;
+	top: -20px;
+}
+
+.backupplus_exclude_container,
+.backupplus_include_container {
+	margin-left: 24px;
+	margin-top: 5px;
+	margin-bottom: 10px;
+	padding: 15px;
+	border: 1px solid #DDD;
+}
+
+label.backupplus-exclude-label {
+	font-weight: 500;
+	margin-bottom: 5px;
+	display: inline-block;
+}
+
+.backupplus_add_exclude_item,
+#backupplus_include_more_paths_another {
+	display: inline-block;
+	margin-top: 10px;
+}
+
+input.backupplus_exclude_entity_field,
+.form-table td input.backupplus_exclude_entity_field,
+.backupplus-morefiles-row input[type=text] {
+	width: calc(100% - 70px);
+	max-width: 400px;
+}
+
+.backupplus-fs-italic {
+	font-style: italic;
+}
+
+@media screen and (max-width: 782px) {
+
+	.form-table td input.backupplus_exclude_entity_field,
+	.form-table td .backupplus-morefiles-row input[type=text] {
+		display: inline-block;
+	}
+
+}
+
+.backupplus_exclude_entity_delete.dashicons, .backupplus_exclude_entity_edit.dashicons, .backupplus_exclude_entity_update.dashicons, .backupplus-morefiles-row a.dashicons {
+	margin-top: 2px;
+	font-size: 20px;
+	-webkit-box-shadow: none;
+	        box-shadow: none;
+	line-height: 1;
+	padding: 3px;
+	margin-right: 4px;
+}
+
+.backupplus_exclude_entity_delete,
+.backupplus_exclude_entity_delete:hover,
+.backupplus-morefiles-row-delete {
+	color: #FF6347;
+}
+
+.backupplus_exclude_entity_update.dashicons, .backupplus_exclude_entity_update.dashicons:hover {
+	color: #008000;
+	font-weight: bold;
+	font-size: 22px;
+	margin-left: 4px;
+}
+
+.backupplus_exclude_entity_edit {
+	margin-left: 4px;
+}
+
+.backupplus_exclude_entity_update.is-active ~ .backupplus_exclude_entity_delete {
+	display: none;
+}
+
+.backupplus-exclude-panel-heading {
+	margin-bottom: 8px;
+}
+
+.backupplus-exclude-panel-heading h3 {
+	margin: 0.5em 0 0.5em 0;
+}
+
+.backupplus-exclude-submit.button-primary {
+	margin-top: 5px;
+}
+
+.backupplus_exclude_actions_list {
+	font-weight: bold;
+}
+
+.backupplus-exclude-link {
+	cursor: pointer;
+}
+
+#backupplus_include_more_options {
+	padding-left: 25px;
+}
+
+#backupplus_report_cell .backupplus_reportbox,
+.backupplus_small_box {
+	padding: 12px;
+	margin: 8px 0;
+	border: 1px solid #CCC;
+	position: relative;
+}
+
+#backupplus_report_cell button.backupplus_reportbox_delete,
+.backupplus_box_delete_button,
+.backupplus_small_box .backupplus_box_delete_button {
+	padding: 4px;
+	padding-top: 6px;
+	border: none;
+	background: transparent;
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	cursor: pointer;
+}
+
+#backupplus_report_cell button.backupplus_reportbox_delete:hover {
+	color: #DE3C3C;
+}
+
+a.backupplus_report_another .dashicons {
+	text-decoration: none;
+	margin-top: 2px;
+}
+
+.backupplus_report_dbbackup.backupplus_report_disabled {
+	color: #CCC;
+}
+
+#backupplus-navtab-settings-content .backupplus-test-button {
+	font-size: 18px !important;
+}
+
+#backupplus_report_cell  .backupplus_report_email {
+	display: block;
+	width: calc(100% - 50px);
+	margin-bottom: 9px;
+}
+
+#backupplus_report_cell .backupplus_report_another_p {
+	clear: left;
+}
+
+/* Taken straight from admin.php */
+
+#backupplus-navtab-settings-content table.form-table p {
+	max-width: 700px;
+}
+
+#backupplus-navtab-settings-content table.form-table .notice p {
+	max-width: none;
+}
+
+#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected,
+#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected td {
+	background-color: #EFEFEF;
+}
+
+#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected:nth-child(even) td {
+	background-color: #E8E8E8;
+}
+
+.backupplus_settings_sectionheading {
+	display: none;
+}
+
+.backupplus-backupentitybutton-disabled {
+	background-color: transparent;
+	border: none;
+	color: #0074A2;
+	text-decoration: underline;
+	cursor: pointer;
+	clear: none;
+	float: left;
+}
+
+.backupplus-backupentitybutton {
+	margin-left: 8px;
+}
+
+.backupplus-bigbutton {
+	padding: 2px 0px !important;
+	margin-right: 14px !important;
+	font-size: 22px !important;
+	min-height: 32px;
+	min-width: 180px;
+}
+
+tr[class*="_backupplus_remote_storage_border"] {
+	border-top: 1px solid #CCC;
+}
+
+.backupplus_multi_storage_options {
+	float: right;
+	clear: right;
+	margin-bottom: 5px !important;
+}
+
+.backupplus_toggle_instance_label {
+	vertical-align: top !important;
+}
+
+.backupplus_debugrow th {
+	float: right;
+	text-align: right;
+	font-weight: bold;
+	padding-right: 8px;
+	min-width: 140px;
+}
+
+.backupplus_debugrow td {
+	min-width: 300px;
+	vertical-align: bottom;
+}
+
+.backupplus_webdav_host_error, .backupplus_sftp_host_error, .backupplus_ftp_host_error, .onedrive_folder_error {
+	color: red;
+}
+
+#backupplus-wrap .udp-info {
+	display: inline-block;
+	margin-left: 10px;
+}
+
+#backupplus-wrap span.info-trigger {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	background: #FFF;
+	color: #72777C;
+	border-radius: 30px;
+	text-align: center;
+	line-height: 20px;
+	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+	        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+#backupplus-wrap .info-content-wrapper {
+	display: none;
+	position: absolute;
+	bottom: 20px;
+	-webkit-transform: translatex(calc(-50% + 10px));
+	        transform: translatex(calc(-50% + 10px));
+	width: 330px;
+	padding-bottom: 10px;
+}
+
+#backupplus-wrap .info-content-wrapper::before {
+	content: '';
+	position: absolute;
+	bottom: -10px;
+	border: 10px solid transparent;
+	border-top-color: #FFF;
+	left: calc(50% - 10px);
+}
+
+#backupplus-wrap .info-content {
+	padding: 20px;
+	background: #FFF;
+	border-radius: 4px;
+	-webkit-box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	color: #72777C;
+}
+
+#backupplus-wrap .info-content h3 {
+	margin-top: 0;
+}
+
+#backupplus-wrap .info-content p {
+	margin-top: 10px;
+}
+
+#backupplus-wrap .udp-info:hover .info-content-wrapper {
+	display: block;
+}
+
+div.conditional_remote_backup select.logic_type {
+	vertical-align: inherit !important;
+}
+
+div.conditional_remote_backup label.backupplus_toggle_instance_label.radio_group {
+	display: block;
+	margin-top: 7px;
+}
+
+div.conditional_remote_backup div.logic ul.rules input.rule_value {
+	vertical-align: middle;
+}
+
+div.conditional_remote_backup p {
+	margin-bottom: 10px;
+}
+
+div.conditional_remote_backup div.logic ul.rules span svg {
+	width: 20px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+div.conditional_remote_backup div.logic ul.rules span svg {
+	margin-left: 3px;
+}
+
+div.conditional_remote_backup div.logic select.logic_type {
+	vertical-align: unset;
+}

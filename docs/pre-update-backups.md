@@ -14,7 +14,7 @@ Complete pre-update restore points have separate retention. BackupPlus keeps the
 
 ## Checks
 
-- `php scripts/test-pre-update-backups.php` checks completion evidence and defaults without WordPress.
+- `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter PreUpdateBackupsTest` checks completion evidence and defaults without WordPress.
 - `podman exec backupplus-dev-wordpress wp --skip-plugins=backupplus eval-file wp-content/plugins/backupplus/scripts/check-pre-update-backups.php` checks real encrypted archives, upload resumption, native automatic updating, authenticated endpoints, classic update forms, authorization, rollback, concurrency and retention using disposable data.
 - `node scripts/test-pre-update-browser.mjs` checks the shipped admin script in Chromium against a local WordPress admin page, using deterministic backup/update transports to test waits, bulk requests, retry, cancellation, plugin information dialogs and classic continuation. It also checks real AJAX nonce rejection.
 

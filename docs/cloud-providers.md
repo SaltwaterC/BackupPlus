@@ -12,7 +12,7 @@ Create a private Blob container. Enter the storage **account name**, its base64 
 
 The implementation uses [Shared Key authorization](https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key) and [block-blob commits](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block-list). The account must permit Shared Key authorization. Container creation, SAS and Entra ID authentication are not provided. Deletion includes blob snapshots; Azure versioning, soft-delete and retention policies can retain service-managed copies.
 
-Run `php scripts/test-azure.php` for signatures, encoded paths, pagination, binary/empty transfers, block commits, failed uploads and malformed XML.
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter AzureTest` for signatures, encoded paths, pagination, binary/empty transfers, block commits, failed uploads and malformed XML.
 
 ## Backblaze B2
 
@@ -20,7 +20,7 @@ Create a B2 bucket and an application key with `listFiles`, `readFiles`, `writeF
 
 The provider uses the [B2 Native API](https://www.backblaze.com/apidocs/introduction-to-the-b2-native-api), including authorization, upload URLs, SHA1 checksums and large-file assembly. Archives larger than 8 MiB use large-file uploads. Individual archives must be smaller than 80 GiB; use BackupPlus's archive splitting for larger backups. Retention deletes every version of each selected exact filename, including hide markers; it preserves other names that share the prefix. Object Lock or retention policies can prevent deletion and will produce an error.
 
-Run `php scripts/test-backblaze.php` for authorization, pagination, part checksums, cancellation, and deletion across file versions.
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter BackblazeTest` for authorization, pagination, part checksums, cancellation, and deletion across file versions.
 
 ## Google Cloud Storage
 
@@ -30,7 +30,7 @@ Alternatively supply your own OAuth **client ID**, **client secret** and **refre
 
 The provider uses the [Cloud Storage JSON API](https://docs.cloud.google.com/storage/docs/json_api) and [resumable upload protocol](https://docs.cloud.google.com/storage/docs/performing-resumable-uploads). Service-account assertions use RS256 through the bundled phpseclib library. Bucket creation is not provided. Service-side versioning, soft-delete and retention policies can retain historical copies after deletion.
 
-Run `php scripts/test-googlecloud.php` for OAuth refresh/retry, independently verified service-account signatures, pagination, upload fragments and atomic downloads.
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter GoogleCloudTest` for OAuth refresh/retry, independently verified service-account signatures, pagination, upload fragments and atomic downloads.
 
 ## Microsoft OneDrive
 
@@ -44,7 +44,7 @@ Enter the application ID, secret and tenant (`common` by default), save the dest
 
 This implementation targets the global [Microsoft Graph driveItem API](https://learn.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0). Uploads follow Graph's [upload-session fragment requirements](https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0). National Graph deployments and the retired Germany endpoint are not supported. OneDrive's recycle-bin and service retention policies still apply to deleted files.
 
-Run `php scripts/test-onedrive.php` for pagination, aligned fragment uploads, refresh-token rotation, credential isolation and administrator-bound, expiring, one-use consent callbacks.
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter OneDriveTest` for pagination, aligned fragment uploads, refresh-token rotation, credential isolation and administrator-bound, expiring, one-use consent callbacks.
 
 ## pCloud
 
@@ -58,7 +58,7 @@ Save the connection and use its authentication link. The callback selects the au
 
 The provider uses pCloud's [HTTP/JSON protocol](https://docs.pcloud.com/protocols/http_json_protocol/uploading_files.html), streaming raw file contents to `uploadfile` and validating the returned filename and size. PHP cURL is required for these streamed uploads. Downloads use validated content links without forwarding the account token. pCloud's trash and revision policies still apply after deletion.
 
-Run `php scripts/test-pcloud.php` for region selection, folder creation, binary/empty streaming, API-level errors, token encryption policy and consent callbacks.
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter PcloudTest` for region selection, folder creation, binary/empty streaming, API-level errors, token encryption policy and consent callbacks.
 
 ## Tests and independence
 

@@ -1,0 +1,489 @@
+/* Media queries. */
+
+@media only screen and (min-width: 1024px) {
+
+	#backupplus_activejobsrow .backupplus_row {
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: baseline;
+		    -ms-flex-align: baseline;
+		        align-items: baseline;
+	}
+
+	#backupplus_activejobsrow .backupplus_row .backupplus_col {
+		-webkit-box-flex: 1;
+		    -ms-flex: auto;
+		        flex: auto;
+	}
+
+	#backupplus_activejobsrow .backupplus_progress_container {
+		width: calc(100% - 230px);
+	}
+
+}
+
+@media only screen and (min-width: 782px) {
+
+	.settings_page_backupplus input[type=text],
+	.settings_page_backupplus input[type=password],
+	.settings_page_backupplus input[type=number] {
+		/* border-radius: 4px; */
+		line-height: 1.42;
+		/* border: 1px solid #CCC; */
+		height: 27px;
+		padding: 2px 6px;
+		color: #555;
+	}
+
+	.settings_page_backupplus input[type="number"] {
+		height: 31px;
+	}
+
+	#ud_massactions.active, #backupplus-delete-waitwarning.active {
+		position: fixed;
+		bottom: 0;
+		left: 160px;
+		right: 0;
+		top: auto;
+		background: #FFF;
+		z-index: 3;
+		-webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	}
+	
+	.rtl #ud_massactions.active, .rtl #backupplus-delete-waitwarning.active {
+		left: 0px;
+		right: 160px;
+	}
+
+	body.folded #ud_massactions.active, body.folded #backupplus-delete-waitwarning.active {
+		left: 36px;
+	}
+
+	.backupplus-after-form-table {
+		margin-left: 250px;
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.range-selection:not(.backuprowselected) .backupplus_existingbackup_date .backup_date_label {
+		color: #FFF;
+	}
+
+}
+
+@media only screen and (min-width: 782px) and (max-width: 960px) {
+
+	body.auto-fold #ud_massactions.active, body.auto-fold #backupplus-delete-waitwarning.active {
+		left: 36px;
+	}
+
+}
+
+@media only screen and (max-width: 782px) {
+
+	#backupplus-wrap {
+		margin-right: 0;
+	}
+
+	#backupplus-wrap .form-table td {
+		padding-right: 0;
+	}
+
+	label.backupplus_checkbox {
+		margin-bottom: 8px;
+		margin-top: 8px;
+		margin-left: 36px;
+	}
+
+	.backupplus_retain_rules {
+		position: relative;
+		margin-right: 0;
+		border: 1px solid #CCC;
+		padding: 5px;
+		margin-bottom: -1px;
+	}
+
+	.backupplus_retain_rules_delete {
+		position: absolute;
+		right: 0;
+		top: 5px;
+	}
+
+	a[id*=backupplus_retain_] {
+		display: block;
+		padding: 15px 15px 15px 0;
+	}
+
+	label.backupplus_checkbox > input[type=checkbox] {
+		margin-left: -33px;
+	}
+
+	#backupplus-backupnow-button {
+		margin: 0;
+		display: block;
+		width: 100%;
+	}
+
+	.backupplus_next_scheduled_backups_wrapper > .backupplus_backup_btn_wrapper {
+		padding-top: 0;
+	}
+
+	#ud_massactions, #backupplus-delete-waitwarning {
+		width: 100%;
+		-webkit-box-sizing: border-box;
+		        box-sizing: border-box;
+		text-align: center;
+	}
+
+	#ud_massactions.active {
+		position: fixed;
+		top: auto;
+		bottom: 0;
+		width: 100%;
+		-webkit-box-sizing: border-box;
+		        box-sizing: border-box;
+		text-align: center;
+		-webkit-box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.08);
+		        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.08);
+		background: #FFF;
+		z-index: 3;
+	}
+
+	#ud_massactions strong {
+		display: block;
+		margin-bottom: 5px;
+	}
+
+	small.ud_massactions-tip {
+		display: block;
+	}
+
+/*	.advert-description {
+		min-width: 75%;
+		margin-bottom: 5px;
+	}
+
+	.advert-btn {
+		margin-top: 15px;
+		margin-left:86px;
+		min-width: 100%;
+	}*/
+
+	.existing-backups-table .backup_date_label > div, .existing-backups-table .backup_date_label span > div {
+		font-weight: normal;
+	}
+
+	.existing-backups-table .backup_date_label .clear-right {
+		display: inline-block;
+	}
+
+	table.widefat.existing-backups-table {
+		border: 0;
+		-webkit-box-shadow: none;
+		        box-shadow: none;
+		background: transparent;
+	}
+
+	.existing-backups-table thead {
+		border: none;
+		clip: rect(0 0 0 0);
+		height: 1px;
+		margin: -1px;
+		overflow: hidden;
+		padding: 0;
+		position: absolute;
+		width: 1px;
+		padding: 0;
+		margin: 0;
+	}
+
+	.existing-backups-table tr {
+		display: block;
+		margin-bottom: .625em;
+		padding-bottom: 16.625px;
+		width: 100%;
+		padding: 0;
+		margin: 0;
+		margin-bottom: 10px;
+		background: #FFF;
+		-webkit-box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+		        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.existing-backups-table td {
+		border-bottom: 1px solid #DDD;
+		display: block;
+		font-size: .9em;
+		text-align: left;
+		width: 100%;
+		padding: 10px;
+		margin: 0;
+	}
+
+	.wp-list-table.existing-backups-table tr:not(.inline-edit-row):not(.no-items) td:not(.column-primary)::before {
+		/*
+		* aria-label has no advantage, it won't be read inside a table
+		content: attr(aria-label);
+		*/
+		content: attr(data-label);
+		font-weight: bold;
+		display: block;
+		position: relative;
+		left: auto;
+		padding-bottom: 10px;
+		width: auto;
+		text-align: left;
+	}
+
+	.existing-backups-table td:last-child {
+		border-bottom: 0;
+	}
+
+	.form-table td.backupplus_existingbackup_date {
+		width: inherit;
+		max-width: 100%;
+	}
+
+	.existing-backups-table td.before-restore-button {
+		min-height: 36px;
+	}
+
+	.backupplus_next_scheduled_backups_wrapper {
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		    -ms-flex-direction: column;
+		        flex-direction: column;
+	}
+
+	.backupplus_next_scheduled_backups_wrapper > div {
+		width: 100%;
+	}
+
+	.backupplus_progress_container {
+		/* width: 77%; */
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row {
+		position: relative;
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected {
+		background-color: #FFF;
+		border-left: 4px solid #0572AA;
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row td:not(.backup-select) {
+		margin-left: 50px;
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row td.backup-select {
+		width: 50px !important;
+		position: absolute;
+		left: 0;
+		top: 0;
+		-webkit-box-sizing: border-box;
+		        box-sizing: border-box;
+		height: 100%;
+		z-index: 1;
+		border: none;
+		border-right: 1px solid rgba(0, 0, 0, 0.05);
+	}
+
+	#backupplus-navtab-backups-content .backupplus_existing_backups input[type="checkbox"] {
+		height: 25px;
+	}
+
+	.form-table th {
+		padding-bottom: 10px;
+	}
+
+	.backupplus--flex {
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		    -ms-flex-direction: column;
+		        flex-direction: column;
+	}
+
+	.backupplus_restore_main {
+		-ms-flex-wrap: wrap;
+		    flex-wrap: wrap;
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		    -ms-flex-direction: column;
+		        flex-direction: column;
+	}
+
+	.backupplus_restore_main--components {
+		width: 100%;
+		min-height: 0;
+	}
+
+	.backupplus_restore_main--activity {
+		width: 100%;
+	}
+
+	div#backupplus_ajax_restore_output,
+	.backupplus_restore_main:not(.show-credentials-form) div#backupplus_ajax_restore_output {
+		position: relative;
+		top: 0;
+		bottom: auto;
+	}
+
+	.backupplus--flex > .backupplus--two-halves,
+	.backupplus--flex > .backupplus--one-half {
+		width: 100%;
+	}
+
+	.backupplus-restore-item {
+		padding-bottom: 10px;
+		padding-top: 10px;
+	}
+
+}
+
+@media screen and (max-width: 600px) {
+	
+	.backupplus_next_scheduled_backups_wrapper > div {
+	}
+
+	.backupplus_next_scheduled_entity {
+		float: none;
+		width: 100%;
+		margin-bottom: 2em;
+	}
+
+	.backupplus_time_now_wrapper {
+		margin-top: 0;
+	}
+
+	#backupplus_lastlogmessagerow h3 {
+		margin-bottom: 5px;
+	}
+
+	#backupplus_lastlogmessagerow .backupplus-log-link {
+		display: block;
+		float: none;
+		margin: 0;
+		margin-bottom: 10px;
+	}
+
+}
+
+@media screen and (max-width: 520px) {
+}
+
+@media only screen and (min-width: 768px) {
+
+	.addon-activation-notice {
+		left: 20em;
+	}
+
+	.existing-backups-table tbody tr.range-selection:hover, .existing-backups-table tbody tr.range-selection {
+		background: #0572AA; /* #2b7fd9 */
+	}
+
+	.existing-backups-table tbody tr:hover {
+		background: #F1F1F1;
+	}
+
+	.existing-backups-table tbody tr td.before-restore-button {
+		position: relative;
+	}
+
+	.form-table .existing-backups-table thead th.check-column {
+		padding-left: 6px;
+	}
+
+	.existing-backups-table tr td:first-child {
+		border-left: 4px solid transparent;
+	}
+
+	.existing-backups-table tr.backuprowselected td:first-child {
+		border-left-color: #0572AA;
+	}
+
+}
+
+@media screen and (min-width: 670px) {
+	
+	.expertmode .advanced_settings_container .advanced_settings_menu {
+		float: left;
+		width: 215px;
+		border-right: 1px solid rgb(204, 204, 204);
+		border-bottom: none;
+	}
+
+	.expertmode .advanced_settings_container .advanced_settings_content {
+		padding-left: 10px;
+		padding-top: 0px;
+	}
+
+	.expertmode .advanced_settings_container .advanced_settings_menu .advanced_tools_button {
+		display: block;
+	}
+
+}
+
+@media only screen and (max-width: 1068px) {
+
+	.backupplus-more-plugins .udp-box {
+		width: calc(50% - 10px);
+		margin-bottom: 20px;
+	}
+
+	.backupplus_feat_table td:nth-child(2), .backupplus_feat_table td:nth-child(3) {
+		width: 100px;
+	}
+
+}
+
+@media only screen and (max-width: 600px) {
+
+	.backupplus-more-plugins .udp-box {
+		width: 100%;
+		margin-bottom: 20px;
+	}
+
+	.backupplus_feat_table td:nth-child(2), .backupplus_feat_table td:nth-child(3) {
+		width: auto;
+	}
+
+	table.backupplus_feat_table {
+		display: block;
+	}
+
+	table.backupplus_feat_table tr {
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		-ms-flex-wrap: wrap;
+		    flex-wrap: wrap;
+	}
+
+	table.backupplus_feat_table td {
+		display: block;
+	}
+
+	table.backupplus_feat_table td:first-child {
+		width: 100%;
+		border-bottom: none;
+	}
+
+	table.backupplus_feat_table td:not(:first-child) {
+		width: 50%;
+		-webkit-box-sizing: border-box;
+		        box-sizing: border-box;
+	}
+
+	table.backupplus_feat_table td:first-child:empty {
+		display: none;
+	}
+
+	td[data-colname]::before {
+		content: attr(data-colname);
+		font-size: 0.8rem;
+		color: #CCC;
+		line-height: 1;
+	}
+
+}

@@ -47,7 +47,10 @@ try {
 	$php_archive = $folder . '/php.age';
 	$cli_archive = $folder . '/cli.age';
 	$restored    = $folder . '/restored.sql';
-	foreach ( array( 0, 1, 65536, 65537, 3 * 65536 + 17 ) as $size ) {
+	// AGE_PART selects one chunk size or "portable" so that the parts can run side by side; without it everything runs.
+	$part  = getenv( 'AGE_PART' );
+	$sizes = array( 0, 1, 65536, 65537, 3 * 65536 + 17 );
+	foreach ( false === $part ? $sizes : array_intersect( $sizes, array( (int) $part ) ) as $size ) {
 		$plain = substr( str_repeat( implode( '', array_map( 'chr', range( 0, 255 ) ) ), (int) ceil( $size / 256 ) ), 0, $size );
 		file_put_contents( $source, $plain );
 		foreach ( $fixture['keys'] as $name => $key ) {
@@ -76,6 +79,11 @@ try {
 		}
 		echo 'PASS: bidirectional age interoperability for all recipients at ', $size, " bytes\n";
 	}
+	if ( false !== $part && 'portable' !== $part ) {
+		return;
+	}
+	$plain = substr( str_repeat( implode( '', array_map( 'chr', range( 0, 255 ) ) ), (int) ceil( $sizes[4] / 256 ) ), 0, $sizes[4] );
+	file_put_contents( $source, $plain );
 	$recipients = array_column( $fixture['keys'], 'recipient' );
 	age_php(
 		array(

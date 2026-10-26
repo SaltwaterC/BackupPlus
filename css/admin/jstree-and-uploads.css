@@ -1,0 +1,244 @@
+/* jstree file browsers, remove buttons, upload and download drop areas. */
+
+/* jstree styles */
+
+/* these styles hide the dots from the parent but keep the arrows */
+.backupplus_jstree .jstree-container-ul > .jstree-node,
+div[id^="backupplus_more_files_jstree_"] .jstree-container-ul > .jstree-node {
+	background: transparent;
+}
+
+.backupplus_jstree .jstree-container-ul > .jstree-open > .jstree-ocl,
+div[id^="backupplus_more_files_jstree_"] .jstree-container-ul > .jstree-open > .jstree-ocl {
+	background-position: -36px -4px;
+}
+
+.backupplus_jstree .jstree-container-ul > .jstree-closed> .jstree-ocl,
+div[id^="backupplus_more_files_jstree_"] .jstree-container-ul > .jstree-closed> .jstree-ocl {
+	background-position: -4px -4px;
+}
+
+.backupplus_jstree .jstree-container-ul > .jstree-leaf> .jstree-ocl,
+div[id^="backupplus_more_files_jstree_"] .jstree-container-ul > .jstree-leaf> .jstree-ocl {
+	background: transparent;
+}
+
+/* zip browser jstree styles */
+#backupplus_zip_files_container {
+	position: relative;
+	height: 450px;
+	overflow: none;
+}
+
+.backupplus_jstree_info_container {
+	position: relative;
+	height: auto;
+	width: 100%;
+	border: 1px dotted;
+	margin-bottom: 5px;
+}
+
+.backupplus_jstree_info_container p {
+	margin: 1px;
+	padding-left: 10px;
+	font-size: 14px;
+}
+
+#backupplus_zip_download_item {
+	display: none;
+	color: #0073AA;
+	padding-left: 10px;
+}
+
+#backupplus_zip_download_notice {
+	padding-left: 10px;
+}
+
+#backupplus_exclude_files_folders_jstree, #backupplus_exclude_files_folders_wildcards_jstree {
+	max-height: 200px;
+	overflow-y: scroll;
+}
+
+.backupplus_jstree {
+	position: relative;
+	border: 1px dotted;
+	height: 80%;
+	width: 100%;
+	overflow: auto;
+}
+
+/* More files jstree styles */
+div[id^="backupplus_more_files_container_"],  div.backupplus_googledrive_container {
+	position: relative;
+	display: none;
+	width: 100%;
+	border: 1px solid #CCC;
+	background: #FAFAFA;
+	margin-bottom: 5px;
+	margin-top: 4px;
+	-webkit-box-shadow: 0 5px 8px rgba(0, 0, 0, 0.1);
+	        box-shadow: 0 5px 8px rgba(0, 0, 0, 0.1);
+}
+
+div.backupplus_googledrive_container ul.jstree-container-ul {
+	overflow-y: scroll;
+	max-height: 200px;
+}
+
+div[id^="backupplus_more_files_container_"]::before, div.backupplus_googledrive_container::before {
+	content: ' ';
+	width: 11px;
+	height: 11px;
+	display: block;
+	background: #FAFAFA;
+	position: absolute;
+	top: 0;
+	left: 20px;
+	border-top: 1px solid #CCC;
+	border-left: 1px solid #CCC;
+	-webkit-transform: translatey(-7px) rotate(45deg);
+	        transform: translatey(-7px) rotate(45deg);
+}
+
+input.backupplus_more_path_editing {
+	border-color: #0285BA;
+}
+
+input.backupplus_more_path_editing ~ a.dashicons {
+	display: none;
+}
+
+div[id^="backupplus_jstree_buttons_"] {
+	padding: 10px;
+	background: #E6E6E6;
+}
+
+div[id^="backupplus_jstree_container_"] {
+	height: 300px;
+	width: 100%;
+	overflow: auto;
+}
+
+div[id^="backupplus_more_files_container_"] button {
+	line-height: 20px;
+}
+
+button[id^="backupplus_parent_directory_"] {
+	margin: 10px 10px 4px 10px;
+	padding-left: 3px;
+}
+
+button[id^="backupplus_jstree_confirm_"], button[id^="backupplus_jstree_cancel_"] {
+	display: none;
+}
+
+input[id^="backupplus_include_more_path_restore_"] {
+	text-align: right;
+}
+
+.backupplus-morefiles-row-delete,
+.backupplus-morefiles-row-edit {
+	cursor: pointer;
+}
+
+#backupplus_include_more_paths_error {
+	color: #DE3C3C;
+}
+
+p[id^="backupplus_manual_authentication_error_"] {
+	color: #DE3C3C;
+}
+
+#backupplus-wrap .form-table th {
+	width: 230px;
+}
+
+#backupplus-wrap .form-table .existing-backups-table th {
+	width: auto;
+}
+
+.backupplus-viewlogdiv form {
+	margin: 0;
+	padding: 0;
+}
+
+.backupplus-viewlogdiv {
+	display: inline-block;
+	margin-left: 4px;
+}
+
+.backupplus-viewlogdiv input, .backupplus-viewlogdiv a {
+	border: none;
+	background-color: transparent;
+	color: #000;
+	margin: 0px;
+	padding: 3px 4px;
+	font-size: 16px;
+	line-height: 26px;
+}
+
+.backupplus-viewlogdiv input:hover, .backupplus-viewlogdiv a:hover {
+	color: #FFF;
+	cursor: pointer;
+}
+
+.button.button-remove {
+	color: white;
+	background-color: #DE3C3C;
+	border-color: #C00000;
+	-webkit-box-shadow: 0 1px 0 #C10100;
+	        box-shadow: 0 1px 0 #C10100;
+}
+
+.button.button-remove:hover,
+.button.button-remove:focus {
+	border-color: #C00;
+	color: #FFF;
+	background: #C00;
+}
+
+/* button-remove colors for midnight admin theme */
+body.admin-color-midnight .button.button-remove {
+	color: #DE3C3C;
+	background-color: #F7F7F7;
+	border-color: #CCC;
+	-webkit-box-shadow: 0 1px 0 #CCC;
+	        box-shadow: 0 1px 0 #CCC;
+}
+
+body.admin-color-midnight .button.button-remove:hover, body.admin-color-midnight .button.button-remove:focus {
+	border-color: #BA281F;
+}
+
+body.admin-color-midnight .button.button-remove:focus {
+	-webkit-box-shadow: inherit;
+	        box-shadow: inherit;
+	-webkit-box-shadow: 0 0 3px rgba(0, 115, 170, 0.8);
+	        box-shadow: 0 0 3px rgba(0, 115, 170, 0.8);
+}
+
+.drag-drop #drag-drop-area2 {
+	border: 4px dashed #DDD;
+	height: 200px;
+}
+
+#drag-drop-area2 .drag-drop-inside {
+	margin: 36px auto 0;
+	width: 350px;
+}
+
+#filelist, #filelist2 {
+	margin-top: 30px;
+	width: 100%;
+}
+
+#filelist .file, #filelist2 .file, .ud_downloadstatus .file, #ud_downloadstatus2 .file, #ud_downloadstatus3 .file {
+	padding: 1px;
+	background: #ECECEC;
+	border: solid 1px #CCC;
+	margin: 4px 0;
+}
+
+@media only screen and (max-width: 768px) {
+
+}

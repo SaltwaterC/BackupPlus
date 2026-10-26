@@ -1,0 +1,254 @@
+/* Rules that must stay last: icons, schedule and encryption fields, chain badge, lock toggle. */
+
+.udp-dashicons-database-view:before {
+	content: "";
+	background-image: url("../../images/icons/database-view.svg");
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+#backupplus-navtab-addons-content .backupplus-account-connection {
+	margin-bottom: 100px;
+}
+
+.udp-button {
+	display: -webkit-inline-box;
+	display: -ms-inline-flexbox;
+	display: inline-flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	color: #2271B1;
+	border-color: #2271B1;
+	background: #F6F7F7;
+	font-size: 13px;
+	line-height: 2.15;
+	padding: 0 10px;
+	cursor: pointer;
+	border: 1px solid;
+	border-radius: 3px;
+}
+
+.udp-dashicons-yes:before {
+	content: "";
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	line-height: 1;
+	background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBMaWNlbnNlOiBHUEwuIE1hZGUgYnkgV29yZHByZXNzOiBodHRwczovL2dpdGh1Yi5jb20vd29yZHByZXNzL2Rhc2hpY29ucyAtLT4KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KCjxyZWN0IHg9IjAiIGZpbGw9Im5vbmUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIvPgoKPGc+Cgo8cGF0aCBmaWxsPSIjMDA4MDAwIiBkPSJNMTQuODMgNC44OWwxLjM0Ljk0LTUuODEgOC4zOEg5LjAyTDUuNzggOS42N2wxLjM0LTEuMjUgMi41NyAyLjR6Ii8+Cgo8L2c+Cgo8L3N2Zz4=");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.udp-dashicons-no-alt:before {
+	content: "";
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	line-height: 1;
+	background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBMaWNlbnNlOiBHUEwuIE1hZGUgYnkgV29yZHByZXNzOiBodHRwczovL2dpdGh1Yi5jb20vd29yZHByZXNzL2Rhc2hpY29ucyAtLT4KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KCjxyZWN0IHg9IjAiIGZpbGw9Im5vbmUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIvPgoKPGc+Cgo8cGF0aCBmaWxsPSIjMjI3MWIxIiBkPSJNMTQuOTUgNi40NkwxMS40MSAxMGwzLjU0IDMuNTQtMS40MSAxLjQxTDEwIDExLjQybC0zLjUzIDMuNTMtMS40Mi0xLjQyTDguNTggMTAgNS4wNSA2LjQ3bDEuNDItMS40MkwxMCA4LjU4bDMuNTQtMy41M3oiLz4KCjwvZz4KCjwvc3ZnPg==");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.backupplus_success_popup .udp-dashicons-updates::before {
+	content: "\f463";
+}
+
+
+/* Keep schedule and encryption controls on the settings form's shared field column. */
+#backupplus-wrap .backup-schedule th,
+#backupplus-wrap .backupplus-encryption-settings th {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+#backupplus-wrap .backup-schedule th > label,
+#backupplus-wrap .backupplus-encryption-settings th > label {
+	display: flex;
+	align-items: center;
+	min-height: 40px;
+}
+
+#backupplus-wrap .backup-schedule td,
+#backupplus-wrap .backupplus-encryption-settings td {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+.backupplus-schedule-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 24px;
+}
+
+.backupplus-schedule-controls > select,
+.backupplus-encryption-fields > select {
+	box-sizing: border-box;
+	width: 208px;
+	max-width: 100%;
+	min-height: 40px;
+	margin: 0;
+}
+
+.backupplus-schedule-retention {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	white-space: nowrap;
+}
+
+.backupplus-schedule-retention input.retain-files {
+	box-sizing: border-box;
+	width: 70px;
+	min-height: 32px;
+	margin: 0;
+}
+
+#backupplus-wrap .backup-schedule p.description,
+#backupplus-wrap .backupplus-encryption-fields > p {
+	margin: 8px 0 0;
+	max-width: 700px;
+}
+
+#backupplus-wrap .backup-schedule p.description {
+	max-width: 65ch;
+}
+
+#backupplus-wrap .backupplus-encryption-settings {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.backupplus-encryption-fields {
+	max-width: 700px;
+}
+
+.backupplus-encryption-fields textarea {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	margin-top: 6px;
+}
+
+.backupplus-encryption-fields > p > label + br,
+.backupplus-encryption-fields > p:empty {
+	display: none;
+}
+
+@media only screen and (max-width: 782px) {
+	#backupplus-wrap .backup-schedule th,
+	#backupplus-wrap .backupplus-encryption-settings th {
+		width: auto;
+		padding: 12px 0 6px;
+	}
+
+	#backupplus-wrap .backup-schedule th > label,
+	#backupplus-wrap .backupplus-encryption-settings th > label {
+		min-height: 0;
+	}
+
+	#backupplus-wrap .backup-schedule td,
+	#backupplus-wrap .backupplus-encryption-settings td {
+		padding: 0 0 12px;
+	}
+}
+
+/* Backup button column, chain badge and delete warning. Kept near the end, as in the shipped stylesheet, so they follow the rules above. */
+
+.backupplus_backup_btn_wrapper {
+	display: grid;
+	justify-content: center;
+	align-content: center;
+	row-gap: 10px;
+}
+
+.backupplus_backup_btn_wrapper .button-hero {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+}
+
+.backupplus-chain-badge {
+	display: inline-block;
+	margin-top: 4px;
+	padding: 1px 8px;
+	border: 1px solid #2271B1;
+	border-radius: 10px;
+	background: #F0F6FC;
+	color: #2271B1;
+	font-size: 12px;
+	line-height: 18px;
+}
+
+.backupplus-delete-chain-warning {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	border: 1px solid #D63638;
+	border-left-width: 5px;
+	background: #FCF0F1;
+	color: #1D2327;
+}
+
+.backupplus-delete-chain-warning p:first-child {
+	margin-top: 0;
+}
+
+.backupplus-delete-chain-warning strong {
+	color: #B32D2E;
+}
+
+.backupplus-delete-chain-warning ul {
+	margin: 0 0 8px 20px;
+	list-style: disc;
+}
+
+/* Restore page: keep long fields inside the container */
+
+.backupplus_restore_container .backupplus--one-half,
+.backupplus_restore_container fieldset {
+	min-width: 0;
+}
+
+.backupplus_restore_container select,
+.backupplus_restore_container textarea,
+.backupplus_restore_container input[type="password"] {
+	box-sizing: border-box;
+	max-width: 100%;
+}
+
+.backupplus_next_scheduled_cleanup,
+.backupplus_time_now_wrapper {
+	clear: both;
+}
+
+/* Lock toggle in the existing backups table. Kept last, as in the shipped stylesheet, so it wins over the generic button rules above. */
+
+.backupplus-lock-toggle {
+	margin: 0 4px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #787C82;
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.backupplus-lock-toggle[data-locked="1"] {
+	color: #2271B1;
+}
+
+.backupplus-lock-toggle:hover, .backupplus-lock-toggle:focus {
+	color: #135E96;
+}
+
+.backupplus-lock-toggle.disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}

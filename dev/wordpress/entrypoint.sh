@@ -150,4 +150,4 @@ login_url="${WP_URL%/}/?backupplus_dev_login=${DEV_LOGIN_TOKEN}"
 echo "BackupPlus WordPress: ${WP_URL}"
 echo "Admin auto-login: ${login_url}"
 
-exec php -S 0.0.0.0:8080 -t "$wp_path" /usr/local/share/backupplus-router.php
+exec php -S "0.0.0.0:${WP_INTERNAL_PORT:-8080}" -t "$wp_path" /usr/local/share/backupplus-router.php

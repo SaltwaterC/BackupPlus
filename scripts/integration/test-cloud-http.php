@@ -9,7 +9,7 @@ try {
 	$localhost = integration_issue_certificate( $directory, 'localhost-server', $authority );
 	$server    = Integration_Server::start( __DIR__ . '/lib/server-http.php', array( 'cloud', $localhost['path'], $localhost['key_path'] ) );
 	$result    = integration_run(
-		array( PHP_BINARY, '-d', 'curl.cainfo=' . $authority['path'], dirname( __DIR__ ) . '/test-cloud-http.php' ),
+		array( PHP_BINARY, '-d', 'curl.cainfo=' . $authority['path'], dirname( __DIR__, 2 ) . '/.cache/php-tools/vendor/bin/phpunit', '--configuration', dirname( __DIR__, 2 ) . '/phpunit.xml.dist', '--testsuite', 'unit', '--filter', 'CloudHttpTest::test_real_https_streaming_upload', '--group', 'live', '--fail-on-skipped', '--do-not-cache-result' ),
 		'',
 		array_merge( getenv(), array( 'BACKUPPLUS_TEST_CLOUD_HTTPS' => 'https://localhost:' . $server->info['ports']['tls'] ) )
 	);

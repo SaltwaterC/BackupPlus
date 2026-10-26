@@ -278,6 +278,8 @@ class BackupPlus_PITR_Process {
 				throw new RuntimeException( 'Could not start native PITR client.' );
 			}
 			$deadline = microtime( true ) + $timeout;
+			// Most clients answer within milliseconds: poll quickly at first and back off to 100 ms for the long dumps and replays.
+			$pause = 1000;
 			do {
 				$status = proc_get_status( $process );
 				if ( ! $status['running'] ) {
@@ -290,7 +292,8 @@ class BackupPlus_PITR_Process {
 				if ( microtime( true ) > $deadline ) {
 					throw new RuntimeException( 'Native PITR operation timed out.' );
 				}
-				usleep( 100000 );
+				usleep( $pause );
+				$pause = min( 100000, $pause * 2 );
 			} while ( true );
 			$closed  = proc_close( $process );
 			$process = false;
