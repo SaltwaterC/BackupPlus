@@ -26,6 +26,8 @@ trait BackupPlus_Backup_Files {
 			set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );
 		}
 
+		if ( $this->archive_compression_enabled() ) { $this->use_zip_object = 'BackupPlus_Tar';
+			$this->binzip = false; }
 		$original_index = $index;
 
 		$this->index              = $index;
@@ -69,7 +71,7 @@ trait BackupPlus_Backup_Files {
 		}
 
 		$itext     = empty( $index ) ? '' : $index + 1;
-		$base_path = $backup_file_basename . '-' . $whichone . $itext . '.zip';
+		$base_path = $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension();
 		$full_path = $this->backupplus_dir . '/' . $base_path;
 		$time_now  = time();
 
@@ -88,7 +90,7 @@ trait BackupPlus_Backup_Files {
 				}
 				++$index;
 				// This is compatible with filenames which indicate increments, as it is looking only for the current increment
-				$base_path = $backup_file_basename . '-' . $whichone . ( $index + 1 ) . '.zip';
+				$base_path = $backup_file_basename . '-' . $whichone . ( $index + 1 ) . '.' . $this->archive_extension();
 				$full_path = $this->backupplus_dir . '/' . $base_path;
 			}
 		}
@@ -160,7 +162,7 @@ trait BackupPlus_Backup_Files {
 			return false;
 		} else {
 			$itext     = empty( $this->index ) ? '' : $this->index + 1;
-			$full_path = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $itext . '.zip';
+			$full_path = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension();
 			if ( file_exists( $full_path . '.tmp' ) ) {
 				if ( @filesize( $full_path . '.tmp' ) === 0 ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 					$backupplus->log( "Did not create $whichone zip (" . $this->index . ') - not needed' );
@@ -209,9 +211,9 @@ trait BackupPlus_Backup_Files {
 		$res_index      = $original_index;
 		for ( $i = $original_index; $i <= $this->index; $i++ ) {
 			$itext     = empty( $i ) ? '' : ( $i + 1 );
-			$full_path = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $itext . '.zip';
-			if ( file_exists( $full_path ) || $backupplus->is_uploaded( $backup_file_basename . '-' . $whichone . $itext . '.zip' ) ) {
-				$files_existing[ $res_index ] = $backup_file_basename . '-' . $whichone . $itext . '.zip';
+			$full_path = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension();
+			if ( file_exists( $full_path ) || $backupplus->is_uploaded( $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension() ) ) {
+				$files_existing[ $res_index ] = $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension();
 			}
 			++$res_index;
 		}
@@ -246,7 +248,7 @@ trait BackupPlus_Backup_Files {
 			if ( '.' == $entry || '..' == $entry ) {
 				continue;
 			}
-			if ( preg_match( '/^backup_(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?\.zip$/i', $entry, $matches ) ) {
+			if ( preg_match( '/^backup_(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?\.(?:zip|tar(?:\.zst)?)(?:\.crypt)?$/i', $entry, $matches ) ) {
 				if ( $matches[6] !== $match_nonce ) {
 					continue;
 				}
@@ -355,7 +357,7 @@ trait BackupPlus_Backup_Files {
 			}
 			$indextext = ( 0 == $index ) ? '' : ( 1 + $index );
 
-			$zip_file = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $youwhat . $indextext . '.zip';
+			$zip_file = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $youwhat . $indextext . '.' . $this->archive_extension();
 
 			// Split needed?
 			$split_every = max( (int) $backupplus->jobdata_get( 'split_every' ), 250 );
@@ -372,7 +374,7 @@ trait BackupPlus_Backup_Files {
 					$itext = ( 0 == $i ) ? '' : ( $i + 1 );
 					// Get the previously-stored filename if possible (which should be always); failing that, base it on the current run
 
-					$zip_file = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][ $i ] ) ) ? $this->backup_files_array[ $youwhat ][ $i ] : $backup_file_basename . '-' . $youwhat . $itext . '.zip';
+					$zip_file = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][ $i ] ) ) ? $this->backup_files_array[ $youwhat ][ $i ] : $backup_file_basename . '-' . $youwhat . $itext . '.' . $this->archive_extension();
 
 					$backup_array[ $youwhat ][ $i ] = $zip_file;
 					$z                              = $this->backupplus_dir . '/' . $zip_file;
@@ -391,7 +393,7 @@ trait BackupPlus_Backup_Files {
 			if ( 'finished' == $job_status ) {
 				// Add the final part of the array
 				if ( $index > 0 ) {
-					$zip_file                           = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][ $index ] ) ) ? $this->backup_files_array[ $youwhat ][ $index ] : $backup_file_basename . '-' . $youwhat . ( $index + 1 ) . '.zip';
+					$zip_file                           = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][ $index ] ) ) ? $this->backup_files_array[ $youwhat ][ $index ] : $backup_file_basename . '-' . $youwhat . ( $index + 1 ) . '.' . $this->archive_extension();
 					$z                                  = $this->backupplus_dir . '/' . $zip_file;
 					$fs_key                             = $youwhat . $index . '-size';
 					$backup_array[ $youwhat ][ $index ] = $zip_file;
@@ -401,7 +403,7 @@ trait BackupPlus_Backup_Files {
 						$backup_array[ $fs_key ] = $this->backup_files_array[ $fs_key ];
 					}
 				} else {
-					$zip_file = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][0] ) ) ? $this->backup_files_array[ $youwhat ][0] : $backup_file_basename . '-' . $youwhat . '.zip';
+					$zip_file = ( isset( $this->backup_files_array[ $youwhat ] ) && isset( $this->backup_files_array[ $youwhat ][0] ) ) ? $this->backup_files_array[ $youwhat ][0] : $backup_file_basename . '-' . $youwhat . '.' . $this->archive_extension();
 
 					$backup_array[ $youwhat ] = $zip_file;
 					$fs_key                   = $youwhat . '-size';
@@ -547,7 +549,7 @@ trait BackupPlus_Backup_Files {
 			$outof = count($files);
 			foreach ($files as $ind => $file) {
 				$nval = $file;
-				if (preg_match('/^(backup_[\-0-9]{15}_.*_[0-9a-f]{12}-[\-a-z]+)([0-9]+)?\.zip$/i', $file, $matches)) {
+				if (preg_match('/^(backup_[\-0-9]{15}_.*_[0-9a-f]{12}-[\-a-z]+)([0-9]+)?\.(?:zip|tar(?:\.zst)?)(?:\.crypt)?$/i', $file, $matches)) {
 					$num = max((int)$matches[2],1);
 					$new = $matches[1].$num.'of'.$outof.'.zip';
 					if (file_exists($this->backupplus_dir.'/'.$file)) {
@@ -563,7 +565,54 @@ trait BackupPlus_Backup_Files {
 			}
 		}
 		*/
-		return $this->encrypt_file_archives( $this->backup_files_array );
+		return $this->encrypt_file_archives( $this->compress_file_archives( $this->backup_files_array ) );
+	}
+
+	/** Freeze the representation for retries; jobs begun before this feature stay compatible. */
+	private function archive_compression_enabled() {
+		global $backupplus;
+		$enabled = $backupplus->jobdata_get( 'archive_zstd', null );
+		if ( null === $enabled ) {
+			$enabled = empty( $backupplus->current_resumption ) && BackupPlus_Archive_Compression::enabled();
+			$backupplus->jobdata_set( 'archive_zstd', (bool) $enabled );
+		}
+		return (bool) $enabled;
+	}
+	private function archive_extension() {
+		return $this->archive_compression_enabled() ? 'tar' : 'zip'; }
+
+	/** Finish each tar part before encryption/upload, checkpointing names before cleanup. */
+	private function compress_file_archives( $files ) {
+		global $backupplus;
+		if ( ! $this->archive_compression_enabled() ) { return $files; }
+		$directory = $backupplus->backups_dir_location();
+		$previous  = $backupplus->jobdata_get( 'previous_backup_files_array', array() );
+		foreach ( $backupplus->get_backupable_file_entities( true ) as $entity => $unused ) {
+			if ( ! isset( $files[ $entity ] ) ) { continue; }
+			$files[ $entity ] = (array) $files[ $entity ];
+			foreach ( $files[ $entity ] as $index => $file ) {
+				if ( ! is_string( $file ) || basename( $file ) !== $file ) { throw new RuntimeException( 'Invalid archive filename for compression.' ); }
+				if ( isset( $previous[ $entity ] ) && in_array( $file, $previous[ $entity ], true ) ) { continue; }
+				if ( preg_match( '/\.tar\.zst(?:\.crypt)?$/D', $file ) ) {
+					$source = $directory . '/' . preg_replace( '/\.zst(?:\.crypt)?$/D', '', $file );
+					foreach ( array( $source, $source . '.list.tmp' ) as $staging ) { if ( is_file( $staging ) && ! unlink( $staging ) ) { throw new RuntimeException( 'Could not remove completed tar staging files.' ); }
+					}
+					continue;
+				}
+				if ( basename( $file ) !== $file || ! preg_match( '/\.tar$/D', $file ) ) { throw new RuntimeException( 'Invalid tar archive for compression.' ); }
+				$path                       = $directory . '/' . $file;
+				$compressed                 = BackupPlus_Archive_Compression::compress_file( $path );
+				$files[ $entity ][ $index ] = basename( $compressed );
+				$size                       = filesize( $compressed );
+				$files[ $entity . ( 0 == $index ? '' : $index ) . '-size' ] = $size;
+				$backupplus->jobdata_set( 'filesize-' . $entity . $index, $size );
+				foreach ( $backupplus->which_checksums() as $checksum ) { $backupplus->jobdata_set( $checksum . '-' . $entity . $index, hash_file( $checksum, $compressed ) ); }
+				$backupplus->jobdata_set( 'backup_files_array', $files );
+				if ( ! unlink( $path ) ) { throw new RuntimeException( 'Could not remove the completed tar staging file.' ); }
+				if ( is_file( $path . '.list.tmp' ) ) { unlink( $path . '.list.tmp' ); }
+			}
+		}
+		return $files;
 	}
 
 	/** Whether this job's saved encryption setting covers all backup archives. */
@@ -576,6 +625,7 @@ trait BackupPlus_Backup_Files {
 	/** Encrypt each completed ZIP part and checkpoint before removing its plaintext. */
 	public function encrypt_file_archives( $files ) {
 		global $backupplus;
+		if ( false === $files ) { return false; }
 		if ( ! $this->archive_encryption_enabled() ) {
 			return $files;
 		}
@@ -591,7 +641,7 @@ trait BackupPlus_Backup_Files {
 			}
 			$files[ $entity ] = (array) $files[ $entity ];
 			foreach ( $files[ $entity ] as $index => $file ) {
-				if ( ! is_string( $file ) || basename( $file ) !== $file || ! preg_match( '/\.zip(?:\.crypt)?$/i', $file ) ) {
+				if ( ! is_string( $file ) || basename( $file ) !== $file || ! preg_match( '/\.(?:zip|tar\.zst)(?:\.crypt)?$/i', $file ) ) {
 					return false;
 				}
 				$previous = $backupplus->jobdata_get( 'previous_backup_files_array', array() );

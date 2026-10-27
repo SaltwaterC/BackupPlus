@@ -96,3 +96,5 @@ if ( ! empty( $options['include_header'] ) ) {
 		</div>
 	</div>
 </div>
+
+<?php echo BackupPlus_Storage_Limits::summary_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the renderer. ?>

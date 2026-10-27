@@ -19,7 +19,7 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 				<label class="screen-reader-text" for="cb-select-all">
 					<?php esc_html_e( 'Select All' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core. ?>
 				</label>
-				<input id="cb-select-all" type="checkbox">
+				<input id="cb-select-all" class="cb-select-all" type="checkbox">
 			</th>
 			<th class="backup-date"><?php esc_html_e( 'Backup date', 'backupplus' ); ?></th>
 			<th class="backup-data"><?php esc_html_e( 'Backup data (click to download)', 'backupplus' ); ?></th>
@@ -108,19 +108,34 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 						if ( ! is_array( $backup['service'] ) ) {
 							$backup['service'] = array( $backup['service'] );
 						}
+						// One icon per destination that holds a copy, named for that destination, so that two servers of the same type can be told apart.
+						$stored_on = array();
 						foreach ( $backup['service'] as $service ) {
-							if ( 'none' === $service || '' === $service || ( is_array( $service ) && ( empty( $service ) || array( 'none' ) === $service || array( '' ) === $service ) ) ) {
-								// Do nothing
-							} else {
-								$image_url = file_exists( $image_folder . $service . '.png' ) ? $image_folder_url . $service . '.png' : $image_folder_url . 'folder.png';
-
-								$remote_storage = isset( $backupplus->backup_methods[ $service ] ) ? $backupplus->backup_methods[ $service ] : $service;
-								/* translators: %s: Remote storage name*/
-								$remote_storage_label = __( 'Remote storage: %s', 'backupplus' );
-								?>
-									<img class="stored_icon" src="<?php echo esc_url( $image_url ); ?>" title="<?php echo esc_attr( sprintf( $remote_storage_label, $remote_storage ) ); ?>">
-									<?php
+							if ( ! is_string( $service ) || 'none' === $service || '' === $service ) {
+								continue;
 							}
+							$instance_ids = ! empty( $backup['service_instance_ids'][ $service ] ) && is_array( $backup['service_instance_ids'][ $service ] ) ? $backup['service_instance_ids'][ $service ] : array( '' );
+							foreach ( $instance_ids as $instance_id ) {
+								if ( empty( $backup['storage_removed'][ $service . ':' . $instance_id ] ) ) {
+									$stored_on[] = array( $service, (string) $instance_id );
+								}
+							}
+						}
+						if ( $stored_on ) {
+							?>
+							<div class="backupplus-remote-storage-icons">
+							<?php
+							foreach ( $stored_on as $destination ) {
+								$image_url = file_exists( $image_folder . $destination[0] . '.png' ) ? $image_folder_url . $destination[0] . '.png' : $image_folder_url . 'folder.png';
+								/* translators: %s: Remote storage name*/
+								$remote_storage_label = sprintf( __( 'Remote storage: %s', 'backupplus' ), BackupPlus_Storage_Limits::label( $destination[0], $destination[1] ) );
+								?>
+								<img class="stored_icon" src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $remote_storage_label ); ?>" title="<?php echo esc_attr( $remote_storage_label ); ?>">
+								<?php
+							}
+							?>
+							</div>
+							<?php
 						}
 						?>
 					</div>
@@ -174,13 +189,28 @@ $image_folder_url = BACKUPPLUS_URL . '/images/icons/';
 		<?php } ?>	
 
 	</tbody>
-	<?php if ( $show_paging_actions ) : ?>
+	<?php if ( $show_paging_actions || $backup_history ) : ?>
 	<tfoot>
+		<?php if ( $show_paging_actions ) : ?>
 		<tr class="backupplus_existing_backups_page_actions">
 			<td colspan="4" style="text-align: center;">
 				<a class="backupplus-load-more-backups"><?php esc_html_e( 'Show more backups...', 'backupplus' ); ?></a> | <a class="backupplus-load-all-backups"><?php esc_html_e( 'Show all backups...', 'backupplus' ); ?></a>
 			</td>
 		</tr>
+		<?php endif; ?>
+		<?php if ( $backup_history ) : ?>
+		<tr class="backupplus-footer-header">
+			<td class="check-column">
+				<label class="screen-reader-text" for="cb-select-all-footer">
+					<?php esc_html_e( 'Select All' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core. ?>
+				</label>
+				<input id="cb-select-all-footer" class="cb-select-all" type="checkbox">
+			</td>
+			<td class="backup-date"><?php esc_html_e( 'Backup date', 'backupplus' ); ?></td>
+			<td class="backup-data"><?php esc_html_e( 'Backup data (click to download)', 'backupplus' ); ?></td>
+			<td class="backupplus_backup_actions"><?php esc_html_e( 'Actions', 'backupplus' ); ?></td>
+		</tr>
+		<?php endif; ?>
 	</tfoot>
 	<?php endif; ?>
 </table>

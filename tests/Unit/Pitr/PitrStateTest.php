@@ -500,14 +500,15 @@ final class PitrStateTest extends PitrTestCase {
 		$this->assertTrue( $this->call( $this->worker, 'retention_locked', array( $unpinned, array( 100 => array( 'always_keep' => true ) ) ) ), 'A locked history row must protect an unpinned chain.' );
 	}
 
-	public function test_the_active_baseline_cannot_be_deleted(): void {
+	public function test_the_active_chain_can_be_deleted_while_recovery_stays_enabled(): void {
 		$this->publish_chain();
-		$this->assertRejected(
-			function () {
-				$this->worker->delete( $this->chain_id );
-			},
-			'Active baseline was deleted.'
-		);
+		$state = $this->state();
+		$this->assertSame( $this->chain_id, $state['active'], 'The published chain must be the active one.' );
+		$this->call( $this->worker, 'delete', array( $this->chain_id ) );
+		$state = $this->state();
+		$this->assertArrayNotHasKey( $this->chain_id, $state['chains'], 'The active chain was not deleted.' );
+		$this->assertNull( $state['active'], 'With no active chain the next scheduled run takes a new baseline.' );
+		$this->assertNotContains( $this->chain_id, $state['protected_previous'] ?? array(), 'A deleted chain must not stay protected.' );
 	}
 
 	/** A published chain whose remote deletion fails; the worker that failed is returned replaced by a fresh one. */
@@ -683,7 +684,7 @@ final class PitrStateTest extends PitrTestCase {
 		$this->assertSame( array( (string) $ordinary_time ), $admin->calls, 'Mixed selection did not delegate ordinary backups and delete the PITR chain together.' );
 	}
 
-	public function test_a_mixed_failure_keeps_completed_rows_and_the_active_recovery_chain(): void {
+	public function test_a_mixed_failure_keeps_completed_rows_and_a_recovery_chain_in_use(): void {
 		$timestamp = $this->prepare_deletion();
 		$this->admin_recorder();
 		$ordinary_time               = $timestamp + 1;
@@ -692,10 +693,57 @@ final class PitrStateTest extends PitrTestCase {
 		$options['delete_remote']    = false;
 		BackupPlus_Options::$values[ BackupPlus_PITR::OPTION ] = array( 'enabled' => true );
 		BackupPlus_Backup_History::$history[ $ordinary_time ]  = array( 'db' => 'ordinary.gz' );
-		$result = BackupPlus_Backup_Deletion::delete_selection( $options );
+		// A restore holds the chain, which is the one thing that still blocks deleting it.
+		$this->restart_worker();
+		$state                  = $this->state();
+		$state['restore_chain'] = $this->chain_id;
+		$this->set_property( $this->worker, 'state', $state );
+		$this->call( $this->worker, 'save' );
+		$this->worker = null;
+		$result       = BackupPlus_Backup_Deletion::delete_selection( $options );
 		$this->assertSame( 'error', $result['result'], 'A mixed failure lost completed rows or deleted the active recovery chain.' );
-		$this->assertStringContainsString( 'Settings', $result['message'], 'A mixed failure lost completed rows or deleted the active recovery chain.' );
+		$this->assertStringContainsString( 'restore', $result['message'], 'A mixed failure lost completed rows or deleted the active recovery chain.' );
 		$this->assertSame( (string) $ordinary_time, $result['deleted_timestamps'], 'A mixed failure lost completed rows or deleted the active recovery chain.' );
 		$this->assertArrayHasKey( $timestamp, BackupPlus_Backup_History::$history, 'A mixed failure lost completed rows or deleted the active recovery chain.' );
 	}
+	/** Quota deletion preserves both the authoritative inventory and all remaining artifacts. */
+	public function test_destination_deletion_preserves_a_restorable_local_chain(): void {
+		$this->publish_chain();
+		$state           = $this->state();
+		$state['active'] = null;
+		$this->set_property( $this->worker, 'state', $state );
+		$this->worker->delete_destination( $this->chain_id, $this->destination[0] );
+		$this->assertSame( array(), glob( $this->provider->remote . '/backup_pitr_*' ) );
+		$this->assertNotEmpty( BackupPlus_Backup_History::$history );
+		$plan = $this->worker->recovery_plan( $this->chain_id );
+		$this->assertSame( array(), $plan['destinations'] );
+		$this->assertSame( $this->end, $plan['target_coordinate'] );
+		foreach ( $this->worker->storage_state()['chains'][ $this->chain_id ]['entries'] as $entry ) {
+			foreach ( $entry['manifest']['artifacts'] as $artifact ) { $this->assertTrue( $this->storage->verify_file( $artifact ) ); }
+		}
+	}
+
+	public function test_destination_deletion_preserves_a_restorable_remote_chain(): void {
+		$this->publish_chain();
+		foreach ( $this->call( $this->worker, 'chain_files', array( $this->state()['chains'][ $this->chain_id ] ) ) as $file ) { copy( $this->directory . '/' . $file, $this->provider->remote . '/' . $file ); }
+		$state           = $this->state();
+		$state['active'] = null;
+		$this->set_property( $this->worker, 'state', $state );
+		$this->worker->delete_destination(
+			$this->chain_id,
+			array(
+				'service'  => 'local',
+				'instance' => '',
+			)
+		);
+		$this->assertSame( array(), glob( $this->directory . '/backup_pitr_*' ) );
+		$this->assertNotEmpty( glob( $this->provider->remote . '/backup_pitr_*' ) );
+		$plan = $this->worker->recovery_plan( $this->chain_id );
+		$this->assertSame( $this->destination, $plan['destinations'] );
+		foreach ( $this->worker->storage_state()['chains'][ $this->chain_id ]['entries'] as $entry ) {
+			foreach ( $entry['manifest']['artifacts'] as $artifact ) { $this->storage->fetch( $artifact );
+				$this->assertTrue( $this->storage->verify_file( $artifact ) ); }
+		}
+	}
+
 }

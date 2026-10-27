@@ -1,6 +1,9 @@
 <?php
 /** Retention cleanup: pruning, daily cleanup, waiting for running backups, interruption and resumption, and failed local and remote deletions. Required by ../check-backup-schedule.php, in its scope. */
 
+// Local deletion is opt-in; these checks exercise it.
+update_option( 'backupplus_delete_local', 1 );
+
 // Retention cleanup. Sets newest first: two kept, Always Keep, imported, an old incremental chain and an old set.
 $sets          = array();
 $files         = array();

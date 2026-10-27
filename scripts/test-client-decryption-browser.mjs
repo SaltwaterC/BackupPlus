@@ -17,6 +17,7 @@ import {
 	cancellationAndStorageFailures,
 	fallbacksAndLimits,
 } from './client-decryption-browser/scenarios/decrypt.mjs';
+import { extractTab } from './client-decryption-browser/scenarios/extract.mjs';
 import { auditRequestsAndLayout, auditLogs } from './client-decryption-browser/scenarios/audit.mjs';
 import { restoreScreen } from './client-decryption-browser/scenarios/restore-screen.mjs';
 import { keygenSettingsScreen } from './client-decryption-browser/scenarios/keygen-settings.mjs';
@@ -30,6 +31,7 @@ try {
 	await decryptVectors(ctx);
 	await cancellationAndStorageFailures(ctx);
 	await fallbacksAndLimits(ctx);
+	await extractTab(ctx);
 	await auditRequestsAndLayout(ctx);
 	await restoreScreen(ctx);
 	await keygenSettingsScreen(ctx);

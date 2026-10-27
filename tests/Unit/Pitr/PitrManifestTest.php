@@ -146,6 +146,27 @@ final class PitrManifestTest extends PitrTestCase {
 		$this->assertSame( $inspection['next'], BackupPlus_PITR_Manifest::chain( $entries ), 'Valid portable chain failed continuity.' );
 	}
 
+	public function test_zstandard_increments_preserve_existing_chain_metadata(): void {
+		list( $entries, $inspection ) = $this->chain_entries();
+		$artifact                     = &$entries[1]['manifest']['artifacts'][0];
+		$artifact['name']             = str_replace( '.bin.gz', '.bin.zst.crypt', $artifact['name'] );
+		$artifact['compression']      = 'zstd';
+		$artifact['raw_size']         = 1000;
+		$artifact['raw_sha256']       = str_repeat( '5', 64 );
+		$entries[1]['manifest']['segments'][0]['artifact'] = $artifact['name'];
+		$this->assertSame( $inspection['next'], BackupPlus_PITR_Manifest::chain( $entries ) );
+		foreach ( array( 'raw_size', 'raw_sha256', 'compression' ) as $field ) {
+			$bad = $entries[1]['manifest'];
+			unset( $bad['artifacts'][0][ $field ] );
+			$this->assertRejected( fn() => BackupPlus_PITR_Manifest::validate( $bad ), 'Incomplete Zstandard metadata must fail.' );
+		}
+		foreach ( array( 'gzip', 'unknown' ) as $codec ) {
+			$bad                                = $entries[1]['manifest'];
+			$bad['artifacts'][0]['compression'] = $codec;
+			$this->assertRejected( fn() => BackupPlus_PITR_Manifest::validate( $bad ), 'Mismatched compression must fail.' );
+		}
+	}
+
 	public static function broken_chains(): iterable {
 		yield 'coordinate' => array( 'coordinate' );
 		yield 'source' => array( 'source' );

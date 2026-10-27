@@ -159,18 +159,18 @@ trait BackupPlus_BackupModule_Templates {
 		// Allow methods to not use this hidden field, if they do not output any settings (to prevent their saved settings being over-written by just this hidden field)
 		if ( $this->print_shared_settings_fields() ) {
 			?>
+			<tr class="<?php echo esc_attr( $this->get_css_classes() ); ?>">
+				<input type="hidden" name="backupplus_<?php echo esc_attr( $this->get_id() ); ?>[version]" value="1">
+			</tr>
+			<?php
 		}
-		
-		if ($this->supports_feature('config_templates')) {
+
+		if ( $this->supports_feature( 'config_templates' ) ) {
 			?>
 			{{#if first_instance}}
 			<?php
 
 				$this->get_pre_configuration_template();
-
-			if ( $this->supports_feature( 'multi_storage' ) ) {
-				do_action( 'backupplus_config_print_add_multi_storage', $this->get_id(), $this );
-			}
 
 			?>
 			{{/if}}
@@ -178,7 +178,7 @@ trait BackupPlus_BackupModule_Templates {
 			do_action( 'backupplus_config_print_before_storage', $this->get_id(), $this );
 			do_action( 'backupplus_config_print_add_conditional_logic', $this->get_id(), $this );
 			if ( $this->supports_feature( 'multi_storage' ) ) {
-				do_action( 'backupplus_config_print_add_instance_label', $this->get_id(), $this );
+				$this->print_instance_header_template();
 			}
 
 			$template  = ob_get_clean();
@@ -191,6 +191,30 @@ trait BackupPlus_BackupModule_Templates {
 			$template = ob_get_clean();
 		}
 		return $template;
+	}
+
+	/**
+	 * Prints the row that names a destination and lets it be disabled or removed, so that several destinations of the same type can be told apart.
+	 */
+	private function print_instance_header_template() {
+		$method = $this->get_id();
+		$field  = 'backupplus_' . $method . '[settings][{{instance_id}}]';
+		$label  = 'backupplus_' . $method . '_instance_label_{{instance_id}}';
+		$toggle = 'backupplus_' . $method . '_instance_enabled_{{instance_id}}';
+		?>
+		<tr class="<?php echo esc_attr( $this->get_css_classes() . ' ' . $method . '_backupplus_remote_storage_border' ); ?>">
+			<th><label for="<?php echo esc_attr( $label ); ?>"><?php esc_html_e( 'Destination name', 'backupplus' ); ?>:</label></th>
+			<td>
+				<input type="text" class="backupplus_input--wide" id="<?php echo esc_attr( $label ); ?>" name="<?php echo esc_attr( $field ); ?>[instance_label]" value="{{instance_label}}" maxlength="80" autocomplete="off">
+				<p class="backupplus_instance_controls">
+					<input type="hidden" name="<?php echo esc_attr( $field ); ?>[instance_enabled]" value="0">
+					<input type="checkbox" class="backupplus_instance_toggle" id="<?php echo esc_attr( $toggle ); ?>" name="<?php echo esc_attr( $field ); ?>[instance_enabled]" value="1" {{#if instance_enabled}}checked="checked"{{/if}}>
+					<label for="<?php echo esc_attr( $toggle ); ?>">{{#if instance_enabled}}<?php esc_html_e( 'Currently enabled', 'backupplus' ); ?>{{else}}<?php esc_html_e( 'Currently disabled', 'backupplus' ); ?>{{/if}}</label>
+					<a href="#" class="backupplus_delete_instance" data-method="<?php echo esc_attr( $method ); ?>" data-instance_id="{{instance_id}}"><?php esc_html_e( 'Remove this destination', 'backupplus' ); ?></a>
+				</p>
+			</td>
+		</tr>
+		<?php
 	}
 
 	/**

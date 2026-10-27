@@ -129,7 +129,7 @@ try {
 	await set(db + ' .backupplus-schedule-weekday select', '6');
 
 	// Incremental backups take run times only, and only while enabled; WordPress's duplicate hourly schedule is not offered.
-	assert.deepEqual(await evaluate(`jQuery('#backupplus_interval_increments option').map(function() { return this.value; }).get()`), ['none', 'everyhour', 'every2hours', 'every4hours', 'every8hours', 'twicedaily', 'daily'], 'Increments offer each schedule once');
+	assert.deepEqual(await evaluate(`jQuery('#backupplus_interval_increments option').map(function() { return this.value; }).get()`), ['none', 'everyminute', 'every5minutes', 'every10minutes', 'every15minutes', 'every30minutes', 'everyhour', 'every2hours', 'every3hours', 'every4hours', 'every6hours', 'every8hours', 'twicedaily', 'daily'], 'Increments offer each schedule once, from one minute to daily');
 	await set('#backupplus_interval_increments', 'none');
 	assert.equal(await visible(increments), false, 'Disabled increments hide timing');
 	await set('#backupplus_interval_increments', 'every2hours');

@@ -6,6 +6,10 @@ Cloud connections require HTTPS. They verify server certificates by default and 
 
 Uploads use bounded memory: Azure, B2 and Google Cloud send 8 MiB chunks; OneDrive sends 10 MiB fragments; pCloud streams directly from the local file through PHP cURL. A retried backup can restart an upload and replace the same remote name. Failed B2 large-file uploads and OneDrive sessions are cancelled when the process can perform cleanup; a killed process may leave an uncommitted upload, so configure the service's lifecycle rules as appropriate. Downloads stream to a temporary sibling file and replace the local archive only after the expected byte count is received. These clients restart interrupted downloads in full.
 
+## Several destinations
+
+Select as many destinations in **Settings** as you need: every selected type receives each backup, and each database recovery chain is published to all of them. A type also takes more than one destination, for example two SFTP servers or two S3 buckets. Use **Add another … destination** under the type's tab, give each destination a name, and fill in its own connection details and **Test Settings**. A destination can be disabled without losing its settings, or removed. Removing a destination does not delete the backups it holds. The name is what the storage limits, alerts and the backups list show. A destination that has no name is numbered when its type has more than one.
+
 ## Microsoft Azure Blob Storage
 
 Create a private Blob container. Enter the storage **account name**, its base64 **account key**, the **container name** and an optional folder prefix. The default endpoint suffix is `blob.core.windows.net`; `blob.core.usgovcloudapi.net` and `blob.core.chinacloudapi.cn` are also supported. The retired Germany endpoint is rejected.

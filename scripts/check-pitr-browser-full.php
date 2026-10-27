@@ -110,7 +110,9 @@ try {
 	}
 	$history_after_scans = BackupPlus_Backup_History::get_history();
 	$stored_history      = maybe_unserialize( BackupPlus_SQL::wpdb()->value( 'SELECT option_value FROM %i WHERE option_name=?', array( $wpdb->options ), array( 'backupplus_backup_history' ) ) );
-	pitr_check( isset( $stored_history[ $baseline_time ]['pitr']['points'] ) && 2 <= count( $stored_history[ $baseline_time ]['pitr']['points'] ), 'PITR recovery points were only cached and did not survive in the restored database.' );
+	pitr_check( isset( $stored_history[ $baseline_time ]['pitr']['chain_id'] ) && $encrypted_full['chain_id'] === $stored_history[ $baseline_time ]['pitr']['chain_id'] && ! isset( $stored_history[ $baseline_time ]['pitr']['points'] ), 'The restored database must retain the compact PITR chain identity.' );
+	$durable_history = BackupPlus_PITR::decorate_history( $stored_history );
+	pitr_check( $history_after_scans[ $baseline_time ]['pitr'] === $durable_history[ $baseline_time ]['pitr'] && 2 <= count( $durable_history[ $baseline_time ]['pitr']['points'] ), 'PITR recovery points must reconstruct from the durable index after restoring and rescanning.' );
 	// A generic rescan must leave PITR availability to the chain index, even without a local full archive.
 	$full_path = $backupplus->backups_dir_location() . '/' . $baseline_set['db'];
 	rename( $full_path, $full_path . '.fixture-hidden' );

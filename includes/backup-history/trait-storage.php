@@ -23,6 +23,11 @@ trait BackupPlus_Backup_History_Storage {
 		// This data is constructed at run-time from the other keys; we do not wish to save redundant data
 		foreach ( $backup_history as $btime => $bdata ) {
 			unset( $backup_history[ $btime ]['incremental_sets'] );
+			// The atomic PITR index owns these growing lists. decorate_history()
+			// reconstructs them for consumers, without copying them into every SQL update.
+			if ( ! empty( $bdata['pitr']['chain_id'] ) ) {
+				unset( $backup_history[ $btime ]['pitr']['points'], $backup_history[ $btime ]['pitr']['downloads'], $backup_history[ $btime ]['pitr']['snapshot_coordinate'], $backup_history[ $btime ]['pitr']['end_coordinate'] );
+			}
 		}
 
 		$previous_history = self::get_history();

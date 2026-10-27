@@ -217,6 +217,11 @@ textarea.backupplus_input--wide {
 	font-size: 1.3em;
 }
 
+/* The label column is 250px wide; the field column matches the 640px used by the other settings. */
+table#remote-storage-holder.form-table {
+	max-width: 890px;
+}
+
 table#remote-storage-holder tbody tr.backupplus-background-white {
 	background-color: #FFF;
 }

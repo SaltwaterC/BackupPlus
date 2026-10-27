@@ -102,22 +102,14 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 	}
 
 	/**
-	 * This creates an array of nodes, built from a unzipped zip file structure.
+	 * Locate the archive a browse request refers to and the name of its root node in the tree.
 	 *
-	 * @param  [array] $params this is an array of parameters sent via ajax it can include the following:
-	 * node - this is a jstree node object containing information about the selected node
-	 * timestamp - this is the backup timestamp and is used to get the backup archive
-	 * type - this is the type of backup and is used to get the backup archive
-	 * findex - this is the index used to get the correct backup archive if theres more than one of a single archive type
-	 * @return [array] returns an array of jstree nodes
+	 * @param  [array] $params timestamp, type and findex of the archive.
+	 * @return [array] parent_name and fullpath, or error.
 	 */
-	private function _backupplus_jstree_zip( $params ) {
+	private function _backupplus_zip_archive( $params ) {
 
 		$backupplus = $this->_backupplus;
-
-		$node_array = array();
-
-		$zip_object = $backupplus->get_zip_object_name();
 
 		// Retrieve the information from our backup history
 		$backup_history = BackupPlus_Backup_History::get_history();
@@ -166,6 +158,41 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 		// Where it should end up being downloaded to
 		$fullpath = $backupplus->backups_dir_location() . '/' . $file;
 
+		return array(
+			'parent_name' => $parent_name,
+			'fullpath'    => $fullpath,
+		);
+	}
+
+	/**
+	 * This creates an array of nodes, built from a unzipped zip file structure.
+	 *
+	 * @param  [array] $params this is an array of parameters sent via ajax it can include the following:
+	 * node - this is a jstree node object containing information about the selected node
+	 * timestamp - this is the backup timestamp and is used to get the backup archive
+	 * type - this is the type of backup and is used to get the backup archive
+	 * findex - this is the index used to get the correct backup archive if theres more than one of a single archive type
+	 * @return [array] returns an array of jstree nodes
+	 */
+	private function _backupplus_jstree_zip( $params ) {
+
+		$backupplus = $this->_backupplus;
+
+		$node_array = array();
+
+		$zip_object = $backupplus->get_zip_object_name();
+
+		$archive = $this->_backupplus_zip_archive( $params );
+		if ( isset( $archive['error'] ) ) {
+			return $archive;
+		}
+		$parent_name = $archive['parent_name'];
+		$fullpath    = $archive['fullpath'];
+
+		if ( BackupPlus_Encryption::is_file_encrypted( $fullpath ) ) {
+			return array( 'error' => __( 'This archive is encrypted and can only be decrypted in your browser, so its contents cannot be listed here. Use the Extract tab to decrypt it.', 'backupplus' ) );
+		}
+
 		if ( file_exists( $fullpath ) && is_readable( $fullpath ) && filesize( $fullpath ) > 0 ) {
 
 			$node_array[] = array(
@@ -177,7 +204,7 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 				'li_attr' => array( 'path' => $parent_name ),
 			);
 
-			$zip = new $zip_object();
+			$zip = preg_match( '/\.tar\.zst$/D', $fullpath ) ? new BackupPlus_Tar() : new $zip_object();
 
 			$zip_opened = $zip->open( $fullpath );
 
@@ -259,6 +286,52 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 	 * @return Array
 	 */
 	public function get_zipfile_download( $params ) {
-		return apply_filters( 'backupplus_command_get_zipfile_download', array( 'error' => 'BackupPlus: command (get_zipfile_download) not installed (are you missing an add-on?)' ), $params );
+		$result = apply_filters( 'backupplus_command_get_zipfile_download', array( 'error' => 'BackupPlus: command (get_zipfile_download) not installed (are you missing an add-on?)' ), $params );
+		if ( ! isset( $result['error'] ) ) {
+			return $result;
+		}
+		$archive = $this->_backupplus_zip_archive( $params );
+		if ( isset( $archive['error'] ) ) {
+			return $archive;
+		}
+		$prefix = $archive['parent_name'] . DIRECTORY_SEPARATOR;
+		$path   = isset( $params['path'] ) && is_string( $params['path'] ) ? $params['path'] : '';
+		if ( 0 !== strpos( $path, $prefix ) || BackupPlus_Encryption::is_file_encrypted( $archive['fullpath'] ) || ! is_readable( $archive['fullpath'] ) ) {
+			return array( 'error' => __( 'This file cannot be extracted from the archive.', 'backupplus' ) );
+		}
+		$entry = str_replace( DIRECTORY_SEPARATOR, '/', substr( $path, strlen( $prefix ) ) );
+
+		$zip_object = preg_match( '/\.tar\.zst$/D', $archive['fullpath'] ) ? 'BackupPlus_Tar' : $this->_backupplus->get_zip_object_name();
+		$zip        = new $zip_object();
+		if ( true !== $zip->open( $archive['fullpath'] ) ) {
+			return array( 'error' => __( 'The archive could not be opened.', 'backupplus' ) );
+		}
+		// Only names the archive lists are extracted, and only as plain files.
+		$found = false;
+		for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+			$info = $zip->statIndex( $i );
+			if ( $info && $info['name'] === $entry && '/' !== substr( $entry, -1 ) ) {
+				$found = true;
+				break;
+			}
+		}
+		$stream = $found ? $zip->getStream( $entry ) : false;
+		if ( ! $stream ) {
+			@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			return array( 'error' => __( 'This file cannot be extracted from the archive.', 'backupplus' ) );
+		}
+		// The download handler removes this copy once it has been sent.
+		$name   = 'extract-' . bin2hex( random_bytes( 6 ) ) . '-' . preg_replace( '/[^A-Za-z0-9._-]/', '_', basename( $entry ) );
+		$target = fopen( $this->_backupplus->backups_dir_location() . '/' . $name, 'xb' );
+		$copied = $target ? stream_copy_to_stream( $stream, $target ) : false;
+		if ( $target ) {
+			fclose( $target );
+		}
+		fclose( $stream );
+		@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+		if ( false === $copied ) {
+			return array( 'error' => __( 'The file could not be extracted from the archive.', 'backupplus' ) );
+		}
+		return array( 'path' => $name );
 	}
 }

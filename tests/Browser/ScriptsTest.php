@@ -15,7 +15,7 @@ final class ScriptsTest extends ScriptTestCase {
 
 	protected static function commands(): array {
 		$commands = array();
-		foreach ( array( 'test-backup-sources-browser.mjs', 'test-pre-update-browser.mjs', 'test-backup-schedule-browser.mjs', 'test-client-decryption-browser.mjs' ) as $script ) {
+		foreach ( array( 'test-backup-sources-browser.mjs', 'test-pre-update-browser.mjs', 'test-backup-schedule-browser.mjs', 'test-storage-limits-browser.mjs', 'test-client-decryption-browser.mjs' ) as $script ) {
 			$commands[ $script ] = array( array( 'node', 'scripts/' . $script ), self::site_environment() );
 		}
 		return $commands;

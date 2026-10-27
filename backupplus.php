@@ -195,48 +195,48 @@ function backupplus_list_cron_schedules() {
 			'interval' => 30 * 60,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Every 30 minutes', 'backupplus' ), 'every30minutes' ),
 		),
-		'everyhour'   => array(
+		'everyhour'      => array(
 			'interval' => 3600,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', $every_hour, 'everyhour' ),
 		),
-		'every2hours' => array(
+		'every2hours'    => array(
 			'interval' => 7200,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '2' ), 'every2hours' ),
 		),
-		'every3hours' => array(
+		'every3hours'    => array(
 			'interval' => 3 * 3600,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '3' ), 'every3hours' ),
 		),
-		'every4hours' => array(
+		'every4hours'    => array(
 			'interval' => 14400,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '4' ), 'every4hours' ),
 		),
-		'every6hours' => array(
+		'every6hours'    => array(
 			'interval' => 6 * 3600,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '6' ), 'every6hours' ),
 		),
-		'every8hours' => array(
+		'every8hours'    => array(
 			'interval' => 28800,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '8' ), 'every8hours' ),
 		),
-		'twicedaily'  => array(
+		'twicedaily'     => array(
 			'interval' => 43200,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', sprintf( $every_particular_hour_label, '12' ), 'twicedaily' ),
 		),
 		// phpcs:disable WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
-		'daily'       => array(
+		'daily'          => array(
 			'interval' => 86400,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Daily' ), 'daily' ),
 		),
-		'weekly'      => array(
+		'weekly'         => array(
 			'interval' => 604800,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Weekly' ), 'weekly' ),
 		),
-		'fortnightly' => array(
+		'fortnightly'    => array(
 			'interval' => 1209600,
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Fortnightly' ), 'fortnightly' ),
 		),
-		'monthly'     => array(
+		'monthly'        => array(
 			'interval' => date( 't' ) * 86400, // Calculate the monthly interval based on the total days of the current month.
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Monthly' ), 'monthly' ),
 		),
@@ -424,9 +424,15 @@ require_once BACKUPPLUS_DIR . '/includes/class-backup-schedule.php';
 require_once BACKUPPLUS_DIR . '/includes/class-retention-cleanup.php';
 BackupPlus_Backup_Schedule::instance();
 BackupPlus_Retention_Cleanup::instance();
+BackupPlus_Jobdata_Store::register();
 add_action( 'admin_enqueue_scripts', array( 'BackupPlus_Backup_Schedule', 'assets' ) );
 
 require_once BACKUPPLUS_DIR . '/includes/class-cli.php';
 BackupPlus_CLI::register();
 require_once BACKUPPLUS_DIR . '/includes/class-pitr.php';
 BackupPlus_PITR::register();
+
+require_once BACKUPPLUS_DIR . '/includes/class-storage-limits.php';
+BackupPlus_Storage_Limits::register();
+register_activation_hook( __FILE__, array( 'BackupPlus_Storage_Limits', 'reconcile' ) );
+register_deactivation_hook( __FILE__, array( 'BackupPlus_Storage_Limits', 'deactivate' ) );

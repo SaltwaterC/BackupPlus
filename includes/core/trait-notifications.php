@@ -342,6 +342,25 @@ trait BackupPlus_Core_Notifications {
 	}
 
 	/**
+	 * Sanitize the selected remote storage services: every one of them receives the backups.
+	 *
+	 * @param Array|String $input - the selected service identifiers
+	 *
+	 * @return Array|String - the unique identifiers, or 'none' when nothing is selected
+	 */
+	public function sanitize_services( $input ) {
+		$services = array();
+		foreach ( is_array( $input ) ? $input : explode( ',', (string) $input ) as $service ) {
+			$service = is_string( $service ) ? trim( $service ) : '';
+			if ( '' === $service || '0' === $service || 'none' === $service || ! preg_match( '/^[a-z0-9_-]+$/Di', $service ) ) {
+				continue;
+			}
+			$services[ $service ] = $service;
+		}
+		return $services ? array_values( $services ) : 'none';
+	}
+
+	/**
 	 * Filter the values down to just one (subject to being filtered)
 	 *
 	 * @param Array|String   $input  - input

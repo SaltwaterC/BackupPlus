@@ -292,7 +292,7 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 				}
 			} catch ( Exception $e ) {
 				$this->log( 'list: exception: ' . $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
-				continue;
+				return new WP_Error( 'listing_incomplete', $e->getMessage() );
 			}
 		}
 

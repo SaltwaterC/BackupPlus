@@ -364,9 +364,11 @@ try {
 	add_filter( 'pre_update_option', $job_write, PHP_INT_MAX, 3 );
 	add_filter( 'pre_option', $job_read, PHP_INT_MAX, 2 );
 	try {
-		foreach ( array( 'age' ) as $mode ) {
+		foreach ( BackupPlus_Archive_Compression::enabled() ? array( false, true ) : array( false ) as $modern ) {
+			$mode              = 'age';
 			$backupplus->nonce = bin2hex( random_bytes( 6 ) );
 			$backupplus->jobdata_reset();
+			$backupplus->jobdata_set( 'archive_zstd', $modern );
 			$job_config = array(
 				'mode'       => $mode,
 				'recipients' => $recipients,
@@ -378,11 +380,19 @@ try {
 					'backupplus_encryptionphrase'    => 'synthetic archive passphrase',
 				)
 			);
-			$parts          = array( preg_replace( '/-db\.gz$/', '-uploads.zip', $name ), preg_replace( '/-db\.gz$/', '-uploads2.zip', $name ) );
+			$parts = array( preg_replace( '/-db\.gz$/', '-uploads.zip', $name ), preg_replace( '/-db\.gz$/', '-uploads2.zip', $name ) );
+			if ( $modern ) {
+				$parts = array_map(
+					function ( $part ) {
+						return str_replace( '.zip', '.tar', $part );
+					},
+					$parts
+				);
+			}
 			$expected_files = array();
 			$zip_bytes      = array();
 			foreach ( $parts as $index => $part ) {
-				$zip = new ZipArchive();
+				$zip = $modern ? new BackupPlus_Tar() : new ZipArchive();
 				age_wp_expect( true === $zip->open( $directory . '/' . $part, ZipArchive::CREATE | ZipArchive::OVERWRITE ), 'Disposable ZIP part must open' );
 				$expected_files[ $index ] = array(
 					'uploads/part' . $index . '/wp-config.php' => '<?php /* synthetic WordPress AUTH_KEY */',
@@ -390,9 +400,20 @@ try {
 					'uploads/part' . $index . '/last.txt' => 'last restored file',
 				);
 				foreach ( $expected_files[ $index ] as $file => $contents ) {
-					$zip->addFromString( $file, $contents );
+					if ( $modern ) {
+						$payload = $directory . '/tar-payload.tmp';
+						file_put_contents( $payload, $contents );
+						$zip->addFile( $payload, $file );
+						unlink( $payload );
+					} else { $zip->addFromString( $file, $contents ); }
 				}
 				$zip->close();
+				if ( $modern ) {
+					BackupPlus_Archive_Compression::compress_file( $directory . '/' . $part );
+					unlink( $directory . '/' . $part );
+					$part           .= '.zst';
+					$parts[ $index ] = $part;
+				}
 				$zip_bytes[ $index ] = file_get_contents( $directory . '/' . $part );
 				touch( $directory . '/' . $part, time() - 60 );
 			}
@@ -435,7 +456,7 @@ try {
 				'key_passphrase' => $fixture['passphrase'],
 			);
 			$download   = $request( $url, array_merge( $base, array( 'file' => $files['uploads'][0] ), $key_fields ) );
-			age_wp_expect( 200 === wp_remote_retrieve_response_code( $download ) && $zip_bytes[0] === wp_remote_retrieve_body( $download ) && 'application/zip' === wp_remote_retrieve_header( $download, 'content-type' ), 'Manual POST decryption must return the authenticated ZIP' );
+			age_wp_expect( 200 === wp_remote_retrieve_response_code( $download ) && $zip_bytes[0] === wp_remote_retrieve_body( $download ) && ( $modern ? 'application/zstd' : 'application/zip' ) === wp_remote_retrieve_header( $download, 'content-type' ), 'Manual POST decryption must return the authenticated archive with its compression MIME type' );
 			$restore                          = array( 'backupplus_restore' => array( 'uploads' ) );
 			$restore['backupplus_age_ticket'] = $browser_prepare( array( 'uploads' ) );
 			$preflight                        = $request(

@@ -24,7 +24,7 @@ trait BackupPlus_Backup_Zip_Writer {
 		$original_index = $this->index;
 
 		$itext            = empty( $this->index ) ? '' : ( $this->index + 1 );
-		$destination_base = $backup_file_basename . '-' . $whichone . $itext . '.zip.tmp';
+		$destination_base = $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension() . '.tmp';
 		// $destination is the temporary file (ending in .tmp)
 		$destination = $this->backupplus_dir . '/' . $destination_base;
 
@@ -50,13 +50,13 @@ trait BackupPlus_Backup_Zip_Writer {
 			$jtext = ( 0 == $j ) ? '' : $j + 1;
 			// This is, in a non-obvious way, compatible with filenames which indicate increments
 			// $j does not need to start at zero; it should start at the index which the current entity split at. However, this is not directly known, and can only be deduced from examining the filenames. And, for other indexes from before the current increment, the searched-for filename won't exist (even if there is no cloud storage). So, this indirectly results in the desired outcome when we start from $j=0.
-			$examine_zip = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $jtext . '.zip' . ( ( $j == $this->index ) ? '.tmp' : '' );
+			$examine_zip = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $jtext . '.' . $this->archive_extension() . ( ( $j == $this->index ) ? '.tmp' : '' );
 
 			// This comes from https://wordpress.org/support/topic/backupplus-not-moving-all-files-to-remote-server - where it appears that the jobdata's record of the split was done (i.e. database write), but the *earlier* rename of the .tmp file was not done (i.e. I/O lost). i.e. In theory, this should be impossible; but, the sychnronicity apparently cannot be fully relied upon in some setups. The check for the index being one behind is being conservative - there's no inherent reason why it couldn't be done for other indexes.
 			// Note that in this 'impossible' case, no backup data was being lost - the design still ensures that the on-disk backup is fine. The problem was a gap in the sequence numbering of the zip files, leading to user confusion.
 			// Other examples of this appear to be in HS#1001 and #1047
 			if ( $j != $this->index && ! file_exists( $examine_zip ) ) {
-				$alt_examine_zip = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $jtext . '.zip' . ( ( $j == $this->index - 1 ) ? '.tmp' : '' );
+				$alt_examine_zip = $this->backupplus_dir . '/' . $backup_file_basename . '-' . $whichone . $jtext . '.' . $this->archive_extension() . ( ( $j == $this->index - 1 ) ? '.tmp' : '' );
 				if ( $alt_examine_zip != $examine_zip && file_exists( $alt_examine_zip ) && is_readable( $alt_examine_zip ) && filesize( $alt_examine_zip ) > 0 ) {
 					$backupplus->log( "Looked-for zip file not found; but non-zero .tmp zip was, despite not being current index ($j != " . $this->index . " - renaming zip (assume previous resumption's IO was lost before kill)" );
 					if ( rename( $alt_examine_zip, $examine_zip ) ) {
@@ -72,7 +72,7 @@ trait BackupPlus_Backup_Zip_Writer {
 			if ( file_exists( $examine_zip ) && is_readable( $examine_zip ) && filesize( $examine_zip ) > 0 ) {
 
 				// Do not use (which also means do not create) a manifest if the file is still a .tmp file, since this may not be complete. If we are in this place in the code from a resumption, creating a manifest here will mean the manifest becomes out-of-date if further files are added.
-				$this->populate_existing_files_list_from_zip( $examine_zip, substr( $examine_zip, -4, 4 ) === '.zip' );
+				$this->populate_existing_files_list_from_zip( $examine_zip, substr( $examine_zip, -4 ) === '.' . $this->archive_extension() );
 
 				// try_split is true if there have been no check-ins recently - or if it needs to be split anyway
 				if ( $j == $this->index ) {
@@ -336,9 +336,14 @@ trait BackupPlus_Backup_Zip_Writer {
 			unset( $stored );
 			$this->zipfiles_dirbatched = array_values( array_filter( array_map( $rewrite, $this->zipfiles_dirbatched ) ) );
 		}
-		$this->incremental_manifest = null;
+		$this->incremental_manifest  = null;
+		$this->incremental_unchanged = false;
 		if ( $backupplus->jobdata_get( 'incremental_configuration' ) ) {
-			$this->incremental_manifest = BackupPlus_Incremental_Backups::scan( $whichone, $this->zipfiles_batched, $this->zipfiles_dirbatched, $this->zipfiles_skipped_notaltered );
+			$this->incremental_manifest = BackupPlus_Incremental_Backups::scan( $whichone, $this->zipfiles_batched, $this->zipfiles_dirbatched, $this->zipfiles_skipped_notaltered, $this->incremental_unchanged );
+		}
+		if ( $this->incremental_unchanged ) {
+			// The empty marker below is removed by the caller as 'not needed'; restores use the entity's latest earlier archive, which holds the same cumulative deletions.
+			$backupplus->log( sprintf( 'No changes to %s since the previous backup: not writing an archive', $whichone ) );
 		}
 
 		// Any not yet dispatched? Under our present scheme, at this point nothing has yet been despatched. And since the enumerating of all files can take a while, we can at this point do a further modification check to reduce the chance of overlaps.
@@ -352,7 +357,7 @@ trait BackupPlus_Backup_Zip_Writer {
 			touch( $destination );
 		}
 
-		if ( $this->incremental_manifest || count( $this->zipfiles_dirbatched ) > 0 || count( $this->zipfiles_batched ) > 0 ) {
+		if ( ! $this->incremental_unchanged && ( $this->incremental_manifest || count( $this->zipfiles_dirbatched ) > 0 || count( $this->zipfiles_batched ) > 0 ) ) {
 
 			$backupplus->log( sprintf( 'Total entities for the zip file: %d directories, %d files (%d skipped as non-modified), %s MB', count( $this->zipfiles_dirbatched ), count( $this->zipfiles_batched ), count( $this->zipfiles_skipped_notaltered ), round( $this->makezip_recursive_batchedbytes / 1048576, 1 ) ) );
 
@@ -374,12 +379,12 @@ trait BackupPlus_Backup_Zip_Writer {
 		// Reset these variables because the index may have changed since we began
 
 		$itext            = empty( $this->index ) ? '' : $this->index + 1;
-		$destination_base = $backup_file_basename . '-' . $whichone . $itext . '.zip.tmp';
+		$destination_base = $backup_file_basename . '-' . $whichone . $itext . '.' . $this->archive_extension() . '.tmp';
 		$destination      = $this->backupplus_dir . '/' . $destination_base;
 
 		// ZipArchive::addFile sometimes fails - there's nothing when we expected something.
 		// Did not used to have || $error_occurred here. But it is better to retry, than to simply warn the user to check his logs.
-		if ( ( ( file_exists( $destination ) || $this->index == $original_index ) && @filesize( $destination ) < 90 && 'BackupPlus_ZipArchive' == $this->use_zip_object ) || ( $error_occurred && $retry_on_error ) ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		if ( ! $this->incremental_unchanged && ( ( ( file_exists( $destination ) || $this->index == $original_index ) && @filesize( $destination ) < 90 && 'BackupPlus_ZipArchive' == $this->use_zip_object ) || ( $error_occurred && $retry_on_error && 'BackupPlus_Tar' !== $this->use_zip_object ) ) ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 			// This can be made more sophisticated if feedback justifies it. Currently we just switch to PclZip. But, it may have been a BinZip failure, so we could then try ZipArchive if that is available. If doing that, make sure that an infinite recursion isn't made possible.
 			$backupplus->log( 'makezip_addfiles(' . $this->use_zip_object . ') apparently failed (file=' . basename( $destination ) . ", type=$whichone, size=" . filesize( $destination ) . ') - retrying with PclZip' );
 			$saved_zip_object     = $this->use_zip_object;

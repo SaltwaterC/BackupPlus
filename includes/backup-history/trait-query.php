@@ -30,6 +30,7 @@ trait BackupPlus_Backup_History_Query {
 		}
 
 		$backup_history = self::build_incremental_sets( $backup_history );
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) ) { $backup_history = BackupPlus_Storage_Limits::discovery( $backup_history ); }
 
 		if ( $timestamp ) {
 			return isset( $backup_history[ $timestamp ] ) ? $backup_history[ $timestamp ] : array();
@@ -145,6 +146,7 @@ trait BackupPlus_Backup_History_Query {
 			$backup_history = self::get_history();
 		}
 
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && is_array( $backup_history ) ) { $backup_history = BackupPlus_Storage_Limits::visible_history( $backup_history ); }
 		if ( ! is_array( $backup_history ) || empty( $backup_history ) ) {
 			return '<div class="postbox"><p class="backupplus-no-backups-msg">' . __( 'You have not yet made any backups.', 'backupplus' ) . '</p> <p class="backupplus-no-backups-msg">' . __( 'If you have an existing backup that you wish to upload and restore from, then please use the "Upload backup files" link above.', 'backupplus' ) . ' ' . __( 'Or, if they are in remote storage, you can connect that remote storage (in the "Settings" tab), save your settings, and use the "Rescan remote storage" link.', 'backupplus' ) . '</p></div>';
 		}
@@ -195,7 +197,7 @@ trait BackupPlus_Backup_History_Query {
 
 				foreach ( $bdata[ $entity ] as $key => $filename ) {
 
-					if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches ) ) {
+					if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $filename, $matches ) ) {
 
 						$timestamp = strtotime( get_gmt_from_date( date_format( DateTime::createFromFormat( 'Y-m-d-Hi', $matches[1] ), 'Y-m-d H:i' ) ) );
 

@@ -1,5 +1,5 @@
 <?php
-/** Node tests of the code that runs in the browser: credential export, archive decryption and the SSH key WebAssembly bridge, the last also in Chromium on a page of its own. */
+/** Node tests of the code that runs in the browser: credential export, archive decryption, extraction and the SSH key WebAssembly bridge, the last also in Chromium on a page of its own. */
 
 namespace BackupPlus\Tests\Client;
 
@@ -16,6 +16,7 @@ final class ScriptsTest extends ScriptTestCase {
 		return array(
 			'test-credential-export.mjs'   => array( array( 'node', 'scripts/test-credential-export.mjs' ) ),
 			'test-client-decryption.mjs'   => array( array( 'node', 'scripts/test-client-decryption.mjs' ) ),
+			'test-client-extract.mjs'      => array( array( 'node', 'scripts/test-client-extract.mjs' ) ),
 			'test-agessh-wasm.mjs'         => array( array( 'node', 'scripts/test-agessh-wasm.mjs' ) ),
 			'test-agessh-wasm-browser.mjs' => array( array( 'node', 'scripts/test-agessh-wasm-browser.mjs' ) ),
 		);

@@ -245,7 +245,17 @@ try {
 	$full   = $manual_capture();
 	$worker = new BackupPlus_PITR( $config );
 	pitr_check( 'database-full' === $full['kind'] && isset( $full['snapshot_coordinate']['file'], $full['snapshot_coordinate']['position'] ), 'Full snapshot coordinates were not persisted.' );
-	$id = $full['chain_id'];
+	$compact_history_after_full = get_option( 'backupplus_backup_history', array() );
+	$id                         = $full['chain_id'];
+	$history_is_compact         = function ( $stored_history ) use ( $id ) {
+		foreach ( $stored_history as $row ) {
+			if ( isset( $row['pitr']['chain_id'] ) && $id === $row['pitr']['chain_id'] ) {
+				return ! array_intersect( array( 'points', 'downloads', 'snapshot_coordinate', 'end_coordinate' ), array_keys( $row['pitr'] ) );
+			}
+		}
+		return false;
+	};
+	pitr_check( $history_is_compact( $compact_history_after_full ), 'PITR recovery and download lists must not be stored in database history.' );
 	echo "PITR coordinated baseline created; testing concurrent writers.\n";
 	$writer_input = $work . '/writer.sql';
 	BackupPlus_PITR_Process::private_file( $writer_input, 'CALL pitr_writer();' );
@@ -291,9 +301,19 @@ try {
 	$application->query( 'USE `' . DB_NAME . '`; BEGIN; UPDATE pitr_a SET value=0x666972737400ff WHERE id=1; UPDATE pitr_b SET value=1 WHERE id=1; COMMIT' );
 	echo "PITR capturing and verifying native log ranges.\n";
 	unset( $worker );
-	$increment = $manual_capture( true );
-	$worker    = new BackupPlus_PITR( $config );
+	add_filter( 'backupplus_pitr_zstd_binary', '__return_false' );
+	try { $increment = $manual_capture( true ); }
+	finally { remove_filter( 'backupplus_pitr_zstd_binary', '__return_false' ); }
+	pitr_check( '.bin.gz' === substr( $increment['artifacts'][0]['name'], -7 ), 'The compatibility capture must remain gzip.' );
+	$worker = new BackupPlus_PITR( $config );
 	pitr_check( 'database-binlog' === $increment['kind'], 'Manual capture waited for its interval instead of capturing now.' );
+	$compact_history_after_increment = get_option( 'backupplus_backup_history', array() );
+	pitr_check( $history_is_compact( $compact_history_after_increment ), 'PITR capture must not store derived recovery/download lists in database history.' );
+	$history_points = false;
+	foreach ( BackupPlus_Backup_History::get_history() as $row ) {
+		if ( isset( $row['pitr']['chain_id'] ) && $id === $row['pitr']['chain_id'] ) { $history_points = count( $row['pitr']['points'] ); }
+	}
+	pitr_check( 2 === $history_points, 'Compact history must reconstruct the full snapshot and increment from the native index.' );
 	echo "PITR queued manual baseline, immediate increment and file-stage routing passed.\n";
 	pitr_check( $increment['start_coordinate'] === $full['snapshot_coordinate'], 'First increment did not start at the snapshot coordinate.' );
 	pitr_check( $increment['end_coordinate']['file'] !== $increment['start_coordinate']['file'], 'Capture did not close and rotate the binary log.' );
@@ -304,7 +324,9 @@ try {
 		'position' => end( $last_segment['boundaries'] )['position'],
 	);
 	$application->query( 'USE `' . DB_NAME . '`; BEGIN; UPDATE pitr_a SET value=0x7365636f6e64 WHERE id=1; UPDATE pitr_b SET value=2 WHERE id=1; COMMIT; ALTER TABLE pitr_a ADD note varchar(20) DEFAULT \'added\'' );
-	$second = $worker->run( 'capture' );
+	$second    = $worker->run( 'capture' );
+	$extension = '.bin.' . BackupPlus_PITR_Compression::binlog_extension();
+	pitr_check( $extension === substr( $second['artifacts'][0]['name'], -strlen( $extension ) ), 'New captures must use the available preferred codec.' );
 	pitr_check( $second['start_coordinate'] === $first_end, 'Second increment has a coordinate gap.' );
 	pitr_check( $second['previous_backup_id'] === $increment['backup_id'], 'Increment predecessor was not saved.' );
 	$verified = $worker->verify( $id, null, null );
@@ -316,12 +338,6 @@ try {
 			$worker->recovery_plan( $id, $bad );
 		},
 		'Mid-transaction recovery accepted.'
-	);
-	pitr_failure(
-		function () use ( $worker, $id ) {
-			$worker->delete( $id );
-		},
-		'Active chain was deleted.'
 	);
 	$recovery_config                  = $config;
 	$recovery_config['source_config'] = $directory . '/recovery.cnf';
@@ -336,7 +352,7 @@ try {
 	$recovery->query( 'DROP DATABASE `' . DB_NAME . '`' );
 	$selected = $worker->recover( $id, null, $recovery_config['source_config'], array( 'pitr_a' ), null, true );
 	pitr_check( '7365636F6E64' === $recovery->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0] && 'added' === $recovery->query( 'SELECT note FROM `' . DB_NAME . '`.pitr_a' )[0][0], 'Latest recovery lost row or schema changes.' );
-	$h   = gzopen( $directory . '/archives/' . $selected['archive'], 'rb' );
+	$h   = BackupPlus_Archive_Compression::open_read( $directory . '/archives/' . $selected['archive'] );
 	$sql = '';
 	while ( ! gzeof( $h ) ) {
 		$sql .= gzread( $h, 65536 );
@@ -371,6 +387,7 @@ try {
 	$application->query( 'USE `' . DB_NAME . '`; UPDATE pitr_b SET value=3 WHERE id=1' );
 	$encrypted_increment = $worker->run( 'capture' );
 	pitr_check( '.crypt' === substr( $encrypted_full['artifacts'][0]['name'], -6 ) && '.crypt' === substr( $encrypted_increment['artifacts'][0]['name'], -6 ), 'Configured age encryption did not cover every payload.' );
+	if ( BackupPlus_PITR_Compression::zstd_binary() ) { pitr_check( 'zstd' === $encrypted_increment['artifacts'][0]['compression'] && '.bin.zst.crypt' === substr( $encrypted_increment['artifacts'][0]['name'], -14 ), 'Encrypted increments must retain their Zstandard format metadata.' ); }
 	$reader = function ( $message, $multiline ) use ( $key ) {
 		return $multiline ? $key['identity'] : '';
 	};

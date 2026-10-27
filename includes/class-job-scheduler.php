@@ -10,6 +10,40 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class BackupPlus_Job_Scheduler {
 
+	/** Seconds after which an unfinished backup job no longer holds back scheduled incremental backups. */
+	const ABANDONED_AFTER = 43200;
+
+	/**
+	 * Backup jobs that have started but not finished: running now, or waiting for a resumption after an error or a timeout.
+	 *
+	 * A job that has been going for longer than the limit is treated as abandoned, so that one that can never finish does not stop scheduled backups for good.
+	 *
+	 * @return array Job data keyed by job nonce.
+	 */
+	public static function unfinished_backup_jobs() {
+		$ids = array( BackupPlus_CLI::fresh( 'backupplus_oneshotnonce', true ) );
+		BackupPlus_CLI::fresh( 'cron' );
+		foreach ( (array) _get_cron_array() as $hooks ) {
+			foreach ( isset( $hooks['backupplus_backup_resume'] ) ? $hooks['backupplus_backup_resume'] : array() as $event ) {
+				if ( isset( $event['args'][1] ) ) {
+					$ids[] = $event['args'][1];
+				}
+			}
+		}
+		$jobs = array();
+		foreach ( array_unique( array_filter( $ids, 'is_string' ) ) as $id ) {
+			$job = BackupPlus_CLI::fresh( 'backupplus_jobdata_' . $id, true );
+			if ( ! is_array( $job ) || ! empty( $job['terminal_outcome'] ) || ! isset( $job['job_type'] ) || ! in_array( $job['job_type'], array( 'backup', 'incremental' ), true ) || ( isset( $job['jobstatus'] ) && 'finished' === $job['jobstatus'] ) ) {
+				continue;
+			}
+			if ( isset( $job['backup_time'] ) && time() - (int) $job['backup_time'] > self::ABANDONED_AFTER ) {
+				continue;
+			}
+			$jobs[ $id ] = $job;
+		}
+		return $jobs;
+	}
+
 	/**
 	 * This function is purely for timing - we just want to know the maximum run-time; not whether we have achieved anything during it. It will also run a check on whether the resumption interval is being approached.
 	 */
@@ -23,8 +57,8 @@ class BackupPlus_Job_Scheduler {
 			$time_passed = array();
 		}
 
-		$time_this_run                                  = microtime( true ) - $backupplus->opened_log_time;
-		$time_passed[ $backupplus->current_resumption ] = $time_this_run;
+		$time_this_run                                        = microtime( true ) - $backupplus->opened_log_time;
+		$time_passed[ (int) $backupplus->current_resumption ] = $time_this_run;
 		$backupplus->jobdata_set( 'run_times', $time_passed );
 
 		$resume_interval = $backupplus->jobdata_get( 'resume_interval' );

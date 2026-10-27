@@ -8,7 +8,7 @@ export async function restoreScreen(ctx) {
 	await checkPage();
 	await navigate(origin + '/wp-admin/index.php');
 	await evaluate('history.back()');
-	await wait('location.search.includes("tab=decryption") && document.readyState === "complete"');
+	await wait('location.search.includes("tab=extract") && document.readyState === "complete"');
 	await checkPage();
 	// Prepare an isolated recovery point through the actual restore screen and worker.
 	ctx.restoreIsolated = true;

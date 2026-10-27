@@ -12,6 +12,7 @@ if ( ! class_exists( 'BackupPlus_PclZip' ) ) {
 	backupplus_try_include_file( 'includes/class-zip.php', 'require_once' );
 }
 
+require_once __DIR__ . '/includes/class-tar.php';
 require_once __DIR__ . '/includes/backup/trait-retention.php';
 require_once __DIR__ . '/includes/backup/trait-cloud.php';
 require_once __DIR__ . '/includes/backup/trait-files.php';
@@ -41,6 +42,8 @@ class BackupPlus_Backup {
 	private $manifest_path;
 
 	private $incremental_manifest;
+
+	private $incremental_unchanged = false;
 
 	private $zipfiles_added;
 
@@ -215,7 +218,7 @@ class BackupPlus_Backup {
 
 		// false means 'tried + failed'; whereas 0 means 'not yet tried'
 		// Disallow binzip on OpenVZ when we're not sure there's plenty of memory
-		if ( 0 === $this->binzip && ( ! defined( 'BACKUPPLUS_PREFERPCLZIP' ) || ! BACKUPPLUS_PREFERPCLZIP ) && ( ! defined( 'BACKUPPLUS_NO_BINZIP' ) || ! BACKUPPLUS_NO_BINZIP ) && ( $backupplus->current_resumption < 9 || $resumptions_since_last_successful < 2 ) ) {
+		if ( ! $this->archive_compression_enabled() && 0 === $this->binzip && ( ! defined( 'BACKUPPLUS_PREFERPCLZIP' ) || ! BACKUPPLUS_PREFERPCLZIP ) && ( ! defined( 'BACKUPPLUS_NO_BINZIP' ) || ! BACKUPPLUS_NO_BINZIP ) && ( $backupplus->current_resumption < 9 || $resumptions_since_last_successful < 2 ) ) {
 
 			if ( @file_exists( '/proc/user_beancounters' ) && @file_exists( '/proc/meminfo' ) && @is_readable( '/proc/meminfo' ) ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 				$meminfo = @file_get_contents( '/proc/meminfo', false, null, 0, 200 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.

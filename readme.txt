@@ -39,6 +39,7 @@ Contact the maintainers of the repository or distribution from which you obtaine
 
 = 3.0.0 - 21/Oct/2026 =
 
+* TWEAK: The Decryption tab is now the Extract tab: besides decrypting, it decompresses gzip and Zstandard files and unpacks tar archives or zips of them in one step, in the browser, returning one uncompressed zip when there are several files.
 * TWEAK: Remove the onboarding wizard and bundled promotional, newsletter, and recommended-plugin steps.
 * TWEAK: Include GPL and third-party license texts and notices with the source distribution.
 * TWEAK: Upgrade the bundled Guzzle HTTP stack; requires PHP 7.2.5 or newer.

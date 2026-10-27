@@ -75,9 +75,9 @@ var backupplus_backups_selection = {};
 		}
 		// if all rows are selected, check the headind's checkbox
 		if (num_rows === num_selected) {
-			$('#cb-select-all').prop('checked', true);
+			$('.cb-select-all').prop('checked', true);
 		} else {
-			$('#cb-select-all').prop('checked', false);
+			$('.cb-select-all').prop('checked', false);
 		}
 		// if no backups, hide massaction
 		if (!num_rows) {

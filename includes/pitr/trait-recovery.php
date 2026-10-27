@@ -74,7 +74,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 		list( $sql, $plan ) = $this->reconstruct( $id, $target, $recovery_config, $tables, $reader, $isolated );
 		$storage            = new BackupPlus_PITR_Storage( $this->work, $this->encryption(), array() );
 		$nonce              = bin2hex( random_bytes( 6 ) );
-		$artifact           = $storage->artifact( $sql, 'backup_' . gmdate( 'Y-m-d-Hi' ) . '_PITRRecovered_' . $nonce . '-db.gz' );
+		$artifact           = $storage->artifact( $sql, 'backup_' . gmdate( 'Y-m-d-Hi' ) . '_PITRRecovered_' . $nonce . '-db.' . ( BackupPlus_PITR_Compression::zstd_binary() ? 'sql.zst' : 'gz' ) );
 		$history            = BackupPlus_Backup_History::get_history();
 		$time               = time();
 		while ( isset( $history[ $time ] ) ) {

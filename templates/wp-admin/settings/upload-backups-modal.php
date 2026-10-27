@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php
 				global $backupplus;
 
-				$service = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+				$service = (array) $backupplus->get_canonical_service_list();
 
 			foreach ( $service as $value ) {
 				if ( '' == $value ) {

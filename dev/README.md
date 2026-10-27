@@ -78,7 +78,7 @@ An optional `compose.yaml` is also provided for users who already have a Compose
 
 ## Manual decryption security regression
 
-With the local environment running, use `make test-client-browser` to exercise the Decryption tab in Chromium. Set `CHROMIUM` to the executable if it is not on PATH or in the Playwright cache. The test uses `http://localhost:8080` by default; set `BACKUPPLUS_TEST_URL` and `BACKUPPLUS_DEV_LOGIN_TOKEN` for a different local HTTP test site. `PODMAN` and `WP_TEST_CONTAINER` select the container runtime and WordPress container.
+With the local environment running, use `make test-client-browser` to exercise the Extract tab in Chromium. Set `CHROMIUM` to the executable if it is not on PATH or in the Playwright cache. The test uses `http://localhost:8080` by default; set `BACKUPPLUS_TEST_URL` and `BACKUPPLUS_DEV_LOGIN_TOKEN` for a different local HTTP test site. `PODMAN` and `WP_TEST_CONTAINER` select the container runtime and WordPress container.
 
 The SEC-003 checks generate a unique disposable passphrase, decrypt and download a synthetic archive, and check success/failure page content, links, request URLs/bodies/headers, redirect destinations and browser navigation history. A temporary loopback HTTP proxy captures page and worker requests, including access records with Referer and Location. The test reads the WordPress container's access/error logs for the test interval, verifies that both log sources contain a control request, and checks that neither contains the test credentials. Chromium's temporary profile, downloads and proxy are removed at exit. These checks inspect disposable test activity; they do not audit historical production logs or browser profiles.
 

@@ -168,12 +168,8 @@ class BackupPlus_Settings_Importer {
 				$valid_services[] = $service;
 			}
 
-			$valid_services = array_values( array_unique( $valid_services ) );
-			if ( count( $valid_services ) > 1 ) {
-				$skipped_settings[] = 'updraft_service:multiple_destinations';
-				$valid_services     = array_slice( $valid_services, -1 );
-			}
-			$settings['backupplus_service'] = empty( $valid_services ) ? 'none' : reset( $valid_services );
+			$valid_services                 = array_values( array_unique( $valid_services ) );
+			$settings['backupplus_service'] = empty( $valid_services ) ? 'none' : ( 1 === count( $valid_services ) ? reset( $valid_services ) : $valid_services );
 			if ( 'updraft_service' === $service_key ) {
 				unset( $settings['updraft_service'] );
 			}

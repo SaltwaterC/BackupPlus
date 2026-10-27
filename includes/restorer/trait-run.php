@@ -126,7 +126,7 @@ trait BackupPlus_Restorer_Run {
 			return $second_loop;
 		}
 
-		$this->delete_archives_upon_restoration = BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 1 ) ? true : false;
+		$this->delete_archives_upon_restoration = BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) && ! ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::quota() );
 		if ( empty( $services ) || array( 'email' ) === $services || ! empty( $this->ud_foreign ) ) {
 			if ( $this->delete_archives_upon_restoration ) {
 				$backupplus->log_e( 'Will not delete any archives after unpacking them, because there was no cloud storage for this backup' );

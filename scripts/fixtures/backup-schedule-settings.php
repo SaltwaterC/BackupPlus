@@ -18,10 +18,10 @@ if ( 'snapshot' === $operation ) {
 	}
 } elseif ( 'read' === $operation ) {
 	$read = array();
-	foreach ( array( 'backupplus_interval', 'backupplus_interval_database', 'backupplus_schedule_exact_files', 'backupplus_schedule_exact_db', 'backupplus_interval_increments', 'backupplus_schedule_exact_increments', 'backupplus_starttime_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db', 'backupplus_retention_cleanup_mode', 'backupplus_retention_cleanup_time' ) as $name ) {
+	foreach ( array( 'backupplus_interval', 'backupplus_interval_database', 'backupplus_schedule_exact_files', 'backupplus_schedule_exact_db', 'backupplus_interval_increments', 'backupplus_schedule_exact_increments', 'backupplus_starttime_increments', 'backupplus_starttime_files', 'backupplus_starttime_db', 'backupplus_startday_files', 'backupplus_startday_db', 'backupplus_retention_cleanup_mode', 'backupplus_retention_cleanup_time', 'backupplus_storage_limits' ) as $name ) {
 		$read['options'][ $name ] = get_option( $name, null );
 	}
-	foreach ( array( 'backupplus_backup', 'backupplus_backup_database', 'backupplus_backup_increments', 'backupplus_retention_cleanup' ) as $hook ) {
+	foreach ( array( 'backupplus_backup', 'backupplus_backup_database', 'backupplus_backup_increments', 'backupplus_retention_cleanup', 'backupplus_storage_monitor' ) as $hook ) {
 		$read['events'][ $hook ] = array();
 		foreach ( (array) _get_cron_array() as $timestamp => $hooks ) {
 			if ( ! empty( $hooks[ $hook ] ) ) {
@@ -32,6 +32,20 @@ if ( 'snapshot' === $operation ) {
 		}
 	}
 	echo wp_json_encode( $read );
+} elseif ( 'storage-status' === $operation ) {
+	update_option(
+		'backupplus_storage_limits_status',
+		array(
+			'local:' => array(
+				'usage'     => 1300000000,
+				'measured'  => time(),
+				'available' => true,
+				'alert'     => array( 'level' => 100 ),
+				'outcome'   => 'Protected recovery chains retained.',
+			),
+		),
+		false
+	);
 } elseif ( 'restore' === $operation ) {
 	$rows = is_file( $path ) ? json_decode( file_get_contents( $path ), true ) : null;
 	if ( ! is_array( $rows ) ) {

@@ -60,7 +60,7 @@ trait BackupPlus_Restorer_Unpack {
 		// $working_dir = $upgrade_folder . basename($package, '.zip');
 		$working_dir = $upgrade_folder . substr( md5( $encrypted_package ? $encrypted_package : $package ), 0, 8 );
 
-		if ( preg_match( '#\.zip$#i', $archive_name ) ) {
+		if ( preg_match( '#\.(?:zip|tar\.zst)$#i', $archive_name ) ) {
 
 			$last_index_key = BackupPlus_Filesystem_Functions::get_jobdata_progress_key( $package );
 
@@ -100,7 +100,7 @@ trait BackupPlus_Restorer_Unpack {
 		}
 
 		// Unzip package to working directory
-		if ( preg_match( '#\.zip$#i', $archive_name ) ) {
+		if ( preg_match( '#\.(?:zip|tar\.zst)$#i', $archive_name ) ) {
 
 			$folders_to_include = array();
 

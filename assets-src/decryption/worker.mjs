@@ -1,4 +1,5 @@
 import { decryptArchive } from './archive.mjs';
+import { classify, extractFile } from './extract.mjs';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 const MEMORY_LIMIT = 128 * 1024 * 1024;
@@ -11,7 +12,17 @@ self.onmessage = async ({ data }) => {
 		if (data.id === activeJob) cancelRequested = true;
 		return;
 	}
-	const { file, id, credentials, hashOutput, stagingFile, agessh } = data;
+	if (data?.type === 'inspect') {
+		// Which credentials, if any, the selected file needs: decided from names and magic bytes only.
+		try {
+			const plan = await classify(data.file, data.file.name);
+			self.postMessage({ id: data.id, type: 'inspected', kind: plan.kind, encrypted: Boolean(plan.encrypted) });
+		} catch {
+			self.postMessage({ id: data.id, type: 'error', code: 'ARCHIVE_FAILED' });
+		}
+		return;
+	}
+	const { file, id, credentials, hashOutput, stagingFile, agessh, mode } = data;
 	activeJob = id;
 	cancelRequested = false;
 	const checkCancelled = () => {
@@ -23,6 +34,7 @@ self.onmessage = async ({ data }) => {
 		writable,
 		storageReady = false,
 		chunks = [],
+		offsets = [],
 		count = 0,
 		lastProgress = 0;
 	const send = (message) => self.postMessage({ id, ...message });
@@ -41,6 +53,7 @@ self.onmessage = async ({ data }) => {
 			}
 		}
 		chunks = [];
+		offsets = [];
 	};
 	try {
 		if (!self.isSecureContext || !crypto.subtle) throw new Error('SECURE_CONTEXT');
@@ -75,6 +88,9 @@ self.onmessage = async ({ data }) => {
 			}
 		};
 		const sink = {
+			get position() {
+				return count;
+			},
 			async write(bytes) {
 				checkCancelled();
 				await prepareStorage();
@@ -87,7 +103,25 @@ self.onmessage = async ({ data }) => {
 				}
 				else {
 					if (count > MEMORY_LIMIT) throw new Error('MEMORY_LIMIT');
+					offsets.push(count - bytes.length);
 					chunks.push(bytes.slice());
+				}
+			},
+			// Rewrites bytes that were written earlier, such as a zip header once its checksum is known.
+			async patch(position, bytes) {
+				checkCancelled();
+				if (hash) throw new Error('DECRYPT_FAILED');
+				await prepareStorage();
+				checkCancelled();
+				if (writable) {
+					await writable.write({ type: 'write', position, data: bytes });
+					await writable.write({ type: 'seek', position: count });
+					checkCancelled();
+				} else {
+					let i = offsets.length - 1;
+					while (i >= 0 && offsets[i] > position) i--;
+					if (i < 0 || position + bytes.length > offsets[i] + chunks[i].length) throw new Error('DECRYPT_FAILED');
+					chunks[i].set(bytes, position - offsets[i]);
 				}
 			},
 			async finish() {
@@ -108,26 +142,32 @@ self.onmessage = async ({ data }) => {
 			},
 			abort: cleanup,
 		};
-		const result = await decryptArchive(
-			file,
-			credentials,
-			sink,
-			(fraction) => {
-				const now = Date.now();
-				if (now - lastProgress > 100 || fraction === 1) {
-					send({ type: 'progress', fraction });
-					lastProgress = now;
-				}
-			},
-			{ agessh },
-		);
+		const progress = (fraction) => {
+			const now = Date.now();
+			if (now - lastProgress > 100 || fraction === 1) {
+				send({ type: 'progress', fraction });
+				lastProgress = now;
+			}
+		};
+		const result =
+			mode === 'extract'
+				? await extractFile({
+						file,
+						name: file.name,
+						credentials,
+						sink,
+						progress,
+						status: (status) => send({ type: 'status', ...status }),
+						options: { agessh, memoryLimit: MEMORY_LIMIT },
+					})
+				: await decryptArchive(file, credentials, sink, progress, { agessh });
 		checkCancelled();
 		send({ type: 'complete', ...result, ...(hash ? { hash: bytesToHex(hash.digest()) } : {}) });
 	} catch (e) {
 		await cleanup();
 		if (cancelRequested) send({ type: 'cancelled' });
 		else {
-			const known = ['SECURE_CONTEXT', 'MEMORY_LIMIT', 'UNSUPPORTED_KEY'];
+			const known = ['SECURE_CONTEXT', 'MEMORY_LIMIT', 'UNSUPPORTED_KEY', 'ARCHIVE_FAILED'];
 			send({
 				type: 'error',
 				code:

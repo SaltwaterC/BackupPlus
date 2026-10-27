@@ -73,6 +73,11 @@ trait BackupPlus_Filesystem_Functions_Files {
 
 		global $backupplus;
 
+		// Capture this before stale job metadata is reaped. A long-running backup
+		// may still need old tar parts while awaiting compression or resumption.
+		$protect_tar_staging = ! class_exists( 'BackupPlus_Retention_Cleanup' ) || BackupPlus_Retention_Cleanup::backup_active() || get_site_option( 'backupplus_restore_in_progress', false );
+		$tar_references      = null;
+
 		// Clean out old job data
 		if ( $older_than > 10000 ) {
 
@@ -123,6 +128,27 @@ trait BackupPlus_Filesystem_Functions_Files {
 		$include_cachelist = defined( 'DOING_CRON' ) && DOING_CRON && doing_action( 'backupplus_clean_temporary_files' ) ? true : $include_cachelist;
 		if ( $handle = opendir( $backupplus_dir ) ) {
 			while ( false !== ( $entry = readdir( $handle ) ) ) {
+				// Native tar files and partial tar files are staging, never published .tar.zst archives.
+				if ( preg_match( '/\Abackup_[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}_.+_[a-f0-9]{12}-[-a-z]+[0-9]*\.tar(?:\.tmp)?\z/iD', $entry ) ) {
+					$path = $backupplus_dir . '/' . $entry;
+					if ( $protect_tar_staging || is_link( $path ) || ! is_file( $path ) || $now_time - filemtime( $path ) <= 43200 ) { continue; }
+					if ( null === $tar_references ) {
+						$tar_references = array();
+						$history        = (array) BackupPlus_Options::get_backupplus_option( 'backupplus_backup_history', array() );
+						array_walk_recursive(
+							$history,
+							function ( $file ) use ( &$tar_references ) {
+								if ( is_string( $file ) && preg_match( '/\.tar(?:\.tmp)?\z/iD', $file ) ) { $tar_references[ $file ] = true; }
+							}
+						);
+					}
+					if ( isset( $tar_references[ $entry ] ) || BackupPlus_Retention_Cleanup::backup_active() || get_site_option( 'backupplus_restore_in_progress', false ) ) { continue; }
+					if ( unlink( $path ) ) {
+						$backupplus->log( "Deleting abandoned tar staging file: $entry", 'notice', false, 0 !== $files_deleted % 25 );
+						++$files_deleted;
+					}
+					continue;
+				}
 				$manifest_match = preg_match( '/backupplus-manifest\.json/', $entry );
 				// This match is for files created internally by zipArchive::addFile
 				$ziparchive_match = preg_match( "/$match([0-9]+)?\.zip\.tmp\.(?:[A-Za-z0-9]+)$/i", $entry ); // on PHP 5 the tmp file is suffixed with 3 bytes hexadecimal (no padding) whereas on PHP 7&8 the file is suffixed with 4 bytes hexadecimal with padding

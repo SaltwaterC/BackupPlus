@@ -77,7 +77,7 @@ trait BackupPlus_Core_Database_Analysis {
 		}
 
 		// Even the empty schema when gzipped comes to 1565 bytes; a blank WP 3.6 install at 5158. But we go low, in case someone wants to share single tables.
-		if ( filesize( $db_file ) < 1000 && empty( $backup['database_coverage']['wp']['partial'] ) && ( empty( $backup['database_coverage']['wp']['mode'] ) || 'selected' !== $backup['database_coverage']['wp']['mode'] ) ) {
+		if ( filesize( $db_file ) < 1000 && ! BackupPlus_Archive_Compression::is_zstd( $db_file ) && empty( $backup['database_coverage']['wp']['partial'] ) && ( empty( $backup['database_coverage']['wp']['mode'] ) || 'selected' !== $backup['database_coverage']['wp']['mode'] ) ) {
 			/* translators: %s: Database size in KB */
 			$err[] = sprintf( __( 'The database is too small to be a valid WordPress database (size: %s Kb).', 'backupplus' ), round( filesize( $db_file ) / 1024, 1 ) );
 			return array( $mess, $warn, $err, $info );
@@ -89,7 +89,7 @@ trait BackupPlus_Core_Database_Analysis {
 			return array( $mess, $warn, $err, $info );
 		}
 
-		$is_plain = ( '.gz' == substr( isset( $decrypted_file['basename'] ) ? $decrypted_file['basename'] : $db_file, -3, 3 ) ) ? false : true;
+		$is_plain = ! BackupPlus_Archive_Compression::is_zstd( $db_file ) && ( '.gz' != substr( isset( $decrypted_file['basename'] ) ? $decrypted_file['basename'] : $db_file, -3, 3 ) );
 
 		$dbhandle = $is_plain ? fopen( $db_file, 'r' ) : BackupPlus_Filesystem_Functions::gzopen_for_read( $db_file, $warn, $err );
 		if ( ! is_resource( $dbhandle ) ) {

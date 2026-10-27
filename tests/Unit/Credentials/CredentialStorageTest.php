@@ -310,6 +310,34 @@ final class CredentialStorageTest extends TestCase {
 		$this->assertRawSafe( get_option( 'backupplus_sftp' ), array( 'synthetic SSH identity via form' ) );
 	}
 
+	public function test_saving_unchanged_settings_keeps_the_stored_ciphertext_and_a_changed_secret_gets_a_new_one(): void {
+		$settings = array(
+			'version'  => 1,
+			'settings' => array(
+				'one' => array(
+					'host' => 'one.example',
+					'pass' => 'synthetic first password',
+					'key'  => 'synthetic key',
+				),
+			),
+		);
+		update_option( 'backupplus_sftp', $settings );
+		$stored = get_option( 'backupplus_sftp' );
+		$this->assertNotSame( 'synthetic first password', $stored['settings']['one']['pass'], 'The password must be stored as an envelope' );
+
+		// The Settings page posts plaintext back for secrets that were not edited.
+		update_option( 'backupplus_sftp', array_replace_recursive( $stored, array( 'settings' => array( 'one' => array( 'host' => 'one.example' ) ) ) ) );
+		$this->assertSame( $stored, get_option( 'backupplus_sftp' ), 'Re-saving unchanged settings must not change the stored value' );
+
+		$resaved                            = BackupPlus_Options::get_backupplus_option( 'backupplus_sftp' );
+		$resaved['settings']['one']['pass'] = 'synthetic second password';
+		update_option( 'backupplus_sftp', $resaved );
+		$changed = get_option( 'backupplus_sftp' );
+		$this->assertNotSame( $stored['settings']['one']['pass'], $changed['settings']['one']['pass'], 'A changed secret needs a new envelope' );
+		$this->assertSame( $stored['settings']['one']['key'], $changed['settings']['one']['key'], 'Untouched secrets keep their envelope' );
+		$this->assertSame( 'synthetic second password', BackupPlus_Options::get_backupplus_option( 'backupplus_sftp' )['settings']['one']['pass'] );
+	}
+
 	public function test_swapping_instances_rejects_the_ciphertext(): void {
 		$this->store_provider( 'ftp' );
 		$wrong_instance                    = get_option( 'backupplus_ftp' );
@@ -375,6 +403,30 @@ final class CredentialStorageTest extends TestCase {
 		$job = $this->store_job();
 		$this->assertRawSafe( get_site_option( 'backupplus_jobdata_disposable-job' ), array( 'synthetic FTP password', 'synthetic filesystem password', 'synthetic external DB snapshot password', 'synthetic restore password', 'synthetic restore alias password' ) );
 		$this->assertSame( $job, $this->backupplus->jobdata_getarray( 'disposable-job' ), 'Jobs must resume with decrypted options' );
+	}
+
+	public function test_progress_updates_reuse_unchanged_job_credentials_across_resumptions(): void {
+		$this->store_job();
+		$before = get_site_option( 'backupplus_jobdata_disposable-job' );
+		$this->backupplus->jobdata_reset();
+		$this->backupplus->jobdata_set( 'progress', 7 );
+		$after = get_site_option( 'backupplus_jobdata_disposable-job' );
+		unset( $after['progress'] );
+		$this->assertSame( $before, $after, 'Progress must not re-encrypt unchanged credentials anywhere in the job.' );
+	}
+
+	public function test_changed_job_credentials_and_new_keys_get_new_authenticated_envelopes(): void {
+		$job                               = $this->store_job();
+		$before                            = get_site_option( 'backupplus_jobdata_disposable-job' )['option_cache'];
+		$job['option_cache']['additional'] = 'changed synthetic credential';
+		$this->backupplus->jobdata_set_from_array( $job );
+		$this->assertNotSame( $before, get_site_option( 'backupplus_jobdata_disposable-job' )['option_cache'] );
+		$this->assertSame( $job, $this->backupplus->jobdata_getarray( 'disposable-job' ) );
+		BackupPlus_Credential_Key_Store::$config['keys']['next'] = base64_encode( random_bytes( 32 ) );
+		BackupPlus_Credential_Key_Store::$config['active']       = 'next';
+		$this->backupplus->jobdata_reset();
+		$this->backupplus->jobdata_set( 'progress', 8 );
+		$this->assertStringStartsWith( 'bpcred:v1:next:', get_site_option( 'backupplus_jobdata_disposable-job' )['option_cache'] );
 	}
 
 	public function test_job_bookkeeping_remains_readable_and_ciphertext_is_bound_to_its_job(): void {

@@ -122,7 +122,7 @@ trait BackupPlus_Admin_Uploads {
 
 		$response = array();
 		if ( ! isset( $_POST['chunks'] ) || ( isset( $chunk ) && preg_match( '/^[0-9]+$/', $chunk ) && $chunk == $_POST['chunks'] - 1 ) && isset( $final_file ) ) {
-			if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/i', $final_file ) && ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $final_file, $matches ) ) {
+			if ( ! preg_match( '/^log\.[a-f0-9]{12}\.txt/i', $final_file ) && ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $final_file, $matches ) ) {
 				$accept = apply_filters( 'backupplus_accept_archivename', array() );
 				if ( is_array( $accept ) ) {
 					foreach ( $accept as $acc ) {
@@ -286,7 +286,7 @@ trait BackupPlus_Admin_Uploads {
 		}
 
 		if ( ! isset( $_POST['chunks'] ) || ( isset( $chunk ) && $chunk == $_POST['chunks'] - 1 ) ) {
-			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-(?:db[0-9]*\.gz|[\-a-z]+[0-9]*\.zip)\.crypt$/i', $final_file ) ) {
+			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-(?:db[0-9]*\.(?:gz|sql\.zst)|[\-a-z]+[0-9]*\.(?:zip|tar\.zst))\.crypt$/i', $final_file ) ) {
 
 				@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 				echo 'ERROR:' . wp_kses_post( __( 'Bad filename format - this does not look like an encrypted backup archive created by BackupPlus or UpdraftPlus', 'backupplus' ) );

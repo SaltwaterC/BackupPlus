@@ -42,6 +42,18 @@ trait BackupPlus_Admin_Downloads {
 			if ( empty( $_REQUEST['timestamp'] ) || ! is_numeric( $_REQUEST['timestamp'] ) || empty( $_REQUEST['type'] ) ) {
 				die;
 			}
+
+			// One archive holding every file of the chosen recovery points; prepare_chain_download has already fetched them.
+			if ( 'bundle' === BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'stage', '', false, 'string', 'sanitize_text_field' ) ) {
+				backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
+				backupplus_try_include_file( 'includes/class-stored-zip.php', 'include_once' );
+				try {
+					BackupPlus_Chain_Downloads::send( (int) $_REQUEST['timestamp'], BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'type', '', false, 'string', 'sanitize_text_field' ), BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'points', '', false, 'string', 'sanitize_text_field' ) );
+				} catch ( RuntimeException $e ) {
+					status_header( 409 );
+					die( esc_html( $e->getMessage() ) );
+				}
+			}
 			$findex    = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'findex' );
 			$findexes  = empty( $findex ) ? array( 0 ) : $findex;
 			$stage     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'stage', '', false, 'string', 'sanitize_text_field' );
@@ -350,7 +362,8 @@ trait BackupPlus_Admin_Downloads {
 				$response['s'] = (int) $matches[1];
 				$response['t'] = (int) $matches[1];
 				$response['m'] = __( 'File ready.', 'backupplus' );
-				if ( 'db' != substr( $type, 0, 2 ) ) {
+				// The server can only list an archive it can read; encrypted archives are decrypted in the browser.
+				if ( 'db' != substr( $type, 0, 2 ) && ! BackupPlus_Encryption::is_file_encrypted( $matches[2] ) ) {
 					$response['can_show_contents'] = true;
 				}
 			} elseif ( preg_match( '/^downloading:(\d+):(.*)$/', $file, $matches ) && file_exists( $matches[2] ) ) {

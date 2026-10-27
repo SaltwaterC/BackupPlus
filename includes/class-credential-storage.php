@@ -126,9 +126,9 @@ class BackupPlus_Credential_Storage {
 		return self::cipher( $context, $config )->encrypt( serialize( $value ) );
 	}
 
-	private static function walk( $value, $option, $mode, $path = array(), $config = null ) {
+	private static function walk( $value, $option, $mode, $path = array(), $config = null, $previous = null ) {
 		if ( in_array( $option, array( 'backupplus_encryptionphrase', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' ), true ) ) {
-			return self::secret( $value, $mode, self::context( $option, $path ), $config );
+			return self::keep( $value, $mode, self::context( $option, $path ), $config, $previous );
 		}
 		if ( ! is_array( $value ) ) {
 			return $value;
@@ -137,12 +137,24 @@ class BackupPlus_Credential_Storage {
 		foreach ( $value as $name => $item ) {
 			$child = array_merge( $path, array( $name ) );
 			if ( in_array( $name, $fields, true ) ) {
-				$value[ $name ] = self::secret( $item, $mode, self::context( $option, $child ), $config );
+				$value[ $name ] = self::keep( $item, $mode, self::context( $option, $child ), $config, is_array( $previous ) && isset( $previous[ $name ] ) ? $previous[ $name ] : null );
 			} else {
-				$value[ $name ] = self::walk( $item, $option, $mode, $child, $config );
+				$value[ $name ] = self::walk( $item, $option, $mode, $child, $config, is_array( $previous ) && isset( $previous[ $name ] ) ? $previous[ $name ] : null );
 			}
 		}
 		return $value;
+	}
+
+	/** Saving unchanged settings must not rewrite their ciphertext: it feeds the incremental and PITR configuration hashes. */
+	private static function keep( $value, $mode, $context, $config, $previous ) {
+		if ( 'encrypt' !== $mode || null === $previous ) {
+			return self::secret( $value, $mode, $context, $config );
+		}
+		try {
+			return self::job_secret( $value, $mode, $context, $config, $previous );
+		} catch ( Exception $e ) {
+			return self::secret( $value, $mode, $context, $config );
+		}
 	}
 
 	public static function incoming( $value, $option ) {
@@ -160,7 +172,7 @@ class BackupPlus_Credential_Storage {
 				throw new RuntimeException( 'Saved credentials are unavailable. Restore the recovery key, delete this destination, or enter replacement credentials before saving.' );
 			}
 		}
-		return self::walk( $value, $option, 'encrypt' );
+		return self::walk( $value, $option, 'encrypt', array(), null, $old );
 	}
 
 	public static function reading( $value, $option, $strict = false ) {
@@ -191,8 +203,20 @@ class BackupPlus_Credential_Storage {
 		);
 	}
 
+	/** Reuse an authenticated current-key envelope when the credential value did not change. */
+	private static function job_secret( $value, $mode, $context, $config, $previous ) {
+		if ( 'encrypt' === $mode && self::envelope( $previous ) && ! self::envelope( $value ) ) {
+			$current = null === $config ? BackupPlus_Credential_Key_Store::configuration() : $config;
+			if ( 0 === strpos( $previous, BackupPlus_Credential_Encrypter::PREFIX . $current['active'] . ':' ) ) {
+				$plain = self::secret( $previous, 'decrypt', $context, $current );
+				if ( $plain === $value || serialize( $plain ) === serialize( $value ) ) { return $previous; }
+			}
+		}
+		return self::secret( $value, $mode, $context, $config );
+	}
+
 	/** Jobs keep ordinary progress metadata readable; credentials use job-bound envelopes. */
-	public static function job( $data, $job_id, $mode, $config = null ) {
+	public static function job( $data, $job_id, $mode, $config = null, $previous = array() ) {
 		if ( ! is_array( $data ) ) {
 			return $data;
 		}
@@ -200,7 +224,7 @@ class BackupPlus_Credential_Storage {
 			if ( ! isset( $data[ $field ] ) ) {
 				continue;
 			}
-			$data[ $field ] = self::secret( $data[ $field ], $mode, 'job:' . $job_id . ':' . $field, $config );
+			$data[ $field ] = self::job_secret( $data[ $field ], $mode, 'job:' . $job_id . ':' . $field, $config, isset( $previous[ $field ] ) ? $previous[ $field ] : null );
 		}
 		// External database connection data is also copied outside option_cache.
 		if ( ! empty( $data['backup_database'] ) && is_array( $data['backup_database'] ) ) {
@@ -209,7 +233,7 @@ class BackupPlus_Credential_Storage {
 					if ( ! isset( $database['dbinfo'][ $field ] ) ) {
 						continue;
 					}
-					$data['backup_database'][ $id ]['dbinfo'][ $field ] = self::secret( $database['dbinfo'][ $field ], $mode, 'job:' . $job_id . ':database:' . serialize( array( $id, $field ) ), $config );
+					$data['backup_database'][ $id ]['dbinfo'][ $field ] = self::job_secret( $database['dbinfo'][ $field ], $mode, 'job:' . $job_id . ':database:' . serialize( array( $id, $field ) ), $config, isset( $previous['backup_database'][ $id ]['dbinfo'][ $field ] ) ? $previous['backup_database'][ $id ]['dbinfo'][ $field ] : null );
 				}
 			}
 		}
@@ -218,7 +242,7 @@ class BackupPlus_Credential_Storage {
 			foreach ( $targets as $id => &$target ) {
 				foreach ( array( 'pass', 'password' ) as $field ) {
 					if ( isset( $target['connection'][ $field ] ) ) {
-						$target['connection'][ $field ] = self::secret( $target['connection'][ $field ], $mode, 'job:' . $job_id . ':restore-target:' . $container . ':' . $id . ':' . $field, $config );
+						$target['connection'][ $field ] = self::job_secret( $target['connection'][ $field ], $mode, 'job:' . $job_id . ':restore-target:' . $container . ':' . $id . ':' . $field, $config, '' === $container ? ( isset( $previous['backupplus_external_targets'][ $id ]['connection'][ $field ] ) ? $previous['backupplus_external_targets'][ $id ]['connection'][ $field ] : null ) : ( isset( $previous[ $container ]['backupplus_external_targets'][ $id ]['connection'][ $field ] ) ? $previous[ $container ]['backupplus_external_targets'][ $id ]['connection'][ $field ] : null ) );
 					}
 				}
 			}
@@ -231,7 +255,7 @@ class BackupPlus_Credential_Storage {
 		// Both old and current restore containers may carry a legacy phrase.
 		foreach ( array( 'restore_options', 'backupplus_restorer_restore_options' ) as $container ) {
 			if ( isset( $data[ $container ]['backupplus_encryptionphrase'] ) ) {
-				$data[ $container ]['backupplus_encryptionphrase'] = self::secret( $data[ $container ]['backupplus_encryptionphrase'], $mode, 'job:' . $job_id . ':' . $container . ':phrase', $config );
+				$data[ $container ]['backupplus_encryptionphrase'] = self::job_secret( $data[ $container ]['backupplus_encryptionphrase'], $mode, 'job:' . $job_id . ':' . $container . ':phrase', $config, isset( $previous[ $container ]['backupplus_encryptionphrase'] ) ? $previous[ $container ]['backupplus_encryptionphrase'] : null );
 			}
 		}
 		return $data;

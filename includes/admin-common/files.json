@@ -8,6 +8,7 @@
 	"history",
 	"modals",
 	"downloads",
+	"chain-downloads",
 	"ajax-response",
 	"restore-status",
 	"backup-now",

@@ -381,6 +381,15 @@ span#backupplus_lastlogcontainer {
 	top: 0.2em;
 }
 
+.backup_date_label .backupplus-remote-storage-icons {
+	display: block;
+	margin-top: 4px;
+}
+
+.backupplus-remote-storage-icons .stored_icon {
+	margin-right: 4px;
+}
+
 .backup_date_label > * {
 	vertical-align: middle;
 }

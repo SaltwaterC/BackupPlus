@@ -130,6 +130,12 @@ class BackupPlus_Storage_Methods_Interface {
 
 					if ( ! isset( $settings['version'] ) ) {
 						$settings = self::update_remote_storage_options_format( $method );
+					} else {
+						$repaired = self::unwrap_nested_instances( $settings );
+						if ( $repaired !== $settings ) {
+							BackupPlus_Options::update_backupplus_option( 'backupplus_' . $method, $repaired );
+							$settings = $repaired;
+						}
 					}
 
 					if ( is_wp_error( $settings ) ) {
@@ -348,6 +354,8 @@ class BackupPlus_Storage_Methods_Interface {
 			$backups_instance_ids = isset( $backup_history[ $timestamp ]['service_instance_ids'][ $service ] ) ? $backup_history[ $timestamp ]['service_instance_ids'][ $service ] : array( false );
 
 			foreach ( $backups_instance_ids as $instance_id ) {
+				$destination_key = $service . ':' . (string) $instance_id;
+				if ( ! empty( $backup_history[ $timestamp ]['storage_deleted_files'][ $destination_key ][ $file ] ) || ! empty( $backup_history[ $timestamp ]['storage_delete_queue'][ $destination_key ][ $file ] ) ) { continue; }
 
 				if ( isset( $instance_ids[ $instance_id ] ) ) {
 					$options = $instance_ids[ $instance_id ];
@@ -440,6 +448,32 @@ class BackupPlus_Storage_Methods_Interface {
 	}
 
 	/**
+	 * Undo instances that were wrapped a second time, which happened to settings saved without the version marker.
+	 *
+	 * @param  Array $setting - Remote storage options in the multi-instance format
+	 * @return Array          - The same options with every instance holding its fields directly
+	 */
+	public static function unwrap_nested_instances( $setting ) {
+		if ( ! isset( $setting['settings'] ) || ! is_array( $setting['settings'] ) ) {
+			return $setting;
+		}
+		$instances = array();
+		foreach ( $setting['settings'] as $instance_id => $options ) {
+			if ( is_array( $options ) && isset( $options['settings'] ) && is_array( $options['settings'] ) && array_filter( $options['settings'], 'is_array' ) === $options['settings'] ) {
+				// Fields saved beside the nested instances, such as whether the instance is enabled, belong to the instances themselves.
+				$extras = array_diff_key( $options, array( 'settings' => true ) );
+				foreach ( self::unwrap_nested_instances( $options )['settings'] as $inner_id => $inner ) {
+					$instances[ $inner_id ] = $inner + $extras;
+				}
+			} else {
+				$instances[ $instance_id ] = $options;
+			}
+		}
+		$setting['settings'] = $instances;
+		return $setting;
+	}
+
+	/**
 	 * This method will update the old style remote storage options to the new style (Apr 2017) if the user has imported a old style version of settings
 	 *
 	 * @param  Array $options - The remote storage options settings array
@@ -449,6 +483,14 @@ class BackupPlus_Storage_Methods_Interface {
 		// Already converted?
 		if ( isset( $options['version'] ) ) {
 			return $options;
+		}
+
+		// Settings posted by the form without the version marker already have the instances; wrapping them again hides every field.
+		if ( isset( $options['settings'] ) && is_array( $options['settings'] ) ) {
+			return array(
+				'version'  => 1,
+				'settings' => $options['settings'],
+			);
 		}
 
 		// Generate an instance id

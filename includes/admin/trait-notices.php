@@ -18,7 +18,7 @@ trait BackupPlus_Admin_Notices {
 		global $backupplus;
 
 		$all_services       = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( $backupplus->get_canonical_service_list() );
-		$available_services = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+		$available_services = (array) $backupplus->get_canonical_service_list();
 
 		$this->storage_service_without_settings        = array();
 		$this->storage_service_with_partial_settings   = array();

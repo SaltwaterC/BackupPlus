@@ -1,6 +1,8 @@
 <?php
 /** Shared bounded SQL input, plus a transformation-free external importer. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
+require_once __DIR__ . '/class-tar.php';
+
 class BackupPlus_SQL_Stream {
 	public static function line( $handle, $plain ) {
 		return $plain ? fgets( $handle, 1048576 ) : gzgets( $handle, 1048576 );
@@ -8,7 +10,7 @@ class BackupPlus_SQL_Stream {
 
 	/** Yield statements without changing quoted values, comments or delimiters in stored programs. */
 	public static function statements( $path ) {
-		$handle = gzopen( $path, 'rb' ); // zlib also reads uncompressed SQL.
+		$handle = BackupPlus_Archive_Compression::open_read( $path ); // zlib also reads uncompressed SQL.
 		if ( false === $handle ) { throw new RuntimeException( 'Could not open SQL dump.' ); }
 		$sql       = '';
 		$quote     = '';
@@ -18,7 +20,8 @@ class BackupPlus_SQL_Stream {
 		try {
 			while ( ! gzeof( $handle ) ) {
 				$line = self::line( $handle, false );
-				if ( false === $line ) { throw new RuntimeException( 'Could not read SQL dump.' ); }
+				if ( false === $line ) { if ( gzeof( $handle ) ) { break;
+				} throw new RuntimeException( 'Could not read SQL dump.' ); }
 				if ( '' === trim( $sql ) && '' === $quote && ! $block ) {
 					if ( preg_match( '/^\s*DELIMITER\s+(\S+)\s*$/i', $line, $m ) ) { $delimiter = $m[1];
 						continue; }

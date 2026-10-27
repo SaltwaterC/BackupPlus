@@ -38,6 +38,20 @@ if ( 'setup' === $operation ) {
 	$zip->open( $directory . '/' . $plain, ZipArchive::CREATE );
 	$zip->addFromString( 'uploads/restore-browser.txt', random_bytes( 1100000 ) );
 	$zip->close();
+	if ( BackupPlus_Archive_Compression::enabled() ) {
+		unlink( $directory . '/' . $plain );
+		$plain   = str_replace( '.zip', '.tar', $plain );
+		$payload = $directory . '/payload.tmp';
+		file_put_contents( $payload, random_bytes( 1100000 ) );
+		$tar = new BackupPlus_Tar();
+		$tar->open( $directory . '/' . $plain );
+		$tar->addFile( $payload, 'uploads/restore-browser.txt' );
+		$tar->close();
+		unlink( $payload );
+		BackupPlus_Archive_Compression::compress_file( $directory . '/' . $plain );
+		unlink( $directory . '/' . $plain );
+		$plain .= '.zst';
+	}
 	$hash = hash_file( 'sha256', $directory . '/' . $plain );
 	global $backupplus;
 	$backupplus->ensure_phpseclib();

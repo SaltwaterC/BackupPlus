@@ -523,7 +523,7 @@ trait BackupPlus_Core_Backup_Resume {
 
 		$total_size = 0;
 
-		$service = $this->jobdata_get( 'pre_update_batch' ) ? $this->jobdata_get( 'service' ) : $this->just_one( $this->jobdata_get( 'service' ) );
+		$service = $this->jobdata_get( 'service' );
 		if ( empty( $service ) ) {
 			$message = 'This file has already been successfully processed';
 		} else {

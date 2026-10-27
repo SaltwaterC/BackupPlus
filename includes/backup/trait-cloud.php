@@ -20,8 +20,8 @@ trait BackupPlus_Backup_Cloud {
 	private function maybe_cloud_backup( $file, $whichone, $index ) {
 
 		global $backupplus;
-		// Encrypted jobs publish all ZIP parts only after encryption is complete.
-		if ( $this->archive_encryption_enabled() ) {
+		// Finalize compression and encryption before any parts are uploaded.
+		if ( $this->archive_encryption_enabled() || $this->archive_compression_enabled() ) {
 			return;
 		}
 
@@ -73,13 +73,13 @@ trait BackupPlus_Backup_Cloud {
 		global $backupplus;
 		if ( $this->archive_encryption_enabled() ) {
 			foreach ( $backup_array as $file ) {
-				if ( is_string( $file ) && preg_match( '/\.zip$/i', $file ) ) {
+				if ( is_string( $file ) && preg_match( '/\.(?:zip|tar(?:\.zst)?)$/i', $file ) ) {
 					throw new RuntimeException( 'Unencrypted file archive refused by backup dispatch.' );
 				}
 			}
 		}
 
-		$services                 = (array) ( $backupplus->jobdata_get( 'pre_update_batch' ) ? $backupplus->jobdata_get( 'service' ) : $backupplus->just_one( $backupplus->jobdata_get( 'service' ) ) );
+		$services                 = (array) $backupplus->jobdata_get( 'service' );
 		$remote_storage_instances = $backupplus->jobdata_get( 'remote_storage_instances', array() );
 
 		// We need to make sure that the loop below actually runs

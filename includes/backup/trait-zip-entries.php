@@ -27,7 +27,7 @@ trait BackupPlus_Backup_Zip_Entries {
 		$bump_index = false;
 		$ret        = true;
 
-		$zipfile = $this->zip_basename . ( ( 0 == $this->index ) ? '' : ( $this->index + 1 ) ) . '.zip.tmp';
+		$zipfile = $this->zip_basename . ( ( 0 == $this->index ) ? '' : ( $this->index + 1 ) ) . '.' . $this->archive_extension() . '.tmp';
 
 		$maxzipbatch = $backupplus->jobdata_get( 'maxzipbatch', 26214400 );
 		if ( (int) $maxzipbatch < 1024 ) {
@@ -425,7 +425,7 @@ trait BackupPlus_Backup_Zip_Entries {
 				$backupplus->log( sprintf( 'Zip size is at/near split limit (%s MB / %s MB) - bumping index (from: %d)', $bumped_at, round( $this->zip_split_every / 1048576, 1 ), $this->index ) );
 				$bump_index = false;
 				$this->bump_index();
-				$zipfile = $this->zip_basename . ( $this->index + 1 ) . '.zip.tmp';
+				$zipfile = $this->zip_basename . ( $this->index + 1 ) . '.' . $this->archive_extension() . '.tmp';
 			}
 
 			if ( empty( $zip ) ) {
@@ -556,7 +556,7 @@ trait BackupPlus_Backup_Zip_Entries {
 		$timetaken = max( microtime( true ) - $this->zip_microtime_start, 0.000001 );
 
 		$itext     = ( 0 == $this->index ) ? '' : ( $this->index + 1 );
-		$full_path = $this->zip_basename . $itext . '.zip';
+		$full_path = $this->zip_basename . $itext . '.' . $this->archive_extension();
 
 		$checksums = $backupplus->which_checksums();
 
@@ -573,7 +573,7 @@ trait BackupPlus_Backup_Zip_Entries {
 
 		}
 
-		$next_full_path = $this->zip_basename . ( $this->index + 2 ) . '.zip';
+		$next_full_path = $this->zip_basename . ( $this->index + 2 ) . '.' . $this->archive_extension();
 		// We touch the next zip before renaming the temporary file; this indicates that the backup for the entity is not *necessarily* finished
 		touch( $next_full_path . '.tmp' );
 

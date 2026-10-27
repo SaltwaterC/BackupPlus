@@ -129,6 +129,38 @@
 	max-width: 700px;
 }
 
+/* The nested storage table shares the settings field width and has its own cell sizing. */
+.backupplus-storage-limits-fields {
+	width: 100%;
+	max-width: 640px;
+}
+
+#backupplus-wrap #backupplus-storage-limits {
+	table-layout: fixed;
+	width: 100%;
+}
+
+#backupplus-wrap #backupplus-storage-limits thead {
+	display: table-header-group;
+}
+
+#backupplus-wrap #backupplus-storage-limits th,
+#backupplus-wrap #backupplus-storage-limits td {
+	display: table-cell;
+	width: auto;
+	padding: 8px 10px;
+	vertical-align: middle;
+	overflow-wrap: anywhere;
+}
+
+#backupplus-wrap #backupplus-storage-limits input {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 12em;
+	min-width: 0;
+	margin: 0;
+}
+
 .backupplus-encryption-fields textarea {
 	box-sizing: border-box;
 	display: block;

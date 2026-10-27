@@ -170,7 +170,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 		if ( ! hash_equals( $before_anchor['sha256'], BackupPlus_PITR_Binlog::prefix_hash( $proof, $before_anchor['coordinate']['position'] ) ) ) {
 			throw new RuntimeException( 'Source binary logs were reset during the full snapshot.' );
 		}
-		$artifact = $storage->artifact( $this->sql_header( $sql ), 'backup_pitr_' . $chain . '_' . $id . '_full.sql.gz' );
+		$artifact = $storage->artifact( $this->sql_header( $sql ), 'backup_pitr_' . $chain . '_' . $id . '_full.sql.' . BackupPlus_PITR_Compression::binlog_extension() );
 		$old_id   = $this->state['active'];
 		if ( $old_id && isset( $this->state['chains'][ $old_id ] ) && 'complete' === $this->state['chains'][ $old_id ]['state'] && $fingerprint === $this->state['chains'][ $old_id ]['fingerprint'] ) {
 			try {
@@ -255,7 +255,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			if ( $inspection['next']['file'] !== $names[ $i + 1 ] ) {
 				throw new RuntimeException( 'Source binary-log successor is missing.' );
 			}
-			$artifact    = $storage->artifact( $path, $prefix . 'log' . count( $segments ) . '.bin.gz' );
+			$artifact    = $storage->artifact( $path, $prefix . 'log' . count( $segments ) . '.bin.' . BackupPlus_PITR_Compression::binlog_extension() );
 			$segments[]  = array_merge(
 				array(
 					'start'    => $next,
@@ -342,6 +342,12 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			throw new RuntimeException( 'Database point-in-time recovery is disabled.' );
 		}
 		$this->job( $nonce );
+		// Scheduled runs have no job log of their own; keep one only when the run published something.
+		$opened = ! is_resource( $backupplus->logfile_handle );
+		if ( $opened ) {
+			$backupplus->logfile_open( $backupplus->nonce );
+		}
+		$keep_log = true;
 		try {
 			$destinations = BackupPlus_PITR_Storage::destinations();
 			$encryption   = $this->encryption();
@@ -389,16 +395,28 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			$this->save();
 			update_option( self::STATUS, $this->summary(), false );
 			$backupplus->jobdata_set( 'jobstatus', 'finished' );
-			if ( ! BackupPlus_Retention_Cleanup::deferred() ) {
+			if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::enabled() ) { BackupPlus_Storage_Limits::run( $this, ! BackupPlus_Retention_Cleanup::deferred() ); }
+			if ( ! BackupPlus_Retention_Cleanup::deferred() && ! ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::managed() ) ) {
 				$this->prune();
 			}
+			$keep_log = ! is_array( $result ) || ! isset( $result['kind'] ) || 'not-due' !== $result['kind'];
 			return $result;
 		} catch ( Throwable $error ) {
+			// Recorded while the run's log is still open: the caller only sees the exception once the log has been closed, which left failed scheduled runs without any reason on disk.
+			$backupplus->log( $error->getMessage(), 'error' );
 			$this->state['error'] = $error->getMessage();
 			$this->save();
 			update_option( self::STATUS, $this->summary(), false );
 			$backupplus->jobdata_set( 'jobstatus', 'finished' );
 			throw $error;
+		} finally {
+			if ( $opened && is_resource( $backupplus->logfile_handle ) ) {
+				fclose( $backupplus->logfile_handle );
+				$backupplus->logfile_handle = null;
+				if ( ! $keep_log ) {
+					@unlink( $backupplus->logfile_name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				}
+			}
 		}
 	}
 }

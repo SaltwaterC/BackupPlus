@@ -295,7 +295,7 @@ $restore_point = $history[ $batch['backup_time'] ];
 pre_update_expect( ! empty( $restore_point['pre_update']['complete'] ) && empty( $restore_point['incremental'] ), 'Restore point must be complete and outside incremental chains' );
 pre_update_expect( ! empty( $restore_point['db'] ) && ! empty( $restore_point['plugins'] ) && ! empty( $restore_point['themes'] ), 'Restore point must contain database, plugins and themes' );
 pre_update_expect( false === BackupPlus_Incremental_Backups::find_base( array( 'plugins', 'themes' ), $finished[2]['incremental_configuration'] ), 'Pre-update backups must never seed incremental chains' );
-$zip = new ZipArchive();
+$zip = ( BackupPlus_Archive_Compression::enabled() ? new BackupPlus_Tar() : new ZipArchive() );
 pre_update_expect( true === $zip->open( $directory . '/archives/' . $restore_point['plugins'][0] ), 'Restore archive must open' );
 pre_update_expect( '<?php // original plugin' === $zip->getFromName( 'plugins/site.php' ), 'Restore archive must contain original site files' );
 $zip->close();

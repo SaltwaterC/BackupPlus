@@ -211,6 +211,23 @@ tr[class*="_backupplus_remote_storage_border"] {
 	border-top: 1px solid #CCC;
 }
 
+.backupplus_instance_controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	margin: 8px 0 0;
+}
+
+.backupplus_instance_controls .backupplus_delete_instance {
+	margin-left: auto;
+	color: #b32d2e;
+}
+
+#remote_storage_tabs {
+	margin-bottom: 0;
+}
+
 .backupplus_multi_storage_options {
 	float: right;
 	clear: right;
@@ -227,6 +244,19 @@ tr[class*="_backupplus_remote_storage_border"] {
 	font-weight: bold;
 	padding-right: 8px;
 	min-width: 140px;
+}
+
+.site_info .backupplus_debugrow th {
+	box-sizing: border-box;
+	min-width: 300px;
+	max-width: 300px;
+}
+
+@media screen and (max-width: 782px) {
+	.site_info .backupplus_debugrow th {
+		min-width: 0;
+		max-width: 50vw;
+	}
 }
 
 .backupplus_debugrow td {

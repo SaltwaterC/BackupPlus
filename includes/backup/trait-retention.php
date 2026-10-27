@@ -14,7 +14,7 @@ trait BackupPlus_Backup_Retention {
 	public function do_prune_standalone() {
 		global $backupplus;
 
-		$services = (array) ( $backupplus->jobdata_get( 'pre_update_batch' ) ? $backupplus->jobdata_get( 'service' ) : $backupplus->just_one( $backupplus->jobdata_get( 'service' ) ) );
+		$services = (array) $backupplus->jobdata_get( 'service' );
 
 		$prune_services = array();
 
@@ -86,6 +86,11 @@ trait BackupPlus_Backup_Retention {
 		global $backupplus, $wpdb;
 
 		$is_cleanup = 'cleanup' === $backupplus->jobdata_get( 'job_type' );
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::managed() ) {
+			BackupPlus_Storage_Limits::run( null, $is_cleanup || ! BackupPlus_Retention_Cleanup::deferred() );
+			$backupplus->jobdata_set( 'prune', 'finished' );
+			return true;
+		}
 		if ( ! $is_cleanup && BackupPlus_Retention_Cleanup::deferred() ) {
 			$backupplus->log( 'Retain: old backups are deleted by the daily retention cleanup, so nothing will be pruned now' );
 			$backupplus->jobdata_set( 'prune', 'finished' );
@@ -102,7 +107,7 @@ trait BackupPlus_Backup_Retention {
 		}
 
 		// If they turned off deletion on local backups, then there is nothing to do
-		if ( ! BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 1 ) && 1 == count( $services ) && array_key_exists( 'none', $services ) ) {
+		if ( ! BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) && 1 == count( $services ) && array_key_exists( 'none', $services ) ) {
 			$backupplus->log( 'Prune old backups from local store: nothing to do, since the user disabled local deletion and we are using local backups' );
 			return;
 		}

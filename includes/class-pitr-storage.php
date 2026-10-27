@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
 }
 
+require_once __DIR__ . '/class-pitr-compression.php';
+
 class BackupPlus_PITR_Delete_Pending extends RuntimeException {}
 
 class BackupPlus_PITR_Storage {
@@ -39,13 +41,13 @@ class BackupPlus_PITR_Storage {
 			$options = null;
 			if ( $object->supports_feature( 'multi_options' ) ) {
 				if ( ! isset( $storage[ $service ]['instance_settings'][ $id ] ) ) {
-					throw new RuntimeException( 'A PITR storage instance is unavailable.' );
+					throw new RuntimeException( 'The remote storage this recovery chain was saved to no longer exists in the settings. Restore it, or delete the chain without also deleting from remote storage.' );
 				}
 				$options = $storage[ $service ]['instance_settings'][ $id ];
 			} elseif ( is_callable( array( $object, 'get_options' ) ) ) {
 				$options = $object->get_options();
 			}
-			if ( isset( $destination['settings_sha256'] ) && ! hash_equals( $destination['settings_sha256'], hash( 'sha256', serialize( $options ) ) ) ) {
+			if ( isset( $destination['settings_sha256'] ) && ! self::settings_match( $destination['settings_sha256'], $options ) ) {
 				throw new RuntimeException( 'PITR storage settings changed. Restore the original settings or rescan and verify the complete chain at the current destination before recovery or deletion.' );
 			}
 			$this->providers[ $service ][ $id ] = array(
@@ -53,6 +55,32 @@ class BackupPlus_PITR_Storage {
 				'options' => $options,
 			);
 		}
+	}
+
+	/** Hash of the settings that decide where files go. The enabled flag appears and disappears as settings are saved, and the label is a display name that can be renamed at any time, so both are left out. */
+	public static function settings_hash( $options ) {
+		if ( is_array( $options ) ) {
+			unset( $options['instance_enabled'], $options['instance_label'] );
+		}
+		return hash( 'sha256', serialize( $options ) );
+	}
+
+	/** Whether a destination's recorded hash still describes these settings, including hashes recorded before the flag and the label were left out. */
+	public static function settings_match( $recorded, $options ) {
+		if ( hash_equals( $recorded, self::settings_hash( $options ) ) ) {
+			return true;
+		}
+		if ( ! is_array( $options ) ) {
+			return false;
+		}
+		$plain = $options;
+		unset( $plain['instance_enabled'] );
+		foreach ( array( $options, $plain, $plain + array( 'instance_enabled' => 1 ), $plain + array( 'instance_enabled' => 0 ) ) as $recorded_as ) {
+			if ( hash_equals( $recorded, hash( 'sha256', serialize( $recorded_as ) ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function destinations() {
@@ -76,7 +104,7 @@ class BackupPlus_PITR_Storage {
 				$result[] = array(
 					'service'         => $service,
 					'instance'        => (string) $id,
-					'settings_sha256' => hash( 'sha256', serialize( $options ) ),
+					'settings_sha256' => self::settings_hash( $options ),
 				);
 			}
 		}
@@ -98,7 +126,7 @@ class BackupPlus_PITR_Storage {
 	}
 
 	public function path( $name ) {
-		if ( is_string( $name ) && preg_match( '/\Abackup_[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}_PITRRecovered_[a-f0-9]{12}-db\.gz(?:\.crypt)?\z/D', $name ) ) {
+		if ( is_string( $name ) && preg_match( '/\Abackup_[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}_PITRRecovered_[a-f0-9]{12}-db\.(?:gz|sql\.zst)(?:\.crypt)?\z/D', $name ) ) {
 			return $this->directory . '/' . $name;
 		}
 		return $this->directory . '/' . BackupPlus_PITR_Manifest::filename( $name );
@@ -122,29 +150,34 @@ class BackupPlus_PITR_Storage {
 
 	private function create_artifact( $input, $name, $compress ) {
 		$path = $this->path( $name );
-		BackupPlus_PITR_Process::private_file( $path );
-		$in  = fopen( $input, 'rb' );
-		$out = $compress ? gzopen( $path, 'wb6' ) : fopen( $path, 'wb' );
-		if ( ! $in || ! $out ) {
-			throw new RuntimeException( 'Could not open PITR artifact.' );
-		}
-		try {
-			while ( ! feof( $in ) ) {
-				$data = fread( $in, 1048576 );
-				if ( false === $data ) {
-					throw new RuntimeException( 'Could not read PITR source artifact.' );
-				}
-				$offset = 0;
-				while ( $offset < strlen( $data ) ) {
-					$written = $compress ? gzwrite( $out, substr( $data, $offset ) ) : fwrite( $out, substr( $data, $offset ) );
-					if ( ! $written ) {
-						throw new RuntimeException( 'Could not write PITR artifact.' );
-					} $offset += $written;
-				}
+		$zstd = $compress && (bool) preg_match( '/\.zst$/D', $name );
+		if ( $zstd ) {
+			BackupPlus_PITR_Compression::compress_zstd( $input, $path, $this->work );
+		} else {
+			BackupPlus_PITR_Process::private_file( $path );
+			$in  = fopen( $input, 'rb' );
+			$out = $compress ? gzopen( $path, 'wb6' ) : fopen( $path, 'wb' );
+			if ( ! $in || ! $out ) {
+				throw new RuntimeException( 'Could not open PITR artifact.' );
 			}
-		} finally {
-			fclose( $in );
-			$compress ? gzclose( $out ) : fclose( $out );
+			try {
+				while ( ! feof( $in ) ) {
+					$data = fread( $in, 1048576 );
+					if ( false === $data ) {
+						throw new RuntimeException( 'Could not read PITR source artifact.' );
+					}
+					$offset = 0;
+					while ( $offset < strlen( $data ) ) {
+						$written = $compress ? gzwrite( $out, substr( $data, $offset ) ) : fwrite( $out, substr( $data, $offset ) );
+						if ( ! $written ) {
+							throw new RuntimeException( 'Could not write PITR artifact.' );
+						} $offset += $written;
+					}
+				}
+			} finally {
+				fclose( $in );
+				$compress ? gzclose( $out ) : fclose( $out );
+			}
 		}
 		$plain_hash = hash_file( 'sha256', $path );
 		$plain_size = filesize( $path );
@@ -160,7 +193,7 @@ class BackupPlus_PITR_Storage {
 			unlink( $path );
 			throw new RuntimeException( 'Unsupported PITR encryption configuration.' );
 		}
-		return array(
+		$artifact = array(
 			'name'         => basename( $path ),
 			'sha256'       => hash_file( 'sha256', $path ),
 			'plain_sha256' => $plain_hash,
@@ -169,6 +202,8 @@ class BackupPlus_PITR_Storage {
 			'raw_size'     => filesize( $input ),
 			'raw_sha256'   => hash_file( 'sha256', $input ),
 		);
+		if ( $zstd ) { $artifact['compression'] = 'zstd'; }
+		return $artifact;
 	}
 
 	public function verify_file( $artifact ) {
@@ -358,7 +393,7 @@ class BackupPlus_PITR_Storage {
 		}
 	}
 
-	public function delete( $files, $receipts, $checkpoint, $deadline = null ) {
+	public function delete( $files, $receipts, $checkpoint, $deadline = null, $delete_local = true ) {
 		foreach ( $this->destinations as $destination ) {
 			$key    = $destination['service'] . ':' . $destination['instance'];
 			$object = $this->provider( $destination );
@@ -387,7 +422,7 @@ class BackupPlus_PITR_Storage {
 				call_user_func( $checkpoint, $receipts );
 			}
 		}
-		foreach ( $files as $file ) {
+		foreach ( $delete_local ? $files : array() as $file ) {
 			$path = $this->path( $file );
 			if ( is_file( $path ) && null !== $deadline && microtime( true ) >= $deadline ) { throw new BackupPlus_PITR_Delete_Pending(); }
 			if ( is_file( $path ) && ! unlink( $path ) ) {

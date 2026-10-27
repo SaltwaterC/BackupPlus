@@ -154,7 +154,7 @@
 	margin-top: 8px;
 }
 
-.download-backups .backupplus_download_button {
+.download-backups .backupplus_download_button, .download-backups .backupplus_chain_download_button {
 	margin-right: 6px;
 }
 
@@ -191,9 +191,8 @@
 #ud_massactions, #backupplus-delete-waitwarning {
 	padding: 14px;
 	background: rgb(241, 241, 241);
-	position: absolute;
-	left: 0;
-	top: 100%;
+	position: relative;
+	margin-top: 8px;
 }
 
 #ud_massactions > *, #backupplus-delete-waitwarning > * {
@@ -222,7 +221,7 @@ small.ud_massactions-tip {
 }
 
 #backupplus-navtab-backups-content .backupplus_existing_backups {
-	margin-bottom: 35px;
+	margin-bottom: 12px;
 	position: relative;
 }
 
@@ -538,4 +537,95 @@ div.ui-dialog.ui-widget.ui-widget-content {
 
 .backupplus-download-label {
 	overflow-wrap: anywhere;
+}
+
+/* Recovery point dialog: the list is the only scrolling region, so the dialog itself is clipped and laid out as a column. */
+#backupplus-iframe-modal.backupplus-chain-modal {
+	overflow: hidden;
+	padding: 0;
+}
+
+.backupplus-chain-modal #backupplus-iframe-modal-innards {
+	height: 100%;
+}
+
+.backupplus-chain {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 12px 16px;
+}
+
+.backupplus-chain-note, .backupplus-chain-status {
+	margin: 0 0 8px;
+}
+
+.backupplus-chain-status:empty {
+	display: none;
+}
+
+.backupplus-chain-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.backupplus-chain-filter {
+	flex: 1 1 240px;
+	min-width: 0;
+}
+
+.backupplus-chain-scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+}
+
+.backupplus-chain-list {
+	margin: 0;
+}
+
+.backupplus-chain-list li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 2px 16px;
+	align-items: center;
+	margin: 0;
+	padding: 8px 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.backupplus-chain-list li:hover {
+	background: #f6f7f7;
+}
+
+.backupplus-chain-meta {
+	color: #646970;
+	text-align: right;
+}
+
+.backupplus-chain-actions {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	padding-left: 24px;
+}
+
+.backupplus-chain-more-row {
+	margin: 0;
+	padding: 8px 12px;
+}
+
+.backupplus-chain-error {
+	color: #b32d2e;
+}
+
+.existing-backups-table tfoot .backupplus-footer-header td {
+	font-weight: 600;
 }

@@ -234,7 +234,7 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_retain_extrarules', array( $backupplus_admin, 'return_array' ) );
 
 		register_setting( 'backupplus-options-group', 'backupplus_database_encryption', array( 'BackupPlus_Database_Encryption', 'sanitize' ) );
-		register_setting( 'backupplus-options-group', 'backupplus_service', array( $backupplus, 'just_one' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_service', array( $backupplus, 'sanitize_services' ) );
 
 		$services_to_register = array_keys( $backupplus->backup_methods );
 		foreach ( $services_to_register as $service ) {
@@ -259,6 +259,7 @@ class BackupPlus_Options {
 
 		register_setting( 'backupplus-options-group', 'backupplus_autobackup_default', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_delete_local', 'absint' );
+		register_setting( 'backupplus-options-group', 'backupplus_storage_limits', array( 'BackupPlus_Storage_Limits', 'sanitize' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_debug_mode', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_extradbs', array( 'BackupPlus_Backup_Sources', 'connections' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_database_selection', array( 'BackupPlus_Backup_Sources', 'sanitize_selection' ) );

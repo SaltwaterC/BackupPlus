@@ -138,8 +138,47 @@ trait BackupPlus_Admin_Existing_Backups {
 			$dbt = __( 'External database', 'backupplus' ) . ' (' . substr( $bkey, 2 ) . ')';
 		}
 
+		backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
+		if ( BackupPlus_Chain_Downloads::supported( $backup, $bkey ) ) {
+			$this->chain_download_button( $bkey, $key, $this->database_download_title( $backup, $bkey ), $dbt, $esc_pretty_date );
+			return;
+		}
 		$files = $this->download_files( $backup, $bkey );
-		$this->download_button( $bkey, $key, 0, null, '', $dbt, $esc_pretty_date, implode( ',', array_keys( $files ) ), $files );
+		$this->download_button( $bkey, $key, 0, null, $this->database_download_title( $backup, $bkey ), $dbt, $esc_pretty_date, implode( ',', array_keys( $files ) ), $files );
+	}
+
+	/** Include every stored PITR artifact, including encrypted logs, manifests and locators. */
+	private function database_download_title( $backup, $type ) {
+		$files   = array();
+		$total   = $full = $increments = 0;
+		$unknown = false;
+		foreach ( $this->download_files( $backup, $type ) as $file ) {
+			if ( isset( $files[ $file['name'] ] ) ) { continue; }
+			$files[ $file['name'] ] = true;
+			if ( empty( $file['size'] ) || ! is_numeric( $file['size'] ) || $file['size'] < 0 ) { $unknown = true;
+				continue; }
+			$total += $file['size'];
+			if ( isset( $file['increment'] ) ) {
+				$increments = max( $increments, $file['increment'] );
+				if ( 0 === $file['increment'] ) { $full += $file['size']; }
+			}
+		}
+		$title = __( 'Press here to download database backups.', 'backupplus' ) . ' ';
+		if ( $unknown || ! $files || ( ! empty( $backup['pitr']['state'] ) && 'unavailable' === $backup['pitr']['state'] ) ) {
+			return $title . __( 'Total archive size unavailable.', 'backupplus' );
+		}
+		if ( ! empty( $backup['pitr']['points'] ) ) {
+			// Each recovery point is several files (data, manifest, locator), so the file count must not be read as the number of points.
+			$points = count( $backup['pitr']['points'] );
+			/* translators: 1: Recovery point count, 2: File count, 3: Total size, 4: Full backup size, 5: Size of everything after the full backup. */
+			return $title . sprintf( _n( '(%1$d recovery point in %2$d files, total %3$s: full backup %4$s plus the log after it %5$s).', '(%1$d recovery points in %2$d files, total %3$s: full backup %4$s plus the logs after it %5$s).', $points, 'backupplus' ), $points, count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total - $full ) );
+		}
+		if ( $increments ) {
+			/* translators: 1: Archive count, 2: Total size, 3: Full backup size, 4: Increment count, 5: Increment size. */
+			return $title . sprintf( __( '(%1$d archive(s) in chain, total %2$s: full backup %3$s plus %4$d incremental backup(s) %5$s).', 'backupplus' ), count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full ), $increments, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total - $full ) );
+		}
+		/* translators: 1: Archive count, 2: Total size. */
+		return $title . sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ) );
 	}
 
 	/**
@@ -225,7 +264,12 @@ trait BackupPlus_Admin_Existing_Backups {
 					$entities .= '/plugins=0//themes=0//uploads=0//others=0/';
 				}
 
-				$this->download_button( $type, $key, 0, null, $ide, $sdescrip, $esc_pretty_date, $set_contents );
+				backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
+				if ( BackupPlus_Chain_Downloads::supported( $backup, $type ) ) {
+					$this->chain_download_button( $type, $key, $ide, $sdescrip, $esc_pretty_date );
+				} else {
+					$this->download_button( $type, $key, 0, null, $ide, $sdescrip, $esc_pretty_date, $set_contents );
+				}
 			}
 		}
 	}
@@ -276,6 +320,7 @@ trait BackupPlus_Admin_Existing_Backups {
 						'set_contents'   => implode( ',', array_keys( $this->download_files( $backup, 'db' ) ) ),
 						'download_files' => $this->download_files( $backup, 'db' ),
 						'title'          => __( 'Database', 'backupplus' ),
+						'ide'            => $this->database_download_title( $backup, 'db' ),
 					);
 				}
 
@@ -290,6 +335,7 @@ trait BackupPlus_Admin_Existing_Backups {
 						'entities'     => $entities,
 						'set_contents' => '0',
 						'title'        => __( 'External database', 'backupplus' ) . ' (' . substr( $bkey, 2 ) . ')',
+						'ide'          => $this->database_download_title( $backup, $bkey ),
 					);
 				}
 			} else {
@@ -418,7 +464,16 @@ trait BackupPlus_Admin_Existing_Backups {
 	private function archive_set_summary( $backup, $type, $archive_count, $total_file_size ) {
 		$total = BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_file_size );
 
-		$increments = $this->incremental_count( $backup );
+		// An entity that did not change has no archive in an increment, so count the increments that hold this entity.
+		$increments = 0;
+		if ( ! empty( $backup['incremental'] ) && ! empty( $backup['incremental_sets'] ) && is_array( $backup['incremental_sets'] ) ) {
+			foreach ( $backup['incremental_sets'] as $files ) {
+				if ( ! empty( $files[ $type ] ) ) {
+					++$increments;
+				}
+			}
+			$increments = max( 0, $increments - 1 );
+		}
 		if ( $increments < 1 ) {
 			/* translators: 1: Archive count, 2: Total size.*/
 			return sprintf( __( '(%1$d archive(s) in set, total %2$s).', 'backupplus' ), $archive_count, $total );
@@ -448,11 +503,9 @@ trait BackupPlus_Admin_Existing_Backups {
 		if ( ! empty( $backup['pitr'] ) ) {
 			$points = array();
 			$stored = isset( $backup['pitr']['points'] ) ? $backup['pitr']['points'] : array();
+			backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
 			foreach ( $stored as $point ) {
-				$label  = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $point['timestamp'] ), 'M d, Y G:i:s' ) . ' - ';
-				$label .= $point['increment'] ? sprintf( __( 'database incremental %d', 'backupplus' ), $point['increment'] ) : __( 'full database backup', 'backupplus' );
-				if ( $point === end( $stored ) ) { $label .= ' (' . __( 'latest', 'backupplus' ) . ')'; }
-				$points[] = array_merge( $point, array( 'label' => $label ) );
+				$points[] = array_merge( $point, array( 'label' => BackupPlus_Chain_Downloads::label( $point, $point === end( $stored ) ) ) );
 			}
 			return array_reverse( $points );
 		}
@@ -585,6 +638,21 @@ trait BackupPlus_Admin_Existing_Backups {
 	}
 
 	/**
+	 * Display a button that opens the recovery point list of an entity. Hundreds of increments would bloat the page and the
+	 * downloader, so the list is fetched when it is opened.
+	 *
+	 * @param string $type            Entity, e.g. db or plugins.
+	 * @param string $backup_timestamp Backup timestamp (epoch time).
+	 * @param string $title           Title attribute contents.
+	 * @param string $pdescrip        Button text.
+	 * @param string $esc_pretty_date Escaped pretty date.
+	 * @return void - Display the button.
+	 */
+	public function chain_download_button( $type, $backup_timestamp, $title, $pdescrip, $esc_pretty_date ) {
+		echo '<button data-wp_nonce="' . esc_attr( wp_create_nonce( 'backupplus_download' ) ) . '" data-backup_timestamp="' . esc_attr( $backup_timestamp ) . '" data-what="' . esc_attr( $type ) . '" data-title="' . esc_attr( $pdescrip ) . '" data-prettydate="' . esc_attr( $esc_pretty_date ) . '" type="button" class="button backupplus_chain_download_button" title="' . esc_attr( $title ) . '">' . esc_html( $pdescrip ) . '</button>';
+	}
+
+	/**
 	 * Display 'Restore' button for backup in existing backups table.
 	 *
 	 * @param array  $backup      Backup instance.
@@ -641,7 +709,7 @@ trait BackupPlus_Admin_Existing_Backups {
 		}
 
 		// Check that the user has remote storage setup.
-		$services = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+		$services = (array) $backupplus->get_canonical_service_list();
 		if ( empty( $services ) ) {
 			return '';
 		}
@@ -735,8 +803,10 @@ trait BackupPlus_Admin_Existing_Backups {
 	public function log_button( $backup ) {
 		global $backupplus;
 		$backupplus_dir = $backupplus->backups_dir_location();
-		if ( isset( $backup['nonce'] ) && preg_match( '/^[0-9a-f]{12}$/', $backup['nonce'] ) && is_readable( $backupplus_dir . '/log.' . $backup['nonce'] . '.txt' ) ) {
-			$nval = $backup['nonce'];
+		// A PITR chain's 'nonce' is its backup ID, so its log is the one recorded by the capture job.
+		$log_nonce = ! empty( $backup['pitr'] ) ? ( isset( $backup['log'] ) ? $backup['log'] : '' ) : ( isset( $backup['nonce'] ) ? $backup['nonce'] : '' );
+		if ( preg_match( '/^[0-9a-f]{12}$/', $log_nonce ) && is_readable( $backupplus_dir . '/log.' . $log_nonce . '.txt' ) ) {
+			$nval = $log_nonce;
 			$url  = BackupPlus_Options::admin_page() . "?page=backupplus&action=downloadlog&amp;backupplus_backup_nonce=$nval";
 			?>
 			<div style="clear:none;" class="backupplus-viewlogdiv">

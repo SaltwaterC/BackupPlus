@@ -263,18 +263,18 @@ trait BackupPlus_Admin_Settings_Page {
 			<?php $this->settings_advanced_tools(); ?>
 		</div>
 
-		<div id="backupplus-navtab-decryption-content"
+		<div id="backupplus-navtab-extract-content"
 		<?php
-		if ( 'decryption' != $tabflag ) {
+		if ( 'extract' != $tabflag ) {
 			echo ' class="backupplus-hidden"';}
 		?>
 		style="
 		<?php
-		if ( 'decryption' != $tabflag ) {
+		if ( 'extract' != $tabflag ) {
 			echo 'display:none;';}
 		?>
 ">
-			<?php $this->include_template( 'wp-admin/settings/tab-decryption.php' ); ?>
+			<?php $this->include_template( 'wp-admin/settings/tab-extract.php' ); ?>
 		</div>
 
 		<?php
@@ -290,10 +290,10 @@ trait BackupPlus_Admin_Settings_Page {
 	 */
 	private function get_main_tabs_array() {
 		$main_tabs = array(
-			'backups'    => __( 'Backup / Restore', 'backupplus' ),
-			'settings'   => __( 'Settings', 'backupplus' ),
-			'expert'     => __( 'Advanced Tools', 'backupplus' ),
-			'decryption' => __( 'Decryption', 'backupplus' ),
+			'backups'  => __( 'Backup / Restore', 'backupplus' ),
+			'settings' => __( 'Settings', 'backupplus' ),
+			'expert'   => __( 'Advanced Tools', 'backupplus' ),
+			'extract'  => __( 'Extract', 'backupplus' ),
 		);
 
 		$main_tabs = apply_filters( 'backupplus_main_tabs', $main_tabs );
@@ -516,6 +516,72 @@ trait BackupPlus_Admin_Settings_Page {
 			'label' => __( 'zip executable found:', 'backupplus' ),
 			'value' => ( ( is_string( $binzip ) ) ? __( 'Yes' ) . ': ' . $binzip : __( 'No' ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
 		);
+		$site_info_data['tar_support']    = array(
+			'label' => __( 'Tar archive support:', 'backupplus' ),
+			'value' => __( 'Built into BackupPlus; no external tar executable required', 'backupplus' ),
+		);
+
+		// Compression and native database tools
+		$zstd_binary                       = BackupPlus_PITR_Compression::zstd_binary();
+		$site_info_data['zstd_executable'] = array(
+			'label' => __( 'zstd executable found:', 'backupplus' ),
+			'value' => $zstd_binary ? __( 'Yes', 'backupplus' ) . ': ' . htmlspecialchars( $zstd_binary ) : __( 'No', 'backupplus' ),
+		);
+		$site_info_data['gzip_support']    = array(
+			'label' => __( 'Gzip support (PHP zlib):', 'backupplus' ),
+			'value' => function_exists( 'gzopen' ) && function_exists( 'gzread' ) && function_exists( 'gzwrite' ) ? __( 'Yes', 'backupplus' ) : __( 'No', 'backupplus' ),
+		);
+
+		// PITR client discovery uses PATH, the configured client directory, and these standard locations.
+		$native_binary_dirs = array( '/usr/bin', '/usr/local/bin', '/bin', '/usr/local/mysql/bin' );
+		$path_environment   = getenv( 'PATH' );
+		if ( is_string( $path_environment ) ) {
+			$native_binary_dirs = array_merge( $native_binary_dirs, explode( PATH_SEPARATOR, $path_environment ) );
+		}
+		$pitr_binary_dir = defined( 'BACKUPPLUS_PITR_BIN_DIRECTORY' ) ? BACKUPPLUS_PITR_BIN_DIRECTORY : apply_filters( 'backupplus_pitr_bin_directory', '' );
+		if ( is_string( $pitr_binary_dir ) && '' !== $pitr_binary_dir ) {
+			$native_binary_dirs[] = $pitr_binary_dir;
+		}
+		$mysqldump_candidates = defined( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE' ) ? explode( ',', BACKUPPLUS_MYSQLDUMP_EXECUTABLE ) : array();
+		foreach ( $mysqldump_candidates as $candidate ) {
+			if ( is_string( $candidate ) && '' !== $candidate ) {
+				$native_binary_dirs[] = dirname( $candidate );
+			}
+		}
+		$native_binary_dirs = array_values( array_unique( array_filter( $native_binary_dirs, 'strlen' ) ) );
+		$find_native_binary = static function ( $name, $explicit_paths = array() ) use ( $native_binary_dirs ) {
+			$filenames = array( $name );
+			if ( '.exe' !== strtolower( substr( $name, -4 ) ) ) {
+				$filenames[] = $name . '.exe';
+			}
+			$candidates = $explicit_paths;
+			foreach ( $native_binary_dirs as $directory ) {
+				foreach ( $filenames as $filename ) {
+					$candidates[] = rtrim( $directory, '/\\' ) . DIRECTORY_SEPARATOR . $filename;
+				}
+			}
+			foreach ( $candidates as $candidate ) {
+				if ( is_string( $candidate ) && is_file( $candidate ) && is_executable( $candidate ) ) {
+					return $candidate;
+				}
+			}
+			return false;
+		};
+		$native_tools       = array(
+			'mysqldump_executable'      => array( 'mysqldump', __( 'mysqldump executable found:', 'backupplus' ), $mysqldump_candidates ),
+			'mysql_client_executable'   => array( 'mysql', __( 'MySQL client executable found (PITR):', 'backupplus' ) ),
+			'mysqlbinlog_executable'    => array( 'mysqlbinlog', __( 'mysqlbinlog executable found (PITR):', 'backupplus' ) ),
+			'mariadb_client_executable' => array( 'mariadb', __( 'MariaDB client executable found (PITR):', 'backupplus' ) ),
+			'mariadb_dump_executable'   => array( 'mariadb-dump', __( 'mariadb-dump executable found (PITR):', 'backupplus' ) ),
+			'mariadb_binlog_executable' => array( 'mariadb-binlog', __( 'mariadb-binlog executable found (PITR):', 'backupplus' ) ),
+		);
+		foreach ( $native_tools as $key => $tool ) {
+			$binary                 = $find_native_binary( $tool[0], isset( $tool[2] ) ? $tool[2] : array() );
+			$site_info_data[ $key ] = array(
+				'label' => $tool[1],
+				'value' => $binary ? __( 'Yes', 'backupplus' ) . ': ' . htmlspecialchars( $binary ) : __( 'No', 'backupplus' ),
+			);
+		}
 
 		// Free disk space
 		$hosting_bytes_free = $backupplus->get_hosting_disk_quota_free();

@@ -73,7 +73,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 		// Based upon how WP updates work, the following code unpacks the "package" (the backup archive) and then later its contents are moved to their destination.
 
 		// If successful, this returns the WP_Filesystem path for the unpacked zip or unencrypted database
-		if ( preg_match( '/-db(\.gz(\.crypt)?)?$/i', $backup_file ) || preg_match( '/\.sql(\.gz|\.bz2)?(\.crypt)?$/i', $backup_file ) ) {
+		if ( preg_match( '/-db(\.gz(\.crypt)?)?$/i', $backup_file ) || preg_match( '/\.sql(\.gz|\.bz2|\.zst)?(\.crypt)?$/i', $backup_file ) ) {
 			$working_dir = $this->unpack_package_database( $backup_file );
 		} else {
 			$working_dir = $this->unpack_package_archive( $backup_file, $type );

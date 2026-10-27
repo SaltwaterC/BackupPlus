@@ -99,8 +99,14 @@ class BackupPlus_Incremental_Backups {
 		return $data;
 	}
 
-	/** Hash the entire selected inventory, then remove unchanged files from this ZIP. */
-	public static function scan( $entity, &$files, $directories, &$skipped ) {
+	/**
+	 * Hash the entire selected inventory, then remove unchanged files from this ZIP.
+	 *
+	 * $unchanged is set when this is an increment that adds no file, no directory and no deletion to the previous
+	 * inventory: its archive would only repeat the previous manifest, so the caller may leave it out. A full backup
+	 * never qualifies. The inventory is still written, because the next job compares against it.
+	 */
+	public static function scan( $entity, &$files, $directories, &$skipped, &$unchanged = null ) {
 		global $backupplus;
 		$previous_names = $backupplus->jobdata_get( 'incremental_previous_snapshots', array() );
 		$previous       = isset( $previous_names[ $entity ] ) ? self::read_snapshot( $previous_names[ $entity ] ) : array(
@@ -132,6 +138,10 @@ class BackupPlus_Incremental_Backups {
 		$paths               = $backupplus->get_backupable_file_entities( true );
 		$root                = BackupPlus_Backup_Sources::custom( $entity ) ? $entity : basename( $paths[ $entity ] );
 		$snapshot['deleted'] = array_values( array_diff( $old_paths, array_keys( $snapshot['files'] ), $snapshot['directories'], in_array( $entity, array( 'others', 'wpcore' ), true ) ? array() : array( $root, $root . '/' ) ) );
+		$unchanged           = isset( $previous_names[ $entity ] ) && ! $files
+			&& ! array_diff( $snapshot['directories'], $previous['directories'] )
+			&& ! array_diff( $snapshot['deleted'], $previous['deleted'] )
+			&& ! array_diff( $previous['deleted'], $snapshot['deleted'] );
 		$name                = 'incremental_' . $backupplus->nonce . '_' . $entity . '.php';
 		$path                = $backupplus->backups_dir_location() . '/' . $name;
 		// Freeze the scan's inventory across resumptions. A file changed after it was archived

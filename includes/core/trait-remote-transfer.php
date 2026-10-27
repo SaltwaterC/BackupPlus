@@ -401,6 +401,11 @@ trait BackupPlus_Core_Remote_Transfer {
 			die;
 		}
 
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::enabled() && ! $this->jobdata_get( 'storage_limits_measured_before_upload_deletion' ) ) {
+			BackupPlus_Storage_Limits::run( null, false, true );
+			$this->jobdata_set( 'storage_limits_measured_before_upload_deletion', true );
+		}
+
 		// Delete local files immediately if the option is set
 		// Where we are only backing up locally, only the "prune" function should do deleting
 		$service = $this->jobdata_get( 'service' );
@@ -553,7 +558,11 @@ trait BackupPlus_Core_Remote_Transfer {
 
 	private function delete_local( $file ) {
 		$log = "Deleting local file: $file: ";
-		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 1 ) ) {
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::quota() ) {
+			$this->log( 'Retaining local archive for local disk quota policy: ' . $file );
+			return;
+		}
+		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) ) {
 			$fullpath = $this->backups_dir_location() . '/' . $file;
 
 			// check to make sure it exists before removing

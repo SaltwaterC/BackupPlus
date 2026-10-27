@@ -10,6 +10,19 @@ function backupplus_remote_storage_tab_activation(the_method){
 }
 
 /**
+ * The row with the button that adds another destination of a type, kept after the last destination of that type.
+ *
+ * @param {string} method - The identifier for the remote storage
+ * @return {string} The HTML row
+ */
+function backupplus_add_instance_row(method) {
+	var escape = function(text) { return jQuery('<div>').text(text).html(); };
+	return '<tr class="backupplusmethod ' + escape(method) + ' ' + escape(method) + '_add_instance_container"><th></th><td>' +
+		'<a href="#" class="button backupplus_add_instance" data-method="' + escape(method) + '">' +
+		escape(backupplus_i18n.add_instance.replace('%s', backupplus_i18n.remote_storage_methods[method])) + '</a></td></tr>';
+}
+
+/**
  * Scroll to a specific remote storage configuration by adding the #remote-storage-{method_name} anchor hash to the URL.
  */
 function backupplus_scroll_to_remote_storage_config() {
@@ -147,7 +160,12 @@ function backupplus_remote_storage_tabs_setup() {
 		}
 	});
 	
-	// Add stuff for free version
+	jQuery('.remote-tab').on('click', function(e) {
+		e.preventDefault();
+		backupplus_remote_storage_tab_activation(jQuery(this).attr('name'));
+	});
+
+	// Destinations are exclusive only when the checkboxes are not marked as multiple
 	jQuery('.backupplus_servicecheckbox:not(.multi)').on('change', function() {
 		set_email_report_storage_interface(false);
 		var svalue = jQuery(this).attr('value');

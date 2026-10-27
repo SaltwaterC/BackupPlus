@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
 }
 require_once __DIR__ . '/class-pitr-process.php';
+require_once __DIR__ . '/class-pitr-compression.php';
 require_once __DIR__ . '/class-pitr-manifest.php';
 require_once __DIR__ . '/class-pitr-binlog.php';
 require_once __DIR__ . '/class-pitr-database.php';
@@ -24,6 +25,9 @@ require_once __DIR__ . '/pitr/trait-recovery-plan.php';
 require_once __DIR__ . '/pitr/trait-recovery.php';
 require_once __DIR__ . '/pitr/trait-retention.php';
 
+/** Another capture, restore or deletion holds the chain; a scheduled run skips its turn instead of reporting an error. */
+class BackupPlus_PITR_Busy extends RuntimeException {}
+
 class BackupPlus_PITR {
 	use BackupPlus_PITR_Orchestrator_Scheduling;
 	use BackupPlus_PITR_Orchestrator_State;
@@ -33,10 +37,10 @@ class BackupPlus_PITR {
 	use BackupPlus_PITR_Orchestrator_Recovery;
 	use BackupPlus_PITR_Orchestrator_Retention;
 
-	const OPTION = 'backupplus_pitr';
-	const STATUS = 'backupplus_pitr_status';
-	const HOOK   = 'backupplus_pitr_capture';
-	const BASELINE_HOOK = 'backupplus_pitr_baseline_check';
+	const OPTION         = 'backupplus_pitr';
+	const STATUS         = 'backupplus_pitr_status';
+	const HOOK           = 'backupplus_pitr_capture';
+	const BASELINE_HOOK  = 'backupplus_pitr_baseline_check';
 	const SCHEDULE_STATE = 'backupplus_pitr_schedule_state';
 	private $root;
 	protected $work;
@@ -61,7 +65,7 @@ class BackupPlus_PITR {
 			umask( $mask );
 		}
 		if ( ! $this->lock || ! flock( $this->lock, LOCK_EX | LOCK_NB ) ) {
-			throw new RuntimeException( 'A PITR capture, restore or deletion is already running.' );
+			throw new BackupPlus_PITR_Busy( 'A PITR capture, restore or deletion is already running.' );
 		}
 		$this->state = $this->read_state();
 		$this->work  = BackupPlus_PITR_Process::directory( $this->root . '/work-' . bin2hex( random_bytes( 16 ) ) );

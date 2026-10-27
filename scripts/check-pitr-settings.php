@@ -198,6 +198,8 @@ try {
 case "$*" in
   *--version*) echo 'MariaDB 11.8.6'; exit 0 ;;
 esac
+# Read the inherited options before the TLS handshake, as the real client does.
+cat <&3 >/dev/null
 echo 'ERROR 2026 (HY000): TLS/SSL error: self-signed certificate' >&2
 echo 'password=private-secret; SELECT private_data FROM customer_table' >&2
 exit 1

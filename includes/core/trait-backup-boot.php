@@ -64,6 +64,8 @@ trait BackupPlus_Core_Backup_Boot {
 		$use_timestamp = empty( $options['use_timestamp'] ) ? false : $options['use_timestamp'];
 		$this->backup_time_nonce( $use_nonce, $use_timestamp );
 		$this->jobdata_reset();
+		// Errors left by whatever ran earlier in this request, such as a database capture, belong to that work and must not count against this job.
+		$this->errors = array();
 		// The current_resumption is consulted within logfile_open()
 		$this->current_resumption = 0;
 		$this->logfile_open( $this->nonce );
@@ -185,7 +187,6 @@ trait BackupPlus_Core_Backup_Boot {
 			$service = array_merge( array_keys( $options['remote_storage_instances'] ), $legacy_storage_instances );
 		}
 
-		$service = ! empty( $options['pre_update_batch'] ) ? $service : $this->just_one( $service );
 		$service = $this->get_canonical_service_list( $service );
 
 		$canonised_storage_objects_and_ids = array_merge( array_flip( $service ), $enabled_storage_objects_and_ids );

@@ -29,16 +29,14 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 		if ( ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) || ( $this->state['pending'] && $id === $this->state['pending']['entry']['manifest']['chain_id'] ) ) {
 			throw new RuntimeException( 'A backup or restore is still using this database recovery chain. Complete that operation before deleting it.' );
 		}
-		if ( ! empty( $this->config['enabled'] ) && ( $id === $this->state['active'] || in_array( $id, isset( $this->state['protected_previous'] ) ? $this->state['protected_previous'] : array(), true ) ) ) {
-			throw new RuntimeException( 'This recovery chain is needed for scheduled database backups. Disable Database point-in-time recovery in Settings before deleting it. Re-enable it afterwards to start a new chain.' );
-		}
 		$chain = &$this->state['chains'][ $id ];
 		if ( 'deleting' === $chain['state'] && $delete_remote !== ( isset( $chain['delete_remote'] ) ? $chain['delete_remote'] : true ) ) { throw new RuntimeException( 'This deletion is already in progress. Retry with the same "Also delete from remote storage" choice to finish removing the complete chain.' ); }
+		// Open the destinations before the chain is marked as being deleted: that mark fixes whether remote copies are deleted too, so a destination that cannot be reached must not leave the chain unable to be deleted without them.
+		$storage                = new BackupPlus_PITR_Storage( $this->work, array(), $delete_remote ? $chain['destinations'] : array() );
 		$chain['delete_remote'] = $delete_remote;
 		$chain['state']         = 'deleting';
 		$this->save();
 		$this->history( $id );
-		$storage         = new BackupPlus_PITR_Storage( $this->work, array(), $delete_remote ? $chain['destinations'] : array() );
 		$files           = array_values( array_unique( $this->chain_files( $chain ) ) );
 		$is_local        = function ( $file ) use ( $storage ) {
 			return is_file( $storage->path( $file ) );
@@ -69,10 +67,60 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			BackupPlus_Backup_History::save_history( $history );
 		}
 		unset( $this->state['chains'][ $id ] );
+		// While enabled, the next scheduled run sees no active chain and takes a new baseline.
 		if ( $id === $this->state['active'] ) {
 			$this->state['active'] = null;
-		} $this->save();
+		}
+		$this->state['protected_previous'] = array_values( array_diff( isset( $this->state['protected_previous'] ) ? $this->state['protected_previous'] : array(), array( $id ) ) );
+		$this->save();
 		return $progress;
+	}
+
+	/** Read under the worker lock; the limits monitor must not infer active chains from stale status. */
+	public function storage_state() {
+		return $this->state; }
+
+	/** Delete one destination while retaining the chain index and other copies. */
+	public function delete_destination( $id, $destination ) {
+		if ( ! isset( $this->state['chains'][ $id ] ) ) { throw new RuntimeException( 'PITR chain unavailable.' ); }
+		$chain   = &$this->state['chains'][ $id ];
+		$history = BackupPlus_Backup_History::get_history();
+		if ( $id === $this->state['active'] || in_array( $id, isset( $this->state['protected_previous'] ) ? $this->state['protected_previous'] : array(), true ) || ! empty( $chain['imported'] ) || $this->retention_locked( $chain, $history ) || ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) || ( ! empty( $this->state['pending']['entry']['manifest']['chain_id'] ) && $id === $this->state['pending']['entry']['manifest']['chain_id'] ) ) {
+			throw new RuntimeException( 'PITR chain is protected by an active backup, restore, import or lock.' );
+		}
+		$key      = $destination['service'] . ':' . $destination['instance'];
+		$selected = array();
+		if ( ! empty( $chain['storage_removed'][ $key ] ) ) { return; }
+		if ( 'local' !== $destination['service'] ) {
+			foreach ( $chain['destinations'] as $item ) { if ( $item['service'] === $destination['service'] && (string) $item['instance'] === $destination['instance'] ) { $selected[] = $item; }
+			}
+			if ( ! $selected ) { throw new RuntimeException( 'PITR destination is unavailable or has changed.' ); }
+		}
+		$chain['storage_deleting'][ $key ] = true;
+		$this->save();
+		$storage = new BackupPlus_PITR_Storage( $this->work, array(), $selected );
+		$storage->delete(
+			array_values( array_unique( $this->chain_files( $chain ) ) ),
+			isset( $chain['storage_receipts'][ $key ] ) ? $chain['storage_receipts'][ $key ] : array(),
+			function ( $receipts ) use ( $id, $key ) {
+				$this->state['chains'][ $id ]['storage_receipts'][ $key ] = $receipts;
+				$this->save();
+			},
+			null,
+			'local' === $destination['service']
+		);
+		$chain['destinations']            = array_values(
+			array_filter(
+				$chain['destinations'],
+				function ( $item ) use ( $destination ) {
+					return $item['service'] !== $destination['service'] || (string) $item['instance'] !== $destination['instance'];
+				}
+			)
+		);
+		$chain['storage_removed'][ $key ] = true;
+		unset( $chain['storage_deleting'][ $key ] );
+		$this->save();
+		$this->history( $id );
 	}
 
 	/** A restore's pin holds only while its history row stays locked, so unlocking in the backups list needs no worker lock. Without a row the pin alone applies. */
@@ -84,6 +132,10 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 	}
 
 	public function prune() {
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::managed() ) {
+			BackupPlus_Storage_Limits::run( $this, true );
+			return;
+		}
 		$history = BackupPlus_Backup_History::get_history();
 		$keep    = max( 1, (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', 2 ) );
 		$chains  = $this->state['chains'];
@@ -98,7 +150,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			if ( ! empty( $chain['imported'] ) ) {
 				continue;
 			}
-			if ( empty( $chain['destinations'] ) && ! BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 1 ) ) {
+			if ( empty( $chain['destinations'] ) && ! BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) ) {
 				continue;
 			}
 			++$count;

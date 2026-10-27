@@ -44,7 +44,7 @@ trait BackupPlus_Dropbox_Listing_Retention {
 				}
 
 				if ( empty( $search['body'] ) ) {
-					return array();
+					return new WP_Error( 'listing_incomplete', 'Dropbox returned an incomplete listing.' );
 				}
 
 				if ( isset( $search['body']->matches ) && is_array( $search['body']->matches ) ) {
@@ -52,9 +52,10 @@ trait BackupPlus_Dropbox_Listing_Retention {
 				} elseif ( is_array( $search['body'] ) ) {
 					$matches = $search['body'];
 				} else {
-					break;
+					return new WP_Error( 'listing_incomplete', 'Dropbox returned an incomplete listing.' );
 				}
 
+				if ( ! empty( $search['body']->has_more ) && empty( $search['body']->cursor ) ) { return new WP_Error( 'listing_incomplete', 'Dropbox listing cursor is missing.' ); }
 				if ( isset( $search['body']->has_more ) && true == $search['body']->has_more && isset( $search['body']->cursor ) ) {
 					$cursor = $search['body']->cursor;
 				} else {
@@ -64,8 +65,7 @@ trait BackupPlus_Dropbox_Listing_Retention {
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
 			// The most likely cause of a search_error is specifying a non-existent path, which should just result in an empty result set.
-			// return new WP_Error('search_error', $e->getMessage());
-			return array();
+			return new WP_Error( 'search_error', $e->getMessage() );
 		}
 
 		$results = array();

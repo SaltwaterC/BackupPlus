@@ -30,8 +30,8 @@ jQuery(function($) {
 		backupplus_open_main_tab('expert');
 		backupplus_page_is_visible = 1;
 	});
-	jQuery('#backupplus-navtab-decryption').on('click', function() {
-		backupplus_open_main_tab('decryption');
+	jQuery('#backupplus-navtab-extract').on('click', function() {
+		backupplus_open_main_tab('extract');
 		backupplus_page_is_visible = 1;
 	});
 	jQuery('#backupplus-navtab-settings, #backupplus-navtab-settings2, #backupplus_backupnow_gotosettings').on('click', function() {
@@ -99,7 +99,7 @@ jQuery(function($) {
 		
 		plupload.each(files, function(file) {
 				// @codingStandardsIgnoreLine
-				if (! /^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+?)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i.test(file.name) && ! /^log\.([0-9a-f]{12})\.txt$/.test(file.name)) {
+				if (! /^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+?)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i.test(file.name) && ! /^log\.([0-9a-f]{12})\.txt$/.test(file.name)) {
 					var accepted_file = false;
 					for (var i = 0; i<backupplus_accept_archivename.length; i++) {
 						if (backupplus_accept_archivename[i].test(file.name)) {

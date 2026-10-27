@@ -22,6 +22,11 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 	 * @return Boolean|Resource - returns false upon failure, otherwise the handle as from gzopen()
 	 */
 	public static function gzopen_for_read( $file, &$warn, &$err ) {
+		if ( BackupPlus_Archive_Compression::is_zstd( $file ) ) {
+			try { return BackupPlus_Archive_Compression::open_read( $file ); }
+			catch ( Throwable $error ) { $err[] = $error->getMessage();
+				return false; }
+		}
 		if ( ! function_exists( 'gzopen' ) || ! function_exists( 'gzread' ) ) {
 			$missing = '';
 			if ( ! function_exists( 'gzopen' ) ) {
@@ -180,6 +185,9 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 			$added_unzip_action = true;
 		}
 
+		if ( BackupPlus_Archive_Compression::is_zstd( $file ) ) {
+			return self::unzip_file_go( $file, $to, $needed_dirs, 'tar', $starting_index, $folders_to_look, $extract_matched_folders );
+		}
 		if ( class_exists( 'ZipArchive', false ) && apply_filters( 'unzip_file_use_ziparchive', true ) ) {
 			$result = self::unzip_file_go( $file, $to, $needed_dirs, 'ziparchive', $starting_index, $folders_to_look, $extract_matched_folders );
 			if ( true === $result || ( is_wp_error( $result ) && 'incompatible_archive' != $result->get_error_code() ) ) {
@@ -308,7 +316,7 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 	private static function unzip_file_go( $file, $to, $needed_dirs = array(), $method = 'ziparchive', $starting_index = 0, $folders_to_look = array(), $extract_matched_folders = 'extract_only' ) {
 		global $wp_filesystem, $backupplus;
 
-		$class_to_use = ( 'ziparchive' == $method ) ? 'BackupPlus_ZipArchive' : 'BackupPlus_PclZip';
+		$class_to_use = 'tar' === $method ? 'BackupPlus_Tar' : ( ( 'ziparchive' == $method ) ? 'BackupPlus_ZipArchive' : 'BackupPlus_PclZip' );
 
 		// Check if the current filesystem is case-sensitive
 		$case_sensitive_filesystem = self::really_is_writable( $to, true );

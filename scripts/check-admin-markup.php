@@ -99,16 +99,19 @@ try {
 		'pitr' => array(
 			'downloads' => array(
 				array(
-					'name' => 'full.sql.gz.crypt',
-					'size' => 100,
+					'name'      => 'full.sql.gz.crypt',
+					'size'      => 100,
+					'increment' => 0,
 				),
 				array(
-					'name' => 'increment.bin.gz.crypt',
-					'size' => 50,
+					'name'      => 'increment.bin.gz.crypt',
+					'size'      => 50,
+					'increment' => 1,
 				),
 				array(
-					'name' => 'manifest.json.crypt',
-					'size' => 25,
+					'name'      => 'manifest.json.crypt',
+					'size'      => 25,
+					'increment' => 1,
 				),
 			),
 		),
@@ -119,8 +122,33 @@ try {
 	$download_button = $download_xpath->query( '//button' )->item( 0 );
 	admin_markup_expect( '0,1,2' === $download_button->getAttribute( 'data-set_contents' ), 'The Database button must request every PITR download file.' );
 	admin_markup_expect( $download_fixture['pitr']['downloads'] === json_decode( $download_button->getAttribute( 'data-download_files' ), true ), 'The Database button must include download file labels.' );
+	admin_markup_expect( false !== strpos( $download_button->getAttribute( 'title' ), 'total 175 B' ) && false !== strpos( $download_button->getAttribute( 'title' ), 'full backup 100 B plus 1 incremental backup(s) 75 B' ), 'The Database tooltip must total the encrypted full backup, increments and metadata.' );
 	$download_data = $backupplus_admin->get_download_buttons_data( array( 100 => $download_fixture ) );
 	admin_markup_expect( '0,1,2' === $download_data[100]['downloads']['db']['set_contents'], 'Download data must expose the same PITR files as the Database button.' );
+	admin_markup_expect( $download_button->getAttribute( 'title' ) === $download_data[100]['downloads']['db']['ide'], 'Database download data and rendered tooltips must agree.' );
+	$duplicated_fixture                        = $download_fixture;
+	$duplicated_fixture['pitr']['downloads'][] = $download_fixture['pitr']['downloads'][0];
+	$title_method                              = new ReflectionMethod( $backupplus_admin, 'database_download_title' );
+	admin_markup_expect( $download_button->getAttribute( 'title' ) === $title_method->invoke( $backupplus_admin, $duplicated_fixture, 'db' ), 'Database tooltips must count each stored artifact only once.' );
+	foreach ( array( 'db', 'db2' ) as $type ) {
+		$ordinary_fixture = array(
+			$type            => array( 'part1.gz.crypt', 'part2.gz.crypt' ),
+			$type . '-size'  => 100,
+			$type . '1-size' => 50,
+		);
+		ob_start();
+		( new ReflectionMethod( $backupplus_admin, 'download_db_button' ) )->invoke( $backupplus_admin, $type, 100, 'Fixture', $ordinary_fixture );
+		$ordinary_xpath = admin_markup_document( ob_get_clean() );
+		admin_markup_expect( false !== strpos( $ordinary_xpath->query( '//button' )->item( 0 )->getAttribute( 'title' ), '2 archive(s) in set, total 150 B' ), 'Ordinary and external database tooltips must include every encrypted split archive.' );
+		$ordinary_fixture['incremental']      = array( 'complete' => true );
+		$ordinary_fixture['incremental_sets'] = array(
+			100 => array( 'plugins' => array( 'full.zip' ) ),
+			200 => array( 'plugins' => array( 'increment.zip' ) ),
+		);
+		admin_markup_expect( false !== strpos( $title_method->invoke( $backupplus_admin, $ordinary_fixture, $type ), '2 archive(s) in set, total 150 B' ), 'File increments must not be counted as database increments in a shared backup row.' );
+		unset( $ordinary_fixture[ $type . '1-size' ] );
+		admin_markup_expect( false !== strpos( $title_method->invoke( $backupplus_admin, $ordinary_fixture, $type ), 'Total archive size unavailable' ), 'An unknown database archive size must not be reported as zero.' );
+	}
 	$job_id   = '0123456789ab';
 	$job_data = array(
 		'backup_time' => time(),
@@ -154,12 +182,12 @@ try {
 	}
 
 	// Force two destinations only for this render, without configuring or contacting either provider.
-	$services = function () {
-		return array( 's3', 'sftp' );
+	$services = function ( $value, $option ) {
+		return 'backupplus_service' === $option ? array( 's3', 'sftp' ) : $value;
 	};
-	add_filter( 'BackupPlus_savestorage', $services );
+	add_filter( 'backupplus_get_option', $services, 10, 2 );
 	$fragments['upload'] = $backupplus_admin->include_template( 'wp-admin/settings/upload-backups-modal.php', true );
-	remove_filter( 'BackupPlus_savestorage', $services );
+	remove_filter( 'backupplus_get_option', $services, 10 );
 	$xpath = admin_markup_document( $fragments['upload'] );
 	foreach ( array( 's3', 'sftp' ) as $service ) {
 		admin_markup_expect( 1 === $xpath->query( '//input[@id="backupplus_remote_' . $service . '" and @type="checkbox" and @checked and @value="' . $service . '"]' )->length, 'Upload destinations need distinct, checked checkboxes' );

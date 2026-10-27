@@ -121,6 +121,7 @@ class Incremental_Test_BackupPlus extends BackupPlus {
 file_put_contents( $directory . '/plugins/unchanged.txt', 'unchanged' );
 file_put_contents( $directory . '/plugins/changed.txt', 'before' );
 file_put_contents( $directory . '/plugins/nested/deleted.txt', 'deleted' );
+file_put_contents( $directory . '/plugins/removed-later.txt', 'removed later' );
 $run        = function ( $incremental, $timestamp ) use ( &$backupplus, &$nonces, &$test_history ) {
 	$backupplus = new Incremental_Test_BackupPlus();
 	$nonce      = bin2hex( random_bytes( 6 ) );
@@ -157,7 +158,7 @@ incremental_expect( 'incremental' === $backupplus->jobdata_get( 'job_type' ), 'S
 incremental_expect( $base_nonce === $backupplus->file_nonce && 1 === count( $test_history ), 'Increment must retain its base chain' );
 $files = $test_history[ $base_time ]['plugins'];
 incremental_expect( 2 === count( $files ), 'Base and increment must both remain in history' );
-$zip = new ZipArchive();
+$zip = ( BackupPlus_Archive_Compression::enabled() ? new BackupPlus_Tar() : new ZipArchive() );
 incremental_expect( true === $zip->open( $directory . '/archives/' . $files[1] ), 'Increment archive must be readable' );
 incremental_expect( false === $zip->locateName( 'plugins/unchanged.txt' ), 'Unchanged content must not be archived again' );
 incremental_expect( 'after!' === $zip->getFromName( 'plugins/changed.txt' ), 'Same-size changes with preserved timestamps must be archived' );
@@ -165,8 +166,25 @@ incremental_expect( 'new image' === $zip->getFromName( 'plugins/new.jpg' ), 'New
 $manifest = json_decode( $zip->getFromName( 'backupplus-manifest.json' ), true );
 incremental_expect( in_array( 'plugins/nested/deleted.txt', $manifest['deleted'], true ), 'Deleted nested file must be recorded' );
 $zip->close();
+$archive_count = count( glob( $directory . '/archives/backup_*-plugins*' ) );
 $run( true, $base_time + 2 );
-incremental_expect( 3 === count( $test_history[ $base_time ]['plugins'] ), 'No-change increment must preserve the chain and restore manifest' );
+incremental_expect( 'incremental' === $backupplus->jobdata_get( 'job_type' ), 'A run without changes must still be an increment' );
+incremental_expect( 2 === count( $test_history[ $base_time ]['plugins'] ), 'An increment without changes must not add an archive: ' . json_encode( $test_history[ $base_time ]['plugins'] ) );
+incremental_expect( $archive_count === count( glob( $directory . '/archives/backup_*-plugins*' ) ), 'An increment without changes must leave no archive or marker behind' );
+incremental_expect( empty( glob( $directory . '/archives/*.tmp' ) ), 'An increment without changes must leave no temporary file' );
+$run( true, $base_time + 3 );
+incremental_expect( 2 === count( $test_history[ $base_time ]['plugins'] ), 'Repeated runs without changes must not add archives' );
+// A deletion alone is a change: its cumulative manifest is what makes a restore remove the file.
+unlink( $directory . '/plugins/removed-later.txt' );
+$run( true, $base_time + 4 );
+incremental_expect( 3 === count( $test_history[ $base_time ]['plugins'] ), 'A deletion without other changes must still write an archive' );
+$zip = ( BackupPlus_Archive_Compression::enabled() ? new BackupPlus_Tar() : new ZipArchive() );
+incremental_expect( true === $zip->open( $directory . '/archives/' . $test_history[ $base_time ]['plugins'][2] ), 'Deletion archive must be readable' );
+$manifest = json_decode( $zip->getFromName( 'backupplus-manifest.json' ), true );
+incremental_expect( in_array( 'plugins/removed-later.txt', $manifest['deleted'], true ) && in_array( 'plugins/nested/deleted.txt', $manifest['deleted'], true ), 'Deletion archive must carry the cumulative deletions' );
+$zip->close();
+$run( true, $base_time + 5 );
+incremental_expect( 3 === count( $test_history[ $base_time ]['plugins'] ), 'A later run without changes must not add an archive' );
 
 // Exercise the real restorer against an isolated destination, including cumulative deletions.
 require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -193,6 +211,7 @@ incremental_expect( 'after!' === file_get_contents( $restore_path . '/changed.tx
 incremental_expect( 'unchanged' === file_get_contents( $restore_path . '/unchanged.txt' ), 'Restore must keep unchanged content from the base' );
 incremental_expect( 'new image' === file_get_contents( $restore_path . '/new.jpg' ), 'Restore must include the new image' );
 incremental_expect( ! file_exists( $restore_path . '/nested' ), 'Latest manifest must remove cumulative nested deletions' );
+incremental_expect( ! file_exists( $restore_path . '/removed-later.txt' ), 'A restore through skipped no-change increments must still apply the latest deletions' );
 incremental_expect( ! file_exists( $restore_path . '/backupplus-manifest.json' ), 'Restore metadata must not be copied into site files' );
 $delete = new ReflectionMethod( $restorer, 'incremental_restore_deleted_paths' );
 foreach ( array( '../escape', 'plugins/../../escape', '/absolute', 'plugins/dir\\escape', '' ) as $unsafe ) {
@@ -294,7 +313,7 @@ $plain_stream  = fopen( $decrypted, 'wb' );
 BackupPlus_Age_Crypto::decrypt( $cipher_stream, $plain_stream, $keys['keys']['native']['identity'], $keys['passphrase'] );
 fclose( $cipher_stream );
 fclose( $plain_stream );
-$zip = new ZipArchive();
+$zip = ( BackupPlus_Archive_Compression::enabled() ? new BackupPlus_Tar() : new ZipArchive() );
 incremental_expect( true === $zip->open( $decrypted ), 'Encrypted increment must decrypt to a valid ZIP' );
 incremental_expect( 'encrypted image change' === $zip->getFromName( 'plugins/new.jpg' ), 'Decrypted increment must contain the changed file' );
 incremental_expect( false === $zip->locateName( 'plugins/unchanged.txt' ), 'Encrypted increment must skip unchanged files' );
@@ -327,4 +346,65 @@ $result = $restorer->move_backup_in( $other_working, trailingslashit( $other_des
 incremental_expect( true === $result && file_exists( $other_working . '/backupplus-manifest.json' ), 'Content-directory restore must keep its manifest for deletion processing' );
 $result = ( new ReflectionMethod( $restorer, 'incremental_restore_prune_files' ) )->invoke( $restorer, $other_working, 'others', $other_destination );
 incremental_expect( true === $result && ! file_exists( $other_destination . '/deleted.txt' ), 'Content-directory deletions must use the selected destination' );
+backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
+$chain_dir     = $backupplus->backups_dir_location();
+$chain_time    = 1700000000;
+$chain_files   = array();
+$chain_history = BackupPlus_Backup_History::get_history();
+foreach ( array( 0, 1, 2, 3 ) as $chain_index ) {
+	$chain_files[ $chain_index ] = 'backup_2023-11-14-221' . $chain_index . '_Site_abcdef012345-plugins' . ( $chain_index ? $chain_index + 1 : '' ) . '.tar.zst';
+	file_put_contents( $chain_dir . '/' . $chain_files[ $chain_index ], 'chain' );
+}
+file_put_contents( $chain_dir . '/incremental_abcdef012345_plugins.php', '<?php exit;' );
+$chain_history[ $chain_time ] = array(
+	'plugins'       => $chain_files,
+	'plugins-size'  => 5,
+	'plugins1-size' => 5,
+	'plugins2-size' => 5,
+	'plugins3-size' => 5,
+	'incremental'   => array(
+		'complete'  => true,
+		'snapshots' => array( 'plugins' => 'incremental_abcdef012345_plugins.php' ),
+	),
+	'nonce'         => 'abcdef012345',
+	'service'       => array( 'none' ),
+);
+BackupPlus_Backup_History::save_history( $chain_history );
+$chain_result = BackupPlus_Chain_Downloads::delete( $chain_time, 'plugins', '2', 'local' );
+$chain_after  = BackupPlus_Backup_History::get_history( $chain_time );
+incremental_expect( array( 2, 3 ) === $chain_result['removed'], 'Deleting an incremental must delete every later incremental of the entity' );
+incremental_expect( array_values( $chain_after['plugins'] ) === array( $chain_files[0], $chain_files[1] ) && ! isset( $chain_after['plugins2-size'], $chain_after['plugins3-size'] ), 'Deleted incrementals must leave the backup history' );
+incremental_expect( file_exists( $chain_dir . '/' . $chain_files[1] ) && ! file_exists( $chain_dir . '/' . $chain_files[2] ) && ! file_exists( $chain_dir . '/' . $chain_files[3] ), 'Only the chosen and later archives may be removed from disk' );
+incremental_expect( empty( $chain_after['incremental']['snapshots']['plugins'] ) && ! file_exists( $chain_dir . '/incremental_abcdef012345_plugins.php' ), 'A truncated chain must not be continued by the next incremental' );
+$chain_history = BackupPlus_Backup_History::get_history();
+unset( $chain_history[ $chain_time ] );
+BackupPlus_Backup_History::save_history( $chain_history );
+foreach ( $chain_files as $chain_file ) {
+	@unlink( $chain_dir . '/' . $chain_file );
+}
+$unfinished_nonce = bin2hex( random_bytes( 6 ) );
+$nonces[]         = $unfinished_nonce;
+$test_cron        = array(
+	'version'   => 2,
+	time() + 60 => array(
+		'backupplus_backup_resume' => array(
+			'resume' => array(
+				'schedule' => false,
+				'args'     => array( 1, $unfinished_nonce ),
+			),
+		),
+	),
+);
+$unfinished_job   = array(
+	'job_type'    => 'incremental',
+	'jobstatus'   => 'resumingforerrors',
+	'backup_time' => time() - 120,
+);
+update_site_option( 'backupplus_jobdata_' . $unfinished_nonce, $unfinished_job );
+incremental_expect( array( $unfinished_nonce ) === array_keys( BackupPlus_Job_Scheduler::unfinished_backup_jobs() ), 'A backup waiting to resume must hold back the next scheduled incremental backup' );
+update_site_option( 'backupplus_jobdata_' . $unfinished_nonce, array_merge( $unfinished_job, array( 'jobstatus' => 'finished' ) ) );
+incremental_expect( ! BackupPlus_Job_Scheduler::unfinished_backup_jobs(), 'A finished backup must not hold back scheduled incremental backups' );
+update_site_option( 'backupplus_jobdata_' . $unfinished_nonce, array_merge( $unfinished_job, array( 'backup_time' => time() - BackupPlus_Job_Scheduler::ABANDONED_AFTER - 60 ) ) );
+incremental_expect( ! BackupPlus_Job_Scheduler::unfinished_backup_jobs(), 'An abandoned backup must not hold back scheduled incremental backups for good' );
+$test_cron = array();
 echo "WordPress incremental backup checks passed.\n";

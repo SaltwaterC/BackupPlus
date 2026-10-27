@@ -232,7 +232,7 @@ class BackupPlus_Encryption {
 
 			// check to ensure there is a response back
 			if ( is_array( $decrypted_file ) ) {
-				header( 'Content-type: ' . ( preg_match( '/\.zip$/i', $decrypted_file['basename'] ) ? 'application/zip' : 'application/x-gzip' ) );
+				header( 'Content-type: ' . ( preg_match( '/\.zst$/i', $decrypted_file['basename'] ) ? 'application/zstd' : ( preg_match( '/\.zip$/i', $decrypted_file['basename'] ) ? 'application/zip' : 'application/x-gzip' ) ) );
 				header( 'Content-Disposition: attachment; filename="' . $decrypted_file['basename'] . '";' );
 				header( 'Content-Length: ' . filesize( $decrypted_file['fullpath'] ) );
 				readfile( $decrypted_file['fullpath'] );

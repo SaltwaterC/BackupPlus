@@ -42,6 +42,11 @@ trait BackupPlus_Core_Backup_Dispatch {
 	public function backup_increments() {
 		$interval = BackupPlus_Options::get_backupplus_option( 'backupplus_interval_increments', 'none' );
 		if ( 'none' !== $interval && ! empty( $interval ) ) {
+			// A short schedule must not start another backup while one is still uploading or waiting to retry: it could not use that backup as its base and would take another full one.
+			if ( BackupPlus_Job_Scheduler::unfinished_backup_jobs() ) {
+				$this->log( 'Skipping this scheduled incremental backup: the previous backup has not finished.' );
+				return;
+			}
 			$this->boot_backup(
 				1,
 				0,

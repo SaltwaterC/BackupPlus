@@ -72,7 +72,7 @@ test-sites:
 	./dev/test-sites.sh
 
 test-prerequisites:
-	@set -e; for tool in php node openssl scp ssh-keygen age age-keygen "$(PODMAN)"; do \
+	@set -e; for tool in php node openssl scp ssh-keygen age age-keygen zstd tar gzip unzip "$(PODMAN)"; do \
 		command -v "$$tool" >/dev/null 2>&1 || { echo "Missing test prerequisite: $$tool" >&2; exit 1; }; \
 	done
 	@php -r '$$missing = array_filter(array("curl", "dom", "openssl", "ctype", "sodium"), function($$name) { return !extension_loaded($$name); }); if ($$missing || !function_exists("curl_init") || !function_exists("fsockopen")) { fwrite(STDERR, "Tests require PHP cURL, DOM, OpenSSL, ctype, sodium, curl_init and fsockopen. Missing extensions: ".implode(", ", $$missing)."\n"); exit(1); } $$curl = curl_version(); if (!in_array("ftp", $$curl["protocols"], true) || !($$curl["features"] & CURL_VERSION_SSL)) { fwrite(STDERR, "Tests require libcurl with FTP and SSL/TLS support.\n"); exit(1); }'

@@ -241,6 +241,10 @@ trait BackupPlus_Pre_Update_Backups_Run {
 
 	/** Complete pre-update sets have an independent, whole-set retention policy. */
 	public function prune() {
+		if ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::managed() ) {
+			BackupPlus_Storage_Limits::run( null, ! BackupPlus_Retention_Cleanup::deferred() );
+			return;
+		}
 		global $backupplus;
 		$history = BackupPlus_Backup_History::get_history();
 		$keep    = max( 1, (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain', 2 ), (int) BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', 2 ) );

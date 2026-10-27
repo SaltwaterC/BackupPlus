@@ -146,14 +146,14 @@ final class SettingsImportTest extends TestCase {
 		$this->assertTrue( $legacy_ftp_result['settings']['backupplus_ftp']['passive'], 'legacy FTP mode keeps its original passive default' );
 	}
 
-	public function test_multiple_destinations_reduce_to_the_active_single_destination(): void {
+	public function test_multiple_destinations_are_all_kept(): void {
 		$multiple_result = BackupPlus_Settings_Importer::normalize_legacy_settings(
 			array( 'updraft_service' => array( 's3', 'dropbox' ) ),
 			array( 's3', 'dropbox' ),
 			array( 'backupplus_service' )
 		);
-		$this->assertSame( 'dropbox', $multiple_result['settings']['backupplus_service'], 'multiple destinations reduce to the active single destination' );
-		$this->assertContains( 'updraft_service:multiple_destinations', $multiple_result['skipped_settings'], 'extra destinations are reported' );
+		$this->assertSame( array( 's3', 'dropbox' ), $multiple_result['settings']['backupplus_service'], 'every available destination is kept' );
+		$this->assertNotContains( 'updraft_service:multiple_destinations', $multiple_result['skipped_settings'], 'no destination is dropped' );
 	}
 
 	public function test_unavailable_providers_are_not_activated_but_keep_their_credentials(): void {

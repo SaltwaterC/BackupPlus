@@ -177,6 +177,7 @@ trait BackupPlus_Admin_Backup_Sets {
 							$remote_obj->set_options( $options, false, $instance_id );
 
 							foreach ( $files as $file ) {
+								if ( ! empty( $backups[ $timestamp ]['storage_deleted_files'][ $service . ':' . $instance_id ][ $file ] ) ) { continue; }
 								$hashed_file = md5( $instance_id . $file );
 								if ( isset( $backups[ $timestamp ]['instance_file_deletions_done'] ) && in_array( $hashed_file, $backups[ $timestamp ]['instance_file_deletions_done'] ) ) {
 									continue;

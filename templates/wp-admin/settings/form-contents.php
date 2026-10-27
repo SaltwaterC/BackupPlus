@@ -117,10 +117,12 @@ foreach ( $default_options as $k => $v ) {
 				</select>
 				<label class="backupplus-retention-cleanup-time"><span class="backupplus-field-prefix"><?php esc_html_e( 'at', 'backupplus' ); ?></span> <input type="time" step="60" id="backupplus_retention_cleanup_time" name="backupplus_retention_cleanup_time" value="<?php echo esc_attr( $backupplus_cleanup_time ); ?>"></label>
 			</div>
-			<p id="backupplus-retention-cleanup-description" class="description"><?php esc_html_e( 'Backups beyond the numbers kept above are deleted, except backups marked "Always Keep" and imported backups. In daily mode, backups no longer delete old backups when they finish; a separate cleanup runs once a day without creating a backup.', 'backupplus' ); ?></p>
+			<p id="backupplus-retention-cleanup-description" class="description"><?php esc_html_e( 'Backups beyond the numbers kept above are deleted, except backups marked "Always Keep" and imported backups. A destination that has a quota under Storage limits is trimmed by that quota instead. In daily mode, backups no longer delete old backups when they finish; a separate cleanup runs once a day without creating a backup.', 'backupplus' ); ?></p>
 			<?php echo wp_kses( BackupPlus_Backup_Schedule::timing_help(), BackupPlus_Backup_Schedule::allowed_html() ); ?>
 		</td>
 	</tr>
+	<?php echo BackupPlus_Storage_Limits::settings_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the renderer. ?>
+
 	<tr>
 		<th scope="row"><label for="backupplus_autobackup_default"><?php esc_html_e( 'Pre-update backups', 'backupplus' ); ?></label></th>
 		<td>
@@ -136,19 +138,16 @@ foreach ( $default_options as $k => $v ) {
 <?php
 $debug_mode     = BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ? 'checked="checked"' : '';
 $active_service = BackupPlus_Options::get_backupplus_option( 'backupplus_service' );
-if ( is_array( $active_service ) ) {
-	$active_service = $backupplus->just_one( $active_service );
-}
 
-// Change this to give a class that we can exclude
-$multi = apply_filters( 'backupplus_storage_printoptions_multi', '' );
+// Every selected destination receives the backups, so the checkboxes are not exclusive.
+$multi = 'multi';
 ?>
 
 <table id="remote-storage-holder" class="form-table width-900">
 	<tr class="backupplus-background-white">
 		<th>
 		<?php
-			echo esc_html__( 'Select your preferred remote storage location', 'backupplus' ) . '<br>' . wp_kses_post( apply_filters( 'backupplus_after_remote_storage_heading_message', '<em>' . __( '(tap on an icon to select or unselect)', 'backupplus' ) . '</em>' ) );
+			echo esc_html__( 'Select your remote storage locations', 'backupplus' ) . '<br>' . wp_kses_post( apply_filters( 'backupplus_after_remote_storage_heading_message', '<em>' . __( '(tap on an icon to select or unselect; every selected location receives each backup)', 'backupplus' ) . '</em>' ) );
 		?>
 		<td>
 		<div id="remote-storage-container" class="available-remote-storages">
@@ -168,11 +167,33 @@ $multi = apply_filters( 'backupplus_storage_printoptions_multi', '' );
 
 
 
+	<tr>
+		<td colspan="2">
+			<h2 id="remote_storage_tabs" class="nav-tab-wrapper" style="display:none">
+				<?php foreach ( $backupplus->backup_methods as $method => $description ) : ?>
+					<a href="#remote-storage-<?php echo esc_attr( $method ); ?>" id="remote-storage-<?php echo esc_attr( $method ); ?>" class="nav-tab remote-tab remote-tab-<?php echo esc_attr( $method ); ?>" name="<?php echo esc_attr( $method ); ?>" style="display:none"><?php echo esc_html( $description ); ?></a>
+				<?php endforeach; ?>
+			</h2>
+		</td>
+	</tr>
+
 	<?php do_action( 'backupplus_after_remote_storage' ); ?>
 
 	<tr class="backupplusmethod none ud_nostorage">
 		<td></td>
 		<td><em><?php echo esc_html( __( 'If you choose no remote storage, then the backups remain on the web-server.', 'backupplus' ) . ' ' . __( 'This is not recommended (unless you plan to manually copy them to your computer), as losing the web-server would mean losing both your website and the backups in one event.', 'backupplus' ) ); ?></em></td>
+	</tr>
+</table>
+
+<table class="form-table width-900">
+	<tr class="deletelocal">
+		<th><label for="backupplus_delete_local"><?php esc_html_e( 'Copies on this server', 'backupplus' ); ?></label></th>
+		<td>
+			<input type="hidden" name="backupplus_delete_local" value="0">
+			<input type="checkbox" id="backupplus_delete_local" name="backupplus_delete_local" value="1" <?php checked( BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) ); ?> aria-describedby="backupplus-delete-local-description">
+			<label for="backupplus_delete_local"><?php esc_html_e( 'Delete backup files from this server once they are in remote storage', 'backupplus' ); ?></label>
+			<p id="backupplus-delete-local-description" class="description"><?php esc_html_e( 'Checked: only the remote copy remains, and retention rules also remove old local files. Unchecked: every backup stays on this server as well, and retention never deletes local files. A disk quota for local storage under Storage limits overrides this and keeps local copies.', 'backupplus' ); ?></p>
+		</td>
 	</tr>
 </table>
 
@@ -311,7 +332,6 @@ foreach ( $storage_objects_and_ids as $method => $method_information ) {
 	<?php BackupPlus_Credential_Key_Admin::render(); ?>
 
 	<?php
-	$delete_local   = BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 1 );
 	$split_every_mb = BackupPlus_Options::get_backupplus_option( 'backupplus_split_every', 400 );
 	if ( ! is_numeric( $split_every_mb ) ) {
 		$split_every_mb = 400;
@@ -340,16 +360,6 @@ foreach ( $storage_objects_and_ids as $method => $method_information ) {
 				);
 				?>
 		</td>
-	</tr>
-
-	<tr class="deletelocal expertmode backupplus-hidden" style="display:none;">
-		<th><?php esc_html_e( 'Delete local backup', 'backupplus' ); ?>:</th>
-		<td><input type="checkbox" id="backupplus_delete_local" name="backupplus_delete_local" value="1" 
-		<?php
-		if ( $delete_local ) {
-			echo 'checked="checked"';}
-		?>
-		> <br><label for="backupplus_delete_local"><?php esc_html_e( 'Check this to delete any superfluous backup files from your server after the backup run finishes (i.e. Whilst this option is unchecked, files sent to remote storage will also remain stored locally, and no locally stored files will be deleted in response to any retention rules).', 'backupplus' ); ?></label></td>
 	</tr>
 
 	<tr class="expertmode backupdirrow backupplus-hidden" style="display:none;">

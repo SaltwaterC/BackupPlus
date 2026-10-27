@@ -77,7 +77,8 @@ trait BackupPlus_Restorer_Database_Restore {
 			}
 			$dbhandle = bzopen( $working_dir_localpath . '/' . $db_basename, 'r' );
 		} else {
-			$dbhandle = gzopen( $working_dir_localpath . '/' . $db_basename, 'r' );
+			try { $dbhandle = BackupPlus_Archive_Compression::open_read( $working_dir_localpath . '/' . $db_basename ); }
+			catch ( Throwable $error ) { return new WP_Error( 'dbopen_failed', $error->getMessage() ); }
 		}
 		if ( ! $dbhandle ) {
 			return new WP_Error( 'dbopen_failed', __( 'Failed to open database file', 'backupplus' ) );

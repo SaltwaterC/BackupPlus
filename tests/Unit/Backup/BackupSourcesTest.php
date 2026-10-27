@@ -42,6 +42,23 @@ final class BackupSourcesTest extends TestCase {
 		$this->fail( $message );
 	}
 
+	public function test_the_plugins_own_tooling_directory_is_never_backed_up(): void {
+		$tooling = BACKUPPLUS_DIR . '/.cache';
+		$created = ! is_dir( $tooling ) && mkdir( $tooling );
+		try {
+			$this->assertTrue( BackupPlus_Backup_Sources::exclude( false, realpath( $tooling ) ) );
+			mkdir( $tooling . '/bp-probe' );
+			$this->assertTrue( BackupPlus_Backup_Sources::exclude( false, realpath( $tooling . '/bp-probe' ) ) );
+			$this->assertFalse( BackupPlus_Backup_Sources::exclude( false, BACKUPPLUS_DIR . '/includes' ) );
+			$this->assertFalse( BackupPlus_Backup_Sources::exclude( false, BACKUPPLUS_DIR . '/.cache-other' ) );
+		} finally {
+			@rmdir( $tooling . '/bp-probe' );
+			if ( $created ) {
+				rmdir( $tooling );
+			}
+		}
+	}
+
 	private function tables(): array {
 		return array( 'wp_posts', 'wp_options', 'unrelated', 'WP_posts' );
 	}

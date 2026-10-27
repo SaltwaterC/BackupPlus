@@ -138,7 +138,7 @@ class BackupPlus_Database_Encryption {
 		<?php if ( ! in_array( $mode, array( 'none', 'age' ), true ) ) { ?>
 		<p role="alert"><?php esc_html_e( 'The saved backup encryption mode is no longer supported. Choose Disabled or age public keys and save changes before running backups.', 'backupplus' ); ?></p>
 		<?php } ?>
-		<p class="description"><?php esc_html_e( 'Encrypts database dumps and every file archive, including split ZIP parts. Encryption must complete before files are uploaded.', 'backupplus' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Encrypts database dumps and every file archive, including split tar/Zstandard parts. Encryption must complete before files are uploaded.', 'backupplus' ); ?></p>
 		<p><label for="backupplus-age-recipients"><?php esc_html_e( 'age recipients, one per line', 'backupplus' ); ?></label><br>
 		<textarea id="backupplus-age-recipients" name="backupplus_database_encryption[sources]" rows="5" spellcheck="false"><?php echo esc_textarea( implode( "\n", $sources ) ); ?></textarea></p>
 		<p><button type="button" id="backupplus-age-generate" class="button"><?php esc_html_e( 'Generate age key in browser', 'backupplus' ); ?></button></p>
@@ -184,7 +184,7 @@ class BackupPlus_Database_Encryption {
 		check_admin_referer( 'backupplus-decrypt-database' );
 		global $backupplus;
 		$file = isset( $_POST['file'] ) && is_string( $_POST['file'] ) ? wp_unslash( $_POST['file'] ) : '';
-		if ( ! preg_match( '/\Abackup_[-0-9]{15}_.*_[a-f0-9]{12}-(?:db[0-9]*\.gz|[-a-z]+[0-9]*\.zip)\.crypt\z/iD', $file ) || basename( $file ) !== $file ) {
+		if ( ! preg_match( '/\Abackup_[-0-9]{15}_.*_[a-f0-9]{12}-(?:db[0-9]*\.(?:gz|sql\.zst)|[-a-z]+[0-9]*\.(?:zip|tar\.zst))\.crypt\z/iD', $file ) || basename( $file ) !== $file ) {
 			wp_die( 'Invalid backup archive.' );
 		}
 		$identity = isset( $_POST['identity'] ) && is_string( $_POST['identity'] ) ? wp_unslash( $_POST['identity'] ) : '';

@@ -159,7 +159,7 @@ function backupplus_download_bulk(container, selected_only) {
 		if (!row.data('download-ready') || (selected_only && !row.find('.backupplus-download-select').prop('checked'))) return;
 		var data = row.data('downloaderfor');
 		// Each attachment needs its own browsing context so downloads do not replace each other.
-		jQuery('<iframe hidden title=""></iframe>').attr('src', ajaxurl + '?_wpnonce=' + encodeURIComponent(backupplus_download_nonce) + '&timestamp=' + data.nonce + '&type=' + encodeURIComponent(data.what) + '&stage=2&findex=' + data.index).on('load', function() { jQuery(this).remove(); }).appendTo(document.body);
+		jQuery('<iframe hidden title=""></iframe>').attr('src', ajaxurl + '?_wpnonce=' + encodeURIComponent(backupplus_download_nonce) + '&timestamp=' + data.nonce + '&type=' + encodeURIComponent(data.what) + '&stage=2&findex=' + data.index + '&action=backupplus_download_backup').on('load', function() { jQuery(this).remove(); }).appendTo(document.body);
 	});
 }
 
@@ -233,7 +233,8 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 		}
 		jQuery(stid_selector).data('lasttimebegan', (new Date).getTime());
 	}
-	if ('uddlstatus_' === base) {
+	// Selecting, downloading all and dismissing only make sense for several archives; one archive just has its own buttons.
+	if ('uddlstatus_' === base && container.find('.backupplus_downloader').length > 1) {
 		backupplus_download_controls(container);
 		backupplus_download_controls_update(container);
 	} else {

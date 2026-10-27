@@ -83,6 +83,7 @@ class BackupPlus_Backup_Deletion {
 						$provider->set_options( $storage[ $service ]['instance_settings'][ $instance ], false, $instance );
 					}
 					foreach ( $files as $file ) {
+						if ( ! empty( $backup['storage_deleted_files'][ $service . ':' . $instance ][ $file ] ) ) { continue; }
 						$key = hash( 'sha256', $service . ':' . $instance . ':' . $file );
 						if ( ! empty( $backup['cli_deletions'][ $key ] ) ) { continue; }
 						try { $deleted = $provider->delete( $file );

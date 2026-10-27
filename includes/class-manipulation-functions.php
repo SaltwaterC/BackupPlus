@@ -156,7 +156,7 @@ class BackupPlus_Manipulation_Functions {
 	 * @return Array|Boolean - the parsed values, or false if parsing failed
 	 */
 	public static function parse_filename( $filename ) {
-		if ( preg_match( '/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|zip\.crypt|gz|gz\.crypt)$/i', $filename, $matches ) ) {
+		if ( preg_match( '/^backup_([\-0-9]{10})-([0-9]{4})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?+\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt)$/i', $filename, $matches ) ) {
 			return array(
 				'date'      => strtotime( $matches[1] . ' ' . $matches[2] ),
 				'nonce'     => $matches[3],
@@ -260,6 +260,7 @@ class BackupPlus_Manipulation_Functions {
 	}
 
 	public static function get_mime_type_from_filename( $filename, $allow_gzip = true ) {
+		if ( '.zst' === substr( $filename, -4 ) ) { return 'application/zstd'; }
 		if ( '.zip' == substr( $filename, -4, 4 ) ) {
 			return 'application/zip';
 		} elseif ( '.tar' == substr( $filename, -4, 4 ) ) {

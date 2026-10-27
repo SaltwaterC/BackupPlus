@@ -52,9 +52,12 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 			if ( self::has_exact_schedule( $config ) && is_numeric( $scheduled_at ) ) {
 				self::queue_next_exact( $config );
 			}
-			$worker = new self();
+			$worker   = new self();
 			$interval = isset( $worker->config['interval'] ) ? (int) $worker->config['interval'] : 15;
 			$worker->run( self::has_exact_schedule( $worker->config ) || $interval <= 60 ? 'capture' : 'run' );
+		} catch ( BackupPlus_PITR_Busy $busy ) {
+			// The previous capture is still going. Capture continues from where it stopped, so a skipped turn only delays the next recovery point.
+			return;
 		} catch ( Throwable $error ) {
 			global $backupplus;
 			$backupplus->log( $error->getMessage(), 'error' );
@@ -72,6 +75,8 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 			}
 			$worker = new self();
 			$worker->run( 'baseline' );
+		} catch ( BackupPlus_PITR_Busy $busy ) {
+			return;
 		} catch ( Throwable $error ) {
 			global $backupplus;
 			$backupplus->log( $error->getMessage(), 'error' );
@@ -222,7 +227,14 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 		);
 		$next       = BackupPlus_Backup_Schedule::next_run( $definition, time(), BackupPlus_Backup_Schedule::timezone() );
 		if ( $next && wp_schedule_single_event( $next, self::HOOK, array( $next ) ) ) {
-			update_option( self::SCHEDULE_STATE, array( 'signature' => $signature, 'scheduled_at' => $next ), false );
+			update_option(
+				self::SCHEDULE_STATE,
+				array(
+					'signature'    => $signature,
+					'scheduled_at' => $next,
+				),
+				false
+			);
 		}
 	}
 }

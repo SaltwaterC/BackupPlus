@@ -2,6 +2,8 @@
 /** Built-in local sources and exact database coverage. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
+require_once __DIR__ . '/class-tar.php';
+
 class BackupPlus_Backup_Sources {
 	private static $run_sources = null;
 	private static $run_paths   = null;
@@ -103,6 +105,9 @@ class BackupPlus_Backup_Sources {
 	public static function exclude( $excluded, $path ) {
 		global $backupplus;
 		if ( $excluded || self::within( $path, realpath( $backupplus->backups_dir_location() ) ?: $backupplus->backups_dir_location() ) ) { return true; }
+		// Developer tooling kept beside the plugin's code: large, regenerable and full of symlinks that cannot be followed.
+		$tooling = realpath( BACKUPPLUS_DIR . '/.cache' );
+		if ( $tooling && self::within( $path, $tooling ) ) { return true; }
 		$status = $backupplus->jobdata_get( 'filecreating_substatus', array() );
 		if ( isset( $status['e'] ) && 'wpcore' === $status['e'] ) {
 			$uploads = $backupplus->wp_upload_dir();
@@ -323,8 +328,8 @@ class BackupPlus_Backup_Sources {
 	/** Recover portable coverage and original destinations from locally available archives. */
 	public static function archive_metadata( $backup, $id, $path ) {
 		if ( ! is_readable( $path ) || BackupPlus_Encryption::is_file_encrypted( $path ) ) { return $backup; }
-		if ( self::custom( $id ) && class_exists( 'ZipArchive' ) ) {
-			$zip = new ZipArchive();
+		if ( self::custom( $id ) && ( preg_match( '/\.tar\.zst$/D', $path ) || class_exists( 'ZipArchive' ) ) ) {
+			$zip = preg_match( '/\.tar\.zst$/D', $path ) ? new BackupPlus_Tar() : new ZipArchive();
 			if ( true === $zip->open( $path ) ) {
 				$index    = $zip->locateName( 'backupplus-manifest.json' );
 				$stat     = false !== $index ? $zip->statIndex( $index ) : false;
@@ -335,7 +340,7 @@ class BackupPlus_Backup_Sources {
 				}
 			}
 		} elseif ( preg_match( '/^db([1-9][0-9]*)?$/D', $id ) ) {
-			$stream = gzopen( $path, 'rb' );
+			$stream = BackupPlus_Archive_Compression::open_read( $path );
 			if ( $stream ) {
 				for ( $line = 0; $line < 100 && ! gzeof( $stream ); ++$line ) {
 					$text   = gzgets( $stream, 1048576 );

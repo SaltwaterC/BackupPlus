@@ -9,7 +9,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait BackupPlus_PITR_Orchestrator_History {
 
 	private function history( $id ) {
-		$chain   = &$this->state['chains'][ $id ];
+		global $backupplus;
+		$chain = &$this->state['chains'][ $id ];
+		// The log of the latest job that published into this chain backs the 'View Log' button.
+		if ( isset( $backupplus->logfile_handle, $backupplus->nonce ) && is_resource( $backupplus->logfile_handle ) && preg_match( '/^[0-9a-f]{12}$/', (string) $backupplus->nonce ) ) {
+			$chain['log'] = $backupplus->nonce;
+		}
 		$full    = $chain['entries'][0]['manifest'];
 		$history = BackupPlus_Backup_History::get_history();
 		if ( ! isset( $chain['history_time'] ) ) {
@@ -38,6 +43,7 @@ trait BackupPlus_PITR_Orchestrator_History {
 				'db'                   => $artifact['name'],
 				'db-size'              => $artifact['size'],
 				'nonce'                => substr( $full['backup_id'], 0, 12 ),
+				'log'                  => isset( $chain['log'] ) ? $chain['log'] : ( isset( $history[ $time ]['log'] ) ? $history[ $time ]['log'] : '' ),
 				'native'               => ! $chain['imported'],
 				'service'              => $services ? array_values( array_unique( $services ) ) : array( 'none' ),
 				'service_instance_ids' => $instances,
@@ -253,7 +259,15 @@ trait BackupPlus_PITR_Orchestrator_History {
 				if ( 'deleting' === $known['state'] || array_column( $known['entries'], 'sha256' ) !== array_column( $ordered, 'sha256' ) ) { throw new RuntimeException( 'Rescan cannot rebind an incomplete or changed local chain.' ); }
 				// Successful discovery and payload verification prove that these current
 				// storage settings hold the same complete chain (including after credential rotation).
-				$this->state['chains'][ $id ]['destinations'] = BackupPlus_PITR_Storage::destinations();
+				$this->state['chains'][ $id ]['destinations'] = array_values(
+					array_filter(
+						BackupPlus_PITR_Storage::destinations(),
+						function ( $destination ) use ( $known ) {
+							$key = $destination['service'] . ':' . $destination['instance'];
+							return empty( $known['storage_removed'][ $key ] ) && empty( $known['storage_deleting'][ $key ] );
+						}
+					)
+				);
 			}
 		}
 		$this->save();

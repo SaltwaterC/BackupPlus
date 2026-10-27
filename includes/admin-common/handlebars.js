@@ -247,9 +247,8 @@ jQuery(function($) {
 					context['instance_conditional_logic'].operator_options = backupplus_i18n.conditional_logic.operator_options;
 
 					context['first_instance'] = first_instance;
-					if ('undefined' == typeof context['instance_enabled']) {
-						context['instance_enabled'] = 1;
-					}
+					// A saved '0' is a string, which a template condition would take for enabled.
+					context['instance_enabled'] = 'undefined' == typeof context['instance_enabled'] || parseInt(context['instance_enabled'], 10) ? 1 : 0;
 					if ('undefined' == typeof context['instance_label'] || '' == context['instance_label']) {
 						var method_name = backupplus_i18n.remote_storage_methods[method];
 						var instance_label = ' (' + instance_count + ')';
@@ -262,6 +261,7 @@ jQuery(function($) {
 					first_instance = false;
 					instance_count++;
 				}
+				html += backupplus_add_instance_row(method);
 			} else {
 				html += backupplus_i18n.remote_storage_templates[method];
 			}

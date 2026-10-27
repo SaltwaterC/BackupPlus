@@ -248,7 +248,7 @@ trait BackupPlus_Admin_Settings_Fields {
 			}
 		}
 
-		$service = $backupplus->just_one( BackupPlus_Options::get_backupplus_option( 'backupplus_service' ) );
+		$service = BackupPlus_Options::get_backupplus_option( 'backupplus_service' );
 		if ( is_string( $service ) ) {
 			$service = array( $service );
 		}
@@ -284,7 +284,7 @@ trait BackupPlus_Admin_Settings_Fields {
 		global $backupplus;
 
 		$active_instances = array();
-		$services         = (array) $backupplus->just_one( $backupplus->get_canonical_service_list() );
+		$services         = (array) $backupplus->get_canonical_service_list();
 		$all_services     = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( $services );
 
 		foreach ( $all_services as $method => $sinfo ) {

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 trait BackupPlus_Backup_Database {
+	private $db_zstd_writer;
 
 	/**
 	 * This function is resumable, using the following method:
@@ -73,11 +74,12 @@ trait BackupPlus_Backup_Database {
 		$file_base        = $this->get_backup_file_basename_from_time( $use_time );
 		$backup_file_base = $this->backupplus_dir . '/' . $file_base;
 
+		$extension = $this->archive_compression_enabled() ? '.sql.zst' : '.gz';
 		if ( 'finished' == $already_done ) {
-			return basename( $backup_file_base ) . '-db' . ( ( 'wp' == $whichdb ) ? '' : $whichdb ) . '.gz';
+			return basename( $backup_file_base ) . '-db' . ( ( 'wp' == $whichdb ) ? '' : $whichdb ) . $extension;
 		}
 		if ( 'encrypted' == $already_done ) {
-			return basename( $backup_file_base ) . '-db' . ( ( 'wp' == $whichdb ) ? '' : $whichdb ) . '.gz.crypt';
+			return basename( $backup_file_base ) . '-db' . ( ( 'wp' == $whichdb ) ? '' : $whichdb ) . $extension . '.crypt';
 		}
 
 		$backupplus->jobdata_set( 'jobstatus', 'dbcreating' . $this->whichdb_suffix );
@@ -435,7 +437,7 @@ trait BackupPlus_Backup_Database {
 		}
 
 		// Race detection - with zip files now being resumable, these can more easily occur, with two running side-by-side
-		$backup_final_file_name = $backup_file_base . '-db' . $this->whichdb_suffix . '.gz';
+		$backup_final_file_name = $backup_file_base . '-db' . $this->whichdb_suffix . $extension;
 		$time_now               = time();
 		$time_mod               = (int) @filemtime( $backup_final_file_name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		if ( file_exists( $backup_final_file_name ) && $time_mod > 100 && ( $time_now - $time_mod ) < 30 ) {
@@ -451,7 +453,7 @@ trait BackupPlus_Backup_Database {
 			$backupplus->log( 'PHP function is disabled; abort expected: gzopen()' );
 		}
 
-		$decompress_mode = ( defined( 'BACKUPPLUS_DB_STICH_DECOMPRESS' ) && BACKUPPLUS_DB_STICH_DECOMPRESS );
+		$decompress_mode = $this->archive_compression_enabled() || ( defined( 'BACKUPPLUS_DB_STICH_DECOMPRESS' ) && BACKUPPLUS_DB_STICH_DECOMPRESS );
 
 		if ( false === $this->backup_db_open( $backup_final_file_name, true ) ) {
 			return false;
@@ -611,12 +613,13 @@ trait BackupPlus_Backup_Database {
 		$this->stow( "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n" );
 		$this->stow( "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" );
 
-		$backupplus->log( $file_base . '-db' . $this->whichdb_suffix . '.gz: finished writing out complete database file (' . round( filesize( $backup_final_file_name ) / 1024, 1 ) . ' KB)' );
 		if ( ! $this->backup_db_close() ) {
 			$backupplus->log( 'An error occurred whilst closing the final database file' );
 			$backupplus->log( __( 'An error occurred whilst closing the final database file', 'backupplus' ), 'error' );
 			++$errors;
 		}
+
+		$backupplus->log( basename( $backup_final_file_name ) . ': finished writing out complete database file (' . round( filesize( $backup_final_file_name ) / 1024, 1 ) . ' KB)' );
 
 		foreach ( $unlink_files as $unlink_file ) {
 			@unlink( $unlink_file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
@@ -693,9 +696,9 @@ trait BackupPlus_Backup_Database {
 		global $backupplus;
 		$table_prefix = $backupplus->get_table_prefix( false ); // or we can just use $this->table_prefix_raw ??
 		if ( 'wp' == $this->whichdb && ( ! empty( $table_prefix ) && strtolower( $table_prefix . 'sitemeta' ) == strtolower( $table ) ) ) {
-			$where[] = BackupPlus_SQL::fragment( "meta_key NOT LIKE 'backupplus_jobdata_%'" );
+			$where[] = BackupPlus_SQL::fragment( "meta_key NOT LIKE 'backupplus_jobdata_%' AND meta_key NOT LIKE 'backupplus_jobpart_%'" );
 		} elseif ( 'wp' == $this->whichdb && ( ! empty( $table_prefix ) && strtolower( $table_prefix . 'options' ) == strtolower( $table ) ) ) {
-			$where[] = BackupPlus_SQL::fragment( "option_name NOT LIKE 'backupplus_jobdata_%' AND option_name NOT LIKE '_site_transient_update_%'" );
+			$where[] = BackupPlus_SQL::fragment( "option_name NOT LIKE 'backupplus_jobdata_%' AND option_name NOT LIKE 'backupplus_jobpart_%' AND option_name NOT LIKE '_site_transient_update_%'" );
 		}
 
 		return $where;
@@ -745,6 +748,10 @@ trait BackupPlus_Backup_Database {
 	 * @return Boolean
 	 */
 	private function backup_db_close() {
+		if ( $this->db_zstd_writer ) {
+			try { return $this->db_zstd_writer->finish(); }
+			finally { $this->db_zstd_writer = null; }
+		}
 		return $this->dbhandle_isgz ? gzclose( $this->dbhandle ) : fclose( $this->dbhandle );
 	}
 
@@ -759,7 +766,11 @@ trait BackupPlus_Backup_Database {
 	 */
 	public function backup_db_open( $file, $allow_gz = true, $append = false ) {
 		$mode = $append ? 'ab' : 'w';
-		if ( $allow_gz && function_exists( 'gzopen' ) ) {
+		if ( $allow_gz && preg_match( '/\.sql\.zst$/D', $file ) ) {
+			$this->db_zstd_writer = new BackupPlus_Zstd_Writer( $file );
+			$this->dbhandle       = $this->db_zstd_writer->handle;
+			$this->dbhandle_isgz  = false;
+		} elseif ( $allow_gz && function_exists( 'gzopen' ) ) {
 			$this->dbhandle      = gzopen( $file, $mode );
 			$this->dbhandle_isgz = true;
 		} else {
@@ -788,6 +799,9 @@ trait BackupPlus_Backup_Database {
 			return 0;
 		}
 
+		if ( $this->db_zstd_writer ) { BackupPlus_Archive_IO::write_all( $this->dbhandle, $write_line );
+			$this->db_current_raw_bytes += strlen( $write_line );
+			return strlen( $write_line ); }
 		$write_function = $this->dbhandle_isgz ? 'gzwrite' : 'fwrite';
 
 		if ( false == ( $ret = call_user_func( $write_function, $this->dbhandle, $write_line ) ) ) {

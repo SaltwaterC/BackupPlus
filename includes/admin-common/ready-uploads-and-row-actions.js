@@ -109,6 +109,11 @@ jQuery(function($) {
 		}
 	});
 	
+	jQuery('#backupplus-navtab-backups-content .backupplus_existing_backups').on('click', 'button.backupplus_chain_download_button', function(e) {
+		e.preventDefault();
+		backupplus_chain_downloads_open(jQuery(this).data('backup_timestamp'), jQuery(this).data('what'), jQuery(this).data('title'), jQuery(this).data('prettydate'));
+	});
+
 	jQuery('#backupplus-navtab-backups-content .backupplus_existing_backups').on('click', 'button.backupplus_download_button', function(e) {
 		e.preventDefault();
 		var base = 'uddlstatus_';

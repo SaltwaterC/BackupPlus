@@ -96,8 +96,8 @@ Object.assign(ctx, { requests, redirects, downloads, exceptions, call, evaluate,
 			encodeURIComponent(process.env.BACKUPPLUS_DEV_LOGIN_TOKEN || 'backupplus-local-dev-login'),
 	});
 	await wait('location.pathname.includes("/wp-admin/") && document.readyState === "complete"');
-	await navigate(origin + '/wp-admin/options-general.php?page=backupplus&tab=decryption');
+	await navigate(origin + '/wp-admin/options-general.php?page=backupplus&tab=extract');
 	await wait(
-		'window.backupplus_decryption && document.getElementById("backupplus-decrypt-start") && document.querySelector("#backupplus-navtab-decryption.nav-tab-active")',
+		'window.backupplus_decryption && document.getElementById("backupplus-decrypt-start") && document.querySelector("#backupplus-navtab-extract.nav-tab-active")',
 	);
 }

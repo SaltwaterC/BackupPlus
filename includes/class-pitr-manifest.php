@@ -64,7 +64,7 @@ class BackupPlus_PITR_Manifest {
 	}
 
 	public static function filename( $name ) {
-		if ( ! is_string( $name ) || ! preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:full\.sql\.gz|log[0-9]+\.bin\.gz|manifest\.json(?:\.crypt)?|locator\.json)(?:\.crypt)?\z/D', $name ) ) {
+		if ( ! is_string( $name ) || ! preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json(?:\.crypt)?|locator\.json)(?:\.crypt)?\z/D', $name ) ) {
 			throw new RuntimeException( 'Invalid PITR artifact name.' );
 		}
 		return $name;
@@ -90,6 +90,9 @@ class BackupPlus_PITR_Manifest {
 				throw new RuntimeException( 'Invalid PITR artifact inventory.' );
 			}
 			self::filename( $artifact['name'] );
+			$is_zstd = (bool) preg_match( '/\.zst(?:\.crypt)?$/D', $artifact['name'] );
+			if ( $is_zstd && ( empty( $artifact['compression'] ) || 'zstd' !== $artifact['compression'] || ! isset( $artifact['raw_size'], $artifact['raw_sha256'] ) ) ) { throw new RuntimeException( 'Incomplete Zstandard PITR metadata.' ); }
+			if ( isset( $artifact['compression'] ) && ( ! in_array( $artifact['compression'], array( 'gzip', 'zstd' ), true ) || ( 'zstd' === $artifact['compression'] ) !== $is_zstd ) ) { throw new RuntimeException( 'Unsupported or mismatched PITR compression.' ); }
 			self::hash( $artifact['sha256'] );
 			self::hash( $artifact['plain_sha256'] );
 			if ( isset( $artifact['raw_size'] ) ) {

@@ -50,6 +50,7 @@ const packages = [
 	'@scure/base',
 	'age-encryption',
 	'crypto-js',
+	'fzstd',
 ];
 let notices = 'BackupPlus browser cryptography — third-party licenses\n\n';
 for (const name of packages) {

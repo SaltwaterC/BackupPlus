@@ -18,6 +18,7 @@ RUN apt-get update \
         php-mysql \
         php-xml \
         php-zip \
+        zstd \
     && curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli-nightly.phar --output /usr/local/bin/wp \
     && chmod 0755 /usr/local/bin/wp \
     && php /usr/local/bin/wp --info \

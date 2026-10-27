@@ -154,7 +154,7 @@ jQuery(function($) {
 		backupplus_backups_selection.toggle($(this).closest('.backupplus_existing_backups_row'));
 	});
 
-	$('#backupplus-navtab-backups-content').on('click', '#cb-select-all', function(e) {
+	$('#backupplus-navtab-backups-content').on('click', '.cb-select-all', function(e) {
 		if ($(this).is(':checked')) {
 			backupplus_backups_selection.selectAll();
 		} else {
@@ -193,6 +193,17 @@ jQuery(function($) {
 	}
 	
 	
+	// What trims a destination follows from whether it has a quota
+	function backupplus_storage_limits_retention(row) {
+		var $cell = $(row).find('.backupplus-storage-limits-retention');
+		var quota = parseFloat($(row).find('input[name$="[quota]"]').val());
+		$cell.text($cell.data(quota > 0 ? 'by-quota' : 'by-count'));
+	}
+	$('#backupplus-storage-limits tbody tr').each(function() { backupplus_storage_limits_retention(this); });
+	$('#backupplus-storage-limits').on('input change', 'input[name$="[quota]"]', function() {
+		backupplus_storage_limits_retention($(this).closest('tr'));
+	});
+
 	$('#backupplus-navtab-backups-content').on('click', '.js--select-all-backups', function(e) {
 		backupplus_backups_selection.selectAll();
 	});
@@ -201,6 +212,13 @@ jQuery(function($) {
 		backupplus_backups_selection.deselectAll();
 	});
 	
+	// A modifier-click on a row selects the backup, not the text under the pointer (Shift would extend a text selection across the rows)
+	$('#backupplus-navtab-backups-content').on('mousedown', '.backupplus_existing_backups .backupplus_existing_backups_row', function(e) {
+		if (!e.ctrlKey && !e.metaKey) return;
+		e.preventDefault();
+		if (window.getSelection) window.getSelection().removeAllRanges();
+	});
+
 	$('#backupplus-navtab-backups-content').on('click', '.backupplus_existing_backups .backupplus_existing_backups_row', function(e) {
 		if (!e.ctrlKey && !e.metaKey) return;
 		if (e.shiftKey) {
@@ -249,40 +267,35 @@ jQuery(function($) {
 		var method = $(this).data('method');
 		var instance_id = $(this).data('instance_id');
 
-		if (1 === $('.' + method + '_backupplus_remote_storage_border').length) {
-			add_new_instance(method);
-		}
-
-		$('.' + method + '-' + instance_id).hide('slow', function() {
+		$('.' + method + '-' + instance_id).addClass('backupplus_removing').hide('slow', function() {
 			$(this).remove();
 		});
-	});
 
-	$('#backupplus-navtab-settings-content #remote-storage-holder').on('click', '.backupplusmethod .backupplus_edit_label_instance', function(e) {
-		$(this).find('span').hide();
-		$(this).attr('contentEditable', true).trigger('focus');
-	});
-	
-	$('#backupplus-navtab-settings-content #remote-storage-holder').on('keyup', '.backupplusmethod .backupplus_edit_label_instance', function(e) {
-		var method = jQuery(this).data('method');
-		var instance_id = jQuery(this).data('instance_id');
-		var content = jQuery(this).text();
-
-		$('#backupplus_' + method + '_instance_label_' + instance_id).val(content);
-	});
-
-	$('#backupplus-navtab-settings-content #remote-storage-holder').on('blur', '.backupplusmethod .backupplus_edit_label_instance', function(e) {
-		$(this).attr('contentEditable', false);
-		$(this).find('span').show();
-	});
-
-	$('#backupplus-navtab-settings-content #remote-storage-holder').on('keypress', '.backupplusmethod .backupplus_edit_label_instance', function(e) {
-		if (13 === e.which) {
-			$(this).attr('contentEditable', false);
-			$(this).find('span').show();
-			$(this).trigger('blur');
+		// There is always one destination of a selected type to fill in
+		if (0 === $('.' + method + '_backupplus_remote_storage_border').not('.backupplus_removing').length) {
+			add_new_instance(method);
 		}
 	});
+
+	/**
+	 * The first name for a new destination that no other destination of the type uses
+	 *
+	 * @param {string} method - the remote storage name
+	 *
+	 * @return string         - the label
+	 */
+	function next_instance_label(method) {
+		var name = backupplus_i18n.remote_storage_methods[method];
+		var used = [];
+		$('.' + method + '_backupplus_remote_storage_border').not('.backupplus_removing').find('input[type="text"]').each(function() {
+			used.push($(this).val());
+		});
+		var label = name;
+		for (var count = 2; used.indexOf(label) > -1; count++) {
+			label = name + ' (' + count + ')';
+		}
+		return label;
+	}
 
 	/**
 	 * This method will get the default options and compile a template with them
@@ -297,7 +310,7 @@ jQuery(function($) {
 		var method_name = backupplus_i18n.remote_storage_methods[method];
 		context['instance_id'] = 's-' + generate_instance_id(32);
 		context['instance_enabled'] = 1;
-		context['instance_label'] = method_name + ' (' + (jQuery('.' + method + '_backupplus_remote_storage_border').length + 1) + ')';
+		context['instance_label'] = next_instance_label(method);
 		context['instance_conditional_logic'] = {
 			type: '', // always by default
 			rules: [],
@@ -307,9 +320,12 @@ jQuery(function($) {
 			operator_options: backupplus_i18n.conditional_logic.operator_options,
 		};
 		var html = template(context);
-		jQuery(html).hide().insertAfter(jQuery('.' + method + '_add_instance_container').first()).show('slow', function() {
+		var $rows = jQuery(html);
+		$rows.hide().insertBefore(jQuery('.' + method + '_add_instance_container').first()).show('slow', function() {
 			initialize_remote_storage_select2_elements(this);
 		});
+		setTimeout(function() { $rows.find('input[type="text"]').first().trigger('focus'); }, 700);
+		return $rows;
 	}
 
 	/**

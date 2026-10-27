@@ -9,7 +9,8 @@ function sources_wp_expect( $condition, $message ) {
 	}
 }
 define( 'BACKUPPLUS_SPLIT_MIN', 1 );
-if ( ! empty( $args ) && in_array( 'pclzip', $args, true ) ) { define( 'BACKUPPLUS_PREFERPCLZIP', true ); }
+if ( ! empty( $args ) && in_array( 'pclzip', $args, true ) ) { define( 'BACKUPPLUS_PREFERPCLZIP', true );
+	add_filter( 'backupplus_archive_zstd', '__return_false' ); }
 $token     = bin2hex( random_bytes( 6 ) );
 $directory = get_temp_dir() . 'backupplus-sources-' . $token;
 mkdir( $directory );
@@ -163,7 +164,7 @@ list( $ok, $full_nonce ) = $run(
 );
 sources_wp_expect( $ok && ! $backupplus->error_count(), 'Core and multiple sources back up successfully: ' . json_encode( $backupplus->errors ) );
 $backup = $test_history[ $start ];
-$zip    = new ZipArchive();
+$zip    = ( BackupPlus_Archive_Compression::enabled() ? new BackupPlus_Tar() : new ZipArchive() );
 sources_wp_expect( true === $zip->open( $directory . '/archives/' . $backup['wpcore'][0] ), 'Core archive opens' );
 sources_wp_expect( 'root custom file' === $zip->getFromName( 'non-wp-root.txt' ), 'Core includes non-WP root files without a wrapper' );
 $zip->close();
@@ -270,7 +271,7 @@ foreach ( array( false, true ) as $binary_export ) {
 	$history = $test_history[ $backupplus->backup_time ];
 	sources_wp_expect( ! isset( $history['db'] ) && isset( $history['db7'] ), 'Disabled WordPress database is omitted' );
 	$dump   = $directory . '/archives/' . $history['db7'];
-	$handle = gzopen( $dump, 'rb' );
+	$handle = BackupPlus_Archive_Compression::open_read( $dump );
 	$sql    = '';
 	while ( ! gzeof( $handle ) ) { $sql .= gzread( $handle, 1048576 );
 	} gzclose( $handle );
@@ -401,10 +402,7 @@ foreach ( $split_backup[ $ids[0] ] as $index => $file ) {
 	sources_wp_expect( is_array( $plain ), 'Each encrypted split archive decrypts' );
 	$working = $directory . '/split-stage-' . $index;
 	mkdir( $working );
-	$zip = new ZipArchive();
-	sources_wp_expect( true === $zip->open( $plain['fullpath'] ), 'Decrypted split ZIP opens' );
-	$zip->extractTo( $working );
-	$zip->close();
+	sources_wp_expect( true === BackupPlus_Filesystem_Functions::unzip_file( $plain['fullpath'], $working ), 'Decrypted split archive extracts' );
 	BackupPlus_Source_Restore::restore( $working, $ids[0], $split_backup, array( 'backupplus_source_destinations' => array( $ids[0] => $directory . '/split-restored' ) ), $index === array_key_last( $split_backup[ $ids[0] ] ) );
 	unlink( $plain['fullpath'] );
 }

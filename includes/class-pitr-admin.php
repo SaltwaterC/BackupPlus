@@ -301,12 +301,14 @@ class BackupPlus_PITR_Admin {
 			480 => __( 'Every 8 hours', 'backupplus' ),
 			720 => __( 'Every 12 hours', 'backupplus' ),
 		);
+		echo '<div class="backupplus-schedule-controls">';
 		echo '<select id="backupplus-pitr-interval" name="backupplus_pitr[interval]" aria-label="' . esc_attr__( 'Database point-in-time recovery', 'backupplus' ) . '">';
 		foreach ( $choices as $minutes => $label ) {
 			echo '<option value="' . esc_attr( $minutes ) . '" ' . selected( self::form_defaults( $config ), $minutes, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
-		echo ' <button type="button" class="button" id="backupplus-pitr-setup-open">' . esc_html__( 'Backup account', 'backupplus' ) . '</button>';
+		echo '<button type="button" class="button" id="backupplus-pitr-setup-open">' . esc_html__( 'Backup account', 'backupplus' ) . '</button>';
+		echo '</div>';
 		self::timing_controls( $config );
 		require_once __DIR__ . '/class-pitr-setup.php';
 		$capture = get_option( BackupPlus_PITR_Setup::OPTION, null );

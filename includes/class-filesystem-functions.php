@@ -16,6 +16,8 @@ require_once __DIR__ . '/filesystem-functions/trait-unzip.php';
  *
  * The methods live in traits under includes/filesystem-functions/ (disk usage, local file handling, unzip).
  */
+require_once __DIR__ . '/class-tar.php';
+
 class BackupPlus_Filesystem_Functions {
 	use BackupPlus_Filesystem_Functions_Disk_Usage;
 	use BackupPlus_Filesystem_Functions_Files;

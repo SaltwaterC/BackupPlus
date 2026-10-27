@@ -9,13 +9,15 @@
     "test:agessh": "node scripts/test-agessh-wasm.mjs",
     "test:agessh:browser": "node scripts/test-agessh-wasm-browser.mjs",
     "test:decryptor": "node scripts/test-client-decryption.mjs",
+    "test:extract": "node scripts/test-client-extract.mjs",
     "test:decryptor:browser": "node scripts/test-client-decryption-browser.mjs"
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",
     "@scure/base": "2.4.0",
     "age-encryption": "0.3.1",
-    "crypto-js": "4.2.0"
+    "crypto-js": "4.2.0",
+    "fzstd": "0.1.1"
   },
   "devDependencies": {
     "esbuild-wasm": "0.27.4"

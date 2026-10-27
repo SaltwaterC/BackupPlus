@@ -14,14 +14,23 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 		if ( ! isset( $this->state['chains'][ $id ] ) || 'deleting' === $this->state['chains'][ $id ]['state'] ) {
 			throw new RuntimeException( 'PITR chain is unavailable for recovery.' );
 		}
-		$chain    = $this->state['chains'][ $id ];
-		$entries  = $chain['entries'];
-		$latest   = BackupPlus_PITR_Manifest::chain( $entries );
-		$full     = $entries[0]['manifest'];
-		$target   = null === $target ? $latest : BackupPlus_PITR_Manifest::coordinate( $target );
-		$selected = array();
-		$found    = $target === $full['snapshot_coordinate'];
-		$stop     = $full['snapshot_coordinate']['position'];
+		$chain                 = $this->state['chains'][ $id ];
+		$chain['destinations'] = array_values(
+			array_filter(
+				$chain['destinations'],
+				function ( $destination ) use ( $chain ) {
+					$key = $destination['service'] . ':' . $destination['instance'];
+					return empty( $chain['storage_deleting'][ $key ] ) && empty( $chain['storage_removed'][ $key ] );
+				}
+			)
+		);
+		$entries               = $chain['entries'];
+		$latest                = BackupPlus_PITR_Manifest::chain( $entries );
+		$full                  = $entries[0]['manifest'];
+		$target                = null === $target ? $latest : BackupPlus_PITR_Manifest::coordinate( $target );
+		$selected              = array();
+		$found                 = $target === $full['snapshot_coordinate'];
+		$stop                  = $full['snapshot_coordinate']['position'];
 		if ( ! $found ) {
 			foreach ( array_slice( $entries, 1 ) as $entry ) {
 				foreach ( $entry['manifest']['segments'] as $segment ) {
@@ -79,34 +88,39 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 
 	private function unpack( $path, $artifact ) {
 		$target = $this->work . '/unpacked-' . bin2hex( random_bytes( 8 ) );
-		BackupPlus_PITR_Process::private_file( $target );
-		$input  = gzopen( $path, 'rb' );
-		$output = fopen( $target, 'wb' );
-		if ( ! $input || ! $output ) {
-			throw new RuntimeException( 'Could not open compressed PITR artifact.' );
-		}
-		$produced = 0;
-		try {
-			while ( ! gzeof( $input ) ) {
-				$data      = gzread( $input, 1048576 );
-				$produced += strlen( false === $data ? '' : $data );
-				if ( isset( $artifact['raw_size'] ) && $produced > $artifact['raw_size'] ) {
-					throw new RuntimeException( 'PITR decompression exceeded its declared size.' );
-				}
-				if ( false === $data || ( '' === $data && ! gzeof( $input ) ) ) {
-					throw new RuntimeException( 'Corrupt compressed PITR artifact.' );
-				}
-				$offset = 0;
-				while ( $offset < strlen( $data ) ) {
-					$written = fwrite( $output, substr( $data, $offset ) );
-					if ( ! $written ) {
-						throw new RuntimeException( 'PITR recovery disk is full.' );
-					} $offset += $written;
-				}
+		if ( isset( $artifact['compression'] ) && 'zstd' === $artifact['compression'] ) {
+			BackupPlus_PITR_Compression::decompress_zstd( $path, $target, $this->work, isset( $artifact['raw_size'] ) ? $artifact['raw_size'] : 0 );
+			$produced = filesize( $target );
+		} else {
+			BackupPlus_PITR_Process::private_file( $target );
+			$input  = gzopen( $path, 'rb' );
+			$output = fopen( $target, 'wb' );
+			if ( ! $input || ! $output ) {
+				throw new RuntimeException( 'Could not open compressed PITR artifact.' );
 			}
-		} finally {
-			gzclose( $input );
-			fclose( $output );
+			$produced = 0;
+			try {
+				while ( ! gzeof( $input ) ) {
+					$data      = gzread( $input, 1048576 );
+					$produced += strlen( false === $data ? '' : $data );
+					if ( isset( $artifact['raw_size'] ) && $produced > $artifact['raw_size'] ) {
+						throw new RuntimeException( 'PITR decompression exceeded its declared size.' );
+					}
+					if ( false === $data || ( '' === $data && ! gzeof( $input ) ) ) {
+						throw new RuntimeException( 'Corrupt compressed PITR artifact.' );
+					}
+					$offset = 0;
+					while ( $offset < strlen( $data ) ) {
+						$written = fwrite( $output, substr( $data, $offset ) );
+						if ( ! $written ) {
+							throw new RuntimeException( 'PITR recovery disk is full.' );
+						} $offset += $written;
+					}
+				}
+			} finally {
+				gzclose( $input );
+				fclose( $output );
+			}
 		}
 		if ( isset( $artifact['raw_size'] ) && ( $produced !== $artifact['raw_size'] || ! hash_equals( $artifact['raw_sha256'], hash_file( 'sha256', $target ) ) ) ) {
 			throw new RuntimeException( 'PITR uncompressed artifact verification failed.' );

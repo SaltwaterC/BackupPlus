@@ -5,6 +5,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
 }
+require_once dirname( __DIR__ ) . '/class-jobdata-store.php';
 
 trait BackupPlus_Core_Jobdata {
 
@@ -21,12 +22,18 @@ trait BackupPlus_Core_Jobdata {
 
 	private function read_jobdata( $job_id ) {
 		$data = get_site_option( 'backupplus_jobdata_' . $job_id, array() );
+		$data = BackupPlus_Jobdata_Store::unpack( $job_id, $data );
 		return class_exists( 'BackupPlus_Credential_Storage' ) ? BackupPlus_Credential_Storage::job( $data, $job_id, 'decrypt' ) : $data;
 	}
 
 	private function save_jobdata() {
-		$data = class_exists( 'BackupPlus_Credential_Storage' ) ? BackupPlus_Credential_Storage::job( $this->jobdata, $this->nonce, 'encrypt' ) : $this->jobdata;
-		return update_site_option( 'backupplus_jobdata_' . $this->nonce, $data );
+		$previous = get_site_option( 'backupplus_jobdata_' . $this->nonce, array() );
+		$data     = class_exists( 'BackupPlus_Credential_Storage' ) ? BackupPlus_Credential_Storage::job( $this->jobdata, $this->nonce, 'encrypt', null, $previous ) : $this->jobdata;
+		$data     = BackupPlus_Jobdata_Store::pack( $this->nonce, $data, $previous );
+		if ( $data === $previous ) { return false; }
+		$changed = update_site_option( 'backupplus_jobdata_' . $this->nonce, $data );
+		if ( ! $changed && get_site_option( 'backupplus_jobdata_' . $this->nonce, array() ) !== $data ) { throw new RuntimeException( 'Could not persist the backup job checkpoint.' ); }
+		return $changed;
 	}
 
 	public function jobdata_set_from_array( $array ) {
@@ -177,7 +184,7 @@ trait BackupPlus_Core_Jobdata {
 			if ( isset( $backup[ 'db' . $db_index ] ) ) {
 				$db_backup_name = $backup[ 'db' . $db_index ];
 
-				if ( preg_match( '/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $db_backup_name, $matches ) ) {
+				if ( preg_match( '/^backup_([\-0-9]{15})_(.*)_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $db_backup_name, $matches ) ) {
 					$backup_database_info['blog_name'] = $matches[2];
 				}
 

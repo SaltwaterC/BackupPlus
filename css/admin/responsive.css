@@ -184,7 +184,8 @@
 		background: transparent;
 	}
 
-	.existing-backups-table thead {
+	.existing-backups-table thead,
+	.existing-backups-table tfoot .backupplus-footer-header {
 		border: none;
 		clip: rect(0 0 0 0);
 		height: 1px;

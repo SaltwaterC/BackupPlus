@@ -36,7 +36,7 @@ export async function checkTabMarkup(ctx) {
 	assert.equal(await evaluate("!!document.querySelector('#backupplus_encryptionphrase')"), false);
 	assert.equal(
 		await evaluate(
-			'[...document.querySelectorAll(".backupplus-nav-tab")].map(e=>e.id).indexOf("backupplus-navtab-decryption") - [...document.querySelectorAll(".backupplus-nav-tab")].map(e=>e.id).indexOf("backupplus-navtab-expert")',
+			'[...document.querySelectorAll(".backupplus-nav-tab")].map(e=>e.id).indexOf("backupplus-navtab-extract") - [...document.querySelectorAll(".backupplus-nav-tab")].map(e=>e.id).indexOf("backupplus-navtab-expert")',
 		),
 		1,
 	);

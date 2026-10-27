@@ -68,7 +68,7 @@ trait BackupPlus_Backup_History_Rebuild {
 					if ( ! is_string( $filename ) ) {
 						continue;
 					}
-					if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches ) ) {
+					if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-[\-a-z]+([0-9]+)?+(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $filename, $matches ) ) {
 						$nonce = $matches[2];
 						if ( isset( $bdata['service'] ) && ( 'none' === $bdata['service'] || ( is_array( $bdata['service'] ) && ( array( 'none' ) === $bdata['service'] || ( 1 == count( $bdata['service'] ) && isset( $bdata['service'][0] ) && empty( $bdata['service'][0] ) ) ) ) ) && ! is_file( $backupplus_dir . '/' . $filename ) ) {
 							// File without remote storage is no longer locally present
@@ -102,7 +102,7 @@ trait BackupPlus_Backup_History_Rebuild {
 					}
 				}
 			}
-			if ( ! $found_file ) {
+			if ( ! $found_file && empty( $bdata['storage_removed'] ) && empty( $bdata['storage_deleting'] ) ) {
 				// File recorded as being without remote storage is no longer present. It may in fact exist in remote storage, and this will be picked up later (when we scan the remote storage).
 				unset( $backup_history[ $btime ] );
 				$changes = true;
@@ -162,7 +162,7 @@ trait BackupPlus_Backup_History_Rebuild {
 
 						foreach ( $files as $entry ) {
 							$filename = $entry['name'];
-							if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $filename, $matches ) ) {
+							if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $filename, $matches ) ) {
 								continue;
 							}
 
@@ -260,7 +260,7 @@ trait BackupPlus_Backup_History_Rebuild {
 				continue;
 			}
 
-			if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $entry, $matches ) ) {
+			if ( preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $entry, $matches ) ) {
 				// Interpret the time as one from the blog's local timezone, rather than as UTC
 				// $matches[1] is YYYY-MM-DD-HHmm, to be interpreted as being the local timezone
 				$btime = strtotime( $matches[1] );
@@ -293,7 +293,7 @@ trait BackupPlus_Backup_History_Rebuild {
 					'code'    => 'possibleforeign_' . md5( $entry ),
 					'desc'    => $entry,
 					'method'  => '',
-					'message' => __( 'This file does not appear to be a BackupPlus or UpdraftPlus backup archive (such files are .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(zip|gz)).', 'backupplus' ),
+					'message' => __( 'This file does not appear to be a BackupPlus or UpdraftPlus backup archive (such files are .tar.zst, .sql.zst, .zip or .gz files which have a name like: backup_(time)_(site name)_(code)_(type).(tar.zst|sql.zst|zip|gz)).', 'backupplus' ),
 				);
 				$messages[ $potmessage['code'] ] = $potmessage;
 				continue;
@@ -438,7 +438,7 @@ trait BackupPlus_Backup_History_Rebuild {
 		// If so, then we compare $remote_files with $backup_nonces_by_filename / $backup_times_by_nonce, and adjust $backup_history
 
 		foreach ( $remote_files as $file => $services ) {
-			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt))?$/i', $file, $matches ) ) {
+			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $file, $matches ) ) {
 				continue;
 			}
 

@@ -21,6 +21,7 @@ require_once __DIR__ . '/wpadmin-commands/trait-restore.php';
 require_once __DIR__ . '/wpadmin-commands/trait-jstree.php';
 require_once __DIR__ . '/wpadmin-commands/trait-notices.php';
 require_once __DIR__ . '/wpadmin-commands/trait-diagnostics.php';
+require_once __DIR__ . '/wpadmin-commands/trait-chain-downloads.php';
 
 /**
  * An extension, because commands available via wp-admin are a super-set of those which are available through all mechanisms
@@ -30,6 +31,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 	use BackupPlus_WPAdmin_Commands_Jstree;
 	use BackupPlus_WPAdmin_Commands_Notices;
 	use BackupPlus_WPAdmin_Commands_Diagnostics;
+	use BackupPlus_WPAdmin_Commands_Chain_Downloads;
 
 	private $_uc_helper;
 
