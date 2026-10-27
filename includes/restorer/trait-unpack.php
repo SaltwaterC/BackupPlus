@@ -102,16 +102,11 @@ trait BackupPlus_Restorer_Unpack {
 		// Unzip package to working directory
 		if ( preg_match( '#\.(?:zip|tar\.zst)$#i', $archive_name ) ) {
 
-			$folders_to_include = array();
-
-			if ( 'themes' == $type && ! $this->include_unspecified_themes ) {
-				$folders_to_include = $this->themes_to_restore;
-			}
-			if ( 'plugins' == $type && ! $this->include_unspecified_plugins ) {
-				$folders_to_include = $this->plugins_to_restore;
-			}
-
-			$result = BackupPlus_Filesystem_Functions::unzip_file( $package, $working_dir, $zip_starting_index, $folders_to_include );
+			// Extract the manifest as well as the selected components. Incremental
+			// restores need it to remove files deleted after the base backup, and
+			// the archive filter does not preserve top-level manifest files.
+			// Component selection is enforced when files are moved into place.
+			$result = BackupPlus_Filesystem_Functions::unzip_file( $package, $working_dir, $zip_starting_index );
 
 		} elseif ( preg_match( '#\.tar(\.(gz|bz2))?$#i', $package ) ) {
 

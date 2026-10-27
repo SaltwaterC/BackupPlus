@@ -102,7 +102,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<p><label for="backupplus-pitr-restore-user"><?php esc_html_e( 'Restore database username', 'backupplus' ); ?></label><br><input type="text" id="backupplus-pitr-restore-user" autocomplete="off" disabled></p>
 									<p><label for="backupplus-pitr-restore-password"><?php esc_html_e( 'Restore database password', 'backupplus' ); ?></label><br><input type="password" id="backupplus-pitr-restore-password" autocomplete="new-password" disabled></p>
 									<p><?php esc_html_e( 'Used only for this recovery. Restore credentials are never saved in settings, jobs, logs or credential files. They are not needed for ordinary full-dump restores.', 'backupplus' ); ?></p>
-									<p><?php esc_html_e( 'Applies the full snapshot and every required binary-log stage directly to this site’s database. A pre-restore backup is retained. Historical selected-table recovery requires a staged reconstruction.', 'backupplus' ); ?></p>
+									<p><?php esc_html_e( 'Applies the full snapshot and every required binary-log stage directly to this site’s database. A pre-restore backup is retained. Individual tables cannot be selected for this restore.', 'backupplus' ); ?></p>
 									<p><?php esc_html_e( 'BackupPlus will temporarily take the site offline and block application database writes during recovery. Compatibility and permissions are checked before restoring.', 'backupplus' ); ?></p>
 								</div>
 							</div>

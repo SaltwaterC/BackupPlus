@@ -145,6 +145,20 @@ class BackupPlus_CLI_Restore {
 		if ( ! in_array( $type, array( 'all', 'files', 'database' ), true ) ) {
 			throw new InvalidArgumentException( 'Use --type=all, files or database.' );
 		}
+		$plugin = isset( $args['plugin'] ) ? $args['plugin'] : null;
+		$table  = isset( $args['table'] ) ? $args['table'] : null;
+		if ( null !== $plugin && null !== $table ) {
+			throw new InvalidArgumentException( 'Use either --plugin or --table for a partial restore.' );
+		}
+		if ( null !== $plugin && ( ! is_string( $plugin ) || '' === $plugin || '.' === $plugin || '..' === $plugin || false !== strpbrk( $plugin, "/\\\x00\r\n" ) ) ) {
+			throw new InvalidArgumentException( 'Use a top-level plugin directory or PHP filename with --plugin.' );
+		}
+		if ( null !== $table && ( ! is_string( $table ) || '' === $table || preg_match( '/[\x00-\x1f\x7f]/', $table ) ) ) {
+			throw new InvalidArgumentException( 'Use an exact source table name with --table.' );
+		}
+		if ( ( null !== $plugin && 'database' === $type ) || ( null !== $table && 'files' === $type ) ) {
+			throw new InvalidArgumentException( 'The partial restore selection is incompatible with --type.' );
+		}
 		$available       = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup );
 		$available['db'] = array();
 		$entities        = array();
@@ -161,10 +175,35 @@ class BackupPlus_CLI_Restore {
 			}
 			$entities = $selected;
 		}
+		if ( null !== $plugin || null !== $table ) {
+			if ( ! isset( $args['components'] ) ) {
+				$entities = array_values( array_intersect( $entities, array( null !== $plugin ? 'plugins' : 'db' ) ) );
+			}
+			if ( 1 !== count( $entities ) || ( null !== $plugin ? 'plugins' !== $entities[0] : 'db' !== $entities[0] ) ) {
+				throw new InvalidArgumentException( 'A partial restore requires exactly one matching component.' );
+			}
+		}
 		if ( ! $entities ) {
 			throw new InvalidArgumentException( 'No components selected for restoration.' );
 		}
 		$options = array( 'backupplus_restorer_wpcore_includewpconfig' => isset( $args['include-wp-config'] ) );
+		// The ordinary importer can restore the full snapshot of a recovery chain.
+		if ( ! empty( $backup['pitr']['points'] ) ) {
+			foreach ( $backup['pitr']['points'] as $point ) {
+				if ( isset( $point['increment'], $point['backup_id'] ) && 0 === $point['increment'] ) {
+					$options['backupplus_pitr_restore_point'] = $point['backup_id'];
+					break;
+				}
+			}
+		}
+		if ( null !== $plugin ) {
+			$options['plugins_to_restore']          = array( $plugin );
+			$options['include_unspecified_plugins'] = false;
+		}
+		if ( null !== $table ) {
+			$options['tables_to_restore']          = array( $table );
+			$options['include_unspecified_tables'] = false;
+		}
 		if ( isset( $args['point'] ) ) {
 			if ( ! ctype_digit( (string) $args['point'] ) || ! isset( $backup['incremental_sets'][ $args['point'] ] ) ) {
 				throw new InvalidArgumentException( 'The requested restore point does not belong to this backup chain.' );
@@ -293,7 +332,8 @@ class BackupPlus_CLI_Restore {
 	public static function run( $timestamp, $args, $reader = null ) {
 		global $backupplus, $backupplus_restorer;
 		list( $backup, $entities, $options ) = self::selection( $timestamp, $args );
-		WP_CLI::confirm( 'Restore backup ' . $timestamp . ' (' . implode( ', ', array_keys( $entities ) ) . ')? This overwrites the selected current files and database tables.', $args );
+		$target                              = isset( $args['plugin'] ) ? ' plugin ' . $args['plugin'] : ( isset( $args['table'] ) ? ' table ' . $args['table'] : ' (' . implode( ', ', array_keys( $entities ) ) . ')' );
+		WP_CLI::confirm( 'Restore backup ' . $timestamp . $target . '? This overwrites the selected current files and database tables.', $args );
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 		if ( $backupplus->check_restore_progress( 1 ) || BackupPlus_Retention_Cleanup::backup_active() || ! WP_Upgrader::create_lock( 'backupplus_cli_restore', HOUR_IN_SECONDS ) ) {

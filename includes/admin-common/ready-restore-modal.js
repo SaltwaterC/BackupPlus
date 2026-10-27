@@ -243,7 +243,7 @@ jQuery(function($) {
 						
 						anyselected = 0;
 					
-						jQuery('input[name="backupplus_restore_tables_options[]"').each(function (x, y) {
+						jQuery('input[name="backupplus_restore_tables_options[]"]').each(function (x, y) {
 							if (jQuery(y).is(':checked') && !jQuery(y).is(':disabled')) anyselected = 1;
 						});
 						
@@ -260,7 +260,7 @@ jQuery(function($) {
 
 						if (!jQuery(".backupplus_restore_plugins_options_container").length) anyselected = 1;
 
-						jQuery('input[name="backupplus_restore_plugins_options[]"').each(function (x, y) {
+						jQuery('input[name="backupplus_restore_plugins_options[]"]').each(function (x, y) {
 							if (jQuery(y).is(':checked') && !jQuery(y).is(':disabled')) anyselected = 1;
 						});
 						
@@ -277,7 +277,7 @@ jQuery(function($) {
 
 						if (!jQuery(".backupplus_restore_themes_options_container").length) anyselected = 1;
 
-						jQuery('input[name="backupplus_restore_themes_options[]"').each(function (x, y) {
+						jQuery('input[name="backupplus_restore_themes_options[]"]').each(function (x, y) {
 							if (jQuery(y).is(':checked') && !jQuery(y).is(':disabled')) anyselected = 1;
 						});
 						
@@ -292,7 +292,7 @@ jQuery(function($) {
 					
 						anyselected = 0;
 					
-						jQuery('input[name="backupplus_include_more_index[]"').each(function (x, y) {
+						jQuery('input[name="backupplus_include_more_index[]"]').each(function (x, y) {
 							if (jQuery(y).is(':checked') && !jQuery(y).is(':disabled')) {
 								anyselected = 1;
 								if ('' == jQuery('#backupplus_include_more_path_restore' + x).val()) {
@@ -310,15 +310,24 @@ jQuery(function($) {
 
 					if (!continue_restore) return;
 					var restore_options = $('#backupplus_restoreoptions_ui select, #backupplus_restoreoptions_ui input, #backupplus_incremental_restore_point, #backupplus_pitr_restore_point').serialize();
+					// Keep the ordinary full-component behavior when the plugin list is unchanged.
+					var plugin_options = jQuery('input[name="backupplus_restore_plugins_options[]"]');
+					if (plugin_options.length && plugin_options.filter(':checked').length === plugin_options.length) {
+						restore_options += '&backupplus_restore_plugins_options%5B%5D=udp_all_other_plugins';
+					}
+					var table_options = jQuery('input[name="backupplus_restore_tables_options[]"]');
+					if (table_options.length && table_options.filter(':checked').length === table_options.length && !table_options.filter('[value="udp_all_other_tables"]').length) {
+						restore_options += '&backupplus_restore_tables_options%5B%5D=udp_all_other_tables';
+					}
 
 					// jQuery serialize does not pick up unchecked checkboxes, but we want to include these so that we have a list of table/plugins/themes the user does not want to restore we prepend these with udp-skip-{entity}- and check this on the backend
 					var entities = ['tables', 'plugins', 'themes'];
 
 					jQuery.each(entities, function(i, entity) {
-						jQuery.each(jQuery('input[name="backupplus_restore_' + entity + '_options[]').filter(function(idx) {
+						jQuery.each(jQuery('input[name="backupplus_restore_' + entity + '_options[]"]').filter(function(idx) {
 							return jQuery(this).prop('checked') === false
 						}), function(idx, el) {
-							restore_options += '&' + jQuery(el).attr('name') + '=' + 'udp-skip-' + entity + '-' + jQuery(el).val();
+							restore_options += '&' + encodeURIComponent(jQuery(el).attr('name')) + '=' + encodeURIComponent('udp-skip-' + entity + '-' + jQuery(el).val());
 						});
 					})
 

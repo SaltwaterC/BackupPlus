@@ -25,6 +25,9 @@ class BackupPlus_PITR_Restore {
 	}
 
 	public static function request( $params ) {
+		foreach ( array( 'table', 'tables', 'tables_to_restore', 'tables_to_skip' ) as $field ) {
+			if ( isset( $params[ $field ] ) ) { throw new RuntimeException( 'Selecting tables is not supported for binary-log recovery. Select the full database snapshot to restore a table.' ); }
+		}
 		$timestamp           = isset( $params['timestamp'] ) ? (int) $params['timestamp'] : 0;
 		$point               = isset( $params['point'] ) ? $params['point'] : '';
 		list( $id, $target ) = self::selection( $timestamp, $point );

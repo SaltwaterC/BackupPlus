@@ -8,6 +8,42 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait BackupPlus_Restorer_Database_Restore {
 
+	private function has_table_selection() {
+		return ( ! empty( $this->tables_to_restore ) && ! $this->include_unspecified_tables ) || ! empty( $this->tables_to_skip );
+	}
+
+	/** Check the selected tables exist before the importer changes any table. */
+	private function validate_selected_dump_tables( $path, $is_plain, $is_bz2 ) {
+		if ( empty( $this->tables_to_restore ) || $this->include_unspecified_tables ) { return true; }
+		$missing = array_fill_keys( $this->tables_to_restore, true );
+		try {
+			$handle = $is_plain ? fopen( $path, 'rb' ) : ( $is_bz2 ? bzopen( $path, 'r' ) : BackupPlus_Archive_Compression::open_read( $path ) );
+			if ( ! $handle ) { throw new RuntimeException( 'Could not open the database dump for table selection.' ); }
+			$pending = '';
+			try {
+				do {
+					$chunk = $is_plain ? fread( $handle, 1048576 ) : ( $is_bz2 ? bzread( $handle, 1048576 ) : gzread( $handle, 1048576 ) );
+					if ( false === $chunk || ( $is_bz2 && bzerrno( $handle ) !== 0 ) ) { throw new RuntimeException( 'Could not read the database dump for table selection.' ); }
+					$pending .= $chunk;
+					$lines    = explode( "\n", $pending );
+					$pending  = array_pop( $lines );
+					if ( '' === $chunk ) { $lines[] = $pending; }
+					foreach ( $lines as $line ) {
+						if ( preg_match( '/^\s*create table `?([^`(]+)`?\s*\(/i', $line, $matches ) ) { unset( $missing[ rtrim( $matches[1] ) ] ); }
+					}
+					// A CREATE TABLE header is short; avoid retaining large INSERT lines.
+					if ( strlen( $pending ) > 4096 ) { $pending = "\0"; }
+				} while ( '' !== $chunk && $missing );
+			} finally {
+				if ( $is_plain ) { fclose( $handle );
+				} elseif ( $is_bz2 ) { bzclose( $handle );
+				} else { gzclose( $handle ); }
+			}
+			if ( $missing ) { throw new RuntimeException( 'The selected table was not found in the database dump: ' . implode( ', ', array_keys( $missing ) ) ); }
+			return true;
+		} catch ( Throwable $error ) { return new WP_Error( 'selected_table_missing', $error->getMessage() ); }
+	}
+
 	/**
 	 * Restore the database backup
 	 *
@@ -64,8 +100,10 @@ trait BackupPlus_Restorer_Database_Restore {
 
 		$this->skin->feedback( $this->strings['restore_database'] );
 
-		$is_plain = ( '.db' == substr( $db_basename, -3, 3 ) );
-		$is_bz2   = ( '.db.bz2' == substr( $db_basename, -7, 7 ) );
+		$is_plain        = ( '.db' == substr( $db_basename, -3, 3 ) );
+		$is_bz2          = ( '.db.bz2' == substr( $db_basename, -7, 7 ) );
+		$selection_check = $this->validate_selected_dump_tables( $working_dir_localpath . '/' . $db_basename, $is_plain, $is_bz2 );
+		if ( is_wp_error( $selection_check ) ) { return $selection_check; }
 
 		// Read-only access: don't need to go through WP_Filesystem
 		if ( $is_plain ) {
@@ -385,7 +423,7 @@ trait BackupPlus_Restorer_Database_Restore {
 				$insert_prefix    = $matches[1];
 
 				// if the current table is a generated columns table, that means at this stage the table creation is being postponed and the block of code below will get executed first to filter the create statement
-				if ( ! empty( $this->generated_columns[ $this->table_name ] ) ) {
+				if ( ! empty( $this->generated_columns[ $this->table_name ] ) && ! $this->table_should_be_skipped( $this->table_name ) ) {
 					// parse the generated columns insert statement so that later we can instantly retrieve the information needed when creating the table
 					$this->generated_columns_exist_in_the_statement[ $this->table_name ] = BackupPlus_Database_Utility::generated_columns_exist_in_the_statement( $sql_line . $buffer, $this->generated_columns[ $this->table_name ]['column_names'] );
 					if ( $this->table_name != $last_created_generated_columns_table ) {
@@ -493,6 +531,13 @@ trait BackupPlus_Restorer_Database_Restore {
 			if ( $native_trigger ) {
 				$sql_line = preg_replace( $native_trigger_prefix, 'CREATE TRIGGER', $sql_line, 1 );
 				$sql_line = preg_replace( '/\*\/(?=\s*' . $delimiter_regex . '\s*$)/', '', $sql_line, 1 );
+			}
+			$selective_tables = $this->has_table_selection();
+			// These objects belong to the database as a whole, not the selected table.
+			if ( $selective_tables && ( 12 === $sql_type || preg_match( '/^\s*(?:DROP\s+(?:VIEW|FUNCTION|PROCEDURE|TRIGGER)\b|CREATE(?:\s+ALGORITHM=\S+)?(?:\s+DEFINER=\S+)?(?:\s+SQL\s+SECURITY\s+\S+)?\s+VIEW\b)/i', $sql_line ) ) ) {
+				$sql_line = '';
+				$sql_type = -1;
+				continue;
 			}
 
 			++$this->line;
@@ -701,7 +746,7 @@ trait BackupPlus_Restorer_Database_Restore {
 							}
 						}
 					}
-				} elseif ( $native_trigger ) {
+				} elseif ( $native_trigger || $selective_tables ) {
 					return new WP_Error( 'native_trigger', 'Cannot determine the owning table of a native trigger.' );
 				}
 				// If the statement is not yet complete, then continue (to get the next line)
@@ -904,7 +949,10 @@ trait BackupPlus_Restorer_Database_Restore {
 			}
 
 			// Do not execute "USE" or "CREATE|DROP DATABASE" or "SET @@GLOBAL.GTID_PURGED" or "SET SQL_MODE" commands
-			if ( ! in_array( $sql_type, array( 6, 7, 10, 17, 18 ) ) && ( 9 != $sql_type || empty( $this->db_permissons_forbidden['triggers'] ) ) ) {
+			// Database-wide routines, views and unrecognised statements have no selected table owner.
+			if ( $selective_tables && ( in_array( $sql_type, array( 0, 11, 12, 13, 16 ), true ) || preg_match( '/^\s*drop\s+trigger\b/i', $sql_line ) ) ) {
+				$backupplus->log( 'Skipped database-wide statement during selected-table restore.' );
+			} elseif ( ! in_array( $sql_type, array( 6, 7, 10, 17, 18 ) ) && ( 9 != $sql_type || empty( $this->db_permissons_forbidden['triggers'] ) ) ) {
 				$do_exec = $this->sql_exec( $sql_line, $sql_type );
 				if ( is_wp_error( $do_exec ) ) {
 					return $do_exec;
@@ -997,7 +1045,9 @@ trait BackupPlus_Restorer_Database_Restore {
 		}
 
 		// Rescan storage, but only if there was remote storage and a database; otherwise just re-scan locally
-		if ( ! empty( $this->ud_backup_set['db'] ) && ! empty( $this->ud_backup_set['service'] ) && ( 'none' !== $this->ud_backup_set['service'] && 'email' !== $this->ud_backup_set['service'] && array( '' ) !== $this->ud_backup_set['service'] && array( 'none' ) !== $this->ud_backup_set['service'] && array( 'email' ) !== $this->ud_backup_set['service'] ) ) {
+		if ( $this->has_table_selection() ) {
+			// Rebuilding history writes to the options table, which may not be selected.
+		} elseif ( ! empty( $this->ud_backup_set['db'] ) && ! empty( $this->ud_backup_set['service'] ) && ( 'none' !== $this->ud_backup_set['service'] && 'email' !== $this->ud_backup_set['service'] && array( '' ) !== $this->ud_backup_set['service'] && array( 'none' ) !== $this->ud_backup_set['service'] && array( 'email' ) !== $this->ud_backup_set['service'] ) ) {
 			$only_add_this_file = array( 'file' => $this->ud_backup_set['db'] );
 			BackupPlus_Backup_History::rebuild( true, $only_add_this_file );
 		} else {

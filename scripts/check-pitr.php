@@ -472,13 +472,36 @@ try {
 		require_once BACKUPPLUS_DIR . '/restorer.php';
 		WP_Filesystem();
 		$backupplus->initiate_restore_job();
-		$baseline_set                   = array(
+		$application->query( 'USE `' . DB_NAME . '`; DROP PROCEDURE IF EXISTS pitr_proc; CREATE PROCEDURE pitr_proc() SELECT 12345' );
+		$application->query( 'DROP TABLE IF EXISTS `' . DB_NAME . '`.pitr_generated; CREATE TABLE `' . DB_NAME . '`.pitr_generated (id int PRIMARY KEY, value int, doubled int GENERATED ALWAYS AS (value * 2) STORED) ENGINE=InnoDB; INSERT INTO `' . DB_NAME . '`.pitr_generated (id, value) VALUES (1, 99)' );
+		$procedure_before = $application->query( 'SHOW CREATE PROCEDURE `' . DB_NAME . '`.pitr_proc' );
+		$baseline_set     = array(
 			'db'     => $full['artifacts'][0]['name'],
 			'native' => true,
 		);
+		// Add a generated-column table to a separate dump used only by the selective
+		// import. The original coordinated baseline remains unchanged for PITR.
+		$selective_dump = $backupplus->backups_dir_location() . '/selective-generated-fixture.sql.gz';
+		$baseline_input = BackupPlus_Archive_Compression::open_read( $backupplus->backups_dir_location() . '/' . $baseline_set['db'] );
+		$fixture_output = gzopen( $selective_dump, 'wb' );
+		pitr_check( false !== $baseline_input && false !== $fixture_output, 'Could not prepare generated-column selection fixture.' );
+		try {
+			while ( ! gzeof( $baseline_input ) ) {
+				$chunk = gzread( $baseline_input, 1048576 );
+				pitr_check( false !== $chunk && ( '' !== $chunk || gzeof( $baseline_input ) ), 'Could not read the snapshot for the generated-column fixture.' );
+				pitr_check( strlen( $chunk ) === gzwrite( $fixture_output, $chunk ), 'Could not write the generated-column fixture.' );
+			}
+			$generated_sql = "\nDROP TABLE IF EXISTS `pitr_generated`;\nCREATE TABLE `pitr_generated` (\n `id` int PRIMARY KEY,\n `value` int,\n `doubled` int GENERATED ALWAYS AS (`value` * 2) STORED\n) ENGINE=InnoDB;\nINSERT INTO `pitr_generated` VALUES (1,5,DEFAULT);\n";
+			pitr_check( strlen( $generated_sql ) === gzwrite( $fixture_output, $generated_sql ), 'Could not write the generated-column fixture.' );
+		} finally {
+			gzclose( $baseline_input );
+			gzclose( $fixture_output );
+		}
+		$selective_set                  = $baseline_set;
+		$selective_set['db']            = basename( $selective_dump );
 		$ordinary                       = new BackupPlus_Restorer(
 			new BackupPlus_Restorer_Skin(),
-			$baseline_set,
+			$selective_set,
 			false,
 			array(
 				'include_unspecified_tables' => false,
@@ -492,8 +515,8 @@ try {
 			$pre->setAccessible( true );
 			$import->setAccessible( true );
 		}
-		$pre->invoke( $ordinary, $baseline_set['db'], 'db', array() );
-		$imported = $import->invoke( $ordinary, $baseline_set['db'], 'db', array(), true, true );
+		$pre->invoke( $ordinary, $selective_set['db'], 'db', array() );
+		$imported = $import->invoke( $ordinary, $selective_set['db'], 'db', array(), true, true );
 		pitr_check( true === $imported, 'The ordinary importer rejected a PITR baseline: ' . ( is_wp_error( $imported ) ? $imported->get_error_message() : json_encode( $imported ) ) );
 		$errors = new ReflectionProperty( $ordinary, 'errors' );
 		if ( PHP_VERSION_ID < 80100 ) {
@@ -501,6 +524,10 @@ try {
 		}
 		pitr_check( ! $errors->getValue( $ordinary ), 'The ordinary baseline importer reported SQL errors.' );
 		pitr_check( '62617365' === $observer->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0] && '100' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0], 'Ordinary baseline table selection changed an unselected table or lost snapshot data.' );
+		pitr_check( array( array( '99', '198' ) ) === $observer->query( 'SELECT value, doubled FROM `' . DB_NAME . '`.pitr_generated' ), 'Selected-table restore changed an unselected table with a generated column.' );
+		unlink( $selective_dump );
+		$application->query( 'DROP TABLE `' . DB_NAME . '`.pitr_generated' );
+		pitr_check( $procedure_before === $application->query( 'SHOW CREATE PROCEDURE `' . DB_NAME . '`.pitr_proc' ), 'Selected-table restore changed an unrelated stored procedure.' );
 		$backupplus->initiate_restore_job();
 		$trigger_importer               = new BackupPlus_Restorer(
 			new BackupPlus_Restorer_Skin(),

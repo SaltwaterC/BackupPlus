@@ -95,6 +95,37 @@ final class CliRestoreTest extends TestCase {
 		$this->assertArrayHasKey( 'db2', $entities, 'Database-only restores exclude files' );
 	}
 
+	public function test_partial_restore_selects_only_requested_plugin(): void {
+		list( $backup, $entities, $options ) = BackupPlus_CLI_Restore::selection( 123, array( 'plugin' => 'akismet' ) );
+		$this->assertSame( array( 'plugins' => 'plugins' ), $entities );
+		$this->assertSame( array( 'akismet' ), $options['plugins_to_restore'] );
+		$this->assertFalse( $options['include_unspecified_plugins'] );
+	}
+
+	public function test_partial_restore_selects_only_requested_table_and_database(): void {
+		list( $backup, $entities, $options ) = BackupPlus_CLI_Restore::selection( 123, array( 'table' => 'wp_options' ) );
+		$this->assertSame( array( 'db' => 'db' ), $entities );
+		$this->assertSame( array( 'wp_options' ), $options['tables_to_restore'] );
+		$this->assertFalse( $options['include_unspecified_tables'] );
+	}
+
+	public function test_pitr_chain_selects_full_snapshot_for_table_restore(): void {
+		BackupPlus_Backup_History::$backup['pitr'] = array(
+			'points' => array(
+				array(
+					'backup_id' => 'full',
+					'increment' => 0,
+				),
+				array(
+					'backup_id' => 'log',
+					'increment' => 1,
+				),
+			),
+		);
+		list( $backup, $entities, $options )       = BackupPlus_CLI_Restore::selection( 123, array( 'table' => 'wp_options' ) );
+		$this->assertSame( 'full', $options['backupplus_pitr_restore_point'] );
+	}
+
 	public static function invalid_selectors(): iterable {
 		foreach ( array(
 			array( 'type' => 'invalid' ),
@@ -104,6 +135,29 @@ final class CliRestoreTest extends TestCase {
 				'components' => 'db',
 			),
 			array( 'point' => '199' ),
+			array( 'plugin' => '../other' ),
+			array( 'plugin' => '' ),
+			array( 'table' => '' ),
+			array(
+				'table'      => 'external_table',
+				'components' => 'db2',
+			),
+			array(
+				'table'  => 'wp_options',
+				'plugin' => 'akismet',
+			),
+			array(
+				'plugin' => 'akismet',
+				'type'   => 'database',
+			),
+			array(
+				'table'      => 'wp_options',
+				'components' => 'plugins,db',
+			),
+			array(
+				'plugin'     => 'akismet',
+				'components' => 'db',
+			),
 		) as $invalid ) {
 			yield json_encode( $invalid ) => array( $invalid );
 		}

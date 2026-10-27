@@ -8,6 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait BackupPlus_Restorer_File_Restore {
 
+	/** Whether a top-level plugin or theme is included in this restore. */
+	private function restore_component_selected( $type, $component ) {
+		if ( 'plugins' === $type ) {
+			return ! in_array( $component, $this->plugins_to_skip, true ) && ( empty( $this->plugins_to_restore ) || $this->include_unspecified_plugins || in_array( $component, $this->plugins_to_restore, true ) );
+		}
+		if ( 'themes' === $type ) {
+			return ! in_array( $component, $this->themes_to_skip, true ) && ( empty( $this->themes_to_restore ) || $this->include_unspecified_themes || in_array( $component, $this->themes_to_restore, true ) );
+		}
+		return true;
+	}
+
 	/**
 	 * For moving files out of a directory into their new location
 	 * The purposes of the $type parameter are 1) to detect 'others' and apply a historical bugfix 2) to detect wpcore, and apply the setting for what to do with wp-config.php 3) to work out whether to delete the directory itself
@@ -532,6 +543,9 @@ trait BackupPlus_Restorer_File_Restore {
 			}
 			foreach ( $del_files as $file => $filestruc ) {
 				if ( empty( $file ) ) {
+					continue;
+				}
+				if ( ! $this->restore_component_selected( $type, $file ) ) {
 					continue;
 				}
 				if ( ! $wp_filesystem->delete( $wp_filesystem_dir . '/' . $file, true ) ) {

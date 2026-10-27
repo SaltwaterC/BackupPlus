@@ -179,6 +179,33 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 				}
 			}
 
+			// List the plugin components actually present in the selected backup chain.
+			if ( isset( $elements['plugins'] ) && empty( $backups[ $timestamp ]['meta_foreign'] ) && ! $err ) {
+				require_once BACKUPPLUS_DIR . '/includes/class-restore-inventory.php';
+				$plugin_files = (array) $backups[ $timestamp ]['plugins'];
+				if ( isset( $res['backupplus_incremental_restore_point'] ) && (int) $res['backupplus_incremental_restore_point'] > 0 && ! empty( $backups[ $timestamp ]['incremental_sets'] ) ) {
+					foreach ( $backups[ $timestamp ]['incremental_sets'] as $point => $components ) {
+						if ( (int) $point > (int) $res['backupplus_incremental_restore_point'] && ! empty( $components['plugins'] ) ) {
+							foreach ( $components['plugins'] as $index => $file ) { unset( $plugin_files[ $index ] ); }
+						}
+					}
+				}
+				$plugins = BackupPlus_Restore_Inventory::components( $plugin_files, $age_ticket, '', 'plugins', $timestamp );
+				if ( is_wp_error( $plugins ) ) {
+					$warn[] = esc_html__( 'The plugin list could not be read from this backup. The complete plugins component can still be restored.', 'backupplus' );
+				} elseif ( $plugins ) {
+					$plugin_ui  = '<div class="udp-notice below-h2 backupplus-restore-option"><p>' . esc_html__( 'Choose which plugins to restore.', 'backupplus' ) . ' (<a href="#" id="backupplus_restore_plugins_showmoreoptions">...</a>)</p>';
+					$plugin_ui .= '<div class="backupplus_restore_plugins_options_container" style="display:none;">';
+					$plugin_ui .= '<p><a href="#" class="backupplus_restore_select_all_plugins">' . esc_html__( 'Select All', 'backupplus' ) . '</a> | <a href="#" class="backupplus_restore_deselect_all_plugins">' . esc_html__( 'Deselect All', 'backupplus' ) . '</a></p>';
+					foreach ( $plugins as $index => $plugin ) {
+						$id         = 'backupplus_restore_plugin_' . $index;
+						$plugin_ui .= '<input class="backupplus_restore_plugins_options" id="' . esc_attr( $id ) . '" checked="checked" type="checkbox" name="backupplus_restore_plugins_options[]" value="' . esc_attr( $plugin ) . '"> <label for="' . esc_attr( $id ) . '">' . esc_html( $plugin ) . '</label><br>';
+					}
+					$plugin_ui    .= '</div></div>';
+					$info['addui'] = empty( $info['addui'] ) ? $plugin_ui : $info['addui'] . '<br>' . $plugin_ui;
+				}
+			}
+
 			// Check this backup set has a incremental_sets array e.g may have been created before this array was introduced; the restore point is normally already chosen in the first step
 			if ( isset( $backups[ $timestamp ]['incremental_sets'] ) && ! isset( $res['backupplus_incremental_restore_point'] ) ) {
 				if ( isset( $elements['db'] ) && 1 === count( $elements ) ) {

@@ -32,6 +32,19 @@ class BackupPlus_Source_Restore {
 	}
 
 	public static function preflight( $entities, $backup, $options ) {
+		if ( ( ! empty( $options['tables_to_restore'] ) && empty( $options['include_unspecified_tables'] ) ) || ! empty( $options['tables_to_skip'] ) ) {
+			if ( ! isset( $entities['db'] ) ) { throw new RuntimeException( 'Selected-table restores require the WordPress database.' ); }
+			foreach ( array( 'tables_to_restore', 'tables_to_skip' ) as $field ) {
+				if ( ! isset( $options[ $field ] ) ) { continue; }
+				if ( ! is_array( $options[ $field ] ) ) { throw new RuntimeException( 'Use exact source database table names.' ); }
+				foreach ( $options[ $field ] as $table ) {
+					if ( ! is_string( $table ) || '' === $table || preg_match( '/[\x00-\x1f\x7f]/', $table ) ) { throw new RuntimeException( 'Use exact source database table names.' ); }
+				}
+			}
+			foreach ( $entities as $id => $unused ) {
+				if ( preg_match( '/^db[1-9][0-9]*$/D', $id ) ) { throw new RuntimeException( 'Selected-table restores do not support external databases.' ); }
+			}
+		}
 		if ( ! empty( $backup['pitr'] ) ) {
 			if ( isset( $backup['pitr']['state'] ) && in_array( $backup['pitr']['state'], array( 'deleting', 'unavailable' ), true ) ) { throw new RuntimeException( 'This database recovery chain is unavailable.' ); }
 			$point    = isset( $options['backupplus_pitr_restore_point'] ) ? $options['backupplus_pitr_restore_point'] : '';

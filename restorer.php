@@ -26,6 +26,7 @@ require_once __DIR__ . '/includes/restorer/trait-site-state.php';
 require_once __DIR__ . '/includes/restorer/trait-database-restore.php';
 require_once __DIR__ . '/includes/restorer/trait-database-tables.php';
 require_once __DIR__ . '/includes/restorer/trait-database-sql.php';
+require_once __DIR__ . '/includes/class-restore-inventory.php';
 
 class BackupPlus_Restorer {
 	use BackupPlus_Restorer_Database_Connection;
@@ -150,6 +151,8 @@ class BackupPlus_Restorer {
 	private $include_unspecified_themes = false;
 
 	private $tables_to_restore = array();
+
+	private $validate_restored_theme = false;
 
 	private $plugins_to_restore = array();
 

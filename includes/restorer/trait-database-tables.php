@@ -523,7 +523,9 @@ trait BackupPlus_Restorer_Database_Tables {
 			// The second prefix here used to have a '!$this->is_multisite' on it (i.e. 'options' table on non-multisite). However, the user_roles entry exists in the main options table on multisite too.
 			if ( ( $this->is_multisite && ! empty( $matches[1] ) ) || $table == $import_table_prefix . 'options' ) {
 
-				$backupplus->wipe_state_data();
+				if ( ! $this->has_table_selection() || $table === $wpdb->options ) {
+					$backupplus->wipe_state_data();
+				}
 
 				$mprefix = empty( $matches[1] ) ? '' : $matches[1];
 
@@ -677,7 +679,7 @@ trait BackupPlus_Restorer_Database_Tables {
 		do_action( 'backupplus_restored_db_table', $table, $import_table_prefix, $engine );
 
 		// Re-generate permalinks. Do this last - i.e. make sure everything else is fixed up first.
-		if ( $table == $import_table_prefix . 'options' ) {
+		if ( $table == $import_table_prefix . 'options' && ! $this->has_table_selection() ) {
 			$this->flush_rewrite_rules();
 		}
 	}

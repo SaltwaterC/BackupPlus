@@ -7,6 +7,9 @@ remove_all_filters( 'pre_option_backupplus_backup_history' );
 remove_all_filters( 'pre_update_option_backupplus_backup_history' );
 BackupPlus_Backup_History::save_history( $current_history );
 BackupPlus_Backup_History::always_get_from_db();
+// Earlier selective imports deliberately do not rescan history. Normalize any stale
+// fixture archives before testing that the full import preserves current history.
+BackupPlus_Backup_History::rebuild();
 $backupplus->admin_menu();
 $browser_config = function ( $value, $name ) use ( $config ) {
 	return BackupPlus_PITR::OPTION === $name ? $config : $value;

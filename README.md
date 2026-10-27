@@ -171,6 +171,8 @@ Scheduled backups use saved selections. **Backup Now** has independent temporary
 
 The existing restore wizard offers core, individual additional sources and each external dump. Directory destinations merge archived contents; standalone files accept a destination filename. The current `wp-config.php` is preserved unless replacement is explicitly selected. External dumps require an explicit saved or newly entered connection to an existing database. Verification displays destinations and replacement details. External imports run before the WordPress database, preserve table names and values without WordPress transformations, and leave tables absent from the dump untouched. Interrupted imports restart the current table. Restore connection passwords use the existing credential encryption, recovery and rotation mechanisms; archive metadata and history contain no passwords.
 
+To roll back a plugin or an update, select the backup and file restore point, choose **Plugins**, then select the desired plugin in the options shown after the archives are prepared. Other plugins are left in place. Plugin selection supports native ZIP and Zstandard tar backups, including encrypted and incremental backups. For a single WordPress database table, select **Database** and choose the table from the scanned full dump. The full SQL snapshot of a PITR chain can also be restored this way; direct binary-log replay restores the database as a whole. WP-CLI supports the same targeted operations with `--plugin` and `--table`; see [WP-CLI restores](docs/wp-cli.md).
+
 Programmatic backup options accept the same structure as `backupplus_database_selection`:
 
 ```php

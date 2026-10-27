@@ -369,6 +369,12 @@ class BackupPlus_CLI_Command {
 	 * [--components=<ids>]
 	 * : Comma-separated component IDs from backup history, such as plugins,db,wpcore.
 	 *
+	 * [--plugin=<name>]
+	 * : Restore only this top-level plugin directory or PHP filename from the plugins component.
+	 *
+	 * [--table=<name>]
+	 * : Restore only this exact source table name from a full database dump.
+	 *
 	 * [--point=<timestamp>]
 	 * : Restore the file chain through this recorded incremental restore point.
 	 *

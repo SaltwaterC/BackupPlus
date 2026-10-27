@@ -59,36 +59,40 @@ trait BackupPlus_Restorer_Run {
 			// All done - remove the intermediate marker
 			delete_site_option( 'backupplus_restore_in_progress' );
 
-			foreach ( array( 'template', 'stylesheet', 'template_root', 'stylesheet_root' ) as $opt ) {
-				add_filter( 'pre_option_' . $opt, array( $this, 'option_filter_' . $opt ) );
+			if ( $this->validate_restored_theme ) {
+				foreach ( array( 'template', 'stylesheet', 'template_root', 'stylesheet_root' ) as $opt ) {
+					add_filter( 'pre_option_' . $opt, array( $this, 'option_filter_' . $opt ) );
+				}
 			}
 
 			// Clear any cached pages after the restore
 			$this->clear_caches();
 
-			// Have seen a case where the current theme in the DB began with a capital, but not on disk - and this breaks migrating from Windows to a case-sensitive system
-			$template = get_option( 'template' );
-			if ( ! empty( $template ) && WP_DEFAULT_THEME != $template && strtolower( $template ) != $template ) {
+			if ( $this->validate_restored_theme ) {
+				// Have seen a case where the current theme in the DB began with a capital, but not on disk - and this breaks migrating from Windows to a case-sensitive system
+				$template = get_option( 'template' );
+				if ( ! empty( $template ) && WP_DEFAULT_THEME != $template && strtolower( $template ) != $template ) {
 
-				$theme_root = get_theme_root( $template );
+					$theme_root = get_theme_root( $template );
 
-				if ( ! file_exists( "$theme_root/$template/style.css" ) && file_exists( "$theme_root/" . strtolower( $template ) . '/style.css' ) ) {
-					$backupplus->log_e( 'Theme directory (%s) not found, but lower-case version exists; updating database option accordingly', $template );
-					update_option( 'template', strtolower( $template ) );
+					if ( ! file_exists( "$theme_root/$template/style.css" ) && file_exists( "$theme_root/" . strtolower( $template ) . '/style.css' ) ) {
+						$backupplus->log_e( 'Theme directory (%s) not found, but lower-case version exists; updating database option accordingly', $template );
+						update_option( 'template', strtolower( $template ) );
+					}
 				}
-			}
 
-			if ( ! function_exists( 'validate_current_theme' ) ) {
-				include_once ABSPATH . WPINC . '/themes';
-			}
-
-			if ( ! validate_current_theme() ) {
-				if ( $browser_context ) {
-					echo '<strong>';
+				if ( ! function_exists( 'validate_current_theme' ) ) {
+					include_once ABSPATH . WPINC . '/themes';
 				}
-				$backupplus->log_e( 'The current theme was not found; to prevent this stopping the site from loading, your theme has been reverted to the default theme' );
-				if ( $browser_context ) {
-					echo '</strong>';
+
+				if ( ! validate_current_theme() ) {
+					if ( $browser_context ) {
+						echo '<strong>';
+					}
+					$backupplus->log_e( 'The current theme was not found; to prevent this stopping the site from loading, your theme has been reverted to the default theme' );
+					if ( $browser_context ) {
+						echo '</strong>';
+					}
 				}
 			}
 
@@ -124,6 +128,25 @@ trait BackupPlus_Restorer_Run {
 		// A WP_Error or boolean indicates that the restore cannot proceed
 		if ( ! is_array( $second_loop ) ) {
 			return $second_loop;
+		}
+
+		// Validate selections across every archive before moving any existing
+		// component. On continuation this was already done at the start, and
+		// completed archives may no longer be present locally.
+		if ( empty( $this->continuation_data['second_loop_entities'] ) ) {
+			foreach ( array(
+				'plugins' => $this->plugins_to_restore,
+				'themes'  => $this->themes_to_restore,
+			) as $type => $selected ) {
+				$include_all = 'plugins' === $type ? $this->include_unspecified_plugins : $this->include_unspecified_themes;
+				if ( empty( $selected ) || $include_all || ! isset( $second_loop[ $type ] ) ) { continue; }
+				if ( ! empty( $this->ud_foreign ) ) { return new WP_Error( 'unsupported_inventory', 'Selective component restores are unavailable for foreign backups.' ); }
+				$ticket    = isset( $this->restore_options['backupplus_age_ticket'] ) ? $this->restore_options['backupplus_age_ticket'] : '';
+				$available = BackupPlus_Restore_Inventory::components( $second_loop[ $type ], $ticket, $backupplus->nonce, $type );
+				if ( is_wp_error( $available ) ) { return $available; }
+				$missing = array_diff( $selected, $available );
+				if ( $missing ) { return new WP_Error( 'component_not_found', sprintf( __( 'Selected components were not found in the backup: %s', 'backupplus' ), implode( ', ', $missing ) ) ); }
+			}
 		}
 
 		$this->delete_archives_upon_restoration = BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) && ! ( class_exists( 'BackupPlus_Storage_Limits' ) && BackupPlus_Storage_Limits::quota() );
@@ -313,6 +336,8 @@ trait BackupPlus_Restorer_Run {
 	 */
 	public function perform_restore( $entities_to_restore, $restore_options ) {
 		global $backupplus;
+		$selective_tables              = $this->has_table_selection();
+		$this->validate_restored_theme = isset( $entities_to_restore['themes'] ) || ( isset( $entities_to_restore['db'] ) && ! $selective_tables );
 
 		$backupplus->log_restore_update(
 			array(
@@ -484,7 +509,7 @@ trait BackupPlus_Restorer_Run {
 		}
 
 		// If the database was restored, then check active plugins and make sure they all exist; otherwise, the site may go down
-		if ( null !== $this->final_import_table_prefix ) {
+		if ( isset( $entities_to_restore['db'] ) && ! $selective_tables && null !== $this->final_import_table_prefix ) {
 			$this->check_active_plugins( $this->final_import_table_prefix );
 		}
 

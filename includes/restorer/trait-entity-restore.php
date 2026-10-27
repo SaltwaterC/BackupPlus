@@ -353,6 +353,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 				);
 
 				// N.B. flush_rewrite_rules() causes $wp_rewrite to become up to date again - important for the no_mod_rewrite() call
+				if ( $this->has_table_selection() ) { break; }
 				$this->flush_rewrite_rules();
 
 				if ( $backupplus->mod_rewrite_unavailable() ) {
@@ -403,7 +404,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 			}
 			$base_path = trailingslashit( WP_CONTENT_DIR );
 			$path      = $base_path . $type;
-			return $this->incremental_restore_scan_dir( $base_path, $path, 1, $decoded_manifest );
+			return $this->incremental_restore_scan_dir( $base_path, $path, 1, $decoded_manifest, $type );
 		} else {
 			return new WP_Error( 'manifest_not_found', $this->strings['manifest_not_found'] );
 		}
@@ -431,10 +432,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 				return new WP_Error( 'read_manifest_failed', 'Invalid incremental deletion path.' );
 			}
 			$component = explode( '/', $relative )[0];
-			if ( 'plugins' === $type && ( in_array( $component, $this->plugins_to_skip, true ) || ( ! empty( $this->plugins_to_restore ) && ! $this->include_unspecified_plugins && ! in_array( $component, $this->plugins_to_restore, true ) ) ) ) {
-				continue;
-			}
-			if ( 'themes' === $type && ( in_array( $component, $this->themes_to_skip, true ) || ( ! empty( $this->themes_to_restore ) && ! $this->include_unspecified_themes && ! in_array( $component, $this->themes_to_restore, true ) ) ) ) {
+			if ( ! $this->restore_component_selected( $type, $component ) ) {
 				continue;
 			}
 			if ( 'wpcore' === $type && 'wp-config.php' === $relative && empty( $this->restore_options['backupplus_restorer_wpcore_includewpconfig'] ) ) { continue; }
@@ -471,7 +469,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 	 * @param array   $entity_manifest - the manifest array which includes the listed_level, directories and files to keep
 	 * @return boolean|WP_Error
 	 */
-	private function incremental_restore_scan_dir( $base_path, $path, $current_level, $entity_manifest ) {
+	private function incremental_restore_scan_dir( $base_path, $path, $current_level, $entity_manifest, $type ) {
 
 		global $wp_filesystem;
 
@@ -487,11 +485,14 @@ trait BackupPlus_Restorer_Entity_Restore {
 
 		if ( isset( $directory_files ) ) {
 			foreach ( $directory_files as $file => $filestruc ) {
+				if ( 1 === $current_level && ! $this->restore_component_selected( $type, $file ) ) {
+					continue;
+				}
 				if ( $wp_filesystem->is_dir( $path . DIRECTORY_SEPARATOR . $file ) ) {
 					$directory = $path . DIRECTORY_SEPARATOR . $file;
 					// Check if we should go deeper in the file path, if not then check if this directory exists in the manifest, if not then remove it.
 					if ( $current_level + 1 < $directory_level ) {
-						$incremental_restore_prune = $this->incremental_restore_scan_dir( $base_path, $directory, $current_level + 1, $entity_manifest );
+						$incremental_restore_prune = $this->incremental_restore_scan_dir( $base_path, $directory, $current_level + 1, $entity_manifest, $type );
 						if ( is_wp_error( $incremental_restore_prune ) ) {
 							return $incremental_restore_prune;
 						}

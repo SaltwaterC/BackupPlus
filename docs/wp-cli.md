@@ -85,11 +85,15 @@ For optional coordinated full snapshots and MySQL/MariaDB binary-log recovery, u
 wp backupplus restore 1792718455
 wp backupplus restore 1792718455 --type=database
 wp backupplus restore 1792718455 --components=plugins,db --yes
+wp backupplus restore 1792718455 --plugin=akismet
+wp backupplus restore 1792718455 --table=wp_options
 wp backupplus restore-points 1792718455 --format=json
 wp backupplus restore 1792718455 --type=files --point=1792718400
 ```
 
 `restore <timestamp>` restores all available components by default. `--type=files|database` limits the selection; `--components` selects exact history IDs, including `wpcore`, `custom-…` and external dumps such as `db1`. Additional sources use their recorded destinations. External dumps use the saved database connection with the corresponding ID; that connection must still exist. The command asks for overwrite confirmation unless `--yes` is supplied.
+
+`--plugin` restores only the named top-level plugin directory or standalone PHP filename. `--table` restores only the exact source table name from a full WordPress database dump. These options select the plugins and WordPress database components respectively and cannot be combined with each other or with unrelated components. Single-table restores are not supported for binary-log recovery or external database dumps.
 
 File chains restore through their latest increment unless `--point` selects a timestamp returned by `restore-points`. These points use the engine's existing minute resolution. Database dumps come from the selected backup history entry. Core restores preserve the current `wp-config.php` unless `--include-wp-config` is supplied.
 
