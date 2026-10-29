@@ -70,6 +70,10 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 		foreach ( $payloads as $artifact ) {
 			$estimate += $artifact['size'] + ( isset( $artifact['plain_size'] ) ? $artifact['plain_size'] : $artifact['size'] ) + 4 * ( isset( $artifact['raw_size'] ) ? $artifact['raw_size'] : $artifact['size'] );
 		}
+		$packed = array( $entries[0]['manifest']['backup_id'] => $entries[0] );
+		foreach ( $selected as $item ) { $packed[ $item['entry']['manifest']['backup_id'] ] = $item['entry']; }
+		foreach ( $packed as $entry ) { if ( isset( $entry['archive'] ) ) { $estimate += $entry['archive']['size']; }
+		}
 		return array(
 			'chain_id'              => $id,
 			'baseline_id'           => $full['backup_id'],
@@ -135,12 +139,14 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 			$entries[ $selected['entry']['manifest']['backup_id'] ] = $selected['entry'];
 		}
 		foreach ( $entries as $entry ) {
-			$path = $storage->plain( $entry['locator']['manifest'] );
+			$archive = isset( $entry['archive'] ) ? $entry['archive'] : null;
+			if ( $archive ) { BackupPlus_PITR_Archive::validate( $storage->fetch( $archive ), $entry['manifest'], $entry['locator'] ); }
+			$path = $storage->plain( $entry['locator']['manifest'], $archive );
 			if ( filesize( $path ) > 16777216 || BackupPlus_PITR_Manifest::validate( json_decode( file_get_contents( $path ), true ) ) !== $entry['manifest'] ) {
 				throw new RuntimeException( 'Persistent PITR manifest differs from its indexed metadata.' );
 			}
 		}
-		$baseline = $this->unpack( $storage->plain( $plan['baseline']['manifest']['artifacts'][0] ), $plan['baseline']['manifest']['artifacts'][0] );
+		$baseline = $this->unpack( $storage->plain( $plan['baseline']['manifest']['artifacts'][0], isset( $plan['baseline']['archive'] ) ? $plan['baseline']['archive'] : null ), $plan['baseline']['manifest']['artifacts'][0] );
 		$paths    = array();
 		foreach ( $plan['segments'] as $selected ) {
 			$segment  = $selected['segment'];
@@ -154,7 +160,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 			if ( null === $artifact ) {
 				throw new RuntimeException( 'PITR segment has no bound artifact.' );
 			}
-			$path       = $this->unpack( $storage->plain( $artifact ), $artifact );
+			$path       = $this->unpack( $storage->plain( $artifact, isset( $selected['entry']['archive'] ) ? $selected['entry']['archive'] : null ), $artifact );
 			$inspection = $this->inspect_binlog( $path, $segment['start']['position'], $plan['database'], $plan['source']['engine'] );
 			if ( $inspection['end'] !== $segment['end'] || $inspection['next'] !== $segment['next'] || $inspection['boundaries'] !== $segment['boundaries'] ) {
 				throw new RuntimeException( 'PITR log contents do not match the recorded coordinates.' );
@@ -191,18 +197,36 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 	public function browser_manifest( $id, $target, $timestamp, $ticket = '' ) {
 		$plan      = $this->recovery_plan( $id, $target );
 		$entries   = array( $plan['baseline']['manifest']['backup_id'] => $plan['baseline'] );
-		$artifacts = array( $plan['baseline']['manifest']['artifacts'][0] );
+		$artifacts = array( array( $plan['baseline']['manifest']['artifacts'][0], $plan['baseline'] ) );
 		foreach ( $plan['segments'] as $selected ) {
 			$entries[ $selected['entry']['manifest']['backup_id'] ] = $selected['entry'];
 			foreach ( $selected['entry']['manifest']['artifacts'] as $artifact ) {
-				if ( $artifact['name'] === $selected['segment']['artifact'] ) { $artifacts[] = $artifact; }
+				if ( $artifact['name'] === $selected['segment']['artifact'] ) { $artifacts[] = array( $artifact, $selected['entry'] ); }
 			}
 		}
-		foreach ( $entries as $entry ) { $artifacts[] = $entry['locator']['manifest']; }
+		foreach ( $entries as $entry ) { $artifacts[] = array( $entry['locator']['manifest'], $entry ); }
 		$storage = new BackupPlus_PITR_Storage( $this->work, array(), $plan['destinations'] );
 		$names   = array();
-		foreach ( $artifacts as $artifact ) { $storage->fetch( $artifact );
-			$names[ $artifact['name'] ] = $artifact['name']; }
+		foreach ( $artifacts as $item ) {
+			list( $artifact, $entry ) = $item;
+			if ( '.crypt' !== substr( $artifact['name'], -6 ) ) { continue; }
+			$storage->member( $artifact, isset( $entry['archive'] ) ? $entry['archive'] : null, true );
+			$names[ $artifact['name'] ] = $artifact['name'];
+		}
 		return BackupPlus_Age_Restore::manifest( array( 'db' => array_values( $names ) ), $timestamp, array( 'db' ), $ticket );
+	}
+
+	/** The ordinary database importer needs the full snapshot as a temporary standalone file. */
+	public static function stage_baseline( $backup ) {
+		if ( empty( $backup['pitr']['baseline_archive'] ) ) { return; }
+		$id       = $backup['pitr']['chain_id'];
+		$worker   = new self();
+		$plan     = $worker->recovery_plan( $id );
+		$entry    = $plan['baseline'];
+		$artifact = $entry['manifest']['artifacts'][0];
+		if ( empty( $entry['archive'] ) || $entry['archive'] !== $backup['pitr']['baseline_archive'] || $artifact['name'] !== $backup['db'] ) { throw new RuntimeException( 'PITR baseline archive does not match the restore selection.' ); }
+		$storage = new BackupPlus_PITR_Storage( $worker->work, array(), $plan['destinations'] );
+		BackupPlus_PITR_Archive::validate( $storage->fetch( $entry['archive'] ), $entry['manifest'], $entry['locator'] );
+		$storage->member( $artifact, $entry['archive'], true );
 	}
 }

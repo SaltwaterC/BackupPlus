@@ -8,6 +8,7 @@ trait BackupPlus_Storage_Limits_Policy {
 		$files    = array();
 		$entities = array_merge( array( 'db' ), array_keys( $backupplus->get_backupable_file_entities( true ) ) );
 		foreach ( $set as $entity => $value ) {
+			if ( 'db' === $entity && ! empty( $set['pitr']['baseline_archive'] ) ) { continue; }
 			if ( ! in_array( $entity, $entities, true ) && ! BackupPlus_Backup_Sources::custom( $entity ) && ! preg_match( '/\Adb[0-9]+\z/D', $entity ) ) { continue; }
 			foreach ( (array) $value as $index => $name ) {
 				if ( ! is_string( $name ) || basename( $name ) !== $name ) { continue; }

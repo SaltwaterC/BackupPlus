@@ -122,7 +122,8 @@ trait BackupPlus_Storage_Limits_Monitor {
 
 	private static function artifact_name( $name, $known ) {
 		if ( ! is_string( $name ) || basename( $name ) !== $name || preg_match( '/\.(tmp|part|log)$/i', $name ) ) { return false; }
-		return isset( $known[ $name ] ) || (bool) preg_match( '/\Abackup_(?:pitr_[a-f0-9_]+_(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json|locator\.json)|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}_.+\.(?:zip|gz|tar\.zst|sql\.zst))(?:\.crypt)?\z/D', $name );
+		if ( preg_match( '/\A(backup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_)(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json)(?:\.crypt)?\z/D', $name, $match ) && isset( $known[ $match[1] . 'point.tar' ] ) ) { return false; }
+		return isset( $known[ $name ] ) || (bool) preg_match( '/\Abackup_(?:pitr_[a-f0-9_]+_(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json|locator\.json|point\.tar)|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}_.+\.(?:zip|gz|tar\.zst|sql\.zst))(?:\.crypt)?\z/D', $name );
 	}
 
 	/** Destinations without quotas retain independent database/file count policies. */

@@ -43,6 +43,7 @@ function backupplus_deleteallselected() {
 	var key_all = '';
 	var nonce_all = '';
 	var remote_all = 0;
+	var remote_missing = 0;
 	var chains = [];
 	jQuery('#backupplus-navtab-backups-content .backupplus_existing_backups .backupplus_existing_backups_row.backuprowselected').each(function(index) {
 		howmany++;
@@ -54,10 +55,11 @@ function backupplus_deleteallselected() {
 		key_all += key;
 		var has_remote = jQuery(this).find('.backupplus-remove').data('hasremote');
 		if (has_remote) remote_all++;
+		if (jQuery(this).find('.backupplus-remove').data('remotemissing')) remote_missing++;
 		var chain = jQuery(this).find('.backupplus-delete-link').data('chain');
 		if (chain) chains.push(chain);
 	});
-	backupplus_delete(key_all, nonce_all, remote_all, chains);
+	backupplus_delete(key_all, nonce_all, remote_all, chains, remote_missing);
 }
 
 /**

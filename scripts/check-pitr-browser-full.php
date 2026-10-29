@@ -54,9 +54,18 @@ try {
 	$history_before            = BackupPlus_Backup_History::get_history();
 	$baseline_set              = BackupPlus_Backup_History::get_history( $baseline_time );
 	$baseline_set['timestamp'] = $baseline_time;
-	$prepared                  = BackupPlus_PITR_Restore::manifest( $baseline_time, $encrypted_full['backup_id'], '' );
-	$baseline_ticket           = $prepared['ticket'];
-	$plain                     = BackupPlus_Encryption::decrypt( BackupPlus_Age_Restore::download( $baseline_ticket, $baseline_set['db'] ), $key['identity'], true, '' );
+	require_once BACKUPPLUS_DIR . '/includes/class-wpadmin-commands.php';
+	$commands = new BackupPlus_WPAdmin_Commands( null );
+	$needed   = $commands->whichdownloadsneeded(
+		array(
+			'timestamp' => $baseline_time,
+			'downloads' => array( array( 'db', '0' ) ),
+		)
+	);
+	pitr_check( empty( $needed['downloads'] ) && is_file( $backupplus->backups_dir_location() . '/' . $baseline_set['db'] ), 'Full-snapshot restore did not extract the point archive before the ordinary download check.' );
+	$prepared        = BackupPlus_PITR_Restore::manifest( $baseline_time, $encrypted_full['backup_id'], '' );
+	$baseline_ticket = $prepared['ticket'];
+	$plain           = BackupPlus_Encryption::decrypt( BackupPlus_Age_Restore::download( $baseline_ticket, $baseline_set['db'] ), $key['identity'], true, '' );
 	pitr_check( is_array( $plain ), 'Could not prepare the encrypted baseline fixture.' );
 	$bytes = file_get_contents( $plain['fullpath'] );
 	unlink( $plain['fullpath'] );
@@ -102,6 +111,7 @@ try {
 	pitr_check( $expected_value === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0], 'Encrypted baseline restore replayed later changes or lost snapshot data.' );
 	pitr_check( $history_before === BackupPlus_Backup_History::get_history(), 'Full-snapshot restore replaced current PITR/file backup history, labels or retention locks with historical options.' );
 	$encrypted_importer->post_restore_clean_up( true, false );
+	pitr_check( ! is_file( $backupplus->backups_dir_location() . '/' . $baseline_set['db'] ), 'A completed full-snapshot restore left an extracted PITR member behind.' );
 	foreach ( array( false, true ) as $remote_scan ) {
 		BackupPlus_Backup_History::rebuild( $remote_scan );
 		$rescanned_history = BackupPlus_Backup_History::get_history();
@@ -117,7 +127,7 @@ try {
 	$durable_history = BackupPlus_PITR::decorate_history( $stored_history );
 	pitr_check( $history_after_scans[ $baseline_time ]['pitr'] === $durable_history[ $baseline_time ]['pitr'] && 2 <= count( $durable_history[ $baseline_time ]['pitr']['points'] ), 'PITR recovery points must reconstruct from the durable index after restoring and rescanning.' );
 	// A generic rescan must leave PITR availability to the chain index, even without a local full archive.
-	$full_path = $backupplus->backups_dir_location() . '/' . $baseline_set['db'];
+	$full_path = $backupplus->backups_dir_location() . '/' . $baseline_set['pitr']['baseline_archive']['name'];
 	rename( $full_path, $full_path . '.fixture-hidden' );
 	try {
 		BackupPlus_Backup_History::rebuild();
@@ -126,7 +136,7 @@ try {
 		rename( $full_path . '.fixture-hidden', $full_path );
 	}
 	// Plaintext PITR snapshots must not be offered to the foreign SQL-dump scanner.
-	$plain_path = substr( $full_path, 0, -strlen( '.crypt' ) );
+	$plain_path = $backupplus->backups_dir_location() . '/' . substr( $baseline_set['db'], 0, -strlen( '.crypt' ) );
 	file_put_contents( $plain_path, gzencode( "# PITR snapshot fixture\n" ) );
 	$foreign_checked = false;
 	$foreign_filter  = function ( $accepted, $filename ) use ( $plain_path, &$foreign_checked ) {

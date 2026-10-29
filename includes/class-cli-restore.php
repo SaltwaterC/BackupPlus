@@ -237,6 +237,10 @@ class BackupPlus_CLI_Restore {
 	/** Fetch and verify every selected archive before asking for secrets or modifying the site. */
 	public static function archives( $backup, $entities ) {
 		global $backupplus;
+		if ( isset( $entities['db'] ) && ! empty( $backup['pitr']['baseline_archive'] ) ) {
+			require_once __DIR__ . '/class-pitr.php';
+			BackupPlus_PITR::stage_baseline( $backup );
+		}
 		$result   = array();
 		$services = isset( $backup['service'] ) ? $backupplus->get_canonical_service_list( $backup['service'] ) : array();
 		foreach ( $entities as $id => $unused ) {
@@ -403,6 +407,9 @@ class BackupPlus_CLI_Restore {
 				if ( get_site_option( 'backupplus_restore_in_progress' ) === $job ) { delete_site_option( 'backupplus_restore_in_progress' ); }
 			}
 			self::cleanup();
+			if ( ! empty( $backup['pitr']['baseline_archive'] ) && ! empty( $backup['db'] ) ) {
+				BackupPlus_PITR_Archive::discard_staged( $backupplus->backups_dir_location(), $backup['db'] );
+			}
 			WP_Upgrader::release_lock( 'backupplus_cli_restore' );
 			$job = '';
 			if ( isset( $backupplus_restorer ) ) {

@@ -12,6 +12,8 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 		$payloads = array();
 		$metadata = array();
 		foreach ( array_merge( $chain['entries'], isset( $chain['abandoned_entries'] ) ? $chain['abandoned_entries'] : array() ) as $entry ) {
+			if ( isset( $entry['archive'] ) ) { $payloads[] = $entry['archive']['name'];
+				continue; }
 			foreach ( $entry['manifest']['artifacts'] as $artifact ) {
 				$payloads[] = $artifact['name'];
 			}
@@ -55,6 +57,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 				$deadline
 			);
 		} catch ( BackupPlus_PITR_Delete_Pending $pending ) { $complete = false; }
+		if ( $complete ) { $this->remove_staged_members( $chain ); }
 		$progress = array(
 			'complete'      => $complete,
 			'backup_local'  => $local_before - count( array_filter( $files, $is_local ) ),
@@ -109,6 +112,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			null,
 			'local' === $destination['service']
 		);
+		if ( 'local' === $destination['service'] ) { $this->remove_staged_members( $chain ); }
 		$chain['destinations']            = array_values(
 			array_filter(
 				$chain['destinations'],
@@ -129,6 +133,17 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			return ! empty( $history[ $chain['history_time'] ]['always_keep'] );
 		}
 		return ! empty( $chain['pinned'] );
+	}
+
+	private function remove_staged_members( $chain ) {
+		global $backupplus;
+		foreach ( array_merge( $chain['entries'], isset( $chain['abandoned_entries'] ) ? $chain['abandoned_entries'] : array() ) as $entry ) {
+			if ( empty( $entry['archive'] ) ) { continue; }
+			foreach ( array_merge( $entry['manifest']['artifacts'], array( $entry['locator']['manifest'] ) ) as $artifact ) {
+				$path = $backupplus->backups_dir_location() . '/' . BackupPlus_PITR_Manifest::filename( $artifact['name'] );
+				if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+			}
+		}
 	}
 
 	public function prune() {
@@ -184,6 +199,19 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 	}
 
 	private function reap_work() {
+		global $backupplus;
+		$restoring = is_callable( array( $backupplus, 'check_restore_progress' ) ) && $backupplus->check_restore_progress( 1 );
+		if ( ! $restoring ) {
+			foreach ( $this->state['chains'] as $chain ) {
+				foreach ( isset( $chain['entries'] ) ? $chain['entries'] : array() as $entry ) {
+					if ( empty( $entry['archive'] ) ) { continue; }
+					foreach ( array_merge( $entry['manifest']['artifacts'], array( $entry['locator']['manifest'] ) ) as $artifact ) {
+						$path = $backupplus->backups_dir_location() . '/' . BackupPlus_PITR_Manifest::filename( $artifact['name'] );
+						if ( ! is_link( $path ) && is_file( $path ) && filemtime( $path ) < time() - 86400 ) { BackupPlus_PITR_Archive::discard_staged( dirname( $path ), basename( $path ) ); }
+					}
+				}
+			}
+		}
 		$keep = array();
 		foreach ( ! empty( $this->state['pending']['files'] ) ? $this->state['pending']['files'] : array() as $file ) {
 			$keep[ 'verify-' . hash( 'sha256', $file['name'] ) ] = $file;

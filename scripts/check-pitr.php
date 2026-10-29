@@ -358,7 +358,10 @@ try {
 		$sql .= gzread( $h, 65536 );
 	} gzclose( $h );
 	pitr_check( false !== strpos( $sql, 'CREATE TABLE `pitr_a`' ) && false === strpos( $sql, 'CREATE TABLE `pitr_b`' ), 'Historical table export included unselected tables.' );
-	$log   = $directory . '/archives/' . $increment['artifacts'][0]['name'];
+	$entries     = $worker->storage_state()['chains'][ $id ]['entries'];
+	$point_files = glob( $directory . '/archives/backup_pitr_' . $id . '_*_point.tar' );
+	pitr_check( count( $point_files ) === count( $entries ), 'Every PITR recovery point must have exactly one stored archive.' );
+	$log   = $directory . '/archives/' . $entries[1]['archive']['name'];
 	$bytes = file_get_contents( $log );
 	file_put_contents( $log, substr( $bytes, 0, -1 ) );
 	pitr_failure(
@@ -392,6 +395,12 @@ try {
 		return $multiline ? $key['identity'] : '';
 	};
 	$worker->verify( $encrypted_full['chain_id'], null, $reader );
+	$encrypted_rescan      = $worker->rescan( $reader );
+	$found_encrypted_chain = false;
+	foreach ( $encrypted_rescan['chains'] as $chain ) {
+		if ( $chain['chain_id'] === $encrypted_full['chain_id'] && $chain['increments'] >= 1 ) { $found_encrypted_chain = true; }
+	}
+	pitr_check( $found_encrypted_chain, 'Encrypted point archives could not be rescanned.' );
 	$recovery->query( 'DROP DATABASE `' . DB_NAME . '`' );
 	$worker->recover( $encrypted_full['chain_id'], null, $recovery_config['source_config'], array(), $reader, true );
 	pitr_check( '3' === $recovery->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0], 'Encrypted full-plus-log recovery failed.' );
@@ -475,7 +484,15 @@ try {
 		$application->query( 'USE `' . DB_NAME . '`; DROP PROCEDURE IF EXISTS pitr_proc; CREATE PROCEDURE pitr_proc() SELECT 12345' );
 		$application->query( 'DROP TABLE IF EXISTS `' . DB_NAME . '`.pitr_generated; CREATE TABLE `' . DB_NAME . '`.pitr_generated (id int PRIMARY KEY, value int, doubled int GENERATED ALWAYS AS (value * 2) STORED) ENGINE=InnoDB; INSERT INTO `' . DB_NAME . '`.pitr_generated (id, value) VALUES (1, 99)' );
 		$procedure_before = $application->query( 'SHOW CREATE PROCEDURE `' . DB_NAME . '`.pitr_proc' );
-		$baseline_set     = array(
+		unset( $worker );
+		$baseline_history = null;
+		foreach ( BackupPlus_Backup_History::get_history() as $row ) {
+			if ( isset( $row['pitr']['chain_id'] ) && $id === $row['pitr']['chain_id'] ) { $baseline_history = $row;
+				break; }
+		}
+		pitr_check( is_array( $baseline_history ), 'The original full snapshot disappeared from history.' );
+		BackupPlus_PITR::stage_baseline( $baseline_history );
+		$baseline_set = array(
 			'db'     => $full['artifacts'][0]['name'],
 			'native' => true,
 		);
@@ -559,6 +576,7 @@ try {
 		$imported = $import->invoke( $whole_importer, $baseline_set['db'], 'db', array(), true, true );
 		pitr_check( true === $imported && ! $errors->getValue( $whole_importer ), 'The ordinary whole-database importer reported SQL errors for a native baseline.' );
 		pitr_check( '0' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_view' )[0][0] && '0' === $application->query( 'CALL `' . DB_NAME . '`.pitr_proc()' )[0][0], 'Ordinary whole-baseline import lost views or routines.' );
+		BackupPlus_PITR_Archive::discard_staged( $backupplus->backups_dir_location(), $baseline_set['db'] );
 
 	} finally {
 		$admin->query( 'SET GLOBAL log_bin_trust_function_creators=' . $trust_creators );

@@ -52,6 +52,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<input type="hidden" name="backup_nonce" value="0" id="backupplus_delete_nonce">
 			<div id="backupplus-delete-remote-section">
 				<input checked="checked" type="checkbox" name="delete_remote" id="backupplus_delete_remote" value="1"> <label for="backupplus_delete_remote"><?php esc_html_e( 'Also delete from remote storage', 'backupplus' ); ?></label><br>
+				<p id="backupplus_delete_remote_missing" style="display:none;"><?php esc_html_e( 'A selected recovery chain was saved to remote storage that no longer exists in the settings, so its remote copies cannot be deleted. Restore that remote storage first if they must be removed too.', 'backupplus' ); ?></p>
 			</div>
 		</fieldset>
 	</form>

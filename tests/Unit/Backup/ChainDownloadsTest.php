@@ -25,7 +25,7 @@ final class ChainDownloadsTest extends PitrTestCase {
 		require_once dirname( __DIR__, 3 ) . '/includes/class-stored-zip.php';
 	}
 
-	/** A chain of one full backup and many increments, each stored as three files like a real chain. */
+	/** An older chain of one full backup and many increments, each stored as three files. */
 	private function chain( int $points ): array {
 		$downloads = array();
 		$stored    = array();
@@ -69,6 +69,113 @@ final class ChainDownloadsTest extends PitrTestCase {
 		$this->assertCount( 50, $page['rows'] );
 		$this->assertSame( 249, $page['rows'][0]['id'] );
 		$this->assertSame( 3, $page['rows'][0]['files'] );
+	}
+
+	public function test_new_pitr_points_list_one_file_and_keep_the_encryption_indicator(): void {
+		$chain                      = $this->chain( 2 );
+		$chain['pitr']['downloads'] = array(
+			array(
+				'name'      => 'full_point.tar',
+				'size'      => 120,
+				'increment' => 0,
+				'encrypted' => true,
+			),
+			array(
+				'name'      => 'increment_point.tar',
+				'size'      => 80,
+				'increment' => 1,
+				'encrypted' => true,
+			),
+		);
+		$page                       = BackupPlus_Chain_Downloads::page( $chain, 'db', '', 0, 50 );
+		$this->assertSame( array( 1, 1 ), array_column( $page['rows'], 'files' ) );
+		$this->assertTrue( $page['encrypted'] );
+		$this->assertSame( array( '80 B', '120 B' ), array_column( $page['rows'], 'size' ) );
+	}
+
+	public function test_one_pitr_point_downloads_its_archive_directly_and_detects_corruption(): void {
+		eval( 'class BackupPlus_Backup_History { public static $history; public static function get_history() { return self::$history; } }' );
+		$GLOBALS['backupplus'] = new class( $this->directory ) {
+			public function __construct( private string $directory ) {}
+			public function backups_dir_location() {
+				return $this->directory; }
+			public function get_canonical_service_list( $services ) {
+				return array(); }
+		};
+		$chain                 = $this->chain( 2 );
+		$prefix                = 'backup_pitr_' . str_repeat( 'a', 32 ) . '_';
+		$first                 = $prefix . str_repeat( 'b', 32 ) . '_point.tar';
+		$second                = $prefix . str_repeat( 'c', 32 ) . '_point.tar';
+		file_put_contents( $this->directory . '/' . $first, 'first' );
+		file_put_contents( $this->directory . '/' . $second, 'second' );
+		$chain['pitr']['downloads']          = array(
+			array(
+				'name'      => $first,
+				'size'      => 5,
+				'sha256'    => hash( 'sha256', 'first' ),
+				'increment' => 0,
+			),
+			array(
+				'name'      => $second,
+				'size'      => 6,
+				'sha256'    => hash( 'sha256', 'second' ),
+				'increment' => 1,
+			),
+		);
+		\BackupPlus_Backup_History::$history = array( 123 => $chain );
+		$one                                 = BackupPlus_Chain_Downloads::prepare( 123, 'db', array( 0 ) );
+		$this->assertSame(
+			array(
+				'files' => 1,
+				'size'  => '5 B',
+				'name'  => $first,
+			),
+			$one
+		);
+		$both = BackupPlus_Chain_Downloads::prepare( 123, 'db', array( 0, 1 ) );
+		$this->assertSame( 2, $both['files'] );
+		$this->assertStringEndsWith( '.zip', $both['name'] );
+		$script  = $this->directory . '/send.php';
+		$source  = <<<'PHP'
+<?php
+define( 'ABSPATH', __DIR__ );
+function __( $text ) { return $text; }
+function get_date_from_gmt( $date, $format ) { return gmdate( $format, strtotime( $date . ' UTC' ) ); }
+function nocache_headers() {}
+class BackupPlus_Backup_History { public static $history; public static function get_history() { return self::$history; } }
+class BackupPlus_Encryption { public static function is_file_encrypted( $name ) { return false; } }
+class DownloadFixture {
+  public function backups_dir_location() { return __DIR__; }
+  public function get_canonical_service_list( $services ) { return array(); }
+}
+PHP;
+		$source .= "\n" . '$GLOBALS[\'backupplus\'] = new DownloadFixture();';
+		$source .= "\n" . 'BackupPlus_Backup_History::$history = ' . var_export( array( 123 => $chain ), true ) . ';';
+		$source .= "\n" . 'require ' . var_export( dirname( __DIR__, 3 ) . '/includes/class-chain-downloads.php', true ) . ';';
+		$source .= "\n" . 'BackupPlus_Chain_Downloads::send(123, \'db\', array(0));';
+		file_put_contents( $script, $source );
+		$process = proc_open(
+			array( PHP_BINARY, $script ),
+			array(
+				1 => array( 'pipe', 'w' ),
+				2 => array( 'pipe', 'w' ),
+			),
+			$pipes
+		);
+		$this->assertIsResource( $process );
+		$output = stream_get_contents( $pipes[1] );
+		$error  = stream_get_contents( $pipes[2] );
+		fclose( $pipes[1] );
+		fclose( $pipes[2] );
+		$this->assertSame( 0, proc_close( $process ), $error );
+		$this->assertSame( 'first', $output, 'A single point must stream the tar itself.' );
+		file_put_contents( $this->directory . '/' . $first, 'wrong' );
+		$this->assertRejected(
+			function () {
+				BackupPlus_Chain_Downloads::prepare( 123, 'db', array( 0 ) );
+			},
+			'A modified point archive must not be downloaded.'
+		);
 	}
 
 	public function test_the_filter_matches_local_dates_and_labels(): void {

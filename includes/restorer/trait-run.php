@@ -56,6 +56,10 @@ trait BackupPlus_Restorer_Run {
 
 		// From this point on, $successful is a boolean
 		if ( $successful ) {
+			if ( ! empty( $this->ud_backup_set['pitr']['baseline_archive'] ) && ! empty( $this->ud_backup_set['db'] ) ) {
+				require_once dirname( __DIR__ ) . '/class-pitr-archive.php';
+				BackupPlus_PITR_Archive::discard_staged( $backupplus->backups_dir_location(), $this->ud_backup_set['db'] );
+			}
 			// All done - remove the intermediate marker
 			delete_site_option( 'backupplus_restore_in_progress' );
 

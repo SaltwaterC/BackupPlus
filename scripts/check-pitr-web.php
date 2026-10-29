@@ -53,7 +53,10 @@ try {
 	};
 	$baseline = BackupPlus_PITR_Restore::manifest( $timestamp, $encrypted_full['backup_id'], '' );
 	pitr_check( array( $encrypted_full['artifacts'][0]['name'] ) === $baseline['files'], 'Full snapshot preparation requested binary logs or PITR manifests.' );
-	$ticket = $baseline['ticket'];
+	$retry = BackupPlus_PITR_Restore::manifest( $timestamp, $encrypted_full['backup_id'], $baseline['ticket'] );
+	pitr_check( $baseline['ticket'] !== $retry['ticket'] && $baseline['files'] === $retry['files'], 'Retrying an incomplete preparation lost the staged ciphertext.' );
+	$baseline = $retry;
+	$ticket   = $baseline['ticket'];
 	$upload( $baseline );
 	$backupplus->admin_menu();
 	require_once BACKUPPLUS_DIR . '/includes/class-wpadmin-commands.php';

@@ -103,7 +103,7 @@ jQuery(function($) {
 		var key = jQuery(this).data('key').toString();
 		var chain = jQuery(this).data('chain');
 		if (nonce) {
-			backupplus_delete(key, nonce, hasremote, chain ? [chain] : []);
+			backupplus_delete(key, nonce, hasremote, chain ? [chain] : [], jQuery(this).data('remotemissing') ? 1 : 0);
 		} else {
 			console.log("BackupPlus: A delete link was clicked, but the Job ID could not be found");
 		}

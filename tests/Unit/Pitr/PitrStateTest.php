@@ -746,4 +746,128 @@ final class PitrStateTest extends PitrTestCase {
 		}
 	}
 
+	public function test_an_existing_separate_file_chain_accepts_a_packed_increment(): void {
+		$work = $this->property( $this->worker, 'work' );
+		copy( $this->directory . '/' . $this->log['name'], $work . '/' . $this->log['name'] );
+		foreach ( array( $this->log, $this->manifest, $this->locator_file ) as $file ) { unlink( $this->directory . '/' . $file['name'] ); }
+		$state            = $this->state();
+		$state['pending'] = null;
+		$this->set_property( $this->worker, 'state', $state );
+		$storage = new BackupPlus_PITR_Storage( $work, array(), $this->destination );
+		$this->call( $this->worker, 'stage_manifest', array( $this->pending['entry']['manifest'], $storage, 'test', $this->destination, array() ) );
+		$archive = $this->state()['pending']['entry']['archive'];
+		$this->call( $this->worker, 'publish', array( $storage ) );
+		$chain = $this->state()['chains'][ $this->chain_id ];
+		$this->assertSame( $this->end, $this->worker->recovery_plan( $this->chain_id )['target_coordinate'] );
+		$downloads = BackupPlus_PITR::chain_metadata( $this->chain_id, $chain )['downloads'];
+		$this->assertSame( array( $this->full['artifacts'][0]['name'], $this->full_manifest['name'], 'backup_pitr_' . $this->chain_id . '_' . $this->full_id . '_locator.json', $archive['name'] ), array_column( $downloads, 'name' ) );
+		$this->assertCount( 2, $storage->discover() );
+	}
+
+	public function test_each_new_point_publishes_one_portable_archive_and_stages_its_baseline(): void {
+		$work          = $this->property( $this->worker, 'work' );
+		$full_artifact = $this->full['artifacts'][0];
+		$increment     = $this->pending['entry']['manifest'];
+		copy( $this->directory . '/' . $full_artifact['name'], $work . '/' . $full_artifact['name'] );
+		copy( $this->directory . '/' . $this->log['name'], $work . '/' . $this->log['name'] );
+		foreach ( glob( $this->directory . '/backup_pitr_*' ) as $file ) { unlink( $file ); }
+		$this->set_property(
+			$this->worker,
+			'state',
+			array(
+				'version' => 1,
+				'chains'  => array(),
+				'active'  => null,
+				'pending' => null,
+			)
+		);
+		$storage = new BackupPlus_PITR_Storage( $work, array(), $this->destination );
+		$this->call( $this->worker, 'stage_manifest', array( $this->full, $storage, 'test', $this->destination, array() ) );
+		$pending      = $this->state()['pending'];
+		$full_archive = $pending['entry']['archive'];
+		$this->assertCount( 1, $pending['files'] );
+		$this->assertCount( 3, \BackupPlus_PITR_Archive::inventory( $this->directory . '/' . $full_archive['name'] ) );
+		$this->assertFileDoesNotExist( $this->directory . '/' . $full_artifact['name'] );
+		$this->provider->fail = $full_archive['name'];
+		$this->assertRejected(
+			function () use ( $storage ) {
+				$this->call( $this->worker, 'publish', array( $storage ) );
+			},
+			'A failed archive upload must not publish the point.'
+		);
+		$this->assertEmpty( $this->state()['chains'] );
+		$this->restart_worker();
+		$work    = $this->property( $this->worker, 'work' );
+		$storage = new BackupPlus_PITR_Storage( $work, array(), $this->destination );
+		file_put_contents( $work . '/' . $this->log['name'], 'log' );
+		$this->provider->fail = null;
+		$this->call( $this->worker, 'publish', array( $storage ) );
+		$increment['previous_manifest_sha256'] = $pending['entry']['sha256'];
+		// A rotation can make one point contain multiple binary logs.
+		$second           = $this->log;
+		$second['name']   = str_replace( 'log0.bin.gz', 'log1.bin.gz', $this->log['name'] );
+		$second['size']   = 4;
+		$second['sha256'] = $second['plain_sha256'] = hash( 'sha256', 'log2' );
+		file_put_contents( $work . '/' . $second['name'], 'log2' );
+		$increment['artifacts'][]    = $second;
+		$increment['segments'][]     = array(
+			'start'      => $this->end,
+			'end'        => 120,
+			'next'       => array(
+				'file'     => 'binlog.000003',
+				'position' => 4,
+			),
+			'artifact'   => $second['name'],
+			'boundaries' => array(),
+		);
+		$increment['end_coordinate'] = $increment['segments'][1]['next'];
+		$this->call( $this->worker, 'stage_manifest', array( $increment, $storage, 'test', $this->destination, array() ) );
+		$increment_archive = $this->state()['pending']['entry']['archive'];
+		$this->assertCount( 4, \BackupPlus_PITR_Archive::inventory( $this->directory . '/' . $increment_archive['name'] ) );
+		$this->call( $this->worker, 'publish', array( $storage ) );
+		$chain = $this->state()['chains'][ $this->chain_id ];
+		$this->assertSame( array( $full_archive['name'], $increment_archive['name'] ), $this->provider->uploads );
+		$this->assertCount( 2, glob( $this->directory . '/backup_pitr_*' ) );
+		$this->assertCount( 2, glob( $this->provider->remote . '/backup_pitr_*' ) );
+		$backup = reset( BackupPlus_Backup_History::$history );
+		$this->assertSame( array( $full_archive['name'], $increment_archive['name'] ), array_column( $backup['pitr']['downloads'], 'name' ) );
+		$this->assertSame( $full_archive, $backup['pitr']['baseline_archive'] );
+		$this->assertSame( array( $full_archive['name'], $increment_archive['name'] ), $this->call( $this->worker, 'chain_files', array( $chain ) ) );
+		$this->assertRejected(
+			function () use ( $full_archive ) {
+				\BackupPlus_PITR_Archive::create( $this->directory . '/' . $full_archive['name'], array() );
+			},
+			'An existing point archive must not be overwritten.'
+		);
+		$this->assertFileExists( $this->directory . '/' . $full_archive['name'] );
+		unlink( $this->directory . '/' . $full_archive['name'] );
+		unlink( $this->directory . '/' . $increment_archive['name'] );
+		$discovered = $storage->discover();
+		$this->assertCount( 2, $discovered );
+		foreach ( $discovered as $locator ) {
+			$manifest = json_decode( file_get_contents( $storage->plain( $locator['manifest'], $locator['archive'] ) ), true );
+			\BackupPlus_PITR_Archive::validate( $this->directory . '/' . $locator['archive']['name'], $manifest, $locator );
+		}
+		$this->worker = null;
+		unlink( $this->directory . '/' . $full_archive['name'] );
+		BackupPlus_PITR::stage_baseline( $backup );
+		$this->assertFileExists( $this->directory . '/' . $full_archive['name'] );
+		$this->assertSame( 'full', file_get_contents( $this->directory . '/' . $full_artifact['name'] ) );
+		\BackupPlus_PITR_Archive::discard_staged( $this->directory, $full_artifact['name'] );
+		$this->assertFileDoesNotExist( $this->directory . '/' . $full_artifact['name'] );
+		$invalid           = $full_artifact;
+		$invalid['sha256'] = str_repeat( '0', 64 );
+		$transfer          = new BackupPlus_PITR_Storage( $this->directory . '/transfer', array(), $this->destination );
+		$this->assertRejected(
+			function () use ( $transfer, $invalid, $full_archive ) {
+				$transfer->member( $invalid, $full_archive );
+			},
+			'A corrupt member must not be staged.'
+		);
+		$this->restart_worker();
+		$this->assertTrue( $this->worker->delete( $this->chain_id )['complete'] );
+		$this->assertEmpty( glob( $this->directory . '/backup_pitr_*' ) );
+		$this->assertEmpty( glob( $this->provider->remote . '/backup_pitr_*' ) );
+	}
+
 }

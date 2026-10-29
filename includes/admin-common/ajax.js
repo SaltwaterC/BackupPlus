@@ -111,8 +111,9 @@ function backupplus_send_command(action, data, callback, options) {
  * @param {string}  nonce      - The backup job ID
  * @param {boolean} showremote - Whether or not to show the "also delete from remote storage?" checkbox
  * @param {Array}   chains     - Descriptions of the selected sets which are a full backup with incremental backups
+ * @param {number}  missing    - How many selected sets were saved to remote storage that no longer exists in the settings
  */
-function backupplus_delete(key, nonce, showremote, chains) {
+function backupplus_delete(key, nonce, showremote, chains, missing) {
 	var chain_warning = jQuery('#backupplus_delete_chain_warning');
 	var chain_list = chain_warning.find('ul').empty();
 	chains = chains || [];
@@ -126,6 +127,11 @@ function backupplus_delete(key, nonce, showremote, chains) {
 		jQuery('#backupplus-delete-remote-section, #backupplus_delete_remote').prop('disabled', false).show();
 	} else {
 		jQuery('#backupplus-delete-remote-section, #backupplus_delete_remote').hide().attr('disabled','disabled');
+	}
+	// Deleting a set from a removed remote storage is refused, so untick the option instead of failing after confirmation.
+	jQuery('#backupplus_delete_remote_missing').toggle(!!showremote && missing > 0);
+	if (showremote) {
+		jQuery('#backupplus_delete_remote').prop('checked', !(missing > 0)).prop('disabled', missing > 0);
 	}
 	if (key.indexOf(',') > -1) {
 		jQuery('#backupplus_delete_question_singular').hide();

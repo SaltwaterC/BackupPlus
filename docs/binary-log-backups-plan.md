@@ -59,7 +59,7 @@ Baseline snapshot imports must continue to support selecting tables. Add and tes
 
 ## Persistent metadata and coordinates
 
-**Both full and incremental backups must save binary-log coordinates as backup metadata.** Store versioned portable manifests beside the archives in every required destination. Index them in backup history, but do not make WordPress options, transient job state or local file inventories the only copy.
+**Both full and incremental backups must save binary-log coordinates as backup metadata.** Each new recovery point stores its versioned portable manifest and locator together with its data in one point archive at every required destination. Older points may have those files separately. Index them in backup history, but do not make WordPress options, transient job state or local file inventories the only copy.
 
 For a full backup, save the snapshot's file and byte position: this is the first source event to replay after importing that snapshot. For an incremental, save the inclusive start and exclusive end coordinates of the replay interval, covering only complete committed transactions. A coordinate is a pair; a position without its log filename is insufficient.
 
@@ -130,7 +130,7 @@ Capture rules:
 - Retrieve entire closed files, retaining format-description events and checksums. The first file may contain bytes before the baseline coordinate; record replay bounds separately from physical artifact bytes. Retain server-wide raw contents without filtering during capture and disclose that their data scope can exceed the selected database.
 - Verify event checksums, complete transactions, rotation transitions, source ancestry and every required intervening log. Reject unsupported compressed/encrypted event handling rather than omitting events. Never convert verbose row-event comments into replay SQL.
 - Stage artifacts privately; compress, age-encrypt when configured and use existing providers. Configured encryption failure blocks publication. Checkpoint each immutable encrypted artifact before removing plaintext. Retries do not append to age ciphertext.
-- Publish artifacts first and their immutable completion manifest last, separately for each provider instance. Make retries idempotent and retain incomplete uploads as uncommitted artifacts. Providers need no cross-object atomic rename.
+- Publish each completed point archive separately for each provider instance. Older pending points publish payloads, manifest and locator in order. Make retries idempotent and retain incomplete uploads as uncommitted artifacts.
 - Advance the durable capture cursor only after artifacts and manifests are complete at every destination required by the job's saved configuration. Track optional destination lag separately. A provider's readable, complete dependency set determines whether it can supply a restore; a successful upload elsewhere does not make it complete.
 - Serialize cursor updates with a source-scoped lease and fencing token so expired workers cannot overwrite a newer cursor. Backup scheduling, new baselines and retention must respect these leases.
 - When a required source log is missing, mark the chain broken at the last verified point, alert and schedule a new full backup. Preserve earlier recoverable coverage. A successful new baseline cannot repair the historical gap.
@@ -178,7 +178,7 @@ Count a PITR full backup plus its incremental coverage as one database chain. Ap
 
 Protect active capture chains, baseline attempts, in-flight uploads and restore leases. Never delete the only usable baseline because a replacement was started or partially uploaded. Route scheduled cleanup, after-backup pruning, browser deletion, CLI deletion and local temporary-file cleanup through the same database dependency checks. Reject deleting an individual required segment; an explicit whole-chain delete must show the recovery coverage being removed.
 
-Use retryable deletion state per destination. Mark a chain as deleting before removal, keep its inventory and failure details until required deletions complete, and hide it from normal recovery selection once deletion starts. Avoid orphan payloads by deleting payloads before their final discovery metadata. Recheck protection under a lock when committing a deletion plan. Initially use chain-owned artifacts so a deleted chain cannot remove a newer chain's overlapping log files.
+Use retryable deletion state per destination. Mark a chain as deleting before removal, keep its inventory and failure details until required deletions complete, and hide it from normal recovery selection once deletion starts. New point archives are deleted as single objects; for older points delete payloads before their final discovery metadata. Recheck protection under a lock when committing a deletion plan. Initially use chain-owned artifacts so a deleted chain cannot remove a newer chain's overlapping log files.
 
 ## Delivery sequence and acceptance gates
 

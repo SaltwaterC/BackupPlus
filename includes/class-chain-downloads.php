@@ -7,9 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Recovery points of an incremental backup chain as a downloadable list.
  *
- * A chain stores several files per point: the snapshot or log of a database PITR chain with its manifest and locator, or
- * one archive per incremental backup of a file entity. Browsers get one row per point, listed a page at a time, and one
- * archive for whichever points were chosen, instead of one transfer per file.
+ * Each new database PITR point has one archive containing its data and metadata. Older points may have several files.
+ * Browsers get one row per point and one download for whichever points were chosen.
  */
 class BackupPlus_Chain_Downloads {
 
@@ -111,7 +110,7 @@ class BackupPlus_Chain_Downloads {
 		$encrypted = false;
 		foreach ( $findexes as $findex ) {
 			$size     += isset( $files[ $findex ]['size'] ) && is_numeric( $files[ $findex ]['size'] ) ? (int) $files[ $findex ]['size'] : 0;
-			$encrypted = $encrypted || BackupPlus_Encryption::is_file_encrypted( $files[ $findex ]['name'] );
+			$encrypted = $encrypted || ! empty( $files[ $findex ]['encrypted'] ) || BackupPlus_Encryption::is_file_encrypted( $files[ $findex ]['name'] );
 		}
 		return array(
 			'id'        => $id,
@@ -475,21 +474,24 @@ class BackupPlus_Chain_Downloads {
 					}
 					BackupPlus_Storage_Methods_Interface::get_remote_file( $services, $name, $timestamp );
 				}
-				if ( ! is_file( $path ) || ! is_readable( $path ) || ( ! empty( $file['size'] ) && is_numeric( $file['size'] ) && filesize( $path ) < (int) $file['size'] ) ) {
+				if ( is_link( $path ) || ! is_file( $path ) || ! is_readable( $path ) || ( ! empty( $file['size'] ) && is_numeric( $file['size'] ) && filesize( $path ) < (int) $file['size'] ) ) {
 					/* translators: %s: File name. */
 					throw new RuntimeException( sprintf( __( 'The file %s is not available on this server and could not be retrieved from remote storage.', 'backupplus' ), $name ) );
 				}
+				if ( ! empty( $file['sha256'] ) && ( filesize( $path ) !== (int) $file['size'] || ! hash_equals( $file['sha256'], hash_file( 'sha256', $path ) ) ) ) { throw new RuntimeException( __( 'A recovery point archive is corrupt.', 'backupplus' ) ); }
 				$files[] = array(
 					'name' => $name,
 					'path' => $path,
 				);
 			}
 		}
-		$first = reset( $chosen );
-		$last  = end( $chosen );
+		$first  = reset( $chosen );
+		$last   = end( $chosen );
+		$direct = 'db' === $type && 1 === count( $chosen ) && 1 === count( $files ) && (bool) preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_point\.tar\z/D', $files[0]['name'] );
 		return array(
-			'files' => $files,
-			'name'  => 'backupplus-' . ( 'db' === $type ? 'database-recovery' : $type ) . '-' . gmdate( 'Ymd-His', $first['timestamp'] ) . ( $first['id'] === $last['id'] ? '' : '-to-' . gmdate( 'Ymd-His', $last['timestamp'] ) ) . '.zip',
+			'files'  => $files,
+			'name'   => $direct ? $files[0]['name'] : 'backupplus-' . ( 'db' === $type ? 'database-recovery' : $type ) . '-' . gmdate( 'Ymd-His', $first['timestamp'] ) . ( $first['id'] === $last['id'] ? '' : '-to-' . gmdate( 'Ymd-His', $last['timestamp'] ) ) . '.zip',
+			'direct' => $direct,
 		);
 	}
 
@@ -498,6 +500,13 @@ class BackupPlus_Chain_Downloads {
 		$resolved = self::resolve( $timestamp, $type, $selection, true );
 		if ( ! $archive ) {
 			return array( 'files' => count( $resolved['files'] ) );
+		}
+		if ( $resolved['direct'] ) {
+			return array(
+				'files' => 1,
+				'size'  => BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( filesize( $resolved['files'][0]['path'] ) ),
+				'name'  => $resolved['name'],
+			);
 		}
 		$zip = new BackupPlus_Stored_Zip( $resolved['files'] );
 		return array(
@@ -510,10 +519,23 @@ class BackupPlus_Chain_Downloads {
 	/** Stream the chosen points as one archive. Does not return on success. */
 	public static function send( $timestamp, $type, $selection ) {
 		$resolved = self::resolve( $timestamp, $type, $selection, false );
-		$zip      = new BackupPlus_Stored_Zip( $resolved['files'] );
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
+		if ( $resolved['direct'] ) {
+			$input = fopen( $resolved['files'][0]['path'], 'rb' );
+			if ( ! $input ) { throw new RuntimeException( 'The recovery point archive is unavailable.' ); }
+			while ( ob_get_level() ) { @ob_end_clean();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced when a buffer cannot be closed.
+			}
+			nocache_headers();
+			header( 'Content-Type: application/x-tar' );
+			header( 'Content-Disposition: attachment; filename="' . $resolved['name'] . '"' );
+			header( 'Content-Length: ' . fstat( $input )['size'] );
+			fpassthru( $input );
+			fclose( $input );
+			die;
+		}
+		$zip = new BackupPlus_Stored_Zip( $resolved['files'] );
 		$zip->send( $resolved['name'] );
 		die;
 	}

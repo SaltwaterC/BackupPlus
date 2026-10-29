@@ -147,7 +147,7 @@ trait BackupPlus_Admin_Existing_Backups {
 		$this->download_button( $bkey, $key, 0, null, $this->database_download_title( $backup, $bkey ), $dbt, $esc_pretty_date, implode( ',', array_keys( $files ) ), $files );
 	}
 
-	/** Include every stored PITR artifact, including encrypted logs, manifests and locators. */
+	/** Count stored PITR point archives, including files from older chains. */
 	private function database_download_title( $backup, $type ) {
 		$files   = array();
 		$total   = $full = $increments = 0;
@@ -168,7 +168,7 @@ trait BackupPlus_Admin_Existing_Backups {
 			return $title . __( 'Total archive size unavailable.', 'backupplus' );
 		}
 		if ( ! empty( $backup['pitr']['points'] ) ) {
-			// Each recovery point is several files (data, manifest, locator), so the file count must not be read as the number of points.
+			// Older recovery points can still contain several separate files.
 			$points = count( $backup['pitr']['points'] );
 			/* translators: 1: Recovery point count, 2: File count, 3: Total size, 4: Full backup size, 5: Size of everything after the full backup. */
 			return $title . sprintf( _n( '(%1$d recovery point in %2$d files, total %3$s: full backup %4$s plus the log after it %5$s).', '(%1$d recovery points in %2$d files, total %3$s: full backup %4$s plus the logs after it %5$s).', $points, 'backupplus' ), $points, count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total - $full ) );
@@ -782,16 +782,45 @@ trait BackupPlus_Admin_Existing_Backups {
 		global $backupplus;
 		$services   = $backupplus->get_canonical_service_list( $backup['service'] );
 		$sval       = array_diff( $services, array( 'email' ) ) ? 1 : 0;
+		$missing    = $sval && ! empty( $backup['pitr'] ) && $this->remote_instance_missing( $backup ) ? 1 : 0;
 		$increments = $this->incremental_count( $backup );
 		if ( ! empty( $backup['pitr']['points'] ) ) { $increments = max( 0, count( $backup['pitr']['points'] ) - 1 ); }
 		$chain_label = $increments > 0 ? $this->chain_label( $increments ) : ( ! empty( $backup['pitr'] ) ? __( 'Full database recovery backup', 'backupplus' ) : '' );
 		?>
-		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr( $sval ); ?>">
-			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-chain="<?php echo esc_attr( $chain_label ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $backup_time ), 'M d, Y G:i' ) . ': ' . $chain_label : '' ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
+		<div class="backupplus-remove" data-hasremote="<?php echo esc_attr( $sval ); ?>" data-remotemissing="<?php echo esc_attr( $missing ); ?>">
+			<a data-hasremote="<?php echo esc_attr( $sval ); ?>" data-remotemissing="<?php echo esc_attr( $missing ); ?>" data-chain="<?php echo esc_attr( $chain_label ? get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $backup_time ), 'M d, Y G:i' ) . ': ' . $chain_label : '' ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>" data-key="<?php echo esc_attr( $backup_time ); ?>" class="button button-remove no-decoration backupplus-delete-link" href="<?php echo esc_url( BackupPlus::get_current_clean_url() ); ?>" title="<?php esc_attr_e( 'Delete this backup set', 'backupplus' ); ?>">
 				<?php esc_html_e( 'Delete', 'backupplus' ); ?>
 			</a>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Whether a recovery chain was saved to a remote storage instance that has since been removed from the settings. Deleting such a chain from remote storage is refused, so the delete dialog must not offer it.
+	 *
+	 * @param array $backup - backup information array
+	 *
+	 * @return bool
+	 */
+	private function remote_instance_missing( $backup ) {
+		if ( empty( $backup['service_instance_ids'] ) ) {
+			return false;
+		}
+		foreach ( (array) $backup['service_instance_ids'] as $service => $instances ) {
+			$storage = BackupPlus_Storage_Methods_Interface::get_storage_objects_and_ids( array( $service ) );
+			if ( empty( $storage[ $service ]['object'] ) ) {
+				return true;
+			}
+			if ( ! $storage[ $service ]['object']->supports_feature( 'multi_options' ) ) {
+				continue;
+			}
+			foreach ( (array) $instances as $instance ) {
+				if ( ! isset( $storage[ $service ]['instance_settings'][ $instance ] ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

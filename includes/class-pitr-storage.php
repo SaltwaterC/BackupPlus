@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-pitr-compression.php';
+require_once __DIR__ . '/class-pitr-archive.php';
 
 class BackupPlus_PITR_Delete_Pending extends RuntimeException {}
 
@@ -132,13 +133,13 @@ class BackupPlus_PITR_Storage {
 		return $this->directory . '/' . BackupPlus_PITR_Manifest::filename( $name );
 	}
 
-	public function artifact( $input, $name, $compress = true ) {
-		$path = $this->path( $name );
+	public function artifact( $input, $name, $compress = true, $staged = false ) {
+		$path = $staged ? $this->work . '/' . BackupPlus_PITR_Manifest::filename( $name ) : $this->path( $name );
 		if ( file_exists( $path ) || is_link( $path ) || file_exists( $path . '.crypt' ) || is_link( $path . '.crypt' ) ) {
 			throw new RuntimeException( 'PITR artifact already exists.' );
 		}
 		try {
-			return $this->create_artifact( $input, $name, $compress );
+			return $this->create_artifact( $input, $name, $compress, $path );
 		} catch ( Throwable $error ) {
 			foreach ( array( $path, $path . '.crypt' ) as $file ) {
 				if ( is_file( $file ) && ! is_link( $file ) ) {
@@ -148,8 +149,7 @@ class BackupPlus_PITR_Storage {
 		}
 	}
 
-	private function create_artifact( $input, $name, $compress ) {
-		$path = $this->path( $name );
+	private function create_artifact( $input, $name, $compress, $path ) {
 		$zstd = $compress && (bool) preg_match( '/\.zst$/D', $name );
 		if ( $zstd ) {
 			BackupPlus_PITR_Compression::compress_zstd( $input, $path, $this->work );
@@ -234,7 +234,7 @@ class BackupPlus_PITR_Storage {
 		}
 	}
 
-	/** Payloads, then manifest, then locator: the locator is the publication marker. */
+	/** Publish each complete point archive, or the ordered files of an older pending point. */
 	public function publish( $pending, $checkpoint ) {
 		global $backupplus_backup;
 		foreach ( $pending['files'] as $file ) {
@@ -296,8 +296,17 @@ class BackupPlus_PITR_Storage {
 		throw new RuntimeException( 'PITR artifact is missing or corrupt: ' . $artifact['name'] );
 	}
 
-	public function plain( $artifact ) {
-		$path = $this->fetch( $artifact );
+	/** Extract an archive member into private work space, or the temporary restore staging area. */
+	public function member( $artifact, $archive = null, $shared = false ) {
+		if ( null === $archive ) { return $this->fetch( $artifact ); }
+		$path   = $this->fetch( $archive );
+		$target = $shared ? $this->path( $artifact['name'] ) : $this->work . '/' . $artifact['name'];
+		return BackupPlus_PITR_Archive::extract( $path, $artifact, $target );
+	}
+
+	public function plain( $artifact, $archive = null ) {
+		$shared = is_array( $this->reader ) && isset( $this->reader['prepared'] ) && is_callable( $this->reader['prepared'] );
+		$path   = $this->member( $artifact, $archive, $shared && '.crypt' === substr( $artifact['name'], -6 ) );
 		if ( '.crypt' !== substr( $path, -6 ) ) {
 			return $path;
 		}
@@ -338,12 +347,15 @@ class BackupPlus_PITR_Storage {
 				throw new RuntimeException( 'Could not list PITR remote artifacts.' );
 			}
 			foreach ( $result as $file ) {
-				if ( isset( $file['name'] ) && preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_locator\.json\z/D', $file['name'] ) ) {
+				if ( isset( $file['name'] ) && preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:locator\.json|point\.tar)\z/D', $file['name'] ) ) {
 					$names[ $file['name'] ] = true;
 				}
 			}
 		}
 		foreach ( glob( $this->directory . '/backup_pitr_*_locator.json' ) as $path ) {
+			$names[ basename( $path ) ] = true;
+		}
+		foreach ( glob( $this->directory . '/backup_pitr_*_point.tar' ) as $path ) {
 			$names[ basename( $path ) ] = true;
 		}
 		$result = array();
@@ -357,10 +369,12 @@ class BackupPlus_PITR_Storage {
 					}
 				}
 			}
-			if ( is_link( $path ) || ! is_file( $path ) || filesize( $path ) > 16384 ) {
+			$packed = '.tar' === substr( $name, -4 );
+			if ( is_link( $path ) || ! is_file( $path ) || ( ! $packed && filesize( $path ) > 16384 ) ) {
 				throw new RuntimeException( 'Invalid PITR discovery record.' );
 			}
-			$locator = json_decode( file_get_contents( $path ), true );
+			$locator_name = $packed ? substr( $name, 0, -strlen( 'point.tar' ) ) . 'locator.json' : $name;
+			$locator      = json_decode( $packed ? BackupPlus_PITR_Archive::contents( $path, $locator_name, 16384 ) : file_get_contents( $path ), true );
 			if ( ! is_array( $locator ) || ! isset( $locator['manifest_version'], $locator['chain_id'], $locator['backup_id'], $locator['manifest'] ) || 1 !== $locator['manifest_version'] ) {
 				throw new RuntimeException( 'Invalid PITR discovery metadata.' );
 			}
@@ -372,8 +386,15 @@ class BackupPlus_PITR_Storage {
 			BackupPlus_PITR_Manifest::filename( $locator['manifest']['name'] );
 			BackupPlus_PITR_Manifest::hash( $locator['manifest']['sha256'] );
 			$base = 'backup_pitr_' . $locator['chain_id'] . '_' . $locator['backup_id'] . '_';
-			if ( $name !== $base . 'locator.json' || ! in_array( $locator['manifest']['name'], array( $base . 'manifest.json', $base . 'manifest.json.crypt' ), true ) ) {
+			if ( $locator_name !== $base . 'locator.json' || ( $packed && $name !== $base . 'point.tar' ) || ! in_array( $locator['manifest']['name'], array( $base . 'manifest.json', $base . 'manifest.json.crypt' ), true ) ) {
 				throw new RuntimeException( 'PITR locator IDs do not match its artifact names.' );
+			}
+			if ( $packed ) {
+				$locator['archive'] = array(
+					'name'   => $name,
+					'size'   => filesize( $path ),
+					'sha256' => hash_file( 'sha256', $path ),
+				);
 			}
 			$result[] = $locator;
 		}

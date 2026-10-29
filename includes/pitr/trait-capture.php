@@ -119,33 +119,54 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			throw new RuntimeException( 'PITR manifest exceeds the supported limit; shorten the capture interval.' );
 		}
 		BackupPlus_PITR_Process::private_file( $json, $encoded );
-		$artifact     = $storage->artifact( $json, $prefix . 'manifest.json', false );
+		$artifact     = $storage->artifact( $json, $prefix . 'manifest.json', false, true );
 		$locator      = array(
 			'manifest_version' => 1,
 			'chain_id'         => $manifest['chain_id'],
 			'backup_id'        => $manifest['backup_id'],
 			'manifest'         => array_intersect_key( $artifact, array_flip( array( 'name', 'sha256', 'size' ) ) ),
 		);
-		$locator_path = $storage->path( $prefix . 'locator.json' );
+		$locator_path = $this->work . '/' . $prefix . 'locator.json';
 		BackupPlus_PITR_Process::private_file( $locator_path, json_encode( $locator, JSON_UNESCAPED_SLASHES ) );
-		$locator_file           = array(
+		$locator_file = array(
 			'name'   => basename( $locator_path ),
 			'sha256' => hash_file( 'sha256', $locator_path ),
 			'size'   => filesize( $locator_path ),
+		);
+		$members      = array_merge( $manifest['artifacts'], array( $artifact, $locator_file ) );
+		$files        = array();
+		foreach ( $members as $member ) {
+			$files[] = $member + array( 'path' => $this->work . '/' . $member['name'] );
+		}
+		$archive_name = $prefix . 'point.tar';
+		$staged       = $this->work . '/' . $archive_name;
+		$target       = $storage->path( $archive_name );
+		if ( file_exists( $target ) || is_link( $target ) ) { throw new RuntimeException( 'PITR point archive already exists.' ); }
+		BackupPlus_PITR_Archive::create( $staged, $files );
+		BackupPlus_PITR_Archive::validate( $staged, $manifest, $locator );
+		if ( ! rename( $staged, $target ) ) { throw new RuntimeException( 'Could not publish local PITR point archive.' ); }
+		$archive                = array(
+			'name'   => $archive_name,
+			'sha256' => hash_file( 'sha256', $target ),
+			'size'   => filesize( $target ),
 		);
 		$this->state['pending'] = array(
 			'entry'        => array(
 				'manifest' => $manifest,
 				'sha256'   => $artifact['sha256'],
 				'locator'  => $locator,
+				'archive'  => $archive,
 			),
-			'files'        => array_merge( $manifest['artifacts'], array( $artifact, $locator_file ) ),
+			'files'        => array( $archive ),
 			'fingerprint'  => $fingerprint,
 			'destinations' => $destinations,
 			'encryption'   => $encryption,
 			'receipts'     => array(),
 		);
-		$this->save();
+		try { $this->save(); }
+		catch ( Throwable $error ) { $this->state['pending'] = null;
+			unlink( $target );
+			throw $error; }
 	}
 
 	private function full( $adapter, $storage, $fingerprint, $destinations, $encryption ) {
@@ -170,7 +191,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 		if ( ! hash_equals( $before_anchor['sha256'], BackupPlus_PITR_Binlog::prefix_hash( $proof, $before_anchor['coordinate']['position'] ) ) ) {
 			throw new RuntimeException( 'Source binary logs were reset during the full snapshot.' );
 		}
-		$artifact = $storage->artifact( $this->sql_header( $sql ), 'backup_pitr_' . $chain . '_' . $id . '_full.sql.' . BackupPlus_PITR_Compression::binlog_extension() );
+		$artifact = $storage->artifact( $this->sql_header( $sql ), 'backup_pitr_' . $chain . '_' . $id . '_full.sql.' . BackupPlus_PITR_Compression::binlog_extension(), true, true );
 		$old_id   = $this->state['active'];
 		if ( $old_id && isset( $this->state['chains'][ $old_id ] ) && 'complete' === $this->state['chains'][ $old_id ]['state'] && $fingerprint === $this->state['chains'][ $old_id ]['fingerprint'] ) {
 			try {
@@ -255,7 +276,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 			if ( $inspection['next']['file'] !== $names[ $i + 1 ] ) {
 				throw new RuntimeException( 'Source binary-log successor is missing.' );
 			}
-			$artifact    = $storage->artifact( $path, $prefix . 'log' . count( $segments ) . '.bin.' . BackupPlus_PITR_Compression::binlog_extension() );
+			$artifact    = $storage->artifact( $path, $prefix . 'log' . count( $segments ) . '.bin.' . BackupPlus_PITR_Compression::binlog_extension(), true, true );
 			$segments[]  = array_merge(
 				array(
 					'start'    => $next,

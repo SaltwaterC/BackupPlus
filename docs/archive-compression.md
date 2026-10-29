@@ -6,10 +6,10 @@ When the `zstd` executable is available, new backups use one Zstandard compressi
 | --- | --- | --- |
 | Files, including full, incremental and pre-update backups | `-plugins.tar.zst`, `-uploads2.tar.zst`, etc. | `.tar.zst.crypt` |
 | WordPress and external database SQL dumps | `-db.sql.zst`, `-db7.sql.zst` | `.sql.zst.crypt` |
-| PITR full snapshots | `_full.sql.zst` | `.sql.zst.crypt` |
-| PITR binary logs | `_log0.bin.zst` | `.bin.zst.crypt` |
+| PITR full snapshots | `_point.tar` containing `_full.sql.zst` | `_point.tar` containing `.sql.zst.crypt` |
+| PITR binary logs | `_point.tar` containing `_log0.bin.zst` and any additional logs | `_point.tar` containing `.bin.zst.crypt` members |
 
-File archives contain ordinary POSIX tar entries, with PAX records for long paths and large files. Their contents are stored without ZIP or Deflate. Each split part is an independent tar/Zstandard archive containing its own incremental manifest. Compression can reuse repeated content across files within that part. SQL assembly feeds uncompressed SQL directly into Zstandard; there is no gzip layer inside the published `.sql.zst` file. Internal resumable per-table staging fragments may still use gzip and are decoded before final assembly.
+File archives contain ordinary POSIX tar entries, with PAX records for long paths and large files. Their contents are stored without ZIP or Deflate. Each split part is an independent tar/Zstandard archive containing its own incremental manifest. Compression can reuse repeated content across files within that part. SQL assembly feeds uncompressed SQL directly into Zstandard; there is no gzip layer inside the published `.sql.zst` file. Internal resumable per-table staging fragments may still use gzip and are decoded before final assembly. PITR point tar files hold independently compressed or encrypted members together with their manifest and locator; the outer tar itself is not compressed.
 
 Zstandard uses level 6, a 32 MiB history window, a frame checksum and one thread. Encryption follows compression. Every completed part has its published size and checksum recorded, and uploads wait until compression/encryption finish. An interrupted compression leaves its source intact; completed names are checkpointed before staging cleanup. Previously published backups are not converted.
 
@@ -26,7 +26,7 @@ tar --zstd -xf backup_2026-10-26-1200_Site_0123456789ab-uploads.tar.zst
 zstd -d backup_2026-10-26-1200_Site_0123456789ab-db.sql.zst
 ```
 
-For age archives, decrypt with `age` first, retaining the `.tar.zst` or `.sql.zst` suffix.
+For ordinary age archives, decrypt with `age` first, retaining the `.tar.zst` or `.sql.zst` suffix. For PITR points, first extract the `.tar`, then decrypt an encrypted member with `age`.
 
 ## Compatibility and staging space
 

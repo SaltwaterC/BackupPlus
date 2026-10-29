@@ -18,7 +18,9 @@ class BackupPlus_PITR_Restore {
 	public static function manifest( $timestamp, $point, $ticket ) {
 		list( $id, $target, $baseline ) = self::selection( $timestamp, $point );
 		if ( $baseline ) {
-			return BackupPlus_Age_Restore::manifest( BackupPlus_Backup_History::get_history( $timestamp ), $timestamp, array( 'db' ), $ticket );
+			$backup = BackupPlus_Backup_History::get_history( $timestamp );
+			BackupPlus_PITR::stage_baseline( $backup );
+			return BackupPlus_Age_Restore::manifest( $backup, $timestamp, array( 'db' ), $ticket );
 		}
 		$worker = new BackupPlus_PITR();
 		return $worker->browser_manifest( $id, $target, $timestamp, $ticket );

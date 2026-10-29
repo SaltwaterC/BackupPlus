@@ -64,7 +64,7 @@ class BackupPlus_PITR_Manifest {
 	}
 
 	public static function filename( $name ) {
-		if ( ! is_string( $name ) || ! preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json(?:\.crypt)?|locator\.json)(?:\.crypt)?\z/D', $name ) ) {
+		if ( ! is_string( $name ) || ! preg_match( '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json)(?:\.crypt)?|locator\.json|point\.tar)\z/D', $name ) ) {
 			throw new RuntimeException( 'Invalid PITR artifact name.' );
 		}
 		return $name;

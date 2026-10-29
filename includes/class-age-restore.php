@@ -87,7 +87,7 @@ class BackupPlus_Age_Restore {
 					'files'  => array(),
 				);
 			} catch ( \RuntimeException $e ) {
-				self::discard( $ticket );
+				self::discard( $ticket, false );
 			}
 		}
 		$files = array();
@@ -201,14 +201,18 @@ class BackupPlus_Age_Restore {
 	}
 
 	/** Cancelled/failed uploads cannot be claimed; old .tmp files also use routine cleanup. */
-	public static function discard( $ticket ) {
+	public static function discard( $ticket, $remove_members = true ) {
 		try { $data = self::pending( $ticket );
 		} catch ( \RuntimeException $e ) { return; }
 		global $backupplus;
-		foreach ( $data['files'] as $entry ) {
+		foreach ( $data['files'] as $name => $entry ) {
 			if ( ! preg_match( '/\Adecrypt_[a-f0-9]{32}\.tmp\z/D', $entry['path'] ) ) { continue; }
 			$path = $backupplus->backups_dir_location() . '/' . $entry['path'];
 			if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+			if ( $remove_members && 0 === strpos( $name, 'backup_pitr_' ) ) {
+				require_once __DIR__ . '/class-pitr-archive.php';
+				BackupPlus_PITR_Archive::discard_staged( $backupplus->backups_dir_location(), $name );
+			}
 		}
 		delete_transient( 'backupplus_age_restore_' . $ticket );
 	}

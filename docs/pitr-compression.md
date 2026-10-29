@@ -27,7 +27,7 @@ The benchmark reads the source, writes its outputs into a private temporary dire
 
 ## Compatibility and resource limits
 
-- New log artifacts use `.bin.zst`, or `.bin.zst.crypt` with age encryption. The manifest identifies Zstandard and binds the uncompressed size and SHA-256.
+- New log members use `.bin.zst`, or `.bin.zst.crypt` with age encryption. Each point's members, manifest and locator are stored together in one uncompressed `.tar` file. The manifest identifies Zstandard and binds the uncompressed size and SHA-256.
 - New full SQL snapshots also use `.sql.zst` when Zstandard is available; the ordinary database importer supports both Zstandard and existing gzip snapshots. File and ordinary SQL archive behavior is documented in [archive compression](archive-compression.md).
 - Existing `.bin.gz` archives remain readable. A chain may contain both codecs. Existing archives and manifest bindings are not rewritten.
 - Without a `zstd` executable, capture falls back to gzip. Restoring `.zst` archives requires `zstd` on that host; a missing executable fails before replay.

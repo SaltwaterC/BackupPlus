@@ -89,6 +89,49 @@ final class StorageLimitsTest extends TestCase {
 		$this->assertSame( 0, $config['local']['']['quota'] );
 		$this->assertSame( $config, Limits::sanitize( $config ) );
 	}
+
+	public function test_pitr_point_archive_is_counted_once_even_when_its_baseline_is_staged(): void {
+		$prefix  = 'backup_pitr_' . str_repeat( 'a', 32 ) . '_' . str_repeat( 'b', 32 ) . '_';
+		$archive = $prefix . 'point.tar';
+		$member  = $prefix . 'full.sql.gz';
+		file_put_contents( $this->directory . '/' . $archive, str_repeat( 'a', 120 ) );
+		file_put_contents( $this->directory . '/' . $member, str_repeat( 'b', 80 ) );
+		$set = array(
+			'db'      => $member,
+			'db-size' => 80,
+			'pitr'    => array(
+				'baseline_archive' => array(
+					'name' => $archive,
+					'size' => 120,
+				),
+				'downloads'        => array(
+					array(
+						'name' => $archive,
+						'size' => 120,
+					),
+				),
+			),
+		);
+		$this->assertSame(
+			array(
+				$archive => array(
+					'size'   => 120,
+					'source' => 'db',
+				),
+			),
+			Limits::artifacts( $set )
+		);
+		$this->assertSame(
+			array( $archive => 120 ),
+			Limits::measure(
+				array(
+					'service'  => 'local',
+					'instance' => '',
+				),
+				array( $set )
+			)
+		);
+	}
 	public function test_boundaries_jump_rearming_and_daily_reminders(): void {
 		$state = array();
 		$now   = 1000000;

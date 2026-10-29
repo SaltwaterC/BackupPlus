@@ -81,10 +81,9 @@ trait BackupPlus_PITR_Orchestrator_History {
 			foreach ( $manifest['artifacts'] as $artifact ) {
 				$encrypted = $encrypted || '.crypt' === substr( $artifact['name'], -6 );
 			}
-			// Keep the full dump at index zero for ordinary full-database restores.
-			// Include the metadata needed to discover and recover a downloaded chain.
+			// Older points have separate files; newer points hold all their members in one archive.
 			$locator = json_encode( $entry['locator'], JSON_UNESCAPED_SLASHES );
-			$files   = array_merge(
+			$files   = isset( $entry['archive'] ) ? array( $entry['archive'] ) : array_merge(
 				$manifest['artifacts'],
 				array(
 					$entry['locator']['manifest'],
@@ -95,12 +94,15 @@ trait BackupPlus_PITR_Orchestrator_History {
 				)
 			);
 			foreach ( $files as $file ) {
-				$downloads[] = array(
+				$download = array(
 					'name'      => $file['name'],
 					'size'      => $file['size'],
 					'increment' => $index,
 					'timestamp' => $manifest['created_at'],
+					'encrypted' => $encrypted,
 				);
+				if ( isset( $entry['archive'], $file['sha256'] ) ) { $download['sha256'] = $file['sha256']; }
+				$downloads[] = $download;
 			}
 			$points[] = array(
 				'backup_id'  => $manifest['backup_id'],
@@ -110,7 +112,7 @@ trait BackupPlus_PITR_Orchestrator_History {
 				'encrypted'  => $encrypted,
 			);
 		}
-		return array(
+		$result = array(
 			'chain_id'            => $id,
 			'snapshot_coordinate' => $chain['entries'][0]['manifest']['snapshot_coordinate'],
 			'end_coordinate'      => $cursor,
@@ -118,6 +120,8 @@ trait BackupPlus_PITR_Orchestrator_History {
 			'points'              => $points,
 			'downloads'           => $downloads,
 		);
+		if ( isset( $chain['entries'][0]['archive'] ) ) { $result['baseline_archive'] = $chain['entries'][0]['archive']; }
+		return $result;
 	}
 
 	/** Enrich older history rows from the atomically written index without starting a worker. */
@@ -197,7 +201,9 @@ trait BackupPlus_PITR_Orchestrator_History {
 		$storage = new BackupPlus_PITR_Storage( $this->work, array(), null, $reader );
 		$groups  = array();
 		foreach ( $storage->discover() as $locator ) {
-			$path = $storage->plain( $locator['manifest'] );
+			$archive = isset( $locator['archive'] ) ? $locator['archive'] : null;
+			unset( $locator['archive'] );
+			$path = $storage->plain( $locator['manifest'], $archive );
 			if ( filesize( $path ) > 16777216 ) {
 				throw new RuntimeException( 'PITR manifest exceeds its limit.' );
 			}
@@ -205,11 +211,17 @@ trait BackupPlus_PITR_Orchestrator_History {
 			if ( $manifest['chain_id'] !== $locator['chain_id'] || $manifest['backup_id'] !== $locator['backup_id'] ) {
 				throw new RuntimeException( 'PITR discovery binding mismatch.' );
 			}
-			$groups[ $manifest['chain_id'] ][ $manifest['backup_id'] ] = array(
+			$entry = array(
 				'manifest' => $manifest,
 				'sha256'   => $locator['manifest']['sha256'],
 				'locator'  => $locator,
 			);
+			if ( $archive ) {
+				BackupPlus_PITR_Archive::validate( $storage->fetch( $archive ), $manifest, $locator );
+				$entry['archive'] = $archive;
+			}
+			if ( isset( $groups[ $manifest['chain_id'] ][ $manifest['backup_id'] ] ) ) { throw new RuntimeException( 'Duplicate PITR recovery point discovery records.' ); }
+			$groups[ $manifest['chain_id'] ][ $manifest['backup_id'] ] = $entry;
 		}
 		foreach ( $groups as $id => $entries ) {
 			$ordered = array();
@@ -241,7 +253,7 @@ trait BackupPlus_PITR_Orchestrator_History {
 			$cursor = BackupPlus_PITR_Manifest::chain( $ordered );
 			foreach ( $ordered as $entry ) {
 				foreach ( $entry['manifest']['artifacts'] as $artifact ) {
-					$storage->fetch( $artifact );
+					$storage->member( $artifact, isset( $entry['archive'] ) ? $entry['archive'] : null );
 				}
 			}
 			if ( ! isset( $this->state['chains'][ $id ] ) ) {

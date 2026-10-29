@@ -306,6 +306,15 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 		if ( empty( $backup ) ) {
 			return array( 'result' => 'asyouwere' );
 		}
+		if ( ! empty( $backup['pitr']['baseline_archive'] ) ) {
+			foreach ( $params['downloads'] as $download ) {
+				if ( isset( $download[0] ) && 'db' === $download[0] ) {
+					backupplus_try_include_file( 'includes/class-pitr.php', 'include_once' );
+					BackupPlus_PITR::stage_baseline( $backup );
+					break;
+				}
+			}
+		}
 
 		foreach ( $params['downloads'] as $i => $download ) {
 			if ( is_array( $download ) && 2 == count( $download ) && isset( $download[0] ) && isset( $download[1] ) ) {
