@@ -10,10 +10,41 @@ class BackupPlus_CLI {
 		// Record cron completions too: a CLI worker may have handed a retry to WP-Cron.
 		add_action( 'backupplus_backup_finished', array( __CLASS__, 'finished' ), 20, 4 );
 		if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) { return; }
+		// A network is managed as a whole, from its main site
+		WP_CLI::add_hook(
+			'before_run_command',
+			function ( $args ) {
+				if ( isset( $args[0] ) && 'backupplus' === $args[0] && ! BackupPlus_Multisite::available() ) {
+					WP_CLI::error( is_multisite() && ! BackupPlus_Multisite::network_active() ? 'On a WordPress network, BackupPlus must be network-activated.' : 'BackupPlus manages the whole network from its main site: run this command without --url, or with the main site\'s URL.' );
+				}
+			}
+		);
 		WP_CLI::add_command( 'backupplus', 'BackupPlus_CLI_Command' );
 		require_once BACKUPPLUS_DIR . '/includes/class-cli-restore.php';
 		require_once BACKUPPLUS_DIR . '/includes/class-cli-updates.php';
 		BackupPlus_CLI_Updates::register();
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-diagnostics.php';
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-download.php';
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-prune.php';
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-jobs.php';
+		WP_CLI::add_command( 'backupplus jobs', 'BackupPlus_CLI_Jobs' );
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-remote.php';
+		WP_CLI::add_command( 'backupplus remote', 'BackupPlus_CLI_Remote' );
+		require_once BACKUPPLUS_DIR . '/includes/class-cli-config.php';
+		WP_CLI::add_command( 'backupplus settings', 'BackupPlus_CLI_Settings' );
+		WP_CLI::add_command( 'backupplus databases', 'BackupPlus_CLI_Databases' );
+		WP_CLI::add_command( 'backupplus notify', 'BackupPlus_CLI_Notify' );
+		WP_CLI::add_command( 'backupplus storage-limits', 'BackupPlus_CLI_Storage_Limits' );
+	}
+
+	/** The wp-admin controller, which holds the history, job and storage operations the screens use. */
+	public static function admin() {
+		global $backupplus_admin;
+		if ( ! is_a( $backupplus_admin, 'BackupPlus_Admin' ) ) {
+			require_once BACKUPPLUS_DIR . '/admin.php';
+			$backupplus_admin = new BackupPlus_Admin();
+		}
+		return $backupplus_admin;
 	}
 
 	/** Refresh both ordinary options and network job data across subprocesses. */
@@ -125,6 +156,17 @@ class BackupPlus_CLI {
 					if ( 'wp' !== $id && ! isset( $connections[ $id ] ) ) { throw new InvalidArgumentException( 'Unknown database source: ' . $id ); }
 				}
 			}
+			if ( isset( $args['label'] ) ) {
+				if ( ! is_string( $args['label'] ) || '' === trim( $args['label'] ) || strlen( $args['label'] ) > 200 || preg_match( '/[\x00-\x1f\x7f]/', $args['label'] ) ) { throw new InvalidArgumentException( 'Use a label of up to 200 printable characters.' ); }
+				$options['label'] = $args['label'];
+			}
+			$services = array();
+			if ( isset( $args['services'] ) ) {
+				if ( isset( $args['local'] ) ) { throw new InvalidArgumentException( '--services and --local are exclusive.' ); }
+				$services = self::words( $args['services'] );
+				foreach ( $services as $service ) { if ( 'none' === $service || ! isset( $backupplus->backup_methods[ $service ] ) ) { throw new InvalidArgumentException( 'Unknown remote storage service: ' . $service ); }
+				}
+			}
 			if ( 'files' !== $type ) { $options['database_plan'] = BackupPlus_Backup_Sources::plan_databases( $options ); }
 			if ( 'files' === $type && ! $files ) { throw new InvalidArgumentException( 'No file sources selected.' ); }
 			return array(
@@ -132,6 +174,7 @@ class BackupPlus_CLI {
 				'database' => 'files' !== $type,
 				'entities' => $files,
 				'local'    => isset( $args['local'] ),
+				'services' => $services,
 				'options'  => $options,
 			);
 		} finally { BackupPlus_Backup_Sources::set_run_sources( null ); }
@@ -295,6 +338,12 @@ class BackupPlus_CLI_Command {
 	 * [--local]
 	 * : Skip remote uploads.
 	 *
+	 * [--services=<ids>]
+	 * : Upload only to these services from remote list; exclusive with --local.
+	 *
+	 * [--label=<label>]
+	 * : Label shown in backup history.
+	 *
 	 * [--incremental]
 	 * : Append changed files to a compatible chain, falling back to full.
 	 *
@@ -381,10 +430,30 @@ class BackupPlus_CLI_Command {
 	 * [--include-wp-config]
 	 * : Restore wp-config.php in place during a core restore.
 	 *
+	 * [--site=<blog-id>]
+	 * : On a network, restore only this site of a network backup: its tables and uploads.
+	 *
+	 * [--import-into=<site>]
+	 * : On a network, import a single-site backup into a new site ("new", named by --slug) or over this blog ID.
+	 *
+	 * [--slug=<slug>]
+	 * : Sub-directory or sub-domain of the site that --import-into=new creates.
+	 *
+	 * [--dry-run]
+	 * : List the archives the restore would use and whether they are local, then stop.
+	 *
+	 * [--format=<format>]
+	 * : Output format of --dry-run: table, json or csv.
+	 *
 	 * [--yes]
 	 * : Skip overwrite confirmation. Encrypted restores still prompt for secrets.
 	 */
 	public function restore( $args, $assoc ) {
+		if ( isset( $assoc['dry-run'] ) ) {
+			try { BackupPlus_CLI::output( BackupPlus_CLI_Restore::plan( $args[0], $assoc ), $assoc, array( 'component', 'file', 'size', 'encrypted', 'local' ) ); }
+			catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+			return;
+		}
 		try { BackupPlus_CLI_Restore::run( $args[0], $assoc ); }
 		catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
 	}
@@ -410,7 +479,7 @@ class BackupPlus_CLI_Command {
 		if ( ! is_array( $request ) ) { WP_CLI::error( 'No CLI request exists for this job.' ); }
 		if ( ! defined( 'BACKUPPLUS_FOLLOWUPS_ALLOWED' ) ) { define( 'BACKUPPLUS_FOLLOWUPS_ALLOWED', true ); }
 		if ( 'start' === $assoc['operation'] ) {
-			$backupplus->boot_backup( $request['files'] ? 1 : 0, $request['database'] ? 1 : 0, $request['entities'], false, $request['local'] ? array( 'none' ) : false, $request['options'] );
+			$backupplus->boot_backup( $request['files'] ? 1 : 0, $request['database'] ? 1 : 0, $request['entities'], false, $request['local'] ? array( 'none' ) : ( ! empty( $request['services'] ) ? $request['services'] : false ), $request['options'] );
 		} else {
 			$events = BackupPlus_CLI::events( $nonce, isset( $request['batch'] ) ? $request['batch'] : '' );
 			if ( $events && $events[0]['time'] <= time() ) {
@@ -458,34 +527,204 @@ class BackupPlus_CLI_Command {
 	}
 
 	/**
-	 * Delete an entire backup chain and its local archives.
+	 * Delete entire backup chains and their local archives.
+	 *
+	 * Name timestamps, or select by age and count. Chains protected with keep, active chains and restore points that
+	 * authorise pending updates are never selected by the filters.
 	 *
 	 * ## OPTIONS
 	 *
-	 * <timestamp>
-	 * : History timestamp identifying the whole chain.
+	 * [<timestamp>...]
+	 * : History timestamps identifying whole chains.
+	 *
+	 * [--older-than=<days>]
+	 * : Select chains older than this many days.
+	 *
+	 * [--keep=<count>]
+	 * : Select all but the newest chains; with --older-than both must match.
 	 *
 	 * [--remote]
 	 * : Also delete remote copies.
 	 *
+	 * [--dry-run]
+	 * : List the chains that would be deleted, then stop.
+	 *
 	 * [--yes]
 	 * : Skip confirmation.
+	 *
+	 * [--format=<format>]
+	 * : Output format of --dry-run: table, json or csv.
 	 */
 	public function delete( $args, $assoc ) {
-		if ( ! ctype_digit( $args[0] ) || ! BackupPlus_Backup_History::get_history( $args[0] ) ) { WP_CLI::error( 'Backup timestamp not found.' ); }
-		WP_CLI::confirm( 'Delete backup chain ' . $args[0] . '?', $assoc );
-		require_once BACKUPPLUS_DIR . '/admin.php';
-		$admin  = new BackupPlus_Admin();
-		$result = $admin->delete_set(
-			array(
-				'backup_timestamp' => $args[0],
-				'delete_remote'    => isset( $assoc['remote'] ),
-				'is_continuation'  => false,
-				'strict'           => true,
-			)
-		);
-		if ( ! empty( $result['errors'] ) || 'error' === $result['result'] ) { WP_CLI::error( isset( $result['message'] ) ? $result['message'] : json_encode( $result['errors'] ) ); }
-		WP_CLI::success( 'Backup deleted.' );
+		try {
+			require_once BACKUPPLUS_DIR . '/includes/class-backup-deletion.php';
+			$history = BackupPlus_Backup_History::get_history();
+			$plan    = BackupPlus_CLI_Prune::select( $history, $args, $assoc, time(), array( 'BackupPlus_Backup_Deletion', 'protected_set' ) );
+			foreach ( $plan['skipped'] as $timestamp => $reason ) { WP_CLI::warning( 'Skipping ' . $timestamp . ': ' . $reason . '.' ); }
+			if ( ! $plan['delete'] ) { WP_CLI::error( 'No backup chains match.' ); }
+			if ( isset( $assoc['dry-run'] ) ) {
+				$rows = array();
+				foreach ( $plan['delete'] as $timestamp ) { $rows[] = array(
+					'timestamp' => $timestamp,
+					'date'      => gmdate( 'Y-m-d H:i:s', (int) $timestamp ),
+					'label'     => isset( $history[ $timestamp ]['label'] ) ? $history[ $timestamp ]['label'] : '',
+				); }
+				BackupPlus_CLI::output( $rows, $assoc, array( 'timestamp', 'date', 'label' ) );
+				return;
+			}
+			WP_CLI::confirm( 1 === count( $plan['delete'] ) ? 'Delete backup chain ' . $plan['delete'][0] . '?' : 'Delete ' . count( $plan['delete'] ) . ' backup chains (' . implode( ', ', $plan['delete'] ) . ')?', $assoc );
+			$admin  = BackupPlus_CLI::admin();
+			$failed = array();
+			foreach ( $plan['delete'] as $timestamp ) {
+				$result = $admin->delete_set(
+					array(
+						'backup_timestamp' => $timestamp,
+						'delete_remote'    => isset( $assoc['remote'] ),
+						'is_continuation'  => false,
+						'strict'           => true,
+					)
+				);
+				if ( ! empty( $result['errors'] ) || 'error' === $result['result'] ) {
+					$failed[] = $timestamp;
+					WP_CLI::warning( $timestamp . ': ' . ( isset( $result['message'] ) ? $result['message'] : json_encode( $result['errors'] ) ) );
+				} else { WP_CLI::log( 'Deleted ' . $timestamp . '.' ); }
+			}
+			if ( $failed ) { WP_CLI::error( count( $failed ) . ' of ' . count( $plan['delete'] ) . ' backup chain(s) could not be deleted: ' . implode( ', ', $failed ) . '.' ); }
+			WP_CLI::success( 1 === count( $plan['delete'] ) ? 'Backup deleted.' : count( $plan['delete'] ) . ' backups deleted.' );
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+	}
+
+	/**
+	 * Rescan local storage, and optionally remote storage, for backups missing from history.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--remote]
+	 * : Also scan remote storage.
+	 */
+	public function rescan( $args, $assoc ) {
+		try {
+			BackupPlus_Backup_History::always_get_from_db();
+			foreach ( (array) BackupPlus_Backup_History::rebuild( isset( $assoc['remote'] ) ) as $message ) {
+				if ( is_string( $message ) ) { WP_CLI::log( wp_strip_all_tags( $message ) );
+					continue; }
+				if ( ! empty( $message['code'] ) && 'file-listing' === $message['code'] ) { continue; }
+				if ( ! empty( $message['message'] ) ) { WP_CLI::log( wp_strip_all_tags( ( empty( $message['desc'] ) ? '' : $message['desc'] . ': ' ) . $message['message'] ) ); }
+			}
+			WP_CLI::success( 'History rebuilt: ' . count( BackupPlus_Backup_History::get_history() ) . ' backups.' );
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+	}
+
+	/**
+	 * Protect backups from retention, or release them.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <timestamp>...
+	 * : History timestamps.
+	 *
+	 * [--off]
+	 * : Release the protection instead of setting it.
+	 */
+	public function keep( $args, $assoc ) {
+		foreach ( $args as $timestamp ) { if ( ! ctype_digit( $timestamp ) ) { WP_CLI::error( 'Use backup history timestamps.' ); }
+		}
+		$result = BackupPlus_Backup_History::set_always_keep( $args, ! isset( $assoc['off'] ) );
+		foreach ( $result['errors'] as $timestamp => $message ) { WP_CLI::warning( $timestamp . ': ' . $message ); }
+		if ( ! $result['locked'] ) { WP_CLI::error( 'No backups were changed.' ); }
+		WP_CLI::success( ( isset( $assoc['off'] ) ? 'Released ' : 'Protected ' ) . count( $result['locked'] ) . ' backup(s).' );
+		if ( $result['errors'] ) { exit( 1 ); }
+	}
+
+	/**
+	 * Copy a backup's archives to a directory, fetching missing ones from remote storage.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <timestamp>
+	 * : Backup history timestamp.
+	 *
+	 * --to=<directory>
+	 * : Target directory; created when it does not exist.
+	 *
+	 * [--type=<type>]
+	 * : all (default), files or database.
+	 *
+	 * [--components=<ids>]
+	 * : Comma-separated history component IDs.
+	 *
+	 * [--point=<timestamp>]
+	 * : Stop a file chain at this recorded restore point.
+	 *
+	 * [--force]
+	 * : Overwrite existing files.
+	 *
+	 * [--porcelain]
+	 * : Print only the copied paths.
+	 */
+	public function download( $args, $assoc ) {
+		try {
+			$paths = BackupPlus_CLI_Download::run( $args[0], $assoc );
+			if ( isset( $assoc['porcelain'] ) ) { foreach ( $paths as $path ) { WP_CLI::line( $path );
+			}
+			}
+			else { WP_CLI::success( 'Copied ' . count( $paths ) . ' archive(s) to ' . dirname( reset( $paths ) ) . '.' ); }
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+	}
+
+	/**
+	 * Check the environment backups depend on; fails when a check fails.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json or csv.
+	 *
+	 * [--fields=<fields>]
+	 * : Comma-separated output fields.
+	 */
+	public function doctor( $args, $assoc ) {
+		try {
+			$rows = BackupPlus_CLI_Diagnostics::checks();
+			BackupPlus_CLI::output( $rows, $assoc, array( 'check', 'status', 'detail' ) );
+			if ( in_array( 'fail', wp_list_pluck( $rows, 'status' ), true ) ) { WP_CLI::halt( 1 ); }
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+	}
+
+	/**
+	 * List the plugin's scheduled events, soonest first.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json or csv.
+	 *
+	 * [--fields=<fields>]
+	 * : Comma-separated output fields.
+	 */
+	public function cron( $args, $assoc ) {
+		try {
+			BackupPlus_CLI::output( BackupPlus_CLI_Diagnostics::events(), $assoc, array( 'hook', 'next_run_utc', 'overdue', 'schedule', 'args' ), array( 'hook', 'next_run', 'next_run_utc', 'overdue', 'schedule', 'args' ) );
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
+	}
+
+	/**
+	 * List the WordPress database tables with their size in bytes.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json or csv.
+	 *
+	 * [--fields=<fields>]
+	 * : Comma-separated output fields.
+	 *
+	 * @subcommand db-size
+	 */
+	public function db_size( $args, $assoc ) {
+		try {
+			BackupPlus_CLI::output( BackupPlus_CLI_Diagnostics::tables(), $assoc, array( 'name', 'engine', 'data', 'index', 'total' ) );
+		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
 	}
 
 	/**
@@ -594,7 +833,7 @@ class BackupPlus_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * <action>
-	 * : status or set.
+	 * : status, set or run. run needs daily cleanup mode and deletes backups beyond the counts.
 	 *
 	 * [--files=<count>]
 	 * : Number of file backups to retain (positive integer).
@@ -607,6 +846,9 @@ class BackupPlus_CLI_Command {
 	 *
 	 * [--time=<time>]
 	 * : Site-local time in HH:MM format.
+	 *
+	 * [--yes]
+	 * : Skip the confirmation of run.
 	 *
 	 * [--format=<format>]
 	 * : Output format: table, json or csv.
@@ -632,7 +874,12 @@ class BackupPlus_CLI_Command {
 				if ( isset( $assoc['time'] ) && ! BackupPlus_Backup_Schedule::valid_time( $assoc['time'] ) ) { throw new InvalidArgumentException( 'Use a valid HH:MM time.' ); }
 				if ( ! $settings ) { throw new InvalidArgumentException( 'Supply at least one retention setting.' ); }
 				BackupPlus_CLI::save_settings( $settings );
-			} elseif ( 'status' !== $args[0] ) { throw new InvalidArgumentException( 'Use retention status or retention set.' ); }
+			} elseif ( 'run' === $args[0] ) {
+				if ( ! BackupPlus_Retention_Cleanup::deferred() ) { throw new InvalidArgumentException( 'Retention is applied after each backup. Use retention set --mode=daily to run cleanup on demand.' ); }
+				WP_CLI::confirm( 'Delete backups beyond the retention counts now?', $assoc );
+				BackupPlus_CLI_Prune::cleanup();
+				WP_CLI::success( 'Cleanup finished.' );
+			} elseif ( 'status' !== $args[0] ) { throw new InvalidArgumentException( 'Use retention status, set or run.' ); }
 			$status = array(
 				'files'         => BackupPlus_Options::get_backupplus_option( 'backupplus_retain', 2 ),
 				'database'      => BackupPlus_Options::get_backupplus_option( 'backupplus_retain_db', 2 ),

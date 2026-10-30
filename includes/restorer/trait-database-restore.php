@@ -275,6 +275,8 @@ trait BackupPlus_Restorer_Database_Restore {
 			$this->db_permissons_forbidden['rename'] = true;
 		}
 
+		$this->save_lock_rows();
+
 		// If this is not a dummy restore or not importing a single site into a multisite and we can rename and drop tables then change the import prefix and proceed with atomic restore
 		if ( empty( $this->db_permissons_forbidden['rename'] ) && ! $this->is_dummy_db_restore && empty( $this->ud_foreign ) ) {
 			add_filter( 'backupplus_restore_table_prefix', array( $this, 'backupplus_random_restore_table_prefix' ) );
@@ -383,8 +385,11 @@ trait BackupPlus_Restorer_Database_Restore {
 					if ( 'end' == $matches[1] ) {
 						$gathering_siteinfo = false;
 						// Sanity checks
-						if ( isset( $this->old_siteinfo['multisite'] ) && ! $this->old_siteinfo['multisite'] && is_multisite() ) {
-							return new WP_Error( 'unsupported_restore_target', __( 'Restoring a single-site backup into a WordPress multisite network is not supported.', 'backupplus' ) );
+						$importing = 'import' === BackupPlus_Multisite_Restore::mode( $this->restore_options );
+						if ( isset( $this->old_siteinfo['multisite'] ) && ! $this->old_siteinfo['multisite'] && is_multisite() && ! $importing ) {
+							return new WP_Error( 'unsupported_restore_target', __( 'A single-site backup can only be imported into one site of a WordPress network: choose the site in the database restoration options.', 'backupplus' ) );
+						} elseif ( ! empty( $this->old_siteinfo['multisite'] ) && $importing ) {
+							return new WP_Error( 'unsupported_restore_target', __( 'This is a backup of a network; choose one of its sites to restore instead of importing it.', 'backupplus' ) );
 						}
 					} elseif ( preg_match( '/^([^=]+)=(.*)$/', $matches[1], $kvmatches ) ) {
 						$key = $kvmatches[1];

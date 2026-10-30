@@ -446,10 +446,13 @@ trait BackupPlus_Restorer_File_Restore {
 			$ret_val        = true;
 			$backupplus_dir = $backupplus->backups_dir_location();
 
-			if ( isset( $this->continuation_data['backupplus_ajax_restore'] ) && 'continue_ajax_restore' != $this->continuation_data['backupplus_ajax_restore'] && ( ( 'plugins' == $type || 'uploads' == $type || 'themes' == $type || 'more' == $type ) && ( ! is_multisite() || 0 !== $this->ud_backup_is_multisite ) ) ) {
-				if ( file_exists( $backupplus_dir . '/' . basename( $wp_filesystem_dir ) . '-old' ) ) {
+			if ( isset( $this->continuation_data['backupplus_ajax_restore'] ) && 'continue_ajax_restore' != $this->continuation_data['backupplus_ajax_restore'] && ( 'plugins' == $type || 'uploads' == $type || 'themes' == $type || 'more' == $type ) ) {
+				$old = $backupplus_dir . '/' . basename( $wp_filesystem_dir ) . '-old';
+				// The old folder this restore would replace: for one site of a network, that site's (see BackupPlus_Multisite_Restore::existing_old_folder())
+				$old = apply_filters( 'backupplus_restore_existing_old_folder', file_exists( $old ) ? $old : false, $type, $wp_filesystem_dir );
+				if ( false !== $old ) {
 					/* translators: %s: Old path */
-					$ret_val = new WP_Error( 'already_exists', sprintf( __( 'Existing unremoved folders from a previous restore exist (please use the "Delete old folders" button to delete them before trying again): %s', 'backupplus' ), $backupplus_dir . '/' . basename( $wp_filesystem_dir ) . '-old' ) );
+					$ret_val = new WP_Error( 'already_exists', sprintf( __( 'Existing unremoved folders from a previous restore exist (please use the "Delete old folders" button to delete them before trying again): %s', 'backupplus' ), $old ) );
 				}
 			}
 		}

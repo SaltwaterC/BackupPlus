@@ -173,6 +173,8 @@ The existing restore wizard offers core, individual additional sources and each 
 
 To roll back a plugin or an update, select the backup and file restore point, choose **Plugins**, then select the desired plugin in the options shown after the archives are prepared. Other plugins are left in place. Plugin selection supports native ZIP and Zstandard tar backups, including encrypted and incremental backups. For a single WordPress database table, select **Database** and choose the table from the scanned full dump. The full SQL snapshot of a PITR chain can also be restored this way; direct binary-log replay restores the database as a whole. WP-CLI supports the same targeted operations with `--plugin` and `--table`; see [WP-CLI restores](docs/wp-cli.md).
 
+On a WordPress network, BackupPlus is network-activated and managed by super administrators from Network Admin. It backs up the whole network and restores it as a whole or one site at a time, and imports a single-site backup into a new or existing site, merging its users into the network's. See [WordPress networks](docs/multisite.md).
+
 Programmatic backup options accept the same structure as `backupplus_database_selection`:
 
 ```php

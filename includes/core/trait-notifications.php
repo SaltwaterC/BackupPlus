@@ -1,6 +1,6 @@
 <?php
 
-/** Result emails and Slack posts for finished backups. */
+/** Result emails, Slack posts and ntfy notifications for finished backups. */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -179,6 +179,11 @@ trait BackupPlus_Core_Notifications {
 
 		foreach ( $sendmail_to as $ind => $mailto ) {
 
+			// Reports can go to ntfy alone, in which case no address is configured.
+			if ( ! is_string( $mailto ) || '' === trim( $mailto ) ) {
+				continue;
+			}
+
 			if ( false === apply_filters( 'backupplus_report_sendto', true, $mailto, $error_count, count( $warnings ), $ind ) ) {
 				continue;
 			}
@@ -213,6 +218,11 @@ trait BackupPlus_Core_Notifications {
 					}
 				}
 			}
+		}
+
+		if ( BackupPlus_Ntfy::enabled() ) {
+			$this->log( "Sending ntfy ('$backup_contains') report" );
+			$this->post_results_ntfy( $subject, $body, $backup_status );
 		}
 
 		foreach ( $unlink_files as $file ) {
@@ -269,7 +279,7 @@ trait BackupPlus_Core_Notifications {
 		$findcontent = __( 'The log file has been attached to this email.', 'backupplus' );
 
 		$report_body = str_replace( $findcontent, '', $report_body );
-		$url         = admin_url( BackupPlus_Options::admin_page() . "?page=backupplus&action=downloadlog&backupplus_backup_nonce=$nval" );
+		$url         = BackupPlus_Options::admin_page_url() . "?page=backupplus&action=downloadlog&backupplus_backup_nonce=$nval";
 		$response    = wp_remote_post(
 			$webhook_url,
 			array(
@@ -324,6 +334,29 @@ trait BackupPlus_Core_Notifications {
 		} else {
 			$this->log( 'HTTP POST error : ' . $response->get_error_code() . ' - ' . $response->get_error_message() );
 		}
+	}
+
+	/**
+	 * Publish the backup report to the configured ntfy topic
+	 *
+	 * @param  string $subject       report title
+	 * @param  string $report_body   report content
+	 * @param  string $backup_status the status the report was built with
+	 * @return Void
+	 */
+	public function post_results_ntfy( $subject, $report_body, $backup_status ) {
+		$report_body = trim( str_replace( __( 'The log file has been attached to this email.', 'backupplus' ), '', $report_body ) );
+		if ( __( 'Successful', 'backupplus' ) === $backup_status ) {
+			$priority = 3;
+			$tags     = array( 'white_check_mark' );
+		} elseif ( __( 'Successful with warnings', 'backupplus' ) === $backup_status ) {
+			$priority = 3;
+			$tags     = array( 'warning' );
+		} else {
+			$priority = 4;
+			$tags     = array( 'x' );
+		}
+		BackupPlus_Ntfy::notify( $subject, $report_body, $priority, $tags, BackupPlus_Options::admin_page_url() . '?page=backupplus' );
 	}
 
 	public function just_one_email( $input, $required = false ) {

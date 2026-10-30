@@ -260,9 +260,11 @@ add_filter( 'cron_schedules', 'backupplus_modify_cron_schedules', 30 );
 
 require_once BACKUPPLUS_DIR . '/includes/class-sql.php';
 
-// Move persisted settings and scheduled jobs into the BackupPlus namespace.
+// Move persisted settings and scheduled jobs into the BackupPlus namespace. A network's are all in its main site's tables.
 require_once BACKUPPLUS_DIR . '/includes/class-legacy-compatibility.php';
-BackupPlus_Legacy_Compatibility::migrate();
+if ( ! is_multisite() || is_main_site() ) {
+	BackupPlus_Legacy_Compatibility::migrate();
+}
 
 // The checks here before loading are for performance only - unless one of those conditions is met, then none of the hooks will ever be used
 if ( ! is_admin() && ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) && ( ! defined( 'XMLRPC_REQUEST' ) || ! XMLRPC_REQUEST ) && empty( $_SERVER['SHELL'] ) && ( empty( $_SERVER['REQUEST_METHOD'] ) || 'OPTIONS' != $_SERVER['REQUEST_METHOD'] ) && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
@@ -327,6 +329,8 @@ if ( ! file_exists( BACKUPPLUS_DIR . '/class-backupplus.php' ) || ! file_exists(
 	add_action( 'all_admin_notices', 'backupplus_incomplete_install_warning' );
 } else {
 
+	require_once BACKUPPLUS_DIR . '/includes/class-multisite.php';
+	require_once BACKUPPLUS_DIR . '/includes/class-multisite-restore.php';
 	backupplus_try_include_file( 'class-backupplus.php', 'include_once' );
 	$backupplus              = new BackupPlus();
 	$GLOBALS['backupplus']   = $backupplus;
@@ -391,17 +395,24 @@ function backupplus_build_mysqldump_list() {
 if ( ! class_exists( 'BackupPlus_Options' ) ) {
 	backupplus_try_include_file( 'options.php', 'require_once' );
 }
+BackupPlus_Multisite::register();
+BackupPlus_Multisite_Restore::register();
+register_activation_hook( __FILE__, array( 'BackupPlus_Multisite', 'activate' ) );
 
 // Initialize installation keys on activation and on upgrades that do not reactivate.
 require_once BACKUPPLUS_DIR . '/includes/class-credential-encrypter.php';
 require_once BACKUPPLUS_DIR . '/includes/class-credential-key-store.php';
 require_once BACKUPPLUS_DIR . '/includes/class-credential-storage.php';
+require_once BACKUPPLUS_DIR . '/includes/class-ntfy.php';
 BackupPlus_Storage_Provider_Factory::register_hooks();
 BackupPlus_Credential_Storage::register();
 require_once BACKUPPLUS_DIR . '/includes/class-credential-key-admin.php';
 require_once BACKUPPLUS_DIR . '/includes/class-credential-key-rotation.php';
 register_activation_hook( __FILE__, array( 'BackupPlus_Credential_Key_Store', 'initialize' ) );
-add_action( 'init', array( 'BackupPlus_Credential_Key_Store', 'initialize' ), 20 );
+// A network's credentials are in its main site's options: the other sites have nothing to upgrade
+if ( ! BackupPlus_Multisite::secondary() ) {
+	add_action( 'init', array( 'BackupPlus_Credential_Key_Store', 'initialize' ), 20 );
+}
 add_filter( 'backupplus_backupable_file_entities_final', array( 'BackupPlus_Credential_Key_Store', 'add_backup_entity' ), 10, 2 );
 add_filter( 'backupplus_exclude_file', array( 'BackupPlus_Credential_Key_Store', 'exclude_from_backup' ), 100, 2 );
 add_filter( 'backupplus_exclude_directory', array( 'BackupPlus_Credential_Key_Store', 'exclude_from_backup' ), 100, 2 );

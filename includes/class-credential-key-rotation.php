@@ -30,6 +30,9 @@ class BackupPlus_Credential_Key_Rotation {
 	}
 
 	public static function schedule() {
+		if ( BackupPlus_Multisite::secondary() ) {
+			return;
+		}
 		if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
 			// Environment key rings are read-only in WordPress; their owner controls rotation.
 			wp_clear_scheduled_hook( self::HOOK );
@@ -153,27 +156,23 @@ class BackupPlus_Credential_Key_Rotation {
 		if ( empty( $config['issued_at'] ) || ! class_exists( 'BackupPlus_Options' ) ) {
 			return;
 		}
-		$email = BackupPlus_Options::get_backupplus_option( 'backupplus_email' );
-		if ( empty( $email ) ) {
-			return;
-		}
+		$email     = BackupPlus_Options::get_backupplus_option( 'backupplus_email' );
+		$addresses = array();
 		global $backupplus;
-		if ( ! is_object( $backupplus ) || ! is_callable( array( $backupplus, 'just_one_email' ) ) ) {
-			return;
-		}
-		$recipients = $backupplus->just_one_email( $email, true );
-		$recipients = is_array( $recipients ) ? $recipients : array( $recipients );
-		$addresses  = array();
-		foreach ( $recipients as $recipient ) {
-			foreach ( explode( ',', (string) $recipient ) as $address ) {
-				$address = trim( $address );
-				if ( is_email( $address ) ) {
-					$addresses[] = $address;
+		if ( ! empty( $email ) && is_object( $backupplus ) && is_callable( array( $backupplus, 'just_one_email' ) ) ) {
+			$recipients = $backupplus->just_one_email( $email, true );
+			$recipients = is_array( $recipients ) ? $recipients : array( $recipients );
+			foreach ( $recipients as $recipient ) {
+				foreach ( explode( ',', (string) $recipient ) as $address ) {
+					$address = trim( $address );
+					if ( is_email( $address ) ) {
+						$addresses[] = $address;
+					}
 				}
 			}
+			$addresses = array_unique( $addresses );
 		}
-		$addresses = array_unique( $addresses );
-		if ( ! $addresses ) {
+		if ( ! $addresses && ! BackupPlus_Ntfy::enabled() ) {
 			return;
 		}
 		$issued  = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $config['issued_at'] );
@@ -195,6 +194,7 @@ class BackupPlus_Credential_Key_Rotation {
 				// Mail delivery is separate from key publication and must not trigger a rotation retry.
 			}
 		}
+		BackupPlus_Ntfy::notify( $subject, $body, 3, array( 'key' ) );
 	}
 
 	public static function queue_retry() {

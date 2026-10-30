@@ -123,9 +123,9 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 
 		$replace_this_siteurl = isset( $this->old_siteurl ) ? $this->old_siteurl : '';
 
-		// Don't call site_url() - the result may/will have been cached.
+		// Don't call site_url() - the result may/will have been cached. The tables may be those of a site of a network, imported from a single site.
 		$options_table      = 'options';
-		$options_table_name = $this->base_prefix . $options_table;
+		$options_table_name = $import_table_prefix . $options_table;
 
 		$db_siteurl_thissite = BackupPlus_SQL::wpdb()->value( "SELECT option_value FROM %i WHERE option_name='siteurl'", array( $options_table_name ) );
 
@@ -222,7 +222,8 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 			$backupplus->log_e( 'Database search and replace: replace %s in backup dump with %s', $from_url, $to_array[ $ind ] );
 		}
 
-		return $this->backupplus_restored_db_dosearchreplace( $from_array, $to_array, $import_table_prefix );
+		// The network's sites and blogs tables are only those of a restored network
+		return $this->backupplus_restored_db_dosearchreplace( $from_array, $to_array, $import_table_prefix, $import_table_prefix === $this->base_prefix );
 	}
 
 	private function backupplus_restored_db_dosearchreplace( $from_array, $to_array, $import_table_prefix, $examine_siteurls = true ) {
@@ -280,6 +281,11 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 					// Remove multisite site number prefix, if relevant
 					if ( is_multisite() && preg_match( '/^(\d+)_(.*)$/', $stripped_table, $matches ) ) {
 						$stripped_table = $matches[2];
+					}
+
+					// When one site of a network is restored, the other sites' tables are left alone
+					if ( ! apply_filters( 'backupplus_restore_search_replace_table', true, $tablename, $import_table_prefix ) ) {
+						continue;
 					}
 
 					if ( ! empty( $this->which_tables ) && is_array( $this->which_tables ) ) {

@@ -77,6 +77,10 @@ trait BackupPlus_Core_WordPress_Hooks {
 	 * This function may get called multiple times, so write accordingly
 	 */
 	public function admin_menu() {
+		// The other sites of a network have no BackupPlus screens: they are all in Network Admin
+		if ( ! BackupPlus_Multisite::available() ) {
+			return;
+		}
 		// We are in the admin area: now load all that code
 		global $backupplus_admin;
 		if ( empty( $backupplus_admin ) ) {
@@ -261,6 +265,10 @@ trait BackupPlus_Core_WordPress_Hooks {
 		if ( ! is_multisite() ) {
 			return;
 		}
+		// The restore putting the site into maintenance carries on through WP-Cron and the super administrator's requests
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( is_admin() && BackupPlus_Options::user_can_manage() ) ) {
+			return;
+		}
 
 		$wp_upload_dir = wp_upload_dir();
 		$subsite_dir   = $wp_upload_dir['basedir'] . '/';
@@ -351,8 +359,8 @@ trait BackupPlus_Core_WordPress_Hooks {
 	 * @return string The modified parent file value.
 	 */
 	public static function parent_file( $parent_file ) {
-		// Set the global variable 'self' and update the parent file to BackupPlus_Options::PARENT_FILE
-		$GLOBALS['self'] = $parent_file = BackupPlus_Options::PARENT_FILE;
+		// Set the global variable 'self' and update the parent file to the top-level BackupPlus menu entry
+		$GLOBALS['self'] = $parent_file = BackupPlus_Options::parent_file();
 
 		return $parent_file;
 	}

@@ -6,7 +6,7 @@ cd "$repo_root"
 
 # Values passed by the caller win over .env: the test sites are started with their own name, port and URL.
 caller_overrides=()
-for name in DEV_NAME WP_PORT WP_URL WP_INTERNAL_PORT; do
+for name in DEV_NAME WP_PORT WP_URL WP_INTERNAL_PORT WP_MULTISITE; do
 	if [[ -n "${!name+x}" ]]; then
 		caller_overrides+=("$name=${!name}")
 	fi
@@ -30,7 +30,13 @@ export DEV_NAME=${DEV_NAME:-backupplus-dev}
 export WP_PORT=${WP_PORT:-8080}
 export WP_INTERNAL_PORT=${WP_INTERNAL_PORT:-8080}
 export PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-4}
+# WP_MULTISITE=1 makes the site a sub-directory WordPress network, and WP_MULTISITE=subdomain a sub-domain one, with
+# BackupPlus network-activated.
+export WP_MULTISITE=${WP_MULTISITE:-}
 export WP_URL=${WP_URL:-http://localhost:${WP_PORT}}
+# The health check asks for the site by its own host name: a sub-domain network does not answer to 127.0.0.1
+wp_host=${WP_URL#*://}
+wp_host=${wp_host%%/*}
 export WP_SITE_TITLE=${WP_SITE_TITLE:-BackupPlus Development}
 export WP_ADMIN_USER=${WP_ADMIN_USER:-admin}
 export WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD:-backupplus_dev}
@@ -144,7 +150,8 @@ podman run --detach \
 	--env WP_ADMIN_PASSWORD="$WP_ADMIN_PASSWORD" \
 	--env WP_ADMIN_EMAIL="$WP_ADMIN_EMAIL" \
 	--env DEV_LOGIN_TOKEN="$DEV_LOGIN_TOKEN" \
-	--health-cmd="php -r \"exit(@file_get_contents('http://127.0.0.1:${WP_INTERNAL_PORT}/wp-login.php') === false ? 1 : 0);\"" \
+	--env WP_MULTISITE="$WP_MULTISITE" \
+	--health-cmd="php -r \"exit(@file_get_contents('http://127.0.0.1:${WP_INTERNAL_PORT}/wp-login.php', false, stream_context_create(['http' => ['header' => 'Host: ${wp_host}']])) === false ? 1 : 0);\"" \
 	--health-interval=10s \
 	--health-timeout=5s \
 	--health-retries=10 \

@@ -99,6 +99,9 @@ class BackupPlus_Restorer {
 
 	private $configuration_bundle;
 
+	/** The live lock rows of the options table being replaced: see save_lock_rows() */
+	private $lock_rows = null;
+
 	/**
 	 * User inputted restore options, available to restore extensions.
 	 *

@@ -126,6 +126,65 @@ final class CliRestoreTest extends TestCase {
 		$this->assertSame( 'full', $options['backupplus_pitr_restore_point'] );
 	}
 
+	public function test_network_restores_select_one_site_from_its_database_and_uploads(): void {
+		$GLOBALS['cli_restore_multisite']    = true;
+		list( $backup, $entities, $options ) = BackupPlus_CLI_Restore::selection( 123, array( 'site' => '2' ) );
+		$this->assertSame( array( 'db' => 'db' ), $entities, 'Only the database and uploads of a site are restored' );
+		$this->assertSame( 2, $options['backupplus_restore_ms_whichsites'] );
+		list( $backup, $entities, $options ) = BackupPlus_CLI_Restore::selection(
+			123,
+			array(
+				'import-into' => 'new',
+				'slug'        => 'imported',
+			)
+		);
+		$this->assertSame( array( 'db' => 'db' ), $entities, 'Only the database and uploads of a single site are imported' );
+		$this->assertSame( 'new', $options['backupplus_restore_ms_import'] );
+		$this->assertSame( 'imported', $options['backupplus_restore_ms_import_slug'] );
+		list( $backup, $entities, $options ) = BackupPlus_CLI_Restore::selection( 123, array( 'import-into' => '3' ) );
+		$this->assertSame( 3, $options['backupplus_restore_ms_import'] );
+	}
+
+	public static function invalid_network_selectors(): iterable {
+		foreach ( array(
+			array( 'site' => 'second' ),
+			array( 'import-into' => 'other' ),
+			array( 'import-into' => 'new' ),
+			array(
+				'site'        => '2',
+				'import-into' => '3',
+			),
+			array(
+				'site'   => '2',
+				'plugin' => 'akismet',
+			),
+		) as $invalid ) {
+			yield json_encode( $invalid ) => array( $invalid );
+		}
+	}
+
+	#[DataProvider( 'invalid_network_selectors' )]
+	public function test_invalid_network_selectors_fail( array $invalid ): void {
+		$GLOBALS['cli_restore_multisite'] = true;
+		$this->assertRejected(
+			function () use ( $invalid ) {
+				BackupPlus_CLI_Restore::selection( 123, $invalid );
+			},
+			'Invalid network restore selectors must fail'
+		);
+	}
+
+	public function test_network_selectors_fail_on_a_single_site(): void {
+		foreach ( array( array( 'site' => '1' ), array( 'import-into' => '2' ) ) as $selector ) {
+			$this->assertRejected(
+				function () use ( $selector ) {
+					BackupPlus_CLI_Restore::selection( 123, $selector );
+				},
+				'Network restore selectors must fail on a single site'
+			);
+		}
+	}
+
 	public static function invalid_selectors(): iterable {
 		foreach ( array(
 			array( 'type' => 'invalid' ),

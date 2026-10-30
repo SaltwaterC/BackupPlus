@@ -11,36 +11,40 @@ class BackupPlus_Credential_Storage {
 	public static function secret_fields( $option ) {
 		return apply_filters(
 			'backupplus_credential_secret_fields',
-			array(
-				'pass',
-				'password',
-				'key',
-				'key_passphrase',
-				'private_key',
-				'privatekey',
-				'private_key_passphrase',
-				'secret',
-				'secretkey',
-				'secret_key',
-				'client_secret',
-				'clientsecret',
-				'apikey',
-				'api_key',
-				'accountkey',
-				'account_key',
-				'applicationkey',
-				'token',
-				'access_token',
-				'refresh_token',
-				'tmp_access_token',
-				'sessiontoken',
-				'session_token',
-				'application_key',
-				'application_key_id',
-				'credentials',
-				'service_account',
-				'service_account_key',
-				'url',
+			array_merge(
+				// An ntfy topic is the only access control of a public server, so it is as sensitive as the token.
+				'backupplus_ntfy' === $option ? array( 'topic' ) : array(),
+				array(
+					'pass',
+					'password',
+					'key',
+					'key_passphrase',
+					'private_key',
+					'privatekey',
+					'private_key_passphrase',
+					'secret',
+					'secretkey',
+					'secret_key',
+					'client_secret',
+					'clientsecret',
+					'apikey',
+					'api_key',
+					'accountkey',
+					'account_key',
+					'applicationkey',
+					'token',
+					'access_token',
+					'refresh_token',
+					'tmp_access_token',
+					'sessiontoken',
+					'session_token',
+					'application_key',
+					'application_key_id',
+					'credentials',
+					'service_account',
+					'service_account_key',
+					'url',
+				)
 			),
 			$option
 		);
@@ -54,7 +58,7 @@ class BackupPlus_Credential_Storage {
 				},
 				array_keys( BackupPlus_Storage_Provider_Factory::get_methods() )
 			),
-			array( 'backupplus_encryptionphrase', 'backupplus_extradbs', 'backupplus_pitr_capture', 'backupplus_pitr_recovery', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' )
+			array( 'backupplus_encryptionphrase', 'backupplus_ntfy', 'backupplus_extradbs', 'backupplus_pitr_capture', 'backupplus_pitr_recovery', 'backupplus_ftp_pass', 'backupplus_googledrive_secret', 'backupplus_googledrive_token' )
 		);
 	}
 

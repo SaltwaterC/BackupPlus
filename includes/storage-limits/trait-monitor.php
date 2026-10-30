@@ -297,7 +297,11 @@ trait BackupPlus_Storage_Limits_Monitor {
 						unset( $entry['pending_notifications'][ $kind ] );
 						$status[ $key ] = $entry;
 						update_option( self::STATUS, $status, false );
-						if ( ! wp_mail( get_option( 'admin_email' ), sprintf( 'BackupPlus storage %s: %s', 100 === $level ? 'critical' : 'warning', self::label( $destination['service'], $destination['instance'] ) ), $message ) ) { $entry['pending_notifications'][ $kind ] = $notice;
+						$subject = sprintf( 'BackupPlus storage %s: %s', 100 === $level ? 'critical' : 'warning', self::label( $destination['service'], $destination['instance'] ) );
+						$mailed  = wp_mail( get_option( 'admin_email' ), $subject, $message );
+						$pushed  = BackupPlus_Ntfy::notify( $subject, $message, 100 === $level ? 4 : 3, array( 100 === $level ? 'rotating_light' : 'warning' ) );
+						// One working channel is a delivered alert; retrying would only repeat it on the other.
+						if ( ! $mailed && ! $pushed ) { $entry['pending_notifications'][ $kind ] = $notice;
 							self::retry(); }
 						$entry['notification']      = $message;
 						$entry['notification_time'] = $notice['time'];

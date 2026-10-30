@@ -4,6 +4,8 @@
 # Every site is a complete stack (WordPress and MariaDB containers, own volumes and network) named backupplus-test-<n>, with PHP
 # listening on port 18080+<n>, so tests that change a site's options, cron schedule or files can run side by side without
 # touching each other or the development site. Healthy sites are left alone; missing ones are created in parallel.
+# Two more stacks are WordPress networks for the multisite tests: backupplus-test-ms on port 18190 (sub-directories) and
+# backupplus-test-msd on port 18191 (sub-domains, <site>.localhost).
 #
 #   dev/test-sites.sh [count]       count defaults to $TEST_SITES, then 8
 #   dev/test-sites.sh --remove      remove all test sites and their data
@@ -13,7 +15,7 @@ repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root"
 
 if [[ "${1:-}" == --remove ]]; then
-	for name in $(podman ps --all --format '{{.Names}}' | sed -n 's/^\(backupplus-test-[0-9]*\)-\(wordpress\|database\)$/\1/p' | sort -u); do
+	for name in $(podman ps --all --format '{{.Names}}' | sed -n 's/^\(backupplus-test-\([0-9]*\|ms\|msd\)\)-\(wordpress\|database\)$/\1/p' | sort -u); do
 		DEV_NAME=$name ./dev/down.sh --volumes
 	done
 	exit 0
@@ -37,17 +39,37 @@ configure_site() {
 	' >/dev/null
 }
 
-# Inspect the sites side by side; this runs before every suite.
+# The numbered sites, and the networks.
+sites=()
 for ((n = 1; n <= count; n++)); do
+	sites+=("$n")
+done
+sites+=(ms msd)
+port() {
+	case $1 in
+	ms) echo 18190 ;;
+	msd) echo 18191 ;;
+	*) echo $((18080 + $1)) ;;
+	esac
+}
+multisite() {
+	case $1 in
+	ms) echo 1 ;;
+	msd) echo subdomain ;;
+	esac
+}
+
+# Inspect the sites side by side; this runs before every suite.
+for n in "${sites[@]}"; do
 	(podman inspect --format '{{.State.Health.Status}}' "backupplus-test-$n-wordpress" 2>/dev/null || true) >"$logs/health-$n" &
 done
 wait
 missing=()
-for ((n = 1; n <= count; n++)); do
+for n in "${sites[@]}"; do
 	[[ "$(cat "$logs/health-$n")" == healthy ]] || missing+=("$n")
 done
 if ((${#missing[@]} == 0)); then
-	for ((n = 1; n <= count; n++)); do
+	for n in "${sites[@]}"; do
 		(podman exec "backupplus-test-$n-wordpress" wp option get backupplus_backup_history >/dev/null 2>&1 || configure_site "$n") &
 	done
 	wait
@@ -62,8 +84,8 @@ echo "Creating test sites: ${missing[*]}"
 pids=()
 for n in "${missing[@]}"; do
 	(
-		export BACKUPPLUS_SKIP_IMAGE_BUILD=1 DB_IN_MEMORY=1 DEV_NAME="backupplus-test-$n" WP_PORT=$((18080 + n)) WP_INTERNAL_PORT=$((18080 + n))
-		export WP_URL="http://localhost:$WP_PORT"
+		export BACKUPPLUS_SKIP_IMAGE_BUILD=1 DB_IN_MEMORY=1 DEV_NAME="backupplus-test-$n" WP_PORT=$(port "$n") WP_INTERNAL_PORT=$(port "$n")
+		export WP_URL="http://localhost:$WP_PORT" WP_MULTISITE=$(multisite "$n")
 		./dev/up.sh >"$logs/$n.log" 2>&1
 	) &
 	pids+=("$!")

@@ -1,6 +1,7 @@
 <?php
 /** Destination-specific archive accounting, retention and notifications. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
+require_once __DIR__ . '/class-ntfy.php';
 require_once __DIR__ . '/storage-limits/trait-policy.php';
 require_once __DIR__ . '/storage-limits/trait-monitor.php';
 require_once __DIR__ . '/storage-limits/trait-interface.php';
@@ -67,6 +68,9 @@ class BackupPlus_Storage_Limits {
 	}
 
 	public static function reconcile() {
+		if ( BackupPlus_Multisite::secondary() ) {
+			return;
+		}
 		if ( self::enabled() ) {
 			if ( ! wp_next_scheduled( self::HOOK ) ) { wp_schedule_event( time() + 60, 'hourly', self::HOOK ); }
 		} else { self::deactivate(); }

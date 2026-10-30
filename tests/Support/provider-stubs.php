@@ -77,7 +77,16 @@ function get_bloginfo( $key ) {
 function get_date_from_gmt( $date, $format ) {
 	return gmdate( $format, strtotime( $date . ' UTC' ) ); }
 function wp_remote_post( $url, $args ) {
+	if ( isset( $GLOBALS['provider_post'] ) ) {
+		return $GLOBALS['provider_post']( $url, $args );
+	}
 	throw new RuntimeException( 'Unexpected network request: ' . $url ); }
+function wp_parse_url( $url ) {
+	return parse_url( $url ); }
+function wp_json_encode( $value ) {
+	return json_encode( $value ); }
+function wp_remote_retrieve_response_message( $response ) {
+	return $response['response']['message'] ?? ''; }
 function wp_mail( $to, $subject, $message, $headers, $attachments ) {
 	$GLOBALS['provider_mail'][] = compact( 'to', 'subject', 'message', 'headers', 'attachments' );
 	return $GLOBALS['provider_mail_success'];

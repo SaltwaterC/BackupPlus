@@ -269,7 +269,26 @@ if ( is_string( $report_rows ) ) {
 
 	<?php
 }
+	$ntfy = BackupPlus_Ntfy::config();
 ?>
+	<tr id="backupplus_report_row_ntfy">
+		<th><?php esc_html_e( 'ntfy', 'backupplus' ); ?>:</th>
+		<td>
+			<p>
+				<label for="backupplus_ntfy_server"><?php esc_html_e( 'Server', 'backupplus' ); ?></label><br>
+				<input type="url" id="backupplus_ntfy_server" name="backupplus_ntfy[server]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['server'] : '' ); ?>" placeholder="<?php echo esc_attr( BackupPlus_Ntfy::DEFAULT_SERVER ); ?>" autocomplete="off">
+			</p>
+			<p>
+				<label for="backupplus_ntfy_topic"><?php esc_html_e( 'Topic', 'backupplus' ); ?></label><br>
+				<input type="text" id="backupplus_ntfy_topic" name="backupplus_ntfy[topic]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['topic'] : '' ); ?>" maxlength="64" pattern="[A-Za-z0-9_\-]+" autocomplete="off">
+			</p>
+			<p>
+				<label for="backupplus_ntfy_token"><?php esc_html_e( 'Access token (optional)', 'backupplus' ); ?></label><br>
+				<input type="<?php echo esc_attr( apply_filters( 'backupplus_admin_secret_field_type', 'password' ) ); ?>" id="backupplus_ntfy_token" name="backupplus_ntfy[token]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['token'] : '' ); ?>" autocomplete="new-password">
+			</p>
+			<p class="description"><?php esc_html_e( 'Enter a topic to also receive the backup report, storage alerts and credential key rotation notices as ntfy notifications; clear it to turn them off. Anyone who knows a topic on a public server can read it, so choose a hard-to-guess name or use an access token.', 'backupplus' ); ?></p>
+		</td>
+	</tr>
 </table>
 
 <h2 class="backupplus_settings_sectionheading"><?php esc_html_e( 'Backup encryption', 'backupplus' ); ?></h2>

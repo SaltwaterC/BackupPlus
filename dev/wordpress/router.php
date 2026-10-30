@@ -28,6 +28,34 @@ if ( $plugin_root && str_starts_with( $request_path, $plugin_prefix ) ) {
 
 $requested_file = realpath( $document_root . $request_path );
 
+// A sub-directory network's sites share WordPress's files: /site/wp-admin/... is /wp-admin/..., as WordPress's rewrite rules have it.
+if ( getenv( 'WP_MULTISITE' ) && 'subdomain' !== getenv( 'WP_MULTISITE' ) && preg_match( '~^/[_0-9a-zA-Z-]+(/(?:wp-(?:content|admin|includes)(?:/.*)?|[^/]*\.php))$~', $request_path, $matches ) ) {
+	$shared_file = realpath( $document_root . $matches[1] );
+	if ( is_dir( (string) $shared_file ) && is_file( $shared_file . '/index.php' ) ) {
+		$shared_file .= '/index.php';
+	}
+	if ( $shared_file && str_starts_with( $shared_file, $document_root . DIRECTORY_SEPARATOR ) && is_file( $shared_file ) ) {
+		if ( '.php' !== substr( $shared_file, -4 ) ) {
+			$types     = array(
+				'css'   => 'text/css',
+				'js'    => 'application/javascript',
+				'svg'   => 'image/svg+xml',
+				'png'   => 'image/png',
+				'jpg'   => 'image/jpeg',
+				'gif'   => 'image/gif',
+				'woff2' => 'font/woff2',
+			);
+			$extension = strtolower( pathinfo( $shared_file, PATHINFO_EXTENSION ) );
+			header( 'Content-Type: ' . ( $types[ $extension ] ?? ( mime_content_type( $shared_file ) ?: 'application/octet-stream' ) ) );
+			readfile( $shared_file );
+			exit;
+		}
+		$_SERVER['SCRIPT_FILENAME'] = $shared_file;
+		chdir( dirname( $shared_file ) );
+		require $shared_file;
+		exit;
+	}
+}
 
 if ( $document_root && $requested_file && str_starts_with( $requested_file, $document_root . DIRECTORY_SEPARATOR ) && ( is_file( $requested_file ) || is_dir( $requested_file ) ) ) {
 	return false;

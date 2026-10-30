@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
 }
 
+require_once __DIR__ . '/includes/class-multisite.php';
+
 class BackupPlus_Options {
 
 	/**
@@ -19,9 +21,17 @@ class BackupPlus_Options {
 	 * @return Boolean
 	 */
 	public static function user_can_manage() {
-		$user_can_manage = current_user_can( apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' ) );
-		// false: allows the filter to know that the request is not coming from the multisite add-on
-		return apply_filters( 'backupplus_user_can_manage', $user_can_manage, false );
+		$user_can_manage = current_user_can( self::capability() ) && BackupPlus_Multisite::available();
+		return apply_filters( 'backupplus_user_can_manage', $user_can_manage, is_multisite() );
+	}
+
+	/**
+	 * The capability required to manage BackupPlus: on a network, that of a super administrator (see BackupPlus_Multisite)
+	 *
+	 * @return String
+	 */
+	public static function capability() {
+		return apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' );
 	}
 
 	public static function options_table() {
@@ -34,7 +44,7 @@ class BackupPlus_Options {
 	 * @return String
 	 */
 	public static function admin_page_url() {
-		return admin_url( 'options-general.php' );
+		return is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'options-general.php' );
 	}
 
 	/**
@@ -43,7 +53,16 @@ class BackupPlus_Options {
 	 * @return String
 	 */
 	public static function admin_page() {
-		return 'options-general.php';
+		return is_multisite() ? 'settings.php' : 'options-general.php';
+	}
+
+	/**
+	 * The menu slug of the top-level BackupPlus menu entry
+	 *
+	 * @return String
+	 */
+	public static function parent_file() {
+		return self::admin_page() . '?page=backupplus';
 	}
 
 	/**
@@ -64,7 +83,8 @@ class BackupPlus_Options {
 	 * @return Mixed
 	 */
 	public static function get_backupplus_option( $option, $default = null ) {
-		$ret = get_option( $option, $default );
+		// On a network, the configuration is the main site's, whichever site this request is for
+		$ret = BackupPlus_Multisite::secondary() ? get_blog_option( BackupPlus_Multisite::main_site_id(), $option, $default ) : get_option( $option, $default );
 		if ( class_exists( 'BackupPlus_Credential_Storage' ) ) {
 			$ret = BackupPlus_Credential_Storage::reading( $ret, $option );
 		}
@@ -72,7 +92,7 @@ class BackupPlus_Options {
 	}
 
 	/**
-	 * The apparently unused parameter is used in the alternative class in the Multisite add-on
+	 * Update an option of the BackupPlus configuration
 	 *
 	 * @param String  $option    specify option name
 	 * @param String  $value     specify option value
@@ -82,7 +102,12 @@ class BackupPlus_Options {
 	 * @return Boolean - as from update_option()
 	 */
 	public static function update_backupplus_option( $option, $value, $use_cache = true, $autoload = 'yes' ) {
-		return update_option( $option, apply_filters( 'backupplus_update_option', $value, $option, $use_cache ), $autoload );
+		$value = apply_filters( 'backupplus_update_option', $value, $option, $use_cache );
+		return BackupPlus_Multisite::on_main_site(
+			function () use ( $option, $value, $autoload ) {
+				return update_option( $option, $value, $autoload );
+			}
+		);
 	}
 
 	/**
@@ -91,14 +116,24 @@ class BackupPlus_Options {
 	 * @param String $option - the option name
 	 */
 	public static function delete_backupplus_option( $option ) {
-		delete_option( $option );
+		BackupPlus_Multisite::on_main_site(
+			function () use ( $option ) {
+				return delete_option( $option );
+			}
+		);
 	}
 
 	/**
-	 * Register the BackupPlus admin menu entry
+	 * Register the BackupPlus admin menu entry: under Settings, or on a network under Network Admin's Settings
 	 */
 	public static function add_admin_pages() {
-		$capability = apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' );
+		// On a network, the page is in Network Admin only
+		if ( is_multisite() !== is_network_admin() || ! BackupPlus_Multisite::available() ) {
+			return;
+		}
+
+		$capability  = self::capability();
+		$parent_menu = self::admin_page();
 
 		if ( ! defined( 'BACKUPPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY' ) || ! BACKUPPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY ) {
 			// Check user capability to manage options before proceeding
@@ -117,18 +152,18 @@ class BackupPlus_Options {
 				'BackupPlus',
 				'BackupPlus',
 				$capability,
-				'options-general.php?page=backupplus',
+				self::parent_file(),
 				'', // Set the callback to empty string because it's unused
 				trailingslashit( BACKUPPLUS_URL ) . 'images/backupplus-menu.svg'
 			);
 
 			BackupPlus_Options::add_submenu();
 
-			foreach ( $submenu['options-general.php'] as $key => $item ) {
+			foreach ( $submenu[ $parent_menu ] as $key => $item ) {
 				if ( 'backupplus' != $item[2] ) {
 					continue;
 				}
-				unset( $submenu['options-general.php'][ $key ] );
+				unset( $submenu[ $parent_menu ][ $key ] );
 			}
 		} else {
 			BackupPlus_Options::add_submenu();
@@ -136,7 +171,7 @@ class BackupPlus_Options {
 	}
 
 	/**
-	 * Adds a submenu page under the "Settings" menu in the WordPress admin.
+	 * Adds a submenu page under the "Settings" menu in the WordPress admin (Network Admin, on a network).
 	 *
 	 * The capability required to access this submenu is filtered through the
 	 * 'option_page_capability_backupplus-options-group' filter, with a default value of 'manage_options'.
@@ -144,13 +179,11 @@ class BackupPlus_Options {
 	public static function add_submenu() {
 		global $backupplus_admin;
 
-		$capability = apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' );
-
 		add_submenu_page(
-			'options-general.php',
+			self::admin_page(),
 			'BackupPlus',
 			__( 'BackupPlus Backups', 'backupplus' ),
-			$capability,
+			self::capability(),
 			'backupplus',
 			array( $backupplus_admin, 'settings_output' )
 		);
@@ -165,7 +198,11 @@ class BackupPlus_Options {
 		}
 
 		$page = '';
-		if ( 'options-general.php' == $pagenow ) {
+		if ( is_network_admin() ) {
+			// wp-admin/options.php saves a site's options; a network's settings are saved by BackupPlus_Options::network_save()
+			$page       = 'edit.php';
+			$get_params = array_merge( array( 'action' => 'backupplus' ), $get_params );
+		} elseif ( 'options-general.php' == $pagenow ) {
 			$page = 'options.php';
 		}
 
@@ -201,7 +238,7 @@ class BackupPlus_Options {
 			$referer = BackupPlus_Manipulation_Functions::wp_unslash( remove_query_arg( $remove_query_args, $_SERVER['REQUEST_URI'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- To be executed on server only, hence this superglobal not to be empty, sanitization and unslashing is done by custom function.
 
 			// Add back the page parameter if it looks like we were on the settings page via an OAuth callback that has now had all parameters removed. This is likely unnecessarily conservative, but there's nothing requiring more than this at the current time.
-			if ( substr( $referer, -19, 19 ) == 'options-general.php' && false !== strpos( $_SERVER['REQUEST_URI'], '?' ) ) {
+			if ( substr( $referer, -strlen( self::admin_page() ) ) == self::admin_page() && false !== strpos( $_SERVER['REQUEST_URI'], '?' ) ) {
 				$referer .= '?page=backupplus'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- To be executed on server only, hence this superglobal will not to be empty, sanitization and unslashing are not required as this superglobal is used directly.
 			}
 			echo '<input type="hidden" name="_wp_http_referer" value="' . esc_attr( $referer ) . '" />';
@@ -219,6 +256,11 @@ class BackupPlus_Options {
 		}
 
 		$already_inited = true;
+
+		// The settings belong to the main site of a network
+		if ( ! BackupPlus_Multisite::available() ) {
+			return;
+		}
 
 		// If being called outside of the admin context, this may not be loaded yet
 		if ( ! function_exists( 'register_setting' ) ) {
@@ -257,6 +299,8 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_report_wholebackup', array( $backupplus_admin, 'return_array' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_report_dbbackup', array( $backupplus_admin, 'return_array' ) );
 
+		register_setting( 'backupplus-options-group', BackupPlus_Ntfy::OPTION, array( 'BackupPlus_Ntfy', 'sanitize' ) );
+
 		register_setting( 'backupplus-options-group', 'backupplus_autobackup_default', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_delete_local', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_storage_limits', array( 'BackupPlus_Storage_Limits', 'sanitize' ) );
@@ -294,14 +338,47 @@ class BackupPlus_Options {
 
 		global $pagenow;
 		$page = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'page', '' );
-		if ( 'options-general.php' == $pagenow && 'backupplus' == substr( $page, 0, 11 ) ) {
+		if ( self::admin_page() == $pagenow && 'backupplus' == substr( $page, 0, 11 ) ) {
 			if ( ! defined( 'BACKUPPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY' ) || ! BACKUPPLUS_DISABLE_TOP_LEVEL_MENU_ENTRY ) {
 				add_filter( 'parent_file', array( 'BackupPlus', 'parent_file' ), 99 );
 			}
-			if ( is_multisite() ) {
-				add_action( 'all_admin_notices', array( 'BackupPlus_Options', 'show_admin_warning_multisite' ) );
-			}
 		}
+	}
+
+	/**
+	 * Save the settings form of Network Admin, which is submitted without JavaScript. This does for the network what
+	 * wp-admin/options.php does for a site, for the settings registered in admin_init(): they are the main site's options.
+	 */
+	public static function network_save() {
+		check_admin_referer( 'backupplus-options-group-options' );
+		if ( ! self::user_can_manage() ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage options for this site.', 'backupplus' ), 403 );
+		}
+
+		$submitted = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each option is sanitised by the callback registered for it, as in wp-admin/options.php.
+		$valid     = BackupPlus_Backup_Schedule::instance()->validate( $submitted );
+		if ( is_wp_error( $valid ) ) {
+			wp_die(
+				esc_html( $valid->get_error_message() ),
+				'',
+				array(
+					'response'  => 400,
+					'back_link' => true,
+				)
+			);
+		}
+
+		$allowed = apply_filters( 'allowed_options', array() );
+		foreach ( isset( $allowed['backupplus-options-group'] ) ? $allowed['backupplus-options-group'] : array() as $option ) {
+			$value = isset( $submitted[ $option ] ) ? $submitted[ $option ] : null;
+			if ( ! is_array( $value ) && null !== $value ) {
+				$value = trim( $value );
+			}
+			update_option( $option, $value );
+		}
+
+		wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ? wp_get_referer() : self::admin_page_url() . '?page=backupplus' ) );
+		exit;
 	}
 
 	public static function hourminute( $pot ) {
@@ -317,14 +394,6 @@ class BackupPlus_Options {
 	public static function week_or_month_day( $pot ) {
 		$pot = absint( $pot );
 		return ( $pot > 28 ) ? 1 : $pot;
-	}
-
-	/**
-	 * Output information about the multisite add-on when relevant
-	 */
-	public static function show_admin_warning_multisite() {
-		global $backupplus_admin;
-		$backupplus_admin->show_admin_warning( '<strong>' . __( 'BackupPlus warning:', 'backupplus' ) . '</strong> ' . __( 'This is a WordPress multi-site (a.k.a. network) installation.', 'backupplus' ) . ' ' . __( 'Every blog admin who can modify plugin settings can back up and restore the entire network, including its data and passwords. Restrict access to these settings to trusted network administrators.', 'backupplus' ), 'error' );
 	}
 }
 

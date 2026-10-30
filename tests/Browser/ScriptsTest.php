@@ -18,6 +18,8 @@ final class ScriptsTest extends ScriptTestCase {
 		foreach ( array( 'test-backup-sources-browser.mjs', 'test-pre-update-browser.mjs', 'test-backup-schedule-browser.mjs', 'test-storage-limits-browser.mjs', 'test-client-decryption-browser.mjs' ) as $script ) {
 			$commands[ $script ] = array( array( 'node', 'scripts/' . $script ), self::site_environment() );
 		}
+		// Network Admin's restore dialog, on the sub-directory network; the leased site takes the single-site backup it imports
+		$commands['test-multisite-restore-browser.mjs'] = array( array( 'node', 'scripts/test-multisite-restore-browser.mjs' ), self::site_environment() + array( 'BACKUPPLUS_TEST_MS_CONTAINER' => 'backupplus-test-ms-wordpress' ) );
 		return $commands;
 	}
 

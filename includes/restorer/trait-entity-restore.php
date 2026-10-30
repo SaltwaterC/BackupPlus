@@ -62,10 +62,12 @@ trait BackupPlus_Restorer_Entity_Restore {
 
 		// We copy the variable because we may be importing with a different prefix (e.g. on multisite imports of individual blog data)
 		// The filter allows you to restore to a completely different prefix - i.e. don't replace this site; possibly useful for testing the restore process (but not yet tested)
-		$import_table_prefix = apply_filters( 'backupplus_restore_table_prefix', $backupplus->get_table_prefix( false ) );
+		// The tables can also become those of another site of a network: see BackupPlus_Multisite_Restore::final_table_prefix()
+		$final_table_prefix  = apply_filters( 'backupplus_restore_final_table_prefix', $backupplus->get_table_prefix( false ), $this->restore_options );
+		$import_table_prefix = apply_filters( 'backupplus_restore_table_prefix', $final_table_prefix );
 
 		$this->import_table_prefix       = $import_table_prefix;
-		$this->final_import_table_prefix = $backupplus->get_table_prefix( false );
+		$this->final_import_table_prefix = $final_table_prefix;
 
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.

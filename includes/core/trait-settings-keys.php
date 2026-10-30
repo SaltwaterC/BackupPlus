@@ -76,6 +76,7 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_server_address',
 				'backupplus_dir',
 				'backupplus_email',
+				'backupplus_ntfy',
 				'backupplus_delete_local',
 				'backupplus_storage_limits',
 				'backupplus_debug_mode',

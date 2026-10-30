@@ -164,6 +164,7 @@ class BackupPlus {
 		// Run earlier than default - hence earlier than other components
 		// admin_menu runs earlier, and we need it because options.php wants to use $backupplus_admin before admin_init happens
 		add_action( apply_filters( 'backupplus_admin_menu_hook', 'admin_menu' ), array( $this, 'admin_menu' ), 9 );
+		add_action( 'network_admin_menu', array( $this, 'admin_menu' ), 9 );
 		// Not a mistake: admin-ajax.php calls only admin_init and not admin_menu
 		add_action( 'admin_init', array( $this, 'admin_menu' ), 9 );
 		add_action( 'admin_init', array( $this, 'wordpress_55_updates_potential_migration' ) );
@@ -219,7 +220,7 @@ class BackupPlus {
 		// Cron to clean temporary files even in the absence of a new backup job beginning
 		add_action( 'backupplus_clean_temporary_files', 'BackupPlus_Filesystem_Functions::clean_temporary_files', 10 );
 
-		if ( ! wp_next_scheduled( 'backupplus_clean_temporary_files' ) ) {
+		if ( ! BackupPlus_Multisite::secondary() && ! wp_next_scheduled( 'backupplus_clean_temporary_files' ) ) {
 			wp_schedule_event( time(), 'twicedaily', 'backupplus_clean_temporary_files' );
 		}
 	}

@@ -131,7 +131,18 @@ if ! wp theme list --status=active --field=name --path="$wp_path" | grep -q .; t
 	fi
 fi
 
-wp plugin activate backupplus --path="$wp_path"
+if [[ -n "${WP_MULTISITE:-}" ]]; then
+	# A sub-directory network (dev/wordpress/router.php serves its sites' paths as Apache's rewrite rules would), or with
+	# WP_MULTISITE=subdomain a sub-domain one, whose sites are <site>.localhost on the same port.
+	if ! wp core is-installed --network --path="$wp_path" >/dev/null 2>&1; then
+		subdomains=()
+		[[ "$WP_MULTISITE" == subdomain ]] && subdomains=(--subdomains)
+		wp core multisite-convert --title="$WP_SITE_TITLE" "${subdomains[@]}" --path="$wp_path"
+	fi
+	wp plugin activate backupplus --network --path="$wp_path"
+else
+	wp plugin activate backupplus --path="$wp_path"
+fi
 
 # Refresh saved native connection files after migrating an existing site to the shared socket.
 wp eval '

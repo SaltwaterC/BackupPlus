@@ -169,9 +169,20 @@ trait BackupPlus_Restore_Search_Replace_Restore_Hooks {
 
 		global $wpdb, $backupplus, $backupplus_restorer;
 
-		$this->siteurl  = untrailingslashit( site_url() );
-		$this->home     = untrailingslashit( home_url() );
-		$this->content  = untrailingslashit( content_url() );
+		// The addresses that replace the backup's; a single site imported into a network gets that site's own
+		$targets        = apply_filters(
+			'backupplus_restore_search_replace_targets',
+			array(
+				'siteurl' => untrailingslashit( site_url() ),
+				'home'    => untrailingslashit( home_url() ),
+				'content' => untrailingslashit( content_url() ),
+				'uploads' => false,
+			)
+		);
+		$this->siteurl  = $targets['siteurl'];
+		$this->home     = $targets['home'];
+		$this->content  = $targets['content'];
+		$this->uploads  = $targets['uploads'];
 		$this->use_wpdb = $backupplus_restorer->use_wpdb();
 
 		$this->base_prefix = $backupplus->get_table_prefix( false );

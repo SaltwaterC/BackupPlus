@@ -8,13 +8,65 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class BackupPlus_PITR_CLI {
 
-	private function output( $callback ) {
+	/** Pretty JSON is the default; table and csv list rows, or the flattened key and value pairs of a nested result. */
+	private function output( $callback, $args = array() ) {
 		try {
+			$format = isset( $args['format'] ) ? $args['format'] : 'json';
+			if ( ! in_array( $format, array( 'json', 'table', 'csv' ), true ) ) {
+				throw new InvalidArgumentException( 'Use --format=json, table or csv.' );
+			}
 			$result = call_user_func( $callback );
-			WP_CLI::line( wp_json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+			if ( 'json' === $format ) {
+				WP_CLI::line( wp_json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+				return;
+			}
+			$rows = self::rows( $result );
+			BackupPlus_CLI::output( $rows, array( 'format' => $format ), $rows ? array_keys( reset( $rows ) ) : array( 'key', 'value' ) );
 		} catch ( Throwable $error ) {
 			WP_CLI::error( $error->getMessage() );
 		}
+	}
+
+	/** A list of flat records is already rows; anything else becomes one row per leaf, keyed by its dotted path. */
+	public static function rows( $result ) {
+		if ( is_array( $result ) && $result && array_is_list( $result ) ) {
+			$flat = true;
+			foreach ( $result as $row ) {
+				$flat = $flat && is_array( $row ) && ! array_is_list( $row ) && array() === array_filter( $row, 'is_array' );
+			}
+			if ( $flat ) {
+				return array_map(
+					function ( $row ) {
+						return array_map( array( __CLASS__, 'cell' ), $row );
+					},
+					$result
+				);
+			}
+		}
+		return self::flatten( $result, '' );
+	}
+
+	private static function cell( $value ) {
+		if ( is_bool( $value ) ) {
+			return $value ? 'true' : 'false';
+		}
+		return is_scalar( $value ) ? (string) $value : '';
+	}
+
+	private static function flatten( $value, $prefix ) {
+		if ( ! is_array( $value ) || ! $value ) {
+			return array(
+				array(
+					'key'   => $prefix,
+					'value' => is_array( $value ) ? '[]' : self::cell( $value ),
+				),
+			);
+		}
+		$rows = array();
+		foreach ( $value as $key => $item ) {
+			$rows = array_merge( $rows, self::flatten( $item, '' === $prefix ? (string) $key : $prefix . '.' . $key ) );
+		}
+		return $rows;
 	}
 
 	private function configuration( $args ) {
@@ -35,13 +87,16 @@ class BackupPlus_PITR_CLI {
 	 * [--engine=<engine>]
 	 * [--source-config=<file>]
 	 * [--bin-directory=<directory>]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function capabilities( $unused, $args ) {
 		$this->output(
 			function () use ( $args ) {
 				$worker = new BackupPlus_PITR( $this->configuration( $args ) );
 				return $worker->capabilities();
-			}
+			},
+			$args
 		);
 	}
 
@@ -53,6 +108,8 @@ class BackupPlus_PITR_CLI {
 	 * --source-config=<file>
 	 * [--interval=<minutes>]
 	 * [--bin-directory=<directory>]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function enable( $unused, $args ) {
 		$this->output(
@@ -60,12 +117,19 @@ class BackupPlus_PITR_CLI {
 				$worker = new BackupPlus_PITR();
 				$worker->configure( $this->configuration( $args ) );
 				return $worker->run( 'full' );
-			}
+			},
+			$args
 		);
 	}
 
-	/** Disable capture and keep all existing artifacts. */
-	public function disable() {
+	/**
+	 * Disable capture and keep all existing artifacts.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function disable( $unused, $args ) {
 		$this->output(
 			function () {
 				$config            = BackupPlus_PITR::config();
@@ -73,37 +137,59 @@ class BackupPlus_PITR_CLI {
 				BackupPlus_PITR::save_configuration( $config );
 				BackupPlus_PITR::deactivate();
 				return array( 'enabled' => false );
-			}
+			},
+			$args
 		);
 	}
 
-	/** Run due capture, renew overdue baselines, or retry unpublished uploads. */
-	public function run() {
+	/**
+	 * Run due capture, renew overdue baselines, or retry unpublished uploads.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function run( $unused, $args ) {
 		$this->output(
 			function () {
 				$worker = new BackupPlus_PITR();
 				return $worker->run();
-			}
+			},
+			$args
 		);
 	}
 
-	/** Create a new coordinated full backup. */
-	public function full() {
+	/**
+	 * Create a new coordinated full backup.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function full( $unused, $args ) {
 		$this->output(
 			function () {
 				$worker = new BackupPlus_PITR();
 				return $worker->run( 'full' );
-			}
+			},
+			$args
 		);
 	}
 
-	/** Capture all closed source logs through a newly created rotation boundary. */
-	public function capture() {
+	/**
+	 * Capture all closed source logs through a newly created rotation boundary.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function capture( $unused, $args ) {
 		$this->output(
 			function () {
 				$worker = new BackupPlus_PITR();
 				return $worker->run( 'capture' );
-			}
+			},
+			$args
 		);
 	}
 
@@ -112,13 +198,16 @@ class BackupPlus_PITR_CLI {
 	 *
 	 * ## OPTIONS
 	 * [--points]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function status( $unused, $args ) {
 		$this->output(
 			function () use ( $args ) {
 				$worker = new BackupPlus_PITR();
 				return $worker->summary( isset( $args['points'] ) );
-			}
+			},
+			$args
 		);
 	}
 
@@ -146,13 +235,16 @@ class BackupPlus_PITR_CLI {
 	 * ## OPTIONS
 	 * <chain>
 	 * [--coordinate=<file:position>]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function plan( $positional, $args ) {
 		$this->output(
 			function () use ( $positional, $args ) {
 				$worker = new BackupPlus_PITR();
 				return $worker->recovery_plan( $positional[0], $this->coordinate( $args ) );
-			}
+			},
+			$args
 		);
 	}
 
@@ -162,23 +254,33 @@ class BackupPlus_PITR_CLI {
 	 * ## OPTIONS
 	 * <chain>
 	 * [--coordinate=<file:position>]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function verify( $positional, $args ) {
 		$this->output(
 			function () use ( $positional, $args ) {
 				$worker = new BackupPlus_PITR();
 				return $worker->verify( $positional[0], $this->coordinate( $args ), array( 'BackupPlus_CLI_Secret', 'read' ) );
-			}
+			},
+			$args
 		);
 	}
 
-	/** Rescan local/remote portable manifests and rebuild missing history. */
-	public function rescan() {
+	/**
+	 * Rescan local/remote portable manifests and rebuild missing history.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function rescan( $unused, $args ) {
 		$this->output(
 			function () {
 				$worker = new BackupPlus_PITR();
 				return $worker->rescan( array( 'BackupPlus_CLI_Secret', 'read' ) );
-			}
+			},
+			$args
 		);
 	}
 
@@ -191,13 +293,16 @@ class BackupPlus_PITR_CLI {
 	 * --isolated
 	 * [--coordinate=<file:position>]
 	 * [--tables=<tables>]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function recover( $positional, $args ) {
 		$this->output(
 			function () use ( $positional, $args ) {
 				$worker = new BackupPlus_PITR();
 				return $worker->recover( $positional[0], $this->coordinate( $args ), $args['recovery-config'], isset( $args['tables'] ) ? BackupPlus_CLI::words( $args['tables'] ) : array(), array( 'BackupPlus_CLI_Secret', 'read' ), isset( $args['isolated'] ) );
-			}
+			},
+			$args
 		);
 	}
 
@@ -215,6 +320,8 @@ class BackupPlus_PITR_CLI {
 	 * [--coordinate=<file:position>]
 	 * [--tables=<tables>]
 	 * [--yes]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function restore( $positional, $args ) {
 		$this->output(
@@ -235,7 +342,8 @@ class BackupPlus_PITR_CLI {
 					WP_CLI::confirm( 'Replace current database contents at ' . $plan['target_coordinate']['file'] . ':' . $plan['target_coordinate']['position'] . '? A separate pre-restore backup will be retained.', $args );
 					return $worker->restore( $positional[0], $this->coordinate( $args ), isset( $args['recovery-config'] ) ? $args['recovery-config'] : '', isset( $args['tables'] ) ? BackupPlus_CLI::words( $args['tables'] ) : array(), array( 'BackupPlus_CLI_Secret', 'read' ), isset( $args['isolated'] ), $direct, true );
 				} finally { BackupPlus_PITR_Process::forget_connection( $connection ); }
-			}
+			},
+			$args
 		);
 	}
 
@@ -245,6 +353,8 @@ class BackupPlus_PITR_CLI {
 	 * ## OPTIONS
 	 * <chain>
 	 * [--yes]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function delete( $positional, $args ) {
 		$this->output(
@@ -253,7 +363,8 @@ class BackupPlus_PITR_CLI {
 				WP_CLI::confirm( 'Delete this complete PITR chain and all its recovery coverage?', $args );
 				$worker->delete( $positional[0] );
 				return array( 'deleted' => $positional[0] );
-			}
+			},
+			$args
 		);
 	}
 
@@ -262,6 +373,8 @@ class BackupPlus_PITR_CLI {
 	 *
 	 * ## OPTIONS
 	 * [--yes]
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
 	 */
 	public function abandon( $unused, $args ) {
 		$this->output(
@@ -269,18 +382,26 @@ class BackupPlus_PITR_CLI {
 				$worker = new BackupPlus_PITR();
 				WP_CLI::confirm( 'Abandon pending publication and require a new full chain? Existing artifacts are preserved.', $args );
 				return $worker->abandon_pending();
-			}
+			},
+			$args
 		);
 	}
 
-	/** Apply database retention counts to complete inactive PITR chains. */
-	public function prune() {
+	/**
+	 * Apply database retention counts to complete inactive PITR chains.
+	 *
+	 * ## OPTIONS
+	 * [--format=<format>]
+	 * : Output format: json (default), table or csv.
+	 */
+	public function prune( $unused, $args ) {
 		$this->output(
 			function () {
 				$worker = new BackupPlus_PITR();
 				$worker->prune();
 				return $worker->summary();
-			}
+			},
+			$args
 		);
 	}
 }

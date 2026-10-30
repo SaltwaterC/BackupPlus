@@ -36,9 +36,18 @@ final class ScriptsTest extends ScriptTestCase {
 		foreach ( array( array( 'check-pitr-settings.php' ), array( 'check-admin-markup.php' ) ) as $eval ) {
 			$commands[ implode( ' ', $eval ) ] = $wp_eval( $eval );
 		}
-		$commands['check-cli-restore.php (host)'] = array( array( PHP_BINARY, 'scripts/integration/check-cli-restore.php' ), self::site_environment() );
-		$evals                                    = array(
+		$commands['check-cli-restore.php (host)']   = array( array( PHP_BINARY, 'scripts/integration/check-cli-restore.php' ), self::site_environment() );
+		$commands['check-restore-locks.php (host)'] = array( array( PHP_BINARY, 'scripts/integration/check-restore-locks.php' ), self::site_environment() );
+		// The networks of dev/test-sites.sh, each with the leased single site for the single-site backup it imports
+		foreach ( array(
+			'sub-directories' => 'backupplus-test-ms-wordpress',
+			'sub-domains'     => 'backupplus-test-msd-wordpress',
+		) as $kind => $network ) {
+			$commands[ 'check-multisite.php ' . $kind . ' (host)' ] = array( array( PHP_BINARY, 'scripts/integration/check-multisite.php' ), self::site_environment() + array( 'BACKUPPLUS_TEST_MS_CONTAINER' => $network ) );
+		}
+		$evals = array(
 			array( 'check-cli.php' ),
+			array( 'check-cli-manage.php' ),
 			array( 'check-backup-sources.php' ),
 			array( 'check-backup-sources.php', 'pclzip' ),
 			array( 'check-pre-update-backups.php' ),

@@ -154,6 +154,9 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 	}
 
 	public static function reconcile_schedule() {
+		if ( BackupPlus_Multisite::secondary() ) {
+			return;
+		}
 		$config = self::config();
 		if ( empty( $config['enabled'] ) ) {
 			self::deactivate();

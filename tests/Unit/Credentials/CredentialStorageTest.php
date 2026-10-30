@@ -588,7 +588,8 @@ final class CredentialStorageTest extends TestCase {
 		$this->assertSame( $first_completed, get_option( 'backupplus_ftp' ), 'A retry skips completed sites' );
 		Credential_Test_State::$blog_id = 2;
 		$this->assertSame( 'network', get_option( BackupPlus_Credential_Key_Rotation::REWRITTEN_KEY_OPTION ), 'A retry re-encrypts unfinished sites without losing credentials' );
-		$this->assertSame( 'synthetic second site password', BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' )['pass'], 'A retry re-encrypts unfinished sites without losing credentials' );
+		// The site's own stored copy: BackupPlus_Options reads the main site's configuration on every site of a network
+		$this->assertSame( 'synthetic second site password', BackupPlus_Credential_Storage::reading( get_option( 'backupplus_ftp' ), 'backupplus_ftp' )['pass'], 'A retry re-encrypts unfinished sites without losing credentials' );
 	}
 
 	public function test_network_ciphertext_detection_restores_the_original_blog_context(): void {

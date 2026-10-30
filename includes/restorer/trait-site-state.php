@@ -143,9 +143,9 @@ trait BackupPlus_Restorer_Site_State {
 
 		$sql = BackupPlus_SQL::wpdb();
 		if ( $this->is_multisite ) {
-			// Get the site wide active plugins
+			// Get the site wide active plugins; restoring one site of the network leaves the network's alone
 			$sitemeta_table = $import_table_prefix . 'sitemeta';
-			$plugins        = $sql->row( "SELECT meta_value FROM %i WHERE meta_key = 'active_sitewide_plugins'", array( $sitemeta_table ) );
+			$plugins        = 'network' === BackupPlus_Multisite_Restore::mode( $this->restore_options ) ? $sql->row( "SELECT meta_value FROM %i WHERE meta_key = 'active_sitewide_plugins'", array( $sitemeta_table ) ) : null;
 			if ( ! empty( $plugins->meta_value ) ) {
 				$plugins = $this->deactivate_missing_plugins( $plugins->meta_value );
 				$sql->execute( "UPDATE %i SET meta_value = ? WHERE meta_key = 'active_sitewide_plugins'", array( $sitemeta_table ), array( $plugins ) );

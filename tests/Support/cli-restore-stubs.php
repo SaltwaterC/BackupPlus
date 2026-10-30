@@ -8,6 +8,9 @@ function __( $text ) {
 	return $text; }
 function is_wp_error( $value ) {
 	return false; }
+/** Whether the tests' WordPress is a network. */
+function is_multisite() {
+	return ! empty( $GLOBALS['cli_restore_multisite'] ); }
 class BackupPlus_CLI {
 	public static function words( $value ) {
 		return explode( ',', $value ); }

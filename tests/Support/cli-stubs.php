@@ -144,6 +144,12 @@ class CLI_Test_Backup {
 
 	public $job = array();
 
+	/** Job data by job ID. */
+	public $jobs = array();
+
+	/** Service IDs and labels. */
+	public $backup_methods = array();
+
 
 	public $directory;
 
@@ -151,6 +157,12 @@ class CLI_Test_Backup {
 	public function jobdata_get( $key, $default = null ) {
 
 		return isset( $this->job[ $key ] ) ? $this->job[ $key ] : $default;
+	}
+
+
+	public function jobdata_getarray( $job_id ) {
+
+		return isset( $this->jobs[ $job_id ] ) ? $this->jobs[ $job_id ] : array();
 	}
 
 

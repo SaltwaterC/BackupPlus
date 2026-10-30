@@ -398,13 +398,8 @@ trait BackupPlus_Restorer_Database_Tables {
 
 		if ( $table_should_be_skipped ) {
 			if ( empty( $this->previous_table_name ) || $table_name != $this->previous_table_name ) {
-				if ( $this->is_multisite && 0 === $this->ud_backup_is_multisite && ( $this->old_table_prefix . 'users' === $table_name || $this->old_table_prefix . 'usermeta' === $table_name ) ) {
-					/* translators: %s: Table name to be excluded (could be users or usermeta) */
-					$backupplus->log( sprintf( __( 'Skipping table %s: this table will not be restored', 'backupplus' ), $table_name ), 'notice-restore' );
-				} else {
-					/* translators: %s: Table name to be excluded (user's chosen)*/
-					$backupplus->log( sprintf( __( 'Skipping table %s: user has chosen not to restore this table', 'backupplus' ), $table_name ), 'notice-restore' );
-				}
+				/* translators: %s: Table name to be excluded (user's chosen)*/
+				$backupplus->log( sprintf( __( 'Skipping table %s: user has chosen not to restore this table', 'backupplus' ), $table_name ), 'notice-restore' );
 			}
 			$skip_table = true;
 		} elseif ( ! empty( $last_table ) && ! empty( $table_name ) && $table_name != $last_table ) {
@@ -517,14 +512,19 @@ trait BackupPlus_Restorer_Database_Tables {
 		}
 
 		if ( $this->is_multisite && $import_table_prefix . 'sitemeta' === $table ) {
+			// The network options cached before the table was replaced are stale: the running job's data, kept there, is saved again from memory only once they are gone
+			wp_cache_flush();
 			// the reason why this if statement is needed is that when *_options table is not included in the backup, then backupplus_jobdata will never be wiped out from the *_sitemeta table as the below elseif statement will call wipe_state_data() only if *_options table is included
 			$backupplus->wipe_state_data( false, 'sitemeta' );
-		} elseif ( preg_match( '/^([\d+]_)?options$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
+		} elseif ( preg_match( '/^(\d+_)?options$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
 			// The second prefix here used to have a '!$this->is_multisite' on it (i.e. 'options' table on non-multisite). However, the user_roles entry exists in the main options table on multisite too.
 			if ( ( $this->is_multisite && ! empty( $matches[1] ) ) || $table == $import_table_prefix . 'options' ) {
 
 				if ( ! $this->has_table_selection() || $table === $wpdb->options ) {
 					$backupplus->wipe_state_data();
+				}
+				if ( $table === $wpdb->options ) {
+					$this->restore_lock_rows( $table );
 				}
 
 				$mprefix = empty( $matches[1] ) ? '' : $matches[1];
@@ -625,7 +625,7 @@ trait BackupPlus_Restorer_Database_Tables {
 					$sql->execute( "DELETE FROM %i WHERE option_name = 'jetpack_options'", array( $new_table_name ) );
 				}
 			}
-		} elseif ( $import_table_prefix != $old_table_prefix && preg_match( '/^([\d+]_)?usermeta$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
+		} elseif ( $import_table_prefix != $old_table_prefix && preg_match( '/^(\d+_)?usermeta$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
 
 			// This table is not a per-site table, but per-install
 
@@ -765,6 +765,54 @@ trait BackupPlus_Restorer_Database_Tables {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Remember the locks held now: the options table of a backup has the locks held when it was taken (at least the lock
+	 * of the backup itself), which describe jobs that are not running. Restored, they would stop backups and other jobs
+	 * until they expired, while the locks held by this restore would disappear with the table being replaced.
+	 */
+	private function save_lock_rows() {
+		global $wpdb;
+		if ( null !== $this->lock_rows || $this->is_dummy_db_restore ) {
+			return;
+		}
+		$rows            = BackupPlus_SQL::wpdb()->rows(
+			'SELECT option_name, option_value, autoload FROM %i WHERE option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ?',
+			array( $wpdb->options ),
+			self::lock_patterns(),
+			ARRAY_A
+		);
+		$this->lock_rows = is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Put the locks held before the restore back into the restored options table, in place of the backup's
+	 *
+	 * @param String $table - the restored options table
+	 */
+	private function restore_lock_rows( $table ) {
+		global $backupplus;
+		if ( ! is_array( $this->lock_rows ) ) {
+			return;
+		}
+		$sql = BackupPlus_SQL::wpdb();
+		$sql->execute( 'DELETE FROM %i WHERE option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ? OR option_name LIKE ?', array( $table ), self::lock_patterns() );
+		foreach ( $this->lock_rows as $row ) {
+			$sql->execute( 'INSERT INTO %i (option_name, option_value, autoload) VALUES (?, ?, ?)', array( $table ), array( $row['option_name'], $row['option_value'], $row['autoload'] ) );
+		}
+		wp_cache_flush();
+		$backupplus->log( 'Locks kept from before the restore: ' . count( $this->lock_rows ) );
+	}
+
+	/** Option names of BackupPlus's semaphores and WordPress upgrader locks. */
+	private static function lock_patterns() {
+		$patterns = array();
+		foreach ( array( 'backupplus_lock_', 'backupplus_locked_', 'backupplus_unlocked_', 'backupplus_semaphore_', 'backupplus_last_lock_time_' ) as $prefix ) {
+			$patterns[] = BackupPlus_Database_Utility::esc_like( $prefix ) . '%';
+		}
+		$patterns[] = BackupPlus_Database_Utility::esc_like( 'backupplus_' ) . '%' . BackupPlus_Database_Utility::esc_like( '.lock' );
+		return $patterns;
 	}
 
 	/**

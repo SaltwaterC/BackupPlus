@@ -151,9 +151,9 @@ trait BackupPlus_Core_Backup_Completion {
 		if ( ! $allow_email ) {
 			$send_an_email = false;
 			$this->log( 'No email will be sent - this backup set was empty.' );
-		} elseif ( empty( $email ) ) {
+		} elseif ( empty( $email ) && ! BackupPlus_Ntfy::enabled() ) {
 			$send_an_email = false;
-			$this->log( 'No email will/can be sent - the user has not configured an email address.' );
+			$this->log( 'No email will/can be sent - the user has not configured an email address or an ntfy topic.' );
 		}
 
 		if ( $force_abort ) {

@@ -359,6 +359,19 @@ trait BackupPlus_Restorer_Run {
 		}
 		$backupplus->log( 'Restore job started. Entities to restore: ' . implode( ', ', array_flip( $entities_to_restore ) ) . '. Restore options: ' . json_encode( $copy_restore_options ) );
 
+		// Restoring one site of a network, or importing a single site into one: check the choice and create the new site
+		$prepared = BackupPlus_Multisite_Restore::prepare( $entities_to_restore, $restore_options, $this->ud_backup_set );
+		if ( is_wp_error( $prepared ) ) {
+			return $prepared;
+		}
+		if ( $prepared !== $restore_options ) {
+			$restore_options       = $prepared;
+			$this->restore_options = $prepared;
+			// A resumed restore must import into the same site
+			$backupplus->jobdata_set( 'restore_options', $prepared );
+			do_action( 'backupplus_restorer_restore_options', $prepared );
+		}
+
 		do_action( 'backupplus_restoration_title', __( 'Final checks', 'backupplus' ) );
 		add_action( 'backupplus_unzip_progress_restore_info', array( $this, 'unzip_progress_restore_info' ), 10, 4 );
 		$backup_set = $this->ud_backup_set;
@@ -390,12 +403,14 @@ trait BackupPlus_Restorer_Run {
 			return $second_loop;
 		}
 
-		// External databases precede the WordPress database, whose options may change this installation.
+		// External databases precede the WordPress database, whose options may change this installation. Restoring one site
+		// of a network, the database comes first: it only changes that site's tables, and its header can still stop the restore.
+		$db_rank = 'network' === BackupPlus_Multisite_Restore::mode( $restore_options ) ? 2 : 0;
 		uksort(
 			$second_loop,
-			function ( $a, $b ) {
-				$rank = function ( $type ) {
-					return preg_match( '/^db[1-9][0-9]*$/D', $type ) ? 0 : ( 'db' === $type ? 2 : 1 );
+			function ( $a, $b ) use ( $db_rank ) {
+				$rank = function ( $type ) use ( $db_rank ) {
+					return preg_match( '/^db[1-9][0-9]*$/D', $type ) ? 0 : ( 'db' === $type ? $db_rank : 1 );
 				};
 				return $rank( $a ) - $rank( $b );
 			}

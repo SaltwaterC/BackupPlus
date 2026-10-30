@@ -99,8 +99,9 @@ trait BackupPlus_Restorer_Database_Sql {
 			$keys_to_save = array_merge( $keys_to_save, $backupplus->get_settings_keys() );
 		}
 
+		// A setting the site does not have is null, and stays unset: saved as '', it would lose its default
 		foreach ( $keys_to_save as $key ) {
-			$this->configuration_bundle[ $key ] = BackupPlus_Options::get_backupplus_option( $key, '' );
+			$this->configuration_bundle[ $key ] = BackupPlus_Options::get_backupplus_option( $key );
 		}
 	}
 
@@ -118,7 +119,9 @@ trait BackupPlus_Restorer_Database_Sql {
 		$backupplus->log( "Restoring prior UD configuration (table: $table; keys: " . count( $this->configuration_bundle ) . ')' );
 		foreach ( $this->configuration_bundle as $key => $value ) {
 			BackupPlus_Options::delete_backupplus_option( $key );
-			BackupPlus_Options::update_backupplus_option( $key, $value );
+			if ( null !== $value ) {
+				BackupPlus_Options::update_backupplus_option( $key, $value );
+			}
 		}
 		// Reset the LiteSpeed server warning message when replacing the site URL.
 		if ( ! empty( $this->restore_options['backupplus_restorer_replacesiteurl'] ) ) {
@@ -191,7 +194,9 @@ trait BackupPlus_Restorer_Database_Sql {
 				'backupplus_restore_this_table',
 				true,
 				$unprefixed_table_name,
-				$this->restore_options
+				$this->restore_options,
+				$table_name,
+				$this->old_table_prefix
 			);
 
 			if ( false === $this->restore_this_table[ $table_name ] ) {

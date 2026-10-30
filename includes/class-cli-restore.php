@@ -159,6 +159,26 @@ class BackupPlus_CLI_Restore {
 		if ( ( null !== $plugin && 'database' === $type ) || ( null !== $table && 'files' === $type ) ) {
 			throw new InvalidArgumentException( 'The partial restore selection is incompatible with --type.' );
 		}
+		$site   = isset( $args['site'] ) ? $args['site'] : null;
+		$import = isset( $args['import-into'] ) ? $args['import-into'] : null;
+		if ( ( null !== $site || null !== $import ) && ! is_multisite() ) {
+			throw new InvalidArgumentException( '--site and --import-into restore into one site of a WordPress network.' );
+		}
+		if ( null !== $site && null !== $import ) {
+			throw new InvalidArgumentException( 'Use either --site or --import-into.' );
+		}
+		if ( null !== $site && ! ctype_digit( (string) $site ) ) {
+			throw new InvalidArgumentException( 'Use a blog ID with --site.' );
+		}
+		if ( null !== $import && 'new' !== $import && ! ctype_digit( (string) $import ) ) {
+			throw new InvalidArgumentException( 'Use --import-into=new or a blog ID.' );
+		}
+		if ( 'new' === $import && empty( $args['slug'] ) ) {
+			throw new InvalidArgumentException( 'Name the new site with --slug.' );
+		}
+		if ( ( null !== $site || null !== $import ) && null !== $plugin ) {
+			throw new InvalidArgumentException( 'A single site is restored from its database and uploads.' );
+		}
 		$available       = BackupPlus_Backup_Sources::restore_entities( $backupplus->get_backupable_file_entities( true, true ), $backup );
 		$available['db'] = array();
 		$entities        = array();
@@ -174,6 +194,10 @@ class BackupPlus_CLI_Restore {
 				throw new InvalidArgumentException( 'Unknown, unavailable or incompatible restore components.' );
 			}
 			$entities = $selected;
+		}
+		// One site of a network has only its database tables and uploads of its own
+		if ( ( null !== $site || null !== $import ) && ! isset( $args['components'] ) ) {
+			$entities = array_values( array_intersect( $entities, array( 'db', 'uploads' ) ) );
 		}
 		if ( null !== $plugin || null !== $table ) {
 			if ( ! isset( $args['components'] ) ) {
@@ -204,6 +228,14 @@ class BackupPlus_CLI_Restore {
 			$options['tables_to_restore']          = array( $table );
 			$options['include_unspecified_tables'] = false;
 		}
+		if ( null !== $site ) {
+			$options['backupplus_restore_ms_whichsites'] = (int) $site;
+		} elseif ( null !== $import ) {
+			$options['backupplus_restore_ms_import'] = 'new' === $import ? 'new' : (int) $import;
+			if ( 'new' === $import ) {
+				$options['backupplus_restore_ms_import_slug'] = (string) $args['slug'];
+			}
+		}
 		if ( isset( $args['point'] ) ) {
 			if ( ! ctype_digit( (string) $args['point'] ) || ! isset( $backup['incremental_sets'][ $args['point'] ] ) ) {
 				throw new InvalidArgumentException( 'The requested restore point does not belong to this backup chain.' );
@@ -232,6 +264,27 @@ class BackupPlus_CLI_Restore {
 		BackupPlus_Source_Restore::preflight( $entities, $backup, $options );
 		$backup['timestamp'] = (int) $timestamp;
 		return array( $backup, $entities, $options );
+	}
+
+	/** The archives a restore would use and where each is now, without fetching, decrypting or restoring anything. */
+	public static function plan( $timestamp, $args ) {
+		global $backupplus;
+		list( $backup, $entities ) = self::selection( $timestamp, $args );
+		$rows                      = array();
+		foreach ( $entities as $id => $unused ) {
+			foreach ( (array) $backup[ $id ] as $index => $file ) {
+				if ( ! is_string( $file ) || basename( $file ) !== $file ) { throw new RuntimeException( 'Invalid archive filename.' ); }
+				$size   = $id . ( $index ? $index : '' ) . '-size';
+				$rows[] = array(
+					'component' => $id,
+					'file'      => $file,
+					'size'      => isset( $backup[ $size ] ) ? (int) $backup[ $size ] : null,
+					'encrypted' => (int) BackupPlus_Encryption::is_file_encrypted( $file ),
+					'local'     => (int) ( is_file( $backupplus->backups_dir_location() . '/' . $file ) && ! is_link( $backupplus->backups_dir_location() . '/' . $file ) ),
+				);
+			}
+		}
+		return $rows;
 	}
 
 	/** Fetch and verify every selected archive before asking for secrets or modifying the site. */

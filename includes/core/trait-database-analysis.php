@@ -281,10 +281,8 @@ trait BackupPlus_Core_Database_Analysis {
 					if ( 'end' == $matches[1] ) {
 						$gathering_siteinfo = false;
 						// Sanity checks
-						if ( isset( $old_siteinfo['multisite'] ) && ! $old_siteinfo['multisite'] && is_multisite() ) {
-							$err[] = __( 'Restoring a single-site backup into a WordPress multisite network is not supported.', 'backupplus' );
-							return array( $mess, $warn, $err, $info );
-						} elseif ( isset( $old_siteinfo['multisite'] ) && $old_siteinfo['multisite'] && ! is_multisite() ) {
+						// A single-site backup is imported into one site of a network: see BackupPlus_Multisite_Restore::postscan()
+						if ( isset( $old_siteinfo['multisite'] ) && $old_siteinfo['multisite'] && ! is_multisite() ) {
 							$warn[] = __( 'Warning:', 'backupplus' ) . ' ' . __( 'Your backup is of a WordPress multisite install; but this site is not.', 'backupplus' ) . ' ' . __( 'Only the first site of the network will be accessible.', 'backupplus' ) . ' <a href="https://codex.wordpress.org/Create_A_Network" target="_blank">' . __( 'If you want to restore a multisite backup, you should first set up your WordPress installation as a multisite.', 'backupplus' ) . '</a>';
 						}
 					} elseif ( preg_match( '/^([^=]+)=(.*)$/', $matches[1], $kvmatches ) ) {
@@ -294,6 +292,14 @@ trait BackupPlus_Core_Database_Analysis {
 							$info['multisite'] = $val ? true : false;
 							if ( $val ) {
 								$mess[] = '<strong>' . __( 'Site information:', 'backupplus' ) . '</strong> ' . 'backup is of a WordPress Network';
+							}
+						} elseif ( 'multisite_data' == $key ) {
+							// The network's sites (blog ID => home URL), to choose one to restore
+							$info['multisite_sites'] = array();
+							foreach ( (array) json_decode( $val, true ) as $site ) {
+								if ( isset( $site['blog_id'], $site['home'] ) ) {
+									$info['multisite_sites'][ (int) $site['blog_id'] ] = preg_replace( '#^https?://#', '', $site['home'] );
+								}
 							}
 						}
 						$old_siteinfo[ $key ] = $val;
@@ -591,9 +597,6 @@ trait BackupPlus_Core_Database_Analysis {
 		// On UD 1.16.30 - 1.16.34 there was a serious bug that did not backup all content in composite key tables, if this is not a migration and the backup was created on one of these versions do not restore this table.
 		$skip_composite_tables = ( ! empty( $info['created_by_version'] ) && version_compare( '1' . substr( $info['created_by_version'], 1 ), '1.16.30', '>=' ) && version_compare( '1' . substr( $info['created_by_version'], 1 ), '1.16.34', '<=' ) ) ? true : false;
 
-		// Check if this is a single site to multisite restore
-		$skip_user_tables = ( isset( $old_siteinfo['multisite'] ) && ! $old_siteinfo['multisite'] && is_multisite() ) ? true : false;
-
 		if ( $skip_composite_tables ) {
 			if ( ! empty( $info['migration'] ) ) {
 				$skip_composite_tables = false;
@@ -611,10 +614,6 @@ trait BackupPlus_Core_Database_Analysis {
 					$info['created_by_version']
 				);
 			}
-		}
-
-		if ( $skip_user_tables ) {
-			$warn[] = __( 'You are restoring a single site backup into a multisite installation.', 'backupplus' ) . ' ' . __( 'The users and usermeta tables will be excluded from the restore to prevent conflicts with the existing multisite user structure.', 'backupplus' );
 		}
 
 		if ( empty( $tables_found ) ) {
@@ -640,16 +639,10 @@ trait BackupPlus_Core_Database_Analysis {
 			}
 
 			foreach ( $tables_found as $table ) {
-				// Check if table should be skipped (composite key tables or user tables in single-to-multisite restore)
-				$is_user_table = ( $skip_user_tables && isset( $old_table_prefix ) && '' !== $old_table_prefix && ( ( $table === $old_table_prefix . 'users' ) || ( $table === $old_table_prefix . 'usermeta' ) ) );
-				$should_skip   = ( $skip_composite_tables && BackupPlus_Database_Utility::table_has_composite_private_key( $table ) ) || $is_user_table;
+				$checked = ( $skip_composite_tables && BackupPlus_Database_Utility::table_has_composite_private_key( $table ) ) ? '' : 'checked="checked"';
 
-				$checked  = $should_skip ? '' : 'checked="checked"';
-				$disabled = $is_user_table ? ' disabled="disabled"' : '';
-				$style    = $is_user_table ? ' style="opacity: 0.5;"' : '';
-
-				$select_restore_tables .= '<input class="backupplus_restore_tables_options" id="backupplus_restore_table_' . esc_attr( $table ) . '" ' . $checked . $disabled . ' type="checkbox" name="backupplus_restore_tables_options[]" value="' . esc_attr( $table ) . '"> ';
-				$select_restore_tables .= '<label for="backupplus_restore_table_' . esc_attr( $table ) . '"' . $style . '>' . esc_html( $table ) . '</label><br>';
+				$select_restore_tables .= '<input class="backupplus_restore_tables_options" id="backupplus_restore_table_' . esc_attr( $table ) . '" ' . $checked . ' type="checkbox" name="backupplus_restore_tables_options[]" value="' . esc_attr( $table ) . '"> ';
+				$select_restore_tables .= '<label for="backupplus_restore_table_' . esc_attr( $table ) . '">' . esc_html( $table ) . '</label><br>';
 			}
 
 			$select_restore_tables .= $select_table_button;
