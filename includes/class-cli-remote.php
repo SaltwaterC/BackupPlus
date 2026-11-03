@@ -205,33 +205,45 @@ class BackupPlus_CLI_Remote {
 	}
 
 	/**
-	 * Complete authorisation of an OAuth destination from the code the provider displays.
+	 * Authorise a destination that takes a pasted code (Dropbox).
 	 *
-	 * Open the authorisation page in a browser, choose "Having problems authenticating?" and pass the code it
-	 * shows in a file or on stdin. Services that use keys instead of OAuth need remote set.
+	 * Without <file>, prints the address to open in a browser. Approve access there, then pass the code Dropbox
+	 * displays in a file or on stdin. A code is accepted for ten minutes after the address is printed.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <service>
 	 * : Service ID from remote list.
 	 *
-	 * <file>
-	 * : File holding the authentication code, or - for stdin.
+	 * [<file>]
+	 * : File holding the authorisation code, or - for stdin.
+	 *
+	 * [--instance=<id>]
+	 * : Instance ID; optional when the service has one instance.
 	 */
 	public function authorize( $args, $assoc ) {
 		try {
-			self::service( $args[0] );
+			$storage = self::service( $args[0] );
+			if ( ! $storage->supports_feature( 'manual_authentication' ) || ! method_exists( $storage, 'start_authorisation' ) ) { throw new InvalidArgumentException( 'This service is not authorised with a code. Authorise it from the settings screen.' ); }
+			$instance = self::pick( $args[0], isset( $assoc['instance'] ) ? $assoc['instance'] : null );
+			if ( ! isset( $args[1] ) ) {
+				$storage->set_options( self::instances( $args[0] )[ $instance ], false, $instance );
+				WP_CLI::line( 'Open this address, approve access, then run remote authorize ' . $args[0] . ' <file|-> --instance=' . $instance . ' with the code shown:' );
+				WP_CLI::line( $storage->start_authorisation() );
+				return;
+			}
 			$raw = '-' === $args[1] ? file_get_contents( 'php://stdin' ) : ( is_file( $args[1] ) && is_readable( $args[1] ) ? file_get_contents( $args[1] ) : false );
-			if ( false === $raw || '' === trim( $raw ) ) { throw new InvalidArgumentException( 'Cannot read the authentication code.' ); }
+			if ( false === $raw || '' === trim( $raw ) ) { throw new InvalidArgumentException( 'Cannot read the authorisation code.' ); }
 			$commands = new BackupPlus_Commands( null );
 			$result   = $commands->manual_remote_storage_authentication(
 				array(
-					'method'    => $args[0],
-					'auth_data' => trim( $raw ),
+					'method'      => $args[0],
+					'instance_id' => $instance,
+					'code'        => trim( $raw ),
 				)
 			);
-			if ( is_wp_error( $result ) || ! is_array( $result ) || 'success' !== $result['result'] ) { throw new RuntimeException( wp_strip_all_tags( is_array( $result ) && isset( $result['data'] ) && is_string( $result['data'] ) ? $result['data'] : 'Authorisation failed.' ) ); }
-			WP_CLI::success( wp_strip_all_tags( is_string( $result['data'] ) ? $result['data'] : 'Authorised.' ) );
+			if ( ! is_array( $result ) || 'success' !== $result['result'] ) { throw new RuntimeException( wp_strip_all_tags( is_array( $result ) && isset( $result['data'] ) && is_string( $result['data'] ) ? html_entity_decode( $result['data'], ENT_QUOTES ) : 'Authorisation failed.' ) ); }
+			WP_CLI::success( wp_strip_all_tags( is_string( $result['data'] ) ? str_replace( '<br>', ' ', $result['data'] ) : 'Authorised.' ) );
 		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
 	}
 

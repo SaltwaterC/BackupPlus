@@ -229,30 +229,15 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 
 		$opts = $this->get_options();
 
-		$use_master = $this->use_master( $opts );
-
-		if ( ! $use_master ) {
-			if ( empty( $opts['secret'] ) || empty( $opts['clientid'] ) || empty( $opts['clientid'] ) ) {
-				return new WP_Error(
-					'no_settings',
-					sprintf(
-					/* translators: %s: Storage provider name */
-						__( 'No %s settings were found', 'backupplus' ),
-						__( 'Google Drive', 'backupplus' )
-					)
-				);
-			}
-		} else {
-			if ( empty( $opts['user_id'] ) || empty( $opts['tmp_access_token'] ) ) {
-				return new WP_Error(
-					'no_settings',
-					sprintf(
-					/* translators: %s: Storage provider name */
-						__( 'No %s settings were found', 'backupplus' ),
-						__( 'Google Drive', 'backupplus' )
-					)
-				);
-			}
+		if ( empty( $opts['secret'] ) || empty( $opts['clientid'] ) || empty( $opts['token'] ) ) {
+			return new WP_Error(
+				'no_settings',
+				sprintf(
+				/* translators: %s: Storage provider name */
+					__( 'No %s settings were found', 'backupplus' ),
+					__( 'Google Drive', 'backupplus' )
+				)
+			);
 		}
 
 		$storage = $this->bootstrap();

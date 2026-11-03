@@ -72,7 +72,7 @@ trait BackupPlus_Admin_Settings_Page {
 		$error             = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'error' );
 		$error_description = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'error_description' );
 		if ( isset( $error ) ) {
-			// This is used by Microsoft OneDrive authorisation failures (May 15). I am not sure what may have been using the 'error' GET parameter otherwise - but it is harmless. June 2024: also now used for insufficient Google Drive permissions upon return from auth.backupplusplus.com.
+			// This is used by Microsoft OneDrive authorisation failures (May 15). I am not sure what may have been using the 'error' GET parameter otherwise - but it is harmless. Also used for insufficient Google Drive permissions on return from Google.
 			if ( ! empty( $error_description ) ) {
 				$this->show_admin_warning( htmlspecialchars( $error_description ) . ' (' . htmlspecialchars( $error ) . ')', 'error' );
 			} else {

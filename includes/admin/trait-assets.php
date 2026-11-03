@@ -215,6 +215,7 @@ trait BackupPlus_Admin_Assets {
 					'nocloudserviceschosen'                => __( 'You have chosen to send this backup to remote storage, but no remote storage locations have been selected', 'backupplus' ),
 					'restore_proceeding'                   => __( 'The restore operation has begun.', 'backupplus' ) . ' ' . __( 'Do not close your browser until it reports itself as having finished.', 'backupplus' ),
 					'unexpectedresponse'                   => __( 'Unexpected response:', 'backupplus' ),
+					'authorisation_complete'               => __( 'Connected.', 'backupplus' ),
 					'backup_locked_title'                  => __( 'Locked: retention never deletes this backup. Click to unlock.', 'backupplus' ),
 					'backup_unlocked_title'                => __( 'Unlocked: retention may delete this backup. Click to lock.', 'backupplus' ),
 					'backup_lock_failed'                   => __( 'Some backups could not be changed:', 'backupplus' ),

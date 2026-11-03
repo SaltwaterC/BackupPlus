@@ -50,11 +50,13 @@ trait BackupPlus_Dropbox_Client {
 					$current_app_key = empty( $opts['settings'][ $instance_id ]['appkey'] ) ? false : $opts['settings'][ $instance_id ]['appkey'];
 					$new_app_key     = empty( $storage_options['appkey'] ) ? false : $storage_options['appkey'];
 
-					// If a different app key is being used, then wipe the stored token as it cannot belong to the new app
+					// If a different app key is being used, then wipe the stored token and secret as they cannot belong to the new app
 					if ( $current_app_key !== $new_app_key ) {
 						unset( $opts['settings'][ $instance_id ]['tk_access_token'] );
+						unset( $opts['settings'][ $instance_id ]['tk_pkce'] );
+						unset( $opts['settings'][ $instance_id ]['token_app'] );
+						unset( $opts['settings'][ $instance_id ]['secret'] );
 						unset( $opts['settings'][ $instance_id ]['ownername'] );
-						unset( $opts['settings'][ $instance_id ]['CSRF'] );
 					}
 				}
 
@@ -85,36 +87,34 @@ trait BackupPlus_Dropbox_Client {
 	}
 
 	/**
-	 * Bootstrap and check token, can also return the authentication method if return_instead_of_echo is true
+	 * The app key of the connection: its own, or the built-in one. A "dropbox:" prefix marks a full Dropbox app.
 	 *
-	 * @param boolean $return_instead_of_echo - a boolean to indicate if we should return the result or echo it
-	 *
-	 * @return void|string - returns the authentication message if return_instead_of_echo is true
+	 * @param Array|null $opts - the instance options, or null for the current ones
+	 * @return String
 	 */
-	public function auth_token( $return_instead_of_echo ) {
-		$this->bootstrap();
-		$opts = $this->get_options();
-		if ( ! empty( $opts['tk_access_token'] ) ) {
-			if ( $return_instead_of_echo ) {
-				return $this->show_authed_admin_warning( $return_instead_of_echo );
-			} else {
-				add_action( 'all_admin_notices', array( $this, 'show_authed_admin_warning' ) );
-			}
+	public function app_key( $opts = null ) {
+		$opts = null === $opts ? $this->get_options() : $opts;
+		$key  = empty( $opts['appkey'] ) ? BackupPlus_Dropbox_PKCE::default_app_key() : $opts['appkey'];
+		return 'dropbox:' === substr( $key, 0, 8 ) ? substr( $key, 8 ) : $key;
+	}
+
+	/**
+	 * The encrypted token storage of the current instance
+	 *
+	 * @return Dropbox_WordPress
+	 */
+	public function token_storage() {
+		foreach ( array( 'API.php', 'Exception.php', 'OAuth/Consumer/ConsumerAbstract.php', 'OAuth/Storage/StorageInterface.php', 'OAuth/Storage/Encrypter.php', 'OAuth/Storage/WordPress.php', 'OAuth/Consumer/Curl.php' ) as $file ) {
+			backupplus_try_include_file( 'methods/dropbox/Dropbox2/' . $file, 'include_once' );
 		}
+		return new Dropbox_WordPress( Dropbox_Encrypter::from_config( $this->get_instance_id() ), 'tk_', 'backupplus_dropbox', $this );
 	}
 
 	/**
-	 * Acquire single-use authorization code
-	 */
-	public function auth_request() {
-		$this->bootstrap();
-	}
-
-	/**
-	 * This basically reproduces the relevant bits of bootstrap.php from the SDK
+	 * Build the API client from the stored token, or revoke the token
 	 *
-	 * @param  Boolean $deauthenticate indicates if we should bootstrap for a deauth or auth request
-	 * @return object
+	 * @param  Boolean $deauthenticate indicates if we should revoke the token instead
+	 * @return object|Boolean
 	 */
 	public function bootstrap( $deauthenticate = false ) {
 
@@ -124,66 +124,24 @@ trait BackupPlus_Dropbox_Client {
 			return $storage;
 		}
 
-		// Dropbox APIv1 is dead, but we'll keep the variable in case v3 is ever announced
-		$dropbox_api = 'Dropbox2';
-
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/API.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/Exception.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Consumer/ConsumerAbstract.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/StorageInterface.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/Encrypter.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Storage/WordPress.php', 'include_once' );
-		backupplus_try_include_file( 'methods/dropbox/' . $dropbox_api . '/OAuth/Consumer/Curl.php', 'include_once' );
-		// backupplus_try_include_file('methods/dropbox/'.$dropbox_api.'/OAuth/Consumer/WordPress.php', 'require_once');
-
 		$opts = $this->get_options();
 
-		$key = empty( $opts['secret'] ) ? '' : $opts['secret'];
-		$sec = empty( $opts['appkey'] ) ? '' : $opts['appkey'];
-
-		$oauth2_id = defined( 'BACKUPPLUS_DROPBOX_CLIENT_ID' ) ? BACKUPPLUS_DROPBOX_CLIENT_ID : base64_decode( 'dzQxM3o0cWhqejY1Nm5l' );
-
-		// Set the callback URL
-		$callbackhome = BackupPlus_Options::admin_page_url() . '?page=backupplus&action=backupplusmethod-dropbox-auth';
-		$callback     = defined( 'BACKUPPLUS_DROPBOX_AUTH_RETURN_URL' ) ? BACKUPPLUS_DROPBOX_AUTH_RETURN_URL : 'https://auth.backupplusplus.com/auth/dropbox/';
-
-		if ( defined( 'BACKUPPLUS_CUSTOM_DROPBOX_APP' ) && BACKUPPLUS_CUSTOM_DROPBOX_APP ) {
-			$callback = $callbackhome;
+		if ( ! $deauthenticate && $this->authentication_required( $opts ) && ! empty( $opts['tk_access_token'] ) ) {
+			$this->log( __( 'This Dropbox connection was made through an app that BackupPlus no longer uses. Connect Dropbox again in BackupPlus Settings.', 'backupplus' ), 'error' );
+			return false;
 		}
 
-		$instance_id = $this->get_instance_id();
-		// Instantiate the Encryptor and storage objects
 		try {
-			$encrypter = Dropbox_Encrypter::from_config( $instance_id );
+			$token_storage = $this->token_storage();
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage(), 'error' );
 			return false;
 		}
 
-		// Instantiate the storage
-		$dropbox_storage = new Dropbox_WordPress( $encrypter, 'tk_', 'backupplus_dropbox', $this );
-
-		// WordPress consumer does not yet work
-		// $oauth = new Dropbox_ConsumerWordPress($sec, $key, $dropbox_storage, $callback);
-
-		// Get the DropBox API access details
-		list($d2, $d1) = $this->defaults();
-		if ( empty( $sec ) ) {
-			$sec = base64_decode( $d1 );
-		}
-
-		if ( empty( $key ) ) {
-			$key = base64_decode( $d2 );
-		}
-
-		$root = 'sandbox';
-		if ( 'dropbox:' == substr( $sec, 0, 8 ) ) {
-			$sec  = substr( $sec, 8 );
-			$root = 'dropbox';
-		}
+		$root = ( ! empty( $opts['appkey'] ) && 'dropbox:' === substr( $opts['appkey'], 0, 8 ) ) ? 'dropbox' : 'sandbox';
 
 		try {
-			$oauth = new Dropbox_Curl( $sec, $oauth2_id, $key, $dropbox_storage, $callback, $callbackhome, $deauthenticate, $instance_id );
+			$oauth = new Dropbox_Curl( $this->app_key( $opts ), empty( $opts['secret'] ) ? '' : $opts['secret'], $token_storage, $deauthenticate );
 		} catch ( Exception $e ) {
 			$this->log( 'Curl error: ' . $e->getMessage() );
 			/* translators: 1: Service name, 2: Error message with exception details */

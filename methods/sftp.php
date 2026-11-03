@@ -276,7 +276,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 	}
 
 	public function get_pre_configuration_template() {
-		echo '<tr class="{{get_template_css_classes false}}"><td colspan="2"><h3>{{method_display_name}}</h3></td></tr>';
+		// The instance tab already shows the method name.
 	}
 
 	public function get_configuration_template() {

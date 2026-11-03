@@ -1,6 +1,6 @@
 # Cloud storage providers
 
-All five providers below are built in. Select the destination in **Settings**, enter its credentials, save the connection and use **Test Settings**. A connection test lists the destination, uploads a random temporary file, verifies its downloaded contents and deletes it. Credentials use the existing authenticated credential-encryption and recovery-key system.
+The providers below are built in. Select the destination in **Settings**, enter its credentials, save the connection and use **Test Settings**. A connection test lists the destination, uploads a random temporary file, verifies its downloaded contents and deletes it. Credentials use the existing authenticated credential-encryption and recovery-key system.
 
 Cloud connections require HTTPS. They verify server certificates by default and honor the SSL verification and CA settings under **Expert settings**. Disabling SSL stops the connection. Redirects are followed only where the provider explicitly obtains and validates a content endpoint; credentials are not forwarded to unrelated content hosts.
 
@@ -35,6 +35,26 @@ Alternatively supply your own OAuth **client ID**, **client secret** and **refre
 The provider uses the [Cloud Storage JSON API](https://docs.cloud.google.com/storage/docs/json_api) and [resumable upload protocol](https://docs.cloud.google.com/storage/docs/performing-resumable-uploads). Service-account assertions use RS256 through the bundled phpseclib library. Bucket creation is not provided. Service-side versioning, soft-delete and retention policies can retain historical copies after deletion.
 
 Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter GoogleCloudTest` for OAuth refresh/retry, independently verified service-account signatures, pagination, upload fragments and atomic downloads.
+
+## Dropbox
+
+Dropbox connections use OAuth with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) and a pasted code, so neither a redirect URI nor an app secret is involved, and no service other than Dropbox takes part. Save the destination, follow its authorization link and approve access on the Dropbox page that opens in a new tab. Dropbox then displays a code: paste it into the field below the link and select **Connect** within ten minutes. The site exchanges the code directly with Dropbox for a refresh token issued to this site, and stores it encrypted (see [Dropbox token encryption](dropbox-token-encryption.md)). Access tokens are short-lived and renewed with that refresh token. An existing connection keeps working until a new code is accepted. From WP-CLI use `remote authorize dropbox` (see [WP-CLI](wp-cli.md)).
+
+The connection uses the BackupPlus Dropbox app when this build includes one; `define( 'BACKUPPLUS_DROPBOX_CLIENT_ID', '...' );` in `wp-config.php` replaces it for every connection. Otherwise, or to use your own, create a **Scoped access** app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) with **App folder** access (or **Full Dropbox**), enable the `account_info.read`, `files.content.write`, `files.content.read` and `files.metadata.read` permissions, and enter its **App key** in the destination. No redirect URI or app secret is needed. Changing the app key removes the saved connection.
+
+Connections made through the shared UpdraftPlus app and its authentication relay are not used any more: reconnect each such destination. A different app has a different app folder, so backups the old connection stored stay where they are; move them into the new folder in Dropbox to keep them in the backups list.
+
+## Google Drive
+
+Google Drive needs your own Google OAuth client; BackupPlus does not provide a shared one. In the [Google Cloud console](https://console.cloud.google.com/) create or choose a project, enable the **Google Drive API**, and configure the OAuth consent screen (Google Auth Platform) for **External** users. Add the site's domain as an authorized domain. Set the publishing status to **In production**: refresh tokens issued while it is **Testing** expire after seven days. The connection requests only the `drive.file` and `userinfo.profile` scopes, which Google does not classify as sensitive. Create an OAuth client of type **Web application** with this redirect URI, replacing the site and WordPress administration path:
+
+```text
+https://YOUR-SITE/wp-admin/options-general.php?action=backupplusmethod-googledrive-auth
+```
+
+On a network the address is under `wp-admin/network/settings.php` instead. Enter the client ID and secret, save the destination, then select **Sign in with Google**. One project can serve several sites; Google allows a limited number of authorized domains per project. With `drive.file` the connection sees only files it created, so backups uploaded by another client or by hand are not listed.
+
+Connections made through the shared UpdraftPlus client cannot transfer files: a dashboard notice lists them until they are signed in again with your own client.
 
 ## Microsoft OneDrive
 

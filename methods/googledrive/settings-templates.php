@@ -24,12 +24,12 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 			'input_secret_label'                     => __( 'Google Drive', 'backupplus' ) . ' ' . __( 'Client Secret', 'backupplus' ),
 			'input_secret_type'                      => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
 			'input_folder_label'                     => __( 'Google Drive', 'backupplus' ) . ' ' . __( 'Folder', 'backupplus' ),
-			'clientid_and_secret_instruction_label1' => __( 'Create a Google OAuth client and enable the Google Drive API. The steps below are for experienced users.', 'backupplus' ),
+			'clientid_and_secret_instruction_label1' => __( 'Google Drive needs your own Google OAuth client. BackupPlus does not provide a shared Google app.', 'backupplus' ),
 			'clientid_and_secret_instruction_label2' => __( 'Follow this link to your Google API Console, and there activate the Drive API and create a Client ID in the API Access section.', 'backupplus' ),
-			'clientid_and_secret_instruction_label3' => __( "Select 'Web Application' as the application type.", 'backupplus' ),
+			'clientid_and_secret_instruction_label3' => __( "Select 'Web Application' as the application type. Set the OAuth consent screen to In production: Google stops refresh tokens of apps in Testing after 7 days.", 'backupplus' ),
 			'clientid_and_secret_instruction_label4' => __( 'You must add the following as the authorised redirect URI (under "More Options") when asked', 'backupplus' ),
 			'clientid_and_secret_instruction_label5' => BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth',
-			'clientid_and_secret_instruction_label6' => __( 'N.B. If you install BackupPlus on several WordPress sites, then you cannot re-use your project; you must create a new one from your Google API console for each site.', 'backupplus' ),
+			'clientid_and_secret_instruction_label6' => __( 'Google requires an HTTPS redirect URI. One client can list the redirect URIs of sites on up to 10 domains.', 'backupplus' ),
 			'id_number_instruction_label'            => wp_kses( __( '<strong>This is NOT a folder name</strong>.', 'backupplus' ) . ' ' . __( 'It is an ID number internal to Google Drive', 'backupplus' ), $this->allowed_html_for_content_sanitisation() ),
 			'custom_folder_name_label'               => __( 'BackupPlus uses the configured Google Drive folder for backups.', 'backupplus' ),
 			'privacy_policy_label'                   => esc_html__( 'BackupPlus transfers backup archives to the Google Drive account you authorize.', 'backupplus' ),
@@ -42,7 +42,6 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 			'deauthentication_nonce'                 => wp_create_nonce( $this->get_id() . '_deauth_nonce' ),
 			/* translators: %s: Storage provider name */
 			'deauthentication_link_text'             => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
-			'deauthorise_use_master_label'           => __( 'To de-authorize BackupPlus (all sites) from accessing your Google Drive, follow this link to your Google account settings.', 'backupplus' ),
 			'account_name_label'                     => __( "Account holder's name", 'backupplus' ),
 			'input_folder_placeholder'               => __( 'Enter your folder name', 'backupplus' ),
 			'input_folder_title'                     => __( 'The folder in your Google Drive where the backups will be stored.', 'backupplus' ),
@@ -76,18 +75,15 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 			<tr class="{{get_template_css_classes false}} {{method_id}}_pre_config_container">
 				<td colspan="2">
 					<img src="{{storage_image_url}}" alt="{{storage_image_title}}">
-					{{#unless use_master}}
 					<br>
 					{{#if ip_address}}
 						{{!-- This is advisory - so the fact it doesn't match IPv6 addresses isn't important --}}
 						<p><strong>{{{unallowed_direct_ip_address}}}</strong></p>
 					{{else}}
-						{{!-- If we are not using the master app then show them the instructions for Client ID and Secret --}}
 						<p><strong>{{clientid_and_secret_instruction_label1}}</strong></p>
 						<p><a href="https://console.developers.google.com" target="_blank">{{clientid_and_secret_instruction_label2}}</a> {{clientid_and_secret_instruction_label3}}</p>
 						<p>{{clientid_and_secret_instruction_label4}}: <kbd>{{clientid_and_secret_instruction_label5}}</kbd> {{clientid_and_secret_instruction_label6}}</p>
 					{{/if}}
-					{{/unless}}
 					<p>
 						{{{privacy_policy_label}}}
 					</p>
@@ -104,16 +100,14 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 	public function get_configuration_template() {
 		ob_start();
 		?>
-			{{#unless use_master}}
-				<tr class="{{get_template_css_classes true}}">
-					<th>{{input_clientid_label}}:</th>
-					<td><input type="text" autocomplete="off" class="backupplus_input--wide" id="{{get_template_input_attribute_value "id" "clientid"}}" name="{{get_template_input_attribute_value "name" "clientid"}}" value="{{clientid}}" /><br><em>{{input_clientid_title}}</em></td>
-				</tr>
-				<tr class="{{get_template_css_classes true}}">
-					<th>{{input_secret_label}}:</th>
-					<td><input type="{{input_secret_type}}" class="backupplus_input--wide" id="{{get_template_input_attribute_value "id" "secret"}}" name="{{get_template_input_attribute_value "name" "secret"}}" value="{{secret}}" /></td>
-				</tr>
-			{{/unless}}
+			<tr class="{{get_template_css_classes true}}">
+				<th>{{input_clientid_label}}:</th>
+				<td><input type="text" autocomplete="off" class="backupplus_input--wide" id="{{get_template_input_attribute_value "id" "clientid"}}" name="{{get_template_input_attribute_value "name" "clientid"}}" value="{{clientid}}" /><br><em>{{input_clientid_title}}</em></td>
+			</tr>
+			<tr class="{{get_template_css_classes true}}">
+				<th>{{input_secret_label}}:</th>
+				<td><input type="{{input_secret_type}}" class="backupplus_input--wide" id="{{get_template_input_attribute_value "id" "secret"}}" name="{{get_template_input_attribute_value "name" "secret"}}" value="{{secret}}" /></td>
+			</tr>
 			{{#if is_google_enhanced_addon}}
 				{{#> gdrive_additional_configuration_top}} {{/gdrive_additional_configuration_top}}
 			{{else}}
@@ -149,9 +143,6 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 							{{{already_authenticated_label}}}
 							<a class="backupplus_deauthlink" href="{{admin_page_url}}?action=backupplusmethod-{{method_id}}-auth&page=backupplus&backupplus_{{method_id}}auth=deauth&nonce={{deauthentication_nonce}}&backupplus_instance={{instance_id}}" data-instance_id="{{instance_id}}" data-remote_method="{{method_id}}">{{deauthentication_link_text}}</a>
 						</p>
-						{{#if use_master}}
-							<p><a target="_blank" href="https://myaccount.google.com/permissions">{{deauthorise_use_master_label}}</a></p>
-						{{/if}}
 					{{/if}}
 					{{#if is_ownername_display}}
 						{{#if owneremail}}
@@ -189,15 +180,14 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 	 * @return Array - Modified handerbar template options
 	 */
 	public function transform_options_for_template( $opts ) {
-		$opts['use_master']               = $this->use_master( $opts );
 		$opts['is_google_enhanced_addon'] = false;
 		if ( isset( $opts['parentid'] ) ) {
 			$opts['parentid_str']             = ( is_array( $opts['parentid'] ) ) ? $opts['parentid']['id'] : $opts['parentid'];
 			$opts['showparent']               = ( is_array( $opts['parentid'] ) && ! empty( $opts['parentid']['name'] ) ) ? $opts['parentid']['name'] : $opts['parentid_str'];
 			$opts['is_id_number_instruction'] = ( ! empty( $opts['parentid'] ) && ( ! is_array( $opts['parentid'] ) || empty( $opts['parentid']['name'] ) ) );
 		}
-		$opts['is_authenticate_with_google'] = ( ! empty( $opts['token'] ) || ! empty( $opts['user_id'] ) );
-		$opts['is_ownername_display']        = ( ( ! empty( $opts['token'] ) || ! empty( $opts['user_id'] ) ) && ! empty( $opts['ownername'] ) );
+		$opts['is_authenticate_with_google'] = ! empty( $opts['token'] );
+		$opts['is_ownername_display']        = ! empty( $opts['token'] ) && ! empty( $opts['ownername'] );
 		$opts                                = apply_filters( 'backupplus_options_googledrive_options', $opts );
 		return $opts;
 	}

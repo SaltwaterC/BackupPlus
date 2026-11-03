@@ -16,36 +16,34 @@ trait BackupPlus_Dropbox_Settings_Templates {
 	 */
 	public function get_template_properties() {
 		global $backupplus, $backupplus_admin;
-		$partial_templates = $this->get_partial_templates();
-		$properties        = array(
-			'storage_image_url'                       => BACKUPPLUS_URL . '/images/dropbox-logo.png',
+		$properties = array(
+			'storage_image_url'              => BACKUPPLUS_URL . '/images/dropbox-logo.png',
 			/* translators: %s: Service name */
-			'storage_image_description'               => sprintf( __( '%s logo', 'backupplus' ), 'Dropbox' ),
-			'curl_existence_label'                    => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], true, $this->get_id() . '', false ), $this->allowed_html_for_content_sanitisation() ),
-			'app_authorisation_policy_label'          => esc_html__( 'BackupPlus uses Dropbox authorization to store backups in the Dropbox account you select.', 'backupplus' ),
-			'sub_folders_instruction_label1'          => __( 'Need to use sub-folders?', 'backupplus' ),
+			'storage_image_description'      => sprintf( __( '%s logo', 'backupplus' ), 'Dropbox' ),
+			'curl_existence_label'           => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], true, $this->get_id() . '', false ), $this->allowed_html_for_content_sanitisation() ),
+			'app_authorisation_policy_label' => esc_html__( 'BackupPlus uses Dropbox authorization to store backups in the Dropbox account you select.', 'backupplus' ),
+			'sub_folders_instruction_label1' => __( 'Need to use sub-folders?', 'backupplus' ),
 			/* translators: %s: Backup folder path */
-			'sub_folders_instruction_label2'          => sprintf( __( 'Backups are saved in %s.', 'backupplus' ), 'apps/BackupPlus' ),
+			'sub_folders_instruction_label2' => sprintf( __( 'Backups are saved in %s.', 'backupplus' ), 'Apps/' . __( '(app name)', 'backupplus' ) ),
 			/* translators: 1: Opening link tag, 2: Closing link tag */
-			'sub_folders_instruction_label3'          => __( 'BackupPlus uses the configured Dropbox app folder for backups.', 'backupplus' ),
-			'input_authenticate_with_label'           => sprintf(
+			'sub_folders_instruction_label3' => __( 'BackupPlus uses the configured Dropbox app folder for backups.', 'backupplus' ),
+			'input_authenticate_with_label'  => sprintf(
 				/* translators: %s: Service name */
 				__( 'Authenticate with %s', 'backupplus' ),
 				__( 'Dropbox', 'backupplus' )
 			),
-			'already_authenticated_label'             => __( '(You are already authenticated).', 'backupplus' ),
+			'already_authenticated_label'    => __( '(You are already authenticated).', 'backupplus' ),
 			/* translators: %s: Service name */
-			'authentication_link_text'                => wp_kses( sprintf( __( "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), then come back here and follow this link to complete authentication with %s.", 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ), $this->allowed_html_for_content_sanitisation() ),
+			'authentication_link_text'       => wp_kses( sprintf( __( "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), follow this link to authorize %s in a new tab.", 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ), $this->allowed_html_for_content_sanitisation() ),
+			'authorisation_code_label'       => __( 'Then paste the code Dropbox displays:', 'backupplus' ),
+			'complete_authorisation_label'   => __( 'Connect', 'backupplus' ),
 			/* translators: %s: Service name */
-			'deauthentication_link_text'              => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
-			'authentication_label'                    => __( 'Ensure you are logged into the correct account before continuing.', 'backupplus' ),
-			'authorised_redirect_uri_label'           => __( 'You must add the following as the authorised redirect URI in your Dropbox console (under "API Settings") when asked', 'backupplus' ),
-			'input_app_key_label'                     => __( 'Your Dropbox App Key', 'backupplus' ),
-			'input_app_secret_label'                  => __( 'Your Dropbox App Secret', 'backupplus' ),
-			'partial_templates_contain_input_element' => isset( $partial_templates['dropbox_additional_configuration_top'] ) && preg_match( '/<input(?:>|[^>]+>)/i', $partial_templates['dropbox_additional_configuration_top'] ),
-			'deauthentication_nonce'                  => wp_create_nonce( $this->get_id() . '_deauth_nonce' ),
-			'input_folder_label'                      => __( 'Store at', 'backupplus' ),
-			'input_folder_prefix'                     => 'apps/UpdraftPlus.Com/',
+			'deauthentication_link_text'     => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
+			'authentication_label'           => __( 'Ensure you are logged into the correct account before continuing.', 'backupplus' ),
+			'input_app_key_label'            => __( 'Dropbox app key', 'backupplus' ),
+			'app_key_instruction_label'      => wp_kses( ( '' === BackupPlus_Dropbox_PKCE::default_app_key() ? __( 'Required.', 'backupplus' ) : __( 'Optional: leave empty to use the BackupPlus app.', 'backupplus' ) ) . ' ' . __( 'Create a Dropbox app with scoped access to an app folder at <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener noreferrer">dropbox.com/developers/apps</a>, give it the files.content.write, files.content.read, files.metadata.read and account_info.read permissions, and enter its app key. No app secret or redirect URI is needed.', 'backupplus' ), $this->allowed_html_for_content_sanitisation() ),
+			'deauthentication_nonce'         => wp_create_nonce( $this->get_id() . '_deauth_nonce' ),
+			'input_folder_label'             => __( 'Store at', 'backupplus' ),
 		);
 		return wp_parse_args( apply_filters( 'backupplus_' . $this->get_id() . '_template_properties', array() ), wp_parse_args( $properties, $this->get_persistent_variables_and_methods() ) );
 	}
@@ -100,6 +98,10 @@ trait BackupPlus_Dropbox_Settings_Templates {
 			{{#> dropbox_additional_configuration_top}}
 			{{/dropbox_additional_configuration_top}}
 			<tr class="{{get_template_css_classes true}}">
+				<th>{{input_app_key_label}}:</th>
+				<td><input type="text" autocomplete="off" class="backupplus_input--wide" id="{{get_template_input_attribute_value "id" "appkey"}}" name="{{get_template_input_attribute_value "name" "appkey"}}" value="{{appkey}}" /><br><em>{{{app_key_instruction_label}}}</em></td>
+			</tr>
+			<tr class="{{get_template_css_classes true}}">
 				<th>{{input_authenticate_with_label}}:</th>
 				<td>
 					{{#if is_authenticated}}
@@ -113,32 +115,16 @@ trait BackupPlus_Dropbox_Settings_Templates {
 						{{ownername_sentence}}
 					{{/if}}
 					<p>
-					{{authentication_label}} <a class="backupplus_authlink" href="{{admin_page_url}}?&action=backupplusmethod-{{method_id}}-auth&page=backupplus&backupplus_{{method_id}}auth=doit&nonce={{storage_auth_nonce}}&backupplus_instance={{instance_id}}" data-instance_id="{{instance_id}}" data-remote_method="{{method_id}}">{{{authentication_link_text}}}</a>
+					{{authentication_label}} <a class="backupplus_authlink" target="_blank" rel="noopener noreferrer" href="{{admin_page_url}}?&action=backupplusmethod-{{method_id}}-auth&page=backupplus&backupplus_{{method_id}}auth=doit&nonce={{storage_auth_nonce}}&backupplus_instance={{instance_id}}" data-instance_id="{{instance_id}}" data-remote_method="{{method_id}}">{{{authentication_link_text}}}</a>
+					</p>
+					<p>
+						<label for="backupplus_authorisation_code_{{instance_id}}">{{authorisation_code_label}}</label>
+						<input type="text" autocomplete="off" class="udignorechange" id="backupplus_authorisation_code_{{instance_id}}">
+						<button type="button" class="button backupplus_complete_authorisation" data-method="{{method_id}}" data-instance_id="{{instance_id}}">{{complete_authorisation_label}}</button>
+						<span class="backupplus_authorisation_result" id="backupplus_authorisation_result_{{instance_id}}"></span>
 					</p>
 				</td>
 			</tr>
-			{{!-- Legacy: only show this next setting to old users who had a setting stored --}}
-			{{#if old_user_settings}}
-				<tr class="{{get_template_css_classes true}}">
-					<th></th>
-					<td>
-						<p>{{authorised_redirect_uri_label}}: <kbd>{{admin_page_url}}?page=backupplus&action=backupplusmethod-dropbox-auth</kbd></p>
-					</td>
-				</tr>
-				<tr class="{{get_template_css_classes true}}">
-					<th>{{input_app_key_label}}:</th>
-					<td><input type="text" autocomplete="off" style="width:332px" id="{{get_template_input_attribute_value "id" "appkey"}}" name="{{get_template_input_attribute_value "name" "appkey"}}" value="{{appkey}}" /></td>
-				</tr>
-				<tr class="{{get_template_css_classes true}}">
-					<th>{{input_app_secret_label}}:</th>
-					<td><input type="text" style="width:332px" id="{{get_template_input_attribute_value "id" "secret"}}" name="{{get_template_input_attribute_value "name" "secret"}}" value="{{secret}}" /></td>
-				</tr>
-			{{else}}
-				{{#unless partial_templates_contain_input_element}}
-				{{!-- We need to make sure that it is not the case that the module has no settings whatsoever - this can result in the module being effectively invisible. --}}
-				<input type="hidden" id="{{get_template_input_attribute_value "id" "dummy-nosave"}}" name="{{get_template_input_attribute_value "name" "dummy-nosave"}}" value="0">
-				{{/unless}}
-			{{/if}}
 		<?php
 		return ob_get_clean();
 	}
@@ -183,14 +169,10 @@ trait BackupPlus_Dropbox_Settings_Templates {
 				/* translators: %s: Account holder's name with email */
 				$opts['ownername_sentence'] = sprintf( __( "Account holder's name: %s.", 'backupplus' ), $ownername_with_email ) . ' ';
 			}
-			$opts['is_authenticated'] = true;
 		}
-		$opts['old_user_settings'] = ( ! empty( $opts['appkey'] ) || ( defined( 'BACKUPPLUS_CUSTOM_DROPBOX_APP' ) && BACKUPPLUS_CUSTOM_DROPBOX_APP ) );
-		if ( $opts['old_user_settings'] ) {
-			$opts['appkey'] = empty( $opts['appkey'] ) ? '' : $opts['appkey'];
-			$opts['secret'] = empty( $opts['secret'] ) ? '' : $opts['secret'];
-		}
-		$opts = apply_filters( 'backupplus_options_dropbox_options', $opts );
+		$opts['is_authenticated'] = ! $this->authentication_required( $opts );
+		$opts['appkey']           = empty( $opts['appkey'] ) ? '' : $opts['appkey'];
+		$opts                     = apply_filters( 'backupplus_options_dropbox_options', $opts );
 		return $opts;
 	}
 
@@ -205,7 +187,9 @@ trait BackupPlus_Dropbox_Settings_Templates {
 			'CSRF',
 			'code',
 			'ownername',
+			'secret',
 			'tk_access_token',
+			'tk_pkce',
 		);
 	}
 

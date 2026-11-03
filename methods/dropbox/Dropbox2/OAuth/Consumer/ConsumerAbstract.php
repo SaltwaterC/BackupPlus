@@ -13,20 +13,8 @@ abstract class Dropbox_ConsumerAbstract
     // Dropbox web endpoint. v2 API has just dropped the 1/ suffix to the below.
     const WEB_URL = 'https://www.dropbox.com/';
     
-    // OAuth flow methods
-    const AUTHORISE_METHOD = 'oauth2/authorize';
     // Beware - the documentation in one place says oauth2/token/revoke, but that appears to be wrong
     const DEAUTHORISE_METHOD = '2/auth/token/revoke';
-    const ACCESS_TOKEN_METHOD = 'oauth2/token';
-    // The next endpoint only exists with APIv1
-    const OAUTH_UPGRADE = 'oauth2/token_from_oauth1';
-
-    private $scopes = array(
-        'account_info.read',
-        'files.content.write',
-        'files.content.read',
-        'files.metadata.read',
-    );
     
     /**
      * Signature method, either PLAINTEXT or HMAC-SHA1
@@ -47,152 +35,23 @@ abstract class Dropbox_ConsumerAbstract
     protected $inFile = null;
     
     /**
-     * Authenticate using 3-legged OAuth flow, firstly
-     * checking we don't already have tokens to use
+     * Check the stored token, renewing its access token when it has expired. Authorization itself happens in
+     * BackupPlus_Dropbox_PKCE, from the settings page.
      * @return void
      */
     protected function authenticate()
     {
-        global $backupplus;
-        
         $access_token = $this->storage->get('access_token');
-        //Check if the new token type is set if not they need to be upgraded to OAuth2
-        if (!empty($access_token) && isset($access_token->oauth_token) && !isset($access_token->token_type)) {
-            $backupplus->log('OAuth v1 token found: upgrading to v2');
-            $this->upgradeOAuth();
-            $backupplus->log('OAuth token upgrade successful');
+        // OAuth 1 tokens cannot be renewed: their upgrade endpoint is gone along with the API v1
+        if (empty($access_token) || !isset($access_token->oauth_token) || !isset($access_token->token_type)) {
+            /* translators: %s: Authentication service name (e.g., Dropbox) */
+            throw new Dropbox_Exception(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'backupplus'), 'Dropbox')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
         }
+        if (isset($access_token->refresh_token) && isset($access_token->expires_in) && $access_token->expires_in < time()) {
+            $this->refreshAccessToken();
+        }
+    }
 
-        if (!empty($access_token) && isset($access_token->refresh_token) && isset($access_token->expires_in)) {
-            if ($access_token->expires_in < time()) $this->refreshAccessToken();
-        }
-        
-        if (empty($access_token) || !isset($access_token->oauth_token)) {
-            try {
-                $this->getAccessToken();
-            } catch(Exception $e) {
-                $excep_class = get_class($e);
-                // 04-Sep-2015 - Dropbox started throwing a 400, which caused a Dropbox_BadRequestException which previously wasn't being caught
-                if ('Dropbox_BadRequestException' == $excep_class || 'Dropbox_Exception' == $excep_class) {
-                    global $backupplus;
-                    $backupplus->log($e->getMessage().' - need to reauthenticate this site with Dropbox (if this fails, then you can also try wiping your settings from the Expert Settings section)');
-                    //$this->getRequestToken();
-                    $this->authorise();
-                } else {
-                    throw $e;
-                }
-            }
-        }
-    }
-    
-    /**
-    * Upgrade the user's OAuth1 token to a OAuth2 token
-    * @return void
-    */
-    private function upgradeOAuth()
-    {
-		// N.B. This call only exists under API v1 - i.e. there is no APIv2 equivalent. Hence the APIv1 endpoint (API_URL) is used, and not the v2 (API_URL_V2)
-	    $url = 'https://api.dropbox.com/1/' . self::OAUTH_UPGRADE;
-	    $response = $this->fetch('POST', $url, '');
-        $token = new stdClass();
-        /*
-	        oauth token secret and oauth token were needed by oauth1 
-	        these are replaced in oauth2 with an access token
-	        currently they are still there just in case a method somewhere is expecting them to both be set
-	        as far as I can tell only the oauth token is used
-	        after more testing token secret can be removed.
-        */
-        
-        $token->oauth_token_secret = $response['body']->access_token;
-        $token->oauth_token = $response['body']->access_token;
-        $token->token_type = $response['body']->token_type;
-        $this->storage->set($token, 'access_token'); 
-        $this->storage->set('true','upgraded');
-        $this->storage->do_unset('request_token');
-    }
-    
-    /**
-     * Obtain user authorisation
-     * The user will be redirected to Dropbox' web endpoint
-     * @link http://tools.ietf.org/html/rfc5849#section-2.2
-     * @return void
-     */
-    private function authorise()
-    {
-        // Only redirect if not using CLI
-        if (PHP_SAPI !== 'cli' && (!defined('DOING_CRON') || !DOING_CRON) && (!defined('DOING_AJAX') || !DOING_AJAX)) {
-            $url = $this->getAuthoriseUrl();
-            if (!headers_sent()) {
-                header('Location: ' . $url);
-                exit;
-            } else {
-                /* translators: %s: Authentication service name (e.g., Dropbox) */
-                throw new Dropbox_Exception(sprintf(__('The %s authentication could not go ahead, because something else on your site is breaking it.', 'backupplus'), 'Dropbox').' '.__('Try disabling your other plugins and switching to a default theme.', 'backupplus').' ('.__('Specifically, you are looking for the component that sends output (most likely PHP warnings/errors) before the page begins.', 'backupplus').' '.__('Turning off any debugging settings may also help.', 'backupplus').')'); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
-            }
-            return false;
-        }
-        global $backupplus;
-        $backupplus->log('Dropbox reauthorisation needed; but we are running from cron, AJAX or the CLI, so this is not possible');
-        $this->storage->do_unset('access_token');
-        /* translators: %s: Authentication service name (e.g., Dropbox) */
-        throw new Dropbox_Exception(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'backupplus'), 'Dropbox')); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should be happening when the exception is printed
-        #$backupplus->log(sprintf(__('You need to re-authenticate with %s, as your existing credentials are not working.', 'backupplus'), 'Dropbox'), 'error');
-        return false;
-    }
-    
-    /**
-    * Build the user authorisation URL
-    * @return string
-    */
-    public function getAuthoriseUrl()
-    {
-	    /*
-		    Generate a random key to be passed to Dropbox and stored in session to be checked to prevent CSRF
-		    Uses the bundled phpseclib 3 cryptographic random source.
-		*/
-	    
-		global $backupplus;
-        $backupplus->ensure_phpseclib();
-
-		$CSRF = base64_encode(\phpseclib3\Crypt\Random::string(16));
-        $this->storage->set($CSRF,'CSRF');
-        // Prepare request parameters
-        /*
-            For OAuth v2 Dropbox needs to use a authorisation url that matches one that is set inside the
-            Dropbox developer console. In order to check this it needs the client ID for the OAuth v2 app
-            This will use the default one unless the user is using their own Dropbox App
-            
-            For users that use their own Dropbox App there is also no need to provide the callbackhome as
-            part of the CSRF as there is no need to go to auth.backupplusplus.com also the redirect uri can
-            then be set to the home as default
-            
-            Check if the key has dropbox: if so then remove it to stop the request from being invalid
-        */
-        $appkey = $this->storage->get('appkey');
-        
-        if (!empty($appkey) && 'dropbox:' == substr($appkey, 0, 8)) {
-			$key = substr($appkey, 8);
-        } else if (!empty($appkey)) {
-            $key = $appkey;
-        }
-
-        if ('' != $this->instance_id) $this->instance_id = ':'.$this->instance_id;
-        
-        $params = array(
-            'client_id' => empty($key) ? $this->oauth2_id : $key,
-            'response_type' => 'code',
-            'redirect_uri' => empty($key) ? $this->callback : $this->callbackhome,
-            'state' => empty($key) ? "POST:".$CSRF.$this->instance_id.$this->callbackhome : $CSRF.$this->instance_id,
-            'scope' => implode(' ', $this->scopes),
-            'token_access_type' => 'offline'
-        );
-    
-        // Build the URL and redirect the user
-        $query = '?' . http_build_query($params, '', '&');
-        $url = self::WEB_URL . self::AUTHORISE_METHOD . $query;
-        return $url;
-    }
-    
     protected function deauthenticate()
     {
 	    $url = BackupPlus_Dropbox_API::API_URL_V2 . self::DEAUTHORISE_METHOD;
@@ -201,68 +60,7 @@ abstract class Dropbox_ConsumerAbstract
     }
     
     /**
-     * Acquire an access token
-     * Tokens acquired at this point should be stored to
-     * prevent having to request new tokens for each API call
-     * @link http://tools.ietf.org/html/rfc5849#section-2.3
-     */
-    public function getAccessToken()
-    {
-    
-		// If this is non-empty, then we just received a code. It is stored in 'code' - our next job is to put it into the proper place.
-	    $code = $this->storage->get('code');
-        /*
-            Checks to see if the user is using their own Dropbox App if so then they need to get
-            a request token. If they are using our App then we just need to save these details
-        */
-        if (!empty($code)){	
-            $appkey = $this->storage->get('appkey');
-            if (!empty($appkey)){
-                // Get the signed request URL
-                $url = BackupPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
-                $params = array(
-                    'code' => $code,
-                    'grant_type' => 'authorization_code',
-                    'redirect_uri' => $this->callbackhome,
-                    'client_id' => $this->consumerKey,
-                    'client_secret' => $this->consumerSecret,
-                );
-                $response = $this->fetch('POST', $url, '' , $params);
-                
-                $code  = json_decode(json_encode($response['body']),true);
-            
-            } else {
-                $code = base64_decode($code);
-                $code = json_decode($code, true);
-            }
-            
-	        /*
-		        Again oauth token secret and oauth token were needed by oauth1 
-		        these are replaced in oauth2 with an access token
-		        currently they are still there just in case a method somewhere is expecting them to both be set
-		        as far as I can tell only the oauth token is used
-		        after more testing token secret can be removed.
-			*/
-            $token = new stdClass();
-            $token->oauth_token_secret = $code['access_token'];
-            $token->oauth_token = $code['access_token'];
-            $token->account_id = $code['account_id'];
-            $token->token_type = $code['token_type'];
-            $token->uid = $code['uid'];
-            $token->refresh_token = $code['refresh_token'];
-            $token->expires_in = time() + $code['expires_in'] - 30;
-            $this->storage->set($token, 'access_token');
-            $this->storage->do_unset('upgraded');
-            
-            //reset code
-            $this->storage->do_unset('code');
-	    } else {
-		    throw new Dropbox_BadRequestException("No Dropbox Code found, will try to get one now", 400);
-	    }
-    }
-
-    /**
-     * This function will make a request to the auth server sending the users refresh token to get a new access token
+     * Renew the access token with the stored refresh token, directly with Dropbox
      *
      * @return void
      */
@@ -270,50 +68,20 @@ abstract class Dropbox_ConsumerAbstract
         global $backupplus;
 
         $access_token = $this->storage->get('access_token');
-        
-        if ($this->callback == $this->callbackhome) {
-            $url = BackupPlus_Dropbox_API::API_URL_V2 . self::ACCESS_TOKEN_METHOD;
-
-            $params = array(
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $access_token->refresh_token,
-                'client_id' => $this->consumerKey,
-                'client_secret' => $this->consumerSecret,
-            );
-        } else {
-            $url = $this->callback;
-
-            $params = array(
-                'code' => 'ud_dropbox_code',
-                'refresh_token' => $access_token->refresh_token,
-                'headers' => apply_filters('backupplus_auth_headers', ''),
-            );
-        }
-
-        $response = $this->fetch('POST', $url, '' , $params);
-        
-        if ("200" != $response['code']) {
-            $backupplus->log('Failed to refresh access token error code: '.$response['code']);
+        if (empty($access_token->refresh_token)) {
+            $backupplus->log('Failed to refresh access token: no refresh token is stored');
             return;
         }
 
-        if (empty($response['body'])) {
-            $backupplus->log('Failed to refresh access token empty response body');
-            return;
-        }
+        // Tokens authorized with PKCE record their app key; earlier tokens of a custom app need its key and secret
+        $client_id = empty($access_token->client_id) ? $this->consumerKey : $access_token->client_id;
+        $secret = empty($access_token->client_id) ? (string) $this->consumerSecret : '';
 
-        // If the request comes from the auth server (master app refreshing a token) then we need to decode the response into an object before we can use it.
-        $body = is_object($response['body']) ? $response['body'] : json_decode(base64_decode($response['body']));
-
-        if (isset($body->access_token) && isset($body->expires_in)) {
-            $access_token->oauth_token_secret = $body->access_token;
-            $access_token->oauth_token = $body->access_token;
-            $access_token->expires_in = time() + $body->expires_in - 30;
-            $this->storage->set($access_token, 'access_token');
+        try {
+            $this->storage->set(BackupPlus_Dropbox_PKCE::refresh($access_token, $client_id, $secret), 'access_token');
             $backupplus->log('Successfully updated and refreshed the access token');
-        } else {
-            $backupplus->log('Failed to refresh access token missing token and expiry: '.json_encode($body));
-            return;
+        } catch (Dropbox_Exception $e) {
+            $backupplus->log('Failed to refresh access token: '.$e->getMessage());
         }
     }
     
@@ -400,25 +168,7 @@ abstract class Dropbox_ConsumerAbstract
                     'postfields' => $additional,
                     'headers' => $headers,
                 );
-            } elseif (isset($additional['code']) && isset($additional['refresh_token'])) {
-                $extra_headers = array();
-                if (isset($additional['headers']) && !empty($additional['headers'])) {
-                    foreach ($additional['headers'] as $key => $header) {
-                        $extra_headers[] = $key.': '.$header;
-                    }
-                    unset($additional['headers']);
-                }
-                $headers = array();
-                $headers = array_merge($headers, $extra_headers);
-
-                return array(
-                    'url' => $url . $call,
-                    'postfields' => $additional,
-                    'headers' => $headers,
-                );
             }
-            // if grant_type is set and it's value is refresh_token, then this is a custom app trying to get a new access token using their refresh token. So we don't want to send an access token and break the request.
-            if (isset($additional['grant_type']) && 'refresh_token' == $additional['grant_type']) unset($params['access_token']);
         } else {
 	        // Generate a random string for the request
 	        $nonce = md5(microtime(true) . uniqid('', true));

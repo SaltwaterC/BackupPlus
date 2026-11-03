@@ -499,7 +499,6 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		?>
 		<tr class="{{get_template_css_classes false}} ftp_pre_config_container">
 			<td colspan="2">
-				<h3>{{method_display_name}}</h3>
 				{{#each ftp_not_possible_warnings}}
 					<div class="error backupplusmethod ftp"><p>{{{this}}}</p></div>
 					<div class="notice error below-h2"><p>{{{this}}}</p></div>

@@ -135,11 +135,13 @@ wp backupplus remote list
 wp backupplus remote set s3generic settings.json --label="Offsite" --select
 wp backupplus remote test s3generic --instance=s-1a2b
 wp backupplus remote remove s3generic s-1a2b --yes
+wp backupplus remote authorize dropbox --instance=s-3c4d
+wp backupplus remote authorize dropbox - --instance=s-3c4d
 ```
 
 `remote list` shows saved destinations without credentials; `--all` includes unconfigured services. `remote set <service> <file|->` reads a JSON object of the provider's saved setting names (`accesskey`, `secretkey`, `path`, `endpoint`, `host`, `user`, `pass` and so on) from a file or stdin, so credentials never appear in arguments or the process list. Keys already saved for the instance are kept, `--instance` updates one instance and a new one is created without it, and `--select` adds the service to the destinations backups use. Credentials are encrypted at rest as when saved from the settings screen. `remote test` runs the same upload, download and delete check as the settings screen from the saved settings. `remote remove` deletes an instance's settings; backups already stored there are kept.
 
-OAuth services start in a browser. WP-CLI cannot start the flow: it sends the provider's address as a redirect header and the authorisation link carries a nonce of the logged-in administrator. On the settings screen follow the service's authorisation link, choose "Having problems authenticating?" at the end and give the displayed code to `remote authorize <service> <file|->` instead of pasting it into the page. Only Dropbox and Google Drive offer manual codes. `remote deauthorize <service>` removes an authorisation.
+Dropbox is authorised from WP-CLI with a pasted code. `remote authorize dropbox` prints a Dropbox address; open it in any browser, approve access, then pass the code Dropbox displays to `remote authorize dropbox <file|->` within ten minutes. `--instance` names the instance when there are several. The pending authorisation is stored encrypted with the instance, and an existing connection keeps working until a new code is accepted. Google Drive, OneDrive and pCloud redirect back to the site, so they are authorised from the settings screen. `remote deauthorize <service>` removes an authorisation.
 
 ## Settings
 

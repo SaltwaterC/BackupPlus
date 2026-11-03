@@ -98,79 +98,50 @@ trait BackupPlus_Commands_Remote_Storage {
 	}
 
 	/**
-	 * A handler method to call the relevant remote storage manual authentication methods and return the authentication result
+	 * Complete a paste-code authorization: the administrator copied the code the provider displayed into the settings page.
 	 *
-	 * @param array $data - an array of authentication data, normally includes the state and auth code
+	 * @param array $data - method, instance_id and code
 	 *
 	 * @return array - an array response to be sent back to the frontend
 	 */
 	public function manual_remote_storage_authentication( $data ) {
-		if ( false === ( $backupplus_admin = $this->_load_ud_admin() ) || false === ( $backupplus = $this->_load_ud() ) ) {
-			return new WP_Error( 'no_backupplus' );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is for future use.
+		$method      = isset( $data['method'] ) && is_string( $data['method'] ) ? $data['method'] : '';
+		$instance_id = isset( $data['instance_id'] ) && is_string( $data['instance_id'] ) ? $data['instance_id'] : '';
+		$code        = isset( $data['code'] ) && is_string( $data['code'] ) ? trim( $data['code'] ) : '';
+
+		$enabled_services = '' === $method ? array() : BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( array( $method ) );
+		if ( empty( $enabled_services[ $method ]['object'] ) || ! $enabled_services[ $method ]['object']->supports_feature( 'manual_authentication' ) ) {
+			return array(
+				'result' => 'error',
+				'data'   => __( 'This remote storage method does not take an authorization code.', 'backupplus' ),
+			);
 		}
-		$response = array(
-			'result' => 'success',
-		);
-
-		$method = $data['method'];
-
-		$enabled_services = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( array( $method ) );
-
-		if ( empty( $enabled_services[ $method ]['object'] ) || empty( $enabled_services[ $method ]['instance_settings'] ) || ! $enabled_services[ $method ]['object']->supports_feature( 'manual_authentication' ) ) {
-			$response['result'] = 'error';
-			$response['data']   = __( 'Manual authentication is not available for this remote storage method', 'backupplus' ) . '(' . $method . ')';
-			return $response;
+		if ( '' === $instance_id || ! isset( $enabled_services[ $method ]['instance_settings'][ $instance_id ] ) ) {
+			return array(
+				'result' => 'error',
+				'data'   => __( 'That remote storage connection no longer exists. Reload the settings page.', 'backupplus' ),
+			);
+		}
+		if ( '' === $code ) {
+			return array(
+				'result' => 'error',
+				'data'   => __( 'Paste the authorization code first.', 'backupplus' ),
+			);
 		}
 
 		$backup_obj = $enabled_services[ $method ]['object'];
-
-		$auth_data   = json_decode( base64_decode( $data['auth_data'] ), true );
-		$instance_id = '';
-
-		$state = isset( $auth_data['state'] ) ? urldecode( $auth_data['state'] ) : '';
-		$code  = isset( $auth_data['code'] ) ? urldecode( $auth_data['code'] ) : '';
-
-		if ( empty( $code ) && isset( $auth_data['access_token'] ) && isset( $auth_data['user_id'] ) ) {
-			// If there is no code, but the access_token and user_id is set then this is for Google Drive so create a code array using these values
-			$access_token = urldecode( $auth_data['access_token'] );
-			$user_id      = urldecode( $auth_data['user_id'] );
-			$code         = array(
-				'access_token' => $access_token,
-				'user_id'      => $user_id,
+		$backup_obj->set_options( $enabled_services[ $method ]['instance_settings'][ $instance_id ], false, $instance_id );
+		try {
+			$result = $backup_obj->complete_authentication( $code );
+		} catch ( Exception $e ) {
+			return array(
+				'result' => 'error',
+				'data'   => esc_html( $e->getMessage() ),
 			);
-		} elseif ( empty( $code ) && isset( $auth_data['token'] ) ) {
-			// If there is no code, but a token is set then this is for OneDrive so assign token to code
-			$encoded_token = stripslashes( $auth_data['token'] );
-			$token         = json_decode( $encoded_token );
-			$code          = $token;
 		}
-
-		if ( empty( $state ) || empty( $code ) ) {
-			$response['result'] = 'error';
-			$response['data']   = __( 'Missing authentication data:', 'backupplus' ) . " ({$state}) ({$code})";
-			return $response;
-		}
-
-		if ( false !== strpos( $state, ':' ) ) {
-			$parts       = explode( ':', $state );
-			$instance_id = $parts[1];
-		}
-
-		if ( empty( $instance_id ) ) {
-			$response['result'] = 'error';
-			$response['data']   = __( 'Missing instance id:', 'backupplus' ) . " ($state)";
-			return $response;
-		}
-
-		if ( isset( $enabled_services[ $method ]['instance_settings'][ $instance_id ] ) ) {
-			$opts = $enabled_services[ $method ]['instance_settings'][ $instance_id ];
-			$backup_obj->set_options( $opts, false, $instance_id );
-		}
-
-		$result = $backup_obj->complete_authentication( $state, $code, true );
-
-		$response['data'] = $result;
-
-		return $response;
+		return array(
+			'result' => 'success',
+			'data'   => $result,
+		);
 	}
 }

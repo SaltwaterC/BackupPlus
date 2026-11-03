@@ -35,10 +35,6 @@ class BackupPlus_BackupModule_googledrive extends BackupPlus_BackupModule {
 
 	private $ids_from_paths = array();
 
-	private $client_id;
-
-	private $callback_url;
-
 	private $multi_directories = array();
 
 	private $registered_prune = array();
@@ -73,21 +69,13 @@ class BackupPlus_BackupModule_googledrive extends BackupPlus_BackupModule {
 	);
 
 	/**
-	 * Constructor
-	 */
-	public function __construct() {
-		$this->client_id    = defined( 'BACKUPPLUS_GOOGLEDRIVE_CLIENT_ID' ) ? BACKUPPLUS_GOOGLEDRIVE_CLIENT_ID : '916618189494-u3ehb1fl7u3meb63nb2b4fqi0r9pcfe2.apps.googleusercontent.com';
-		$this->callback_url = defined( 'BACKUPPLUS_GOOGLEDRIVE_CALLBACK_URL' ) ? BACKUPPLUS_GOOGLEDRIVE_CALLBACK_URL : 'https://auth.backupplusplus.com/auth/googledrive';
-	}
-
-	/**
 	 * This method overrides the parent method and lists the supported features of this remote storage option.
 	 *
 	 * @return Array - an array of supported features (any features not mentioned are asuumed to not be supported)
 	 */
 	public function get_supported_features() {
 		// This options format is handled via only accessing options via $this->get_options()
-		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic', 'manual_authentication' );
+		return array( 'multi_options', 'config_templates', 'multi_storage', 'conditional_logic' );
 	}
 
 	/**
@@ -98,7 +86,7 @@ class BackupPlus_BackupModule_googledrive extends BackupPlus_BackupModule {
 	 * @return Boolean
 	 */
 	public function options_exist( $opts ) {
-		if ( is_array( $opts ) && ( ! empty( $opts['user_id'] ) || ! empty( $opts['token'] ) ) ) {
+		if ( is_array( $opts ) && ! empty( $opts['token'] ) ) {
 			return true;
 		}
 		return false;

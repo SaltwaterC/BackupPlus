@@ -17,101 +17,16 @@ trait BackupPlus_GoogleDrive_Client {
 
 		$opts = $this->get_options();
 
-		$use_master = $this->use_master( $opts );
-
 		$curl_exists = function_exists( 'curl_version' ) && function_exists( 'curl_exec' );
 
-		if ( ! $use_master ) {
-			if ( empty( $opts['token'] ) || empty( $opts['clientid'] ) || empty( $opts['secret'] ) ) {
-				$this->log( 'this account is not authorised' );
-				$this->log( __( 'Account is not authorized.', 'backupplus' ), 'error', 'googledrivenotauthed' );
-				return new WP_Error( 'not_authorized', __( 'Account is not authorized.', 'backupplus' ) . ' (Google Drive)' );
-			}
+		if ( empty( $opts['token'] ) || empty( $opts['clientid'] ) || empty( $opts['secret'] ) ) {
+			$this->log( 'this account is not authorised' );
+			$this->log( __( 'Account is not authorized.', 'backupplus' ), 'error', 'googledrivenotauthed' );
+			return new WP_Error( 'not_authorized', __( 'Account is not authorized.', 'backupplus' ) . ' (Google Drive)' );
+		}
 
-			if ( empty( $access_token ) ) {
-				$access_token = $this->access_token( $opts['token'], $opts['clientid'], $opts['secret'] );
-			}
-		} else {
-
-			if ( empty( $opts['user_id'] ) ) {
-				$this->log( 'this account is not authorised' );
-				$this->log( __( 'Account is not authorized.', 'backupplus' ), 'error', 'googledrivenotauthed' );
-				return new WP_Error( 'not_authorized', __( 'Account is not authorized.', 'backupplus' ) );
-			}
-
-			if ( ! isset( $opts['expires_in'] ) || $opts['expires_in'] < time() ) {
-
-				$user_id = empty( $opts['user_id'] ) ? '' : $opts['user_id'];
-
-				$args = array(
-					'code'    => 'ud_googledrive_code',
-					'user_id' => $user_id,
-				);
-
-				$result = wp_remote_post(
-					$this->callback_url,
-					array(
-						'timeout' => 60,
-						'headers' => apply_filters( 'backupplus_auth_headers', '' ),
-						'body'    => $args,
-					)
-				);
-
-				if ( is_wp_error( $result ) ) {
-
-					$body = array(
-						'result'            => 'error',
-						'error'             => $result->get_error_code(),
-						'error_description' => $result->get_error_message(),
-					);
-
-				} else {
-					$response_code = wp_remote_retrieve_response_code( $result );
-
-					if ( $response_code < 200 || $response_code >= 300 ) {
-						$body = array(
-							'result'            => 'error',
-							'error'             => $response_code,
-							'error_description' => sprintf(
-								/* translators: 1: Error message, 2: Callback URL */
-								__( '%1$s for %2$s', 'backupplus' ),
-								wp_remote_retrieve_response_message( $result ),
-								$this->callback_url
-							),
-						);
-					} else {
-						$body_json = wp_remote_retrieve_body( $result );
-						$body      = json_decode( $body_json, true );
-					}
-				}
-
-				if ( ! empty( $body['result'] ) && 'error' == $body['result'] ) {
-
-					$access_token = new WP_Error( $body['error'], empty( $body['error_description'] ) ? __( 'Have not yet obtained an access token from Google - you need to authorise or re-authorise your connection to Google Drive.', 'backupplus' ) : $body['error_description'] );
-
-				} else {
-
-					$result_body_json = base64_decode( $body[0] );
-					$result_body      = json_decode( $result_body_json );
-
-					if ( isset( $result_body->access_token ) ) {
-						$access_token = array(
-							'access_token'  => $result_body->access_token,
-							'created'       => time(),
-							'expires_in'    => $result_body->expires_in,
-							'refresh_token' => '',
-						);
-
-						$opts['tmp_access_token'] = $access_token;
-						$opts['expires_in']       = $access_token['created'] + $access_token['expires_in'] - 30;
-						$this->set_options( $opts, true );
-					} else {
-						$access_token = '';
-					}
-				}
-			} else {
-				$access_token = $opts['tmp_access_token'];
-			}
+		if ( empty( $access_token ) ) {
+			$access_token = $this->access_token( $opts['token'], $opts['clientid'], $opts['secret'] );
 		}
 
 		// Do we have an access token?
@@ -154,14 +69,6 @@ trait BackupPlus_GoogleDrive_Client {
 			$config->setClassConfig( 'UDP_Google_Http_Request', 'disable_gzip', true );
 		}
 
-		if ( ! $use_master ) {
-			$client_id     = $opts['clientid'];
-			$client_secret = $opts['secret'];
-		} else {
-			$client_id     = $this->client_id;
-			$client_secret = '';
-		}
-
 		$proxy  = new WP_HTTP_Proxy();
 		$client = new UDP_Google_Client( $config );
 
@@ -176,22 +83,18 @@ trait BackupPlus_GoogleDrive_Client {
 			}
 		}
 
-		$client->setClientId( $client_id );
-		$client->setClientSecret( $client_secret );
+		$client->setClientId( $opts['clientid'] );
+		$client->setClientSecret( $opts['secret'] );
 		// $client->setUseObjects(true);
 
-		if ( ! $use_master ) {
-			$client->setAccessToken(
-				json_encode(
-					array(
-						'access_token'  => $access_token,
-						'refresh_token' => $opts['token'],
-					)
+		$client->setAccessToken(
+			json_encode(
+				array(
+					'access_token'  => $access_token,
+					'refresh_token' => $opts['token'],
 				)
-			);
-		} else {
-			$client->setAccessToken( json_encode( $access_token ) );
-		}
+			)
+		);
 
 		$io      = $client->getIo();
 		$setopts = array();
@@ -317,17 +220,15 @@ trait BackupPlus_GoogleDrive_Client {
 		}
 
 		foreach ( $google['settings'] as $instance_id => $storage_options ) {
-			if ( empty( $opts['settings'][ $instance_id ]['user_id'] ) ) {
-				$old_client_id = ( empty( $opts['settings'][ $instance_id ]['clientid'] ) ) ? '' : $opts['settings'][ $instance_id ]['clientid'];
-				if ( ! empty( $opts['settings'][ $instance_id ]['token'] ) && $old_client_id != $storage_options['clientid'] ) {
-					backupplus_try_include_file( 'methods/googledrive.php', 'include_once' );
-					$backupplus->register_wp_http_option_hooks();
-					$googledrive = new BackupPlus_BackupModule_googledrive();
-					$googledrive->gdrive_auth_revoke( false );
-					$backupplus->register_wp_http_option_hooks( false );
-					$opts['settings'][ $instance_id ]['token'] = '';
-					unset( $opts['settings'][ $instance_id ]['ownername'] );
-				}
+			$old_client_id = ( empty( $opts['settings'][ $instance_id ]['clientid'] ) ) ? '' : $opts['settings'][ $instance_id ]['clientid'];
+			if ( ! empty( $opts['settings'][ $instance_id ]['token'] ) && $old_client_id != $storage_options['clientid'] ) {
+				backupplus_try_include_file( 'methods/googledrive.php', 'include_once' );
+				$backupplus->register_wp_http_option_hooks();
+				$googledrive = new BackupPlus_BackupModule_googledrive();
+				$googledrive->gdrive_auth_revoke( false );
+				$backupplus->register_wp_http_option_hooks( false );
+				$opts['settings'][ $instance_id ]['token'] = '';
+				unset( $opts['settings'][ $instance_id ]['ownername'] );
 			}
 
 			foreach ( $storage_options as $key => $value ) {
@@ -340,18 +241,5 @@ trait BackupPlus_GoogleDrive_Client {
 			}
 		}
 		return $opts;
-	}
-
-	/**
-	 * This function checks if the user has any options for Google Drive saved or if they have defined to use a custom app and if they have we will not use the master Google Drive app and allow them to enter their own client ID and secret
-	 *
-	 * @param  Array $opts - the Google Drive options array
-	 * @return Bool        - a bool value to indicate if we should use the master app or not
-	 */
-	protected function use_master( $opts ) {
-		if ( ( ! empty( $opts['clientid'] ) && ! empty( $opts['secret'] ) ) || ( defined( 'BACKUPPLUS_CUSTOM_GOOGLEDRIVE_APP' ) && BACKUPPLUS_CUSTOM_GOOGLEDRIVE_APP ) ) {
-			return false;
-		}
-		return true;
 	}
 }

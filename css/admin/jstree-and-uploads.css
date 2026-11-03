@@ -145,10 +145,6 @@ input[id^="backupplus_include_more_path_restore_"] {
 	color: #DE3C3C;
 }
 
-p[id^="backupplus_manual_authentication_error_"] {
-	color: #DE3C3C;
-}
-
 #backupplus-wrap .form-table th {
 	width: 230px;
 }

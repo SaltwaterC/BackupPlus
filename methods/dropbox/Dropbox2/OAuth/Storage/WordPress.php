@@ -35,6 +35,9 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 * @var Backup_module_object|null
 	 */
 	protected $backup_module_object = null;
+
+	/** Token types, all stored encrypted: the access token and the pending PKCE authorization ('request_token' is OAuth 1 only) */
+	const TYPES = array('access_token', 'request_token', 'pkce');
 	
 	/**
 	 * Check if an instance of the encrypter is passed, set the encryption object
@@ -62,25 +65,15 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 */
 	public function get($type)
 	{
-		if ($type != 'request_token' && $type != 'access_token' && $type != 'appkey' && $type != 'CSRF' && $type != 'code') {
-			throw new Dropbox_Exception("Expected a type of either 'request_token', 'access_token', 'CSRF' or 'code', got '$type'"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
-		} else {
-			if (false !== ($opts = $this->backup_module_object->get_options())) {
-				if ($type == 'request_token' || $type == 'access_token'){
-					if (!empty($opts[$this->option_name_prefix.$type])) {
-						$gettoken = $opts[$this->option_name_prefix.$type];
-						$token = $this->decrypt($gettoken);
-						if (false === $token) throw new Dropbox_Exception('Dropbox credentials could not be read. Restore your recovery key in BackupPlus Settings, or disconnect and reconnect Dropbox.');
-						return $token;
-					}
-				} else {
-					if (!empty($opts[$type])) {
-						return $opts[$type];
-					}
-				}
+		$this->check_type($type);
+		if (false !== ($opts = $this->backup_module_object->get_options())) {
+			if (!empty($opts[$this->option_name_prefix.$type])) {
+				$token = $this->decrypt($opts[$this->option_name_prefix.$type]);
+				if (false === $token) throw new Dropbox_Exception('Dropbox credentials could not be read. Restore your recovery key in BackupPlus Settings, or disconnect and reconnect Dropbox.');
+				return $token;
 			}
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -92,21 +85,10 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 */
 	public function set($token, $type)
 	{
-		if ($type != 'request_token' && $type != 'access_token' && $type != 'upgraded' && $type != 'CSRF' && $type != 'code') {
-			throw new Dropbox_Exception("Expected a type of either 'request_token', 'access_token', 'CSRF', 'upgraded' or 'code', got '$type'"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
-		} else {
-			
-			$opts = $this->backup_module_object->get_options();
-			
-			if ($type == 'access_token' || $type == 'request_token'){
-				$token = $this->encrypt($token);
-				$opts[$this->option_name_prefix.$type] = $token;
-			} else {
-				$opts[$type] = $token;
-			}
-			
-			$this->backup_module_object->set_options($opts, true);
-		}
+		$this->check_type($type);
+		$opts = $this->backup_module_object->get_options();
+		$opts[$this->option_name_prefix.$type] = $this->encrypt($token);
+		$this->backup_module_object->set_options($opts, true);
 	}
 	
 	/**
@@ -122,19 +104,10 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 */
 	public function do_unset($type)
 	{
-		if ($type != 'request_token' && $type != 'access_token' && $type != 'upgraded' && $type != 'CSRF' && $type != 'code') {
-			throw new Dropbox_Exception("Expected a type of either 'request_token', 'access_token', 'CSRF', 'upgraded' or 'code', got '$type'"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
-		} else {
-			
-			$opts = $this->backup_module_object->get_options();
-			
-			if ($type == 'access_token' || $type == 'request_token'){
-				$opts[$this->option_name_prefix.$type] = null;
-			} else {
-				$opts[$type] = null;
-			}
-			$this->backup_module_object->set_options($opts, true);
-		}
+		$this->check_type($type);
+		$opts = $this->backup_module_object->get_options();
+		$opts[$this->option_name_prefix.$type] = null;
+		$this->backup_module_object->set_options($opts, true);
 	}
 	
 	/**
@@ -144,9 +117,10 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	public function delete()
 	{
 		$opts = $this->backup_module_object->get_options();
-		$opts[$this->option_name_prefix.'request_token'] = null;
-		$opts[$this->option_name_prefix.'access_token'] = null;
-		unset($opts['ownername']);
+		foreach (self::TYPES as $type) {
+			$opts[$this->option_name_prefix.$type] = null;
+		}
+		unset($opts['ownername'], $opts['token_app']);
 		unset($opts['upgraded']);
 		$this->backup_module_object->set_options($opts, true);
 		return true;
@@ -157,6 +131,13 @@ class Dropbox_WordPress implements Dropbox_StorageInterface
 	 * @param stdClass $token OAuth token to encrypt
 	 * @return stdClass|string
 	 */
+	protected function check_type($type)
+	{
+		if (!in_array($type, self::TYPES, true)) {
+			throw new Dropbox_Exception("Expected a type of either 'access_token', 'request_token' or 'pkce', got '$type'"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The escaping should happen when the exception is caught and printed
+		}
+	}
+
 	protected function encrypt($token)
 	{
 		// Serialize the token object

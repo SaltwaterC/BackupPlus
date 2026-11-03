@@ -162,37 +162,35 @@ jQuery(function($) {
 		}
 	});
 
-	$('#backupplus-wrap').on('click', '[id^=backupplus_manual_authorisation_submit_]', function(e) {
+	// Exchange the code a provider displayed after the administrator approved access (Dropbox PKCE)
+	$('#backupplus-wrap').on('click', '.backupplus_complete_authorisation', function(e) {
 		e.preventDefault();
-		var method = $(this).data('method');
-		var auth_data = $('#backupplus_manual_authentication_data_'+method).val();
-		$('#backupplus_manual_authentication_error_'+method).text();
-		$('#backupplus-wrap #backupplus_manual_authorisation_template_'+method+' .backupplus_spinner.spinner').addClass('visible');
-		$('#backupplus_manual_authorisation_submit_'+method).prop('disabled', true);
-		manual_remote_storage_auth(method, auth_data);
-	});
-
-	/**
-	 * This method will send the ajax request to manually authenticate the remote storage method and then update the page with the response
-	 *
-	 * @param {string} method    - the remote storage method
-	 * @param {string} auth_data - the auth data as a base64 json encoded string
-	 */
-	function manual_remote_storage_auth(method, auth_data) {
-		backupplus_send_command('manual_remote_storage_authentication', {method: method, auth_data: auth_data}, function(response) {
-			$('#backupplus-wrap #backupplus_manual_authorisation_template_'+method+' .backupplus_spinner.spinner').removeClass('visible');
-			if (response.hasOwnProperty('result') && 'success' === response.result) {
+		var $button = $(this);
+		var method = $button.data('method');
+		var instance_id = String($button.data('instance_id'));
+		var $result = $('#backupplus_authorisation_result_'+instance_id);
+		var code = $.trim($('#backupplus_authorisation_code_'+instance_id).val());
+		$result.text('');
+		if ('' === code) return;
+		$button.prop('disabled', true);
+		backupplus_send_command('manual_remote_storage_authentication', {method: method, instance_id: instance_id, code: code}, function(response) {
+			$button.prop('disabled', false);
+			if (response && 'success' === response.result) {
+				$('#backupplus_authorisation_code_'+instance_id).val('');
 				$('#backupplus-wrap .backupplus-top-menu').before(response.data);
-				$('#backupplus-wrap #backupplus_manual_authorisation_template_'+method).parent().remove();
 				$('#backupplus-wrap .backupplus_authenticate_'+method).remove();
-			} else if (response.hasOwnProperty('result') && 'error' === response.result) {
-				$('#backupplus_manual_authentication_error_'+method).text(response.data);
-				$('#backupplus_manual_authorisation_submit_'+method).prop('disabled', false);
+				$result.text(backupplus_i18n.authorisation_complete);
+			} else {
+				$result.text(response && response.data ? response.data : backupplus_i18n.unexpectedresponse+' '+(response && response.error_code ? response.error_code : ''));
+			}
+		}, {
+			error_callback: function(response, status, error_code) {
+				$button.prop('disabled', false);
+				$result.text(backupplus_i18n.unexpectedresponse+' '+error_code);
 			}
 		});
-	}
-	
-	
+	});
+
 	// What trims a destination follows from whether it has a quota
 	function backupplus_storage_limits_retention(row) {
 		var $cell = $(row).find('.backupplus-storage-limits-retention');

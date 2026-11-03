@@ -17,26 +17,8 @@ trait BackupPlus_GoogleDrive_OAuth {
 			$state = $parts[0];
 
 			if ( 'success' == $state ) {
-				$user_id      = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'user_id' );
-				$access_token = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'access_token' );
-
-				if ( isset( $user_id ) && isset( $access_token ) ) {
-					$code = array(
-						'user_id'      => $user_id,
-						'access_token' => $access_token,
-					);
-
-					$scope = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'scope' );
-					if ( isset( $scope ) ) {
-						$scope         = $scope;
-						$code['scope'] = explode( ' ', $scope );
-					}
-				} else {
-					$code = array();
-				}
-
-				$this->do_complete_authentication( $state, $code );
-
+				// gdrive_auth_token() redirects here after saving the token, so that the notice is not shown with the code in the URL.
+				add_action( 'all_admin_notices', array( $this, 'show_authed_admin_success' ) );
 			} elseif ( 'token' == $state ) {
 				$this->gdrive_auth_token();
 			} elseif ( 'revoke' == $state ) {
@@ -103,17 +85,12 @@ trait BackupPlus_GoogleDrive_OAuth {
 	}
 
 	/**
-	 * This method will return a redirect URL depending on the parameter passed. It will either return the redirect for the user's site or the auth server.
+	 * The redirect URI registered for the site's OAuth client.
 	 *
-	 * @param  Boolean $master - indicate whether we want the master redirect URL
-	 * @return String          - a redirect URL
+	 * @return String - the redirect URI
 	 */
-	private function redirect_uri( $master = false ) {
-		if ( $master ) {
-			return $this->callback_url;
-		} else {
-			return BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth';
-		}
+	private function redirect_uri() {
+		return BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth';
 	}
 
 	/**
@@ -124,10 +101,13 @@ trait BackupPlus_GoogleDrive_OAuth {
 	public function do_authenticate_storage( $instance_id ) {
 		$opts = $this->get_options();
 
-		$use_master = $this->use_master( $opts );
+		if ( empty( $opts['clientid'] ) || empty( $opts['secret'] ) ) {
+			$this->log( __( 'Enter your Google OAuth client ID and secret, and save your settings, before you sign in with Google.', 'backupplus' ), 'error' );
+			return;
+		}
 
 		// First, revoke any existing token, since Google doesn't appear to like issuing new ones
-		if ( ! empty( $opts['token'] ) && ! $use_master ) {
+		if ( ! empty( $opts['token'] ) ) {
 			$this->gdrive_auth_revoke();
 		}
 
@@ -139,19 +119,13 @@ trait BackupPlus_GoogleDrive_OAuth {
 
 		// We use 'force' here for the approval_prompt, not 'auto', as that deals better with messy situations where the user authenticated, then changed settings
 
-		if ( $use_master ) {
-			$client_id = $this->client_id;
-			$token     = 'token' . $prefixed_instance_id;
-			$token    .= $this->redirect_uri();
-		} else {
-			$client_id = $opts['clientid'];
-			$token     = 'token' . $prefixed_instance_id;
-		}
+		$client_id = $opts['clientid'];
+		$token     = 'token' . $prefixed_instance_id;
 		// We require access to all Google Drive files (not just ones created by this app - scope https://www.googleapis.com/auth/drive.file) - because we need to be able to re-scan storage for backups uploaded by other installs, or manually by the user into their Google Drive. But, if you are happy to lose that capability, you can use the filter below to remove the drive.readonly scope.
 		$params = array(
 			'response_type'           => 'code',
 			'client_id'               => $client_id,
-			'redirect_uri'            => $this->redirect_uri( $use_master ),
+			'redirect_uri'            => $this->redirect_uri(),
 			// Nov 2024 - https://www.googleapis.com/auth/drive.readonly temporarily removed for annual re-verification (for which we received no notification)
 			'scope'                   => apply_filters( 'backupplus_googledrive_scope', 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile' ),
 			'state'                   => $token,
@@ -177,44 +151,6 @@ trait BackupPlus_GoogleDrive_OAuth {
 			);
 		} else {
 			header( 'Location: https://accounts.google.com/o/oauth2/auth?' . http_build_query( $params, '', '&' ) );
-		}
-	}
-
-	/**
-	 * This function will complete the oAuth flow, if return_instead_of_echo is true then add the action to display the authed admin notice, otherwise echo this notice to page.
-	 *
-	 * @param string  $state                  - the state
-	 * @param string  $code                   - the oauth code
-	 * @param boolean $return_instead_of_echo - a boolean to indicate if we should return the result or echo it
-	 *
-	 * @return void|string - returns the authentication message if return_instead_of_echo is true
-	 */
-	public function do_complete_authentication( $state, $code, $return_instead_of_echo = false ) {
-
-		// If these are set then this is a request from our master app and the auth server has returned these to be saved.
-		if ( isset( $code['user_id'] ) && isset( $code['access_token'] ) ) {
-			$opts                     = $this->get_options();
-			$opts['user_id']          = base64_decode( $code['user_id'] );
-			$opts['tmp_access_token'] = base64_decode( $code['access_token'] );
-			if ( isset( $opts['auth_in_progress'] ) ) {
-				$opts['scope'] = $code['scope'];
-			}
-			// Unset this value if it is set as this is a fresh auth we will set this value in the next step
-			if ( isset( $opts['expires_in'] ) ) {
-				unset( $opts['expires_in'] );
-			}
-			// remove our flag so we know this authentication is complete
-			if ( isset( $opts['auth_in_progress'] ) ) {
-				unset( $opts['auth_in_progress'] );
-			}
-			$this->set_options( $opts, true );
-			$this->set_connection_status( true );
-		}
-
-		if ( $return_instead_of_echo ) {
-			return $this->show_authed_admin_success( $return_instead_of_echo );
-		} else {
-			add_action( 'all_admin_notices', array( $this, 'show_authed_admin_success' ) );
 		}
 	}
 
@@ -252,7 +188,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 				'code'          => $code,
 				'client_id'     => $opts['clientid'],
 				'client_secret' => $opts['secret'],
-				'redirect_uri'  => BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth',
+				'redirect_uri'  => $this->redirect_uri(),
 				'grant_type'    => 'authorization_code',
 			);
 
@@ -276,8 +212,9 @@ trait BackupPlus_GoogleDrive_OAuth {
 				$json_values = json_decode( wp_remote_retrieve_body( $result ), true );
 				if ( isset( $json_values['refresh_token'] ) ) {
 
-					// Save token
+					// Save token, replacing any connection left by the retired shared Google app
 					$opts['token'] = $json_values['refresh_token'];
+					unset( $opts['user_id'], $opts['expires_in'], $opts['scope'], $opts['auth_in_progress'] );
 					$this->set_options( $opts, true );
 
 					if ( isset( $json_values['access_token'] ) ) {
@@ -348,7 +285,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 				$message    .= '<ul style="list-style: disc inside;">';
 				foreach ( $error_codes as $error_code ) {
 					$message .= '<li>';
-					$message .= $storage->get_error_message( $error_code ) . ' (' . $error_code . ')';
+					$message .= esc_html( $storage->get_error_message( $error_code ) . ' (' . $error_code . ')' );
 					$message .= '</li>';
 				}
 				$message .= '</ul>';
@@ -389,7 +326,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 		) . ' ';
 		if ( ! empty( $username ) ) {
 			/* translators: %s: Username */
-			$final_message .= sprintf( __( 'Name: %s.', 'backupplus' ), $username ) . ' ';
+			$final_message .= sprintf( __( 'Name: %s.', 'backupplus' ), esc_html( $username ) ) . ' ';
 		}
 		$final_message .= $message;
 

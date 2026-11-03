@@ -18,12 +18,6 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
 	protected $consumerKey;
 
 	/**
-	 * Dropbox oauth2_id
-	 * @var String
-	 */
-	protected $oauth2_id;
-
-	/**
 	 * Dropbox consumer secret
 	 * @var String
 	 */
@@ -34,24 +28,6 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
 	 * @var \Dropbox\OAuth\Consumer\StorageInterface|Dropbox_StorageInterface
 	 */
 	protected $storage;
-
-	/**
-	 * Not used anywhere but it is set
-	 * @var Callable|Null
-	 */
-	protected $callback;
-
-	/**
-	 * Callback URL
-	 * @var String|null
-	 */
-	protected $callbackhome;
-
-	/**
-	 * Dropbox storage instance id
-	 * @var String
-	 */
-	protected $instance_id;
 
     /**
      * Default cURL options
@@ -72,13 +48,13 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
     protected $lastResponse = null;
     
     /**
-     * Set properties and begin authentication
-     * @param string $key
-     * @param string $secret
+     * Set properties and check the stored token, or revoke it
+     * @param string $key App key
+     * @param string $secret App secret, only stored for connections authorized before PKCE
      * @param \Dropbox\OAuth\Consumer\StorageInterface $storage
-     * @param string $callback
+     * @param bool $deauthenticate Revoke and delete the stored token instead
      */
-    public function __construct($key, $oauth2_id, $secret, Dropbox_StorageInterface $storage, $callback = null, $callbackhome = null, $deauthenticate = false, $instance_id = '')
+    public function __construct($key, $secret, Dropbox_StorageInterface $storage, $deauthenticate = false)
     {
         // Check the cURL extension is loaded
         if (!extension_loaded('curl')) {
@@ -86,12 +62,8 @@ class Dropbox_Curl extends Dropbox_ConsumerAbstract
         }
         
         $this->consumerKey = $key;
-        $this->oauth2_id = $oauth2_id;
         $this->consumerSecret = $secret;
         $this->storage = $storage;
-        $this->callback = $callback;
-        $this->callbackhome = $callbackhome;
-        $this->instance_id = $instance_id;
         
         if ($deauthenticate) {
 			$this->deauthenticate();

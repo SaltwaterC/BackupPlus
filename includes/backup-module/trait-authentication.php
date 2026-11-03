@@ -67,7 +67,7 @@ trait BackupPlus_BackupModule_Authentication {
 	 * Check the authentication is valid before proceeding to call the authentication method
 	 */
 	public function action_authenticate_storage() {
-		$backupplus_auth     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'BackupPlus_' . $this->get_id() . 'auth' );
+		$backupplus_auth     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_' . $this->get_id() . 'auth' );
 		$backupplus_instance = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_instance' );
 		$nonce               = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'nonce' );
 
@@ -116,7 +116,7 @@ trait BackupPlus_BackupModule_Authentication {
 	 * Check the deauthentication is valid before proceeding to call the deauthentication method
 	 */
 	public function action_deauthenticate_storage() {
-		$backupplus_auth     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'BackupPlus_' . $this->get_id() . 'auth' );
+		$backupplus_auth     = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_' . $this->get_id() . 'auth' );
 		$backupplus_instance = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_instance' );
 		$nonce               = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'nonce' );
 
@@ -139,47 +139,19 @@ trait BackupPlus_BackupModule_Authentication {
 	}
 
 	/**
-	 * Get the manual authorisation template
+	 * Complete a paste-code authorization with the code the provider displayed
 	 *
-	 * @return String - the template
+	 * @param string $code - the authorization code
+	 *
+	 * @return String - the result to show the administrator
 	 */
-	public function get_manual_authorisation_template() {
-
-		$id          = $this->get_id();
-		$description = $this->get_description();
-
-		$template = "<div id='backupplus_manual_authorisation_template_{$id}'>";
-		/* translators: %s: Description */
-		$template .= '<strong>' . sprintf( __( '%s authentication:', 'backupplus' ), $description ) . '</strong>';
-		/* translators: %s: Description */
-		$template .= '<p>' . sprintf( __( 'If you are having problems authenticating with %s you can manually authorize here.', 'backupplus' ), $description ) . '</p>';
-		$template .= '<p>' . __( 'To complete manual authentication, at the orange BackupPlus authentication screen select the "Having problems authenticating?" link, then copy and paste the code given here.', 'backupplus' ) . '</p>';
-		/* translators: %s: Description */
-		$template .= "<label for='backupplus_manual_authentication_data_{$id}'>" . sprintf( __( '%s authentication code:', 'backupplus' ), $description ) . "</label> <input type='text' id='backupplus_manual_authentication_data_{$id}' name='backupplus_manual_authentication_data_{$id}'>";
-		$template .= "<p id='backupplus_manual_authentication_error_{$id}'></p>";
-		$template .= "<button type='button' data-method='{$id}' class='button button-primary' id='backupplus_manual_authorisation_submit_{$id}'>" . __( 'Complete manual authentication', 'backupplus' ) . '</button>';
-		$template .= '<span class="backupplus_spinner spinner">' . __( 'Processing', 'backupplus' ) . '...</span>';
-		$template .= '</div>';
-
-		return $template;
-	}
-
-	/**
-	 * This will call the remote storage methods complete authentication function
-	 *
-	 * @param string $state - the remote storage authentication state
-	 * @param string $code  - the remote storage authentication code
-	 *
-	 * @return String - returns a string response
-	 */
-	public function complete_authentication( $state, $code ) {
+	public function complete_authentication( $code ) {
 		if ( method_exists( $this, 'do_complete_authentication' ) ) {
-			return $this->do_complete_authentication( $state, $code, true );
-		} else {
-			$message = $this->get_id() . ': module does not have an complete authentication method (coding bug)';
-			BackupPlus_Manipulation_Functions::error_log( $message );
-			return $message;
+			return $this->do_complete_authentication( $code );
 		}
+		$message = $this->get_id() . ': module does not have a complete authentication method (coding bug)';
+		BackupPlus_Manipulation_Functions::error_log( $message );
+		return $message;
 	}
 
 	/**

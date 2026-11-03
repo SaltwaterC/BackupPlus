@@ -400,24 +400,19 @@ trait BackupPlus_Admin_Notices {
 	}
 
 	/**
-	 * Show which remote storage settings are partially setup error, or if manual auth is supported show the manual auth UI
+	 * Warn about remote storage whose sign-in was started but not completed
 	 */
 	public function show_admin_warning_if_remote_storage_with_partial_settings() {
+		$message = sprintf(
+			/* translators: %s: List of storage services */
+			__( 'Sign-in to %s was started but not completed, so backups cannot be sent there.', 'backupplus' ),
+			esc_html( implode( ', ', $this->storage_service_with_partial_settings ) )
+		) . ' ' . __( 'Sign in again from the BackupPlus settings.', 'backupplus' );
 		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
-			$enabled_services = BackupPlus_Storage_Methods_Interface::get_enabled_storage_objects_and_ids( array_keys( $this->storage_service_with_partial_settings ) );
-			foreach ( $this->storage_service_with_partial_settings as $method => $method_name ) {
-				if ( empty( $enabled_services[ $method ]['object'] ) || empty( $enabled_services[ $method ]['instance_settings'] ) || ! $enabled_services[ $method ]['object']->supports_feature( 'manual_authentication' ) ) {
-					/* translators: %s: Remote storage method */
-					$this->show_admin_warning( sprintf( __( 'The following remote storage (%s) has only been partially configured, manual authorization is not supported with this remote storage, please try again and if the problem persists contact support.', 'backupplus' ), $method ), 'error' );
-				} else {
-					$this->show_admin_warning( $enabled_services[ $method ]['object']->get_manual_authorisation_template(), 'error' );
-				}
-			}
+			$this->show_admin_warning( $message, 'error' );
 		} else {
 			$this->show_admin_warning(
-				/* translators: %s: List of storage services */
-				'BackupPlus: ' . sprintf( __( 'The following remote storage (%s) has only been partially configured, if you are having problems you can try to manually authorise at the BackupPlus settings page.', 'backupplus' ), implode( ', ', $this->storage_service_with_partial_settings ) ) .
-				' <a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings">' . __( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>',
+				'BackupPlus: ' . $message . ' <a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings">' . __( 'Return to BackupPlus configuration', 'backupplus' ) . '</a>',
 				'error'
 			);
 		}

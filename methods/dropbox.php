@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // The provider's concerns live in traits in its own directory, methods/dropbox/.
+require_once __DIR__ . '/dropbox/pkce.php';
 require_once __DIR__ . '/dropbox/admin.php';
 require_once __DIR__ . '/dropbox/transfers.php';
 require_once __DIR__ . '/dropbox/listing-retention.php';
@@ -49,6 +50,14 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 			$options = $settings['updraft_dropbox'];
 			if ( is_array( $options ) && empty( $options['settings'] ) ) {
 				$options = BackupPlus_Storage_Methods_Interface::wrap_remote_storage_options( $options );
+			}
+			// Tokens of UpdraftPlus's own Dropbox app can only be renewed through its service, so those connections must be made again
+			if ( is_array( $options ) && ! empty( $options['settings'] ) && is_array( $options['settings'] ) ) {
+				foreach ( $options['settings'] as $id => $instance ) {
+					if ( is_array( $instance ) && empty( $instance['appkey'] ) ) {
+						unset( $options['settings'][ $id ]['tk_access_token'], $options['settings'][ $id ]['tk_request_token'], $options['settings'][ $id ]['CSRF'], $options['settings'][ $id ]['code'], $options['settings'][ $id ]['ownername'] );
+					}
+				}
 			}
 			$settings['updraft_dropbox'] = BackupPlus_Dropbox_Token_Migration::import_options( $options );
 		}
@@ -120,14 +129,5 @@ class BackupPlus_BackupModule_dropbox extends BackupPlus_BackupModule {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Identification of Dropbox app
-	 *
-	 * @return Array
-	 */
-	private function defaults() {
-		return apply_filters( 'backupplus_dropbox_defaults', array( 'Z3Q3ZmkwbnplNHA0Zzlx', 'bTY0bm9iNmY4eWhjODRt' ) );
 	}
 }

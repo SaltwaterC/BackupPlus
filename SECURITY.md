@@ -13,4 +13,4 @@ Include as much of the following information as possible:
 
 Please allow the maintainers reasonable time to investigate and prepare a fix before disclosing the issue publicly.
 
-The current source-review findings and remediation criteria are documented in [Encryption and credential-storage findings](docs/security-findings.md). Each finding records its status; documentation does not indicate that a fix has been implemented.
+The current source-review findings and remediation criteria are documented in [Security review findings](docs/security-findings.md). Each finding records its status; documentation does not indicate that a fix has been implemented.
