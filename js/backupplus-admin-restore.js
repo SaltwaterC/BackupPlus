@@ -163,9 +163,9 @@ jQuery(function($) {
 				if ('db' == restore_data.stage) {
 					if (restore_data.data.hasOwnProperty('stage')) {
 						if ('table' == restore_data.data.stage) {
-							$current.find('.backupplus_component--progress').html(' — '+backupplus_i18n.restore_db_table_progress.replace('%s', '<strong>'+(restore_data.data.table)+'</strong>'));
+							$current.find('.backupplus_component--progress').html(' — '+backupplus_i18n.restore_db_table_progress.replace('%s', '<strong>'+jQuery('<div>').text(restore_data.data.table).html()+'</strong>'));
 						} else if ('stored_routine' == restore_data.data.stage) {
-							$current.find('.backupplus_component--progress').html(' — '+backupplus_i18n.restore_db_stored_routine_progress.replace('%s', '<strong>'+(restore_data.data.routine_name)+'</strong>'));
+							$current.find('.backupplus_component--progress').html(' — '+backupplus_i18n.restore_db_stored_routine_progress.replace('%s', '<strong>'+jQuery('<div>').text(restore_data.data.routine_name).html()+'</strong>'));
 						} else if ('finished' == restore_data.data.stage) {
 							$current.find('.backupplus_component--progress').html(' — '+backupplus_i18n.finished);
 						} else if ('begun' == restore_data.data.stage) {

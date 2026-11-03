@@ -249,6 +249,8 @@ jQuery(function($) {
 		if ('file-dir' == panel) {
 			jQuery('#backupplus_exclude_files_folders_jstree').jstree({
 				"core": {
+					// Node names come from archives, the file system and remote storage: render them as text (BPS-04).
+					"force_text": true,
 					"multiple": false,
 					"data": function (nodeid, callback) {
 						backupplus_send_command('get_jstree_directory_nodes', {entity: 'filebrowser', node:nodeid, path: jQuery('#backupplus_exclude_modal_path').val(), findex: 0, skip_root_node: true}, function(response) {
@@ -285,6 +287,8 @@ jQuery(function($) {
 		} else if ('contain-clause' == panel) {
 			jQuery('#backupplus_exclude_files_folders_wildcards_jstree').jstree({
 				"core": {
+					// Node names come from archives, the file system and remote storage: render them as text (BPS-04).
+					"force_text": true,
 					"multiple": false,
 					"data": function (nodeid, callback) {
 						backupplus_send_command('get_jstree_directory_nodes', {entity: 'filebrowser', directories_only: 1, node:nodeid, path: jQuery('#backupplus_exclude_modal_path').val(), findex: 0, skip_root_node: 0}, function(response) {

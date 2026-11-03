@@ -7,9 +7,8 @@ jQuery(function($) {
 		var timestamp = jQuery(this).data('timestamp').toString();
 		backupplus_send_command('rawbackup_history', { timestamp: timestamp, nonce: nonce }, function (response) {
 			if (response.hasOwnProperty('rawbackup')) {
-				var textArea = document.createElement('textarea');
-				textArea.innerHTML = response.rawbackup;
-				backupplus_html_modal(textArea.value, backupplus_i18n.raw, 780, 500);
+				// Already escaped server-side; do not decode it again.
+				backupplus_html_modal(response.rawbackup, backupplus_i18n.raw, 780, 500);
 			} else {
 				backupplus_html_modal(backupplus_i18n.jsonnotunderstood, backupplus_i18n.raw, 780, 500);
 			}

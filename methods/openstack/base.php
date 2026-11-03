@@ -172,7 +172,8 @@ class BackupPlus_BackupModule_openstack_base extends BackupPlus_BackupModule {
 				while ( false !== ( $file = $objects->offsetGet( $index ) ) && ! empty( $file ) ) {
 					++$index;
 					try {
-						if ( ( is_object( $file ) && ! empty( $file->name ) ) ) {
+						// Objects in pseudo-folders, or with traversing names, must not reach backup history (BPS-02).
+						if ( is_object( $file ) && ! empty( $file->name ) && BackupPlus_Manipulation_Functions::is_safe_basename( $file->name ) ) {
 							$result = array( 'name' => $file->name );
 							// Rackspace returns the size of a manifested file properly; other OpenStack implementations may not
 							if ( ! empty( $file->bytes ) ) {

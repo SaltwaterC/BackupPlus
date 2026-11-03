@@ -112,7 +112,7 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 				$foreign_known = apply_filters( 'backupplus_accept_archivename', array() );
 				if ( ! is_array( $foreign_known ) || empty( $foreign_known[ $backups[ $timestamp ]['meta_foreign'] ] ) ) {
 					/* translators: %s: Backup source information */
-					$err[] = sprintf( __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ), $backups[ $timestamp ]['meta_foreign'] );
+					$err[] = sprintf( __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ), esc_html( $backups[ $timestamp ]['meta_foreign'] ) );
 				} else {
 					// For some reason, on PHP 5.5 passing by reference in a single array stopped working with apply_filters_ref_array (though not with do_action_ref_array).
 					$backupable_plus_db = apply_filters_ref_array( 'backupplus_importforeign_backupable_plus_db', array( $backupable_plus_db, array( $foreign_known[ $backups[ $timestamp ]['meta_foreign'] ], &$mess, &$warn, &$err ) ) );
@@ -139,18 +139,21 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 						$missing .= ( '' == $missing ) ? ( 1 + $expected_index ) : ',' . ( 1 + $expected_index );
 						++$expected_index;
 					}
-					if ( ! file_exists( $backupplus_dir . '/' . $file ) ) {
+					if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $file ) ) {
+						// History entries can come from remote listings (BPS-02).
+						$err[] = __( 'The backup records contain an archive name that is not a plain file name.', 'backupplus' );
+					} elseif ( ! file_exists( $backupplus_dir . '/' . $file ) ) {
 						/* translators: %s: File path */
-						$err[] = sprintf( __( 'File not found (you need to upload it): %s', 'backupplus' ), $backupplus_dir . '/' . $file );
+						$err[] = sprintf( __( 'File not found (you need to upload it): %s', 'backupplus' ), esc_html( $backupplus_dir . '/' . $file ) );
 					} elseif ( filesize( $backupplus_dir . '/' . $file ) == 0 ) {
 						/* translators: %s: File name */
-						$err[] = sprintf( __( 'File was found, but is zero-sized (you need to re-upload it): %s', 'backupplus' ), $file );
+						$err[] = sprintf( __( 'File was found, but is zero-sized (you need to re-upload it): %s', 'backupplus' ), esc_html( $file ) );
 					} else {
 						$itext = ( 0 == $index ) ? '' : $index;
 						if ( ! empty( $backups[ $timestamp ][ $type . $itext . '-size' ] ) && filesize( $backupplus_dir . '/' . $file ) != $backups[ $timestamp ][ $type . $itext . '-size' ] ) {
 							if ( empty( $warn['doublecompressfixed'] ) ) {
 								/* translators: 1: File name, 2: Actual file size, 3: Expected file size */
-								$warn[] = sprintf( __( 'File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt.', 'backupplus' ), $file, filesize( $backupplus_dir . '/' . $file ), $backups[ $timestamp ][ $type . $itext . '-size' ] );
+								$warn[] = sprintf( __( 'File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt.', 'backupplus' ), esc_html( $file ), filesize( $backupplus_dir . '/' . $file ), (int) $backups[ $timestamp ][ $type . $itext . '-size' ] );
 							}
 						}
 						$check_path = $backupplus_dir . '/' . $file;
@@ -242,7 +245,7 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 
 			if ( count( $this->_backupplus_admin->logged ) > 0 ) {
 				foreach ( $this->_backupplus_admin->logged as $lwarn ) {
-					$warn[] = $lwarn;
+					$warn[] = esc_html( $lwarn );
 				}
 			}
 			restore_error_handler();

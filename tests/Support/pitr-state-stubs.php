@@ -3,6 +3,8 @@
 
 function __( $text, $domain = null ) {
 	return $text; }
+function esc_html( $text ) {
+	return htmlspecialchars( (string) $text, ENT_QUOTES ); }
 function is_wp_error( $value ) {
 	return false;
 }

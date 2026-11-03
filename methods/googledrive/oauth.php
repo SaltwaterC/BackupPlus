@@ -8,21 +8,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait BackupPlus_GoogleDrive_OAuth {
 
+	/** Seconds for which a started sign-in can be completed. */
+	private static $oauth_state_lifetime = 600;
+
+	/**
+	 * Handles the URL actions: doit starts a sign-in and deauth removes it (both nonce-checked), state=token is Google's return
+	 * from a sign-in this site started, and state=success shows the result of that sign-in once (nonce-checked).
+	 */
 	public function action_auth() {
 		$state                      = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'state' );
 		$backupplus_googledriveauth = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'backupplus_googledriveauth' );
-		if ( isset( $state ) ) {
+		if ( is_string( $state ) ) {
 
 			$parts = explode( ':', $state );
-			$state = $parts[0];
 
-			if ( 'success' == $state ) {
+			if ( 'success' === $parts[0] ) {
 				// gdrive_auth_token() redirects here after saving the token, so that the notice is not shown with the code in the URL.
-				add_action( 'all_admin_notices', array( $this, 'show_authed_admin_success' ) );
-			} elseif ( 'token' == $state ) {
-				$this->gdrive_auth_token();
-			} elseif ( 'revoke' == $state ) {
-				$this->gdrive_auth_revoke();
+				$nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'nonce' );
+				if ( is_string( $nonce ) && wp_verify_nonce( $nonce, 'backupplus_googledrive_auth_success' ) ) {
+					add_action( 'all_admin_notices', array( $this, 'show_authed_admin_success' ) );
+				}
+			} elseif ( 'token' === $parts[0] ) {
+				$this->gdrive_auth_token( $state );
 			}
 		} elseif ( isset( $backupplus_googledriveauth ) ) {
 			if ( 'doit' == $backupplus_googledriveauth ) {
@@ -94,6 +101,72 @@ trait BackupPlus_GoogleDrive_OAuth {
 	}
 
 	/**
+	 * Start a sign-in: store a new single-use state, bound to the current user and this instance, and return Google's consent address
+	 *
+	 * @param  String $instance_id - the instance id of the settings we want to authenticate
+	 *
+	 * @throws RuntimeException - if no OAuth client is saved
+	 *
+	 * @return String - the address
+	 */
+	public function authorization_url( $instance_id ) {
+		$opts = $this->get_options();
+
+		if ( empty( $opts['clientid'] ) || empty( $opts['secret'] ) ) {
+			throw new RuntimeException( __( 'Enter your Google OAuth client ID and secret, and save your settings, before you sign in with Google.', 'backupplus' ) );
+		}
+
+		// The handler of the return reads the instance from the second field; the random part makes the state unguessable.
+		$state                    = 'token:' . $instance_id . ':' . bin2hex( random_bytes( 32 ) );
+		$opts['oauth_state']      = array(
+			'hash'    => hash( 'sha256', $state ),
+			'user'    => get_current_user_id(),
+			'expires' => time() + self::$oauth_state_lifetime,
+		);
+		$opts['auth_in_progress'] = true;
+		$this->set_options( $opts, true );
+
+		// We require access to all Google Drive files (not just ones created by this app - scope https://www.googleapis.com/auth/drive.file) - because we need to be able to re-scan storage for backups uploaded by other installs, or manually by the user into their Google Drive. But, if you are happy to lose that capability, you can use the filter below to remove the drive.readonly scope.
+		$params          = array(
+			'response_type'           => 'code',
+			'client_id'               => $opts['clientid'],
+			'redirect_uri'            => $this->redirect_uri(),
+			// Nov 2024 - https://www.googleapis.com/auth/drive.readonly temporarily removed for annual re-verification (for which we received no notification)
+			'scope'                   => apply_filters( 'backupplus_googledrive_scope', 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile' ),
+			'access_type'             => 'offline',
+			// 'approval_prompt' => 'force', // legacy and has been deprected. It can lead to conflicts when specified along with "prompt" param
+			// Nov 2024 - changed from `true` for the same reason as a few lines earlier
+			'include_granted_scopes'  => 'false',
+			'enable_granular_consent' => 'true',
+			'prompt'                  => 'select_account consent', // new option param as the replacement to 'approval_prompt'
+		);
+		$params          = apply_filters( 'backupplus_googledrive_auth_params', $params );
+		$params['state'] = $state;
+		return 'https://accounts.google.com/o/oauth2/auth?' . http_build_query( $params, '', '&' );
+	}
+
+	/**
+	 * Consume the pending sign-in state. It is removed whether or not it matches, so that it can be used once only.
+	 *
+	 * @param  Mixed $state - the state Google returned
+	 *
+	 * @return Boolean - whether it is the state of a sign-in that the current user started for this instance, and has not expired
+	 */
+	private function consume_oauth_state( $state ) {
+		$opts   = $this->get_options();
+		$stored = ( isset( $opts['oauth_state'] ) && is_array( $opts['oauth_state'] ) ) ? $opts['oauth_state'] : array();
+		if ( array_key_exists( 'oauth_state', $opts ) ) {
+			unset( $opts['oauth_state'] );
+			$this->set_options( $opts, true );
+		}
+		return is_string( $state ) && '' !== $state
+			&& ! empty( $stored['hash'] ) && is_string( $stored['hash'] )
+			&& isset( $stored['user'] ) && (int) $stored['user'] === (int) get_current_user_id() && 0 !== (int) get_current_user_id()
+			&& isset( $stored['expires'] ) && (int) $stored['expires'] >= time()
+			&& hash_equals( $stored['hash'], hash( 'sha256', $state ) );
+	}
+
+	/**
 	 * Acquire single-use authorization code from Google via OAuth 2.0
 	 *
 	 * @param  String $instance_id - the instance id of the settings we want to authenticate
@@ -111,32 +184,8 @@ trait BackupPlus_GoogleDrive_OAuth {
 			$this->gdrive_auth_revoke();
 		}
 
-		// Set a flag so we know this authentication is in progress
-		$opts['auth_in_progress'] = true;
-		$this->set_options( $opts, true );
+		$url = $this->authorization_url( $instance_id );
 
-		$prefixed_instance_id = ':' . $instance_id;
-
-		// We use 'force' here for the approval_prompt, not 'auto', as that deals better with messy situations where the user authenticated, then changed settings
-
-		$client_id = $opts['clientid'];
-		$token     = 'token' . $prefixed_instance_id;
-		// We require access to all Google Drive files (not just ones created by this app - scope https://www.googleapis.com/auth/drive.file) - because we need to be able to re-scan storage for backups uploaded by other installs, or manually by the user into their Google Drive. But, if you are happy to lose that capability, you can use the filter below to remove the drive.readonly scope.
-		$params = array(
-			'response_type'           => 'code',
-			'client_id'               => $client_id,
-			'redirect_uri'            => $this->redirect_uri(),
-			// Nov 2024 - https://www.googleapis.com/auth/drive.readonly temporarily removed for annual re-verification (for which we received no notification)
-			'scope'                   => apply_filters( 'backupplus_googledrive_scope', 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile' ),
-			'state'                   => $token,
-			'access_type'             => 'offline',
-			// 'approval_prompt' => 'force', // legacy and has been deprected. It can lead to conflicts when specified along with "prompt" param
-			// Nov 2024 - changed from `true` for the same reason as a few lines earlier
-			'include_granted_scopes'  => 'false',
-			'enable_granular_consent' => 'true',
-			'prompt'                  => 'select_account consent', // new option param as the replacement to 'approval_prompt'
-		);
-		$params = apply_filters( 'backupplus_googledrive_auth_params', $params );
 		if ( headers_sent() ) {
 			$this->log(
 				sprintf(
@@ -150,7 +199,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 				'error'
 			);
 		} else {
-			header( 'Location: https://accounts.google.com/o/oauth2/auth?' . http_build_query( $params, '', '&' ) );
+			header( 'Location: ' . $url );
 		}
 	}
 
@@ -178,67 +227,88 @@ trait BackupPlus_GoogleDrive_OAuth {
 	}
 
 	/**
-	 * Get a Google account refresh token using the code received from do_authenticate_storage
+	 * Complete a sign-in: check the state against the one this site stored when the current user started it, then exchange the code
+	 *
+	 * @param  Mixed $state - the state Google returned
+	 * @param  Mixed $code  - the authorization code Google returned
+	 *
+	 * @throws RuntimeException - if the state is not valid, or Google does not issue a refresh token
+	 *
+	 * @return Boolean - true once the refresh token is saved
 	 */
-	public function gdrive_auth_token() {
-		$opts = $this->get_options();
-		$code = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'code' );
-		if ( isset( $code ) ) {
-			$post_vars = array(
-				'code'          => $code,
-				'client_id'     => $opts['clientid'],
-				'client_secret' => $opts['secret'],
-				'redirect_uri'  => $this->redirect_uri(),
-				'grant_type'    => 'authorization_code',
-			);
-
-			$result = wp_remote_post(
-				'https://accounts.google.com/o/oauth2/token',
-				array(
-					'timeout' => 25,
-					'method'  => 'POST',
-					'body'    => $post_vars,
-				)
-			);
-
-			if ( is_wp_error( $result ) ) {
-				$add_to_url = 'Bad response when contacting Google: ';
-				foreach ( $result->get_error_messages() as $message ) {
-					$this->log( 'authentication error: ' . $message );
-					$add_to_url .= $message . '. ';
-				}
-				header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?page=backupplus&error=' . urlencode( $add_to_url ) );
-			} else {
-				$json_values = json_decode( wp_remote_retrieve_body( $result ), true );
-				if ( isset( $json_values['refresh_token'] ) ) {
-
-					// Save token, replacing any connection left by the retired shared Google app
-					$opts['token'] = $json_values['refresh_token'];
-					unset( $opts['user_id'], $opts['expires_in'], $opts['scope'], $opts['auth_in_progress'] );
-					$this->set_options( $opts, true );
-
-					if ( isset( $json_values['access_token'] ) ) {
-						$opts['tmp_access_token'] = $json_values['access_token'];
-						$this->set_options( $opts, true );
-						// We do this to clear the GET parameters, otherwise WordPress sticks them in the _wp_referer in the form and brings them back, leading to confusion + errors
-						header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth&page=backupplus&state=success:' . urlencode( $this->get_instance_id() ) );
-					}
-				} else {
-
-					$msg = __( 'No refresh token was received from Google.', 'backupplus' ) . ' ' . __( 'This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it.', 'backupplus' ) . ' ' . __( 'Re-check it, then follow the link to authenticate again.', 'backupplus' ) . ' ' . __( 'Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again.', 'backupplus' );
-
-					/* translators: %s: Error message */
-					if ( isset( $json_values['error'] ) ) {
-						$msg .= ' ' . sprintf( __( 'Error: %s', 'backupplus' ), $json_values['error'] );
-					}
-
-					header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?page=backupplus&error=' . urlencode( $msg ) );
-				}
-			}
-		} else {
-			/* translators: %s: Storage provider name */
-			header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?page=backupplus&error=' . urlencode( sprintf( __( '%s authorization failed', 'backupplus' ), 'Google Drive' ) ) );
+	public function complete_oauth( $state, $code ) {
+		// Consumed first, so that a state is single use even when the exchange then fails
+		if ( ! $this->consume_oauth_state( $state ) ) {
+			$this->log( 'authorization return refused: the state does not match a sign-in started by this user for this instance, or it has expired' );
+			throw new RuntimeException( __( 'The Google Drive sign-in was not started from this site by you, or it has expired.', 'backupplus' ) . ' ' . __( 'Sign in with Google again.', 'backupplus' ) );
 		}
+		if ( ! is_string( $code ) || '' === $code ) {
+			/* translators: %s: Storage provider name */
+			throw new RuntimeException( sprintf( __( '%s authorization failed', 'backupplus' ), 'Google Drive' ) );
+		}
+
+		$opts      = $this->get_options();
+		$post_vars = array(
+			'code'          => $code,
+			'client_id'     => $opts['clientid'],
+			'client_secret' => $opts['secret'],
+			'redirect_uri'  => $this->redirect_uri(),
+			'grant_type'    => 'authorization_code',
+		);
+
+		$result = wp_remote_post(
+			'https://accounts.google.com/o/oauth2/token',
+			array(
+				'timeout' => 25,
+				'method'  => 'POST',
+				'body'    => $post_vars,
+			)
+		);
+
+		if ( is_wp_error( $result ) ) {
+			$message = 'Bad response when contacting Google: ';
+			foreach ( $result->get_error_messages() as $error_message ) {
+				$this->log( 'authentication error: ' . $error_message );
+				$message .= $error_message . '. ';
+			}
+			throw new RuntimeException( $message );
+		}
+
+		$json_values = json_decode( wp_remote_retrieve_body( $result ), true );
+		if ( ! isset( $json_values['refresh_token'] ) ) {
+			$msg = __( 'No refresh token was received from Google.', 'backupplus' ) . ' ' . __( 'This often means that you entered your client secret wrongly, or that you have not yet re-authenticated (below) since correcting it.', 'backupplus' ) . ' ' . __( 'Re-check it, then follow the link to authenticate again.', 'backupplus' ) . ' ' . __( 'Finally, if that does not work, then use expert mode to wipe all your settings, create a new Google client ID/secret, and start again.', 'backupplus' );
+
+			if ( isset( $json_values['error'] ) && is_string( $json_values['error'] ) ) {
+				/* translators: %s: Error message */
+				$msg .= ' ' . sprintf( __( 'Error: %s', 'backupplus' ), $json_values['error'] );
+			}
+			throw new RuntimeException( $msg );
+		}
+
+		// Save token, replacing any connection left by the retired shared Google app
+		$opts['token'] = $json_values['refresh_token'];
+		unset( $opts['user_id'], $opts['expires_in'], $opts['scope'], $opts['auth_in_progress'], $opts['tmp_access_token'] );
+		if ( isset( $json_values['access_token'] ) ) {
+			$opts['tmp_access_token'] = $json_values['access_token'];
+		}
+		$this->set_options( $opts, true );
+		return true;
+	}
+
+	/**
+	 * Handle Google's return from a sign-in, then redirect so that the code is not left in the address
+	 *
+	 * @param String $state - the state Google returned
+	 */
+	public function gdrive_auth_token( $state ) {
+		try {
+			$this->complete_oauth( $state, BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'code' ) );
+		} catch ( RuntimeException $e ) {
+			header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?page=backupplus&error=' . urlencode( $e->getMessage() ) );
+			return;
+		}
+		// We do this to clear the GET parameters, otherwise WordPress sticks them in the _wp_referer in the form and brings them back, leading to confusion + errors
+		header( 'Location: ' . BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-googledrive-auth&page=backupplus&state=success:' . urlencode( $this->get_instance_id() ) . '&nonce=' . urlencode( wp_create_nonce( 'backupplus_googledrive_auth_success' ) ) );
 	}
 
 	/**

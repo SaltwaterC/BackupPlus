@@ -26,10 +26,10 @@ trait BackupPlus_Admin_Existing_Backups {
 
 		$pretty_date = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $key ), 'M d, Y G:i' );
 
-		$rawbackup = "<h2 title=\"$key\">$pretty_date</h2>";
+		$rawbackup = '<h2 title="' . esc_attr( $key ) . '">' . esc_html( $pretty_date ) . '</h2>';
 
 		if ( ! empty( $backup['label'] ) ) {
-			$rawbackup .= '<span class="raw-backup-info">' . $backup['label'] . '</span>';
+			$rawbackup .= '<span class="raw-backup-info">' . esc_html( $backup['label'] ) . '</span>';
 		}
 
 		if ( null === $job_data ) {
@@ -37,7 +37,7 @@ trait BackupPlus_Admin_Existing_Backups {
 		}
 
 		$rawbackup .= '<hr>';
-		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="' . $key . '" ' . ( empty( $backup['always_keep'] ) ? '' : 'checked ' ) . '><label for="always_keep_this_backup">' . __( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ) . '</label>';
+		$rawbackup .= '<input type="checkbox" name="always_keep_this_backup" id="always_keep_this_backup" data-backup_key="' . esc_attr( $key ) . '" ' . ( empty( $backup['always_keep'] ) ? '' : 'checked ' ) . '><label for="always_keep_this_backup">' . __( 'Only allow this backup to be deleted manually (i.e. keep it even if retention limits are hit).', 'backupplus' ) . '</label>';
 
 		foreach ( isset( $backup['database_coverage'] ) ? $backup['database_coverage'] : array() as $database_id => $coverage ) {
 			if ( ! empty( $coverage['partial'] ) || 'selected' === $coverage['mode'] ) { $rawbackup .= '<p>' . esc_html( 'Partial database backup (' . $database_id . '): ' . implode( ', ', $coverage['tables'] ) ) . '</p>'; }
@@ -85,9 +85,9 @@ trait BackupPlus_Admin_Existing_Backups {
 			if ( 'none' == $serv || '' == $serv ) {
 				$add_none = true;
 			} elseif ( isset( $backupplus->backup_methods[ $serv ] ) ) {
-				$show_services .= $show_services ? ', ' . $backupplus->backup_methods[ $serv ] : $backupplus->backup_methods[ $serv ];
+				$show_services .= $show_services ? ', ' . esc_html( $backupplus->backup_methods[ $serv ] ) : esc_html( $backupplus->backup_methods[ $serv ] );
 			} else {
-				$show_services .= $show_services ? ', ' . $serv : $serv;
+				$show_services .= $show_services ? ', ' . esc_html( $serv ) : esc_html( $serv );
 			}
 		}
 		if ( '' == $show_services && $add_none ) {
@@ -100,13 +100,14 @@ trait BackupPlus_Admin_Existing_Backups {
 			$rawbackup .= '</p><strong>' . __( 'Total backup size:', 'backupplus' ) . '</strong> ' . BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_size ) . '<p>';
 		}
 
-		$rawbackup .= '</p><hr><p><pre>' . print_r( $backup, true ) . '</pre></p>';
+		$rawbackup .= '</p><hr><p><pre>' . esc_html( print_r( $backup, true ) ) . '</pre></p>';
 
 		if ( ! empty( $job_data ) && is_array( $job_data ) ) {
-			$rawbackup .= '<p><pre>' . htmlspecialchars( print_r( $job_data, true ) ) . '</pre></p>';
+			$rawbackup .= '<p><pre>' . esc_html( print_r( $job_data, true ) ) . '</pre></p>';
 		}
 
-		return esc_attr( $rawbackup );
+		// Every dynamic value above is escaped for HTML where it is added. Callers hand the markup straight to the modal, so it is not entity-encoded again and nothing decodes it afterwards.
+		return $rawbackup;
 	}
 
 	/**
@@ -871,7 +872,7 @@ trait BackupPlus_Admin_Existing_Backups {
 		ob_start();
 		$history = BackupPlus_Backup_History::get_history();
 		var_dump( $history ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump -- we use the var_dump() to show the raw backup list in the advanced tools.
-		$response['html'] .= ob_get_clean();
+		$response['html'] .= esc_html( ob_get_clean() ); // History names and labels come from remote storage, so the dump is text, not markup.
 		$response['html'] .= '</pre>';
 
 		$response['html'] .= '<h3 id="ud-debuginfo-files">' . __( 'Files', 'backupplus' ) . '</h3><pre>';
@@ -891,7 +892,9 @@ trait BackupPlus_Admin_Existing_Backups {
 				$size = '       ?';
 			}
 			if ( preg_match( '/^log\.(.*)\.txt$/', $entry, $lmatch ) ) {
-				$entry = '<a target="_top" href="?action=downloadlog&amp;page=backupplus&amp;backupplus_backup_nonce=' . htmlspecialchars( $lmatch[1] ) . '">' . $entry . '</a>';
+				$entry = '<a target="_top" href="?action=downloadlog&amp;page=backupplus&amp;backupplus_backup_nonce=' . esc_attr( $lmatch[1] ) . '">' . esc_html( $entry ) . '</a>';
+			} else {
+				$entry = esc_html( $entry );
 			}
 			$raw_output[ $mtime ] = empty( $raw_output[ $mtime ] ) ? sprintf( "%s %s\n", $size, $entry ) : $raw_output[ $mtime ] . sprintf( "%s %s\n", $size, $entry );
 		}

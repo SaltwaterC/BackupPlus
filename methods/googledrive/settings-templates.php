@@ -201,6 +201,7 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 	public function filter_frontend_settings_keys() {
 		return array(
 			'expires_in',
+			'oauth_state',
 			'tmp_access_token',
 			'token',
 			'user_id',

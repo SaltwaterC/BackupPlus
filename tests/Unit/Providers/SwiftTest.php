@@ -109,6 +109,17 @@ final class SwiftTest extends ProviderTestCase {
 		$this->assertSame( array(), $this->provider->listfiles( 'unmatched' ), "$id must pass listing filters" );
 	}
 
+	/** BPS-02: pseudo-folder and traversing object names must not be listed. */
+	#[DataProvider( 'providers' )]
+	public function test_listing_drops_names_that_are_not_basenames( string $id, string $class ): void {
+		$this->configure( $class );
+		$legit = 'backup_2024-01-01-0000_site_abcdef012345-db.gz';
+		foreach ( array( $legit, 'backup_2024-01-01-0000_x/../../evil.php._abcdef012345-db.gz', 'backup_x\\y.zip', 'backup_folder/backup_nested.zip' ) as $name ) {
+			$this->container->objects[ $name ] = 'archive';
+		}
+		$this->assertSame( array( $legit ), array_column( $this->provider->listfiles(), 'name' ), "$id must drop listed names that are not basenames" );
+	}
+
 	#[DataProvider( 'providers' )]
 	public function test_downloads( string $id, string $class ): void {
 		$this->configure( $class );

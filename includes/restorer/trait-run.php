@@ -252,6 +252,13 @@ trait BackupPlus_Restorer_Run {
 
 			foreach ( $files as $ind => $file ) {
 
+				// History entries can come from remote listings; never restore from a path outside the backup directory (BPS-02).
+				if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $file ) ) {
+					$backupplus->log( __( 'The backup records contain an archive name that is not a plain file name.', 'backupplus' ), 'warning-restore' );
+					$backupplus->log( __( 'The backup records contain an archive name that is not a plain file name.', 'backupplus' ), 'error' );
+					return false;
+				}
+
 				$fullpath = $backupplus_dir . '/' . $file;
 				/* translators: 1: Entity type, 2: File name */
 				$backupplus->log( sprintf( __( 'Looking for %1$s archive: file name: %2$s', 'backupplus' ), $type, $file ), 'notice-restore' );

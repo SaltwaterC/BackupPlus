@@ -263,7 +263,8 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 			try {
 				$title = $item->getTitle();
 				if ( $list_files ) {
-					if ( 0 === strpos( $title, $match ) ) {
+					// Drive titles may contain "/" or ".."; such files must not reach backup history (BPS-02).
+					if ( 0 === strpos( $title, $match ) && BackupPlus_Manipulation_Functions::is_safe_basename( $title ) ) {
 						$results[] = array(
 							'name' => $title,
 							'size' => $item->getFileSize(),

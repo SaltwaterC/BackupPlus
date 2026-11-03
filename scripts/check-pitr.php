@@ -373,12 +373,45 @@ try {
 	file_put_contents( $log, $bytes );
 	unset( $worker );
 	// New installation: only portable artifacts survive, not the original PHP state/history.
+	$captured_state   = file_get_contents( $directory . '/archives/pitr/state.php' );
+	$captured_history = BackupPlus_Backup_History::get_history();
 	unlink( $directory . '/archives/pitr/state.php' );
 	$history   = array();
 	$worker    = new BackupPlus_PITR( $config );
 	$rescanned = $worker->rescan( null );
 	pitr_check( 1 === count( $rescanned['chains'] ) && 2 === $rescanned['chains'][0]['increments'], 'Remote-style rescan could not reconstruct portable coordinate metadata.' );
+	// Storage holds the only copy of a rescanned chain's manifests, so it cannot replace the database (BPS-03);
+	// an isolated export of it still works.
+	foreach (
+		array(
+			function () use ( $worker, $id, $first_end ) {
+				$worker->restore( $id, $first_end, '', array(), null, false, true );
+			},
+			function () use ( $worker, $id, $recovery_config ) {
+				$worker->restore( $id, null, $recovery_config['source_config'], array(), null, true );
+			},
+			function () use ( $worker, $id, $first_end ) {
+				$worker->verify_source_restore( $id, $first_end, null );
+			},
+		) as $attempt
+	) {
+		try {
+			$attempt();
+			throw new LogicException( 'Source restore accepted a rescanned chain.' );
+		} catch ( RuntimeException $error ) {
+			pitr_check( false !== strpos( $error->getMessage(), 'found by a storage rescan' ), 'Source restore of a rescanned chain failed for another reason: ' . $error->getMessage() );
+		}
+	}
+	// The closures and the exception trace hold the worker, and with it the PITR lock.
+	unset( $attempt, $error );
+	$recovery->query( 'DROP DATABASE `' . DB_NAME . '`' );
+	$worker->recover( $id, $first_transaction, $recovery_config['source_config'], array(), null, true );
+	pitr_check( '666972737400FF' === $recovery->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0], 'A rescanned chain could not be exported to the isolated recovery server.' );
 	unset( $worker );
+	// The site that captured the chain still holds its index; later checks restore from it.
+	unlink( $directory . '/archives/pitr/state.php' );
+	BackupPlus_PITR_Process::private_file( $directory . '/archives/pitr/state.php', $captured_state );
+	BackupPlus_Backup_History::save_history( $captured_history );
 	$fixture        = json_decode( file_get_contents( __DIR__ . '/fixtures/age-keys.json' ), true );
 	$key            = $fixture['keys']['native'];
 	$encryption     = array(
@@ -450,10 +483,16 @@ try {
 		require __DIR__ . '/check-pitr-setup.php';
 		$worker = new BackupPlus_PITR( $config );
 		require __DIR__ . '/check-pitr-isolation.php';
+		unset( $worker );
+		require __DIR__ . '/check-pitr-planted.php';
+		$worker = new BackupPlus_PITR( $config );
 		$application->query( 'USE `' . DB_NAME . '`; UPDATE pitr_b SET value=99; CREATE TABLE pitr_future (id int) ENGINE=InnoDB' );
 		$direct = $worker->restore( $id, $first_end, '', array(), null, false, true );
 		pitr_check( '1' === $observer->query( 'SELECT value FROM `' . DB_NAME . '`.pitr_b' )[0][0] && '666972737400FF' === $observer->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0], 'Direct source replay missed the selected historical transaction.' );
 		pitr_check( 2 === count( $observer->query( 'SHOW COLUMNS FROM `' . DB_NAME . '`.pitr_a' ) ) && ! $observer->query( 'SHOW TABLES FROM `' . DB_NAME . '` LIKE \'pitr_future\'' ), 'Direct source replay included later schema changes.' );
+		// Restored programs belong to the site account, never the restore account, and views and routines run as their caller.
+		$owners = $admin->query( "SELECT 'routine', DEFINER, SECURITY_TYPE FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='" . DB_NAME . "' UNION ALL SELECT 'view', DEFINER, SECURITY_TYPE FROM information_schema.VIEWS WHERE TABLE_SCHEMA='" . DB_NAME . "' UNION ALL SELECT 'trigger', DEFINER, 'INVOKER' FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='" . DB_NAME . "' UNION ALL SELECT 'event', DEFINER, 'INVOKER' FROM information_schema.EVENTS WHERE EVENT_SCHEMA='" . DB_NAME . "'" );
+		pitr_check( 4 <= count( $owners ) && array( 'pitr_application@%' ) === array_values( array_unique( array_column( $owners, 1 ) ) ) && array( 'INVOKER' ) === array_values( array_unique( array_column( $owners, 2 ) ) ), 'Direct source recovery kept a definer or SQL SECURITY DEFINER from the dump: ' . json_encode( $owners ) );
 		pitr_check( ! file_exists( ABSPATH . '.maintenance' ) && $direct['capture_enabled'] && ! empty( BackupPlus_PITR::config()['enabled'] ) && BackupPlus_PITR::next_scheduled() && ! empty( $direct['pre_restore_chain'] ), 'Direct source recovery did not retain protection and exit maintenance safely.' );
 		unset( $worker );
 		$worker = new BackupPlus_PITR( $config );

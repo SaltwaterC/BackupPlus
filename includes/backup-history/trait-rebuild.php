@@ -161,8 +161,9 @@ trait BackupPlus_Backup_History_Rebuild {
 						}
 
 						foreach ( $files as $entry ) {
-							$filename = $entry['name'];
-							if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $filename, $matches ) ) {
+							$filename = isset( $entry['name'] ) ? $entry['name'] : null;
+							// Remote names become local paths later; anything but a plain archive basename is dropped (BPS-02).
+							if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $filename ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $filename, $matches ) ) {
 								continue;
 							}
 
@@ -438,7 +439,7 @@ trait BackupPlus_Backup_History_Rebuild {
 		// If so, then we compare $remote_files with $backup_nonces_by_filename / $backup_times_by_nonce, and adjust $backup_history
 
 		foreach ( $remote_files as $file => $services ) {
-			if ( ! preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i', $file, $matches ) ) {
+			if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( (string) $file ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $file, $matches ) ) {
 				continue;
 			}
 

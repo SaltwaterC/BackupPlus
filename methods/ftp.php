@@ -343,19 +343,12 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 				}
 				// if (0 !== strpos($path, $ftp_remote_path)) continue;
 				// $path = substr($path, strlen($ftp_remote_path));
-				if ( 0 === strpos( $path, $match ) ) {
-					$results[]['name'] = $path;
-				}
-			} else {
-				if ( '/' == substr( $path, 0, 1 ) ) {
-					$path = substr( $path, 1 );
-				}
-				if ( false !== strpos( $path, '/' ) ) {
-					continue;
-				}
-				if ( 0 === strpos( $path, $match ) ) {
-					$results[]['name'] = $path;
-				}
+			} elseif ( '/' == substr( $path, 0, 1 ) ) {
+				$path = substr( $path, 1 );
+			}
+			// Entries in subdirectories, or with traversing names, must not reach backup history (BPS-02).
+			if ( BackupPlus_Manipulation_Functions::is_safe_basename( $path ) && 0 === strpos( $path, $match ) ) {
+				$results[]['name'] = $path;
 			}
 
 			unset( $dirlist[ $k ] );

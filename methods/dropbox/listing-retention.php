@@ -86,8 +86,8 @@ trait BackupPlus_Dropbox_Listing_Retention {
 					$path = substr( $path, 1 );
 				}
 
-				// Ones in subfolders are not wanted
-				if ( false !== strpos( $path, '/' ) ) {
+				// Ones in subfolders, or with traversing names, are not wanted (BPS-02)
+				if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $path ) ) {
 					continue;
 				}
 

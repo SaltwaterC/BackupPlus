@@ -161,8 +161,14 @@ trait BackupPlus_Admin_Downloads {
 			$backupplus->jobdata_set( 'job_type', 'download' );
 			$backupplus->jobdata_set( 'job_time_ms', $backupplus->job_time_ms );
 
-			// Base name
+			// Base name. History entries can come from remote listings, so check before it is joined to the directory (BPS-02).
 			$file = $files[ $findex ]['name'];
+			if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $file ) ) {
+				return array(
+					'result' => 'error',
+					'code'   => 'invalid_file',
+				);
+			}
 
 			if ( false !== strpos( $file_path, '..' ) ) {
 				BackupPlus_Manipulation_Functions::error_log( "BackupPlus_Admin::do_backupplus_download_backup : invalid file_path: $file_path" );
@@ -339,7 +345,8 @@ trait BackupPlus_Admin_Downloads {
 
 	private function download_status( $timestamp, $type, $findex ) {
 		global $backupplus;
-		$response = array( 'm' => $backupplus->jobdata_get( 'dlmessage_' . $timestamp . '_' . $type . '_' . $findex ) . '<br>' );
+		// The message is a log line that can carry remote file names and provider errors; the browser renders it as HTML.
+		$response = array( 'm' => esc_html( $backupplus->jobdata_get( 'dlmessage_' . $timestamp . '_' . $type . '_' . $findex ) ) . '<br>' );
 		if ( $file = $backupplus->jobdata_get( 'dlfile_' . $timestamp . '_' . $type . '_' . $findex ) ) {
 			if ( 'failed' == $file ) {
 				$response['e']      = __( 'Download failed', 'backupplus' ) . '<br>';

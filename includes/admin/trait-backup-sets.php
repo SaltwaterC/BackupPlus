@@ -131,7 +131,8 @@ trait BackupPlus_Admin_Backup_Sets {
 				}
 
 				foreach ( $files as $file ) {
-					if ( is_file( $backupplus_dir . '/' . $file ) && @unlink( $backupplus_dir . '/' . $file ) ) {
+					// History entries can come from remote listings; never unlink outside the backup directory (BPS-02).
+					if ( BackupPlus_Manipulation_Functions::is_safe_basename( $file ) && is_file( $backupplus_dir . '/' . $file ) && @unlink( $backupplus_dir . '/' . $file ) ) {
 						++$local_deleted;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 					}
 				}
@@ -399,10 +400,10 @@ trait BackupPlus_Admin_Backup_Sets {
 			$noutput = '';
 			foreach ( $messages as $msg ) {
 				if ( is_string( $msg ) ) {
-					$noutput .= '<li><em>' . $msg . '</em></li>';
+					$noutput .= '<li><em>' . esc_html( $msg ) . '</em></li>';
 				} else {
 					if ( empty( $msg['code'] ) || 'file-listing' != $msg['code'] ) {
-						$noutput .= '<li>' . ( empty( $msg['desc'] ) ? '' : $msg['desc'] . ': ' ) . '<em>' . $msg['message'] . '</em></li>';
+						$noutput .= '<li>' . ( empty( $msg['desc'] ) ? '' : esc_html( $msg['desc'] ) . ': ' ) . '<em>' . esc_html( $msg['message'] ) . '</em></li>';
 					}
 					if ( ! empty( $msg['data'] ) ) {
 						$key          = $msg['method'] . '-' . $msg['service_instance_id'];

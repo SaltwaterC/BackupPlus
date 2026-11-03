@@ -97,6 +97,25 @@ final class DropboxTest extends ProviderTestCase {
 		$this->assertFalse( $this->provider->download( 'backup_missing.zip' ), 'Dropbox must fail a missing download' );
 	}
 
+	/** BPS-02: names that would traverse once joined to the backup directory must not be listed. */
+	public function test_listing_drops_names_that_are_not_basenames(): void {
+		$this->authenticate();
+		$this->api->pages = array(
+			'' => array(
+				'code' => 200,
+				'body' => (object) array(
+					'matches'  => array(
+						provider_dropbox_item( '/site/backup_first.zip', 15 ),
+						provider_dropbox_item( '/site/backup_x\\..\\..\\evil.zip', 15 ),
+						provider_dropbox_item( '/site/backup_x..evil.zip', 15 ),
+					),
+					'has_more' => false,
+				),
+			),
+		);
+		$this->assertSame( array( 'backup_first.zip' ), array_column( $this->provider->listfiles(), 'name' ), 'Dropbox must drop listed names that are not basenames' );
+	}
+
 	public function test_search_failures_are_returned(): void {
 		$this->authenticate();
 		$this->paginated_search_results();

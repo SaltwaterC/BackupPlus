@@ -32,6 +32,8 @@ function is_wp_error( $value ) {
 function backupplus_try_include_file( $path, $mode ) {
 	require_once dirname( __DIR__, 2 ) . '/' . $path; }
 
+require_once dirname( __DIR__, 2 ) . '/includes/class-manipulation-functions.php';
+
 class WP_Error {
 	private $code;
 	private $message;

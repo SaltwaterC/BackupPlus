@@ -322,6 +322,12 @@ class BackupPlus_Storage_Methods_Interface {
 
 		global $backupplus;
 
+		// History entries can come from remote listings; never let one name a path outside the backup directory (BPS-02).
+		if ( ! BackupPlus_Manipulation_Functions::is_backup_basename( $file ) ) {
+			$backupplus->log( __( 'Refusing to fetch a remote file whose name is not a backup archive name.', 'backupplus' ), $restore ? 'warning-restore' : 'error' );
+			return false;
+		}
+
 		$backup_history = BackupPlus_Backup_History::get_history();
 
 		$fullpath = $backupplus->backups_dir_location() . '/' . $file;

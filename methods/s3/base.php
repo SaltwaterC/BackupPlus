@@ -784,10 +784,10 @@ abstract class BackupPlus_BackupModule_s3_base extends BackupPlus_BackupModule {
 					continue;
 				}
 				$object['name'] = substr( $object['name'], strlen( $bucket_path ) );
-			} else {
-				if ( ! $include_subfolders && false !== strpos( $object['name'], '/' ) ) {
-					continue;
-				}
+			}
+			// Keys below the prefix that are not plain basenames would become paths outside the backup directory (BPS-02).
+			if ( ! $include_subfolders && ! BackupPlus_Manipulation_Functions::is_safe_basename( $object['name'] ) ) {
+				continue;
 			}
 
 			$result = array( 'name' => $object['name'] );

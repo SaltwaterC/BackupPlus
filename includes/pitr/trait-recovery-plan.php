@@ -183,6 +183,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 
 	public function verify_source_restore( $id, $target, $reader ) {
 		require_once dirname( __DIR__ ) . '/class-pitr-isolation.php';
+		$this->assert_captured( $id );
 		$plan             = $this->verify( $id, $target, $reader );
 		list( $baseline ) = $this->authenticate( $plan, $reader );
 		$this->assert_no_replayed_events( $baseline, isset( $plan['baseline']['manifest']['database_events'] ) ? $plan['baseline']['manifest']['database_events'] : null );
@@ -190,6 +191,8 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 		if ( $plan['database'] !== DB_NAME || empty( $plan['baseline']['manifest']['wordpress_table_prefix'] ) || $plan['baseline']['manifest']['wordpress_table_prefix'] !== $wpdb->prefix ) { throw new RuntimeException( 'Source recovery requires the original database name and WordPress table prefix.' ); }
 		$isolation = new BackupPlus_PITR_Isolation( $this->config, $this->work, $this->root );
 		$this->direct_source_check( $isolation->adapter, $plan );
+		list( $checked ) = $this->guarded_sql( $baseline, $isolation->adapter->engine, array(), $isolation->adapter->query( 'SELECT @@version' )[0][0] );
+		unlink( $checked );
 		return $plan;
 	}
 

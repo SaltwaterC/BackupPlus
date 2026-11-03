@@ -34,7 +34,7 @@ trait BackupPlus_Core_Entities {
 			if ( is_array( $jobdata ) && ! empty( $jobdata['backup_database'] ) && is_array( $jobdata['backup_database'] ) && ! empty( $jobdata['backup_database'][ $dind ] ) && is_array( $jobdata['backup_database'][ $dind ]['dbinfo'] ) && ! empty( $jobdata['backup_database'][ $dind ]['dbinfo']['host'] ) ) {
 				$dbinfo = $jobdata['backup_database'][ $dind ]['dbinfo'];
 				/* translators: %s: Database connection details */
-				$meta .= sprintf( __( 'External database (%s)', 'backupplus' ), $dbinfo['user'] . '@' . $dbinfo['host'] . '/' . $dbinfo['name'] ) . '<br>';
+				$meta .= sprintf( __( 'External database (%s)', 'backupplus' ), esc_html( $dbinfo['user'] . '@' . $dbinfo['host'] . '/' . $dbinfo['name'] ) ) . '<br>';
 			}
 		}
 		/* translators: %s: Database size in MB */
@@ -46,7 +46,7 @@ trait BackupPlus_Core_Entities {
 			$ck_plain = false;
 			if ( isset( $history['checksums'][ $ck ][ $ckey ] ) ) {
 				/* translators: 1: Checksum type, 2: Checksum value */
-				$meta    .= ( ( $meta ) ? ', ' : '' ) . sprintf( __( '%1$s checksum: %2$s', 'backupplus' ), strtoupper( $ck ), $history['checksums'][ $ck ][ $ckey ] );
+				$meta    .= ( ( $meta ) ? ', ' : '' ) . sprintf( __( '%1$s checksum: %2$s', 'backupplus' ), strtoupper( $ck ), esc_html( $history['checksums'][ $ck ][ $ckey ] ) );
 				$ck_plain = true;
 			}
 			if ( isset( $history['checksums'][ $ck ][ $ckey . '.crypt' ] ) ) {
@@ -54,7 +54,7 @@ trait BackupPlus_Core_Entities {
 					$meta .= ' ' . __( '(when decrypted)', 'backupplus' );
 				}
 				/* translators: 1: Checksum type, 2: Checksum value */
-				$meta .= ( ( $meta ) ? ', ' : '' ) . sprintf( __( '%1$s checksum: %2$s', 'backupplus' ), strtoupper( $ck ), $history['checksums'][ $ck ][ $ckey . '.crypt' ] );
+				$meta .= ( ( $meta ) ? ', ' : '' ) . sprintf( __( '%1$s checksum: %2$s', 'backupplus' ), strtoupper( $ck ), esc_html( $history['checksums'][ $ck ][ $ckey . '.crypt' ] ) );
 			}
 		}
 

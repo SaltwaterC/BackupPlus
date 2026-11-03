@@ -73,6 +73,8 @@ function backupplus_js_tree(remote_storage) {
 		// init jstree
 		parent.find('.backupplus_' + self.remote_storage + '_jstree_container').jstree({
 			"core": {
+				// Node names come from archives, the file system and remote storage: render them as text (BPS-04).
+				"force_text": true,
 				"multiple": false,
 				"data": function (nodeid, callback) {
 					backupplus_send_command('get_jstree_directory_nodes', {entity:entity, node:nodeid, instance_id:instance_id}, function(response) {

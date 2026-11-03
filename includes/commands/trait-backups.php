@@ -135,7 +135,7 @@ trait BackupPlus_Commands_Backups {
 		$nonce          = $backup_history[ $backup_key ]['nonce'];
 		$rawbackup      = $backupplus_admin->raw_backup_info( $backup_history, $backup_key, $nonce );
 		return array(
-			'rawbackup' => html_entity_decode( $rawbackup ),
+			'rawbackup' => $rawbackup,
 		);
 	}
 
@@ -173,7 +173,7 @@ trait BackupPlus_Commands_Backups {
 		$rawbackup = $backupplus_admin->raw_backup_info( $history, $data['timestamp'], $data['nonce'], null );
 
 		return array(
-			'rawbackup' => html_entity_decode( $rawbackup ),
+			'rawbackup' => $rawbackup,
 		);
 	}
 

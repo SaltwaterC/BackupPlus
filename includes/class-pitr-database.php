@@ -335,8 +335,9 @@ class BackupPlus_PITR_Database {
 		}
 	}
 
+	/** Client commands other than delimiter and charset are off in binary mode; LOAD DATA LOCAL cannot read files here. */
 	public function import( $path, $database, $unlogged = false ) {
-		$arguments = array( '--binary-mode' );
+		$arguments = array( '--binary-mode', '--local-infile=0', '--default-character-set=utf8mb4' );
 		if ( $unlogged ) {
 			$arguments[] = '--init-command=SET SESSION sql_log_bin=0';
 			$arguments[] = '--skip-reconnect';

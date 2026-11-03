@@ -133,11 +133,63 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 		} finally { fclose( $handle ); }
 	}
 
+	/**
+	 * A rescan imports chains from storage, whose manifests are checked only against files from the same storage.
+	 * Only a chain this site captured, whose index it holds, may replace the source database.
+	 */
+	private function assert_captured( $id ) {
+		if ( ! empty( $this->state['chains'][ $id ]['imported'] ) ) {
+			throw new RuntimeException( 'This recovery chain was found by a storage rescan, so this site cannot confirm that it captured it. Only chains captured by this site can replace its database. Export the point to an isolated recovery server (wp backupplus pitr recover) and restore that export with the ordinary database restore. No database replacement was started.' );
+		}
+	}
+
+	/** The WordPress database account, which owns every restored view, trigger, routine and event. */
+	private function application_account() {
+		global $wpdb;
+		$account = $wpdb->get_var( 'SELECT CURRENT_USER()' );
+		$at      = is_string( $account ) ? strrpos( $account, '@' ) : false;
+		if ( ! $at ) { throw new RuntimeException( 'Could not identify the WordPress database account.' ); }
+		return array( substr( $account, 0, $at ), substr( $account, $at + 1 ) );
+	}
+
+	/** Check the SQL that replaces the database before anything is changed; returns the copy to import and its database options. */
+	private function guarded_sql( $sql, $engine, $tables, $version ) {
+		require_once dirname( __DIR__ ) . '/class-pitr-sql-guard.php';
+		$path    = $this->work . '/guarded-' . bin2hex( random_bytes( 8 ) ) . '.sql';
+		$options = BackupPlus_PITR_SQL_Guard::sanitize(
+			$sql,
+			$path,
+			array(
+				'engine'   => $engine,
+				'database' => DB_NAME,
+				'definer'  => $this->application_account(),
+				'whole'    => ! $tables,
+				'version'  => $version,
+			)
+		);
+		return array( $path, $options );
+	}
+
+	/** Recreate the dropped database with the character set, collation and encryption its dump defined. */
+	private function create_database( $adapter, $options, $unlogged ) {
+		if ( $options['charset'] && $options['collation'] ) {
+			$adapter->query( BackupPlus_SQL::render( 'CREATE DATABASE %i CHARACTER SET %i COLLATE %i', array( DB_NAME, $options['charset'], $options['collation'] ) ), $unlogged );
+		} elseif ( $options['charset'] ) {
+			$adapter->query( BackupPlus_SQL::render( 'CREATE DATABASE %i CHARACTER SET %i', array( DB_NAME, $options['charset'] ) ), $unlogged );
+		} elseif ( $options['collation'] ) {
+			$adapter->query( BackupPlus_SQL::render( 'CREATE DATABASE %i COLLATE %i', array( DB_NAME, $options['collation'] ) ), $unlogged );
+		} else {
+			$adapter->query( BackupPlus_SQL::render( 'CREATE DATABASE %i', array( DB_NAME ) ), $unlogged );
+		}
+		if ( 'Y' === $options['encryption'] ) { $adapter->query( BackupPlus_SQL::render( "ALTER DATABASE %i ENCRYPTION 'Y'", array( DB_NAME ) ), $unlogged ); }
+	}
+
 	/** Exact replacement on the configured source; an interrupted import leaves maintenance active. */
 	public function restore( $id, $target, $recovery_config, $tables, $reader, $isolated, $direct = false, $writers_stopped = false ) {
 		if ( empty( $this->config['source_config'] ) || $this->config['database'] !== DB_NAME ) {
 			throw new RuntimeException( 'PITR restore requires the configured source to be this WordPress database.' );
 		}
+		$this->assert_captured( $id );
 		if ( $direct && $tables ) {
 			throw new RuntimeException( 'Direct source recovery restores the entire database. Selected historical tables require a staged reconstruction.' );
 		}
@@ -190,16 +242,20 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 		}
 		$credential_directory = get_site_option( BackupPlus_Credential_Key_Store::OPTION, '' );
 		$adapter              = $this->database( $this->config, $this->work );
-		$this->assert_wordpress_source( $adapter->source( DB_NAME ), DB_NAME );
+		$current              = $adapter->source( DB_NAME );
+		$this->assert_wordpress_source( $current, DB_NAME );
 		if ( ! $direct && ! empty( $this->config['restore_connection'] ) ) {
 			$target_config                    = $this->config;
 			$target_config['source_config']   = $this->config['restore_connection'];
 			$target_config['capture_account'] = false;
 			$adapter                          = $this->database( $target_config, $this->work );
-			$this->assert_wordpress_source( $adapter->source( DB_NAME ), DB_NAME );
+			$current                          = $adapter->source( DB_NAME );
+			$this->assert_wordpress_source( $current, DB_NAME );
 		}
-		$isolation           = null;
-		$replacement_started = false;
+		// The restore account can change accounts and server settings; the SQL it imports is checked first.
+		list( $sql, $database_options ) = $this->guarded_sql( $sql, $adapter->engine, $tables, $current['server_version'] );
+		$isolation                      = null;
+		$replacement_started            = false;
 		if ( $direct ) {
 			$isolation = new BackupPlus_PITR_Isolation( $this->config, $this->work, $this->root );
 			$adapter   = $isolation->adapter;
@@ -247,8 +303,9 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 				$replacement_started = true;
 				if ( ! $tables ) {
 					$adapter->query( BackupPlus_SQL::render( 'DROP DATABASE %i', array( DB_NAME ) ), $direct );
+					$this->create_database( $adapter, $database_options, $direct );
 				}
-				$adapter->import( $sql, $tables ? DB_NAME : null, $direct );
+				$adapter->import( $sql, DB_NAME, $direct );
 				if ( $direct ) {
 					if ( $logs ) { $adapter->import( $replay_sql, DB_NAME, true ); }
 					$isolation->check( true );

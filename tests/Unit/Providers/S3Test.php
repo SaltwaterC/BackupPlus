@@ -107,6 +107,24 @@ final class S3Test extends ProviderTestCase {
 		$this->assertSame( array(), $this->provider->listfiles(), "$id must handle failed listing responses" );
 	}
 
+	/** BPS-02: keys below the configured prefix must be plain basenames, or they would become paths outside the backup directory. */
+	#[DataProvider( 'providers' )]
+	public function test_listing_below_a_prefix_drops_names_that_are_not_basenames( string $id, string $transport_class ): void {
+		$this->configure( $id, $transport_class );
+		$legit = 'backup_2024-01-01-0000_site_abcdef012345-db.gz';
+		foreach ( array(
+			$legit,
+			'backup_2024-01-01-0000_x/../../../../var/www/html/wp-content/plugins/x/y.php._abcdef012345-db.gz',
+			'backup_2024-01-01-0000_x..y_abcdef012345-db.gz',
+			'backup_2024-01-01-0000_x\\..\\y_abcdef012345-db.gz',
+			"backup_2024-01-01-0000_x\0_abcdef012345-db.gz",
+			'nested/backup_2024-01-01-0000_site_abcdef012345-db.gz',
+		) as $name ) {
+			$this->transport->objects['test-bucket'][ 'site/backups/' . $name ] = 'archive';
+		}
+		$this->assertSame( array( $legit ), array_column( $this->provider->listfiles(), 'name' ), "$id must drop listed keys that are not basenames" );
+	}
+
 	#[DataProvider( 'providers' )]
 	public function test_downloads( string $id, string $transport_class ): void {
 		$this->configure( $id, $transport_class );

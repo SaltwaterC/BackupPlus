@@ -266,6 +266,10 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 		try {
 			$objects = $container_object->list_objects( 0, null, $match );
 			foreach ( $objects as $name ) {
+				// Objects in pseudo-folders, or with traversing names, must not reach backup history (BPS-02).
+				if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $name ) ) {
+					continue;
+				}
 				$result = array( 'name' => $name );
 				try {
 					$object = new BackupPlus_CF_Object( $container_object, $name, true );

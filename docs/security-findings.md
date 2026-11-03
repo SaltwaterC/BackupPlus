@@ -38,10 +38,10 @@ No Critical finding was identified, and nothing was found that an unauthenticate
 | ID | Severity | Status | Area | Title |
 | --- | --- | --- | --- | --- |
 | [BPS-01](#bps-01-oauth-relay-hostname-is-unregistered) | High | Fixed | Remote storage | OAuth relay hostname `auth.backupplusplus.com` is unregistered |
-| [BPS-02](#bps-02-remote-file-names-can-traverse-out-of-the-backup-directory) | Medium | Open | Filesystem | Remote file names can traverse out of the backup directory |
-| [BPS-03](#bps-03-pitr-source-restore-runs-untrusted-sql-with-server-level-privileges) | Medium | Open | Database | PITR source restore runs untrusted SQL with server-level privileges |
-| [BPS-04](#bps-04-stored-xss-from-remote-storage-and-archive-contents) | Medium | Open | XSS | Stored XSS from remote storage and archive contents |
-| [BPS-05](#bps-05-dropbox-and-google-drive-oauth-callbacks-lack-state-validation) | Medium | Partly fixed | Auth / CSRF | Dropbox and Google Drive OAuth callbacks lack `state` validation |
+| [BPS-02](#bps-02-remote-file-names-can-traverse-out-of-the-backup-directory) | Medium | Fixed | Filesystem | Remote file names can traverse out of the backup directory |
+| [BPS-03](#bps-03-pitr-source-restore-runs-untrusted-sql-with-server-level-privileges) | Medium | Fixed | Database | PITR source restore runs untrusted SQL with server-level privileges |
+| [BPS-04](#bps-04-stored-xss-from-remote-storage-and-archive-contents) | Medium | Fixed | XSS | Stored XSS from remote storage and archive contents |
+| [BPS-05](#bps-05-dropbox-and-google-drive-oauth-callbacks-lack-state-validation) | Medium | Fixed | Auth / CSRF | Dropbox and Google Drive OAuth callbacks lack `state` validation |
 | [BPS-06](#bps-06-backup-uploads-can-store-php-files) | Low | Open | Filesystem | Backup uploads can store PHP files |
 | [BPS-07](#bps-07-backup-directory-setting-accepts-any-location) | Low | Open | Filesystem | Backup directory setting accepts any location |
 | [BPS-08](#bps-08-mysqldump-password-file-is-world-readable-and-injectable) | Low | Open | Secrets / exec | mysqldump password file is world-readable and injectable |
@@ -95,7 +95,7 @@ The pasted code is protected by PKCE: a code obtained by anyone else cannot be r
 
 ### BPS-02: Remote file names can traverse out of the backup directory
 
-**Severity:** Medium. **Status:** Open. **Confirmed.**
+**Severity:** Medium. **Status:** Fixed. **Confirmed.** The locations below refer to the code as reviewed.
 
 **Location:** `includes/backup-history/trait-rebuild.php:165` and `:440` (`rebuild()` name pattern), `methods/s3/base.php:781-786` (and the identical code in `methods/s3generic/` and `methods/dreamobjects/`), `includes/class-storage-methods-interface.php:327` (`get_remote_file()`), `includes/core/trait-remote-transfer.php:242-252` (`chunked_download()`), `includes/admin/trait-downloads.php:165-194`, `includes/restorer/trait-run.php:254-267`.
 
@@ -114,9 +114,19 @@ The newer providers built on `BackupPlus_Remote_Storage_Module` (Azure, Backblaz
 * S3, S3-generic, DreamObjects, OpenStack, Cloud Files, Dropbox and FTP listings drop names containing a path separator after removing the configured prefix.
 * A test lists a remote name containing `../` and verifies it is neither added to history nor written outside the backup directory.
 
+**Resolution.** Remote names are validated where they enter history and again at every sink that joins a history name to the backup directory. Every criterion above is met:
+
+* `BackupPlus_Manipulation_Functions::is_safe_basename()` accepts a single path component only: no `/` or `\`, no NUL or other control character, and no `..`. `is_backup_basename()` additionally requires the backup-archive or PITR-artifact name pattern (`BACKUP_NAME_PATTERN`, `PITR_NAME_PATTERN`).
+* `rebuild()` applies `is_safe_basename()` and the archive pattern to every listed remote name, in both the listing loop and the pass that adds remote-only sets.
+* `get_remote_file()` and `chunked_download()`, which write remote bytes locally, require `is_backup_basename()`. The local-only sinks require `is_safe_basename()`, because history also holds foreign archives found in the backup directory, whose names follow no BackupPlus pattern. Those sinks are the download handler (before the `delete` and spool stages), the restorer, the restore pre-check and backup set deletion (`includes/admin/trait-backup-sets.php`, which also unlinked history names and was not listed above).
+* The S3, S3-compatible and DreamObjects listings apply the same rule below a bucket sub-path as at the bucket root. OpenStack, Cloud Files (both modules), FTP and Dropbox drop names that are not plain basenames, as does Google Drive, whose file titles may contain `/`.
+* `tests/Unit/Backup/RemoteFileNamesTest.php` covers the validator. The S3, Swift and Dropbox provider tests list traversing, backslash, NUL and sub-folder names and expect only the plain archive. `scripts/check-remote-file-names.php` runs in WordPress as part of `make test`: the shipped S3 module lists a sub-path holding the exploit name through a fake transport. The script checks that a remote rescan adds only the plain archive, and that history poisoned before the fix is refused by `get_remote_file()`, `chunked_download()`, the download handler and its `delete` stage, and set deletion. The legitimate archive still downloads, and a file outside the backup directory at the traversal target survives. Each layer was confirmed to fail that script when reverted on its own.
+
+`fopen()` resolves a missing directory followed by `..` textually, as noted above, but `is_file()` and `unlink()` go through `stat()` and need the directory to exist. The script therefore creates it before checking the deletion sinks.
+
 ### BPS-03: PITR source restore runs untrusted SQL with server-level privileges
 
-**Severity:** Medium. **Status:** Open. **Confirmed.**
+**Severity:** Medium. **Status:** Fixed. **Confirmed.** The locations below refer to the code as reviewed.
 
 **Location:** `includes/pitr/trait-history.php:199-270` (`rescan()`), `includes/class-pitr-storage.php:184` (default encryption `none`), `includes/pitr/trait-recovery-plan.php:135-174` (`authenticate()`), `includes/pitr/trait-recovery.php:44` and `:249-251`, `includes/class-pitr-database.php:338-348` (`import()`), `includes/class-pitr-isolation.php:73`.
 
@@ -136,9 +146,17 @@ Per `docs/binary-log-backups.md`, the restore account holds CREATE USER, SUPER o
 * Statements that change accounts, grants or global server state (`CREATE/ALTER/DROP USER`, `GRANT`, `REVOKE`, `SET GLOBAL`, `SET PASSWORD`, `INSTALL PLUGIN` and similar) cause the restore to fail before anything is dropped.
 * A test restores a planted chain containing each of these statements and verifies that the restore is refused and the database is untouched.
 
+**Resolution.** Source restore now refuses chains the site did not capture, and checks and rewrites the SQL it imports before anything is changed. Every criterion above is met:
+
+* `restore()` (direct and staged) and `verify_source_restore()` refuse chains marked `imported`, which covers every chain added by a rescan. The refusal points to `wp backupplus pitr recover`, which still exports such a chain to an isolated recovery server for the ordinary importer. The manifest-authentication alternative was not implemented. A key kept with the backups would not authenticate anything. A key kept only on the site is lost in the disaster that makes a rescan necessary.
+* The restore imports the checked baseline or reconstructed export, and the replay SQL, with `--database=DB_NAME`. `import()` also passes `--local-infile=0` and `--default-character-set=utf8mb4` next to `--binary-mode`. The dump's own `CREATE DATABASE` and `USE` statements are dropped. A whole-database restore recreates the database from fixed templates with the character set, collation and encryption that the dump's `CREATE DATABASE` declared.
+* `BackupPlus_PITR_SQL_Guard` (`includes/class-pitr-sql-guard.php`) rewrites the DEFINER of every view, trigger, routine and event to the WordPress connection's `CURRENT_USER()`, and removes any DEFINER or SQL SECURITY clause from the dump. Views are created with `SQL SECURITY INVOKER`, and each procedure and function is followed by `ALTER ... SQL SECURITY INVOKER`. Triggers and events have no SQL SECURITY clause; they run as the WordPress account.
+* The guard runs in `restore_locked()` before isolation, the pre-restore snapshot, maintenance mode and `DROP DATABASE`. It also runs in `verify_source_restore()`. It accepts only what `mysqldump` and `mariadb-dump` write for one database: definitions, `DROP`, `LOCK`/`UNLOCK TABLES`, `ALTER TABLE ... DISABLE/ENABLE KEYS`, `INSERT`/`REPLACE ... VALUES` with literal values only, MariaDB `SETVAL`, and session `SET` of plain values or variables saved from the same setting. Any other statement fails the restore, as does any name qualified with another database. The scanner splits statements exactly as the `mysql` client does in binary mode, including its `delimiter` command and the version-dependent `/*!` and `/*M!` comments, and refuses input on which a server could disagree. That covers `ANSI_QUOTES`, `NO_BACKSLASH_ESCAPES`, multibyte client character sets such as `gbk`, nested comments, optimizer hints and `--` followed by a control character. The binary-log replay SQL is not passed through the guard: `mysqlbinlog` produces it from row events, and account-administration events are already neutralised in the private replay copies.
+* `tests/Unit/Pitr/PitrSqlGuardTest.php` checks the rewrites and dropped statements on real MySQL 8.4 and MariaDB 11.4 dumps, with row data copied byte for byte. It also checks that 52 privileged statements and 24 splitting attacks are refused and leave no checked copy behind. In the native matrix, `scripts/check-pitr-planted.php` builds a chain from the real baseline for each statement in the criterion, plus a write to `mysql.db` and a `USE mysql`. After a rescan, direct restore, staged restore and verification refuse each chain as not captured by this site. The same chains, marked as captured, are refused by the SQL check. In both cases the application tables, `mysql.user`, the planted grants, `max_connections`, the maintenance file and the chain index are unchanged, and no pre-restore snapshot is taken. `scripts/check-pitr.php` also refuses a rescanned genuine chain, exports it in isolation, and checks after a direct source restore that every view, routine, trigger and event belongs to the WordPress account with invoker security.
+
 ### BPS-04: Stored XSS from remote storage and archive contents
 
-**Severity:** Medium. **Status:** Open. **Confirmed** for sinks (a), (b), (f) and (g); traced for the others.
+**Severity:** Medium. **Status:** Fixed. **Confirmed** for sinks (a), (b), (f) and (g); traced for the others. The locations below refer to the code as reviewed.
 
 **Location and description.** File names accepted by `rebuild()` (see BPS-02) may contain `<`, `>`, quotes and spaces, and are written to history unescaped. Archive entry names, dump header comments and remote error messages are also attacker-influenced. They reach these sinks without escaping:
 
@@ -161,9 +179,23 @@ Per `docs/binary-log-backups.md`, the restore account holds CREATE USER, SUPER o
 * BPS-02's name validation is in place, so history names cannot contain markup.
 * A test renders each sink with a name containing `<img src=x onerror=...>` and asserts the markup is escaped.
 
+**Resolution.** Every sink escapes its data where it is added to the output, and no layer decodes the result again. Every criterion above is met, with one difference in how the name criterion is met, noted below:
+
+* (a) `show_raw_backups()` passes the `var_dump()` output through `esc_html()`, and escapes the backup directory listing (the entry name, and the log-download link) as well.
+* (b) `raw_backup_info()` escapes the label, key, date, service names and the `print_r()` of the history entry and job data, and returns the markup as is. It no longer wraps the result in `esc_attr()`, which kept existing entities and so could not protect the markup once it was decoded; nothing used that return value as an attribute. `rawbackup_history` and `always_keep_this_backup` no longer call `html_entity_decode()`, and `ready-tools.js` no longer decodes through `textarea.innerHTML`. The checksum values and external-database details that `get_entity_row()` prints in the same view are escaped too; they were not in the list above, and the check found the checksum value to be a further sink.
+* (c) The download status message, which carries the log line, is escaped by `download_status()`.
+* (d) The restore preflight escapes the file names in its errors and warnings, the unknown-source label and the PHP messages collected during the scan. The database scan escapes the old site URL, the backup label, the skipped and missing tables, the character sets and collations, the version strings from the dump header and the creating-version string.
+* (e) The restore progress labels escape the table and routine names (`js/backupplus-admin-restore.js` and the minified source that the shipped build is generated from, `assets-src/js/backupplus-admin-restore.min.js`).
+* (f) Every jstree instance (the zip browser, the two exclusion pickers and the remote folder picker) sets `core.force_text`, so names from archives, `readdir()` and remote folder listings are rendered as text.
+* (g) Fixed with BPS-01.
+* (h) The rescan messages escape the method description and message, including plain-string messages.
+* `show_admin_warning()` still does not escape; its callers were audited. Those that include data from outside the site (the Dropbox account name and the Google Drive display name and error text) already escape it, and the rest pass fixed or translated text.
+* BPS-02's name validation rejects separators, `..` and control characters, but not `<`, `>` or quotes, which a legitimate site name could contain. History names can therefore still contain markup, and the criterion that they cannot is met by escaping at every sink instead.
+* `scripts/check-xss-sinks.php` runs in WordPress as part of `make test`. It renders the raw backup info (and both commands that return it), the raw history dump and the directory listing, the download status and failure list, the restore preflight errors and warnings, the database scan and the rescan messages with a name, label, service, checksum and dump header carrying `<img src=x onerror=alert(1)>`. It asserts that no tag is present and that the escaped text is, and that the raw backup info is not escaped twice. Reverting the escaping of the download message, the rescan messages, the skipped tables, the old site URL, the preflight warnings and the raw history dump each fails that script. `tests/Unit/Backup/AdminMarkupEscapingTest.php` checks the browser side: every script that creates a jstree sets `force_text` (including the built bundle), the decoding steps are gone, and the progress labels escape the dump's names in both the source and the minified build.
+
 ### BPS-05: Dropbox and Google Drive OAuth callbacks lack `state` validation
 
-**Severity:** Medium. **Status:** Partly fixed. **Confirmed.** Dropbox is fixed by the BPS-01 change: it has no OAuth callback any more, a pasted code is accepted only through the nonce-checked `backupplus_ajax` dispatcher or WP-CLI, and it is redeemable only with the PKCE verifier the site generated. The Google Drive `success` state and its token-accepting path are removed. The Google Drive `token` and `revoke` states remain open as described below.
+**Severity:** Medium. **Status:** Fixed. **Confirmed.** The locations below refer to the code as reviewed.
 
 **Location:** `methods/dropbox/oauth.php:36-48,76-102`, `methods/googledrive/oauth.php:11-52,192-218,244-306`, `includes/core/trait-wordpress-hooks.php:155-200`.
 
@@ -185,6 +217,15 @@ The precondition is the instance ID (`s-` plus an MD5 of random values, `include
 * Google Drive `success`, `token` and `revoke` all require a valid pending state; `revoke` additionally requires a nonce because it is not an OAuth return.
 * CSRF comparison failures do not log the expected value.
 * Tests cover an empty state, a reused state, a state for another user and an expired state.
+
+**Resolution.** Dropbox no longer has an OAuth callback, and Google Drive uses the OneDrive/pCloud state scheme. Every criterion above is met:
+
+* Dropbox was fixed with BPS-01. Its `doit` action only starts a PKCE authorization. The administrator pastes the code that Dropbox displays, which is accepted only through the nonce-checked `backupplus_ajax` dispatcher or WP-CLI, and it can be redeemed only with the PKCE verifier the site generated. The `CSRF` and `code` options and the code that compared and logged them are gone.
+* Google Drive's `authorization_url()` (`methods/googledrive/oauth.php`) creates the state `token:<instance>:<256 random bits>` when the nonce-checked `doit` action starts a sign-in. It stores only its SHA-256 hash, with the current user and an expiry ten minutes ahead, in that instance's options. The state is added after the `backupplus_googledrive_auth_params` filter runs, so the filter cannot remove it. The hash is hidden from the settings templates.
+* `complete_oauth()` handles `state=token`. It removes the stored state before any check, so each state can be used once and a failed attempt ends the pending sign-in. It then requires a non-empty string state, the same user, an unexpired entry and a match by `hash_equals()`. Only then is the code sent to Google. Because the hash covers the instance ID, a state is valid only for the instance that issued it. A refusal is logged without the expected value.
+* `state=revoke` is no longer handled. Nothing linked to it. Revocation happens only through the nonce-checked `doit` (before a new sign-in) and `deauth` actions.
+* The `success` state no longer accepts tokens (BPS-01). It now only shows the result of a sign-in that has just been completed, a step that has no OAuth state of its own. The redirect to it carries a WordPress nonce, and the notice is shown only when the nonce is valid.
+* `tests/Unit/Providers/GoogleDriveOAuthStateTest.php` covers an empty, missing or non-string state; a reused state; a state for another user; an expired state; a forged state and the old instance-only format; a wrong state followed by the right one; this instance's state replayed for another instance; and a return without a code. In each case it checks that nothing is sent to Google and that the existing connection is unchanged. It also checks that the state is not stored in clear, that a filter cannot remove it, that `state=revoke` leaves the connection in place and that the success notice requires the nonce. Reverting the hash, user, expiry or single-use check, the state parameter or the nonce check each fails that test.
 
 ### BPS-06: Backup uploads can store PHP files
 
@@ -457,8 +498,8 @@ These areas were reviewed and no issue was found. They are listed so that future
 ## Suggested order of work
 
 1. BPS-01: remove or replace the master-app relay. This is the only finding that an outside party can exploit at scale without any access to a site.
-2. BPS-02 and the name validation part of BPS-04: one validation function for remote file names, applied in `rebuild()` and at every sink.
+2. BPS-02 and BPS-04: one validation function for remote file names, applied in `rebuild()` and at every sink, and every sink that renders such a name escaping it.
 3. BPS-05: port the OneDrive/pCloud state scheme to Dropbox and Google Drive.
 4. BPS-03: restrict PITR source restore to locally captured or authenticated chains and strip DEFINER.
-5. The remaining BPS-04 sinks, then BPS-06 to BPS-11.
+5. BPS-06 to BPS-11.
 6. BPS-19, so that the SQL rule is enforced as strictly as it is stated.

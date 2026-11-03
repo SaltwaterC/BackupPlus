@@ -34,6 +34,8 @@ function wp_parse_args( $args, $defaults = array() ) {
 	return array_merge( $defaults, $args ); }
 function wp_create_nonce( $action ) {
 	return 'test-nonce'; }
+function wp_verify_nonce( $nonce, $action ) {
+	return 'test-nonce' === $nonce ? 1 : false; }
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error; }
 function backupplus_try_include_file( $path, $mode ) {
@@ -170,6 +172,7 @@ class Provider_Test_Job {
 		$this->data['removed_warnings'][] = $key; }
 }
 
+require_once BACKUPPLUS_DIR . '/includes/class-manipulation-functions.php';
 require_once BACKUPPLUS_DIR . '/includes/class-storage-provider-factory.php';
 require_once BACKUPPLUS_DIR . '/includes/class-storage-methods-interface.php';
 

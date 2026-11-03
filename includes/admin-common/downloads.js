@@ -35,6 +35,8 @@ function zip_files_jstree(entity, timestamp, type, findex) {
 
 	jQuery('#backupplus_zip_files_jstree').jstree({
 		"core": {
+			// Node names come from archives, the file system and remote storage: render them as text (BPS-04).
+			"force_text": true,
 			"multiple": false,
 			"data": function (nodeid, callback) {
 				backupplus_send_command('get_jstree_directory_nodes', {entity:entity, node:nodeid, timestamp:timestamp, type:type, findex:findex}, function(response) {

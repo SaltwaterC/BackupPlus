@@ -396,6 +396,7 @@ final class PitrStateTest extends PitrTestCase {
 
 	public function test_download_requests_route_each_index_to_its_chain_file(): void {
 		$this->publish_chain();
+		require_once dirname( __DIR__, 3 ) . '/includes/class-manipulation-functions.php';
 		require_once dirname( __DIR__, 3 ) . '/includes/admin/trait-downloads.php';
 		define( 'BACKUPPLUS_SET_TIME_LIMIT', 30 );
 		$admin                 = new class {

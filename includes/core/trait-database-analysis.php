@@ -152,9 +152,9 @@ trait BackupPlus_Core_Database_Analysis {
 				$processing_routine = false;
 				if ( '' == $old_siteurl && preg_match( '/^\# Backup of: (http(.*))$/', $buffer, $matches ) ) {
 					$old_siteurl = untrailingslashit( $matches[1] );
-					$mess[]      = __( 'Backup of:', 'backupplus' ) . ' ' . htmlspecialchars( $old_siteurl ) .
+					$mess[]      = __( 'Backup of:', 'backupplus' ) . ' ' . esc_html( $old_siteurl ) .
 								/* translators: %s: Old WP versions */
-								( ( ! empty( $old_wp_version ) ) ? ' ' . sprintf( __( '(version: %s)', 'backupplus' ), $old_wp_version ) : '' );
+								( ( ! empty( $old_wp_version ) ) ? ' ' . sprintf( __( '(version: %s)', 'backupplus' ), esc_html( $old_wp_version ) ) : '' );
 					// Check for should-be migration
 					if ( untrailingslashit( site_url() ) != $old_siteurl ) {
 						if ( ! $migration_warning ) {
@@ -168,7 +168,7 @@ trait BackupPlus_Core_Database_Analysis {
 								$actual_siteurl_parsed     = parse_url( site_url() );
 								if ( ( stripos( $old_siteurl_parsed['host'], 'www.' ) === 0 && stripos( $actual_siteurl_parsed['host'], 'www.' ) !== 0 ) || ( stripos( $old_siteurl_parsed['host'], 'www.' ) !== 0 && stripos( $actual_siteurl_parsed['host'], 'www.' ) === 0 ) ) {
 									/* translators: 1: Old site URL, 2: Current site URL */
-									$powarn = sprintf( __( 'The website address in the backup set (%1$s) is slightly different from that of the site now (%2$s).', 'backupplus' ), $old_siteurl, site_url() ) . ' ' .
+									$powarn = sprintf( __( 'The website address in the backup set (%1$s) is slightly different from that of the site now (%2$s).', 'backupplus' ), esc_html( $old_siteurl ), esc_html( site_url() ) ) . ' ' .
 											__( 'This is not expected to be a problem for restoring the site, as long as visits to the former address still reach the site.', 'backupplus' ) . ' ';
 								} else {
 									$powarn = '';
@@ -194,7 +194,7 @@ trait BackupPlus_Core_Database_Analysis {
 									sprintf(
 									/* translators: %s: Old and current site URLs */
 										__( 'This backup set is from a different site (%s). After restoring, check whether any site URLs need to be updated.', 'backupplus' ),
-										htmlspecialchars( $old_siteurl . ' / ' . untrailingslashit( site_url() ) )
+										esc_html( $old_siteurl . ' / ' . untrailingslashit( site_url() ) )
 									),
 									$old_siteurl,
 									$res
@@ -276,7 +276,7 @@ trait BackupPlus_Core_Database_Analysis {
 					// echo '<strong>'.__('Old table prefix:', 'backupplus').'</strong> '.htmlspecialchars($old_table_prefix).'<br>';
 				} elseif ( empty( $info['label'] ) && preg_match( '/^\# Label: (.*)$/', $buffer, $matches ) ) {
 					$info['label'] = $matches[1];
-					$mess[]        = __( 'Backup label:', 'backupplus' ) . ' ' . htmlspecialchars( $info['label'] );
+					$mess[]        = __( 'Backup label:', 'backupplus' ) . ' ' . esc_html( $info['label'] );
 				} elseif ( $gathering_siteinfo && preg_match( '/^\# Site info: (\S+)$/', $buffer, $matches ) ) {
 					if ( 'end' == $matches[1] ) {
 						$gathering_siteinfo = false;
@@ -413,7 +413,7 @@ trait BackupPlus_Core_Database_Analysis {
 				$warn[]                        = sprintf(
 					/* translators: %s: Character sets */
 					_n( "The database server that this WordPress site is running on doesn't support the character set (%s) which you are trying to import.", "The database server that this WordPress site is running on doesn't support the character sets (%s) which you are trying to import.", count( $db_unsupported_charset_unique ), 'backupplus' ),
-					implode( ', ', $db_unsupported_charset_unique )
+					esc_html( implode( ', ', $db_unsupported_charset_unique ) )
 				) . ' ' .
 				__( 'Choose a character set supported by the target database before continuing; changing it may alter how imported text is stored.', 'backupplus' );
 				$db_supported_character_sets = array_keys( $db_supported_character_sets );
@@ -457,7 +457,7 @@ trait BackupPlus_Core_Database_Analysis {
 				$warn[]                        = sprintf(
 					/* translators: %s: Collations */
 					_n( "The database server that this WordPress site is running on doesn't support the collation (%s) used in the database which you are trying to import.", "The database server that this WordPress site is running on doesn't support multiple collations (%s) used in the database which you are trying to import.", count( $db_unsupported_collate_unique ), 'backupplus' ),
-					implode( ', ', $db_unsupported_collate_unique )
+					esc_html( implode( ', ', $db_unsupported_collate_unique ) )
 				) . ' ' .
 				__( 'You can choose another suitable collation instead and continue with the restoration (at your own risk).', 'backupplus' );
 				$similar_type_collate = '';
@@ -568,11 +568,11 @@ trait BackupPlus_Core_Database_Analysis {
 
 				if ( count( $missing_tables ) > 0 && empty( $info['database_coverage']['partial'] ) && ( empty( $info['database_coverage']['mode'] ) || 'selected' !== $info['database_coverage']['mode'] ) ) {
 					/* translators: %s: Missing WordPress tables */
-					$warn[] = sprintf( __( 'This database backup is missing core WordPress tables: %s', 'backupplus' ), implode( ', ', $missing_tables ) );
+					$warn[] = sprintf( __( 'This database backup is missing core WordPress tables: %s', 'backupplus' ), esc_html( implode( ', ', $missing_tables ) ) );
 				}
 				if ( count( $skipped_tables ) > 0 ) {
 					/* translators: %s: Excluded database tables */
-					$warn[] = sprintf( __( 'This database backup has the following non-core WordPress database tables excluded: %s', 'backupplus' ), implode( ', ', $skipped_tables ) );
+					$warn[] = sprintf( __( 'This database backup has the following non-core WordPress database tables excluded: %s', 'backupplus' ), esc_html( implode( ', ', $skipped_tables ) ) );
 				}
 			}
 		} else {
@@ -604,14 +604,14 @@ trait BackupPlus_Core_Database_Analysis {
 					/* translators: %s: BackupPlus or UpdraftPlus version */
 					__( 'This backup was created on a previous BackupPlus or UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes).', 'backupplus' ) . ' ' .
 					__( 'Therefore it is advised that you take a fresh backup on the source site, using a later version.', 'backupplus' ),
-					$info['created_by_version']
+					esc_html( $info['created_by_version'] )
 				);
 			} else {
 				$warn[] = sprintf(
 					/* translators: %s: BackupPlus or UpdraftPlus version */
 					__( 'This backup was created on a previous BackupPlus or UpdraftPlus version (%s) which did not correctly backup tables with composite primary keys (such as the term_relationships table, which records tags and product attributes).', 'backupplus' ) . ' ' .
 					__( 'Therefore, affected tables on the current site which already exist will not be replaced by default, to avoid corrupting them (you can review this in the list of tables below).', 'backupplus' ),
-					$info['created_by_version']
+					esc_html( $info['created_by_version'] )
 				);
 			}
 		}

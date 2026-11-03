@@ -55,6 +55,8 @@ final class ScriptsTest extends ScriptTestCase {
 			array( 'check-incremental-restore.php' ),
 			array( 'check-backup-schedule.php' ),
 			array( 'check-storage-limits.php' ),
+			array( 'check-remote-file-names.php' ),
+			array( 'check-xss-sinks.php' ),
 			array( 'check-temporary-cleanup.php' ),
 			array( 'check-jobdata-write-volume.php' ),
 			array( 'check-credential-storage.php' ),

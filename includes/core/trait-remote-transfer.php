@@ -239,6 +239,12 @@ trait BackupPlus_Core_Remote_Transfer {
 
 		try {
 
+			// Storage modules pass names from history or listings; only an archive basename may be written locally (BPS-02).
+			if ( ! BackupPlus_Manipulation_Functions::is_backup_basename( $file ) ) {
+				$this->log( 'Refusing to download a file whose name is not a backup archive basename', 'error' );
+				return false;
+			}
+
 			$fullpath     = $this->backups_dir_location() . '/' . $file;
 			$start_offset = file_exists( $fullpath ) ? filesize( $fullpath ) : 0;
 

@@ -170,6 +170,36 @@ class BackupPlus_Manipulation_Functions {
 	}
 
 	/**
+	 * Whether a name is a single path component that is safe to join to a local directory: no separator of any platform, no
+	 * control character (NUL included) and no "..", so that it can neither leave the directory nor be truncated.
+	 *
+	 * @param Mixed $name - the candidate file name
+	 *
+	 * @return Boolean
+	 */
+	public static function is_safe_basename( $name ) {
+		return is_string( $name ) && '' !== $name && '.' !== $name && false === strpos( $name, '..' ) && ! preg_match( '/[\/\\\\\x00-\x1f\x7f]/', $name );
+	}
+
+	/**
+	 * Whether a name is a safe basename of a BackupPlus archive or PITR artifact: the only names that may be fetched from remote
+	 * storage into the backup directory. Remote listings are not trusted to produce them (BPS-02).
+	 *
+	 * @param Mixed $name - the candidate file name
+	 *
+	 * @return Boolean
+	 */
+	public static function is_backup_basename( $name ) {
+		return self::is_safe_basename( $name ) && ( preg_match( self::BACKUP_NAME_PATTERN, $name ) || preg_match( self::PITR_NAME_PATTERN, $name ) );
+	}
+
+	/** The names of backup archives, as matched when rebuilding backup history. */
+	const BACKUP_NAME_PATTERN = '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i';
+
+	/** The names of PITR artifacts; the same as BackupPlus_PITR_Manifest::filename(). */
+	const PITR_NAME_PATTERN = '/\Abackup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_(?:(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json)(?:\.crypt)?|locator\.json|point\.tar)\z/D';
+
+	/**
 	 * Convert a number of bytes into a suitable textual string
 	 *
 	 * @param Integer $size - the number of bytes
