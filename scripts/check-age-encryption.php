@@ -7,9 +7,10 @@ function age_wp_expect( $condition, $message ) {
 	if ( ! $condition ) {
 		throw new RuntimeException( $message );
 	} }
-$gate      = bin2hex( random_bytes( 12 ) );
-$option    = 'backupplus_age_test_' . $gate;
-$directory = wp_upload_dir()['basedir'] . '/' . $option;
+$gate   = bin2hex( random_bytes( 12 ) );
+$option = 'backupplus_age_test_' . $gate;
+// A folder directly in wp-content: the backup directory may not be inside uploads (BPS-07), and the web server must reach it.
+$directory = WP_CONTENT_DIR . '/' . $option;
 mkdir( $directory, 0700 );
 $mu_file = WPMU_PLUGIN_DIR . '/' . $option . '.php';
 $user    = wp_insert_user(
@@ -20,7 +21,12 @@ $user    = wp_insert_user(
 	)
 );
 age_wp_expect( ! is_wp_error( $user ), 'Disposable administrator must be created' );
-$tickets          = array();
+$tickets = array();
+// Starting a restore leaves the restore marker and its continuation token (BPS-11) in the database despite the interception below
+$restore_markers = array();
+foreach ( array( 'backupplus_restore_in_progress', 'backupplus_restore_continuation' ) as $name ) {
+	$restore_markers[ $name ] = get_site_option( $name, null );
+}
 $original_user    = get_current_user_id();
 $original_cookies = $_COOKIE;
 $remove_tree      = function ( $path ) use ( &$remove_tree ) {
@@ -37,9 +43,16 @@ $remove_tree      = function ( $path ) use ( &$remove_tree ) {
 	}
 	rmdir( $path );
 };
-$cleanup          = function () use ( $option, $directory, $mu_file, $user, &$tickets, $remove_tree ) {
+$cleanup          = function () use ( $option, $directory, $mu_file, $user, &$tickets, $remove_tree, $restore_markers ) {
 	foreach ( $tickets as $ticket ) {
 		delete_transient( 'backupplus_age_restore_' . $ticket );
+	}
+	foreach ( $restore_markers as $name => $value ) {
+		if ( null === $value ) {
+			delete_site_option( $name );
+		} else {
+			update_site_option( $name, $value );
+		}
 	}
 	foreach ( array( '', '_phrase', '_history', '_cron' ) as $suffix ) {
 		delete_option( $option . $suffix );
@@ -149,46 +162,43 @@ try {
 		age_wp_expect( ! is_wp_error( $response ), 'The HTTP test endpoint must be reachable' );
 		return $response;
 	};
-	$url     = admin_url( 'admin-post.php' );
-	$base    = array(
-		'action'   => 'backupplus_decrypt_database',
-		'_wpnonce' => wp_create_nonce( 'backupplus-decrypt-database' ),
-		'file'     => $encrypted,
-	);
+	// Decryption itself, which restore uses after the browser upload and the CLI uses directly: every identity
+	// recovers the exact database into a private staging file, and failures leave nothing behind.
+	$staged = function () use ( $directory ) {
+		return glob( $directory . '/decrypt_*.tmp' );
+	};
 	foreach ( $fixture['keys'] as $key ) {
-		$response = $request(
-			$url,
-			$base + array(
-				'identity'       => $key['identity'],
-				'key_passphrase' => $fixture['passphrase'],
-			)
-		);
-		age_wp_expect( 200 === wp_remote_retrieve_response_code( $response ) && $plain === wp_remote_retrieve_body( $response ), 'Each identity must download the exact decrypted database over POST' );
-		age_wp_expect( false !== strpos( wp_remote_retrieve_header( $response, 'cache-control' ), 'no-store' ) && '' !== wp_remote_retrieve_header( $response, 'content-disposition' ), 'Decrypted downloads must be attachments with no-store headers' );
+		$decrypted = BackupPlus_Encryption::decrypt( $directory . '/' . $encrypted, $key['identity'], true, $fixture['passphrase'] );
+		age_wp_expect( is_array( $decrypted ) && $plain === file_get_contents( $decrypted['fullpath'] ) && $name === $decrypted['basename'], 'Each identity must decrypt the exact database' );
+		age_wp_expect( 0600 === ( fileperms( $decrypted['fullpath'] ) & 0777 ), 'Decrypted plaintext must be staged in an owner-only file' );
+		unlink( $decrypted['fullpath'] );
 	}
-	$wrong = $request(
-		$url,
-		$base + array(
-			'identity'       => $fixture['keys']['ed25519']['identity'],
-			'key_passphrase' => 'sentinel-wrong-password',
-		)
-	);
-	foreach ( array( $fixture['passphrase'], 'sentinel-wrong-password', $fixture['keys']['ed25519']['identity'] ) as $secret ) {
-		age_wp_expect( false === strpos( wp_remote_retrieve_body( $wrong ), $secret ), 'Failed HTTP decryption must not disclose secrets' );
-	}
-	age_wp_expect( '' === wp_remote_retrieve_header( $wrong, 'content-disposition' ), 'Failed decryption must not publish an attachment' );
-	$sentinel = 'configured-fallback-passphrase-sentinel';
-	update_option( $option . '_phrase', $sentinel );
-	$fallback = $request( $url, $base );
-	age_wp_expect( 400 === wp_remote_retrieve_response_code( $fallback ) && false === strpos( wp_remote_retrieve_body( $fallback ), $sentinel ), 'A failed configured fallback must not disclose the saved passphrase' );
-	$direct        = 'direct-backup-passphrase-sentinel';
-	$failed_direct = $request( $url, $base + array( 'key' => $direct ) );
-	age_wp_expect( 400 === wp_remote_retrieve_response_code( $failed_direct ) && false === strpos( wp_remote_retrieve_body( $failed_direct ), $direct ), 'A failed explicitly supplied backup passphrase must not be echoed' );
+	age_wp_expect( false === BackupPlus_Encryption::decrypt( $directory . '/' . $encrypted, $fixture['keys']['ed25519']['identity'], true, 'sentinel-wrong-password' ) && ! $staged(), 'A wrong key passphrase must fail and leave no plaintext' );
+	// An age archive never falls back to the legacy passphrase format, whatever passphrase is saved.
+	update_option( $option . '_phrase', 'configured-fallback-passphrase-sentinel' );
+	age_wp_expect( false === BackupPlus_Encryption::decrypt( $directory . '/' . $encrypted, 'configured-fallback-passphrase-sentinel', true ) && ! $staged(), 'A passphrase must not decrypt an age archive' );
 	update_option( $option . '_phrase', '' );
-	$denied = array( $request( $url, array_merge( $base, array( '_wpnonce' => 'invalid' ) ) ), $request( $url, $base, 'GET' ), $request( $url, array_merge( $base, array( 'file' => '../outside.gz.crypt' ) ) ) );
-	foreach ( $denied as $response ) {
-		age_wp_expect( wp_remote_retrieve_response_code( $response ) >= 400 && '' === wp_remote_retrieve_header( $response, 'content-disposition' ), 'Nonce, method and filename guards must reject requests' );
+
+	// The server-side decrypt endpoint is gone (BPS-20): no request can hand the server a private key and get plaintext back.
+	$url  = admin_url( 'admin-post.php' );
+	$base = array(
+		'action'         => 'backupplus_decrypt_database',
+		'_wpnonce'       => wp_create_nonce( 'backupplus-decrypt-database' ),
+		'file'           => $encrypted,
+		'identity'       => $fixture['keys']['ed25519']['identity'],
+		'key_passphrase' => $fixture['passphrase'],
+	);
+	age_wp_expect( false === has_action( 'admin_post_backupplus_decrypt_database' ) && false === has_action( 'admin_post_nopriv_backupplus_decrypt_database' ), 'No server-side decryption endpoint may be registered' );
+	$anonymous = $headers;
+	unset( $anonymous['Cookie'] );
+	foreach ( array( $request( $url, $base ), $request( $url, $base, 'GET' ), $request( $url, $base, 'POST', $anonymous ) ) as $response ) {
+		$body = wp_remote_retrieve_body( $response );
+		age_wp_expect( 400 === wp_remote_retrieve_response_code( $response ) && '' === wp_remote_retrieve_header( $response, 'content-disposition' ) && false === strpos( $body, $plain ), 'admin-post.php must have no handler for the removed decryption endpoint (HTTP ' . wp_remote_retrieve_response_code( $response ) . ')' );
+		foreach ( array( $fixture['passphrase'], $fixture['keys']['ed25519']['identity'] ) as $secret ) {
+			age_wp_expect( false === strpos( $body, $secret ), 'A request to the removed endpoint must not echo secrets' );
+		}
 	}
+	age_wp_expect( ! $staged(), 'A request to the removed endpoint must not decrypt anything' );
 	$old_get = $request(
 		add_query_arg(
 			array(
@@ -202,10 +212,6 @@ try {
 		'GET'
 	);
 	age_wp_expect( 405 === wp_remote_retrieve_response_code( $old_get ), 'Legacy GET decryption links must reject downloads' );
-	$anonymous = $headers;
-	unset( $anonymous['Cookie'] );
-	$response = $request( $url, $base, 'POST', $anonymous );
-	age_wp_expect( wp_remote_retrieve_response_code( $response ) >= 400 && '' === wp_remote_retrieve_header( $response, 'content-disposition' ), 'Anonymous requests must not decrypt files' );
 
 	// Simulate the browser protocol over real HTTP. Only plaintext crosses the upload API.
 	$browser_prepare = function ( $entities ) use ( $request, $timestamp, $directory, $fixture, &$tickets ) {
@@ -431,6 +437,13 @@ try {
 				'nonce'         => '0123456789ab',
 				'service'       => 'none',
 				'native'        => true,
+				// As the backup records them: the browser restore checks each downloaded archive against these.
+				'checksums'     => array(
+					'sha256' => array(
+						'uploads0.crypt' => $backupplus->jobdata_get( 'sha256-uploads0.crypt' ),
+						'uploads1.crypt' => $backupplus->jobdata_get( 'sha256-uploads1.crypt' ),
+					),
+				),
 			);
 			update_option( $option . '_history', array( $timestamp => $history ) );
 			BackupPlus_Backup_History::rebuild( false );
@@ -451,12 +464,9 @@ try {
 				'GET'
 			);
 			age_wp_expect( 200 === wp_remote_retrieve_response_code( $raw_download ) && file_get_contents( $directory . '/' . $files['uploads'][0] ) === wp_remote_retrieve_body( $raw_download ), 'Ordinary downloads must preserve the encrypted ZIP exactly' );
-			$key_fields = array(
-				'identity'       => $fixture['keys']['ed25519']['identity'],
-				'key_passphrase' => $fixture['passphrase'],
-			);
-			$download   = $request( $url, array_merge( $base, array( 'file' => $files['uploads'][0] ), $key_fields ) );
-			age_wp_expect( 200 === wp_remote_retrieve_response_code( $download ) && $zip_bytes[0] === wp_remote_retrieve_body( $download ) && ( $modern ? 'application/zstd' : 'application/zip' ) === wp_remote_retrieve_header( $download, 'content-type' ), 'Manual POST decryption must return the authenticated archive with its compression MIME type' );
+			$decrypted = BackupPlus_Encryption::decrypt( $directory . '/' . $files['uploads'][0], $fixture['keys']['ed25519']['identity'], true, $fixture['passphrase'] );
+			age_wp_expect( is_array( $decrypted ) && $zip_bytes[0] === file_get_contents( $decrypted['fullpath'] ) && $parts[0] === $decrypted['basename'], 'Decryption must return the authenticated archive under its compressed name' );
+			unlink( $decrypted['fullpath'] );
 			$restore                          = array( 'backupplus_restore' => array( 'uploads' ) );
 			$restore['backupplus_age_ticket'] = $browser_prepare( array( 'uploads' ) );
 			$preflight                        = $request(
@@ -571,11 +581,6 @@ try {
 		remove_filter( 'pre_update_option', $job_write, PHP_INT_MAX );
 		remove_filter( 'pre_option', $job_read, PHP_INT_MAX );
 	}
-	$subscriber = new WP_User( $user );
-	$subscriber->set_role( 'subscriber' );
-	$response = $request( $url, $base );
-	age_wp_expect( wp_remote_retrieve_response_code( $response ) >= 400 && '' === wp_remote_retrieve_header( $response, 'content-disposition' ), 'Subscribers must not decrypt files' );
-	$subscriber->set_role( 'administrator' );
 	ob_start();
 	BackupPlus_Database_Encryption::render();
 	BackupPlus_Database_Encryption::restore_fields();
@@ -597,7 +602,7 @@ try {
 		'Restore key fields must be requested only for backup sets with encrypted archives'
 	);
 	age_wp_expect( false !== strpos( $html, 'github:USERNAME' ) && false !== strpos( $html, 'id="backupplus-age-identity"' ) && false === strpos( $html, $fixture['passphrase'] ), 'Settings and restore forms must expose public recipient and request-only key controls' );
-	echo "PASS: real WordPress age settings, backup writer, POST downloads, authorization, restore preflight and private-key-free DB continuation\n";
+	echo "PASS: real WordPress age settings, backup writer, decryption, no server-side decryption endpoint, restore preflight and private-key-free DB continuation\n";
 } finally {
 	wp_set_current_user( $original_user );
 	$_COOKIE = $original_cookies;

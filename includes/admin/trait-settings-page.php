@@ -59,14 +59,8 @@ trait BackupPlus_Admin_Settings_Page {
 			$this->delete_old_dirs_go();
 			return;
 		}
-		$request_subaction = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'subaction' );
-		if ( ! empty( $_REQUEST['action'] ) && 'backupplus_broadcastaction' == $_REQUEST['action'] && ! empty( $request_subaction ) ) {
-			$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
-			$nonce         = ( empty( $request_nonce ) ) ? '' : $request_nonce;
-			if ( ! wp_verify_nonce( $nonce, 'backupplus-credentialtest-nonce' ) ) {
-				die( 'Security check' );
-			}
-			do_action( $request_subaction );
+		if ( ! empty( $_REQUEST['action'] ) && 'backupplus_searchreplace' === $_REQUEST['action'] ) {
+			$this->run_search_replace_request();
 			return;
 		}
 		$error             = BackupPlus_Manipulation_Functions::fetch_superglobal( 'get', 'error' );
@@ -532,24 +526,21 @@ trait BackupPlus_Admin_Settings_Page {
 			'value' => function_exists( 'gzopen' ) && function_exists( 'gzread' ) && function_exists( 'gzwrite' ) ? __( 'Yes', 'backupplus' ) : __( 'No', 'backupplus' ),
 		);
 
-		// PITR client discovery uses PATH, the configured client directory, and these standard locations.
-		$native_binary_dirs = array( '/usr/bin', '/usr/local/bin', '/bin', '/usr/local/mysql/bin' );
-		$path_environment   = getenv( 'PATH' );
-		if ( is_string( $path_environment ) ) {
-			$native_binary_dirs = array_merge( $native_binary_dirs, explode( PATH_SEPARATOR, $path_environment ) );
-		}
-		$pitr_binary_dir = defined( 'BACKUPPLUS_PITR_BIN_DIRECTORY' ) ? BACKUPPLUS_PITR_BIN_DIRECTORY : apply_filters( 'backupplus_pitr_bin_directory', '' );
-		if ( is_string( $pitr_binary_dir ) && '' !== $pitr_binary_dir ) {
-			$native_binary_dirs[] = $pitr_binary_dir;
-		}
+		// PITR client discovery uses the configured client directory, PATH and the standard locations, with the same checks (BPS-20).
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
+		$pitr_binary_dir      = defined( 'BACKUPPLUS_PITR_BIN_DIRECTORY' ) ? BACKUPPLUS_PITR_BIN_DIRECTORY : apply_filters( 'backupplus_pitr_bin_directory', '' );
+		$native_binary_dirs   = BackupPlus_Executables::directories( $pitr_binary_dir );
 		$mysqldump_candidates = defined( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE' ) ? explode( ',', BACKUPPLUS_MYSQLDUMP_EXECUTABLE ) : array();
+		$mysqldump_configured = BackupPlus_Executables::configured( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE' );
+		$configured_directory = '' !== (string) $pitr_binary_dir ? BackupPlus_Executables::trusted_directory( $pitr_binary_dir, true ) : false;
 		foreach ( $mysqldump_candidates as $candidate ) {
-			if ( is_string( $candidate ) && '' !== $candidate ) {
-				$native_binary_dirs[] = dirname( $candidate );
+			$directory = is_string( $candidate ) && '' !== $candidate ? BackupPlus_Executables::trusted_directory( dirname( $candidate ), $mysqldump_configured ) : false;
+			if ( false !== $directory ) {
+				$native_binary_dirs[] = $directory;
 			}
 		}
-		$native_binary_dirs = array_values( array_unique( array_filter( $native_binary_dirs, 'strlen' ) ) );
-		$find_native_binary = static function ( $name, $explicit_paths = array() ) use ( $native_binary_dirs ) {
+		$native_binary_dirs = array_values( array_unique( $native_binary_dirs ) );
+		$find_native_binary = static function ( $name, $explicit_paths = array() ) use ( $native_binary_dirs, $mysqldump_configured, $configured_directory ) {
 			$filenames = array( $name );
 			if ( '.exe' !== strtolower( substr( $name, -4 ) ) ) {
 				$filenames[] = $name . '.exe';
@@ -561,7 +552,9 @@ trait BackupPlus_Admin_Settings_Page {
 				}
 			}
 			foreach ( $candidates as $candidate ) {
-				if ( is_string( $candidate ) && is_file( $candidate ) && is_executable( $candidate ) ) {
+				// The same rule as the backup itself: only what the site owner configured may be writable by PHP
+				$owner_may_write = ( $mysqldump_configured && in_array( $candidate, $explicit_paths, true ) ) || ( false !== $configured_directory && realpath( dirname( $candidate ) ) === $configured_directory );
+				if ( BackupPlus_Executables::trusted_binary( $candidate, $owner_may_write ) ) {
 					return $candidate;
 				}
 			}
@@ -624,20 +617,6 @@ trait BackupPlus_Admin_Settings_Page {
 			);
 		}
 
-		// HTTP Get test
-		$site_info_data['http_get'] = array(
-			'label'   => 'HTTP Get: ',
-			'value'   => '<input id="backupplus_httpget_uri" type="text" class="call-action"> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_httpget_go">' . __( 'Fetch', 'backupplus' ) . '</a> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_httpget_gocurl">' . __( 'Fetch', 'backupplus' ) . ' (Curl)</a><p id="backupplus_httpget_results"></p>',
-			'is_html' => true,
-		);
-
-		// Call WordPress action
-		$site_info_data['wp_action'] = array(
-			'label'   => __( 'Call WordPress action:', 'backupplus' ),
-			'value'   => '<input id="backupplus_callwpaction" type="text" class="call-action"> <a href="' . esc_url( BackupPlus::get_current_clean_url() ) . '" id="backupplus_callwpaction_go">' . __( 'Call', 'backupplus' ) . '</a><div id="backupplus_callwpaction_results"></div>',
-			'is_html' => true,
-		);
-
 		// Raw backup history and rescan
 		$site_info_data['raw_backup'] = array(
 			'label'   => '',
@@ -646,6 +625,18 @@ trait BackupPlus_Admin_Settings_Page {
 		);
 
 		return $site_info_data;
+	}
+
+	/**
+	 * Run the Advanced Tools search / replace form. This replaces a generic broadcast that ran whatever action the request
+	 * named (BPS-20): only the search / replace action runs here, and only for a manager with the nonce, sent by POST.
+	 */
+	private function run_search_replace_request() {
+		$request_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'nonce' );
+		if ( ! BackupPlus_Options::user_can_manage() || ! is_string( $request_nonce ) || ! wp_verify_nonce( $request_nonce, 'backupplus-credentialtest-nonce' ) ) {
+			die( 'Security check' );
+		}
+		do_action( 'backupplus_adminaction_searchreplace' );
 	}
 
 	public function settings_advanced_tools( $return_instead_of_echo = false, $pass_through = array() ) {

@@ -190,8 +190,67 @@ class BackupPlus_Manipulation_Functions {
 	 * @return Boolean
 	 */
 	public static function is_backup_basename( $name ) {
-		return self::is_safe_basename( $name ) && ( preg_match( self::BACKUP_NAME_PATTERN, $name ) || preg_match( self::PITR_NAME_PATTERN, $name ) );
+		// The same names as an upload may have (BPS-06): a listing must not place a file the web server would run or render
+		return self::is_safe_basename( $name ) && ! preg_match( self::EXECUTABLE_NAME_PATTERN, $name ) && ( preg_match( self::BACKUP_NAME_PATTERN, $name ) || preg_match( self::PITR_NAME_PATTERN, $name ) );
 	}
+
+	/**
+	 * Classify the name of a file uploaded into the backup directory (BPS-06). The name must be a plain basename: a backup log,
+	 * a BackupPlus archive with one of its archive extensions, or an archive that a backupplus_accept_archivename entry
+	 * recognises with an archive extension. A dot-separated part that a web server may execute, such as ".php.", is refused
+	 * anywhere in the name, so that an Apache handler that matches inner extensions cannot run an upload either.
+	 *
+	 * @param Mixed $name   - the candidate file name
+	 * @param Array $accept - backupplus_accept_archivename entries, each with a 'pattern' and a 'desc'
+	 *
+	 * @return Array|Boolean - false if the name is refused; otherwise 'kind' (log, backup or foreign), 'entity' (the archive
+	 *                         entity of a backup) and 'desc' (the tool that created a foreign archive)
+	 */
+	public static function upload_name( $name, $accept = array() ) {
+		if ( ! self::is_safe_basename( $name ) || preg_match( self::EXECUTABLE_NAME_PATTERN, $name ) ) {
+			return false;
+		}
+		if ( preg_match( self::LOG_NAME_PATTERN, $name ) ) {
+			return array(
+				'kind'   => 'log',
+				'entity' => '',
+				'desc'   => '',
+			);
+		}
+		if ( preg_match( self::BACKUP_NAME_PATTERN, $name, $matches ) ) {
+			// The pattern also matches names without an extension, which rescans tolerate but uploads do not.
+			return empty( $matches[5] ) ? false : array(
+				'kind'   => 'backup',
+				'entity' => $matches[3],
+				'desc'   => '',
+			);
+		}
+		if ( ! preg_match( self::FOREIGN_ARCHIVE_EXTENSION_PATTERN, $name ) || ! is_array( $accept ) ) {
+			return false;
+		}
+		foreach ( $accept as $acc ) {
+			if ( is_array( $acc ) && isset( $acc['pattern'], $acc['desc'] ) && preg_match( '/' . $acc['pattern'] . '/i', $name ) ) {
+				return array(
+					'kind'   => 'foreign',
+					'entity' => '',
+					'desc'   => (string) $acc['desc'],
+				);
+			}
+		}
+		return false;
+	}
+
+	/** The names of backup logs. */
+	const LOG_NAME_PATTERN = '/\Alog\.[a-f0-9]{12}\.txt\z/iD';
+
+	/**
+	 * A dot-separated name part that web servers commonly execute or interpret, or that browsers render as a document. A
+	 * compression suffix such as .gz is served as a content encoding, so an inner .html part still sets the type.
+	 */
+	const EXECUTABLE_NAME_PATTERN = '/\.(?:php[0-9]*|phtml|pht|phar|phps|inc|s?html?|xht(?:ml)?|svgz?|xml|xsl|cgi|fcgi|pl|py|rb|sh|asp|aspx|jsp|htaccess|htpasswd|user\.ini)(?=\.|\z)/i';
+
+	/** The extensions accepted for an uploaded archive of another backup tool. */
+	const FOREIGN_ARCHIVE_EXTENSION_PATTERN = '/\.(?:zip|tar|tgz|gz|bz2|zst|sql|crypt)\z/iD';
 
 	/** The names of backup archives, as matched when rebuilding backup history. */
 	const BACKUP_NAME_PATTERN = '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-([\-a-z]+)([0-9]+)?(\.(zip|zip\.crypt|gz|gz\.crypt|tar\.zst|tar\.zst\.crypt|sql\.zst|sql\.zst\.crypt))?$/i';

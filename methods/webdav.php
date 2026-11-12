@@ -107,6 +107,9 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 		}
 		$options = $this->normalise_options( null === $options ? $this->get_options() : $options );
 		$client  = BackupPlus_WebDAV_Client::open( $options, $tls );
+		if ( $saved_options && ! is_wp_error( $client ) && $client->plaintext() ) {
+			$this->log( 'The connection uses plain HTTP: the WebDAV credentials and backup data are sent unencrypted. Choose HTTPS in the WebDAV settings if the server supports it.' );
+		}
 		if ( $saved_options && ! is_wp_error( $client ) ) {
 			$this->set_storage( $client );
 		}
@@ -253,6 +256,8 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 				'https://' => 'HTTPS',
 				'http://'  => 'HTTP',
 			),
+			'plaintext_warning_label'    => __( 'Warning', 'backupplus' ),
+			'webdav_plaintext_warning'   => __( 'HTTP sends your WebDAV password and backups unencrypted, so anyone on the network path can read them. Choose HTTPS unless the server is only reachable over a trusted private network.', 'backupplus' ),
 			'input_host_label'           => __( 'WebDAV server', 'backupplus' ),
 			'input_host_placeholder'     => 'cloud.example.com',
 			'input_port_label'           => __( 'Port (optional)', 'backupplus' ),
@@ -281,9 +286,10 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 				<th><label for="{{get_template_input_attribute_value "id" "<?php echo esc_attr( $field ); ?>"}}">{{input_<?php echo esc_html( $field ); ?>_label}}:</label></th>
 				<td>
 				<?php if ( 'webdav' === $field ) { ?>
-					<select data-backupplus_settings_test="webdav" id="{{get_template_input_attribute_value "id" "webdav"}}" name="{{get_template_input_attribute_value "name" "webdav"}}">
+					<select data-backupplus_settings_test="webdav" data-backupplus_plaintext_pattern="^http://$" id="{{get_template_input_attribute_value "id" "webdav"}}" name="{{get_template_input_attribute_value "name" "webdav"}}">
 					{{#each input_webdav_option_labels}}<option value="{{@key}}" {{#ifeq @key ../webdav}}selected="selected"{{/ifeq}}>{{this}}</option>{{/each}}
 					</select>
+					<p class="backupplus_plaintext_warning"{{#ifeq "http://" webdav}}{{else}} style="display: none;"{{/ifeq}}><strong>{{plaintext_warning_label}}:</strong> {{webdav_plaintext_warning}}</p>
 					<?php
 				} else {
 					$type = 'pass' === $field ? '{{input_pass_type}}' : ( 'port' === $field ? 'number' : 'text' );

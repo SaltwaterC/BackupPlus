@@ -95,7 +95,9 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 		);
 	}
 
-	protected $use_v4 = false;
+	// Every current endpoint (s3.<region>.dream.io) requires SigV4; get_bucket_access() also forces it for them. SigV2 was only
+	// for objects-us-east-1.dream.io, which was shut down in November 2025.
+	protected $use_v4 = true;
 
 	/**
 	 * Given an S3 object, possibly set the region on it

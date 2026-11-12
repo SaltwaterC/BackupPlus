@@ -84,6 +84,21 @@ The provider uses pCloud's [HTTP/JSON protocol](https://docs.pcloud.com/protocol
 
 Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter PcloudTest` for region selection, folder creation, binary/empty streaming, API-level errors, token encryption policy and consent callbacks.
 
+## S3-compatible storage
+
+**Signature version** selects how requests are signed: SigV4 (the default) or SigV2. Destinations saved before this setting existed have no saved value. They used to keep SigV2 and now use SigV4, like new destinations, because SigV2 is deprecated and many providers no longer accept it. A few older S3-compatible servers only support SigV2; if such a destination stops working after an update, select **SigV2** in its settings and save. A destination without a saved value adds a line to the backup log saying that it uses SigV4. An explicitly selected SigV2 is kept. The `backupplus_s3_signature_version` filter still sets the default for destinations without a saved value. Amazon S3 always uses SigV4, and so does DreamObjects: every current DreamObjects endpoint requires it, and SigV2 was only used for the `objects-us-east-1.dream.io` endpoint, which was shut down in November 2025.
+
+Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter S3Test` for the signature version defaults.
+
+## FTP and WebDAV without encryption
+
+FTP and WebDAV can still connect without encryption, for servers that support nothing else, but the password and the backups then cross the network in clear text.
+
+* New FTP destinations default to **FTPS (explicit TLS)**. A destination saved before the encryption setting existed keeps plain FTP, which is how it has always connected; select FTPS in its settings when the server supports it. Implicit FTPS is not supported.
+* WebDAV defaults to HTTPS. HTTP with Basic or Digest authentication still works.
+
+While **Encryption** is set to **None** (FTP) or **Protocol** to **HTTP** (WebDAV), the settings page shows a warning under that setting, and connecting adds a line to the backup log. The log line never contains the password. Run `.cache/php-tools/vendor/bin/phpunit --testsuite unit --filter '(FtpTest|WebDavTest)'` for the defaults and warnings.
+
 ## Tests and independence
 
 `make test-unit` runs the provider suites automatically. `make test-integration` includes the real HTTPS streaming transport test; it does not require cloud accounts. `make test-wordpress` checks settings, credential lifecycle, individual provider removal and each provider installed on its own. Every provider can be removed by deleting its entry file and its own helper directory; the other providers continue to work.

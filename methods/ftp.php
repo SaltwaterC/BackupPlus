@@ -39,6 +39,42 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		return BackupPlus_FTP_Settings_Importer::normalize( $settings );
 	}
 
+	/**
+	 * Whether the plain FTP notice has been logged by this object.
+	 *
+	 * @var bool
+	 */
+	private $plaintext_logged = false;
+
+	/**
+	 * Settings saved before the encryption setting existed connected over plain FTP. Keep that, rather than applying
+	 * the explicit TLS default for new destinations, so that a working connection does not change on upgrade.
+	 *
+	 * @param Array       $options     - saved settings of one destination
+	 * @param Boolean     $save        - whether to save the options
+	 * @param String|null $instance_id - the instance ID
+	 * @return Boolean|null
+	 */
+	public function set_options( $options, $save = false, $instance_id = null ) {
+		if ( is_array( $options ) && ! isset( $options['encryption'] ) ) {
+			$options['encryption'] = 'none';
+		}
+		return parent::set_options( $options, $save, $instance_id );
+	}
+
+	/**
+	 * Show settings saved before the encryption setting existed as plain FTP, which is how they connect.
+	 *
+	 * @param Array $opts - handlebars template options
+	 * @return Array
+	 */
+	public function transform_options_for_template( $opts ) {
+		if ( is_array( $opts ) && ! isset( $opts['encryption'] ) ) {
+			$opts['encryption'] = 'none';
+		}
+		return parent::transform_options_for_template( $opts );
+	}
+
 
 	/**
 	 * Input and option field mappings with default values and supported contexts.
@@ -50,8 +86,9 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			'default_value' => '',
 			'contexts'      => array( 'option', 'input' ),
 		),
+		// New destinations use explicit TLS. A saved destination without this key predates the setting and keeps plain FTP (set_options()).
 		'encryption' => array(
-			'default_value' => 'none',
+			'default_value' => 'tls',
 			'contexts'      => array( 'option', 'input' ),
 		),
 		'user'       => array(
@@ -106,6 +143,10 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		}
 		if ( 'tls' === $encryption && $disable_ssl ) {
 			return new WP_Error( 'ftp_ssl_disabled', __( 'FTPS requires SSL/TLS. Uncheck the option to disable SSL in the expert settings, then try again.', 'backupplus' ) );
+		}
+		if ( 'none' === $encryption && ! $this->plaintext_logged ) {
+			$this->plaintext_logged = true;
+			$this->log( 'Encryption is set to none: the FTP password and backup data are sent unencrypted. Choose FTPS (explicit TLS) in the FTP settings if the server supports it.' );
 		}
 		if ( ! class_exists( 'BackupPlus_ftp_wrapper' ) ) {
 			backupplus_try_include_file( 'methods/ftp/client.php', 'include_once' );
@@ -218,6 +259,8 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 				'none' => __( 'None (plain FTP)', 'backupplus' ),
 				'tls'  => __( 'FTPS (explicit TLS)', 'backupplus' ),
 			),
+			'plaintext_warning_label'        => __( 'Warning', 'backupplus' ),
+			'ftp_plaintext_warning'          => __( 'Plain FTP sends your password and backups unencrypted, so anyone on the network path can read them. Choose FTPS (explicit TLS) if your server supports it.', 'backupplus' ),
 			'input_user_label'               => __( 'FTP login', 'backupplus' ),
 			'input_user_placeholder'         => __( 'Enter your username', 'backupplus' ),
 			'input_password_label'           => __( 'FTP password', 'backupplus' ),
@@ -524,11 +567,12 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		
 		<tr class="{{get_template_css_classes true}}">
 			<th>{{input_encryption_label}}:</th>
-			<td><select data-backupplus_settings_test="encryption" id="{{get_template_input_attribute_value "id" "encryption"}}" name="{{get_template_input_attribute_value "name" "encryption"}}">
+			<td><select data-backupplus_settings_test="encryption" data-backupplus_plaintext_pattern="^none$" id="{{get_template_input_attribute_value "id" "encryption"}}" name="{{get_template_input_attribute_value "name" "encryption"}}">
 				{{#each input_encryption_option_labels}}
 				<option value="{{@key}}" {{#ifeq @key ../encryption}}selected="selected"{{/ifeq}}>{{this}}</option>
 				{{/each}}
-			</select></td>
+			</select>
+			<p class="backupplus_plaintext_warning"{{#ifeq "none" encryption}}{{else}} style="display: none;"{{/ifeq}}><strong>{{plaintext_warning_label}}:</strong> {{ftp_plaintext_warning}}</p></td>
 		</tr>
 
 		<tr class="{{get_template_css_classes true}}">
@@ -590,7 +634,9 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		}
 
 		$encryption = isset( $posted_settings['encryption'] ) ? $posted_settings['encryption'] : 'none';
-		$ftp        = $this->getFTP( $server, $login, $pass, $nossl, $disable_verify, $use_server_certs, $passive, $encryption );
+		// The settings page already warns about plain FTP, and there is no backup log for a settings test.
+		$this->plaintext_logged = true;
+		$ftp                    = $this->getFTP( $server, $login, $pass, $nossl, $disable_verify, $use_server_certs, $passive, $encryption );
 		if ( is_wp_error( $ftp ) ) {
 			echo esc_html( $ftp->get_error_message() );
 			return;

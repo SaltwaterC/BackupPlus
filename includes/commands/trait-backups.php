@@ -320,6 +320,13 @@ trait BackupPlus_Commands_Backups {
 			return new WP_Error( 'no_backupplus' );
 		}
 
+		// History may hold names written before BPS-02 was fixed: upload, and then delete, only archives in the backup directory
+		$history = BackupPlus_Backup_History::get_history();
+		$set     = isset( $data['use_timestamp'] ) && is_scalar( $data['use_timestamp'] ) && isset( $history[ $data['use_timestamp'] ] ) ? $history[ $data['use_timestamp'] ] : null;
+		if ( ! is_array( $set ) || ! BackupPlus_Backup_History::archive_names_are_safe( $set, $backupplus->get_backupable_file_entities( true ) ) ) {
+			return new WP_Error( 'invalid_backup_set', __( 'This backup set cannot be uploaded: it is missing or names a file outside the backup directory.', 'backupplus' ) );
+		}
+
 		add_filter( 'backupplus_initial_jobdata', array( $backupplus_admin, 'upload_local_backup_jobdata' ), 10, 3 );
 		add_filter( 'backupplus_get_backup_file_basename_from_time', array( $backupplus_admin, 'upload_local_backup_name' ), 10, 3 );
 

@@ -301,8 +301,6 @@ trait BackupPlus_Admin_Assets {
 					'uploaderror'                          => __( 'Upload error:', 'backupplus' ),
 					'notdba'                               => __( 'Use a BackupPlus encrypted archive ending in .sql.zst.crypt, .tar.zst.crypt, .gz.crypt or .zip.crypt.', 'backupplus' ),
 					'uploaderr'                            => __( 'Upload error', 'backupplus' ),
-					'followlink'                           => __( 'Decrypt and download the backup archive to your computer.', 'backupplus' ),
-					'thiskey'                              => __( 'This decryption key will be attempted:', 'backupplus' ),
 					'unknownresp'                          => __( 'Unknown server response:', 'backupplus' ),
 					'ukrespstatus'                         => __( 'Unknown server response status:', 'backupplus' ),
 					'uploaded'                             => __( 'The file was uploaded.', 'backupplus' ),

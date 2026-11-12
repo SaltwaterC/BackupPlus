@@ -281,4 +281,113 @@ final class BackupSourcesTest extends TestCase {
 		);
 		$this->assertFileDoesNotExist( $this->directory . '/outside/replaced', 'Restore cannot follow destination symlinks.' );
 	}
+
+	/** A staged custom source archive whose manifest names $path as the source directory. */
+	private function stage( string $id, string $path ): string {
+		$working = $this->directory . '/stage-' . bin2hex( random_bytes( 3 ) );
+		mkdir( $working . '/' . $id, 0775, true );
+		file_put_contents( $working . '/' . $id . '/payload.txt', 'restored' );
+		$manifest = array(
+			'source'  => array(
+				'path' => $path,
+				'kind' => 'directory',
+			),
+			'version' => 2,
+			'type'    => $id,
+			'deleted' => array(),
+		);
+		file_put_contents( $working . '/backupplus-manifest.json', json_encode( $manifest ) );
+		return $working;
+	}
+
+	/** History for one custom source recorded at $path. */
+	private function history( string $id, string $path ): array {
+		return array(
+			'file_sources' => array(
+				$id => array(
+					'path' => $path,
+					'kind' => 'directory',
+				),
+			),
+		);
+	}
+
+	public function test_restore_writes_to_the_destination_recorded_in_history(): void {
+		$recorded = $this->directory . '/recorded';
+		$id       = BackupPlus_Backup_Sources::source_id( $recorded );
+		BackupPlus_Source_Restore::restore( $this->stage( $id, $recorded . '/' ), $id, $this->history( $id, $recorded ), array(), false );
+		$this->assertSame( 'restored', file_get_contents( $recorded . '/payload.txt' ), 'A manifest matching history restores to the recorded destination.' );
+	}
+
+	public function test_restore_aborts_when_the_archive_names_a_different_destination(): void {
+		$recorded = $this->directory . '/recorded';
+		$forged   = $this->directory . '/forged';
+		$id       = BackupPlus_Backup_Sources::source_id( $recorded );
+		$working  = $this->stage( $id, $forged );
+		foreach ( array( array(), array( 'backupplus_source_destinations' => array( $id => $this->directory . '/override' ) ) ) as $options ) {
+			$this->assertRejects(
+				function () use ( $working, $id, $recorded, $options ) {
+					BackupPlus_Source_Restore::restore( $working, $id, $this->history( $id, $recorded ), $options, false );
+				},
+				'A manifest path that differs from history aborts the restore.'
+			);
+		}
+		foreach ( array( $forged, $recorded, $this->directory . '/override' ) as $path ) {
+			$this->assertFileDoesNotExist( $path, 'An aborted restore writes nothing.' );
+		}
+	}
+
+	public function test_restore_honours_the_administrator_override(): void {
+		$recorded = $this->directory . '/recorded';
+		$override = $this->directory . '/override';
+		$id       = BackupPlus_Backup_Sources::source_id( $recorded );
+		BackupPlus_Source_Restore::restore( $this->stage( $id, $recorded ), $id, $this->history( $id, $recorded ), array( 'backupplus_source_destinations' => array( $id => $override ) ), false );
+		$this->assertSame( 'restored', file_get_contents( $override . '/payload.txt' ), 'The override replaces the recorded destination.' );
+		$this->assertFileDoesNotExist( $recorded, 'The recorded destination is untouched when overridden.' );
+	}
+
+	public function test_restore_without_recorded_source_requires_an_override(): void {
+		$forged  = $this->directory . '/forged';
+		$id      = BackupPlus_Backup_Sources::source_id( $forged );
+		$working = $this->stage( $id, $forged );
+		$this->assertRejects(
+			function () use ( $working, $id ) {
+				BackupPlus_Source_Restore::restore( $working, $id, array(), array(), false );
+			},
+			'An archive alone cannot choose the destination.'
+		);
+		$this->assertRejects(
+			function () use ( $id ) {
+				BackupPlus_Source_Restore::preflight( array( $id => true ), array(), array() );
+			},
+			'Preflight requires a recorded destination or an override.'
+		);
+		$this->assertFileDoesNotExist( $forged, 'Nothing is written without a recorded destination or an override.' );
+	}
+
+	public function test_archive_metadata_does_not_replace_a_recorded_source(): void {
+		$recorded = $this->directory . '/recorded';
+		$id       = BackupPlus_Backup_Sources::source_id( $recorded );
+		$archive  = $this->directory . '/archive.zip';
+		$zip      = new \ZipArchive();
+		$zip->open( $archive, \ZipArchive::CREATE );
+		$zip->addFromString(
+			'backupplus-manifest.json',
+			json_encode(
+				array(
+					'type'   => $id,
+					'source' => array(
+						'path' => $this->directory . '/forged',
+						'kind' => 'directory',
+					),
+				)
+			)
+		);
+		$zip->close();
+		$history = $this->history( $id, $recorded );
+		$this->assertSame( $history, BackupPlus_Backup_Sources::archive_metadata( $history, $id, $archive ), 'A downloaded archive cannot rewrite the recorded source.' );
+		$recovered = BackupPlus_Backup_Sources::archive_metadata( array(), $id, $archive );
+		$this->assertSame( $this->directory . '/forged', $recovered['archive_sources'][ $id ]['path'], 'An unrecorded source is still recovered from the archive, as a suggestion.' );
+		$this->assertArrayNotHasKey( 'file_sources', $recovered, 'A source read from the archive is never taken as recorded.' );
+	}
 }

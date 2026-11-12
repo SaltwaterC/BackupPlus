@@ -140,4 +140,41 @@ final class NtfyTest extends ProviderTestCase {
 			'Credentials in the server URL are refused'
 		);
 	}
+
+	/** BPS-20: an http server keeps working, but every notification over it is logged, without the topic or token. */
+	public function test_plain_http_is_sent_and_logged_without_the_topic_or_token(): void {
+		$this->assertTrue( BackupPlus_Ntfy::notify( 'Title', 'Body' ) );
+		$this->assertSame( array(), $this->job->logs, 'An https server must not log the plaintext notice' );
+
+		BackupPlus_Options::$options['backupplus_ntfy']['server'] = 'HTTP://10.0.0.5:8080';
+		$this->assertTrue( BackupPlus_Ntfy::notify( 'Title', 'Body' ), 'An http server must keep working' );
+		$this->assertSame( 'http://10.0.0.5:8080', strtolower( $this->posts[1]['url'] ) );
+		$this->assertSame( 'Bearer tk_secret', $this->posts[1]['args']['headers']['Authorization'] );
+		$this->assertCount( 1, $this->job->logs );
+		$this->assertStringContainsString( 'access token are sent unencrypted', $this->job->logs[0][0] );
+		$this->assertStringNotContainsString( 'tk_secret', $this->job->logs[0][0] );
+		$this->assertStringNotContainsString( 'backups', $this->job->logs[0][0] );
+
+		BackupPlus_Options::$options['backupplus_ntfy']['token'] = '';
+		BackupPlus_Ntfy::notify( 'Title', 'Body' );
+		$this->assertStringContainsString( 'the notification is sent unencrypted', $this->job->logs[1][0] );
+	}
+
+	/** BPS-20: the settings page warns about http server addresses, as saved or as typed. */
+	public function test_plaintext_detection(): void {
+		foreach ( array( 'http://ntfy.example.test', 'HTTP://10.0.0.5:8080', ' http://x' ) as $server ) {
+			$this->assertTrue( BackupPlus_Ntfy::plaintext( $server ), "$server is plain HTTP" );
+		}
+		foreach ( array( 'https://ntfy.sh', '', null, 'ntfy.example.test', 'https://http.example.test' ) as $server ) {
+			$this->assertFalse( BackupPlus_Ntfy::plaintext( $server ), var_export( $server, true ) . ' is not plain HTTP' );
+		}
+	}
+
+	/** BPS-20: the suggested topic is long, random and valid, so that it can be used on a public server as it is. */
+	public function test_suggested_topics_are_random_and_valid(): void {
+		$topic = BackupPlus_Ntfy::suggested_topic();
+		$this->assertMatchesRegularExpression( '/\Abackupplus-[0-9a-f]{32}\z/', $topic );
+		$this->assertNotSame( $topic, BackupPlus_Ntfy::suggested_topic() );
+		$this->assertSame( $topic, BackupPlus_Ntfy::sanitize( array( 'topic' => $topic ) )['topic'], 'The suggestion must be a valid topic' );
+	}
 }

@@ -9,6 +9,15 @@ class BackupPlus_Incremental_Backups {
 	/** Identify the source, exclusions, encryption and destination of a chain. */
 	public static function configuration( $entities, $services, $instances, $credentials ) {
 		global $backupplus;
+		// The hash is kept in the backup history, and so in every database backup. It covers the
+		// credentials in their stored envelopes, never as plaintext that could be guessed offline
+		// (BPS-10). Saving unchanged credentials keeps their envelopes, so only a credential
+		// change or a key rotation starts a new chain.
+		foreach ( array_keys( $credentials ) as $option ) {
+			if ( class_exists( 'BackupPlus_Credential_Storage' ) && BackupPlus_Credential_Storage::handles( $option ) ) {
+				$credentials[ $option ] = BackupPlus_Options::get_stored_backupplus_option( $option );
+			}
+		}
 		$configuration = array();
 		$paths         = $backupplus->get_backupable_file_entities( true );
 		sort( $entities );

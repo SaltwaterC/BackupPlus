@@ -61,6 +61,11 @@ class BackupPlus_WebDAV_Client {
 		return $client;
 	}
 
+	/** Whether requests use plain HTTP, which sends the credentials and backup data unencrypted. */
+	public function plaintext() {
+		return 0 === strpos( $this->url, 'http://' );
+	}
+
 	/** Preserve component settings and accept legacy URL-only settings. */
 	public static function normalise_options( $options ) {
 		$options  = is_array( $options ) ? $options : array();

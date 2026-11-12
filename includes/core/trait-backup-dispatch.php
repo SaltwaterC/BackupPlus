@@ -22,7 +22,8 @@ trait BackupPlus_Core_Backup_Dispatch {
 			$timestamp = time();
 		}
 		if ( false === $nonce ) {
-			$nonce = substr( md5( time() . wp_rand() ), 20 );
+			// 12 hexadecimal characters, as backup file names expect; random, because the job ID names log files and archives (BPS-11)
+			$nonce = bin2hex( random_bytes( 6 ) );
 		}
 		$this->backup_time = $timestamp;
 		$this->file_nonce  = apply_filters( 'backupplus_incremental_backup_file_nonce', $nonce );

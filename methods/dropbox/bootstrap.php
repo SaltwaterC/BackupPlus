@@ -9,7 +9,7 @@ require_once __DIR__ . '/Dropbox2/Exception.php';
 require_once __DIR__ . '/Dropbox2/OAuth/Storage/Encrypter.php';
 require_once __DIR__ . '/token-migration.php';
 
-foreach ( array( 'upgrade', 'upgrade_restored', 'rotate', 'verify' ) as $operation ) {
+foreach ( array( 'upgrade', 'upgrade_restored', 'rotate', 'retire', 'verify' ) as $operation ) {
 	add_action( 'backupplus_credentials_' . $operation, array( 'BackupPlus_Dropbox_Token_Migration', $operation ) );
 }
 add_filter(
@@ -18,3 +18,5 @@ add_filter(
 		return $found || false !== strpos( serialize( BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) ), 'bpcred:' );
 	}
 );
+// Saved jobs hold a copy of the Dropbox settings inside their own envelope, which key maintenance re-encrypts as a whole
+add_filter( 'backupplus_credentials_job_snapshot', array( 'BackupPlus_Dropbox_Token_Migration', 'job_snapshot' ), 10, 2 );

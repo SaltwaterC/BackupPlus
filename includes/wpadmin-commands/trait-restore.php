@@ -92,6 +92,10 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 				$info['source_defaults'][ $id ] = $source['path'];
 				if ( empty( $res['backupplus_source_destinations'][ $id ] ) ) { $res['backupplus_source_destinations'][ $id ] = $source['path']; }
 			}
+			// A path only an archive reports is a hint for the administrator, not a destination (BPS-15)
+			foreach ( isset( $backups[ $timestamp ]['archive_sources'] ) ? $backups[ $timestamp ]['archive_sources'] : array() as $id => $source ) {
+				if ( ! isset( $info['source_defaults'][ $id ] ) && is_array( $source ) && isset( $source['path'] ) && is_string( $source['path'] ) ) { $info['source_suggestions'][ $id ] = $source['path']; }
+			}
 			$backupable_entities = BackupPlus_Backup_Sources::restore_entities( $this->_backupplus->get_backupable_file_entities( true, true ), $backups[ $timestamp ] );
 			try {
 				BackupPlus_Source_Restore::preflight( $elements, $backups[ $timestamp ], $res );

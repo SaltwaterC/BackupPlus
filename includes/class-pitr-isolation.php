@@ -70,11 +70,15 @@ class BackupPlus_PITR_Isolation {
 			if ( preg_match( '/^GRANT (.+) ON \*\.\* TO /', $grant[0], $m ) ) { foreach ( preg_split( '/\s*,\s*/', $m[1] ) as $privilege ) { $privileges[ $privilege ] = true; }
 			}
 		}
-		$all = isset( $privileges['ALL PRIVILEGES'] );
-		if ( ! $all && ! isset( $privileges['CREATE USER'] ) ) { throw new RuntimeException( 'Automatic restore protection cannot temporarily lock application logins. Ask your hosting provider to grant CREATE USER to the separate recovery account.' ); }
-		if ( ! $all && ! isset( $privileges['SUPER'] ) && '0' === $this->adapter->query( 'SELECT @@global.log_bin_trust_function_creators' )[0][0] ) { throw new RuntimeException( 'The restore account needs SUPER to recreate functions/triggers with log_bin_trust_function_creators=0. Supply a suitably privileged restore account; the global setting will not be changed.' ); }
-		if ( ! $all && ! isset( $privileges['PROCESS'] ) ) { throw new RuntimeException( 'The recovery account needs PROCESS permission to inspect and disconnect in-flight application sessions.' ); }
-		if ( ! $all && ! isset( $privileges['SUPER'] ) && ! isset( $privileges[ 'mysql' === $config['engine'] ? 'CONNECTION_ADMIN' : 'CONNECTION ADMIN' ] ) ) { throw new RuntimeException( 'The restore account needs connection administration permission to stop application sessions.' ); }
+		// The restore account gets the documented grants and no more: never root, and never every privilege on every database.
+		// A dump's routines run as this account during the import, so its reach must end at those grants (BPS-03).
+		if ( 'root' === strtolower( $recovery_name ) || isset( $privileges['ALL PRIVILEGES'] ) ) {
+			throw new RuntimeException( 'The restore account must not be root or hold all privileges on every database. Create a separate restore account with the documented grants.' );
+		}
+		if ( ! isset( $privileges['CREATE USER'] ) ) { throw new RuntimeException( 'Automatic restore protection cannot temporarily lock application logins. Ask your hosting provider to grant CREATE USER to the separate recovery account.' ); }
+		if ( ! isset( $privileges['SUPER'] ) && '0' === $this->adapter->query( 'SELECT @@global.log_bin_trust_function_creators' )[0][0] ) { throw new RuntimeException( 'The restore account needs SUPER to recreate functions/triggers with log_bin_trust_function_creators=0. Supply a suitably privileged restore account; the global setting will not be changed.' ); }
+		if ( ! isset( $privileges['PROCESS'] ) ) { throw new RuntimeException( 'The recovery account needs PROCESS permission to inspect and disconnect in-flight application sessions.' ); }
+		if ( ! isset( $privileges['SUPER'] ) && ! isset( $privileges[ 'mysql' === $config['engine'] ? 'CONNECTION_ADMIN' : 'CONNECTION ADMIN' ] ) ) { throw new RuntimeException( 'The restore account needs connection administration permission to stop application sessions.' ); }
 
 		$accounts          = array();
 		$this->application = $app_name;
@@ -86,7 +90,7 @@ class BackupPlus_PITR_Isolation {
 					'locked' => '1' === $account[1],
 				);
 			}
-		} catch ( Throwable $error ) { throw new RuntimeException( 'The recovery account cannot inspect application login protection. Ask your hosting provider to grant the documented SELECT privileges on the mysql grant tables and CREATE USER to the recovery-only account. ' . $error->getMessage() ); }
+		} catch ( Throwable $error ) { throw new RuntimeException( 'The recovery account cannot inspect application login protection. Ask your hosting provider to give the recovery-only account the documented read access to the mysql grant tables and the right to create users. ' . $error->getMessage() ); }
 		if ( ! $accounts ) { throw new RuntimeException( 'Could not identify the application database accounts to protect.' ); }
 		foreach ( $accounts as $account ) {
 			if ( ! $this->database_specific( $account ) ) { throw new RuntimeException( 'The WordPress username is shared with another database or has unverified privileges. Use a database-specific application username before restoring.' ); }

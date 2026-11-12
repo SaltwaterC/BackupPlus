@@ -8,8 +8,22 @@ class BackupPlus_CLI_Secret {
 
 	/** Run stty against the terminal, with no secret material in process arguments. */
 	private static function terminal( $tty, $command ) {
+		// stty from a system folder, not whatever PATH names first (BPS-20)
+		if ( ! class_exists( 'BackupPlus_Executables' ) ) {
+			require_once BACKUPPLUS_DIR . '/includes/class-executables.php';
+		}
+		$stty = false;
+		foreach ( array( '/bin/stty', '/usr/bin/stty' ) as $candidate ) {
+			if ( BackupPlus_Executables::trusted_binary( $candidate ) ) {
+				$stty = $candidate;
+				break;
+			}
+		}
+		if ( false === $stty ) {
+			throw new RuntimeException( 'Cannot configure hidden terminal input.' );
+		}
 		$process = proc_open(
-			'stty ' . $command,
+			BackupPlus_Executables::shell_program( $stty ) . ' ' . $command,
 			array(
 				0 => $tty,
 				1 => array( 'pipe', 'w' ),

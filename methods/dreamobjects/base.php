@@ -134,6 +134,52 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 	}
 
 	/**
+	 * Whether the PHP cURL extension is present.
+	 *
+	 * @return Boolean
+	 */
+	protected function curl_available() {
+		return function_exists( 'curl_init' );
+	}
+
+	/**
+	 * Whether the PHP cURL extension is present and built with SSL support.
+	 *
+	 * @return Boolean
+	 */
+	protected function curl_supports_tls() {
+		if ( ! $this->curl_available() || ! function_exists( 'curl_version' ) || ! defined( 'CURL_VERSION_SSL' ) ) {
+			return false;
+		}
+		$curl_version = curl_version();
+		return is_array( $curl_version ) && ( (int) $curl_version['features'] & CURL_VERSION_SSL ) !== 0;
+	}
+
+	/**
+	 * Whether the stream transport can carry HTTPS: allow_url_fopen is on and the https wrapper (OpenSSL) is registered.
+	 *
+	 * @return Boolean
+	 */
+	protected function stream_supports_tls() {
+		return (bool) ini_get( 'allow_url_fopen' ) && in_array( 'https', stream_get_wrappers(), true );
+	}
+
+	/**
+	 * Whether the client class can reach the endpoint over TLS. The internal library always uses cURL. The AWS SDK path
+	 * uses Guzzle, which uses cURL when the extension is present and its stream handler otherwise.
+	 *
+	 * @param String $use_s3_class - the class returned by indicate_s3_class()
+	 *
+	 * @return Boolean
+	 */
+	protected function tls_transport_available( $use_s3_class ) {
+		if ( $this->curl_supports_tls() ) {
+			return true;
+		}
+		return 'BackupPlus_DreamObjects_Compat' === $use_s3_class && ! $this->curl_available() && $this->stream_supports_tls();
+	}
+
+	/**
 	 * Get an S3 object, after setting our options. Public for storage integrations.
 	 *
 	 * @param  String      $key            S3 Key
@@ -186,6 +232,13 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		}
 
 		$use_s3_class = $this->indicate_s3_class();
+
+		// Never fall back to plain HTTP: without a TLS-capable transport, only an explicit 'nossl' preference allows a connection.
+		if ( ! $nossl && ! $this->tls_transport_available( $use_s3_class ) ) {
+			$message = __( 'No TLS-capable HTTP transport is available: the PHP cURL extension with SSL support is required. Communications will not be sent unencrypted.', 'backupplus' );
+			$this->log( $message, 'error' );
+			return new WP_Error( 's3_no_tls', $message );
+		}
 
 		if ( ! class_exists( 'WP_HTTP_Proxy' ) ) {
 			include_once ABSPATH . WPINC . '/class-http.php';
@@ -1421,23 +1474,15 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		}
 
 		if ( ! $nossl ) {
-			$curl_version       = function_exists( 'curl_version' ) ? curl_version() : array( 'features' => null );
-			$curl_ssl_supported = ( $curl_version['features'] && defined( 'CURL_VERSION_SSL' ) && CURL_VERSION_SSL );
-			if ( $curl_ssl_supported ) {
-				if ( $this->got_with['disableverify'] ) {
-					$ssl_ca = false;
-					$this->log( 'Disabling verification of SSL certificates' );
-				} else {
-					if ( $this->got_with['useservercerts'] ) {
-						$this->log( "Using the server's SSL certificates" );
-						$ssl_ca = 'system';
-					} else {
-						$ssl_ca = file_exists( BACKUPPLUS_DIR . '/includes/cacert.pem' ) ? BACKUPPLUS_DIR . '/includes/cacert.pem' : true;
-					}
-				}
+			// getS3() refuses to build a client without a TLS-capable transport; HTTPS is never downgraded here.
+			if ( $this->got_with['disableverify'] ) {
+				$ssl_ca = false;
+				$this->log( 'Disabling verification of SSL certificates' );
+			} elseif ( $this->got_with['useservercerts'] ) {
+				$this->log( "Using the server's SSL certificates" );
+				$ssl_ca = 'system';
 			} else {
-				$use_ssl = false;
-				$this->log( 'Curl/SSL is not available. Communications will not be encrypted.' );
+				$ssl_ca = file_exists( BACKUPPLUS_DIR . '/includes/cacert.pem' ) ? BACKUPPLUS_DIR . '/includes/cacert.pem' : true;
 			}
 		} else {
 			$use_ssl = false;

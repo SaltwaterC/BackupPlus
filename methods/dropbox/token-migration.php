@@ -28,6 +28,27 @@ class BackupPlus_Dropbox_Token_Migration {
 	public static function rotate() {
 		return self::rewrite( false ); }
 
+	/** Key retirement: re-encrypt only the tokens an older key wrote, so current envelopes keep their ciphertext (BPS-20). */
+	public static function retire() {
+		return self::rewrite( false, true ); }
+
+	/**
+	 * The Dropbox settings copied into a saved job's option snapshot, with their tokens re-encrypted as rotate() or retire()
+	 * does for the saved option; otherwise a resumed job could not read a token once its key is retired (BPS-20).
+	 *
+	 * @param Array  $cache The job's decrypted option snapshot
+	 * @param String $mode  rotate or retire
+	 *
+	 * @return Array
+	 */
+	public static function job_snapshot( $cache, $mode ) {
+		if ( ! is_array( $cache ) || empty( $cache['backupplus_dropbox']['settings'] ) || ! is_array( $cache['backupplus_dropbox']['settings'] ) || ! in_array( $mode, array( 'rotate', 'retire' ), true ) ) {
+			return $cache;
+		}
+		list( $cache['backupplus_dropbox'] ) = self::prepare( $cache['backupplus_dropbox'], false, 'retire' === $mode );
+		return $cache;
+	}
+
 	/** Prepare an explicit UpdraftPlus import without persisting legacy ciphertext. */
 	public static function import_options( $options ) {
 		list( $updated ) = self::prepare( $options, true );
@@ -52,13 +73,13 @@ class BackupPlus_Dropbox_Token_Migration {
 		}
 	}
 
-	private static function rewrite( $allow_legacy ) {
+	private static function rewrite( $allow_legacy, $only_old_keys = false ) {
 		$raw_original = class_exists( 'BackupPlus_Credential_Storage' ) ? get_option( 'backupplus_dropbox' ) : BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' );
 		$original     = $raw_original;
 		if ( class_exists( 'BackupPlus_Credential_Storage' ) ) {
 			$original = $allow_legacy ? BackupPlus_Credential_Storage::incoming( $original, 'backupplus_dropbox' ) : BackupPlus_Credential_Storage::reading( $original, 'backupplus_dropbox', true );
 		}
-		list( $updated, $count ) = self::prepare( $original, $allow_legacy );
+		list( $updated, $count ) = self::prepare( $original, $allow_legacy, $only_old_keys );
 		if ( $updated !== $original ) {
 			if ( ( class_exists( 'BackupPlus_Credential_Storage' ) ? get_option( 'backupplus_dropbox' ) : BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' ) ) !== $raw_original ) {
 				throw new RuntimeException( 'Dropbox settings changed during the upgrade. Please retry.' );
@@ -71,10 +92,11 @@ class BackupPlus_Dropbox_Token_Migration {
 		return $count;
 	}
 
-	private static function prepare( $original, $allow_legacy ) {
+	private static function prepare( $original, $allow_legacy, $only_old_keys = false ) {
 		if ( empty( $original ) ) {
 			return array( $original, 0 );
 		}
+		$active_prefix = $only_old_keys ? BackupPlus_Credential_Encrypter::PREFIX . BackupPlus_Credential_Key_Store::configuration()['active'] . ':' : '';
 		if ( ! is_array( $original ) || ! isset( $original['settings'] ) || ! is_array( $original['settings'] ) ) {
 			throw new RuntimeException( 'The saved Dropbox settings could not be upgraded. Reconnect Dropbox in BackupPlus Settings.' );
 		}
@@ -83,6 +105,17 @@ class BackupPlus_Dropbox_Token_Migration {
 		try {
 			foreach ( $original['settings'] as $id => $settings ) {
 				$encrypter = Dropbox_Encrypter::from_config( $id );
+				// A pending sign-in's verifier is re-encrypted with the tokens, or dropped when it cannot be, so that retiring a
+				// key leaves nothing behind that it wrote; the sign-in then simply starts again
+				if ( ! empty( $settings['tk_pkce'] ) ) {
+					$stored = $settings['tk_pkce'];
+					$plain  = is_string( $stored ) && 0 === strpos( $stored, 'bpcred:' ) ? $encrypter->decrypt( $stored ) : false;
+					if ( false === $plain ) {
+						unset( $updated['settings'][ $id ]['tk_pkce'] );
+					} elseif ( ! $allow_legacy && ( '' === $active_prefix || 0 !== strpos( $stored, $active_prefix ) ) ) {
+						$updated['settings'][ $id ]['tk_pkce'] = $encrypter->encrypt( $plain );
+					}
+				}
 				foreach ( array( 'tk_access_token', 'tk_request_token' ) as $field ) {
 					if ( empty( $settings[ $field ] ) ) {
 						continue;
@@ -93,7 +126,7 @@ class BackupPlus_Dropbox_Token_Migration {
 						if ( false === $plain ) {
 							throw new RuntimeException();
 						}
-						if ( $allow_legacy ) {
+						if ( $allow_legacy || ( '' !== $active_prefix && 0 === strpos( $stored, $active_prefix ) ) ) {
 							continue;
 						}
 					} else {

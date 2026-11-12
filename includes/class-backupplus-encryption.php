@@ -205,50 +205,6 @@ class BackupPlus_Encryption {
 	}
 
 	/**
-	 * This function spools the decrypted contents of a file to the browser
-	 *
-	 * @param  String $fullpath   This is the full path to the encrypted file
-	 * @param  String $encryption This is the key used to decrypt the file
-	 *
-	 * @uses header()
-	 */
-	public static function spool_crypted_file( $fullpath, $encryption, $key_passphrase = '' ) {
-
-		global $backupplus;
-
-		if ( '' == $encryption ) {
-			$encryption = BackupPlus_Options::get_backupplus_option( 'backupplus_encryptionphrase' );
-		}
-
-		if ( '' == $encryption ) {
-			http_response_code( 400 );
-			header( 'Content-type: text/plain' );
-			echo esc_html( __( 'Decryption failed.', 'backupplus' ) . ' ' . __( 'The database file is encrypted, but you have no encryption key entered.', 'backupplus' ) );
-			$backupplus->log( 'Decryption of database failed: the database file is encrypted, but you have no encryption key entered.', 'error' );
-		} else {
-
-			// now decrypt the file and return array
-			$decrypted_file = self::decrypt( $fullpath, $encryption, true, $key_passphrase );
-
-			// check to ensure there is a response back
-			if ( is_array( $decrypted_file ) ) {
-				header( 'Content-type: ' . ( preg_match( '/\.zst$/i', $decrypted_file['basename'] ) ? 'application/zstd' : ( preg_match( '/\.zip$/i', $decrypted_file['basename'] ) ? 'application/zip' : 'application/x-gzip' ) ) );
-				header( 'Content-Disposition: attachment; filename="' . $decrypted_file['basename'] . '";' );
-				header( 'Content-Length: ' . filesize( $decrypted_file['fullpath'] ) );
-				readfile( $decrypted_file['fullpath'] );
-
-				// need to remove the file as this is no longer needed on the local server
-				unlink( $decrypted_file['fullpath'] );
-			} else {
-				http_response_code( 400 );
-				header( 'Content-type: text/plain' );
-				echo esc_html( __( 'Decryption failed. Check the key or private key passphrase and ensure the archive is complete.', 'backupplus' ) );
-
-			}
-		}
-	}
-
-	/**
 	 * Indicate whether an indicated backup file is encrypted or not, as indicated by the suffix
 	 *
 	 * @param String $file - the filename

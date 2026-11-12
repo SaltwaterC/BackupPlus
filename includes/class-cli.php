@@ -292,18 +292,26 @@ class BackupPlus_CLI {
 /** Manage backups, sources, exact schedules, update protection and credential keys. */
 class BackupPlus_CLI_Command {
 	/**
-	 * Rotate disk-managed keys or generate the next environment key-ring value.
+	 * Rotate or retire disk-managed keys, or generate the next environment key-ring value.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <action>
-	 * : Use rotate to rotate the active credential key.
+	 * : rotate makes a new active credential key and keeps the previous ones; retire re-encrypts saved credentials with the
+	 * active key and removes every other key.
+	 *
+	 * [--yes]
+	 * : Retire without asking for confirmation.
 	 *
 	 * @subcommand credential-keys
 	 */
 	public function credential_keys( $args, $assoc ) {
-		if ( ! isset( $args[0] ) || 'rotate' !== $args[0] ) {
-			WP_CLI::error( 'Use wp backupplus credential-keys rotate.' );
+		if ( ! isset( $args[0] ) || ! in_array( $args[0], array( 'rotate', 'retire' ), true ) ) {
+			WP_CLI::error( 'Use wp backupplus credential-keys rotate or wp backupplus credential-keys retire.' );
+		}
+		if ( 'retire' === $args[0] ) {
+			$this->retire_credential_keys( $assoc );
+			return;
 		}
 		try {
 			if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
@@ -313,6 +321,30 @@ class BackupPlus_CLI_Command {
 			}
 			BackupPlus_Credential_Key_Rotation::rotate_manually();
 			WP_CLI::success( 'Credential key rotated and saved credentials were re-encrypted.' );
+		} catch ( Throwable $error ) {
+			WP_CLI::error( $error->getMessage() );
+		}
+	}
+
+	/** Key retirement (BPS-20): everything but the payload goes to stderr, so the environment value can be captured. */
+	private function retire_credential_keys( $assoc ) {
+		$consequence = 'Credentials inside older backups and older recovery-key downloads will no longer be readable with the key file; restoring such a backup means entering or reconnecting its storage and database credentials again.';
+		try {
+			if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+				$result = BackupPlus_Credential_Key_Rotation::environment_retirement_value();
+				WP_CLI::warning( $result['retired'] ? 'Saved credentials now use the active key. Set BACKUPPLUS_CREDENTIAL_KEYS to the value below to remove ' . count( $result['retired'] ) . ' old key(s). ' . $consequence : 'Only the active key is configured. The value below is unchanged apart from its encoding.' );
+				// This value is a secret; keep stdout to the payload for safe capture by automation.
+				WP_CLI::line( $result['value'] );
+				return;
+			}
+			WP_CLI::warning( 'Retiring re-encrypts saved credentials with the active key and then removes every other key. ' . $consequence . ' Download a new recovery key afterwards.' );
+			WP_CLI::confirm( 'Retire the previous credential keys?', $assoc );
+			$result = BackupPlus_Credential_Key_Rotation::retire_manually();
+			if ( ! $result['retired'] ) {
+				WP_CLI::success( 'Only the active key is configured; nothing to retire.' );
+				return;
+			}
+			WP_CLI::success( 'Retired ' . count( $result['retired'] ) . ' credential key(s). Download a new recovery key from BackupPlus Settings.' );
 		} catch ( Throwable $error ) {
 			WP_CLI::error( $error->getMessage() );
 		}

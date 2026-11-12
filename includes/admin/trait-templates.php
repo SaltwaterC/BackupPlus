@@ -76,11 +76,7 @@ trait BackupPlus_Admin_Templates {
 			BackupPlus_Manipulation_Functions::error_log( "BackupPlus: template not found: $template_file" );
 			echo esc_html( __( 'Error:', 'backupplus' ) . ' ' . __( 'template not found', 'backupplus' ) . ' (' . $path . ')' );
 		} else {
-			extract( $extract_these );
-			global $backupplus, $wpdb;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
-			$backupplus_admin            = $this;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
-			$GLOBALS['backupplus_admin'] = $backupplus_admin;
-			include $template_file;
+			$this->run_template( $template_file, $extract_these );
 		}
 
 		do_action( 'backupplus_after_template', $path, $template_file, $return_instead_of_echo, $extract_these );
@@ -88,5 +84,21 @@ trait BackupPlus_Admin_Templates {
 		if ( $return_instead_of_echo ) {
 			return ob_get_clean();
 		}
+	}
+
+	/**
+	 * Run a template with only the variables passed to it, $backupplus, $backupplus_admin and $wpdb in scope. The variables
+	 * cannot replace the file being included: EXTR_SKIP keeps $template_file and $extract_these, and include_template()'s own
+	 * locals (the path and the parts matched from it) are not in this scope at all (BPS-20).
+	 *
+	 * @param String $template_file - the template to include
+	 * @param Array  $extract_these - variables to inject into the template's run context
+	 */
+	private function run_template( $template_file, $extract_these ) {
+		extract( $extract_these, EXTR_SKIP );
+		global $backupplus, $wpdb;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
+		$backupplus_admin            = $this;// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Passed though to template file.
+		$GLOBALS['backupplus_admin'] = $backupplus_admin;
+		include $template_file;
 	}
 }

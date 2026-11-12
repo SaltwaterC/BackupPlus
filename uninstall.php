@@ -14,9 +14,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 $deinstall_option = get_site_option( 'backupplus_deinstall_option', 'no' );
 
 /**
- * Respect user preference (if set to "no", keep data)
+ * Wipe only on an explicit "yes". Before BPS-13 a sub-site administrator could store other values; they keep the data.
  */
-if ( 'no' === $deinstall_option ) {
+if ( 'yes' !== $deinstall_option ) {
 	return;
 }
 
@@ -118,3 +118,4 @@ foreach ( $udp_settings_keys['crons'] as $hook ) {
 }
 
 delete_site_option( 'backupplus_deinstall_option' );
+delete_site_option( 'backupplus_deinstall_option_reviewed' );

@@ -3,6 +3,27 @@
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
 class BackupPlus_Backup_Deletion {
+	/**
+	 * Recovery points are captured as often as every minute, each capture holding the PITR lock for a few seconds. A
+	 * deletion with a time budget waits for the lock within it, and gets null when the budget runs out first. Without a
+	 * budget it does not wait, and a busy lock is reported as before.
+	 */
+	private static function pitr_worker( $deadline ) {
+		while ( true ) {
+			try {
+				return new BackupPlus_PITR();
+			} catch ( BackupPlus_PITR_Busy $busy ) {
+				if ( null === $deadline ) {
+					throw $busy;
+				}
+				if ( microtime( true ) + 0.25 >= $deadline ) {
+					return null;
+				}
+				usleep( 250000 );
+			}
+		}
+	}
+
 	public static function delete( $opts ) {
 		global $backupplus;
 		$timestamp = $opts['backup_timestamp'];
@@ -10,7 +31,33 @@ class BackupPlus_Backup_Deletion {
 		$errors    = array();
 		if ( ! empty( $backup['pitr'] ) ) {
 			try {
-				$worker   = new BackupPlus_PITR();
+				$deadline = isset( $opts['deadline'] ) ? $opts['deadline'] : null;
+				$worker   = self::pitr_worker( $deadline );
+				if ( null === $worker ) {
+					// The browser asks again at once, so the wait above, not this answer, sets the pace.
+					return array(
+						'complete'      => false,
+						'backup_local'  => 0,
+						'backup_remote' => 0,
+						'result'        => 'continue',
+						'message'       => 'Waiting for a database recovery point capture to finish.',
+						'errors'        => array(),
+					);
+				}
+				// Retention runs after each capture, and one that ran while this request waited may have deleted the chain and its row.
+				if ( ! isset( $worker->storage_state()['chains'][ $backup['pitr']['chain_id'] ] ) ) {
+					BackupPlus_CLI::fresh( 'backupplus_backup_history' );
+					if ( ! BackupPlus_Backup_History::get_history( $timestamp ) ) {
+						return array(
+							'complete'      => true,
+							'backup_local'  => 0,
+							'backup_remote' => 0,
+							'result'        => 'success',
+							'message'       => 'Database recovery chain deleted.',
+							'errors'        => array(),
+						);
+					}
+				}
 				$progress = $worker->delete( $backup['pitr']['chain_id'], ! empty( $opts['delete_remote'] ), isset( $opts['deadline'] ) ? $opts['deadline'] : null );
 				return array_merge(
 					$progress,
@@ -134,13 +181,23 @@ class BackupPlus_Backup_Deletion {
 		$timestamps = array_values( array_unique( explode( ',', (string) $opts['backup_timestamp'] ) ) );
 		$history    = BackupPlus_Backup_History::get_history();
 		foreach ( $timestamps as $timestamp ) {
-			if ( ! ctype_digit( $timestamp ) || ! isset( $history[ $timestamp ] ) ) { return array(
+			if ( ! ctype_digit( $timestamp ) ) { return array(
 				'result'  => 'error',
 				'message' => 'Backup set not found.',
 			); }
 		}
-		$deadline = microtime( true ) + max( 1, isset( $opts['remote_delete_limit'] ) ? (int) $opts['remote_delete_limit'] : 20 );
-		$response = array(
+		// A row that is already gone was deleted as asked: retention after a capture can delete selected chains between two requests of a batch.
+		$gone       = array_values(
+			array_filter(
+				$timestamps,
+				function ( $timestamp ) use ( $history ) {
+					return ! isset( $history[ $timestamp ] );
+				}
+			)
+		);
+		$timestamps = array_values( array_diff( $timestamps, $gone ) );
+		$deadline   = microtime( true ) + max( 1, isset( $opts['remote_delete_limit'] ) ? (int) $opts['remote_delete_limit'] : 20 );
+		$response   = array(
 			'result'                 => 'success',
 			'backup_local'           => 0,
 			'backup_remote'          => 0,
@@ -153,7 +210,7 @@ class BackupPlus_Backup_Deletion {
 			'remote_message'         => __( 'Remote files deleted:', 'backupplus' ),
 			'error_messages'         => '',
 		);
-		$deleted  = array();
+		$deleted    = $gone;
 		foreach ( $timestamps as $index => $timestamp ) {
 			$single                        = $opts;
 			$single['backup_timestamp']    = $timestamp;
@@ -161,6 +218,8 @@ class BackupPlus_Backup_Deletion {
 			$single['remote_delete_limit'] = max( 1, (int) ceil( $deadline - microtime( true ) ) );
 			if ( ! empty( $history[ $timestamp ]['pitr'] ) ) {
 				$result = self::delete( $single );
+				// Gone since this request started: a capture between two items of the batch applied retention.
+				if ( 'error' === $result['result'] && isset( $result['errors'][0]['code'] ) && 'not_found' === $result['errors'][0]['code'] ) { $result = array( 'result' => 'success' ); }
 				if ( 'success' === $result['result'] ) { $result['backup_sets'] = 1; }
 			} else { $result = $backupplus_admin->delete_set( $single ); }
 			foreach ( array( 'backup_local', 'backup_remote', 'backup_sets' ) as $counter ) { $response[ $counter ] += isset( $result[ $counter ] ) ? $result[ $counter ] : 0; }

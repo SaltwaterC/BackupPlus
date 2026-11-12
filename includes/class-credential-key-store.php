@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-storage-directory.php';
+require_once __DIR__ . '/class-web-guard.php';
 
 /** Installation keys live in protected files or a read-only environment source. */
 class BackupPlus_Credential_Key_Store {
@@ -442,7 +443,7 @@ class BackupPlus_Credential_Key_Store {
 		@chmod( $directory, 0700 );
 		$guards = array(
 			'index.php'    => "<?php http_response_code(404); exit;\n",
-			'.htaccess'    => "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n",
+			'.htaccess'    => BackupPlus_Web_Guard::HTACCESS,
 			'web.config'   => '<?xml version="1.0"?><configuration><system.webServer><security><authorization><remove users="*" roles="" verbs=""/><add accessType="Deny" users="*"/></authorization></security></system.webServer></configuration>',
 			'.donotbackup' => "Private credential keys: keep out of backup archives.\n",
 		);
@@ -614,6 +615,98 @@ class BackupPlus_Credential_Key_Store {
 				self::write_file( $path, $config );
 				return $config;
 			}
+		);
+	}
+
+	/** The key IDs other than the active one: what retirement removes. */
+	private static function retired_ids( $config ) {
+		$ids = array();
+		foreach ( array_keys( $config['keys'] ) as $id ) {
+			// Hexadecimal IDs of decimal digits only come back from json_decode() as integer array keys.
+			if ( (string) $id !== (string) $config['active'] ) {
+				$ids[] = (string) $id;
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Remove every key except the active one from the disk key ring.
+	 *
+	 * The key file is read, checked and rewritten under its lock, so no other process can change it in between. Nothing
+	 * is removed unless $references, given the IDs about to be removed, reports that no stored data still uses them.
+	 * Credentials written while the lock is held wait for it and then use the active key, which this keeps.
+	 *
+	 * @param String   $active     The active key ID the caller re-encrypted credentials with; a different one refuses.
+	 * @param Callable $references Returns the places that still hold an envelope of the given key IDs. It must not read
+	 *                             the key store (the lock is held), so it inspects stored ciphertext only.
+	 *
+	 * @return Array The new configuration ('config') and the removed key IDs ('retired').
+	 */
+	public static function retire( $active, $references ) {
+		self::require_file_managed();
+		self::configuration();
+		return self::with_lock(
+			self::directory(),
+			function ( $path ) use ( $active, $references ) {
+				if ( @realpath( dirname( $path ) ) !== @realpath( self::directory() ) ) {
+					throw new RuntimeException( 'The key location changed. No keys were removed; please retry.' );
+				}
+				$config = self::read_file( $path );
+				if ( (string) $config['active'] !== (string) $active ) {
+					throw new RuntimeException( 'The active credential key changed during retirement. No keys were removed; please retry.' );
+				}
+				$retired = self::retired_ids( $config );
+				if ( ! $retired ) {
+					return array(
+						'config'  => $config,
+						'retired' => array(),
+					);
+				}
+				$found = call_user_func( $references, $retired );
+				if ( ! is_array( $found ) ) {
+					throw new RuntimeException( 'Stored credentials could not be checked. No keys were removed.' );
+				}
+				if ( $found ) {
+					throw new RuntimeException( 'Stored data still uses a key that would be removed: ' . implode( '; ', array_slice( $found, 0, 20 ) ) . ( count( $found ) > 20 ? '; and ' . ( count( $found ) - 20 ) . ' more' : '' ) . '. No keys were removed.' );
+				}
+				$config['keys'] = array( $config['active'] => $config['keys'][ $config['active'] ] );
+				self::write_file( $path, $config );
+				return array(
+					'config'  => $config,
+					'retired' => $retired,
+				);
+			}
+		);
+	}
+
+	/**
+	 * The next environment key-ring value without the keys retirement would remove. Nothing is changed: WordPress cannot
+	 * write the environment, and it never re-encrypts credentials for environment-managed keys.
+	 *
+	 * @param Callable $references As for retire().
+	 *
+	 * @return Array The encoded value ('value') and the key IDs it leaves out ('retired').
+	 */
+	public static function environment_retirement_value( $references ) {
+		if ( ! self::environment_managed() ) {
+			throw new RuntimeException( 'Environment-managed credential keys are not configured.' );
+		}
+		$config  = self::configuration();
+		$retired = self::retired_ids( $config );
+		if ( $retired ) {
+			$found = call_user_func( $references, $retired );
+			if ( ! is_array( $found ) ) {
+				throw new RuntimeException( 'Stored credentials could not be checked.' );
+			}
+			if ( $found ) {
+				throw new RuntimeException( 'Stored data still uses a key that this value would remove: ' . implode( '; ', array_slice( $found, 0, 20 ) ) . ( count( $found ) > 20 ? '; and ' . ( count( $found ) - 20 ) . ' more' : '' ) . '. Re-enter or reconnect those credentials, then run this again.' );
+			}
+		}
+		$config['keys'] = array( $config['active'] => $config['keys'][ $config['active'] ] );
+		return array(
+			'value'   => self::encode_environment( $config ),
+			'retired' => $retired,
 		);
 	}
 

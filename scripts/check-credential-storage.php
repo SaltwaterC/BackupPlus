@@ -208,7 +208,9 @@ $import_settings = array(
 	'updraft_dropbox' => array(
 		'version'  => 1,
 		'settings' => array(
+			// The site's own Dropbox app: tokens of UpdraftPlus's shared app are dropped on import (BPS-01)
 			'imported-dropbox' => array(
+				'appkey'          => 'imported-own-app-key',
 				'folder'          => 'imported-backups',
 				'secret'          => 'synthetic-sec005-imported-Dropbox-secret',
 				'tk_access_token' => $dropbox_legacy['ciphertext'],
@@ -249,7 +251,10 @@ credential_wp_expect( base64_decode( $dropbox_legacy['plaintext'] ) === openssl_
 $before_dropbox = get_option( $isolated['backupplus_dropbox'] );
 $before_ftp     = get_option( $isolated['backupplus_ftp'] );
 $invalid_import = $import_settings;
-$invalid_import['updraft_dropbox']['settings']['broken']            = array( 'tk_access_token' => base64_encode( 'short' ) );
+$invalid_import['updraft_dropbox']['settings']['broken']            = array(
+	'appkey'          => 'imported-own-app-key',
+	'tk_access_token' => base64_encode( 'short' ),
+);
 $invalid_import['updraft_ftp']['settings']['test-instance']['pass'] = 'synthetic-sec005-rejected-import';
 credential_wp_reject(
 	function () use ( $backupplus_admin, $backupplus, $invalid_import ) {

@@ -88,6 +88,10 @@ class BackupPlus_Deactivation {
 	 * Instantiate a deactivation dialog object with preconfigured settings
 	 */
 	public function instantiate_deinstall_dialog_object() {
+		// The dialog library checks only activate_plugins, which a site administrator has when the network enables the Plugins menu.
+		if ( ! BackupPlus_Options::user_can_manage() ) {
+			return;
+		}
 
 		if ( ! class_exists( 'Updraft_Deinstall_Dialog_v1' ) ) {
 			backupplus_try_include_file(
@@ -115,11 +119,25 @@ class BackupPlus_Deactivation {
 
 	/**
 	 * Handle the AJAX request to save the user’s deactivation choice.
-	 * The capability check is handled by the dialog library.
+	 * The dialog library checks only activate_plugins and the nonce, so the BackupPlus capability is checked here too.
 	 */
 	public function handle_user_choice() {
+		if ( ! self::store_choice( BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'backupplus_deinstall_option', 'no', true, null, 'sanitize_text_field' ) ) ) {
+			wp_send_json_error( array( 'message' => 'Capability and/or value verification failed.' ), 403 );
+		}
+	}
 
-		$choice = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'backupplus_deinstall_option', 'no', true, null, 'sanitize_text_field' );
+	/**
+	 * Store the choice of the network-wide deinstall option, which uninstall.php reads to wipe all the data.
+	 *
+	 * @param mixed $choice The submitted value.
+	 * @return bool Whether the choice was stored: only a user who manages BackupPlus, and only 'yes' or 'no'.
+	 */
+	public static function store_choice( $choice ) {
+		if ( ! BackupPlus_Options::user_can_manage() || ! in_array( $choice, array( 'yes', 'no' ), true ) ) {
+			return false;
+		}
 		update_site_option( 'backupplus_deinstall_option', $choice );
+		return true;
 	}
 }

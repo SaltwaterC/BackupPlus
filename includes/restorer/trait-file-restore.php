@@ -156,7 +156,8 @@ trait BackupPlus_Restorer_File_Restore {
 						}
 					}
 				} elseif ( self::MOVEIN_OVERWRITE_NO_BACKUP == $preserve_existing ) {
-					if ( ! $wpfs->delete( $dest_dir . $file, true ) ) {
+					// Links in the destination are removed, never followed (BPS-20)
+					if ( ! BackupPlus_Filesystem_Functions::delete_restore_path( $wpfs, $dest_dir . $file ) ) {
 						if ( 'others' == $type && hash_file( $checksums[0], $working_dir . '/' . $file ) == hash_file( $checksums[0], $dest_dir . $file ) ) {
 							$backupplus->log( $dest_dir . $file . ' could not be removed, but the new version had an identical hash, so the existing version will be left as-is' );
 							@$wpfs->delete( $working_dir . '/' . $file, true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced because failure to delete the source will be noted later and is not useful to record on individual files.
@@ -498,7 +499,7 @@ trait BackupPlus_Restorer_File_Restore {
 			// Is better to warn and delete the restore than abort mid-restore and leave inconsistent site
 			$backupplus->log_e( '%s: This directory already exists, and will be replaced', $wp_filesystem_dir . '-old' );
 			// In theory, supplying true as the 3rd parameter achieves this; in practice, not always so (leads to support requests)
-			$wp_filesystem->delete( $wp_filesystem_dir . '-old', true );
+			BackupPlus_Filesystem_Functions::delete_restore_path( $wp_filesystem, $wp_filesystem_dir . '-old' );
 			if ( $wp_filesystem->exists( $wp_filesystem_dir . '-old' ) ) {
 				$backupplus->log( 'Failed to remove existing directory (' . $wp_filesystem_dir . '-old' );
 				$failed_to_remove = true;
@@ -551,7 +552,7 @@ trait BackupPlus_Restorer_File_Restore {
 				if ( ! $this->restore_component_selected( $type, $file ) ) {
 					continue;
 				}
-				if ( ! $wp_filesystem->delete( $wp_filesystem_dir . '/' . $file, true ) ) {
+				if ( ! BackupPlus_Filesystem_Functions::delete_restore_path( $wp_filesystem, $wp_filesystem_dir . '/' . $file ) ) {
 					$this->restore_log_permission_failure_message( $wp_filesystem_dir, 'Delete ' . $wp_filesystem_dir . '/' . $file );
 				}
 			}

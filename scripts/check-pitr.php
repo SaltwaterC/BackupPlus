@@ -373,7 +373,11 @@ try {
 	file_put_contents( $log, $bytes );
 	unset( $worker );
 	// New installation: only portable artifacts survive, not the original PHP state/history.
-	$captured_state   = file_get_contents( $directory . '/archives/pitr/state.php' );
+	$captured_state  = file_get_contents( $directory . '/archives/pitr/state.php' );
+	$captured_chains = array();
+	foreach ( glob( $directory . '/archives/pitr/chains/*.php' ) as $chain_file ) {
+		$captured_chains[ basename( $chain_file ) ] = file_get_contents( $chain_file );
+	}
 	$captured_history = BackupPlus_Backup_History::get_history();
 	unlink( $directory . '/archives/pitr/state.php' );
 	$history   = array();
@@ -408,7 +412,13 @@ try {
 	$worker->recover( $id, $first_transaction, $recovery_config['source_config'], array(), null, true );
 	pitr_check( '666972737400FF' === $recovery->query( 'SELECT HEX(value) FROM `' . DB_NAME . '`.pitr_a' )[0][0], 'A rescanned chain could not be exported to the isolated recovery server.' );
 	unset( $worker );
-	// The site that captured the chain still holds its index; later checks restore from it.
+	// The site that captured the chain still holds its index; later checks restore from it. The rescan removed the
+	// chain files that index names.
+	foreach ( $captured_chains as $chain_file => $contents ) {
+		if ( ! is_file( $directory . '/archives/pitr/chains/' . $chain_file ) ) {
+			BackupPlus_PITR_Process::private_file( $directory . '/archives/pitr/chains/' . $chain_file, $contents );
+		}
+	}
 	unlink( $directory . '/archives/pitr/state.php' );
 	BackupPlus_PITR_Process::private_file( $directory . '/archives/pitr/state.php', $captured_state );
 	BackupPlus_Backup_History::save_history( $captured_history );

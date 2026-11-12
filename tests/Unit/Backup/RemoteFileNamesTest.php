@@ -72,6 +72,34 @@ final class RemoteFileNamesTest extends TestCase {
 		}
 	}
 
+	public function test_archive_names_with_an_executable_or_document_part_are_not_fetched(): void {
+		foreach ( array( 'backup_2024-01-01-0000_x.php.y_abcdef012345-db.gz', 'backup_2024-01-01-0000_x.html.y_abcdef012345-db.gz', 'backup_2024-01-01-0000_x.phtml.y_abcdef012345-plugins.zip', 'backup_2024-01-01-0000_x.svg.y_abcdef012345-db.gz' ) as $name ) {
+			$this->assertFalse( BackupPlus_Manipulation_Functions::is_backup_basename( $name ), "$name could be run or rendered by the web server" );
+			$this->assertFalse( BackupPlus_Manipulation_Functions::upload_name( $name ), "$name must not be uploaded either" );
+		}
+	}
+
+	public function test_a_history_set_naming_a_path_outside_the_backup_directory_is_refused(): void {
+		require_once dirname( __DIR__, 3 ) . '/includes/class-backup-history.php';
+		$entities = array(
+			'plugins' => '/p',
+			'uploads' => '/u',
+		);
+		$set      = array(
+			'nonce'        => 'abcdef012345',
+			'db'           => 'backup_2024-01-01-0000_site_abcdef012345-db.gz',
+			'plugins'      => array( 'backup_2024-01-01-0000_site_abcdef012345-plugins.zip', 'backup_2024-01-01-0000_site_abcdef012345-plugins2.zip' ),
+			'plugins-size' => 10,
+			'label'        => '../not an archive',
+		);
+		$this->assertTrue( \BackupPlus_Backup_History::archive_names_are_safe( $set, $entities ), 'Archive names and other fields are fine' );
+		foreach ( array( 'db1', 'uploads', 'plugins' ) as $key ) {
+			$poisoned         = $set;
+			$poisoned[ $key ] = array( 'backup_2024-01-01-0000_site_abcdef012345-plugins.zip', '../../other/backup_2024-01-01-0000_site_abcdef012345-db.gz' );
+			$this->assertFalse( \BackupPlus_Backup_History::archive_names_are_safe( $poisoned, $entities ), "A traversing name in $key must be refused" );
+		}
+	}
+
 	/** The PITR pattern is duplicated so that the helper does not need the PITR classes; keep the two in step. */
 	public function test_pitr_pattern_matches_the_manifest_rule(): void {
 		$prefix = 'backup_pitr_' . str_repeat( 'c', 32 ) . '_' . str_repeat( 'd', 32 ) . '_';

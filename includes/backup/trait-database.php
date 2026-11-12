@@ -127,7 +127,7 @@ trait BackupPlus_Backup_Database {
 		// If this is not the WP database, then we do not consider it a fatal error if there are no tables
 		if ( null === $exact_tables && 'wp' == $whichdb && 0 == count( $all_tables ) ) {
 			$extra = ( $backupplus->newresumption_scheduled ) ? ' - ' . __( 'please wait for the rescheduled attempt', 'backupplus' ) : '';
-			$backupplus->log( 'Error: No WordPress database tables found (SHOW TABLES returned nothing)' . $extra );
+			$backupplus->log( 'Error: No WordPress database tables found (the server listed no tables)' . $extra );
 			$backupplus->log( __( 'No database tables found', 'backupplus' ) . $extra, 'error' );
 			die;
 		}
@@ -927,7 +927,7 @@ trait BackupPlus_Backup_Database {
 		$this->stow( "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n" );
 		// N.B. Setting this as the mode matches the export behaviour of both mysqldump and phpMyAdmin
 		$this->stow( "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" );
-		$this->stow( '/*!40101 SET NAMES ' . $backupplus->get_connection_charset( $this->wpdb_obj ) . " */;\n" );
+		$this->stow( BackupPlus_SQL::render( "/*!40101 SET NAMES %i */;\n", array( $this->sql()->charset() ) ) );
 		$this->stow( "/*!40101 SET foreign_key_checks = 0 */;\n\n" );
 
 		// This filter allows a user to add their own arbitrary content.

@@ -8,7 +8,6 @@ require_once __DIR__ . '/class-age-crypto.php';
 class BackupPlus_Database_Encryption {
 	public static function register() {
 		add_filter( 'backupplus_job_option_cache', array( __CLASS__, 'snapshot' ) );
-		add_action( 'admin_post_backupplus_decrypt_database', array( __CLASS__, 'download' ) );
 		add_action( 'backupplus_restore_form_encryption', array( __CLASS__, 'restore_fields' ) );
 	}
 
@@ -171,36 +170,5 @@ class BackupPlus_Database_Encryption {
 		<input id="backupplus-age-ticket" name="backupplus_age_ticket" type="hidden" value="">
 		<p class="description"><?php esc_html_e( 'Archives are decrypted in your browser, then a plaintext copy is uploaded for this restore. Your private key and its passphrase are never sent to the server.', 'backupplus' ); ?></p>
 		<?php
-	}
-
-	/** Manual decryption: secrets in an authorized POST body, never a URL. */
-	public static function download() {
-		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
-			wp_die( 'Use POST.', '', array( 'response' => 405 ) );
-		}
-		if ( ! BackupPlus_Options::user_can_manage() ) {
-			wp_die( 'Not authorized.', '', array( 'response' => 403 ) );
-		}
-		check_admin_referer( 'backupplus-decrypt-database' );
-		global $backupplus;
-		$file = isset( $_POST['file'] ) && is_string( $_POST['file'] ) ? wp_unslash( $_POST['file'] ) : '';
-		if ( ! preg_match( '/\Abackup_[-0-9]{15}_.*_[a-f0-9]{12}-(?:db[0-9]*\.(?:gz|sql\.zst)|[-a-z]+[0-9]*\.(?:zip|tar\.zst))\.crypt\z/iD', $file ) || basename( $file ) !== $file ) {
-			wp_die( 'Invalid backup archive.' );
-		}
-		$identity = isset( $_POST['identity'] ) && is_string( $_POST['identity'] ) ? wp_unslash( $_POST['identity'] ) : '';
-		$password = isset( $_POST['key_passphrase'] ) && is_string( $_POST['key_passphrase'] ) ? wp_unslash( $_POST['key_passphrase'] ) : '';
-		$key      = '' !== trim( $identity ) ? $identity : ( isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? wp_unslash( $_POST['key'] ) : '' );
-		if ( strlen( $key ) > 65536 || strlen( $password ) > 4096 ) {
-			wp_die( 'Invalid decryption input.' );
-		}
-		$path = $backupplus->backups_dir_location() . '/' . $file;
-		if ( is_link( $path ) || ! is_file( $path ) ) {
-			wp_die( 'Backup archive not found.' );
-		}
-		nocache_headers();
-		header( 'Cache-Control: no-store, private' );
-		header( 'X-Content-Type-Options: nosniff' );
-		BackupPlus_Encryption::spool_crypted_file( $path, $key, $password );
-		exit;
 	}
 }

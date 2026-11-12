@@ -23,20 +23,41 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 		return array_merge( $payloads, $metadata );
 	}
 
+	/**
+	 * A chain being deleted is never restored or rebound again, so its per-transaction boundaries, the bulk of the
+	 * chain index, are dropped as it is marked. Deletion then always shrinks the index, and a full index can still be emptied.
+	 */
+	private function release_boundaries( &$chain ) {
+		foreach ( array( 'entries', 'abandoned_entries' ) as $list ) {
+			foreach ( isset( $chain[ $list ] ) ? array_keys( $chain[ $list ] ) : array() as $index ) {
+				foreach ( isset( $chain[ $list ][ $index ]['manifest']['segments'] ) ? array_keys( $chain[ $list ][ $index ]['manifest']['segments'] ) : array() as $segment ) {
+					$chain[ $list ][ $index ]['manifest']['segments'][ $segment ]['boundaries'] = array();
+				}
+			}
+		}
+	}
+
 	public function delete( $id, $delete_remote = true, $deadline = null ) {
 		BackupPlus_PITR_Manifest::id( $id );
 		if ( ! isset( $this->state['chains'][ $id ] ) ) {
 			throw new RuntimeException( 'PITR chain was not found.' );
 		}
-		if ( ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) || ( $this->state['pending'] && $id === $this->state['pending']['entry']['manifest']['chain_id'] ) ) {
-			throw new RuntimeException( 'A backup or restore is still using this database recovery chain. Complete that operation before deleting it.' );
+		if ( isset( $this->state['restore_chain'] ) && $id === $this->state['restore_chain'] ) {
+			throw new RuntimeException( 'A restore is still using this database recovery chain. Complete that operation before deleting it.' );
 		}
 		$chain = &$this->state['chains'][ $id ];
 		if ( 'deleting' === $chain['state'] && $delete_remote !== ( isset( $chain['delete_remote'] ) ? $chain['delete_remote'] : true ) ) { throw new RuntimeException( 'This deletion is already in progress. Retry with the same "Also delete from remote storage" choice to finish removing the complete chain.' ); }
 		// Open the destinations before the chain is marked as being deleted: that mark fixes whether remote copies are deleted too, so a destination that cannot be reached must not leave the chain unable to be deleted without them.
-		$storage                = new BackupPlus_PITR_Storage( $this->work, array(), $delete_remote ? $chain['destinations'] : array() );
+		$storage = new BackupPlus_PITR_Storage( $this->work, array(), $delete_remote ? $chain['destinations'] : array() );
+		// A point of this chain whose publication failed is retried by every run until it succeeds. Deleting the chain
+		// deletes that point too, so recovery need not be stopped first; the next run starts a new chain.
+		if ( $this->state['pending'] && $id === $this->state['pending']['entry']['manifest']['chain_id'] ) {
+			$chain['abandoned_entries'][] = $this->state['pending']['entry'];
+			$this->state['pending']       = null;
+		}
 		$chain['delete_remote'] = $delete_remote;
 		$chain['state']         = 'deleting';
+		$this->release_boundaries( $chain );
 		$this->save();
 		$this->history( $id );
 		$files           = array_values( array_unique( $this->chain_files( $chain ) ) );

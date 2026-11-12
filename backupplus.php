@@ -64,9 +64,13 @@ if ( ! defined( 'BACKUPPLUS_DATA_OPTIONAL_TABLES' ) ) {
 }
 if ( ! defined( 'BACKUPPLUS_ZIP_EXECUTABLE' ) ) {
 	define( 'BACKUPPLUS_ZIP_EXECUTABLE', '/usr/bin/zip,/bin/zip,/usr/local/bin/zip,/usr/sfw/bin/zip,/usr/xdg4/bin/zip,/opt/bin/zip' );
+	// Built-in locations must not be writable by the PHP user; a list set in wp-config.php may be (BPS-20)
+	define( 'BACKUPPLUS_ZIP_EXECUTABLE_BUILT_IN', true );
 }
 if ( ! defined( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE' ) ) {
 	define( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE', backupplus_build_mysqldump_list() );
+	// Built-in locations must not be writable by the PHP user; a list set in wp-config.php may be (BPS-20)
+	define( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE_BUILT_IN', true );
 }
 // If any individual file size is greater than this, then a warning is given
 if ( ! defined( 'BACKUPPLUS_WARN_FILE_SIZE' ) ) {
@@ -259,6 +263,9 @@ endif;
 add_filter( 'cron_schedules', 'backupplus_modify_cron_schedules', 30 );
 
 require_once BACKUPPLUS_DIR . '/includes/class-sql.php';
+require_once BACKUPPLUS_DIR . '/includes/class-mysqldump-option-file.php';
+// The secret that lets an unauthenticated request continue a restore (BPS-11).
+require_once BACKUPPLUS_DIR . '/includes/class-restore-continuation.php';
 
 // Move persisted settings and scheduled jobs into the BackupPlus namespace. A network's are all in its main site's tables.
 require_once BACKUPPLUS_DIR . '/includes/class-legacy-compatibility.php';
@@ -406,6 +413,9 @@ require_once BACKUPPLUS_DIR . '/includes/class-credential-storage.php';
 require_once BACKUPPLUS_DIR . '/includes/class-ntfy.php';
 BackupPlus_Storage_Provider_Factory::register_hooks();
 BackupPlus_Credential_Storage::register();
+// Every write of the backup directory setting is checked, whichever path makes it (BPS-07).
+require_once BACKUPPLUS_DIR . '/includes/class-backup-directory.php';
+BackupPlus_Backup_Directory::register();
 require_once BACKUPPLUS_DIR . '/includes/class-credential-key-admin.php';
 require_once BACKUPPLUS_DIR . '/includes/class-credential-key-rotation.php';
 register_activation_hook( __FILE__, array( 'BackupPlus_Credential_Key_Store', 'initialize' ) );

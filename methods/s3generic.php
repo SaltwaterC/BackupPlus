@@ -21,6 +21,19 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	protected $provider_has_regions = false;
 
 	/**
+	 * Signature version for configurations without a saved one, including those saved before the setting existed.
+	 * SigV2 remains available when selected explicitly, for servers that do not support SigV4.
+	 */
+	const DEFAULT_SIGNATURE_VERSION = 'v4';
+
+	/**
+	 * Whether the missing signature version notice has been logged by this object.
+	 *
+	 * @var bool
+	 */
+	private $signature_default_logged = false;
+
+	/**
 	 * Input and option field mappings with default values and supported contexts.
 	 *
 	 * @var array
@@ -50,7 +63,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 			'contexts'      => array( 'input' ),
 		),
 		'signature_version'   => array(
-			'default_value' => 'v4',
+			'default_value' => self::DEFAULT_SIGNATURE_VERSION,
 			'contexts'      => array( 'input' ),
 		),
 	);
@@ -183,9 +196,9 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 */
 	public function transform_options_for_template( $opts ) {
 		if ( ! empty( $opts['instance_id'] ) && 'default' !== $opts['instance_id'] ) {
-			if ( ! isset( $opts['signature_version'] ) ) { // this check is to find out whether we're dealing with a pre-existing configuration or not
-				$opts['signature_version'] = 'v2'; // the pre-existing S3-Compatible configurations before signature_version was introduced by default use SigV2, so we wan't to keep it that way as we don't want to break what's already working
-				$opts['signature_version'] = apply_filters( 'backupplus_s3_signature_version', $opts['signature_version'], false, $this );
+			if ( ! isset( $opts['signature_version'] ) ) { // a configuration saved before the signature_version setting existed
+				// These used to keep SigV2. They now use SigV4, like new configurations (see self::DEFAULT_SIGNATURE_VERSION); a server that only supports SigV2 needs it selected explicitly.
+				$opts['signature_version'] = apply_filters( 'backupplus_s3_signature_version', self::DEFAULT_SIGNATURE_VERSION, false, $this );
 				if ( ! empty( $opts['endpoint'] ) ) {
 					if ( preg_match( '/\.(leviia|r2\.cloudflarestorage)\.com$/i', $opts['endpoint'] ) || ( preg_match( '/\.amazonaws\.com$/i', $opts['endpoint'] ) && ! empty( $opts['bucket_access_style'] ) && 'virtual_host_style' === $opts['bucket_access_style'] ) ) {
 						// due to the merge of S3-generic bucket access style MR on March 2021, if virtual-host bucket access style is selected, connecting to an amazonaws bucket location where the user doesn't have an access to it will throw an S3 InvalidRequest exception. It requires the signature to be set to version 4
@@ -302,7 +315,11 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 	 */
 	protected function maybe_use_dns_bucket_name( $storage, $bucket, $config ) {
 
-		$signature_version = ! empty( $config['signature_version'] ) ? $config['signature_version'] : apply_filters( 'backupplus_s3_signature_version', 'v2', false, $this ); // the 'v2' value used to be handled by the use_v4 class variable, but since the signature_version (dropdown) setting has been introduced then use_v4 class variable has been removed and is no longer needed
+		$signature_version = ! empty( $config['signature_version'] ) ? $config['signature_version'] : apply_filters( 'backupplus_s3_signature_version', self::DEFAULT_SIGNATURE_VERSION, false, $this ); // configurations saved before the setting existed have none
+		if ( empty( $config['signature_version'] ) && 'v4' === $signature_version && ! $this->signature_default_logged ) {
+			$this->signature_default_logged = true;
+			$this->log( 'No signature version is saved for this destination, so it uses SigV4. If the server only supports SigV2, select SigV2 under Signature version in its settings and save.' );
+		}
 		if ( is_callable( array( $storage, 'setSignatureVersion' ) ) ) {
 			$storage->setSignatureVersion( $signature_version ); // we don't prioritise the hardcoded endpoint if signature_version is set, which means users are aware of this new option and intentionally set this option and/or save the settings
 		}

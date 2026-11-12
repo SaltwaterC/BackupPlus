@@ -25,7 +25,7 @@ class BackupPlus_Sources_Admin {
 		}
 
 		wp_enqueue_style( 'backupplus-sources', BACKUPPLUS_URL . '/css/backupplus-sources.css', array( 'backupplus-admin-css' ), '1' );
-		wp_enqueue_script( 'backupplus-sources', BACKUPPLUS_URL . '/js/backupplus-sources.js', array( 'jquery' ), '1', true );
+		wp_enqueue_script( 'backupplus-sources', BACKUPPLUS_URL . '/js/backupplus-sources.js', array( 'jquery' ), '2', true );
 		wp_localize_script(
 			'backupplus-sources',
 			'backupplus_sources',
@@ -43,6 +43,10 @@ class BackupPlus_Sources_Admin {
 		try {
 			global $wpdb;
 			$info = isset( $_POST['connection'] ) ? wp_unslash( $_POST['connection'] ) : null;
+			if ( is_array( $info ) ) {
+				// The form shows a saved password as a placeholder: use the saved password of the same connection for it (BPS-20).
+				$info = BackupPlus_Credential_Storage::unmask_at( $info, 'backupplus_extradbs', array( isset( $_POST['connection_id'] ) ? absint( $_POST['connection_id'] ) : 0 ) );
+			}
 			if ( ! empty( $_POST['saved'] ) ) {
 				$connections = BackupPlus_Backup_Sources::connections();
 				$id          = absint( $_POST['saved'] );
@@ -110,6 +114,8 @@ class BackupPlus_Sources_Admin {
 		if ( ! $manual ) { echo '<button type="button" class="button bp-remove-database">' . esc_html__( 'Remove connection', 'backupplus' ) . '</button>'; }
 		echo '</div>';
 		if ( ! $manual ) {
+			// A saved password reaches the page only as a placeholder; saving the placeholder keeps the password (BPS-20).
+			$info = BackupPlus_Credential_Storage::mask( $info, 'backupplus_extradbs' );
 			echo '<div class="bp-connection-fields">';
 			foreach ( array(
 				'host'   => __( 'Host', 'backupplus' ),

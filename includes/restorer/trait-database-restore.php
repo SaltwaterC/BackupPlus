@@ -45,6 +45,42 @@ trait BackupPlus_Restorer_Database_Restore {
 	}
 
 	/**
+	 * Accept the requested replacement character set and collation only when the server lists them.
+	 *
+	 * Both values are written into CREATE TABLE and routine DDL, so each is replaced by the server's own
+	 * name for it; anything the server does not list stops the restore before a statement runs.
+	 *
+	 * @param array $supported_charsets   SHOW CHARACTER SET rows keyed by lower-case name.
+	 * @param array $supported_collations SHOW COLLATION rows keyed by lower-case name.
+	 * @return true|WP_Error
+	 */
+	private function validate_charset_options( $supported_charsets, $supported_collations ) {
+		$checks = array(
+			'backupplus_restorer_charset' => array( $supported_charsets, 'Charset', __( 'character set', 'backupplus' ) ),
+			'backupplus_restorer_collate' => array( $supported_collations, 'Collation', __( 'collation', 'backupplus' ) ),
+		);
+		foreach ( $checks as $option => $check ) {
+			if ( ! isset( $this->restore_options[ $option ] ) || '' === $this->restore_options[ $option ] ) {
+				continue;
+			}
+			$value = $this->restore_options[ $option ];
+			if ( 'backupplus_restorer_collate' === $option && 'choose_a_default_for_each_table' === $value ) {
+				continue;
+			}
+			list( $supported, $column, $label ) = $check;
+			$key                                = is_string( $value ) ? strtolower( $value ) : '';
+			$row                                = '' !== $key && isset( $supported[ $key ] ) ? $supported[ $key ] : null;
+			$name                               = is_object( $row ) && isset( $row->$column ) ? (string) $row->$column : '';
+			if ( '' === $name || strtolower( $name ) !== $key || ! preg_match( '/^[A-Za-z0-9_]+$/', $name ) ) {
+				/* translators: %s: "character set" or "collation" */
+				return new WP_Error( 'unsupported_restore_charset', sprintf( __( 'The requested %s is not supported by the database server; choose one from the restore options.', 'backupplus' ), $label ) );
+			}
+			$this->restore_options[ $option ] = $name;
+		}
+		return true;
+	}
+
+	/**
 	 * Restore the database backup
 	 *
 	 * @param  string $working_dir           specify working directory
@@ -147,6 +183,10 @@ trait BackupPlus_Restorer_Database_Restore {
 		$supported_engines    = array_change_key_case( (array) $wpdb->get_results( 'SHOW ENGINES', OBJECT_K ) );
 		$supported_charsets   = array_change_key_case( (array) $wpdb->get_results( 'SHOW CHARACTER SET', OBJECT_K ) );
 		$supported_collations = array_change_key_case( (array) $wpdb->get_results( 'SHOW COLLATION', OBJECT_K ) );
+		$charset_options      = $this->validate_charset_options( $supported_charsets, $supported_collations );
+		if ( is_wp_error( $charset_options ) ) {
+			return $charset_options;
+		}
 
 		$this->table_engine = '';
 
@@ -700,14 +740,16 @@ trait BackupPlus_Restorer_Database_Restore {
 				// WPB2D produces these, as do some phpMyAdmin dumps
 				$sql_type = 7;
 			} elseif ( preg_match( '#^\s*/\*\!40\d+ (SET NAMES) (.*)\*\/#i', $sql_line, $smatches ) ) {
-				$sql_type           = 8;
-				$charset            = rtrim( $smatches[2] );
+				$sql_type = 8;
+				// Current dumps quote the name as an identifier; older ones do not.
+				$dumped             = trim( rtrim( $smatches[2] ), '`' );
+				$charset            = $dumped;
 				$names              = $charset;
 				$connection_charset = $backupplus->get_connection_charset();
 				if ( 'utf8' === $charset && 'utf8mb4' === $connection_charset ) {
 					$names = $connection_charset;
 					/* translators: 1: Charset found, 2: Changed charset to */
-					$backupplus->log( sprintf( __( 'Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset().', 'backupplus' ), $charset, $connection_charset ), 'notice-restore' );
+					$backupplus->log( sprintf( __( 'The dump uses the character set %1$s, but changing to %2$s as suggested by WPDB::determine_charset().', 'backupplus' ), $charset, $connection_charset ), 'notice-restore' );
 					$charset = $connection_charset;
 				}
 				$this->set_names = $charset;
@@ -717,7 +759,7 @@ trait BackupPlus_Restorer_Database_Restore {
 					$backupplus->log( 'Connection character set: ' . sprintf( __( 'Requested character set (%1$s) is not present - changing to %2$s.', 'backupplus' ), esc_html( $charset ), esc_html( $names ) ), 'notice-restore' );
 				}
 				// A changed character set replaces the dump's statement; an unchanged one runs as written.
-				if ( '' !== $names && rtrim( $smatches[2] ) !== $names ) {
+				if ( '' !== $names && $dumped !== $names ) {
 					$sql_line = BackupPlus_SQL::render( 'SET NAMES %i', array( $names ) );
 				}
 			} elseif ( preg_match( '/^\s*create trigger /i', $sql_line ) ) {

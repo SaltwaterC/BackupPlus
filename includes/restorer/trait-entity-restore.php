@@ -120,6 +120,12 @@ trait BackupPlus_Restorer_Entity_Restore {
 				);
 				$restored_db = $this->restore_backup_db( $working_dir, $working_dir_localpath, $import_table_prefix );
 				if ( false === $restored_db || is_wp_error( $restored_db ) ) {
+					// A failed restore must not leave the database, possibly decrypted, in the web-reachable upgrade folder (BPS-14)
+					foreach ( array( 'backup.db.gz', 'backup.db', 'backup.db.bz2' ) as $db_basename ) {
+						if ( file_exists( $working_dir_localpath . '/' . $db_basename ) ) {
+							@unlink( $working_dir_localpath . '/' . $db_basename );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink -- Best effort; the restore has already failed.
+						}
+					}
 					return $restored_db;
 				}
 				$backupplus->log_restore_update(
@@ -455,7 +461,8 @@ trait BackupPlus_Restorer_Entity_Restore {
 				}
 				$parent = dirname( $parent );
 			}
-			if ( $wp_filesystem->exists( $path ) && ! $wp_filesystem->delete( $path, true ) ) {
+			// A symbolic link, here or anywhere inside a deleted folder, is removed itself and never followed (BPS-20)
+			if ( ( is_link( $path ) || $wp_filesystem->exists( $path ) ) && ! BackupPlus_Filesystem_Functions::delete_restore_path( $wp_filesystem, $path ) ) {
 				return new WP_Error( 'incremental_delete_failed', 'Could not remove a deleted file during incremental restore.' );
 			}
 		}
@@ -490,7 +497,8 @@ trait BackupPlus_Restorer_Entity_Restore {
 				if ( 1 === $current_level && ! $this->restore_component_selected( $type, $file ) ) {
 					continue;
 				}
-				if ( $wp_filesystem->is_dir( $path . DIRECTORY_SEPARATOR . $file ) ) {
+				// A link to a folder is pruned as a file: neither scanned nor emptied (BPS-20)
+				if ( $wp_filesystem->is_dir( $path . DIRECTORY_SEPARATOR . $file ) && ! is_link( $path . DIRECTORY_SEPARATOR . $file ) ) {
 					$directory = $path . DIRECTORY_SEPARATOR . $file;
 					// Check if we should go deeper in the file path, if not then check if this directory exists in the manifest, if not then remove it.
 					if ( $current_level + 1 < $directory_level ) {
@@ -501,13 +509,13 @@ trait BackupPlus_Restorer_Entity_Restore {
 					} else {
 						$directory = str_replace( $base_path, '', $directory );
 						if ( ! in_array( $directory, $entity_directories ) ) {
-							$wp_filesystem->delete( $base_path . $directory, true );
+							BackupPlus_Filesystem_Functions::delete_restore_path( $wp_filesystem, $base_path . $directory );
 						}
 					}
 				} else {
 					$file = str_replace( $base_path, '', $path . DIRECTORY_SEPARATOR . $file );
 					if ( ! in_array( $file, $entity_files ) ) {
-						$wp_filesystem->delete( $base_path . $file, false );
+						BackupPlus_Filesystem_Functions::delete_restore_path( $wp_filesystem, $base_path . $file );
 					}
 				}
 			}

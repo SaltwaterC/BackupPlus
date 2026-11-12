@@ -569,6 +569,10 @@ trait BackupPlus_Core_Remote_Transfer {
 			return;
 		}
 		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_delete_local', 0 ) ) {
+			if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $file ) ) {
+				$this->log( $log . 'skipped: not a file name in the backup directory' );
+				return false;
+			}
 			$fullpath = $this->backups_dir_location() . '/' . $file;
 
 			// check to make sure it exists before removing
@@ -606,7 +610,8 @@ trait BackupPlus_Core_Remote_Transfer {
 		return call_user_func( array( $storage, 'options_filter' ), $options );
 	}
 
-	public function spool_file( $fullpath, $encryption = '' ) {
+	public function spool_file( $fullpath, $encryption = '', $download_name = '' ) {
+		$download_name = '' === $download_name ? basename( $fullpath ) : $download_name;
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
@@ -619,9 +624,8 @@ trait BackupPlus_Core_Remote_Transfer {
 		// Don't enable this line - it causes 500 HTTP errors in some cases/hosts on some large files, for unknown reason
 		// @ini_set('display_errors', '0');
 
-		// Ordinary backup downloads preserve ciphertext. Decryption has its own
-		// authorized POST handler and never takes a key from a download URL.
-		$content_type = BackupPlus_Encryption::is_file_encrypted( $fullpath ) ? 'application/octet-stream' : BackupPlus_Manipulation_Functions::get_mime_type_from_filename( $fullpath, false );
+		// Downloads preserve ciphertext; no download takes a decryption key (the browser decrypts age archives itself).
+		$content_type = BackupPlus_Encryption::is_file_encrypted( $fullpath ) ? 'application/octet-stream' : BackupPlus_Manipulation_Functions::get_mime_type_from_filename( $download_name, false );
 
 		backupplus_try_include_file( 'includes/class-partialfileservlet.php', 'include_once' );
 
@@ -645,21 +649,28 @@ trait BackupPlus_Core_Remote_Transfer {
 			}
 		}
 
+		// A request for several ranges, or a Range header that is not valid, is answered with the whole file, as RFC 9110
+		// allows; only one valid byte range is served partially
+		if ( ! empty( $range_header ) ) {
+			try {
+				$range_header = false !== strpos( (string) $range_header, ',' ) ? null : BackupPlus_RangeHeader::createFromHeaderString( $range_header );
+			} catch ( BackupPlus_InvalidRangeHeaderException $e ) {
+				BackupPlus_Manipulation_Functions::error_log( 'BackupPlus: ignored an invalid Range header: ' . $e->getMessage() );
+				$range_header = null;
+			}
+		}
+
 		if ( empty( $range_header ) ) {
 			header( 'Content-Length: ' . filesize( $fullpath ) );
 			header( "Content-type: $content_type" );
-			header( 'Content-Disposition: attachment; filename="' . basename( $fullpath ) . '";' );
+			header( 'Content-Disposition: attachment; filename="' . $download_name . '";' );
 			readfile( $fullpath );
 			return;
 		}
 
 		try {
-			$range_header = BackupPlus_RangeHeader::createFromHeaderString( $range_header );
-			$servlet      = new BackupPlus_PartialFileServlet( $range_header );
-			$servlet->sendFile( $fullpath, $content_type );
-		} catch ( BackupPlus_InvalidRangeHeaderException $e ) {
-			header( 'HTTP/1.1 400 Bad Request' );
-			BackupPlus_Manipulation_Functions::error_log( 'BackupPlus: BackupPlus_InvalidRangeHeaderException: ' . $e->getMessage() );
+			$servlet = new BackupPlus_PartialFileServlet( $range_header );
+			$servlet->sendFile( $fullpath, $content_type, $download_name );
 		} catch ( BackupPlus_UnsatisfiableRangeException $e ) {
 			header( 'HTTP/1.1 416 Range Not Satisfiable' );
 		} catch ( BackupPlus_NonExistentFileException $e ) {

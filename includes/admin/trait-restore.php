@@ -9,14 +9,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait BackupPlus_Admin_Restore {
 
 	/**
-	 * Called via the ajax_restore actions to prepare the restore over AJAX
+	 * Called via the ajax_restore actions to prepare the restore over AJAX. backupplus_ajaxrestore needs a manager and a nonce;
+	 * backupplus_ajaxrestore_continue needs the continuation token instead, which prepare_restore() checks (BPS-11).
 	 *
 	 * @return void
 	 */
 	public function backupplus_ajaxrestore() {
 		$request_action = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'action' );
 		$request_nonce  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'nonce' );
-		if ( 'backupplus_ajaxrestore' === $request_action && ( empty( $request_nonce ) || ! wp_verify_nonce( $request_nonce, 'backupplus-credentialtest-nonce' ) ) ) {
+		if ( 'backupplus_ajaxrestore_continue' !== $request_action && ( ! BackupPlus_Options::user_can_manage() || empty( $request_nonce ) || ! is_string( $request_nonce ) || ! wp_verify_nonce( $request_nonce, 'backupplus-credentialtest-nonce' ) ) ) {
 			die( 'Security Check' );
 		}
 		$this->prepare_restore();
@@ -84,13 +85,16 @@ trait BackupPlus_Admin_Restore {
 	 */
 	public function show_admin_restore_in_progress_notice( $return_instead_of_echo = false ) {
 
-		if ( isset( $_REQUEST['action'] ) && 'backupplus_restore_abort' === $_REQUEST['action'] && ! empty( $_REQUEST['job_id'] ) && is_string( $_REQUEST['job_id'] ) ) {
+		// Dismissing clears the restore marker, so it needs a manager and the nonce that the dialog's form posts (BPS-20). Without them the notice is shown again.
+		$abort_nonce = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'nonce' );
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_restore_abort' === $_REQUEST['action'] && ! empty( $_REQUEST['job_id'] ) && is_string( $_REQUEST['job_id'] ) && BackupPlus_Options::user_can_manage() && is_string( $abort_nonce ) && wp_verify_nonce( $abort_nonce, 'backupplus-credentialtest-nonce' ) ) {
 
 			if ( empty( $this->restore_in_progress_jobdata ) || ! is_array( $this->restore_in_progress_jobdata ) || ! isset( $this->restore_in_progress_jobdata['jobid'] ) || $this->restore_in_progress_jobdata['jobid'] != $_REQUEST['job_id'] ) {
 				$html = 'Job ID not found.<br>';
 			} else {
 				$html = '';
 				delete_site_option( 'backupplus_restore_in_progress' );
+				BackupPlus_Restore_Continuation::clear();
 			}
 			if ( $return_instead_of_echo ) {
 				return $html;
@@ -111,7 +115,8 @@ trait BackupPlus_Admin_Restore {
 		/* translators: %s: Time ago */
 		$html .= '<p>' . sprintf( __( 'You have an unfinished restoration operation, begun %s ago.', 'backupplus' ), $time_ago ) . '</p>';
 		$html .= '<form method="post" action="' . esc_url( BackupPlus_Options::admin_page_url() ) . '?page=backupplus">';
-		$html .= wp_nonce_field( 'backupplus-credentialtest-nonce', 'nonce' );
+		// Returned, not echoed: the field belongs inside the form, which the dismiss button also submits
+		$html .= wp_nonce_field( 'backupplus-credentialtest-nonce', 'nonce', true, false );
 		$html .= '<input id="backupplus_restore_continue_action" type="hidden" name="action" value="backupplus_restore_continue">';
 		$html .= '<input type="hidden" name="backupplus_ajax_restore" value="continue_ajax_restore">';
 		$html .= '<input type="hidden" name="job_id" value="' . esc_attr( $restore_jobdata['jobid'] ) . '">';
@@ -145,10 +150,12 @@ trait BackupPlus_Admin_Restore {
 			die( 'Invalid request (restore_job_id).' );
 		}
 
-		if ( isset( $_REQUEST['action'] ) && 'backupplus_ajaxrestore_continue' === $_REQUEST['action'] ) { // unlike backupplus_ajaxrestore which requires nonce to start a new restoration, backupplus_ajaxrestore_continue doesn't require nonces at all so additional checks are required
-			$restore_in_progress = get_site_option( 'backupplus_restore_in_progress' );
-			if ( empty( $restore_in_progress ) || ! $restore_job_id || $restore_job_id !== $restore_in_progress ) {
-				die; // continuation requires a job ID, and if it's not presented then just abort without showing anything
+		if ( isset( $_REQUEST['action'] ) && 'backupplus_ajaxrestore_continue' === $_REQUEST['action'] ) {
+			// Unlike backupplus_ajaxrestore, this action is open to logged-out requests, because the database restore can end the session. It needs the token issued to the restore page, and it only runs the saved job: it cannot start a restore or supply filesystem credentials (BPS-11).
+			$continuation_token = BackupPlus_Manipulation_Functions::fetch_superglobal( 'post', 'token' );
+			$ajax_restore_mode  = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'backupplus_ajax_restore' );
+			if ( ! BackupPlus_Restore_Continuation::verify( $restore_job_id, $continuation_token ) || 'do_ajax_restore' !== $ajax_restore_mode ) {
+				die; // abort without showing anything
 			}
 		}
 
@@ -232,13 +239,14 @@ trait BackupPlus_Admin_Restore {
 			$credentials_found = false;
 
 			foreach ( $_REQUEST as $key => $value ) {
-				if ( array_key_exists( $key, $filesystem_credentials ) ) {
+				if ( array_key_exists( $key, $filesystem_credentials ) && is_string( $value ) ) {
 					$filesystem_credentials[ $key ] = stripslashes( $value );
 					$credentials_found              = true;
 				}
 			}
 
-			if ( $credentials_found ) {
+			// The credentials are loaded into $_POST for WP_Filesystem on every later step, including logged-out continuations, so only a manager may supply them (BPS-11)
+			if ( $credentials_found && BackupPlus_Options::user_can_manage() ) {
 				$backupplus->jobdata_set( 'filesystem_credentials', $filesystem_credentials );
 			}
 
@@ -373,6 +381,8 @@ trait BackupPlus_Admin_Restore {
 			echo '<input type="hidden" id="backupplus_ajax_restore_debug" name="backupplus_ajax_restore_debug" value="1">';
 		}
 		echo '<input type="hidden" id="backupplus_ajax_restore_job_id" name="backupplus_restore_job_id" value="' . esc_attr( $backupplus->nonce ) . '">';
+		// Only a manager reaches this page: lets this page continue the restore after the database restore has logged them out
+		echo '<input type="hidden" id="backupplus_ajax_restore_token" name="backupplus_restore_token" value="' . esc_attr( BackupPlus_Restore_Continuation::issue( $backupplus->nonce ) ) . '">';
 		echo '<input type="hidden" id="backupplus_ajax_restore_action" name="backupplus_restore_action" value="' . esc_attr( $ajax_action ) . '">';
 		echo '<div id="backupplus_ajax_restore_progress" style="display: none;"></div>';
 

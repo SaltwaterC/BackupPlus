@@ -62,6 +62,7 @@ trait BackupPlus_Restorer_Run {
 			}
 			// All done - remove the intermediate marker
 			delete_site_option( 'backupplus_restore_in_progress' );
+			BackupPlus_Restore_Continuation::clear( $backupplus->nonce );
 
 			if ( $this->validate_restored_theme ) {
 				foreach ( array( 'template', 'stylesheet', 'template_root', 'stylesheet_root' ) as $opt ) {

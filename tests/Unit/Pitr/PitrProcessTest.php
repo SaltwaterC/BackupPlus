@@ -64,6 +64,44 @@ final class PitrProcessTest extends PitrTestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
+	public function test_guarded_credentials_are_piped_and_never_copied(): void {
+		$password   = 'p"a\\ss;#' . bin2hex( random_bytes( 8 ) );
+		$connection = $this->directory . '/source.php';
+		file_put_contents( $connection, BackupPlus_PITR_Process::GUARD . "[client]\nhost=\"127.0.0.1\"\nuser=\"wordpress\"\npassword=\"" . str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), $password ) . "\"\n" );
+		chmod( $connection, 0600 );
+		$this->assertSame( $password, BackupPlus_PITR_Process::connection_options( $connection )['password'], 'The guard line changed the parsed credentials.' );
+		$before = glob( $this->directory . '/*' );
+		$handle = BackupPlus_PITR_Process::connection_file( $connection, $this->directory );
+		$this->assertStringStartsWith( 'memory:', $handle, 'A guarded option file was not passed through the pipe.' );
+		$this->assertSame( $before, glob( $this->directory . '/*' ), 'A guarded option file was copied in plaintext.' );
+		$this->assertSame( $password, BackupPlus_PITR_Process::connection_options( $handle )['password'], 'Piped credentials differ from the guarded file.' );
+		$piped = BackupPlus_PITR_Process::run( array( '/bin/sh', '-c', 'cat <&3', '--defaults-file=' . $handle ), $this->directory );
+		$this->assertStringNotContainsString( '<?php', $piped, 'The PHP guard reached the native client.' );
+		$this->assertStringContainsString( "user=\"wordpress\"\n", $piped, 'The native client did not receive the connection.' );
+	}
+
+	public function test_guarded_credentials_keep_the_option_allowlist(): void {
+		$connection = $this->directory . '/source.php';
+		file_put_contents( $connection, BackupPlus_PITR_Process::GUARD . "[client]\nuser=root\nhost=127.0.0.1\ninit-command=DROP DATABASE wordpress\n" );
+		chmod( $connection, 0600 );
+		$this->assertRejected(
+			function () use ( $connection ) {
+				BackupPlus_PITR_Process::connection_file( $connection, $this->directory );
+			},
+			'A guarded file accepted a client behavior override.'
+		);
+	}
+
+	public function test_a_missing_connection_file_asks_for_the_settings_to_be_saved(): void {
+		$error = $this->assertRejected(
+			function () {
+				BackupPlus_PITR_Process::connection_options( $this->directory . '/source.cnf' );
+			},
+			'A missing connection file was accepted.'
+		);
+		$this->assertStringContainsString( 'Save the database point-in-time recovery settings again', $error->getMessage() );
+	}
+
 	public function test_unverified_remote_transport_is_rejected(): void {
 		$connection = $this->connection( "[client]\nuser=root\nhost=remote.example\n" );
 		$this->assertRejected(

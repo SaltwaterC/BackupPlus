@@ -18,6 +18,7 @@ final class PitrManifestTest extends PitrTestCase {
 		parent::setUp();
 		require_once dirname( __DIR__, 3 ) . '/includes/class-pitr-process.php';
 		require_once dirname( __DIR__, 3 ) . '/includes/class-pitr-manifest.php';
+		require_once dirname( __DIR__, 3 ) . '/includes/class-sql.php';
 		require_once dirname( __DIR__, 3 ) . '/includes/class-pitr-binlog.php';
 	}
 

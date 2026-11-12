@@ -59,6 +59,10 @@ async function backupplus_restorer_checkstage2(doalert) {
 					if (info.source_defaults) {
 						Object.keys(info.source_defaults).forEach(function(id) { var input = jQuery('[name="backupplus_source_destinations['+id+']"]'); if (!input.val()) { input.val(info.source_defaults[id]); } });
 					}
+					// A path that only the archive reports is shown as a hint; the administrator types the destination.
+					if (info.source_suggestions) {
+						Object.keys(info.source_suggestions).forEach(function(id) { jQuery('[name="backupplus_source_destinations['+id+']"]').attr('placeholder', String(info.source_suggestions[id])); });
+					}
 					if (info.age_ticket) {
 						jQuery('#backupplus-age-ticket').val(info.age_ticket);
 						jQuery('#backupplus-age-identity, #backupplus-age-key-passphrase').val('').prop('disabled', true);

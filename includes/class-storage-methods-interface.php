@@ -70,6 +70,12 @@ class BackupPlus_Storage_Methods_Interface {
 						unset( $opts[ $filter_frontend_settings_key ] );
 					}
 
+					// Saved secrets, including any a template derives from them, reach the browser only as a placeholder (BPS-20).
+					// The defaults for a new instance come from the code.
+					if ( 'default' !== $instance_id ) {
+						$opts = BackupPlus_Credential_Storage::mask( $opts, 'backupplus_' . $method );
+					}
+
 					$options[ $method ][ $instance_id ] = $opts;
 				}
 			}
@@ -83,6 +89,33 @@ class BackupPlus_Storage_Methods_Interface {
 			'templates'         => $templates,
 			'partial_templates' => $partial_templates,
 		);
+	}
+
+	/**
+	 * Saved instance settings as the settings templates show them. A placeholder that a form returns stands for the value
+	 * shown, which some providers derive (WebDAV shows the parts of a legacy URL).
+	 *
+	 * @param String $method    The storage method
+	 * @param Array  $instances Decrypted instance settings, keyed by instance ID
+	 *
+	 * @return Array
+	 */
+	public static function template_instance_settings( $method, $instances ) {
+		$object = BackupPlus_Storage_Provider_Factory::has( $method ) ? self::get_storage_object( $method ) : null;
+		if ( ! is_a( $object, 'BackupPlus_BackupModule' ) || ! $object->supports_feature( 'multi_options' ) ) {
+			return $instances;
+		}
+		foreach ( $instances as $instance_id => $instance_options ) {
+			if ( ! is_array( $instance_options ) ) {
+				continue;
+			}
+			$shown = $object->transform_options_for_template( array_merge( $instance_options, array( 'instance_id' => $instance_id ) ) );
+			if ( is_array( $shown ) ) {
+				unset( $shown['instance_id'] );
+				$instances[ $instance_id ] = $shown + $instance_options;
+			}
+		}
+		return $instances;
 	}
 
 	/**

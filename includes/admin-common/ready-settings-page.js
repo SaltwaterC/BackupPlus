@@ -44,7 +44,13 @@ jQuery(function($) {
 			notice_selector.show();
 		}
 	});
-	
+
+	// Show the plaintext warning next to a transport setting (FTP encryption, WebDAV protocol, ntfy server) while it selects an unencrypted connection
+	$(document).on('change input', '[data-backupplus_plaintext_pattern]', function() {
+		var plaintext = new RegExp($(this).attr('data-backupplus_plaintext_pattern'), 'i').test(String($(this).val() || '').trim());
+		$(this).closest('td').find('.backupplus_plaintext_warning').toggle(plaintext);
+	});
+
 	// Update WebDAV URL as user edits
 	$('#backupplus-navtab-settings-content #remote-storage-holder').on('change keyup paste', '.backupplus_webdav_settings', function() {
 		var attr_id = $(this).attr('id');

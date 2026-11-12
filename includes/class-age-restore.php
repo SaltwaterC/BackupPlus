@@ -5,6 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-backup-sources.php';
 
+/** An archive differs from the checksum in the backup history; the message is safe to show. */
+class BackupPlus_Archive_Checksum_Exception extends RuntimeException {}
+
 /** Prepare verified archives for resumable restores without retaining identities. */
 class BackupPlus_Age_Restore {
 	const LIFETIME = 7200;
@@ -22,7 +25,7 @@ class BackupPlus_Age_Restore {
 		return 'age-encryption.org/' === $prefix;
 	}
 
-	/** Restorable archives of a backup set, as entity and filename pairs. */
+	/** Restorable archives of a backup set, as entity, filename and index triples. */
 	private static function archives( $backup, $entities ) {
 		global $backupplus;
 		$files         = array();
@@ -33,8 +36,8 @@ class BackupPlus_Age_Restore {
 			if ( ! is_string( $entity ) || ! isset( $allowed[ $entity ] ) || ! isset( $backup[ $entity ] ) ) {
 				continue;
 			}
-			foreach ( (array) $backup[ $entity ] as $file ) {
-				$files[] = array( $entity, $file );
+			foreach ( (array) $backup[ $entity ] as $index => $file ) {
+				$files[] = array( $entity, $file, $index );
 			}
 		}
 		return $files;
@@ -103,6 +106,13 @@ class BackupPlus_Age_Restore {
 			}
 			$hash = hash_file( 'sha256', $path );
 			if ( false === $hash ) { throw new \RuntimeException( 'Could not read archive.' ); }
+			// age authenticates the content, not which backup it belongs to: anyone with a public recipient can write a valid
+			// archive. Where this site recorded the archive's checksum, a swapped or older copy from remote storage is refused.
+			$recorded = isset( $backup['checksums']['sha256'][ $entry[0] . $entry[2] . '.crypt' ] ) ? $backup['checksums']['sha256'][ $entry[0] . $entry[2] . '.crypt' ] : '';
+			if ( is_string( $recorded ) && '' !== $recorded && ! hash_equals( strtolower( $recorded ), $hash ) ) {
+				/* translators: %s: archive file name */
+				throw new BackupPlus_Archive_Checksum_Exception( sprintf( __( 'The encrypted archive %s does not match the checksum recorded when this backup was created. It may have been replaced in remote storage. Delete the local copy and download it again, or restore a different backup.', 'backupplus' ), $file ) );
+			}
 			$files[ $file ] = array(
 				'path'        => 'decrypt_' . bin2hex( random_bytes( 16 ) ) . '.tmp',
 				'cipher_hash' => $hash,

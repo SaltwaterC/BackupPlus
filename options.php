@@ -83,12 +83,24 @@ class BackupPlus_Options {
 	 * @return Mixed
 	 */
 	public static function get_backupplus_option( $option, $default = null ) {
-		// On a network, the configuration is the main site's, whichever site this request is for
-		$ret = BackupPlus_Multisite::secondary() ? get_blog_option( BackupPlus_Multisite::main_site_id(), $option, $default ) : get_option( $option, $default );
+		$ret = self::get_stored_backupplus_option( $option, $default );
 		if ( class_exists( 'BackupPlus_Credential_Storage' ) ) {
 			$ret = BackupPlus_Credential_Storage::reading( $ret, $option );
 		}
 		return apply_filters( 'backupplus_get_option', $ret, $option, $default );
+	}
+
+	/**
+	 * Get an option as saved, with its credentials still in their encryption envelopes
+	 *
+	 * @param String $option  option name
+	 * @param Mixed  $default default value of option
+	 *
+	 * @return Mixed
+	 */
+	public static function get_stored_backupplus_option( $option, $default = null ) {
+		// On a network, the configuration is the main site's, whichever site this request is for
+		return BackupPlus_Multisite::secondary() ? get_blog_option( BackupPlus_Multisite::main_site_id(), $option, $default ) : get_option( $option, $default );
 	}
 
 	/**
@@ -293,7 +305,7 @@ class BackupPlus_Options {
 
 		register_setting( 'backupplus-options-group', 'backupplus_split_every', array( $backupplus_admin, 'optionfilter_split_every' ) );
 
-		register_setting( 'backupplus-options-group', 'backupplus_dir', array( 'BackupPlus_Manipulation_Functions', 'prune_backupplus_dir_prefix' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_dir' ); // phpcs:ignore PluginCheck.CodeAnalysis.SettingSanitization.register_settingMissing -- BackupPlus_Backup_Directory::sanitize() is registered for every request, so CLI and imports are checked too.
 
 		register_setting( 'backupplus-options-group', 'backupplus_report_warningsonly', array( $backupplus_admin, 'return_array' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_report_wholebackup', array( $backupplus_admin, 'return_array' ) );
@@ -305,7 +317,7 @@ class BackupPlus_Options {
 		register_setting( 'backupplus-options-group', 'backupplus_delete_local', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_storage_limits', array( 'BackupPlus_Storage_Limits', 'sanitize' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_debug_mode', 'absint' );
-		register_setting( 'backupplus-options-group', 'backupplus_extradbs', array( 'BackupPlus_Backup_Sources', 'connections' ) );
+		register_setting( 'backupplus-options-group', 'backupplus_extradbs', array( 'BackupPlus_Backup_Sources', 'sanitize_connections' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_database_selection', array( 'BackupPlus_Backup_Sources', 'sanitize_selection' ) );
 		register_setting( 'backupplus-options-group', 'backupplus_backupdb_nonwp', 'absint' );
 		register_setting( 'backupplus-options-group', 'backupplus_database_next_id', 'absint' );

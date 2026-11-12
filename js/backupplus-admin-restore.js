@@ -2,6 +2,8 @@ var backupplus_restore_screen = true;
 jQuery(function($) {
 
 	var job_id = $('#backupplus_ajax_restore_job_id').val();
+	// Continuing works without a login, because restoring the database can end the session; it needs this token instead
+	var continuation_token = $('#backupplus_ajax_restore_token').val() || '';
 	var action = $('#backupplus_ajax_restore_action').val();
 	var backupplus_restore_update_timer;
 	var last_received = 0;
@@ -27,7 +29,11 @@ jQuery(function($) {
 
 		var xhttp = new XMLHttpRequest();
 		var xhttp_data = 'action=' + action + '&backupplus_ajax_restore=do_ajax_restore&job_id=' + job_id;
-		if ('backupplus_ajaxrestore' === action) xhttp_data += '&nonce=' + backupplus_credentialtest_nonce;
+		if ('backupplus_ajaxrestore' === action) {
+			xhttp_data += '&nonce=' + backupplus_credentialtest_nonce;
+		} else {
+			xhttp_data += '&token=' + encodeURIComponent(continuation_token);
+		}
 		var previous_data_length = 0;
 		var show_alert = true;
 		var debug = $('#backupplus_ajax_restore_debug').length;
@@ -194,13 +200,14 @@ jQuery(function($) {
 								if (!$.isEmptyObject(pages_found)) {
 									$('.backupplus_restore_result').before(backupplus_i18n.ajax_restore_404_detected);
 									$.each(pages_found, function(index, url) {
-										$('.backupplus_missing_pages').append('<li>'+url+'</li>');
+										// URLs come from the restored database, so they are text, never markup
+										$('.backupplus_missing_pages').append($('<li>').text(url));
 									});
 								}
 							});
 
 							$.each(restore_data.data.actions, function(index, item) {
-								$steps_list.after('<a href="'+item+'" class="button button-primary">'+index+'</a>');
+								$steps_list.after($('<a class="button button-primary">').attr('href', item).text(index));
 							});
 						}
 

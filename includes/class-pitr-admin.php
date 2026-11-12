@@ -5,12 +5,24 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
 }
+require_once __DIR__ . '/class-web-guard.php';
+require_once __DIR__ . '/class-executables.php';
 
 class BackupPlus_PITR_Admin {
+
+	/** The WordPress database connection, PHP-guarded, in the PITR folder. */
+	const SOURCE_FILE = 'source.php';
+
+	/** Its plaintext predecessor, which a web server that ignores .htaccess would serve (BPS-09). */
+	const LEGACY_SOURCE_FILE = 'source.cnf';
+
+	/** After a failed move to SOURCE_FILE, requests wait this long before trying again. */
+	const LEGACY_RETRY = 'backupplus_pitr_source_retry';
 
 	public static function register() {
 		add_action( 'admin_init', array( __CLASS__, 'settings' ) );
 		add_action( 'init', array( __CLASS__, 'retire_saved_restore' ), 1 );
+		add_action( 'init', array( __CLASS__, 'retire_plaintext_source' ), 1 );
 		add_action( 'updated_option', array( __CLASS__, 'updated' ), 10, 3 );
 		add_action(
 			'added_option',
@@ -25,6 +37,40 @@ class BackupPlus_PITR_Admin {
 	/** The previous experimental saved restore login must no longer remain configured. */
 	public static function retire_saved_restore() {
 		if ( null !== get_option( 'backupplus_pitr_recovery', null ) ) { delete_option( 'backupplus_pitr_recovery' ); }
+	}
+
+	/**
+	 * Settings saved before BPS-09 point at the plaintext source.cnf. Write the guarded file, point the settings at it
+	 * and delete the plaintext copy. Only the file this class wrote is touched; an option file given to the CLI is the
+	 * administrator's own.
+	 */
+	public static function retire_plaintext_source() {
+		global $backupplus;
+		$config = BackupPlus_PITR::config();
+		if ( empty( $config['source_config'] ) || ! is_string( $config['source_config'] ) || self::LEGACY_SOURCE_FILE !== basename( $config['source_config'] ) || ! is_object( $backupplus ) ) {
+			return;
+		}
+		$root = realpath( $backupplus->backups_dir_location() . '/pitr' );
+		if ( false === $root || realpath( dirname( $config['source_config'] ) ) !== $root || get_transient( self::LEGACY_RETRY ) ) {
+			return;
+		}
+		try {
+			$current                 = self::wordpress_configuration( isset( $config['bin_directory'] ) ? $config['bin_directory'] : null );
+			$config['source_config'] = $current['source_config'];
+			BackupPlus_PITR::save_configuration( $config );
+			delete_transient( self::LEGACY_RETRY );
+		} catch ( Throwable $error ) {
+			// Capture keeps the old file until the guarded one can be written; saving the PITR settings retries at once.
+			set_transient( self::LEGACY_RETRY, 1, HOUR_IN_SECONDS );
+			BackupPlus_Manipulation_Functions::error_log( 'BackupPlus: could not move the PITR database connection to a protected file: ' . $error->getMessage() );
+		}
+	}
+
+	private static function remove_legacy_source( $root ) {
+		$legacy = $root . '/' . self::LEGACY_SOURCE_FILE;
+		if ( ( file_exists( $legacy ) || is_link( $legacy ) ) && ! @unlink( $legacy ) ) {
+			throw new RuntimeException( __( 'Could not delete the old unprotected database connection file in the point-in-time recovery folder.', 'backupplus' ) );
+		}
 	}
 
 	public static function settings() {
@@ -146,13 +192,14 @@ class BackupPlus_PITR_Admin {
 			if ( is_array( $tls ) && isset( $tls[1] ) && '' === $tls[1] ) { $lines[] = 'ssl=0'; }
 		}
 
+		// The password is in the web root, so the file is PHP that answers 404 and native clients read it from the pipe (BPS-09).
 		$root = null === $temporary_directory ? self::private_directory( $backupplus ) : BackupPlus_PITR_Process::directory( $temporary_directory );
-		$path = $root . '/source.cnf';
+		$path = $root . '/' . self::SOURCE_FILE;
 		if ( is_link( $path ) ) {
 			throw new RuntimeException( __( 'The private database connection file is unsafe. Contact your hosting provider.', 'backupplus' ) );
 		}
-		$temp = $root . '/.source-' . bin2hex( random_bytes( 8 ) ) . '.tmp';
-		BackupPlus_PITR_Process::private_file( $temp, implode( "\n", $lines ) . "\n" );
+		$temp = $root . '/.source-' . bin2hex( random_bytes( 16 ) ) . '.php';
+		BackupPlus_PITR_Process::private_file( $temp, BackupPlus_PITR_Process::GUARD . implode( "\n", $lines ) . "\n" );
 		if ( ! @rename( $temp, $path ) ) {
 			@unlink( $temp );
 			throw new RuntimeException( __( 'Could not safely save the private database connection.', 'backupplus' ) );
@@ -161,6 +208,7 @@ class BackupPlus_PITR_Admin {
 		if ( ! is_file( $path ) || is_link( $path ) || false === $permissions || ( $permissions & 0077 ) ) {
 			throw new RuntimeException( __( 'The private database connection could not be verified.', 'backupplus' ) );
 		}
+		self::remove_legacy_source( $root );
 
 		return array(
 			'engine'          => $engine,
@@ -203,24 +251,15 @@ class BackupPlus_PITR_Admin {
 
 	private static function native_directory( $engine ) {
 		$configured = defined( 'BACKUPPLUS_PITR_BIN_DIRECTORY' ) ? BACKUPPLUS_PITR_BIN_DIRECTORY : apply_filters( 'backupplus_pitr_bin_directory', '' );
-		$candidates = array();
-		if ( is_string( $configured ) && '' !== $configured ) {
-			$candidates[] = $configured;
-		}
-		$path = getenv( 'PATH' );
-		if ( is_string( $path ) ) {
-			$candidates = array_merge( $candidates, explode( PATH_SEPARATOR, $path ) );
-		}
-		$candidates = array_merge( $candidates, array( '/usr/bin', '/usr/local/bin', '/bin', '/usr/local/mysql/bin' ) );
-		$tools      = 'mariadb' === $engine ? array( 'mariadb', 'mariadb-dump', 'mariadb-binlog' ) : array( 'mysql', 'mysqldump', 'mysqlbinlog' );
-		foreach ( array_unique( $candidates ) as $candidate ) {
-			$directory = realpath( $candidate );
-			if ( false === $directory || ! is_dir( $directory ) ) {
-				continue;
-			}
+		// PATH comes from the PHP process environment: relative, empty and writable entries are skipped (BPS-20).
+		$explicit = BackupPlus_Executables::trusted_directory( $configured, true );
+		$tools    = 'mariadb' === $engine ? array( 'mariadb', 'mariadb-dump', 'mariadb-binlog' ) : array( 'mysql', 'mysqldump', 'mysqlbinlog' );
+		foreach ( BackupPlus_Executables::directories( $configured ) as $directory ) {
 			try {
 				foreach ( $tools as $tool ) {
-					BackupPlus_PITR_Process::binary( $tool, $directory );
+					if ( ! BackupPlus_Executables::trusted_binary( BackupPlus_PITR_Process::binary( $tool, $directory ), $directory === $explicit ) ) {
+						throw new RuntimeException( 'Native database client can be replaced by another user: ' . $tool );
+					}
 				}
 				return $directory;
 			} catch ( RuntimeException $error ) {
@@ -242,7 +281,7 @@ class BackupPlus_PITR_Admin {
 	public static function private_directory( $backupplus ) {
 		$directory = BackupPlus_PITR_Process::directory( $backupplus->backups_dir_location() . '/pitr' );
 		$guards    = array(
-			'.htaccess'  => "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n",
+			'.htaccess'  => BackupPlus_Web_Guard::HTACCESS,
 			'index.php'  => "<?php exit;\n",
 			'web.config' => '<?xml version="1.0"?><configuration><system.webServer><security><authorization><remove users="*" roles="" verbs=""/><add accessType="Deny" users="*"/></authorization></security></system.webServer></configuration>',
 		);
@@ -250,6 +289,9 @@ class BackupPlus_PITR_Admin {
 			$path = $directory . '/' . $name;
 			if ( is_link( $path ) ) {
 				throw new RuntimeException( __( 'The point-in-time recovery folder contains an unsafe protection file.', 'backupplus' ) );
+			}
+			if ( '.htaccess' === $name ) {
+				BackupPlus_Web_Guard::upgrade_htaccess( $path );
 			}
 			if ( ! is_file( $path ) ) {
 				try {

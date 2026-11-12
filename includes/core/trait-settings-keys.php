@@ -27,7 +27,6 @@ trait BackupPlus_Core_Settings_Keys {
 			$general_keys['options'],
 			array(
 				'backupplus_dismiss_azure_legacy_storage_notice',
-				'backupplus_tmp_googledrive_access_token',
 				'backupplus_dismissedautobackup',
 				'backupplus_dismissedexpiry',
 				'backupplus_dismisseddashnotice',
@@ -36,7 +35,7 @@ trait BackupPlus_Core_Settings_Keys {
 			)
 		);
 		// N.B. backupplus_backup_history is not included here, as we don't want that wiped
-		return array_diff( $general_keys, array( 'backupplus_restore_in_progress', 'backupplus_backup_history' ) );
+		return array_diff( $general_keys, array( 'backupplus_restore_in_progress', 'backupplus_restore_continuation', 'backupplus_backup_history' ) );
 	}
 
 	/**
@@ -95,8 +94,6 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_include_uploads_exclude',
 				'backupplus_lastmessage',
 				'backupplus_googledrive_token',
-				'backupplus_dropboxtk_request_token',
-				'backupplus_dropboxtk_access_token',
 				'backupplus_retain_extrarules',
 				'backupplus_googlecloud',
 				'backupplus_include_more_path',
@@ -124,7 +121,6 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_s3generic',
 				'backupplus_dreamhost',
 				'backupplus_s3generic_login',
-				'backupplus_s3generic_pass',
 				'backupplus_s3generic_remote_path',
 				'backupplus_s3generic_endpoint',
 				'backupplus_webdav',
@@ -133,16 +129,13 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_azure',
 				'backupplus_cloudfiles',
 				'backupplus_cloudfiles_user',
-				'backupplus_cloudfiles_apikey',
 				'backupplus_cloudfiles_path',
 				'backupplus_cloudfiles_authurl',
 				'backupplus_ssl_useservercerts',
 				'backupplus_ssl_disableverify',
 				'backupplus_s3_login',
-				'backupplus_s3_pass',
 				'backupplus_s3_remote_path',
 				'backupplus_dreamobjects_login',
-				'backupplus_dreamobjects_pass',
 				'backupplus_dreamobjects_remote_path',
 				'backupplus_dreamobjects',
 				'backupplus_report_warningsonly',
@@ -154,6 +147,7 @@ trait BackupPlus_Core_Settings_Keys {
 				'backupplus_dismiss_admin_warning_pclzip',
 				'backupplus_dismiss_phpseclib_notice',
 				'backupplus_restore_in_progress',
+				'backupplus_restore_continuation',
 				'backupplus_backup_history',
 			),
 			'prefixed_options'    => array(

@@ -5,7 +5,9 @@
  * - only super administrators manage BackupPlus, and the network's other sites have no BackupPlus state or commands;
  * - a network backup restores as a whole, or one site at a time without touching the others or the shared tables;
  * - a single-site backup, taken on the leased single test site, imports into a new site and over an existing one, with its
- *   users merged into the network's, its addresses replaced and its uploads in the site's directory.
+ *   users merged into the network's, its addresses replaced and its uploads in the site's directory;
+ * - a restore of the whole network's database that ends just after wp_sitemeta continues logged out with the restore page's
+ *   token and finishes (scripts/check-interrupted-restore-continuation.php, run after the checks above have cleaned up).
  */
 require __DIR__ . '/lib/support.php';
 
@@ -306,6 +308,10 @@ try {
 		}
 	}
 }
+
+// Last, on the cleaned-up network: it restores the whole network's database to a backup it takes first (BPS-11)
+$continued = ms_wp( $network, array( '--skip-plugins=backupplus', 'eval-file', 'wp-content/plugins/backupplus/scripts/check-interrupted-restore-continuation.php' ) );
+ms_check( false !== strpos( $continued, 'PASS:' ), 'An interrupted network database restore continues with the restore page token and finishes' );
 
 function ms_host( $url ) {
 	$host = parse_url( $url, PHP_URL_HOST );

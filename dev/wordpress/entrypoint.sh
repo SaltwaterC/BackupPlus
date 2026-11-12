@@ -100,6 +100,16 @@ $connection->close();
 	exit 1
 fi
 
+# A network's wp-config.php outlives its database when the database is recreated (the test sites keep it in memory). WordPress
+# then finds no network for DOMAIN_CURRENT_SITE and every command fails, so drop the network constants and convert again below.
+if wp config has MULTISITE --type=constant --path="$wp_path" >/dev/null 2>&1 &&
+	! wp core is-installed --network --path="$wp_path" >/dev/null 2>&1; then
+	echo "wp-config.php describes a network the database does not hold; installing the network again."
+	for constant in WP_ALLOW_MULTISITE MULTISITE SUBDOMAIN_INSTALL DOMAIN_CURRENT_SITE PATH_CURRENT_SITE SITE_ID_CURRENT_SITE BLOG_ID_CURRENT_SITE; do
+		wp config delete "$constant" --type=constant --path="$wp_path" >/dev/null 2>&1 || true
+	done
+fi
+
 if ! wp core is-installed --path="$wp_path" >/dev/null 2>&1; then
 	wp core install \
 		--path="$wp_path" \

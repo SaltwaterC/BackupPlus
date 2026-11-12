@@ -37,6 +37,42 @@ final class AgeRestoreTest extends AgeTestCase {
 		$this->assertSame( array( basename( $this->path ) ), $manifest['files'], 'Only selected encrypted archives belong to a transfer' );
 	}
 
+	/** The selected database with the checksum the backup recorded for it (BPS-20). */
+	private function backup_with_checksum( string $checksum ): array {
+		return array(
+			'db'        => basename( $this->path ),
+			'checksums' => array( 'sha256' => array( 'db0.crypt' => $checksum ) ),
+		);
+	}
+
+	public function test_an_archive_matching_its_recorded_checksum_is_transferred(): void {
+		$manifest = BackupPlus_Age_Restore::manifest( $this->backup_with_checksum( hash( 'sha256', $this->reference ) ), 122, array( 'db' ) );
+		$this->assertSame( array( basename( $this->path ) ), $manifest['files'], 'An archive with its recorded checksum must be transferred' );
+	}
+
+	public function test_a_swapped_archive_is_refused_before_any_transfer(): void {
+		// Another valid age archive for the same recipients, as anyone with the public key or write access to remote storage could provide.
+		$recorded = hash( 'sha256', $this->reference );
+		file_put_contents( $this->path, $this->reference . 'x' );
+		$this->assertThrowsRuntime(
+			function () use ( $recorded ) {
+				BackupPlus_Age_Restore::manifest( $this->backup_with_checksum( $recorded ), 122, array( 'db' ) );
+			},
+			'An archive that differs from its recorded checksum must be refused'
+		);
+		try {
+			BackupPlus_Age_Restore::manifest( $this->backup_with_checksum( $recorded ), 122, array( 'db' ) );
+		} catch ( \BackupPlus_Archive_Checksum_Exception $e ) {
+			$this->assertStringContainsString( basename( $this->path ), $e->getMessage(), 'The refusal must name the archive' );
+		}
+		$this->assertSame( array(), AgeTestState::$transients, 'A refused archive must not create a transfer' );
+	}
+
+	public function test_backups_without_recorded_checksums_are_still_transferred(): void {
+		$manifest = BackupPlus_Age_Restore::manifest( array( 'db' => basename( $this->path ) ), 122, array( 'db' ) );
+		$this->assertSame( array( basename( $this->path ) ), $manifest['files'], 'Rescanned backups without checksums must remain restorable' );
+	}
+
 	public function test_transfer_downloads_resolve_the_original_ciphertext(): void {
 		list(, $ticket, $file) = $this->begin_transfer();
 		$this->assertSame( $this->path, BackupPlus_Age_Restore::download( $ticket, $file ), 'Transfer downloads must resolve the original ciphertext' );

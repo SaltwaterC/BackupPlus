@@ -73,14 +73,6 @@ class BackupPlus_Restorer {
 
 	public $ud_foreign;
 
-	private $ud_extract_count;
-
-	private $ud_working_dir;
-
-	private $ud_extract_dir;
-
-	private $ud_made_dirs;
-
 	// store restored table names
 	public $restored_table_names = array();
 
@@ -98,6 +90,9 @@ class BackupPlus_Restorer {
 	private $our_siteurl;
 
 	private $configuration_bundle;
+
+	/** On a network, restore state kept in network options, which the sitemeta table restore replaces (BPS-11). */
+	private $network_bundle = null;
 
 	/** The live lock rows of the options table being replaced: see save_lock_rows() */
 	private $lock_rows = null;

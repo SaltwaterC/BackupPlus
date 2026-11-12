@@ -402,6 +402,9 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 
 	private $symlink_reversals = array();
 
+	/** Empty directories whose names zip -@ cannot take; PclZip adds them. */
+	private $pclzip_dirs = array();
+
 	/**
 	 * Class constructor
 	 */
@@ -442,6 +445,16 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 			}
 		}
 
+		// zip -@ reads one name per line and drops a trailing CR, so such a name would add other paths (BPS-20). PclZip adds it.
+		if ( self::line_breaking( $add_as ) ) {
+			$backupplus->log( 'File name contains a line break, so it is added with PclZip instead of the zip binary: ' . str_replace( array( "\r", "\n" ), array( '\\r', '\\n' ), $add_as ) );
+			$this->renamed_files[] = array(
+				PCLZIP_ATT_FILE_NAME          => $file,
+				PCLZIP_ATT_FILE_NEW_FULL_NAME => $add_as,
+			);
+			return;
+		}
+
 		// Get the directory that $add_as is relative to
 		$base = BackupPlus_Manipulation_Functions::str_lreplace( $add_as, '', $file );
 
@@ -454,6 +467,55 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 			// Note: $file equals $rdirname/$add_as
 			$this->addfiles[ $rdirname ][] = $add_as;
 		}
+	}
+
+	/**
+	 * Whether a name cannot be sent to zip -@ as one line.
+	 *
+	 * @param String $name - the name in the archive
+	 *
+	 * @return Boolean
+	 */
+	public static function line_breaking( $name ) {
+		return false !== strpbrk( (string) $name, "\r\n" );
+	}
+
+	/**
+	 * Add an empty directory; one whose name zip -@ cannot take is added by PclZip
+	 *
+	 * @param String $dir - the directory name in the archive
+	 */
+	public function addEmptyDir( $dir ) {
+		if ( self::line_breaking( $dir ) ) {
+			$this->pclzip_dirs[] = $dir;
+			return;
+		}
+		parent::addEmptyDir( $dir );
+	}
+
+	/**
+	 * Add what zip -@ cannot take with PclZip, after the zip binary has written the rest
+	 *
+	 * @return Boolean - success or failure state
+	 */
+	private function close_with_pclzip() {
+		global $backupplus;
+		foreach ( $this->pclzip_dirs as $dir ) {
+			$backupplus_dir = $backupplus->backups_dir_location();
+			if ( false == $this->pclzip->add( $backupplus_dir . '/emptydir', PCLZIP_OPT_REMOVE_PATH, $backupplus_dir . '/emptydir', PCLZIP_OPT_ADD_PATH, $dir ) ) {
+				$this->last_error = $this->pclzip->errorInfo( true );
+				return false;
+			}
+		}
+		$this->pclzip_dirs = array();
+		if ( $this->renamed_files ) {
+			if ( false == $this->pclzip->add( $this->renamed_files ) ) {
+				$this->last_error = $this->pclzip->errorInfo( true );
+				return false;
+			}
+			$this->renamed_files = array();
+		}
+		return true;
 	}
 
 	/**
@@ -480,9 +542,11 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 			1 => array( 'pipe', 'w' ),
 			2 => array( 'pipe', 'w' ),
 		);
-		$exec           = $this->binzip;
-		if ( defined( 'BACKUPPLUS_BINZIP_OPTS' ) && BACKUPPLUS_BINZIP_OPTS ) {
-			$exec .= ' ' . BACKUPPLUS_BINZIP_OPTS;
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
+		$exec    = BackupPlus_Executables::shell_program( $this->binzip );
+		$options = BackupPlus_Executables::binzip_options();
+		if ( '' !== $options ) {
+			$exec .= ' ' . $options;
 		}
 		$exec .= ' -v -@ ' . escapeshellarg( $this->path );
 
@@ -598,6 +662,6 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 			unset( $this->addfiles[ $rdirname ] );
 		}
 
-		return true;
+		return $this->close_with_pclzip();
 	}
 }

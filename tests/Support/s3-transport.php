@@ -89,3 +89,38 @@ class Provider_Test_Generic_Transport extends BackupPlus_S3Generic {
 class Provider_Test_Dream_Transport extends BackupPlus_DreamObjects {
 	use Provider_Test_S3_Transport;
 }
+
+// BPS-16: providers whose transport capability probes are fixed by the test.
+require_once BACKUPPLUS_DIR . '/methods/s3.php';
+require_once BACKUPPLUS_DIR . '/methods/s3generic.php';
+require_once BACKUPPLUS_DIR . '/methods/dreamobjects.php';
+
+trait Provider_Test_Transport_Probe {
+	public $curl       = true;
+	public $curl_tls   = true;
+	public $stream_tls = true;
+	public function get_id() {
+		return substr( get_parent_class( $this ), strlen( 'BackupPlus_BackupModule_' ) );
+	}
+	protected function curl_available() {
+		return $this->curl;
+	}
+	protected function curl_supports_tls() {
+		return $this->curl && $this->curl_tls;
+	}
+	protected function stream_supports_tls() {
+		return $this->stream_tls;
+	}
+	public function probe_tls_transport( $use_s3_class ) {
+		return $this->tls_transport_available( $use_s3_class );
+	}
+}
+class Provider_Test_Amazon_Probe extends BackupPlus_BackupModule_s3 {
+	use Provider_Test_Transport_Probe;
+}
+class Provider_Test_Generic_Probe extends BackupPlus_BackupModule_s3generic {
+	use Provider_Test_Transport_Probe;
+}
+class Provider_Test_Dream_Probe extends BackupPlus_BackupModule_dreamobjects {
+	use Provider_Test_Transport_Probe;
+}

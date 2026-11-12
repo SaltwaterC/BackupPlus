@@ -26,9 +26,47 @@ class BackupPlus_SQL {
 	private $errno    = 0;
 	private $affected = 0;
 
+	/**
+	 * Character sets in which the byte 0x5C (backslash) or 0x60 (backtick) can be the second byte of a two-byte character.
+	 * Under one of them, a quote placed after a character ending in such a byte is swallowed by the character.
+	 */
+	const MULTIBYTE_TRAIL_CHARSETS = array( 'big5', 'gbk', 'gb18030', 'sjis', 'cp932' );
+
+	/** Whether any connection used in this request had one of those character sets; from then on, %i refuses bytes >= 0x80. */
+	private static $restrict_identifiers = false;
+
 	public function __construct( $link ) {
 		if ( ! $link instanceof mysqli ) { throw new RuntimeException( 'BackupPlus requires a mysqli database connection.' ); }
 		$this->link = $link;
+		self::note_charset( $this->charset() );
+	}
+
+	public static function charset_has_multibyte_trail( $charset ) {
+		return is_string( $charset ) && in_array( strtolower( $charset ), self::MULTIBYTE_TRAIL_CHARSETS, true );
+	}
+
+	private static function note_charset( $charset ) {
+		if ( self::charset_has_multibyte_trail( $charset ) ) { self::$restrict_identifiers = true; }
+	}
+
+	/** The character set the connection uses to read and write statements. */
+	public function charset() {
+		$charset = mysqli_character_set_name( $this->link );
+		return is_string( $charset ) ? $charset : 'utf8mb4';
+	}
+
+	/**
+	 * A string as a literal for a dump, escaped by the server library for the connection's character set. Where a byte of
+	 * a character could be taken for a backslash, a value with bytes >= 0x80 is a hexadecimal literal instead, which no
+	 * reader of the dump, including the byte-based statement splitter on restore, can misread.
+	 */
+	public function quote( $value ) {
+		$value   = (string) $value;
+		$charset = $this->charset();
+		if ( self::charset_has_multibyte_trail( $charset ) && preg_match( '/[\x80-\xff]/', $value ) ) {
+			return '_' . strtolower( $charset ) . ' 0x' . bin2hex( $value );
+		}
+		return "'" . mysqli_real_escape_string( $this->link, $value ) . "'";
 	}
 
 	/** WordPress's own connection. A database drop-in without a mysqli handle is refused rather than sent escaped SQL. */
@@ -105,13 +143,33 @@ class BackupPlus_SQL {
 			return false;
 		}
 		if ( $result instanceof mysqli_result ) { mysqli_free_result( $result ); }
+		// A statement of the dump can change the character set of the connection
+		if ( preg_match( '/\A\s*(?:\/\*!\d+\s*)?SET\s+(?:NAMES|CHARACTER\s+SET|character_set_client)\b/i', $statement ) ) {
+			$charset = mysqli_query( $this->link, 'SELECT @@character_set_client' );
+			if ( $charset instanceof mysqli_result ) {
+				$row = mysqli_fetch_row( $charset );
+				mysqli_free_result( $charset );
+				if ( $row ) { self::note_charset( $row[0] ); }
+			}
+		}
 		return (int) mysqli_affected_rows( $this->link );
 	}
 
 	/** Part of a statement, compiled from its own constant template, for %f, %l and %w. */
 	public static function fragment( $template, $parts = array(), $values = array() ) {
+		static $create       = null;
 		list( $sql, $bound ) = self::compile( $template, $parts, $values );
-		return new BackupPlus_SQL_Fragment( $sql, $bound );
+		// The constructor is private to the fragment class; only this method reaches it.
+		if ( null === $create ) {
+			$create = Closure::bind(
+				static function ( $sql, $bound ) {
+					return new BackupPlus_SQL_Fragment( $sql, $bound );
+				},
+				null,
+				'BackupPlus_SQL_Fragment'
+			);
+		}
+		return $create( $sql, $bound );
 	}
 
 	/** Statement text for native clients that cannot take bound values: identifiers, accounts and integers only. */
@@ -126,6 +184,8 @@ class BackupPlus_SQL {
 		// The server limit is 64 characters; names that are not UTF-8 are counted in bytes.
 		$length = is_string( $name ) && preg_match( '//u', $name ) ? preg_match_all( '/./su', $name ) : ( is_string( $name ) ? strlen( $name ) : 0 );
 		if ( ! is_string( $name ) || '' === $name || $length > 64 || false !== strpos( $name, "\0" ) ) { throw new InvalidArgumentException( 'Unsupported SQL identifier.' ); }
+		// Under a character set where a byte >= 0x80 can pair with a backtick, the closing quote could be swallowed.
+		if ( self::$restrict_identifiers && preg_match( '/[\x80-\xff]/', $name ) ) { throw new InvalidArgumentException( 'Unsupported SQL identifier.' ); }
 		return '`' . str_replace( '`', '``', $name ) . '`';
 	}
 
@@ -236,7 +296,8 @@ class BackupPlus_SQL {
 					if ( ! is_array( $fragments ) || ! $fragments ) { throw new InvalidArgumentException( 'Empty SQL fragment list.' ); }
 					$texts = array();
 					foreach ( $fragments as $fragment ) {
-						if ( ! $fragment instanceof BackupPlus_SQL_Fragment ) { throw new InvalidArgumentException( 'Unsupported SQL fragment.' ); }
+						// An instance made without the constructor (Reflection) carries no compiled text.
+						if ( ! $fragment instanceof BackupPlus_SQL_Fragment || ! is_string( $fragment->sql() ) || ! is_array( $fragment->values() ) ) { throw new InvalidArgumentException( 'Unsupported SQL fragment.' ); }
 						$texts[] = 'w' === $kind ? '(' . $fragment->sql() . ')' : $fragment->sql();
 						$bound   = array_merge( $bound, $fragment->values() );
 					}
@@ -251,14 +312,25 @@ class BackupPlus_SQL {
 	}
 }
 
-/** Created only by BackupPlus_SQL::fragment(); scripts/check-sql.php rejects constructing one anywhere else. */
+/**
+ * Created only by BackupPlus_SQL::fragment(): the constructor is private and a fragment cannot be unserialized.
+ * scripts/check-sql.php also rejects naming this class anywhere but in instanceof and type declarations.
+ */
 final class BackupPlus_SQL_Fragment {
 	private $sql;
 	private $values;
 
-	public function __construct( $sql, $values ) {
+	private function __construct( $sql, $values ) {
 		$this->sql    = $sql;
 		$this->values = $values;
+	}
+
+	public function __wakeup() {
+		throw new LogicException( 'SQL fragments cannot be unserialized.' );
+	}
+
+	public function __unserialize( $data ) {
+		throw new LogicException( 'SQL fragments cannot be unserialized.' );
 	}
 
 	public function sql() {

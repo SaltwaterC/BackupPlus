@@ -94,7 +94,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 				array( 'get', 'action' )
 			)
 		);
-		if ( $wpnonce && $action && 'backupplus' == $page && 'downloadlatestmodlog' == $action && wp_verify_nonce( $wpnonce, 'backupplus_download' ) ) {
+		if ( $wpnonce && $action && 'backupplus' == $page && 'downloadlatestmodlog' == $action && BackupPlus_Options::user_can_manage() && wp_verify_nonce( $wpnonce, 'backupplus_download' ) ) {
 
 			list($mod_time, $log_file, $nonce) = $this->last_modified_log();// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused parameter is present because the method returns an array.
 
@@ -220,7 +220,8 @@ trait BackupPlus_Core_WordPress_Hooks {
 					add_action( 'all_admin_notices', array( $this, 'show_admin_warning_unreadablelog' ) );
 				}
 			} elseif ( 'backupplus' === $page && 'downloadfile' == $action && $backupplus_file && preg_match( '/^backup_([\-0-9]{15})_.*_([0-9a-f]{12})-db([0-9]+)?+\.(gz\.crypt)$/i', $backupplus_file ) && BackupPlus_Options::user_can_manage() ) {
-				wp_die( 'Use the database decryption form.', '', array( 'response' => 405 ) );
+				// The server never decrypts a download; private keys stay in the browser.
+				wp_die( 'Download the encrypted archive and decrypt it in the Extract tab.', '', array( 'response' => 405 ) );
 			} elseif ( 'backupplus_spool_file' === $action && $what && $backup_timestamp && is_numeric( $backup_timestamp ) && BackupPlus_Options::user_can_manage() ) {
 				// At some point, it may be worth merging this with the previous section
 				$backupplus_dir = $this->backups_dir_location();

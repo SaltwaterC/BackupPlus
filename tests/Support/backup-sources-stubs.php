@@ -10,6 +10,9 @@ class BackupPlus_Credential_Key_Store {
 	const BACKUP_ENTITY = 'credential-keys';
 	public static function exclude( $excluded, $path ) {
 		return $excluded; } }
+class BackupPlus_Encryption {
+	public static function is_file_encrypted( $path ) {
+		return false; } }
 $GLOBALS['backupplus'] = new class {
 	public function backups_dir_location() {
 		return '/no-backups-here';

@@ -5,6 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** One policy for provider secrets in options, snapshots and settings transfers. */
 class BackupPlus_Credential_Storage {
+	/**
+	 * Shown in a form instead of a saved secret, which never reaches the browser (BPS-20). Submitting it back
+	 * keeps the saved value; the placeholder itself is never saved.
+	 */
+	const PLACEHOLDER = "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}";
+
 	private static $options;
 
 	/** Providers can extend this list without implementing cryptography or key management. */
@@ -99,8 +105,18 @@ class BackupPlus_Credential_Storage {
 		if ( 'redact' === $mode ) {
 			return '';
 		}
+		if ( 'mask' === $mode ) {
+			return self::PLACEHOLDER;
+		}
 		$encrypted = self::envelope( $value );
 		if ( $encrypted ) {
+			if ( 'retire' === $mode ) {
+				// Key retirement re-encrypts only what an older key wrote, so unchanged envelopes keep the incremental fingerprint.
+				$current = null === $config ? BackupPlus_Credential_Key_Store::configuration() : $config;
+				if ( 0 === strpos( $value, BackupPlus_Credential_Encrypter::PREFIX . $current['active'] . ':' ) ) {
+					return $value;
+				}
+			}
 			if ( 'verify' === $mode ) {
 				$current = null === $config ? BackupPlus_Credential_Key_Store::configuration() : $config;
 				if ( 0 !== strpos( $value, BackupPlus_Credential_Encrypter::PREFIX . $current['active'] . ':' ) ) {
@@ -115,14 +131,14 @@ class BackupPlus_Credential_Storage {
 			if ( serialize( $decoded ) !== $plain ) {
 				throw new RuntimeException( 'The stored credential format is invalid.' );
 			}
-			if ( 'encrypt' !== $mode && 'rotate' !== $mode ) {
+			if ( 'encrypt' !== $mode && 'rotate' !== $mode && 'retire' !== $mode ) {
 				return $decoded;
 			}
 			if ( 'encrypt' === $mode ) {
 				return $value;
 			}
 			$value = $decoded;
-		} elseif ( 'decrypt' === $mode || 'verify' === $mode || 'rotate' === $mode ) {
+		} elseif ( 'decrypt' === $mode || 'verify' === $mode || 'rotate' === $mode || 'retire' === $mode ) {
 			throw new RuntimeException( 'Stored plaintext credentials require the authorized credential upgrade in Settings.' );
 		} elseif ( 'incoming' === $mode ) {
 			return $value;
@@ -138,10 +154,12 @@ class BackupPlus_Credential_Storage {
 			return $value;
 		}
 		$fields = self::secret_fields( $option );
+		// A saved secret goes back only to the server it was saved for: with an endpoint changed, the placeholder means no value
+		$bound = 'unmask' === $mode && self::endpoint_changed( $value, $previous, $option );
 		foreach ( $value as $name => $item ) {
 			$child = array_merge( $path, array( $name ) );
 			if ( in_array( $name, $fields, true ) ) {
-				$value[ $name ] = self::keep( $item, $mode, self::context( $option, $child ), $config, is_array( $previous ) && isset( $previous[ $name ] ) ? $previous[ $name ] : null );
+				$value[ $name ] = self::keep( $item, $mode, self::context( $option, $child ), $config, ! $bound && is_array( $previous ) && isset( $previous[ $name ] ) ? $previous[ $name ] : null );
 			} else {
 				$value[ $name ] = self::walk( $item, $option, $mode, $child, $config, is_array( $previous ) && isset( $previous[ $name ] ) ? $previous[ $name ] : null );
 			}
@@ -149,8 +167,48 @@ class BackupPlus_Credential_Storage {
 		return $value;
 	}
 
-	/** Saving unchanged settings must not rewrite their ciphertext: it feeds the incremental and PITR configuration hashes. */
+	/**
+	 * The fields that decide where a secret is sent, or how it is protected on the way. Script in the admin page could otherwise
+	 * submit the placeholder with its own server and receive the saved secret in a connection test or a later backup (BPS-20).
+	 *
+	 * @param String $option The option name
+	 *
+	 * @return Array
+	 */
+	public static function endpoint_fields( $option ) {
+		return apply_filters(
+			'backupplus_credential_endpoint_fields',
+			array( 'host', 'port', 'server', 'endpoint', 'authurl', 'account', 'protocol', 'host_key', 'fingerprint', 'encryption', 'scheme', 'disableverify', 'useservercerts' ),
+			$option
+		);
+	}
+
+	private static function endpoint_changed( $value, $previous, $option ) {
+		if ( ! is_array( $value ) || ! is_array( $previous ) ) {
+			return false;
+		}
+		$normal = function ( $item ) {
+			// An unticked box is not submitted, and an untouched one may be saved as 0
+			return ( null === $item || false === $item || '' === $item || '0' === $item || 0 === $item ) ? '' : ( is_scalar( $item ) ? (string) $item : serialize( $item ) );
+		};
+		foreach ( self::endpoint_fields( $option ) as $field ) {
+			// A field that is not submitted falls back to the provider's default, which is not a server of the submitter's choosing
+			if ( ! array_key_exists( $field, $value ) ) {
+				continue;
+			}
+			if ( $normal( isset( $value[ $field ] ) ? $value[ $field ] : null ) !== $normal( isset( $previous[ $field ] ) ? $previous[ $field ] : null ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Saving unchanged settings must not rewrite their ciphertext: the incremental chain fingerprint hashes these envelopes (BPS-10). */
 	private static function keep( $value, $mode, $context, $config, $previous ) {
+		if ( 'unmask' === $mode ) {
+			// $previous is the decrypted value the form was shown. With nothing behind it, the placeholder stands for no value.
+			return self::PLACEHOLDER === $value ? ( null === $previous ? '' : $previous ) : $value;
+		}
 		if ( 'encrypt' !== $mode || null === $previous ) {
 			return self::secret( $value, $mode, $context, $config );
 		}
@@ -162,7 +220,109 @@ class BackupPlus_Credential_Storage {
 	}
 
 	public static function incoming( $value, $option ) {
-		return self::walk( $value, $option, 'incoming' );
+		return self::walk( self::unmask( $value, $option ), $option, 'incoming' );
+	}
+
+	/**
+	 * A value for a page or debug output: every non-empty secret field is replaced by the placeholder.
+	 *
+	 * @param Mixed  $value  The option value, decrypted or as saved
+	 * @param String $option The option name, which selects the secret fields
+	 *
+	 * @return Mixed
+	 */
+	public static function mask( $value, $option ) {
+		return self::walk( $value, $option, 'mask' );
+	}
+
+	/**
+	 * Put the saved secret back wherever a submitted value returns the placeholder it was shown. The saved value is the one
+	 * at the same path, which includes the instance ID; a placeholder with nothing saved behind it becomes empty. Unchanged
+	 * secrets then keep their envelopes when saved (see keep()).
+	 *
+	 * @param Mixed  $value  The submitted option value
+	 * @param String $option The option name
+	 *
+	 * @return Mixed
+	 */
+	public static function unmask( $value, $option ) {
+		if ( ! self::has_placeholder( $value ) ) {
+			return $value;
+		}
+		$saved = class_exists( 'BackupPlus_Options' ) ? BackupPlus_Options::get_stored_backupplus_option( $option, null ) : get_option( $option, null );
+		try {
+			$shown = self::shown( self::walk( $saved, $option, 'incoming' ), $option );
+		} catch ( Exception $e ) {
+			// Unreadable credentials were never shown as placeholders. saving() refuses to replace them with empty values.
+			$shown = null;
+		}
+		return self::walk( $value, $option, 'unmask', array(), null, $shown );
+	}
+
+	/**
+	 * Unmask part of an option that was submitted on its own, such as the settings of one instance for a connection test.
+	 *
+	 * @param Array  $value  The submitted settings
+	 * @param String $option The option name
+	 * @param Array  $path   Where the settings are in the option, e.g. array( 'settings', $instance_id )
+	 *
+	 * @return Array
+	 */
+	public static function unmask_at( $value, $option, $path ) {
+		$wrapped = $value;
+		foreach ( array_reverse( $path ) as $key ) {
+			$wrapped = array( $key => $wrapped );
+		}
+		$wrapped = self::unmask( $wrapped, $option );
+		foreach ( $path as $key ) {
+			$wrapped = $wrapped[ $key ];
+		}
+		return $wrapped;
+	}
+
+	private static function has_placeholder( $value ) {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $item ) {
+				if ( self::has_placeholder( $item ) ) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return self::PLACEHOLDER === $value;
+	}
+
+	/** The saved option as the settings page showed it, where a page derives fields (a legacy WebDAV URL, the external database list). */
+	private static function shown( $value, $option ) {
+		if ( 'backupplus_extradbs' === $option && class_exists( 'BackupPlus_Backup_Sources' ) ) {
+			$value = BackupPlus_Backup_Sources::connections( is_array( $value ) ? $value : array() );
+		} elseif ( is_array( $value ) && isset( $value['settings'] ) && is_array( $value['settings'] ) && 0 === strpos( $option, 'backupplus_' ) && class_exists( 'BackupPlus_Storage_Methods_Interface' ) ) {
+			$value['settings'] = BackupPlus_Storage_Methods_Interface::template_instance_settings( substr( $option, strlen( 'backupplus_' ) ), $value['settings'] );
+		}
+		return apply_filters( 'backupplus_credential_placeholder_source', $value, $option );
+	}
+
+	/**
+	 * Job data for display, with every credential the job API protects masked and the rest unchanged. Option snapshots keep
+	 * their ordinary settings, which the raw backup information is there to show.
+	 *
+	 * @param Mixed $data Decrypted job data
+	 *
+	 * @return Mixed
+	 */
+	public static function mask_job( $data ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+		$cache = isset( $data['option_cache'] ) && is_array( $data['option_cache'] ) ? $data['option_cache'] : null;
+		$data  = self::job( $data, '', 'mask' );
+		if ( null !== $cache ) {
+			foreach ( $cache as $name => $value ) {
+				$cache[ $name ] = self::handles( $name ) ? self::mask( $value, $name ) : $value;
+			}
+			$data['option_cache'] = $cache;
+		}
+		return $data;
 	}
 
 	public static function saving( $value, $option ) {
@@ -266,14 +426,15 @@ class BackupPlus_Credential_Storage {
 	}
 
 	/** Migration/rotation prepares all option replacements before publishing any. */
-	public static function rewrite( $allow_plaintext = false ) {
+	public static function rewrite( $allow_plaintext = false, $retire = false ) {
+		$mode     = $allow_plaintext ? 'encrypt' : ( $retire ? 'retire' : 'rotate' );
 		$prepared = array();
 		foreach ( self::option_names() as $option ) {
 			$raw = get_option( $option, null );
 			if ( null === $raw ) {
 				continue;
 			}
-			$prepared[ $option ] = array( $raw, self::walk( $raw, $option, $allow_plaintext ? 'encrypt' : 'rotate' ) );
+			$prepared[ $option ] = array( $raw, self::walk( $raw, $option, $mode ) );
 		}
 		foreach ( $prepared as $option => $pair ) {
 			if ( $pair[0] === $pair[1] ) {
@@ -287,14 +448,23 @@ class BackupPlus_Credential_Storage {
 				throw new RuntimeException( 'Encrypted credentials could not be saved. Previous keys have been retained.' );
 			}
 		}
-		self::rewrite_jobs( $allow_plaintext );
+		self::rewrite_jobs( $mode );
 	}
 
-	private static function rewrite_jobs( $allow_plaintext ) {
+	private static function rewrite_jobs( $mode ) {
 		foreach ( self::job_names() as $name ) {
 			$raw     = get_site_option( $name );
 			$id      = substr( $name, strlen( 'backupplus_jobdata_' ) );
-			$updated = self::job( $raw, $id, $allow_plaintext ? 'encrypt' : 'rotate' );
+			$updated = self::job( $raw, $id, $mode );
+			// Providers that keep their own envelopes inside the snapshot (Dropbox) re-encrypt them as well
+			if ( in_array( $mode, array( 'rotate', 'retire' ), true ) && is_array( $raw ) && isset( $raw['option_cache'] ) ) {
+				$cache    = self::job( array( 'option_cache' => $raw['option_cache'] ), $id, 'decrypt' );
+				$snapshot = apply_filters( 'backupplus_credentials_job_snapshot', $cache['option_cache'], $mode );
+				if ( $snapshot !== $cache['option_cache'] ) {
+					$encrypted               = self::job( array( 'option_cache' => $snapshot ), $id, 'encrypt' );
+					$updated['option_cache'] = $encrypted['option_cache'];
+				}
+			}
 			if ( $updated === $raw ) {
 				continue;
 			}
@@ -316,6 +486,58 @@ class BackupPlus_Credential_Storage {
 			: BackupPlus_SQL::wpdb()->column( 'SELECT option_name FROM %i WHERE option_name LIKE ?', array( $wpdb->options ), array( $pattern ) );
 		// Like $wpdb->get_col(), a failed lookup finds no jobs.
 		return array_unique( false === $names ? array() : $names );
+	}
+
+	/**
+	 * Where the database still holds an envelope written with one of these keys: any option of any site, in every network
+	 * that shares the key file, and any network option. This reads the stored text only, never the key store, so key
+	 * retirement can run it while it holds the key store lock. It also finds copies outside the credential options.
+	 *
+	 * @param String[] $key_ids Key IDs
+	 *
+	 * @return String[] One description per place, such as "option backupplus_s3 (site 1)"
+	 */
+	public static function key_references( $key_ids ) {
+		global $wpdb;
+		$found = array();
+		$sites = is_multisite() ? get_sites(
+			array(
+				'fields' => 'ids',
+				'number' => 0,
+			)
+		) : array( get_current_blog_id() );
+		foreach ( $sites as $site ) {
+			if ( is_multisite() ) {
+				switch_to_blog( $site );
+			}
+			try {
+				foreach ( $key_ids as $id ) {
+					$names = BackupPlus_SQL::wpdb()->column( 'SELECT option_name FROM %i WHERE option_value LIKE ?', array( $wpdb->options ), array( '%' . $wpdb->esc_like( BackupPlus_Credential_Encrypter::PREFIX . $id . ':' ) . '%' ) );
+					if ( false === $names ) {
+						throw new RuntimeException( 'Stored credentials could not be checked for old keys.' );
+					}
+					foreach ( $names as $name ) {
+						$found[] = 'option ' . $name . ' (site ' . (int) $site . ')';
+					}
+				}
+			} finally {
+				if ( is_multisite() ) {
+					restore_current_blog();
+				}
+			}
+		}
+		if ( is_multisite() ) {
+			foreach ( $key_ids as $id ) {
+				$names = BackupPlus_SQL::wpdb()->column( 'SELECT meta_key FROM %i WHERE meta_value LIKE ?', array( $wpdb->sitemeta ), array( '%' . $wpdb->esc_like( BackupPlus_Credential_Encrypter::PREFIX . $id . ':' ) . '%' ) );
+				if ( false === $names ) {
+					throw new RuntimeException( 'Stored credentials could not be checked for old keys.' );
+				}
+				foreach ( $names as $name ) {
+					$found[] = 'network option ' . $name;
+				}
+			}
+		}
+		return array_values( array_unique( $found ) );
 	}
 
 	public static function has_ciphertext() {

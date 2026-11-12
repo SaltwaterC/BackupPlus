@@ -7,6 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class BackupPlus_PITR_Process {
+	/** First line of a guarded option file: a web request for it runs PHP and gets a 404, even where .htaccess is ignored (BPS-09). */
+	const GUARD = "<?php http_response_code(404); exit; __halt_compiler();\n";
+
 	private static $connections = array();
 
 	/** Request-lifetime credentials. Native clients read an inherited pipe, never a disk file. */
@@ -26,7 +29,18 @@ class BackupPlus_PITR_Process {
 
 	public static function connection_options( $path ) {
 		if ( isset( self::$connections[ $path ] ) ) { return self::$connections[ $path ]['options']; }
-		$raw     = file_get_contents( $path );
+		return self::client_options( self::read_option_file( $path )[0] );
+	}
+
+	/** The option file contents without a GUARD line, and whether it had one. */
+	private static function read_option_file( $path ) {
+		$raw = is_string( $path ) && is_file( $path ) ? file_get_contents( $path, false, null, 0, 65537 ) : false;
+		if ( false === $raw ) { throw new RuntimeException( 'The PITR database connection file is missing. Save the database point-in-time recovery settings again.' ); }
+		$guarded = 0 === strpos( $raw, self::GUARD );
+		return array( $guarded ? (string) substr( $raw, strlen( self::GUARD ) ) : $raw, $guarded );
+	}
+
+	private static function client_options( $raw ) {
 		$options = parse_ini_string( $raw, true, INI_SCANNER_RAW );
 		if ( ! is_array( $options ) || empty( $options['client']['user'] ) ) { throw new RuntimeException( 'Invalid database connection.' ); }
 		$escapes = array(
@@ -142,15 +156,15 @@ class BackupPlus_PITR_Process {
 		return $path;
 	}
 
-	/** Only a client connection group is accepted; tool behavior comes from our argv. */
+	/** Only a client connection group is accepted; tool behavior comes from our argv. A guarded file is passed through the pipe, never copied. */
 	public static function connection_file( $path, $directory ) {
 		if ( is_string( $path ) && isset( self::$connections[ $path ] ) ) { return $path; }
 		if ( ! is_string( $path ) || is_link( $path ) || ! is_file( $path ) || ! is_readable( $path ) || filesize( $path ) > 65536 || ( fileperms( $path ) & 0077 ) ) {
 			throw new RuntimeException( 'Use a readable, owner-only client option file (mode 0600).' );
 		}
-		$raw     = file_get_contents( $path );
-		$allowed = array( 'host', 'port', 'socket', 'protocol', 'user', 'password', 'ssl', 'ssl-ca', 'ssl-cert', 'ssl-key', 'ssl-mode', 'ssl-verify-server-cert' );
-		$group   = false;
+		list( $raw, $guarded ) = self::read_option_file( $path );
+		$allowed               = array( 'host', 'port', 'socket', 'protocol', 'user', 'password', 'ssl', 'ssl-ca', 'ssl-cert', 'ssl-key', 'ssl-mode', 'ssl-verify-server-cert' );
+		$group                 = false;
 		foreach ( preg_split( '/\r\n|\n|\r/', $raw ) as $line ) {
 			$line = trim( $line );
 			if ( '' === $line || '#' === $line[0] || ';' === $line[0] ) {
@@ -177,6 +191,9 @@ class BackupPlus_PITR_Process {
 		}
 		if ( ! $local && ( empty( $options['ssl-ca'] ) || ( ( ! isset( $options['ssl-mode'] ) || 'VERIFY_IDENTITY' !== $options['ssl-mode'] ) && ( ! isset( $options['ssl-verify-server-cert'] ) || ! in_array( strtolower( $options['ssl-verify-server-cert'] ), array( '1', 'true', 'on' ), true ) ) ) ) ) {
 			throw new RuntimeException( 'Remote PITR connections require a CA and verified server identity.' );
+		}
+		if ( $guarded ) {
+			return self::memory_connection( self::client_options( $raw ) );
 		}
 		return self::private_file( $directory . '/client-' . bin2hex( random_bytes( 12 ) ) . '.cnf', $raw );
 	}

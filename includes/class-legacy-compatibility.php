@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class BackupPlus_Legacy_Compatibility {
 	const MIGRATION_OPTION  = 'backupplus_legacy_identifier_migration';
-	const MIGRATION_VERSION = 3;
+	const MIGRATION_VERSION = 4;
 
 	/**
 	 * Run the identifier migration once per site.
@@ -29,6 +29,8 @@ class BackupPlus_Legacy_Compatibility {
 		self::migrate_resume_transient();
 		self::delete_removed_lock_admin_settings();
 		self::delete_removed_remote_transfer_settings();
+		self::delete_flat_credential_options();
+		self::disarm_network_uninstall();
 
 		update_option( self::MIGRATION_OPTION, self::MIGRATION_VERSION, false );
 	}
@@ -45,6 +47,39 @@ class BackupPlus_Legacy_Compatibility {
 			delete_site_option( 'backupplus_adminlocking' );
 			delete_site_option( 'updraft_adminlocking' );
 		}
+	}
+
+	/** Single-instance credential options of very old versions. Nothing reads them, and they were stored and shown in plain text (BPS-20). */
+	const FLAT_CREDENTIAL_OPTIONS = array( 's3_pass', 's3generic_pass', 'dreamobjects_pass', 'cloudfiles_apikey', 'dropboxtk_access_token', 'dropboxtk_request_token', 'tmp_googledrive_access_token' );
+
+	/**
+	 * Delete the plaintext single-instance credential options, under their current and their former names.
+	 *
+	 * @return void
+	 */
+	private static function delete_flat_credential_options() {
+		foreach ( self::FLAT_CREDENTIAL_OPTIONS as $name ) {
+			foreach ( array( 'backupplus_', 'updraft_' ) as $prefix ) {
+				delete_option( $prefix . $name );
+				if ( is_multisite() ) {
+					delete_site_option( $prefix . $name );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Before BPS-13 any sub-site administrator could arm the network-wide uninstall wipe, and the stored choice outlives the
+	 * upgrade. Clear it once per network: the wipe is armed again only by a network administrator deactivating the plugin.
+	 *
+	 * @return void
+	 */
+	private static function disarm_network_uninstall() {
+		if ( ! is_multisite() || get_site_option( 'backupplus_deinstall_option_reviewed' ) ) {
+			return;
+		}
+		delete_site_option( 'backupplus_deinstall_option' );
+		update_site_option( 'backupplus_deinstall_option_reviewed', 1 );
 	}
 
 	/**

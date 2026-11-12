@@ -282,6 +282,23 @@ final class PitrStateTest extends PitrTestCase {
 		);
 	}
 
+	/** BPS-09 renamed the WordPress connection file; a chain and its pending backup must survive the rename. */
+	public function test_the_guarded_connection_file_keeps_the_chain_fingerprint(): void {
+		$root    = $this->directory . '/pitr';
+		$options = "[client]\nhost=\"localhost\"\nuser=\"wordpress\"\npassword=\"secret\"\n";
+		file_put_contents( $root . '/source.cnf', $options );
+		file_put_contents( $root . '/source.php', \BackupPlus_PITR_Process::GUARD . $options );
+		mkdir( $this->directory . '/elsewhere', 0700 );
+		file_put_contents( $this->directory . '/elsewhere/source.php', \BackupPlus_PITR_Process::GUARD . $options );
+		$fingerprint = function ( string $source ): string {
+			$this->set_property( $this->worker, 'config', array( 'source_config' => $source ) );
+			return $this->call( $this->worker, 'fingerprint', array( $this->destination, array() ) );
+		};
+		$legacy      = $fingerprint( $root . '/source.cnf' );
+		$this->assertSame( $legacy, $fingerprint( $root . '/source.php' ), 'Moving to the guarded connection file started a new chain.' );
+		$this->assertNotSame( $legacy, $fingerprint( $this->directory . '/elsewhere/source.php' ), 'A connection file elsewhere was treated as the managed one.' );
+	}
+
 	public function test_a_storage_setting_change_cannot_move_a_running_chain(): void {
 		$this->provider->options = array( 'directory' => 'changed-during-dump' );
 		$this->assertRejected(
@@ -392,6 +409,71 @@ final class PitrStateTest extends PitrTestCase {
 		$backup  = reset( $history );
 		$this->assertSame( 'unavailable', $backup['pitr']['state'] );
 		$this->assertArrayNotHasKey( 'downloads', $backup['pitr'] );
+	}
+
+	/** @return string[] The files under the chain directory of the index. */
+	private function chain_records_on_disk(): array {
+		return array_map( 'basename', glob( $this->directory . '/pitr/chains/*' ) ?: array() );
+	}
+
+	private function index(): array {
+		return json_decode( substr( file_get_contents( $this->directory . '/pitr/state.php' ), strlen( '<?php exit; ?>' ) ), true );
+	}
+
+	public function test_the_index_names_one_points_file_per_chain_and_reloads_unchanged(): void {
+		$this->publish_chain();
+		$index = $this->index();
+		$file  = $index['chains'][ $this->chain_id ]['entries'];
+		$this->assertSame( 2, $index['version'], 'The index was not written in the split layout.' );
+		$this->assertMatchesRegularExpression( '/\A' . $this->chain_id . '-[a-f0-9]{64}\.php\z/D', $file, 'The index holds recovery points inline.' );
+		$this->assertSame( array( $file ), $this->chain_records_on_disk(), 'Superseded or interrupted points files remain.' );
+		$this->restart_worker();
+		$this->assertSame( $this->retained_state, $this->state(), 'The split index did not reload the chain as it was saved.' );
+	}
+
+	public function test_a_save_that_leaves_the_points_unchanged_does_not_rewrite_them(): void {
+		$this->publish_chain();
+		$this->restart_worker();
+		$path = $this->directory . '/pitr/chains/' . $this->chain_records_on_disk()[0];
+		touch( $path, 1000 );
+		$state          = $this->state();
+		$state['error'] = 'An index-only change.';
+		$this->set_property( $this->worker, 'state', $state );
+		$this->call( $this->worker, 'save' );
+		clearstatcache();
+		$this->assertSame( 1000, filemtime( $path ), 'An index-only save rewrote the recovery points of the chain.' );
+		$this->assertSame( 'An index-only change.', $this->index()['error'], 'The index-only change was not saved.' );
+	}
+
+	public function test_an_inline_version_1_index_loads_and_is_split_on_the_next_save(): void {
+		$this->publish_chain();
+		$this->worker      = null;
+		$legacy            = $this->retained_state;
+		$legacy['version'] = 1;
+		unlink( $this->directory . '/pitr/state.php' );
+		array_map( 'unlink', glob( $this->directory . '/pitr/chains/*' ) );
+		\BackupPlus_PITR_Process::private_file( $this->directory . '/pitr/state.php', '<?php exit; ?>' . json_encode( $legacy, JSON_UNESCAPED_SLASHES ) );
+		$this->restart_worker();
+		$this->assertSame( $this->retained_state, $this->state(), 'A version 1 index did not load.' );
+		$this->call( $this->worker, 'save' );
+		$this->assertIsString( $this->index()['chains'][ $this->chain_id ]['entries'], 'A version 1 index was not split on save.' );
+		$this->restart_worker();
+		$this->assertSame( $this->retained_state, $this->state(), 'A split version 1 index did not reload unchanged.' );
+	}
+
+	public function test_a_points_file_that_does_not_match_its_name_is_refused(): void {
+		$this->publish_chain();
+		$this->worker = null;
+		$path         = $this->directory . '/pitr/chains/' . $this->chain_records_on_disk()[0];
+		file_put_contents( $path, str_replace( $this->increment_id, str_repeat( '0', 32 ), file_get_contents( $path ) ) );
+		$this->assertRejected(
+			function () {
+				$this->restart_worker();
+			},
+			'A points file that does not match its name was trusted.'
+		);
+		$history = BackupPlus_PITR::decorate_history( BackupPlus_Backup_History::$history );
+		$this->assertSame( 'unavailable', reset( $history )['pitr']['state'], 'The backups list trusted a points file that does not match its name.' );
 	}
 
 	public function test_download_requests_route_each_index_to_its_chain_file(): void {
@@ -598,6 +680,28 @@ final class PitrStateTest extends PitrTestCase {
 		);
 	}
 
+	public function test_a_chain_being_deleted_releases_its_boundaries_and_still_completes(): void {
+		$this->prepare_deletion();
+		$this->worker = $this->restore_deletion_fixture();
+		$this->assertNotSame( array(), $this->boundaries( $this->state()['chains'][ $this->chain_id ] ), 'The fixture chain has no boundaries to release.' );
+		$this->assertFalse( $this->worker->delete( $this->chain_id, true, microtime( true ) - 1 )['complete'], 'The bounded deletion finished in one pass.' );
+		$this->assertSame( array(), $this->boundaries( $this->state()['chains'][ $this->chain_id ] ), 'A chain being deleted kept its boundaries, so deleting cannot shrink a full chain index.' );
+		$this->assertTrue( $this->worker->delete( $this->chain_id )['complete'], 'A chain without boundaries could not finish its deletion.' );
+		$this->assertSame( array(), $this->state()['chains'], 'A chain without boundaries could not finish its deletion.' );
+		$this->assertSame( array(), glob( $this->provider->remote . '/backup_pitr_*' ), 'A chain without boundaries left remote artifacts behind.' );
+		$this->assertSame( array(), $this->chain_records_on_disk(), 'A deleted chain left its recovery points behind.' );
+	}
+
+	private function boundaries( array $chain ): array {
+		$boundaries = array();
+		foreach ( $chain['entries'] as $entry ) {
+			foreach ( isset( $entry['manifest']['segments'] ) ? $entry['manifest']['segments'] : array() as $segment ) {
+				$boundaries = array_merge( $boundaries, $segment['boundaries'] );
+			}
+		}
+		return $boundaries;
+	}
+
 	public function test_the_shared_delete_action_resumes_and_removes_the_full_chain(): void {
 		$timestamp    = $this->prepare_deletion();
 		$this->worker = $this->restore_deletion_fixture();
@@ -613,6 +717,63 @@ final class PitrStateTest extends PitrTestCase {
 		$this->assertGreaterThan( 0, $result['backup_remote'], 'The shared Delete action did not resume and remove the full PITR chain.' );
 		$this->assertGreaterThan( 0, $result['backup_local'], 'The shared Delete action did not resume and remove the full PITR chain.' );
 		$this->assertEmpty( BackupPlus_Backup_History::$history, 'The shared Delete action did not resume and remove the full PITR chain.' );
+	}
+
+	public function test_a_chain_with_an_unpublished_point_is_deleted_with_that_point(): void {
+		$this->fail_publication();
+		$this->assertNotEmpty( $this->state()['pending'], 'The fixture left no unpublished point.' );
+		$this->assertNotEmpty( glob( $this->provider->remote . '/backup_pitr_*' ), 'The failed publication uploaded nothing to delete.' );
+		$this->provider->fail = null;
+		$this->assertTrue( $this->worker->delete( $this->chain_id )['complete'], 'A chain with an unpublished point could not be deleted while recovery stays enabled.' );
+		$this->assertNull( $this->state()['pending'], 'The unpublished point of a deleted chain is still retried.' );
+		$this->assertNull( $this->state()['active'], 'The next run does not start a new chain after the active one was deleted.' );
+		$this->assertSame( array(), $this->state()['chains'], 'A chain with an unpublished point was not deleted.' );
+		$this->assertSame( array(), glob( $this->provider->remote . '/backup_pitr_*' ), 'The unpublished point left remote files behind.' );
+		$this->assertSame( array(), glob( $this->directory . '/backup_pitr_*' ), 'The unpublished point left local files behind.' );
+		$this->restart_worker();
+		$this->assertNull( $this->state()['pending'], 'The unpublished point of a deleted chain came back.' );
+	}
+
+	public function test_a_batch_counts_a_chain_that_retention_already_deleted_as_deleted(): void {
+		$timestamp    = $this->prepare_deletion();
+		$this->worker = $this->restore_deletion_fixture();
+		// Retention after a capture deletes the selected chain between two requests of the batch.
+		$this->worker->delete( $this->chain_id );
+		$this->worker = null;
+		$result       = BackupPlus_Backup_Deletion::delete_selection( array( 'is_continuation' => true ) + $this->selection_options( $timestamp ) );
+		$this->assertSame( 'success', $result['result'], 'A batch failed on a chain that retention had already deleted.' );
+		$this->assertSame( (string) $timestamp, $result['deleted_timestamps'], 'A batch did not report a chain that retention had already deleted as deleted.' );
+		$this->assertSame( '', $result['timestamps'], 'A batch kept a chain that retention had already deleted.' );
+	}
+
+	public function test_a_deletion_waits_for_a_running_capture_within_its_budget(): void {
+		$timestamp    = $this->prepare_deletion();
+		$this->worker = $this->restore_deletion_fixture();
+		// The worker holds the PITR lock, as a capture does while it runs.
+		$started = microtime( true );
+		$result  = BackupPlus_Backup_Deletion::delete_selection( $this->selection_options( $timestamp ) );
+		$this->assertSame( 'continue', $result['result'], 'A deletion that met a running capture failed instead of asking to continue.' );
+		$this->assertSame( (string) $timestamp, $result['timestamps'], 'A deletion that met a running capture dropped the chain from the batch.' );
+		$this->assertGreaterThanOrEqual( 0.5, microtime( true ) - $started, 'A deletion that met a running capture answered at once, so the browser would ask again in a tight loop.' );
+		$this->assertArrayHasKey( $timestamp, BackupPlus_Backup_History::$history, 'A deletion that met a running capture removed the chain.' );
+		$this->assertSame(
+			'error',
+			BackupPlus_Backup_Deletion::delete(
+				array(
+					'backup_timestamp' => $timestamp,
+					'delete_remote'    => true,
+				)
+			)['result'],
+			'A deletion without a time budget waited for the lock.'
+		);
+		$this->worker = null;
+		$result       = BackupPlus_Backup_Deletion::delete_selection( $this->selection_options( $timestamp ) );
+		$this->assertContains( $result['result'], array( 'success', 'continue' ), 'A deletion could not proceed once the capture finished.' );
+		for ( $turn = 0; 'continue' === $result['result'] && $turn < 20; ++$turn ) {
+			$result = BackupPlus_Backup_Deletion::delete_selection( array( 'is_continuation' => true ) + $this->selection_options( $timestamp ) );
+		}
+		$this->assertSame( 'success', $result['result'], 'A deletion could not finish once the capture finished.' );
+		$this->assertEmpty( BackupPlus_Backup_History::$history, 'A deletion could not finish once the capture finished.' );
 	}
 
 	public function test_a_local_only_deletion_leaves_the_remote_artifacts(): void {

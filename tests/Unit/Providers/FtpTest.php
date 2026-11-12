@@ -58,9 +58,59 @@ final class FtpTest extends TestCase {
 		}
 	}
 
-	public function test_existing_settings_default_to_plain_ftp(): void {
-		$defaults = $this->provider->get_default_options();
-		$this->assertSame( 'none', $defaults['encryption'], 'Existing settings must default to plain FTP' );
+	/** BPS-20: new destinations, including the onboarding form, start with explicit TLS. */
+	public function test_new_destinations_default_to_explicit_tls(): void {
+		$this->assertSame( 'tls', $this->provider->get_default_options()['encryption'], 'New FTP destinations must default to FTPS' );
+		$fields = array_column( $this->provider->transform_template_properties_to_fields_structure(), null, 'id' );
+		$this->assertSame( 'tls', $fields['encryption']['default'], 'Onboarding must default to FTPS' );
+		$this->assertSame( 'tls', $this->provider->transform_options_for_template( $this->provider->get_default_options() + array( 'instance_id' => 'default' ) )['encryption'], 'The template for an added destination must select FTPS' );
+	}
+
+	/** BPS-20: settings saved before the encryption setting existed keep connecting, and are shown, as plain FTP. */
+	public function test_saved_settings_without_encryption_keep_plain_ftp(): void {
+		$saved = array(
+			'host' => 'example.test',
+			'user' => 'test',
+			'pass' => 'test',
+			'path' => '',
+		);
+		$this->provider->set_options( $saved, false, 's-old' );
+		$this->assertSame( 'none', $this->provider->get_options()['encryption'], 'A destination saved before the setting existed must keep plain FTP' );
+		$this->assertSame( 'none', $this->provider->transform_options_for_template( $saved + array( 'instance_id' => 's-old' ) )['encryption'], 'The settings page must show such a destination as plain FTP' );
+		$this->assertSame(
+			'none',
+			$this->provider->options_filter(
+				array(
+					'version'  => 1,
+					'settings' => array( 's-old' => $saved ),
+				)
+			)['settings']['s-old']['encryption'],
+			'Saving such a destination must keep plain FTP'
+		);
+
+		$this->provider->set_options( $saved + array( 'encryption' => 'tls' ), false, 's-new' );
+		$this->assertSame( 'tls', $this->provider->get_options()['encryption'], 'A saved FTPS choice must be kept' );
+		$this->provider->set_options( $saved + array( 'encryption' => 'none' ), false, 's-plain' );
+		$this->assertSame( 'none', $this->provider->get_options()['encryption'], 'A saved plain FTP choice must be kept' );
+	}
+
+	/** BPS-20: plain FTP is allowed, with a warning under the setting and a log line that does not contain the password. */
+	public function test_plain_ftp_is_warned_about_and_logged_without_the_password(): void {
+		$template = $this->provider->get_configuration_template();
+		$this->assertStringContainsString( 'data-backupplus_plaintext_pattern="^none$"', $template, 'The encryption selector must drive the plaintext warning' );
+		$this->assertStringContainsString( '<p class="backupplus_plaintext_warning"{{#ifeq "none" encryption}}{{else}} style="display: none;"{{/ifeq}}>', $template, 'The warning must be visible only for plain FTP' );
+		$this->assertStringContainsString( 'unencrypted', $this->provider->get_template_properties()['ftp_plaintext_warning'] );
+
+		$this->provider->set_options( array( 'host' => 'example.test' ), false, 's-test' );
+		$get_ftp = new \ReflectionMethod( $this->provider, 'getFTP' );
+		$get_ftp->invoke( $this->provider, 'example.test', 'user', 'tls-password', false, false, false, true, 'tls' );
+		$get_ftp->invoke( $this->provider, 'ftps://example.test', 'user', 'tls-password', false, false, false, true, 'none' );
+		$this->assertSame( array(), $this->job->logs, 'FTPS connections must not log the plaintext notice' );
+		$get_ftp->invoke( $this->provider, 'example.test', 'user', 'plain-password', false, false, false, true, 'none' );
+		$get_ftp->invoke( $this->provider, 'example.test', 'user', 'plain-password', false, false, false, true, 'none' );
+		$this->assertCount( 1, $this->job->logs, 'Plain FTP must be logged once per connection object' );
+		$this->assertStringContainsString( 'sent unencrypted', $this->job->logs[0] );
+		$this->assertStringNotContainsString( 'plain-password', $this->job->logs[0], 'The log must not contain the password' );
 	}
 
 	public function test_saved_settings_are_sanitised(): void {

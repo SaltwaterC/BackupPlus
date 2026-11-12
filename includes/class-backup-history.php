@@ -21,4 +21,27 @@ class BackupPlus_Backup_History {
 	use BackupPlus_Backup_History_Rebuild;
 
 	private static $backup_history_on_restore = null;
+
+	/**
+	 * Whether every archive a backup set names is a backup archive basename. History saved before BPS-02 was fixed may name
+	 * paths outside the backup directory, so a feature that reads or deletes a set's local files checks it first.
+	 *
+	 * @param Array $backup   One backup set from the history
+	 * @param Array $entities The file entities, as keys
+	 *
+	 * @return Boolean
+	 */
+	public static function archive_names_are_safe( $backup, $entities ) {
+		foreach ( $backup as $key => $names ) {
+			if ( ! is_string( $key ) || ( ! isset( $entities[ $key ] ) && ! preg_match( '/\Adb[0-9]*\z/D', $key ) ) ) {
+				continue;
+			}
+			foreach ( (array) $names as $name ) {
+				if ( ! is_string( $name ) || ! BackupPlus_Manipulation_Functions::is_backup_basename( $name ) ) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 }

@@ -311,6 +311,10 @@ trait BackupPlus_Storage_Limits_Monitor {
 						$transition     = self::alert_transition( $entry[ $kind ], $entry['usage'], $config[ $kind ], 'quota' === $kind, time() );
 						$entry[ $kind ] = $transition['state'];
 					}
+					// A delivered alert describes a crossing; once usage is back below every configured limit it no longer applies.
+					if ( ! $entry['alert']['level'] && ! $entry['quota']['level'] && empty( $entry['pending_notifications'] ) ) {
+						unset( $entry['notification'], $entry['notification_time'] );
+					}
 					$history = BackupPlus_Backup_History::get_history();
 				} catch ( Throwable $error ) {
 					$entry['available'] = false;

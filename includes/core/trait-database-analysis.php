@@ -19,6 +19,29 @@ trait BackupPlus_Core_Database_Analysis {
 	 * @return Array - containing arrays for the resulting messages, warnings, errors and meta information
 	 */
 	public function analyse_db_file( $timestamp, $res, $db_file = false, $header_only = false ) {
+		$temporary = '';
+		try {
+			return $this->analyse_db_file_contents( $timestamp, $res, $db_file, $header_only, $temporary );
+		} finally {
+			// A database that was decrypted for the scan never stays on disk, whichever way the scan ends.
+			if ( '' !== $temporary && is_file( $temporary ) ) {
+				unlink( $temporary );
+			}
+		}
+	}
+
+	/**
+	 * The scan of analyse_db_file()
+	 *
+	 * @param Integer        $timestamp   - see analyse_db_file()
+	 * @param Array          $res         - see analyse_db_file()
+	 * @param Boolean|String $db_file     - see analyse_db_file()
+	 * @param Boolean        $header_only - see analyse_db_file()
+	 * @param String         $temporary   - set to the private plaintext file this scan creates, for the caller to remove
+	 *
+	 * @return Array - see analyse_db_file()
+	 */
+	private function analyse_db_file_contents( $timestamp, $res, $db_file, $header_only, &$temporary ) {
 
 		$mess       = array();
 		$warn       = array();
@@ -42,7 +65,12 @@ trait BackupPlus_Core_Database_Analysis {
 				return array( $mess, $warn, $err, $info );
 			}
 
-			$db_file = is_string( $backup['db'] ) ? $backupplus_dir . '/' . $backup['db'] : $backupplus_dir . '/' . $backup['db'][0];
+			$db_name = is_array( $backup['db'] ) ? reset( $backup['db'] ) : $backup['db'];
+			// History may hold names written before BPS-02 was fixed
+			if ( ! is_string( $db_name ) || ! BackupPlus_Manipulation_Functions::is_backup_basename( $db_name ) ) {
+				return array( $mess, $warn, $err, $info );
+			}
+			$db_file = $backupplus_dir . '/' . $db_name;
 		}
 
 		if ( ! is_readable( $db_file ) ) {
@@ -65,7 +93,11 @@ trait BackupPlus_Core_Database_Analysis {
 					return array( $mess, $warn, $err, $info );
 				}
 
-				$decrypted_file = BackupPlus_Encryption::decrypt( $db_file, $encryption );
+				// A private temporary file, not a plaintext copy beside the encrypted backup.
+				$decrypted_file = BackupPlus_Encryption::decrypt( $db_file, $encryption, true );
+				if ( is_array( $decrypted_file ) ) {
+					$temporary = $decrypted_file['fullpath'];
+				}
 			}
 
 			if ( is_array( $decrypted_file ) ) {
@@ -314,7 +346,7 @@ trait BackupPlus_Core_Database_Analysis {
 					$skipped_tables = array_map( 'trim', explode( ',', $matches[1] ) );
 				}
 			} elseif ( preg_match( '#^\s*/\*\!40\d+ SET NAMES (.*)\*\/#i', $buffer, $smatches ) ) {
-				$db_charsets_found[] = rtrim( $smatches[1] );
+				$db_charsets_found[] = trim( rtrim( $smatches[1] ), '`' );
 			} elseif ( ! $processing_routine && ! $processing_create && preg_match( "/^[^'\"]*create[^'\"]*(?:definer\s*=\s*(?:`.{1,17}`@`[^\s]+`|'.{1,17}'@'[^\s]+'))?.+?(?:function(?:\s\s*if\s\s*not\s\s*exists)?|procedure)\s*`([^\r\n]+)`/is", $buffer, $matches ) ) {
 				// ^\s*create\s\s*(?:or\s\s*replace\s\s*)?.*?(?:aggregate\s\s*function|function|procedure)\s\s*`(.+)`(?:\s\s*if\s\s*not\s\s*exists\s*|\s*)?\(
 				if ( ! preg_match( '/END\s*(?:\*\/)?;;\s*$/is', $buffer ) && ! preg_match( '/\;\s*;;\s*$/is', $buffer ) && ! preg_match( '/\s*(?:\*\/)?;;\s*$/is', $buffer ) ) {
@@ -651,10 +683,6 @@ trait BackupPlus_Core_Database_Analysis {
 
 			$info['addui'] = empty( $info['addui'] ) ? $select_restore_tables : $info['addui'] . '<br>' . $select_restore_tables;
 		}
-
-		// //need to make sure that we reset the file back to .crypt before clean temp files
-		// $db_file = $decrypted_file['fullpath'].'.crypt';
-		// unlink($decrypted_file['fullpath']);
 
 		return array( $mess, $warn, $err, $info );
 	}

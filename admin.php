@@ -34,7 +34,6 @@ require_once __DIR__ . '/includes/admin/trait-settings-storage.php';
 require_once __DIR__ . '/includes/admin/trait-existing-backups.php';
 require_once __DIR__ . '/includes/admin/trait-restore.php';
 require_once __DIR__ . '/includes/admin/trait-old-directories.php';
-require_once __DIR__ . '/includes/admin/trait-http.php';
 
 class BackupPlus_Admin {
 	use BackupPlus_Admin_Templates;
@@ -53,7 +52,6 @@ class BackupPlus_Admin {
 	use BackupPlus_Admin_Existing_Backups;
 	use BackupPlus_Admin_Restore;
 	use BackupPlus_Admin_Old_Directories;
-	use BackupPlus_Admin_Http;
 
 	public $logged = array();
 
@@ -99,7 +97,7 @@ class BackupPlus_Admin {
 		add_action( 'wp_ajax_backupplus_download_backup', array( $this, 'backupplus_download_backup' ) );
 		add_action( 'wp_ajax_backupplus_ajax', array( $this, 'backupplus_ajax_handler' ) );
 		add_action( 'wp_ajax_backupplus_ajaxrestore', array( $this, 'backupplus_ajaxrestore' ) );
-		add_action( 'wp_ajax_nopriv_backupplus_ajaxrestore', array( $this, 'backupplus_ajaxrestore' ) );
+		// Only continuing a restore is open to logged-out requests, with the token issued to the restore page (BPS-11)
 		add_action( 'wp_ajax_backupplus_ajaxrestore_continue', array( $this, 'backupplus_ajaxrestore' ) );
 		add_action( 'wp_ajax_nopriv_backupplus_ajaxrestore_continue', array( $this, 'backupplus_ajaxrestore' ) );
 

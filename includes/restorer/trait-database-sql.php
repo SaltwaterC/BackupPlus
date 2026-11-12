@@ -92,7 +92,8 @@ trait BackupPlus_Restorer_Database_Sql {
 		// Some items must always be saved + restored; others only when restoring to a different site.
 		// Remember, if modifying this, that a restoration can include restoring a destroyed site from a backup onto a fresh WP install on the same URL. So, it is not necessarily desirable to retain the current settings and drop the ones in the backup.
 		// Backup history describes artifacts outside the database and must survive same-site restores too.
-		$keys_to_save = array( 'backupplus_restore_in_progress', 'backupplus_backup_history' );
+		// The continuation token lets the restore page continue after the restored users table has ended its session (BPS-11)
+		$keys_to_save = array( 'backupplus_restore_in_progress', BackupPlus_Restore_Continuation::OPTION, 'backupplus_backup_history' );
 
 		if ( $this->old_siteurl != $this->our_siteurl || ( defined( 'BACKUPPLUS_RESTORE_ALL_SETTINGS' ) && BACKUPPLUS_RESTORE_ALL_SETTINGS ) ) {
 			global $backupplus;
@@ -102,6 +103,29 @@ trait BackupPlus_Restorer_Database_Sql {
 		// A setting the site does not have is null, and stays unset: saved as '', it would lose its default
 		foreach ( $keys_to_save as $key ) {
 			$this->configuration_bundle[ $key ] = BackupPlus_Options::get_backupplus_option( $key );
+		}
+		// The restore state lives in network options on a network, not in the main site's options (BPS-11)
+		if ( is_multisite() ) {
+			$this->network_bundle = array();
+			foreach ( array( 'backupplus_restore_in_progress', BackupPlus_Restore_Continuation::OPTION ) as $key ) {
+				$this->network_bundle[ $key ] = get_site_option( $key, null );
+			}
+		}
+	}
+
+	/**
+	 * Put back the network restore state after the sitemeta table was replaced, so that the restore can continue after the
+	 * restored users table ended the administrator's session.
+	 */
+	private function restore_network_bundle() {
+		if ( ! is_array( $this->network_bundle ) ) {
+			return;
+		}
+		foreach ( $this->network_bundle as $key => $value ) {
+			delete_site_option( $key );
+			if ( null !== $value ) {
+				update_site_option( $key, $value );
+			}
 		}
 	}
 
@@ -367,7 +391,7 @@ trait BackupPlus_Restorer_Database_Sql {
 				$backupplus->log( 'Retrying SQL query with INSERT IGNORE', 'notice-restore' );
 				$this->sql_exec( $sql_line, $sql_type, $import_table_prefix, $check_skipping );
 			} elseif ( 8 == $sql_type && 1 == $this->errors ) {
-				$backupplus->log( 'Aborted: SET NAMES ' . $this->set_names . ' failed: leaving maintenance mode' );
+				$backupplus->log( 'Aborted: setting the connection character set to ' . $this->set_names . ' failed: leaving maintenance mode' );
 				$this->maintenance_mode( false );
 				$extra_msg = '';
 				$dbv       = $wpdb->db_version();

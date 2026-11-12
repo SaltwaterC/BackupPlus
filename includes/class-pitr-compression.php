@@ -1,6 +1,7 @@
 <?php
 /** Lossless binary-log compression; source bytes, coordinates and ancestry hashes stay unchanged. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
+require_once __DIR__ . '/class-executables.php';
 
 class BackupPlus_PITR_Compression {
 	/** Optional on existing installations. A false filter value deliberately keeps gzip. */
@@ -8,7 +9,8 @@ class BackupPlus_PITR_Compression {
 		$configured = function_exists( 'apply_filters' ) ? apply_filters( 'backupplus_pitr_zstd_binary', null ) : null;
 		$paths      = null === $configured ? array( '/usr/bin/zstd', '/usr/local/bin/zstd', '/bin/zstd' ) : array( $configured );
 		foreach ( $paths as $path ) {
-			if ( is_string( $path ) && '/' === substr( $path, 0, 1 ) && is_file( $path ) && is_executable( $path ) ) { return $path; }
+			// A filtered path is the site owner's choice; the standard ones must not be replaceable by the PHP user (BPS-20).
+			if ( BackupPlus_Executables::trusted_binary( $path, null !== $configured ) ) { return $path; }
 		}
 		return false;
 	}

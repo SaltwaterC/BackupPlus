@@ -210,6 +210,42 @@ final class WebDavTest extends TestCase {
 		);
 	}
 
+	/** BPS-20: HTTP still works, with a warning under the protocol selector. */
+	public function test_http_is_warned_about_in_the_settings(): void {
+		$template = $this->provider->get_configuration_template();
+		$this->assertStringContainsString( 'data-backupplus_plaintext_pattern="^http://$"', $template, 'The protocol selector must drive the plaintext warning' );
+		$this->assertStringContainsString( '<p class="backupplus_plaintext_warning"{{#ifeq "http://" webdav}}{{else}} style="display: none;"{{/ifeq}}>', $template, 'The warning must be visible only for HTTP' );
+		$this->assertStringContainsString( 'unencrypted', $this->provider->get_template_properties()['webdav_plaintext_warning'] );
+		$this->assertSame( 'http://', $this->provider->transform_options_for_template( array( 'webdav' => 'webdav://' ) )['webdav'], 'Legacy webdav:// settings must show the warning too' );
+	}
+
+	/** BPS-20: a saved HTTP connection is logged once, without its credentials; HTTPS and unsaved tests are not. */
+	public function test_http_connections_are_logged_without_credentials_with_curl(): void {
+		$this->require_curl();
+		$connect         = new \ReflectionMethod( $this->provider, 'connect' );
+		$options         = array(
+			'host' => 'dav.example.test',
+			'user' => 'dav-user',
+			'pass' => 'dav-password',
+		);
+		$this->job->logs = array();
+
+		$this->assertFalse( $connect->invoke( $this->provider, $options + array( 'webdav' => 'https://' ) )->plaintext(), 'An HTTPS client must not report plaintext' );
+		$this->assertTrue( $connect->invoke( $this->provider, $options + array( 'webdav' => 'http://' ) )->plaintext(), 'An HTTP client must report plaintext' );
+		$this->provider->set_options( $options + array( 'webdav' => 'https://' ), false, 's-https' );
+		$connect->invoke( $this->provider );
+		$this->assertSame( array(), $this->job->logs, 'HTTPS connections and unsaved settings tests must not log the plaintext notice' );
+
+		$this->provider->set_options( $options + array( 'webdav' => 'http://' ), false, 's-http' );
+		$connect->invoke( $this->provider );
+		$connect->invoke( $this->provider );
+		$this->assertCount( 1, $this->job->logs, 'A saved HTTP connection must be logged once' );
+		$this->assertStringContainsString( 'plain HTTP', $this->job->logs[0] );
+		foreach ( array( 'dav-user', 'dav-password' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $this->job->logs[0], 'The log must not contain the credentials' );
+		}
+	}
+
 	public static function invalid_filenames(): array {
 		return array(
 			'empty'               => array( '' ),

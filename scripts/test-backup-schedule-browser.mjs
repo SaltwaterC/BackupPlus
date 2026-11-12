@@ -211,6 +211,6 @@ try {
 	await new Promise((resolve) => browser.once('exit', resolve));
 	await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 	// The development server handles one request at a time, so this returns after any queued page or cron request that could save settings.
-	await fetch(origin + '/wp-includes/js/jquery/jquery.min.js').catch(() => null);
+	await fetch(origin + '/wp-includes/js/jquery/jquery.min.js').then((response) => response.arrayBuffer()).catch(() => null);
 	settings('restore');
 }

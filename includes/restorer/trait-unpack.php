@@ -108,62 +108,10 @@ trait BackupPlus_Restorer_Unpack {
 			// Component selection is enforced when files are moved into place.
 			$result = BackupPlus_Filesystem_Functions::unzip_file( $package, $working_dir, $zip_starting_index );
 
-		} elseif ( preg_match( '#\.tar(\.(gz|bz2))?$#i', $package ) ) {
+		} elseif ( preg_match( '#\.tar(?:\.(gz|bz2))?$#i', $archive_name, $tar_match ) ) {
 
-			if ( ! class_exists( 'UpdraftPlus_Archive_Tar' ) ) {
-				if ( false === strpos( get_include_path(), BACKUPPLUS_DIR . '/includes/PEAR' ) ) {
-					set_include_path( BACKUPPLUS_DIR . '/includes/PEAR' . PATH_SEPARATOR . get_include_path() );
-				}
-				backupplus_try_include_file( 'includes/PEAR/Archive/Tar.php', 'include_once' );
-			}
-
-			$p_compress = null;
-			if ( '.tar.gz' == strtolower( substr( $package, -7, 7 ) ) ) {
-				$p_compress = 'gz';
-			} elseif ( '.tar.bz2' == strtolower( substr( $package, -8, 8 ) ) ) {
-				$p_compress = 'bz2';
-			}
-
-			// It's not pretty, but it works.
-			if ( is_a( $wp_filesystem, 'WP_Filesystem_Direct' ) ) {
-				$extract_dir = $working_dir;
-			} else {
-				$backupplus_dir = $backupplus->backups_dir_location();
-				if ( ! BackupPlus_Filesystem_Functions::really_is_writable( $backupplus_dir ) ) {
-					$backupplus->log_e( 'Backup directory (%s) is not writable, or does not exist.', $backupplus_dir );
-					$result = new WP_Error( 'unpack_failed', $this->strings['unpack_failed'] );
-				} else {
-					$extract_dir = $backupplus_dir . '/' . basename( $working_dir ) . '-old';
-					if ( file_exists( $extract_dir ) ) {
-						BackupPlus_Filesystem_Functions::remove_local_directory( $extract_dir );
-					}
-					$backupplus->log( "Using a temporary folder to extract before moving over WPFS: $extract_dir" );
-				}
-			}
-
-			// Slightly hackish - rather than re-write Archive_Tar to use wp_filesystem, we instead unpack into the location that we already require to be directly writable for other reasons, and then move from there.
-
-			if ( empty( $result ) ) {
-
-				$this->ud_extract_count = 0;
-				$this->ud_working_dir   = trailingslashit( $working_dir );
-				$this->ud_extract_dir   = untrailingslashit( $extract_dir );
-				$this->ud_made_dirs     = array();
-				add_filter( 'backupplus_tar_wrote', array( $this, 'tar_wrote' ), 10, 2 );
-				$tar    = new UpdraftPlus_Archive_Tar( $package, $p_compress );
-				$result = $tar->extract( $extract_dir, false );
-				if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Direct' ) ) {
-					BackupPlus_Filesystem_Functions::remove_local_directory( $extract_dir );
-				}
-				if ( true != $result ) {
-					$result = new WP_Error( 'unpack_failed', $this->strings['unpack_failed'], $result );
-				} else {
-					if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Direct' ) ) {
-						$backupplus->log( 'Moved unpacked tarball contents' );
-					}
-				}
-				remove_filter( 'backupplus_tar_wrote', array( $this, 'tar_wrote' ), 10, 2 );
-			}
+			// Foreign tar archives are read with BackupPlus_Tar, like the plugin's own, which accepts only files and directories with safe relative names. They used to need the PEAR Archive_Tar library, which is not shipped (BPS-20).
+			$result = $this->unpack_tar_package( $package, $working_dir, isset( $tar_match[1] ) ? strtolower( $tar_match[1] ) : '' );
 		}
 
 		// Keep prepared plaintext for interrupted extraction; remove it on success.
@@ -202,46 +150,84 @@ trait BackupPlus_Restorer_Unpack {
 		return $working_dir;
 	}
 
-	public function tar_wrote( $result, $file ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Filter use
-		if ( 0 !== strpos( $file, $this->ud_extract_dir ) ) {
-			return false;
-		}
-		global $wp_filesystem, $backupplus;
-		if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Direct' ) ) {
-			$modint    = 100;
-			$leaf      = substr( $file, strlen( $this->ud_extract_dir ) );
-			$dirname   = dirname( $leaf );
-			$need_dirs = explode( '/', $dirname );
-			if ( empty( $this->ud_made_dirs[ $dirname ] ) ) {
-				$cdir = '';
-				foreach ( $need_dirs as $ndir ) {
-					$cdir .= ( $cdir ) ? '/' . $ndir : $ndir;
-					if ( empty( $this->ud_made_dirs[ $cdir ] ) ) {
-						if ( ! $wp_filesystem->mkdir( $this->ud_working_dir . $cdir, FS_CHMOD_DIR ) && ! $wp_filesystem->is_dir( $this->ud_working_dir . $cdir ) ) {
-							$backupplus->log( 'Failed to create WPFS directory: ' . $this->ud_working_dir . $cdir );
-							return false;
-						} else {
-							$this->ud_made_dirs[ $cdir ] = true;
-						}
-					}
-				}
-			}
-			$put = $wp_filesystem->put_contents( $this->ud_working_dir . $leaf, file_get_contents( $file ) );
-			if ( is_wp_error( $put ) ) {
-				$backupplus->log_wp_error( $put );
-			}
-			@unlink( $file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-		} else {
-			$modint = 500;
-			$put    = true;
-		}
-		if ( $put ) {
-			++$this->ud_extract_count;
-			if ( 0 == $this->ud_extract_count % $modint ) {
-				$backupplus->log_e( '%s files have been extracted', $this->ud_extract_count );
+	/**
+	 * Unpack a .tar, .tar.gz or .tar.bz2 archive with BackupPlus_Tar. A compressed archive is first decompressed to a private
+	 * file beside it, which is removed afterwards; the decompressed size is limited by the free disk space.
+	 *
+	 * @param String $package     - full path of the archive
+	 * @param String $working_dir - the directory to unpack into
+	 * @param String $compression - '', 'gz' or 'bz2'
+	 *
+	 * @return Boolean|WP_Error - true on success
+	 */
+	private function unpack_tar_package( $package, $working_dir, $compression ) {
+		$plain = $package;
+		if ( '' !== $compression ) {
+			$plain = self::decompress_tar_package( $package, $compression );
+			if ( is_wp_error( $plain ) ) {
+				return $plain;
 			}
 		}
-		return ( true == $put );
+		try {
+			return BackupPlus_Filesystem_Functions::unzip_file( $plain, $working_dir, 0, array(), 'extract_only', 'tar' );
+		} finally {
+			if ( $plain !== $package && is_file( $plain ) ) {
+				unlink( $plain );
+			}
+		}
+	}
+
+	/**
+	 * Decompress a gzip or bzip2 tar archive to a new private file in the same directory.
+	 *
+	 * @param String $package     - full path of the archive
+	 * @param String $compression - 'gz' or 'bz2'
+	 *
+	 * @return String|WP_Error - the path of the decompressed file
+	 */
+	private static function decompress_tar_package( $package, $compression ) {
+		$wrapper = 'gz' === $compression ? 'compress.zlib://' : 'compress.bzip2://';
+		if ( 'gz' === $compression ? ! function_exists( 'gzopen' ) : ! function_exists( 'bzopen' ) ) {
+			/* translators: %s: the archive compression, gz or bz2 */
+			return new WP_Error( 'unpack_failed', sprintf( __( 'This PHP installation cannot read %s-compressed tar archives.', 'backupplus' ), $compression ) );
+		}
+		$directory = dirname( $package );
+		$plain     = $directory . '/tar-read-' . bin2hex( random_bytes( 16 ) ) . '.tmp';
+		$available = function_exists( 'disk_free_space' ) ? @disk_free_space( $directory ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- disk_free_space() may be disabled or fail on some file systems.
+		$limit     = false === $available ? PHP_INT_MAX : (int) max( 0, $available - 8388608 );
+		$input     = @fopen( $wrapper . $package, 'rb' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Reported below.
+		$output    = $input ? @fopen( $plain, 'xb' ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Reported below.
+		$error     = $input && $output ? '' : 'The archive could not be opened.';
+		if ( $output ) {
+			chmod( $plain, 0600 );
+		}
+		$written = 0;
+		while ( '' === $error && ! feof( $input ) ) {
+			$chunk = fread( $input, 1048576 );
+			if ( false === $chunk ) {
+				$error = 'The archive could not be decompressed.';
+				break;
+			}
+			$written += strlen( $chunk );
+			if ( $written > $limit ) {
+				$error = 'There is not enough free disk space to decompress the archive.';
+			} elseif ( '' !== $chunk && fwrite( $output, $chunk ) !== strlen( $chunk ) ) {
+				$error = 'The decompressed archive could not be written.';
+			}
+		}
+		if ( $input ) {
+			fclose( $input );
+		}
+		if ( $output ) {
+			fclose( $output );
+		}
+		if ( '' !== $error ) {
+			if ( is_file( $plain ) ) {
+				unlink( $plain );
+			}
+			return new WP_Error( 'unpack_failed', $error );
+		}
+		return $plain;
 	}
 
 	/**
@@ -303,6 +289,7 @@ trait BackupPlus_Restorer_Unpack {
 		// Unpack package to working directory
 		if ( BackupPlus_Encryption::is_file_encrypted( $package ) ) {
 			$this->skin->feedback( $this->strings['decrypt_database'] );
+			$legacy_plain = '';
 			if ( ! empty( $this->restore_options['backupplus_age_ticket'] ) || BackupPlus_Age_Restore::is_age( $backup_dir . $package ) ) {
 				$decrypted_file = BackupPlus_Age_Restore::file( $backup_dir . $package, isset( $this->restore_options['backupplus_age_ticket'] ) ? $this->restore_options['backupplus_age_ticket'] : '', $backupplus->nonce );
 			} else {
@@ -313,12 +300,24 @@ trait BackupPlus_Restorer_Unpack {
 				}
 
 				// function decrypt
-				$decrypted_file = BackupPlus_Encryption::decrypt( $backup_dir . $package, $encryption );
+				// A private temporary file, not a plaintext copy beside the encrypted backup.
+				$decrypted_file = BackupPlus_Encryption::decrypt( $backup_dir . $package, $encryption, true );
+				$legacy_plain   = is_array( $decrypted_file ) ? $decrypted_file['fullpath'] : '';
 			}
 
 			if ( is_array( $decrypted_file ) ) {
 				$this->skin->feedback( $this->strings['decrypted_database'] );
-				if ( ! copy( $decrypted_file['fullpath'], $working_dir . '/backup.db.gz' ) ) { // phpcs:ignore PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- False positive: the 'copy()' function doesn't put the file in the plugin directory, it puts it in the 'upgrade' directory instead.
+				// The plaintext copy is readable by its owner only, and is removed when the database restore fails (BPS-14)
+				$umask  = umask( 0077 );
+				$copied = copy( $decrypted_file['fullpath'], $working_dir . '/backup.db.gz' ); // phpcs:ignore PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- False positive: the 'copy()' function doesn't put the file in the plugin directory, it puts it in the 'upgrade' directory instead.
+				umask( $umask );
+				if ( $copied ) {
+					@chmod( $working_dir . '/backup.db.gz', 0600 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- The umask already applies; this covers an existing file.
+				}
+				if ( ! $copied ) {
+					if ( '' !== $legacy_plain && is_file( $legacy_plain ) ) {
+						unlink( $legacy_plain );
+					}
 					return new WP_Error( 'write_failed', __( 'Failed to write out the decrypted database to the filesystem', 'backupplus' ) );
 				} else {
 					unlink( $decrypted_file['fullpath'] );

@@ -152,7 +152,11 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 
 		// Deal with multi-archive sets
 		if ( is_array( $file ) ) {
-			$file = $file[ $params['findex'] ];
+			$file = isset( $file[ $params['findex'] ] ) ? $file[ $params['findex'] ] : null;
+		}
+		// History may hold names written before BPS-02 was fixed: open only an archive in the backup directory
+		if ( ! is_string( $file ) || ! BackupPlus_Manipulation_Functions::is_backup_basename( $file ) ) {
+			return array( 'error' => __( 'Backup set not found', 'backupplus' ) );
 		}
 
 		// Where it should end up being downloaded to
@@ -315,21 +319,51 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 				break;
 			}
 		}
+		// The archive states the entry's size: it must fit on the disk with room to spare, and no more than that is written,
+		// so a highly compressed entry cannot fill the disk (BPS-20)
+		$size = $found && isset( $info['size'] ) ? (int) $info['size'] : -1;
+		$free = function_exists( 'disk_free_space' ) ? @disk_free_space( $this->_backupplus->backups_dir_location() ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Unknown free space is not checked.
+		if ( $found && ( $size < 0 || ( false !== $free && $size * 2 + 1048576 > $free ) ) ) {
+			@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			return array( 'error' => __( 'There is not enough disk space to extract this file.', 'backupplus' ) );
+		}
 		$stream = $found ? $zip->getStream( $entry ) : false;
 		if ( ! $stream ) {
 			@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 			return array( 'error' => __( 'This file cannot be extracted from the archive.', 'backupplus' ) );
 		}
-		// The download handler removes this copy once it has been sent.
-		$name   = 'extract-' . bin2hex( random_bytes( 6 ) ) . '-' . preg_replace( '/[^A-Za-z0-9._-]/', '_', basename( $entry ) );
+		// The download handler removes this copy once it has been sent; the temporary file cleanup removes an abandoned one. Its
+		// name is random and ends in .tmp, so a web server never runs it, whatever the archive entry is called. The entry's name
+		// is used only for the download, and is kept for this user only (BPS-20).
+		$id       = bin2hex( random_bytes( 16 ) );
+		$name     = 'extract-' . $id . '.tmp';
+		$download = preg_replace( '/[^A-Za-z0-9._-]/', '_', basename( $entry ) );
+		// A name of dots only would be refused when downloaded, and the extracted copy left behind
+		if ( '' === trim( $download, '.' ) ) {
+			$download = 'download';
+		}
+		set_transient(
+			'backupplus_extract_' . $id,
+			array(
+				'name' => $download,
+				'user' => get_current_user_id(),
+			),
+			DAY_IN_SECONDS
+		);
 		$target = fopen( $this->_backupplus->backups_dir_location() . '/' . $name, 'xb' );
-		$copied = $target ? stream_copy_to_stream( $stream, $target ) : false;
+		$copied = $target ? stream_copy_to_stream( $stream, $target, $size + 1 ) : false;
+		// An entry larger than the archive states is refused rather than written in full
+		if ( false !== $copied && $copied > $size ) {
+			$copied = false;
+		}
 		if ( $target ) {
 			fclose( $target );
 		}
 		fclose( $stream );
 		@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 		if ( false === $copied ) {
+			@unlink( $this->_backupplus->backups_dir_location() . '/' . $name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The file may not have been created.
+			delete_transient( 'backupplus_extract_' . $id );
 			return array( 'error' => __( 'The file could not be extracted from the archive.', 'backupplus' ) );
 		}
 		return array( 'path' => $name );

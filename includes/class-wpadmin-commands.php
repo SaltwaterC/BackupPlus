@@ -104,7 +104,7 @@ class BackupPlus_WPAdmin_Commands extends BackupPlus_Commands {
 				return BackupPlus_Age_Restore::upload( $ticket, $params['file'], $params['offset'], $bytes, isset( $params['size'] ) ? $params['size'] : null, isset( $params['hash'] ) ? $params['hash'] : '' );
 			}
 		} catch ( \Throwable $e ) {
-			if ( ! empty( $params['point'] ) && $e instanceof \RuntimeException ) { return array( 'error' => $e->getMessage() ); }
+			if ( ( ! empty( $params['point'] ) && $e instanceof \RuntimeException ) || $e instanceof BackupPlus_Archive_Checksum_Exception ) { return array( 'error' => $e->getMessage() ); }
 			return array( 'error' => __( 'Could not transfer the restore archives. Retry the restore preparation.', 'backupplus' ) );
 		}
 		return array( 'error' => __( 'Invalid restore operation.', 'backupplus' ) );

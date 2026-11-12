@@ -150,6 +150,25 @@ class BackupPlus_Backup_Sources {
 		return $result;
 	}
 
+	/** True when a connection's password can be given to mysqldump. Line breaks and NUL would add option file lines (BPS-08). */
+	public static function valid_password( $info ) {
+		return ! isset( $info['pass'] ) || ( is_scalar( $info['pass'] ) && BackupPlus_Mysqldump_Option_File::valid_password( (string) $info['pass'] ) );
+	}
+
+	/** Every save of backupplus_extradbs. A password that is refused is not stored; the rest of the connection is. */
+	public static function sanitize_connections( $value ) {
+		$connections = self::connections( $value );
+		foreach ( $connections as $id => $connection ) {
+			if ( self::valid_password( $connection ) ) { continue; }
+			$connections[ $id ]['pass'] = '';
+			if ( function_exists( 'add_settings_error' ) ) {
+				/* translators: %s: database name and host */
+				add_settings_error( 'backupplus_extradbs', 'invalid_password', sprintf( __( 'The password for the database %s was not saved: it contains a line break or NUL character. Enter it again.', 'backupplus' ), $connection['name'] . '@' . $connection['host'] ) );
+			}
+		}
+		return $connections;
+	}
+
 	public static function connect( $info ) {
 		require_once BACKUPPLUS_DIR . '/backup.php';
 		foreach ( array( 'host', 'name', 'user', 'pass' ) as $field ) {
@@ -295,10 +314,10 @@ class BackupPlus_Backup_Sources {
 	public static function restore_entities( $entities, $backup ) {
 		foreach ( $backup as $id => $value ) {
 			if ( self::custom( $id ) ) {
-				$source          = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : array(
+				$source          = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : ( isset( $backup['archive_sources'][ $id ] ) ? $backup['archive_sources'][ $id ] : array(
 					'path' => '',
 					'kind' => 'directory',
-				);
+				) );
 				$entities[ $id ] = array(
 					'path'        => $source['path'],
 					'kind'        => $source['kind'],
@@ -335,8 +354,10 @@ class BackupPlus_Backup_Sources {
 				$stat     = false !== $index ? $zip->statIndex( $index ) : false;
 				$manifest = $stat && $stat['size'] < 4194304 ? json_decode( $zip->getFromIndex( $index ), true ) : null;
 				$zip->close();
-				if ( is_array( $manifest ) && isset( $manifest['type'], $manifest['source']['path'], $manifest['source']['kind'] ) && $id === $manifest['type'] && self::absolute( $manifest['source']['path'] ) && in_array( $manifest['source']['kind'], array( 'file', 'directory' ), true ) ) {
-					$backup['file_sources'][ $id ] = array_intersect_key( $manifest['source'], array_flip( array( 'path', 'kind' ) ) );
+				// What an archive reports is kept apart from what this site recorded: an archive could have been swapped in remote
+				// storage, so its path is only shown as a suggestion and never chosen as the restore destination (BPS-15).
+				if ( ! isset( $backup['file_sources'][ $id ] ) && is_array( $manifest ) && isset( $manifest['type'], $manifest['source']['path'], $manifest['source']['kind'] ) && $id === $manifest['type'] && self::absolute( $manifest['source']['path'] ) && in_array( $manifest['source']['kind'], array( 'file', 'directory' ), true ) ) {
+					$backup['archive_sources'][ $id ] = array_intersect_key( $manifest['source'], array_flip( array( 'path', 'kind' ) ) );
 				}
 			}
 		} elseif ( preg_match( '/^db([1-9][0-9]*)?$/D', $id ) ) {

@@ -163,7 +163,11 @@ trait BackupPlus_Admin_Settings_Storage {
 			BackupPlus_Options::update_backupplus_option( 'backupplus_email', array() );
 			BackupPlus_Options::update_backupplus_option( 'backupplus_report_warningsonly', array() );
 			BackupPlus_Options::update_backupplus_option( 'backupplus_report_wholebackup', array() );
-			BackupPlus_Options::update_backupplus_option( 'backupplus_extradbs', array() );
+			// The form always sends the connections, which replace the saved ones below. Keep them until then: a password
+			// placeholder in the form stands for the saved password (BPS-20).
+			if ( ! isset( $settings['backupplus_extradbs'] ) ) {
+				BackupPlus_Options::update_backupplus_option( 'backupplus_extradbs', array() );
+			}
 			BackupPlus_Options::update_backupplus_option( 'backupplus_include_more_path', array() );
 
 			$relevant_keys = $backupplus->get_settings_keys();
@@ -201,6 +205,10 @@ trait BackupPlus_Admin_Settings_Storage {
 					// Restricting to strings for now, to prevent any unintended leakage (since this is just used for UI updating)
 					if ( $updated ) {
 						$value = BackupPlus_Options::get_backupplus_option( $key );
+						// A credential option goes back to the page only as the placeholder it showed (BPS-20)
+						if ( is_string( $value ) && BackupPlus_Credential_Storage::handles( $key ) ) {
+							$value = BackupPlus_Credential_Storage::mask( $value, $key );
+						}
 						if ( is_string( $value ) ) {
 							$return_array['changed'][ $key ] = $value;
 						}
@@ -265,6 +273,12 @@ trait BackupPlus_Admin_Settings_Storage {
 
 		if ( $return_array['saved'] ) { //
 			$this->show_admin_warning( __( 'Your settings have been saved.', 'backupplus' ), 'updated fade' );
+			// A refused backup directory or database password is not stored while the other settings are saved.
+			foreach ( array( 'backupplus_dir', 'backupplus_extradbs' ) as $setting ) {
+				foreach ( function_exists( 'get_settings_errors' ) ? get_settings_errors( $setting ) : array() as $error ) {
+					$this->show_admin_warning( esc_html( $error['message'] ), 'error' );
+				}
+			}
 		} else {
 			if ( isset( $return_array['error_message'] ) ) {
 				$this->show_admin_warning( $return_array['error_message'], 'error' );

@@ -103,7 +103,8 @@ trait BackupPlus_Admin_Existing_Backups {
 		$rawbackup .= '</p><hr><p><pre>' . esc_html( print_r( $backup, true ) ) . '</pre></p>';
 
 		if ( ! empty( $job_data ) && is_array( $job_data ) ) {
-			$rawbackup .= '<p><pre>' . esc_html( print_r( $job_data, true ) ) . '</pre></p>';
+			// Credentials in the job snapshot are shown only as placeholders (BPS-20).
+			$rawbackup .= '<p><pre>' . esc_html( print_r( BackupPlus_Credential_Storage::mask_job( $job_data ), true ) ) . '</pre></p>';
 		}
 
 		// Every dynamic value above is escaped for HTML where it is added. Callers hand the markup straight to the modal, so it is not entity-encoded again and nothing decodes it afterwards.
@@ -915,7 +916,12 @@ trait BackupPlus_Admin_Existing_Backups {
 		foreach ( $opts as $opt ) {
 			$pitr_credentials = in_array( $opt, array( 'backupplus_pitr_capture', 'backupplus_pitr_recovery' ), true );
 			$value            = $pitr_credentials ? get_option( $opt ) : BackupPlus_Options::get_backupplus_option( $opt );
-			if ( $pitr_credentials && $value ) { $value = '[redacted]'; }
+			if ( $pitr_credentials && $value ) {
+				$value = '[redacted]';
+			} elseif ( BackupPlus_Credential_Storage::handles( $opt ) ) {
+				// Saved secrets of every other credential option are shown only as placeholders (BPS-20).
+				$value = BackupPlus_Credential_Storage::mask( $value, $opt );
+			}
 			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( $value, true ) ) . '</td>';
 		}
 

@@ -208,3 +208,4 @@ dropbox_wp_expect( $denied && $rotated === BackupPlus_Credential_Key_Store::conf
 remove_filter( 'wp_die_handler', $stop, PHP_INT_MAX );
 remove_filter( 'wp_die_ajax_handler', $stop, PHP_INT_MAX );
 echo "PASS: activation key generation, automatic migration, real storage, archive exclusion, HTTP denial, browser rotation/recovery and request authorization\n";
+require __DIR__ . '/check-credential-key-retirement.php';

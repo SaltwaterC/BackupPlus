@@ -1,6 +1,6 @@
 <?php
 
-/** Diagnostics and scheduling: ping, PHP info, database size and collation, raw backup history, cron checks and forced resumptions. */
+/** Diagnostics and scheduling: ping, redacted PHP info, database size and collation, raw backup history, cron checks and forced resumptions. */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -35,26 +35,6 @@ trait BackupPlus_WPAdmin_Commands_Diagnostics {
 	}
 
 	/**
-	 * Calls a WordPress action and dies
-	 *
-	 * @param Array $data - must have at least the key 'wpaction' with a string value
-	 *
-	 * @return WP_Error if no command was included
-	 */
-	public function call_wordpress_action( $data ) {
-
-		if ( empty( $data['wpaction'] ) ) {
-			return new WP_Error( 'error', '', 'no command sent' );
-		}
-
-		$response = $this->_backupplus_admin->call_wp_action( $data, array( $this->_uc_helper, '_backupplus_background_operation_started' ) );// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is for future use.
-
-		die;
-
-		// return array('response' => $response['response'], 'status' => $response['status'], 'log' => $response['log'] );
-	}
-
-	/**
 	 * The purpose of this is to detect brokenness caused by extra line feeds in plugins/themes - before it breaks other AJAX operations and leads to support requests
 	 *
 	 * @return string
@@ -73,32 +53,35 @@ trait BackupPlus_WPAdmin_Commands_Diagnostics {
 	 * N.B. This differs from the phpinfo output in WordPress core.
 	 * Returns a string, as it is directly fetched as the source of an iframe
 	 *
+	 * Secrets are redacted (BPS-20): phpinfo() runs without its Environment and PHP Variables sections, and the rest of its
+	 * output and the constants are passed through BackupPlus_Diagnostics_Redaction.
+	 *
 	 * @return String - returns the resulting HTML
 	 */
 	public function phpinfo() {
 
-		ob_start();
-
-		if ( function_exists( 'phpinfo' ) ) {
-			phpinfo( INFO_ALL ^ ( INFO_CREDITS | INFO_LICENSE ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_phpinfo -- we call the phpinfo() function to display PHP information in the advanced tools.
+		if ( ! class_exists( 'BackupPlus_Diagnostics_Redaction' ) ) {
+			backupplus_try_include_file( 'includes/class-diagnostics-redaction.php', 'require_once' );
 		}
+
+		$info = '';
+		if ( function_exists( 'phpinfo' ) ) {
+			ob_start();
+			phpinfo( INFO_GENERAL | INFO_CONFIGURATION | INFO_MODULES ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_phpinfo -- we call the phpinfo() function to display PHP information in the advanced tools.
+			$info = ob_get_clean();
+		}
+
+		ob_start();
 		echo '<h3 id="ud-debuginfo-constants">' . esc_html__( 'Constants', 'backupplus' ) . '</h3>';
-		$opts = @get_defined_constants();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		ksort( $opts );
 		echo '<table><thead></thead><tbody>';
-		foreach ( $opts as $key => $opt ) {
-			// Administrators can already read these in other ways, but we err on the side of caution
-			if ( is_string( $opt ) && false !== stripos( $opt, 'api_key' ) ) {
-				$opt = '***';
-			}
-			echo '<tr><td>' . esc_html( $key ) . '</td><td>' . esc_html( print_r( $opt, true ) ) . '</td>';
+		foreach ( BackupPlus_Diagnostics_Redaction::constants() as $key => $opt ) {
+			echo '<tr><td>' . esc_html( $key ) . '</td><td>' . esc_html( $opt ) . '</td>';
 		}
 		echo '</tbody></table>';
+		$constants = ob_get_clean();
 
-		$ret = ob_get_contents();
-		ob_end_clean();
-
-		return $ret;
+		$secret_values = BackupPlus_Diagnostics_Redaction::secret_values();
+		return BackupPlus_Diagnostics_Redaction::phpinfo( $info, $secret_values ) . BackupPlus_Diagnostics_Redaction::mask_values( $constants, $secret_values );
 	}
 
 	/**

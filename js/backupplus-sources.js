@@ -17,7 +17,11 @@ jQuery(function ($) {
         var request = {action: 'backupplus_source_tables', nonce: backupplus_sources.nonce};
         if ($connection.length) {
             if ($connection.find('.bp-saved-connection').length) { request.saved = $connection.find('.bp-saved-connection').val(); }
-            else { request.connection = {}; $connection.find('[data-field]').each(function () { request.connection[$(this).data('field')] = this.value; }); }
+            else {
+                // A saved password is shown as a placeholder; the server uses the saved password of this connection for it.
+                request.connection = {}; request.connection_id = $connection.data('id');
+                $connection.find('[data-field]').each(function () { request.connection[$(this).data('field')] = this.value; });
+            }
         }
         var $button = $(this).prop('disabled', true), $status = $selector.find('.bp-connection-status').text(' …');
         $.post(backupplus_sources.ajax, request).done(function (response) {

@@ -295,6 +295,41 @@ try {
 		restore_chain_expect( array() === glob( $destination . '/*-old' ), "Core restore to $label must not make -old copies" );
 		restore_chain_expect( ! file_exists( $destination . '/backupplus-manifest.json' ), "Core restore to $label must not copy restore metadata into site files" );
 	}
+
+	// A deleted path that is now a symbolic link to a folder: the link goes, the folder it points to is left alone (BPS-20)
+	$destination = WP_CONTENT_DIR . '/' . $marker . '-wpcore-symlink';
+	$outside     = WP_CONTENT_DIR . '/' . $marker . '-outside';
+	mkdir( $destination );
+	mkdir( $outside );
+	file_put_contents( $outside . '/precious.txt', 'precious' );
+	symlink( $outside, $destination . '/' . $marker . '-gone.txt' );
+	// The same link inside a real folder that is deleted: WP_Filesystem_Direct::delete() would recurse through it
+	mkdir( $destination . '/' . $marker . '-gone-dir' );
+	file_put_contents( $destination . '/' . $marker . '-gone-dir/own.txt', 'own' );
+	symlink( $outside, $destination . '/' . $marker . '-gone-dir/cache' );
+	$restorer = new BackupPlus_Restorer( new BackupPlus_Restorer_Skin(), $set, false, array() );
+	$deleted  = ( new ReflectionMethod( $restorer, 'incremental_restore_deleted_paths' ) )->invoke(
+		$restorer,
+		array(
+			'version' => 2,
+			'type'    => 'wpcore',
+			'root'    => '',
+			'deleted' => array( $marker . '-gone.txt', $marker . '-gone-dir' ),
+		),
+		'wpcore',
+		$destination
+	);
+	remove_filter( 'backupplus_logline', array( $restorer, 'backupplus_logline' ), 10 );
+	restore_chain_expect( true === $deleted, 'Deleting a path that is a symbolic link must succeed: ' . ( is_wp_error( $deleted ) ? $deleted->get_error_message() : json_encode( $deleted ) ) );
+	restore_chain_expect( ! is_link( $destination . '/' . $marker . '-gone.txt' ), 'The symbolic link itself must be removed' );
+	restore_chain_expect( 'precious' === $read( $outside . '/precious.txt' ), 'The folder a deleted symbolic link points to must not be emptied' );
+	restore_chain_expect( ! file_exists( $destination . '/' . $marker . '-gone-dir' ) && ! is_link( $destination . '/' . $marker . '-gone-dir/cache' ), 'A deleted folder must be removed with the link inside it' );
+
+	// Removing an old copy of a folder (a <type>-old folder) must not follow the links it holds either
+	mkdir( $destination . '/old' );
+	symlink( $outside, $destination . '/old/link' );
+	restore_chain_expect( BackupPlus_Filesystem_Functions::remove_local_directory( $destination . '/old' ) && ! file_exists( $destination . '/old' ), 'The old folder must be removed' );
+	restore_chain_expect( 'precious' === $read( $outside . '/precious.txt' ), 'Removing a folder must not empty the target of a link inside it' );
 } finally {
 	// Shutdown handlers do not run when a failed check ends in a fatal error, so clean up here as well.
 	$cleanup();

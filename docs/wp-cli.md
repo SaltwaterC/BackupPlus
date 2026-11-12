@@ -9,6 +9,7 @@ wp backupplus backup --files=plugins,wpcore,custom --tables=wp_posts,wp_postmeta
 wp backupplus backup --type=files --incremental
 wp backupplus backup --label="Before the migration" --services=s3
 wp backupplus credential-keys rotate
+wp backupplus credential-keys retire --yes
 wp backupplus list --format=json
 wp backupplus sources --format=csv
 wp backupplus delete 1792718455 --remote --yes
@@ -19,7 +20,9 @@ wp backupplus delete --older-than=30 --keep=4 --dry-run
 
 `credential-keys rotate` uses the disk key store when no environment key is configured. It rotates the key, re-encrypts saved credentials and job snapshots, schedules retries if needed, and sends the configured key rotation email. When `BACKUPPLUS_CREDENTIAL_KEYS` is set, it instead prints a new Base64 encoded JSON key-ring value to stdout. That value has a new active key and updated `issued_at` and `rotated_at` timestamps, while retaining all previous keys. It does not change the environment or rewrite stored credentials; deploy the printed value through the service's secret configuration. Treat stdout as secret material.
 
-Rotation does not remove old keys. Disk rotations and generated environment values retain them so credentials encrypted under earlier keys remain readable; there is currently no automatic key retirement command.
+Rotation does not remove old keys. Disk rotations and generated environment values retain them so credentials encrypted under earlier keys remain readable.
+
+`credential-keys retire` removes them. It first re-encrypts, on every site of the network, whatever an older key wrote: provider settings, other credential options, saved job credentials and the provider settings inside job snapshots, Dropbox tokens and pending Dropbox authorizations. Envelopes of the active key are left unchanged, so retiring alone does not start a new incremental chain. For disk keys it then removes every key but the active one, under the key file lock, and only if no option of any site and no network option still holds an envelope of a key it would remove; otherwise it names those places and changes nothing. It asks for confirmation unless `--yes` is given. With `BACKUPPLUS_CREDENTIAL_KEYS`, it re-encrypts the database the same way, then prints the key-ring value with only the active key to stdout (warnings go to stderr); deploy it as for rotation. Credentials inside older backups and older recovery-key downloads can no longer be decrypted after retirement, so restoring such a backup means entering or reconnecting its storage and database credentials again. Download a new recovery key afterwards.
 
 `--services` uploads this run only to the named services from `remote list`; it is exclusive with `--local`. `--label` sets the label shown in history.
 
@@ -139,7 +142,7 @@ wp backupplus remote authorize dropbox --instance=s-3c4d
 wp backupplus remote authorize dropbox - --instance=s-3c4d
 ```
 
-`remote list` shows saved destinations without credentials; `--all` includes unconfigured services. `remote set <service> <file|->` reads a JSON object of the provider's saved setting names (`accesskey`, `secretkey`, `path`, `endpoint`, `host`, `user`, `pass` and so on) from a file or stdin, so credentials never appear in arguments or the process list. Keys already saved for the instance are kept, `--instance` updates one instance and a new one is created without it, and `--select` adds the service to the destinations backups use. Credentials are encrypted at rest as when saved from the settings screen. `remote test` runs the same upload, download and delete check as the settings screen from the saved settings. `remote remove` deletes an instance's settings; backups already stored there are kept.
+`remote list` shows saved destinations without credentials; `--all` includes unconfigured services. `remote set <service> <file|->` reads a JSON object of the provider's saved setting names (`accesskey`, `secretkey`, `path`, `endpoint`, `host`, `user`, `pass` and so on) from a file or stdin, so credentials never appear in arguments or the process list. Keys already saved for the instance are kept, `--instance` updates one instance and a new one is created without it, starting from the provider's defaults as on the settings screen (for FTP, explicit TLS), and `--select` adds the service to the destinations backups use. Credentials are encrypted at rest as when saved from the settings screen. `remote test` runs the same upload, download and delete check as the settings screen from the saved settings. `remote remove` deletes an instance's settings; backups already stored there are kept.
 
 Dropbox is authorised from WP-CLI with a pasted code. `remote authorize dropbox` prints a Dropbox address; open it in any browser, approve access, then pass the code Dropbox displays to `remote authorize dropbox <file|->` within ten minutes. `--instance` names the instance when there are several. The pending authorisation is stored encrypted with the instance, and an existing connection keeps working until a new code is accepted. Google Drive, OneDrive and pCloud redirect back to the site, so they are authorised from the settings screen. `remote deauthorize <service>` removes an authorisation.
 

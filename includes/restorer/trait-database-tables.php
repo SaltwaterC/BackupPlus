@@ -120,7 +120,7 @@ trait BackupPlus_Restorer_Database_Tables {
 			} else {
 				/* translators: %s: Table engine name */
 				$engine_change_message  = sprintf( __( 'Requested table engine (%s) is not present - changing to MyISAM.', 'backupplus' ), $this->table_engine ) . '<br>';
-				$create_table_statement = BackupPlus_Manipulation_Functions::str_lreplace( "ENGINE=$this->table_engine", 'ENGINE=MyISAM', $create_table_statement );
+				$create_table_statement = BackupPlus_Manipulation_Functions::str_lreplace( $eng_match[0], 'ENGINE=MyISAM', $create_table_statement );
 				$this->table_engine     = 'MyISAM';
 				// Remove (M)aria options
 				if ( 'maria' == strtolower( $this->table_engine ) || 'aria' == strtolower( $this->table_engine ) || 'myisam' == strtolower( $this->table_engine ) ) {
@@ -140,32 +140,30 @@ trait BackupPlus_Restorer_Database_Tables {
 			$table_collation = ! empty( $table_definitions[6] ) ? $table_definitions[6] : '';
 
 			foreach ( $matches as $match ) {
-				$full_match        = $match[0];
-				$charset_keyword   = $match[1];
-				$charset_separator = $match[2];
-				$charset_original  = $match[3];
-				$collate_keyword   = isset( $match[4] ) ? $match[4] : 'COLLATE';
-				$collate_separator = isset( $match[5] ) ? $match[5] : ' ';
+				$full_match       = $match[0];
+				$charset_original = $match[3];
 
 				if ( ! isset( $supported_charsets[ strtolower( $charset_original ) ] ) && ! in_array( $full_match, $charset_replaced ) ) {
+					// Names the server lists (validate_charset_options() checks the restore options), written as quoted identifiers
 					if ( ! empty( $this->restore_options['backupplus_restorer_charset'] ) ) {
 						// Use the character set from the restoration settings
-						$change_charset_to = $charset_keyword . $charset_separator . $this->restore_options['backupplus_restorer_charset'];
-
-						if ( ! empty( $backupplus_restorer_collate ) && 'choose_a_default_for_each_table' != $backupplus_restorer_collate ) {
-							$change_charset_to .= ' ' . $collate_keyword . $collate_separator . $backupplus_restorer_collate;
-						}
+						$charset = $this->restore_options['backupplus_restorer_charset'];
+						$collate = ! empty( $backupplus_restorer_collate ) && 'choose_a_default_for_each_table' != $backupplus_restorer_collate ? $backupplus_restorer_collate : '';
 					} elseif ( ! empty( $table_charset ) && isset( $supported_charsets[ strtolower( $table_charset ) ] ) ) {
-						// Use the character set from the CREATE TABLE statement if no override is provided
-						$change_charset_to = $charset_keyword . $charset_separator . $table_charset;
-
-						// Use the collation from the CREATE TABLE statement if no override is provided
-						if ( ! empty( $table_collation ) && isset( $supported_collations[ strtolower( $table_collation ) ] ) ) {
-							$change_charset_to .= ' ' . $collate_keyword . $collate_separator . $table_collation;
-						}
+						// Use the character set from the CREATE TABLE statement if no override is provided, and its collation if the server has it
+						$charset = $table_charset;
+						$collate = ! empty( $table_collation ) && isset( $supported_collations[ strtolower( $table_collation ) ] ) ? $table_collation : '';
 					} else {
+						$charset = '';
+						$collate = '';
+					}
+					if ( '' === $charset ) {
 						// Remove character set
 						$change_charset_to = '';
+					} elseif ( '' === $collate ) {
+						$change_charset_to = BackupPlus_SQL::render( 'CHARACTER SET %i', array( $charset ) );
+					} else {
+						$change_charset_to = BackupPlus_SQL::render( 'CHARACTER SET %i COLLATE %i', array( $charset, $collate ) );
 					}
 
 					$charset_replaced[] = $full_match;
@@ -188,41 +186,38 @@ trait BackupPlus_Restorer_Database_Tables {
 
 		$collate_change_message           = '';
 		$unsupported_collates_in_sql_line = array();
+		// The dump's own text is searched for; a replacement collation is one the server lists, written as a quoted identifier
+		$default_collation = 'choose_a_default_for_each_table' == $backupplus_restorer_collate;
 		if ( ! empty( $backupplus_restorer_collate ) && preg_match( '/ COLLATE=([a-zA-Z0-9._-]+)/i', $create_table_statement, $collate_match ) ) {
 			$collate = $collate_match[1];
 			if ( ! isset( $supported_collations[ strtolower( $collate ) ] ) ) {
 				$unsupported_collates_in_sql_line[] = $collate;
-				if ( 'choose_a_default_for_each_table' == $backupplus_restorer_collate ) {
-					$create_table_statement = BackupPlus_Manipulation_Functions::str_lreplace( "COLLATE=$collate", '', $create_table_statement, false );
+				$replacement                        = $default_collation ? '' : BackupPlus_SQL::render( 'COLLATE=%i', array( $backupplus_restorer_collate ) );
+				$create_table_statement             = BackupPlus_Manipulation_Functions::str_lreplace( ltrim( $collate_match[0] ), $replacement, $create_table_statement, false );
+			}
+		}
+		// Column collations followed by a space or a comma
+		foreach ( array(
+			' ' => '/ COLLATE ([a-zA-Z0-9._-]+) /i',
+			',' => '/ COLLATE ([a-zA-Z0-9._-]+),/i',
+		) as $terminator => $pattern ) {
+			if ( empty( $backupplus_restorer_collate ) || ! preg_match_all( $pattern, $create_table_statement, $collate_matches, PREG_SET_ORDER ) ) {
+				continue;
+			}
+			$replaced = array();
+			foreach ( $collate_matches as $collate_match ) {
+				$collate = $collate_match[1];
+				if ( isset( $replaced[ $collate ] ) || isset( $supported_collations[ strtolower( $collate ) ] ) ) {
+					continue;
+				}
+				$replaced[ $collate ]               = true;
+				$unsupported_collates_in_sql_line[] = $collate;
+				if ( $default_collation ) {
+					$replacement = ',' === $terminator ? ',' : '';
 				} else {
-					$create_table_statement = BackupPlus_Manipulation_Functions::str_lreplace( "COLLATE=$collate", 'COLLATE=' . $backupplus_restorer_collate, $create_table_statement, false );
+					$replacement = ',' === $terminator ? BackupPlus_SQL::render( 'COLLATE %i,', array( $backupplus_restorer_collate ) ) : BackupPlus_SQL::render( 'COLLATE %i ', array( $backupplus_restorer_collate ) );
 				}
-			}
-		}
-		if ( ! empty( $backupplus_restorer_collate ) && preg_match_all( '/ COLLATE ([a-zA-Z0-9._-]+) /i', $create_table_statement, $collate_matches ) ) {
-			$collates = array_unique( $collate_matches[1] );
-			foreach ( $collates as $collate ) {
-				if ( ! isset( $supported_collations[ strtolower( $collate ) ] ) ) {
-					$unsupported_collates_in_sql_line[] = $collate;
-					if ( 'choose_a_default_for_each_table' == $backupplus_restorer_collate ) {
-						$create_table_statement = str_ireplace( "COLLATE $collate ", '', $create_table_statement );
-					} else {
-						$create_table_statement = str_ireplace( "COLLATE $collate ", 'COLLATE ' . $backupplus_restorer_collate . ' ', $create_table_statement );
-					}
-				}
-			}
-		}
-		if ( ! empty( $backupplus_restorer_collate ) && preg_match_all( '/ COLLATE ([a-zA-Z0-9._-]+),/i', $create_table_statement, $collate_matches ) ) {
-			$collates = array_unique( $collate_matches[1] );
-			foreach ( $collates as $collate ) {
-				if ( ! isset( $supported_collations[ strtolower( $collate ) ] ) ) {
-					$unsupported_collates_in_sql_line[] = $collate;
-					if ( 'choose_a_default_for_each_table' == $backupplus_restorer_collate ) {
-						$create_table_statement = str_ireplace( "COLLATE $collate,", ',', $create_table_statement );
-					} else {
-						$create_table_statement = str_ireplace( "COLLATE $collate,", 'COLLATE ' . $backupplus_restorer_collate . ',', $create_table_statement );
-					}
-				}
+				$create_table_statement = str_ireplace( ltrim( $collate_match[0] ), $replacement, $create_table_statement );
 			}
 		}
 		if ( count( $unsupported_collates_in_sql_line ) > 0 ) {
@@ -488,6 +483,16 @@ trait BackupPlus_Restorer_Database_Tables {
 	}
 
 	/**
+	 * Write the running job's data again once the table that held it has been replaced. Until the next checkpoint it would
+	 * otherwise exist only in memory, and a request ended in between (by a time limit, say) would leave a continuation with
+	 * no job to resume (BPS-11).
+	 */
+	private function save_job_state() {
+		global $backupplus;
+		$backupplus->jobdata_set_multi( array() );
+	}
+
+	/**
 	 * Called when a table has been restored
 	 *
 	 * @param String $table               - The full table name that has been restored
@@ -516,6 +521,8 @@ trait BackupPlus_Restorer_Database_Tables {
 			wp_cache_flush();
 			// the reason why this if statement is needed is that when *_options table is not included in the backup, then backupplus_jobdata will never be wiped out from the *_sitemeta table as the below elseif statement will call wipe_state_data() only if *_options table is included
 			$backupplus->wipe_state_data( false, 'sitemeta' );
+			$this->restore_network_bundle();
+			$this->save_job_state();
 		} elseif ( preg_match( '/^(\d+_)?options$/', substr( $table, strlen( $import_table_prefix ) ), $matches ) ) {
 			// The second prefix here used to have a '!$this->is_multisite' on it (i.e. 'options' table on non-multisite). However, the user_roles entry exists in the main options table on multisite too.
 			if ( ( $this->is_multisite && ! empty( $matches[1] ) ) || $table == $import_table_prefix . 'options' ) {
@@ -525,6 +532,10 @@ trait BackupPlus_Restorer_Database_Tables {
 				}
 				if ( $table === $wpdb->options ) {
 					$this->restore_lock_rows( $table );
+					// A single site keeps the job data in this table; a network keeps it in sitemeta
+					if ( ! $this->is_multisite ) {
+						$this->save_job_state();
+					}
 				}
 
 				$mprefix = empty( $matches[1] ) ? '' : $matches[1];
@@ -595,7 +606,7 @@ trait BackupPlus_Restorer_Database_Tables {
 						if ( ! is_dir( $new_dir ) ) {
 							@mkdir( $new_dir, 0775, true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 						}                       $backupplus->log_e( 'Elegant themes theme builder plugin data detected: resetting temporary folder' );
-						$wpdb->update( $new_table_name, array( 'option_value' => $new_dir ), array( 'option_name' => 'et_images_temp_folder' ) );
+						$sql->execute( 'UPDATE %i SET option_value = ? WHERE option_name = ?', array( $new_table_name ), array( $new_dir, 'et_images_temp_folder' ) );
 					}
 
 					// check if current restoration is a migration
@@ -608,7 +619,7 @@ trait BackupPlus_Restorer_Database_Tables {
 							// if WP Rocket settings is found and cdn is enabled
 							if ( isset( $wp_rocket_settings['cdn'] ) ) {
 								unset( $wp_rocket_settings['cdn'] );
-								$wpdb->update( $new_table_name, array( 'option_value' => serialize( $wp_rocket_settings ) ), array( 'option_name' => 'wp_rocket_settings' ) );
+								$sql->execute( 'UPDATE %i SET option_value = ? WHERE option_name = ?', array( $new_table_name ), array( serialize( $wp_rocket_settings ), 'wp_rocket_settings' ) );
 
 								$backupplus->log_e( 'WP Rocket CDN option detected: disabling the option' );
 							}

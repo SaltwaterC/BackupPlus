@@ -2,6 +2,7 @@
 /** Shared bounded SQL input, plus a transformation-free external importer. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 require_once __DIR__ . '/class-tar.php';
+require_once __DIR__ . '/class-external-sql-guard.php';
 
 class BackupPlus_SQL_Stream {
 	public static function line( $handle, $plain ) {
@@ -71,35 +72,49 @@ class BackupPlus_SQL_Stream {
 class BackupPlus_External_Importer {
 	public static function restore( $path, $id, $connection ) {
 		global $backupplus;
+		// With multiple statements enabled the server would run whatever follows a statement it was given.
+		if ( defined( 'MYSQL_CLIENT_FLAGS' ) && defined( 'MYSQLI_CLIENT_MULTI_STATEMENTS' ) && ( MYSQL_CLIENT_FLAGS & MYSQLI_CLIENT_MULTI_STATEMENTS ) ) { return new WP_Error( 'external_import_failed', 'External database restore is not available while MYSQL_CLIENT_FLAGS enables multiple statements.' ); }
 		$db          = BackupPlus_Backup_Sources::connect( $connection );
 		$progress    = $backupplus->jobdata_get( 'external_restore_progress', array() );
 		$fingerprint = hash_file( 'sha256', $path );
-		$destination = hash( 'sha256', serialize( $connection ) );
+		// The target is identified without its password: job data is not encrypted, and an unsalted hash of a password could be
+		// attacked offline (BPS-10)
+		$destination = hash( 'sha256', serialize( array_diff_key( (array) $connection, array( 'pass' => true ) ) ) );
 		$state       = isset( $progress[ $id ] ) ? $progress[ $id ] : array(
 			'start'       => 0,
 			'complete'    => false,
 			'fingerprint' => $fingerprint,
 			'destination' => $destination,
 		);
+		// A restore that began before this change recorded the connection with its password
+		if ( isset( $state['destination'] ) && is_string( $state['destination'] ) && hash_equals( $state['destination'], hash( 'sha256', serialize( $connection ) ) ) ) {
+			$state['destination'] = $destination;
+		}
 		if ( $fingerprint !== $state['fingerprint'] || $destination !== $state['destination'] ) { return new WP_Error( 'external_changed', 'The SQL dump or target connection changed during restoration.' ); }
 		if ( $state['complete'] ) { return true; }
 		$index = 0;
 		try {
-			// Dump statements run verbatim on the target's own connection.
+			// Dump statements run verbatim on the target's own connection, once the guard has read them as the server will (BPS-18).
 			$target = new BackupPlus_SQL( $db->dbh );
+			$guard  = BackupPlus_External_SQL_Guard::for_connection( $target, $connection['name'] );
 			foreach ( BackupPlus_SQL_Stream::statements( $path ) as $sql ) {
 				++$index;
+				try {
+					$kind = $guard->inspect( $sql );
+				} catch ( RuntimeException $e ) {
+					throw new RuntimeException( 'External database restore refused statement ' . $index . ': ' . $e->getMessage() );
+				}
 				// Session settings must be replayed on every new connection.
-				$session = (bool) preg_match( '#^(?:SET\s|/\*![0-9]+\s+SET\s)#i', $sql );
-				if ( $index < $state['start'] && ! $session ) { continue; }
-				if ( preg_match( '/^(?:CREATE|DROP|ALTER)\s+DATABASE\b|^USE\s/i', $sql ) ) { throw new RuntimeException( 'Database switching is not permitted in an external restore.' ); }
-				if ( preg_match( '/^DROP\s+(?:TABLE|VIEW)\s/i', $sql ) ) {
+				if ( $index < $state['start'] && 'set' !== $kind ) { continue; }
+				if ( 'drop table' === $kind || 'drop view' === $kind ) {
 					// Restart at this table's DROP after interruption, including a lost acknowledgement of an INSERT.
 					$state['start']  = $index;
 					$progress[ $id ] = $state;
 					$backupplus->jobdata_set( 'external_restore_progress', $progress );
 				}
 				if ( false === $target->script( $sql ) ) { throw new RuntimeException( 'External database restore failed at statement ' . $index . '. Check the target permissions and database compatibility, then resume.' ); }
+				// A SET can change how the server reads quotes in the statements that follow.
+				if ( 'set' === $kind ) { $guard->refresh( $target ); }
 				do_action( 'backupplus_external_restore_statement', $id, $index );
 				if ( 0 === $index % 100 ) { $backupplus->log( 'External database ' . $id . ': restored ' . $index . ' statements.' ); }
 			}

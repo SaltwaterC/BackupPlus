@@ -199,47 +199,6 @@ jQuery(function($) {
 		});
 	}
 	
-	// Functions in the debugging console
-	jQuery('#backupplus_httpget_go').on('click', function(e) {
-		e.preventDefault();
-		backupplus_httpget_go(0);
-	});
-
-	jQuery('#backupplus_httpget_gocurl').on('click', function(e) {
-		e.preventDefault();
-		backupplus_httpget_go(1);
-	});
-	
-	jQuery('#backupplus_callwpaction_go').on('click', function(e) {
-		e.preventDefault();
-		params = { wpaction: jQuery('#backupplus_callwpaction').val() };
-		backupplus_send_command('call_wordpress_action', params, function(response) {
-			if (response.e) {
-				alert(response.e);
-			} else if (response.s) {
-				// Silence
-			} else if (response.r) {
-				jQuery('#backupplus_callwpaction_results').html(response.r);
-			} else {
-				console.log(response);
-				alert(backupplus_i18n.jsonnotunderstood);
-			}
-		});
-	});
-	
-	function backupplus_httpget_go(curl) {
-		params = { uri: jQuery('#backupplus_httpget_uri').val() };
-		params.curl = curl;
-		backupplus_send_command('httpget', params, function(resp) {
-			if (resp.e) { alert(resp.e); }
-			if (resp.r) {
-				jQuery('#backupplus_httpget_results').html('<pre>'+resp.r+'</pre>');
-			} else {
-				console.log(resp);
-			}
-		}, { type: 'GET' });
-	}
-	
 	jQuery('#backupplus_activejobs_table').on('click', '.backupplus_jobinfo_delete', function(e) {
 		e.preventDefault();
 		var job_id = jQuery(this).data('jobid');

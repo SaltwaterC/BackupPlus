@@ -1,6 +1,6 @@
 <?php
 
-/** Advanced tools: HTTP checks, search and replace, and site information. */
+/** Advanced tools: search and replace, and site information. */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -25,78 +25,6 @@ trait BackupPlus_Commands_Tools {
 		$html = $backupplus_admin->settings_advanced_tools( true, array( 'options' => $options ) );
 
 		return $html;
-	}
-
-	/**
-	 * This gets the http_get function from admin to grab information on a url
-	 *
-	 * @param  string $uri URL to be used
-	 * @return array returns response from specific URL
-	 */
-	public function http_get( $uri ) {
-		if ( false === ( $backupplus_admin = $this->_load_ud_admin() ) ) {
-			return new WP_Error( 'no_backupplus' );
-		}
-
-		if ( empty( $uri ) ) {
-			return new WP_Error( 'error', '', 'no_uri' );
-		}
-
-		$response        = $backupplus_admin->http_get( $uri, false );
-		$response_decode = json_decode( $response );
-
-		if ( isset( $response_decode->e ) ) {
-			return new WP_Error( 'error', '', htmlspecialchars( $response_decode->e ) );
-		}
-
-		return array(
-			'status'   => $response_decode->code,
-			'response' => $response_decode->html_response,
-		);
-	}
-
-	/**
-	 * This gets the http_get function from admin to grab cURL information on a url
-	 *
-	 * @param  string $uri URL to be used
-	 * @return array
-	 */
-	public function http_get_curl( $uri ) {
-		if ( false === ( $backupplus_admin = $this->_load_ud_admin() ) ) {
-			return new WP_Error( 'no_backupplus' );
-		}
-
-		if ( empty( $uri ) ) {
-			return new WP_Error( 'error', '', 'no_uri' );
-		}
-
-		if ( ! function_exists( 'curl_exec' ) ) {
-			return new WP_Error( 'error', '', 'no_curl' );
-		}
-
-		$response_encode = $backupplus_admin->http_get( $uri, true );
-		$response_decode = json_decode( $response_encode );
-
-		$response = 'Curl Info: ' . $response_decode->verb
-					. 'Response: ' . $response_decode->response;
-
-		if ( false === $response_decode->response ) {
-			return new WP_Error(
-				'error',
-				'',
-				array(
-					'error'  => htmlspecialchars( $response_decode->e ),
-					'status' => $response_decode->status,
-					'log'    => htmlspecialchars( $response_decode->verb ),
-				)
-			);
-		}
-
-		return array(
-			'response' => htmlspecialchars( substr( $response, 0, 2048 ) ),
-			'status'   => $response_decode->status,
-			'log'      => htmlspecialchars( $response_decode->verb ),
-		);
 	}
 
 	public function search_replace( $query ) {

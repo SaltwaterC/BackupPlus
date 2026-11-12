@@ -51,6 +51,7 @@ class Restore_Inventory_Filesystem {
 	public function is_dir( $path ) {
 		return true; }
 }
+require_once BACKUPPLUS_DIR . '/includes/class-filesystem-functions.php';
 require BACKUPPLUS_DIR . '/includes/class-restore-inventory.php';
 require BACKUPPLUS_DIR . '/includes/restorer/trait-file-restore.php';
 require BACKUPPLUS_DIR . '/includes/restorer/trait-entity-restore.php';

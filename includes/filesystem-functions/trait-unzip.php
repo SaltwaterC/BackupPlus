@@ -135,10 +135,11 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 	 * @param string  $extract_matched_folders - the value is either 'extract_only' or 'extract_except'.
 	 *                                           * If the value is 'extract_only', then it'll extract only files in the '$folders_to_look' parameter.
 	 *                                           * If the value is 'extract_except', then it'll extract all files except the ones in the '$folders_to_look' parameter.
+	 * @param string  $archive_format          - 'tar' to read an uncompressed tar archive with BackupPlus_Tar; otherwise, Zstandard-compressed tar archives are detected and anything else is read as a zip.
 	 *
 	 * @return boolean|WP_Error True on success, WP_Error on failure.
 	 */
-	public static function unzip_file( $file, $to, $starting_index = 0, $folders_to_look = array(), $extract_matched_folders = 'extract_only' ) {
+	public static function unzip_file( $file, $to, $starting_index = 0, $folders_to_look = array(), $extract_matched_folders = 'extract_only', $archive_format = '' ) {
 		global $wp_filesystem;
 
 		if ( ! $wp_filesystem || ! is_object( $wp_filesystem ) ) {
@@ -185,7 +186,7 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 			$added_unzip_action = true;
 		}
 
-		if ( BackupPlus_Archive_Compression::is_zstd( $file ) ) {
+		if ( 'tar' === $archive_format || BackupPlus_Archive_Compression::is_zstd( $file ) ) {
 			return self::unzip_file_go( $file, $to, $needed_dirs, 'tar', $starting_index, $folders_to_look, $extract_matched_folders );
 		}
 		if ( class_exists( 'ZipArchive', false ) && apply_filters( 'unzip_file_use_ziparchive', true ) ) {
@@ -394,12 +395,12 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 		* disk_free_space() could return false. Assume that any falsey value is an error.
 		* A disk that has zero free bytes has bigger problems.
 		* Require we have enough space to unzip the file and copy its contents, with a 10% buffer.
+		* WordPress core checks this only under cron. A restore extracts the same archive from an AJAX request, WP-CLI or a cron
+		* resumption, so it is checked whichever runs it (BPS-20).
 		*/
-		if ( self::wp_doing_cron() ) {
-			$available_space = function_exists( 'disk_free_space' ) ? @disk_free_space( WP_CONTENT_DIR ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Call is speculative
-			if ( $available_space && ( $uncompressed_size * 2.1 ) > $available_space ) {
-				return new WP_Error( 'disk_full_unzip_file', __( 'Could not copy files.' ) . ' ' . __( 'You may have run out of disk space.' ), compact( 'uncompressed_size', 'available_space' ) );// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
-			}
+		$available_space = function_exists( 'disk_free_space' ) ? @disk_free_space( WP_CONTENT_DIR ) : false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Call is speculative
+		if ( $available_space && ( $uncompressed_size * 2.1 ) > $available_space ) {
+			return new WP_Error( 'disk_full_unzip_file', __( 'Could not copy files.' ) . ' ' . __( 'You may have run out of disk space.' ), compact( 'uncompressed_size', 'available_space' ) );// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- The string exists within the WordPress core.
 		}
 
 		$needed_dirs = array_unique( $needed_dirs );

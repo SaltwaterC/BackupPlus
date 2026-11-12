@@ -163,7 +163,7 @@ trait BackupPlus_Backup_History_Rebuild {
 						foreach ( $files as $entry ) {
 							$filename = isset( $entry['name'] ) ? $entry['name'] : null;
 							// Remote names become local paths later; anything but a plain archive basename is dropped (BPS-02).
-							if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( $filename ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $filename, $matches ) ) {
+							if ( ! BackupPlus_Manipulation_Functions::is_backup_basename( $filename ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $filename, $matches ) ) {
 								continue;
 							}
 
@@ -439,7 +439,7 @@ trait BackupPlus_Backup_History_Rebuild {
 		// If so, then we compare $remote_files with $backup_nonces_by_filename / $backup_times_by_nonce, and adjust $backup_history
 
 		foreach ( $remote_files as $file => $services ) {
-			if ( ! BackupPlus_Manipulation_Functions::is_safe_basename( (string) $file ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $file, $matches ) ) {
+			if ( ! BackupPlus_Manipulation_Functions::is_backup_basename( (string) $file ) || ! preg_match( BackupPlus_Manipulation_Functions::BACKUP_NAME_PATTERN, $file, $matches ) ) {
 				continue;
 			}
 

@@ -238,6 +238,42 @@ incremental_expect( false === BackupPlus_Incremental_Backups::find_base( array( 
 $test_history[ $base_time ]['incremental']['complete'] = true;
 
 incremental_expect( false === BackupPlus_Incremental_Backups::find_base( array( 'plugins' ), 'different configuration' ), 'A changed source, destination, exclusion or encryption configuration requires a full backup' );
+
+// BPS-10: the fingerprint kept in the history covers the stored credential envelopes, never the plaintext.
+$stored_ftp = null;
+$ftp_filter = function () use ( &$stored_ftp ) {
+	return $stored_ftp;
+};
+add_filter( 'pre_option_backupplus_ftp', $ftp_filter, 100 );
+$save_ftp    = function ( $pass ) use ( &$stored_ftp ) {
+	$stored_ftp = BackupPlus_Credential_Storage::saving(
+		array(
+			'version'  => 1,
+			'settings' => array(
+				's-bps10' => array(
+					'host' => 'ftp.example.com',
+					'user' => 'backup',
+					'pass' => $pass,
+					'path' => 'site',
+				),
+			),
+		),
+		'backupplus_ftp'
+	);
+};
+$fingerprint = function ( $credentials = null ) {
+	return BackupPlus_Incremental_Backups::configuration( array( 'plugins' ), array( 'ftp' ), array( 'ftp' => array( 's-bps10' ) ), array( 'backupplus_ftp' => null === $credentials ? BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' ) : $credentials ) );
+};
+$save_ftp( 'guessable-password' );
+incremental_expect( 0 === strpos( $stored_ftp['settings']['s-bps10']['pass'], 'bpcred:' ), 'The test FTP password must be saved encrypted' );
+incremental_expect( 'guessable-password' === BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' )['settings']['s-bps10']['pass'], 'The test FTP password must decrypt' );
+$protected = $fingerprint();
+incremental_expect( $protected === $fingerprint( array( 'decrypted' => 'anything else' ) ), 'The fingerprint must not depend on decrypted credentials' );
+$save_ftp( 'guessable-password' );
+incremental_expect( $protected === $fingerprint(), 'Saving unchanged credentials must keep the chain' );
+$save_ftp( 'replacement-password' );
+incremental_expect( $protected !== $fingerprint(), 'Changing a credential must start a new chain' );
+remove_filter( 'pre_option_backupplus_ftp', $ftp_filter, 100 );
 $base_archive        = $directory . '/archives/' . $files[0];
 $original_archive    = file_get_contents( $base_archive );
 $damaged_archive     = $original_archive;

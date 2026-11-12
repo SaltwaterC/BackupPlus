@@ -47,8 +47,13 @@ trait BackupPlus_Core_Environment {
 			return false;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
 		$perl = ( @is_executable( '/usr/local/cpanel/3rdparty/bin/perl' ) ) ? '/usr/local/cpanel/3rdparty/bin/perl' : '/usr/local/bin/perl';// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+		// The same rule as every other program BackupPlus runs (BPS-20)
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
+		if ( ! BackupPlus_Executables::trusted_binary( $perl ) ) {
+			return false;
+		}
 
-		$exec = "BACKUPPLUSKEY=backupplus $perl " . BACKUPPLUS_DIR . '/includes/get-cpanel-quota-usage.pl';
+		$exec = 'BACKUPPLUSKEY=backupplus ' . BackupPlus_Executables::shell_program( $perl ) . ' ' . escapeshellarg( BACKUPPLUS_DIR . '/includes/get-cpanel-quota-usage.pl' );
 
 		// A case was seen of a web hosting company that disabled pclose() but not popen()
 		$handle = ( function_exists( 'popen' ) && function_exists( 'pclose' ) ) ? @popen( $exec, 'r' ) : false; // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.

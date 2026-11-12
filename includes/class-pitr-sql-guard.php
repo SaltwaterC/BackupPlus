@@ -484,7 +484,7 @@ class BackupPlus_PITR_SQL_Guard {
 
 	private function set_statement( $t ) {
 		$first = $this->keyword( $t, 1 );
-		if ( in_array( $first, array( 'PASSWORD', 'ROLE', 'DEFAULT', 'STATEMENT', 'RESOURCE' ), true ) ) { $this->refuse( 'a SET ' . $first . ' statement' ); }
+		if ( in_array( $first, array( 'PASSWORD', 'ROLE', 'DEFAULT', 'STATEMENT', 'RESOURCE' ), true ) ) { $this->refuse( $this->describe( $t ) ); }
 		if ( in_array( $first, array( 'NAMES', 'CHARSET', 'CHARACTER' ), true ) ) {
 			$index = 'CHARACTER' === $first ? 3 : 2;
 			if ( 'CHARACTER' === $first && 'SET' !== $this->keyword( $t, 2 ) ) { $this->refuse( $this->describe( $t ) ); }
@@ -522,6 +522,7 @@ class BackupPlus_PITR_SQL_Guard {
 			if ( 'v' === $target[0] ) {
 				$rhs = array_slice( $item, $i + 2 );
 				if ( ! $this->punct( $item, $i + 1, '=' ) && ! $this->punct( $item, $i + 1, ':=' ) ) { $this->refuse( $this->describe( $t ) ); }
+				$this->plain( $rhs );
 				$name = $this->variable_name( $target );
 				if ( null !== $name && 1 === count( $rhs ) && 'g' === $rhs[0][0] ) {
 					$this->pinned[ $name ] = $this->system_name( substr( $rhs[0][1], 2 ) );
@@ -545,13 +546,62 @@ class BackupPlus_PITR_SQL_Guard {
 			if ( 0 === strpos( $system, 'global.' ) ) { $this->refuse( 'a change to global server settings' ); }
 			if ( ! $this->punct( $item, $i + 1, '=' ) && ! $this->punct( $item, $i + 1, ':=' ) ) { $this->refuse( $this->describe( $t ) ); }
 			$rhs = array_slice( $item, $i + 2 );
+			$this->plain( $rhs );
 			if ( 'sql_mode' === $system ) {
 				$this->sql_mode( $rhs );
 			} elseif ( 'character_set_client' === $system ) {
 				$this->charset( $rhs, $system );
 			} else {
+				$this->session_variable( $system, $rhs );
 				$this->taint( $rhs );
 			}
+		}
+	}
+
+	/**
+	 * Dumps assign only a literal, a saved variable or a system variable. An expression could call a function that the
+	 * dump defined, which would then run as the restore account (BPS-03).
+	 */
+	private function plain( $rhs ) {
+		if ( 2 === count( $rhs ) && $this->punct( $rhs, 0, '-' ) && 'n' === $rhs[1][0] ) { return; }
+		if ( 1 !== count( $rhs ) || ! in_array( $rhs[0][0], array( 's', 'n', 'w', 'g', 'v' ), true ) ) { $this->refuse( 'an expression in a variable assignment' ); }
+	}
+
+	/**
+	 * Session settings that would hide the import from the binary log or replicas, impersonate a replication thread, or let a
+	 * table without an ENGINE clause use an engine that reads other data.
+	 */
+	private function session_variable( $system, $rhs ) {
+		if ( 'sql_log_bin' === $system ) {
+			$value = $rhs[0];
+			if ( ( 'n' === $value[0] && '0' === $value[1] ) || ( 'w' === $value[0] && in_array( strtoupper( $value[1] ), array( 'OFF', 'FALSE' ), true ) ) || ( 'v' === $value[0] && $this->usable( $value, 'sql_log_bin' ) ) ) { return; }
+			$this->refuse( 'a change to binary logging' );
+		}
+		if ( in_array( $system, array( 'default_storage_engine', 'default_tmp_storage_engine', 'storage_engine' ), true ) ) {
+			if ( in_array( $rhs[0][0], array( 'w', 's' ), true ) && in_array( strtoupper( $rhs[0][1] ), self::ENGINES, true ) ) { return; }
+			$this->refuse( 'an unsupported storage engine' );
+		}
+		if ( in_array( $system, array( 'gtid_next', 'gtid_seq_no', 'gtid_domain_id', 'server_id', 'pseudo_thread_id', 'pseudo_slave_mode', 'pseudo_replica_mode', 'sql_log_off', 'skip_replication', 'wsrep_on', 'wsrep_osu_method', 'debug', 'debug_dbug', 'debug_sync' ), true ) ) {
+			$this->refuse( 'a change to replication or server internals' );
+		}
+	}
+
+	/**
+	 * The body of a view, trigger, routine or event: no account, grant or dynamic SQL statements, and no names in the system
+	 * schemas or, written in full, in another database. Bodies run as the site's account, so this is a second layer.
+	 */
+	private function body( $t, $from ) {
+		$count = count( $t );
+		for ( $k = $from; $k < $count; $k++ ) {
+			$word = $this->keyword( $t, $k );
+			if ( in_array( $word, array( 'GRANT', 'REVOKE', 'PREPARE', 'EXECUTE', 'DEALLOCATE', 'INSTALL', 'UNINSTALL', 'SHUTDOWN', 'KILL', 'FLUSH', 'PURGE', 'RESET', 'OUTFILE', 'DUMPFILE', 'LOAD_FILE', 'SONAME' ), true ) ) { $this->refuse( 'an object body with administrative or dynamic statements' ); }
+			if ( in_array( $word, array( 'CREATE', 'ALTER', 'DROP', 'RENAME' ), true ) && in_array( $this->keyword( $t, $k + 1 ), array( 'USER', 'ROLE', 'SERVER', 'DATABASE', 'SCHEMA' ), true ) ) { $this->refuse( 'an object body that changes accounts or databases' ); }
+			if ( 'SET' === $word && ( in_array( $this->keyword( $t, $k + 1 ), array( 'PASSWORD', 'ROLE', 'DEFAULT', 'GLOBAL', 'PERSIST', 'PERSIST_ONLY' ), true ) || ( isset( $t[ $k + 1 ] ) && 'g' === $t[ $k + 1 ][0] && 0 === strpos( $this->system_name( substr( $t[ $k + 1 ][1], 2 ) ), 'global.' ) ) ) ) { $this->refuse( 'an object body that changes global settings' ); }
+			if ( 'USE' === $word ) { $this->refuse( 'an object body that switches database' ); }
+			if ( ! $this->punct( $t, $k, '.' ) || ! $this->name_token( $t, $k - 1 ) || ! $this->name_token( $t, $k + 1 ) ) { continue; }
+			$first = strtolower( $t[ $k - 1 ][1] );
+			$three = $this->punct( $t, $k + 2, '.' ) && $this->name_token( $t, $k + 3 ) && ! ( $k - 2 >= $from && $this->punct( $t, $k - 2, '.' ) );
+			if ( in_array( $first, array( 'mysql', 'sys', 'performance_schema' ), true ) || ( $three && $this->database !== $t[ $k - 1 ][1] ) ) { $this->refuse( 'a reference to another database' ); }
 		}
 	}
 
@@ -653,6 +703,7 @@ class BackupPlus_PITR_SQL_Guard {
 			for ( $k = $j; $k < count( $t ) && 'ON' !== $this->keyword( $t, $k ); $k++ ) {}
 			$this->object_name( $t, $k + 1 );
 		}
+		$this->body( $t, $j );
 		// Every program runs as the site's account: a missing DEFINER clause would make it the restore account.
 		$remove[] = array( $t[ $keyword ][2], $t[ $keyword ][2], $this->definer . ( 'VIEW' === $kind ? 'SQL SECURITY INVOKER ' : '' ) );
 		$result   = array(

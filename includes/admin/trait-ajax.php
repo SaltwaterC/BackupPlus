@@ -106,7 +106,6 @@ trait BackupPlus_Admin_Ajax {
 		}
 
 		// Below are all the commands not ported over into class-commands.php or class-wpadmin-commands.php
-		$request_subsubaction = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'subsubaction' );
 		if ( 'activejobs_list' == $subaction ) {
 			try {
 				// N.B. Also called from autobackup.php
@@ -131,57 +130,6 @@ trait BackupPlus_Admin_Ajax {
 					)
 				);
 			}
-		} elseif ( 'httpget' == $subaction ) {
-			try {
-				// httpget
-				$curl        = empty( $_REQUEST['curl'] ) ? false : true;
-				$request_uri = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'uri' );
-				echo $this->http_get( BackupPlus_Manipulation_Functions::wp_unslash( $request_uri ), $curl ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- It's not HTML content; the output is in JSON format which can't be escaped
-			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during http get. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
-				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				echo json_encode(
-					array(
-						'fatal_error'         => true,
-						'fatal_error_message' => $log_message,
-					)
-				);
-			} catch ( Exception $e ) {
-				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during http get. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
-				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				echo json_encode(
-					array(
-						'fatal_error'         => true,
-						'fatal_error_message' => $log_message,
-					)
-				);
-			}
-		} elseif ( 'doaction' == $subaction && ! empty( $request_subsubaction ) && 'backupplus_' == substr( $request_subsubaction, 0, 8 ) ) {
-			$subsubaction = $request_subsubaction;
-			try {
-					// These generally echo and die - they will need further work to port to one of the command classes.
-				do_action( BackupPlus_Manipulation_Functions::wp_unslash( $subsubaction ), $_REQUEST );
-			} catch ( Exception $e ) {
-				$log_message = 'PHP Fatal Exception error (' . get_class( $e ) . ') has occurred during doaction subaction with ' . $subsubaction . ' subsubaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
-				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				echo json_encode(
-					array(
-						'fatal_error'         => true,
-						'fatal_error_message' => $log_message,
-					)
-				);
-				die;
-			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during doaction subaction with ' . $subsubaction . ' subsubaction. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
-				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				echo json_encode(
-					array(
-						'fatal_error'         => true,
-						'fatal_error_message' => $log_message,
-					)
-				);
-				die;
-			}
 		}
 
 		die;
@@ -197,6 +145,13 @@ trait BackupPlus_Admin_Ajax {
 	public function do_credentials_test( $test_settings, $return_instead_of_echo = false ) {
 
 		$method = ( ! empty( $test_settings['method'] ) && preg_match( '/^[a-z0-9]+$/', $test_settings['method'] ) ) ? $test_settings['method'] : '';
+
+		// The settings page shows saved secrets as placeholders: test with the saved values of the same instance (BPS-20).
+		// Without a saved instance, a placeholder is tested as an empty value.
+		if ( '' !== $method && is_array( $test_settings ) ) {
+			$instance_id   = isset( $test_settings['instance_id'] ) && is_string( $test_settings['instance_id'] ) ? $test_settings['instance_id'] : '';
+			$test_settings = BackupPlus_Credential_Storage::unmask_at( $test_settings, 'backupplus_' . $method, array( 'settings', $instance_id ) );
+		}
 
 		$this->logged = array();
 		// TODO: Add action for WP HTTP SSL stuff
@@ -452,72 +407,5 @@ trait BackupPlus_Admin_Ajax {
 				)
 			);
 		}
-	}
-
-	/**
-	 * This will call any wp_action
-	 *
-	 * @param  Array|Null       $data                      The array of data with the values for wpaction
-	 * @param  Callable|Boolean $close_connection_callable A callable to call to close the browser connection, or true for a default suitable for internal use, or false for none
-	 * @return Array - results
-	 */
-	public function call_wp_action( $data = null, $close_connection_callable = false ) {
-		global $backupplus;
-
-		ob_start();
-
-		$res = '<em>Request received: </em>';
-
-		if ( preg_match( '/^([^:]+)+:(.*)$/', $data['wpaction'], $matches ) ) {
-			$action = $matches[1];
-			if ( null === ( $args = json_decode( $matches[2], true ) ) ) {
-				$res   .= 'The parameters (should be JSON) could not be decoded';
-				$action = false;
-			} else {
-				if ( is_string( $args ) ) {
-					$args = array( $args );
-				}
-				$res .= 'Will despatch action: ' . htmlspecialchars( $action ) . ', parameters: ' . htmlspecialchars( implode( ',', $args ) );
-			}
-		} else {
-			$action = $data['wpaction'];
-			$res   .= 'Will despatch action: ' . htmlspecialchars( $action ) . ', no parameters';
-		}
-
-		ob_get_clean();
-
-		// Need to add this as the close browser should only work for UDP
-		if ( $close_connection_callable ) {
-			if ( is_callable( $close_connection_callable ) ) {
-				call_user_func( $close_connection_callable, array( 'r' => $res ) );
-			} else {
-				$backupplus->close_browser_connection( json_encode( array( 'r' => $res ) ) );
-			}
-		}
-
-		if ( ! empty( $action ) ) {
-			if ( ! empty( $args ) ) {
-				ob_start();
-				$returned = do_action_ref_array( $action, $args );
-				$output   = ob_get_clean();
-				$res     .= ' - do_action_ref_array Trigger ';
-			} else {
-				ob_start();
-				do_action( $action );
-				$output = ob_get_contents();
-				ob_end_clean();
-				$res .= ' - do_action Trigger ';
-			}
-		}
-		$response             = array();
-		$response['response'] = $res;
-		$response['log']      = $output;
-
-		// Check if response is empty
-		if ( ! empty( $returned ) ) {
-			$response['status'] = $returned;
-		}
-
-		return $response;
 	}
 }

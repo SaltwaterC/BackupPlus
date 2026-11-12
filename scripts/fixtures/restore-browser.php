@@ -4,15 +4,16 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) { die( 'CLI only.' ); }
 $token     = $args[0] ?? '';
 $operation = $args[1] ?? '';
 if ( ! preg_match( '/\A[a-f0-9]{24}\z/D', $token ) ) { throw new RuntimeException( 'Invalid token.' ); }
-$option    = 'backupplus_restore_browser_' . $token;
-$directory = wp_upload_dir()['basedir'] . '/' . $option;
+$option = 'backupplus_restore_browser_' . $token;
+// A folder directly in wp-content: the backup directory may not be inside uploads (BPS-07), and the web server must reach it.
+$directory = WP_CONTENT_DIR . '/' . $option;
 $mu_file   = WPMU_PLUGIN_DIR . '/' . $option . '.php';
 $timestamp = 1792612800;
 if ( 'cleanup' === $operation ) {
 	foreach ( (array) get_option( $option . '_tickets', array() ) as $ticket ) { delete_transient( 'backupplus_age_restore_' . $ticket ); }
 	foreach ( array( '', '_tickets' ) as $suffix ) { delete_option( $option . $suffix ); }
 	if ( is_file( $mu_file ) ) { unlink( $mu_file ); }
-	foreach ( glob( $directory . '/*' ) ?: array() as $path ) { unlink( $path ); }
+	foreach ( is_dir( $directory ) ? array_diff( scandir( $directory ), array( '.', '..' ) ) : array() as $entry ) { unlink( $directory . '/' . $entry ); }
 	if ( is_dir( $directory ) ) { rmdir( $directory ); }
 	return;
 }

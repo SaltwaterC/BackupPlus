@@ -330,20 +330,34 @@ trait BackupPlus_Core_Entities {
 		if ( $allow_cache && ! empty( $this->backup_dir ) ) {
 			return $this->backup_dir;
 		}
-		$backupplus_dir = BackupPlus_Options::get_backupplus_option( 'backupplus_dir' );
-		if ( ! is_string( $backupplus_dir ) ) {
-			$backupplus_dir = '';
-		}
-		$backupplus_dir = untrailingslashit( $backupplus_dir );
+		require_once BACKUPPLUS_DIR . '/includes/class-backup-directory.php';
+		$constant_dir = BackupPlus_Backup_Directory::constant_path();
+		if ( '' !== $constant_dir ) {
+			// wp-config.php is trusted to choose a location, but not one WordPress loads code from.
+			$backupplus_dir = BackupPlus_Backup_Directory::unsafe( $constant_dir ) ? '' : $constant_dir;
+		} else {
+			$backupplus_dir = BackupPlus_Options::get_backupplus_option( 'backupplus_dir' );
+			if ( ! is_string( $backupplus_dir ) ) {
+				$backupplus_dir = '';
+			}
+			$backupplus_dir = untrailingslashit( $backupplus_dir );
 
-		// Normalize historical settings that included the wp-content prefix before saving them.
-		if ( preg_match( '/^wp-content\/(.*)$/', $backupplus_dir, $matches ) && ABSPATH . 'wp-content' === WP_CONTENT_DIR ) {
-			BackupPlus_Options::update_backupplus_option( 'backupplus_dir', $matches[1] );
-			$backupplus_dir = WP_CONTENT_DIR . '/' . $matches[1];
+			// Normalize historical settings that included the wp-content prefix before saving them.
+			if ( preg_match( '/^wp-content\/(.*)$/', $backupplus_dir, $matches ) && ABSPATH . 'wp-content' === WP_CONTENT_DIR ) {
+				BackupPlus_Options::update_backupplus_option( 'backupplus_dir', $matches[1] );
+				$backupplus_dir = WP_CONTENT_DIR . '/' . $matches[1];
+			}
+
+			$backupplus_dir = BackupPlus_Backup_Directory::resolve( $backupplus_dir );
+
+			// A setting saved before locations were checked may name a WordPress, plugin, theme or uploads folder; use the default.
+			if ( '' !== $backupplus_dir && BackupPlus_Backup_Directory::unsafe( $backupplus_dir ) ) {
+				$backupplus_dir = '';
+			}
 		}
 
 		// Preserve historical installations; new default folders get a persistent random name.
-		if ( ! $backupplus_dir ) {
+		if ( '' === $backupplus_dir ) {
 			require_once BACKUPPLUS_DIR . '/includes/class-storage-directory.php';
 			foreach ( BackupPlus_Storage_Directory::existing( WP_CONTENT_DIR, 'backupplus' ) as $candidate ) {
 				if ( is_dir( $candidate ) ) {
@@ -351,34 +365,21 @@ trait BackupPlus_Core_Entities {
 					break;
 				}
 			}
-			if ( ! $backupplus_dir ) {
+			if ( '' === $backupplus_dir ) {
 				$backupplus_dir = BackupPlus_Storage_Directory::name( 'backupplus' );
 			}
-			BackupPlus_Options::update_backupplus_option( 'backupplus_dir', $backupplus_dir );
+			if ( '' === $constant_dir ) {
+				BackupPlus_Options::update_backupplus_option( 'backupplus_dir', $backupplus_dir );
+			}
 			$backupplus_dir = WP_CONTENT_DIR . '/' . $backupplus_dir;
 		}
 
-		// Do a test for a relative path
-		if ( '/' != substr( $backupplus_dir, 0, 1 ) && '\\' != substr( $backupplus_dir, 0, 1 ) && ! preg_match( '/^[a-zA-Z]:/', $backupplus_dir ) ) {
-			// Legacy - file paths stored related to ABSPATH
-			if ( is_dir( ABSPATH . $backupplus_dir ) && is_file( ABSPATH . $backupplus_dir . '/index.html' ) && is_file( ABSPATH . $backupplus_dir . '/.htaccess' ) && ! is_file( ABSPATH . $backupplus_dir . '/index.php' ) && false !== strpos( file_get_contents( ABSPATH . $backupplus_dir . '/.htaccess', false, null, 0, 20 ), 'deny from all' ) ) {
-				$backupplus_dir = ABSPATH . $backupplus_dir;
-			} else {
-				// File paths stored relative to WP_CONTENT_DIR
-				$backupplus_dir = trailingslashit( WP_CONTENT_DIR ) . $backupplus_dir;
-			}
-		}
-
-		// Check for the existence of the dir and prevent enumeration
-		// index.php is for a sanity check - make sure that we're not somewhere unexpected
-		if ( ( ! is_dir( $backupplus_dir ) || ! is_file( $backupplus_dir . '/index.html' ) || ! is_file( $backupplus_dir . '/.htaccess' ) ) && ! is_file( $backupplus_dir . '/index.php' ) || ! is_file( $backupplus_dir . '/web.config' ) ) {
+		// Prevent enumeration and direct downloads. Existing files are never replaced.
+		if ( ! is_dir( $backupplus_dir ) ) {
 			@mkdir( $backupplus_dir, 0775, true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-			@file_put_contents( $backupplus_dir . '/index.html', '<html><body>WordPress backups by BackupPlus</body></html>' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- Silenced to suppress errors that may arise because of the function. False positive: the 'file_put_contents()' function doesn't put the file in the plugin directory, it puts it in the BackupPlus backup directory instead.
-			if ( ! is_file( $backupplus_dir . '/.htaccess' ) ) {
-				@file_put_contents( $backupplus_dir . '/.htaccess', 'deny from all' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- Silenced to suppress errors that may arise because of the function. False positive: the 'file_put_contents()' function doesn't put the file in the plugin directory, it puts it in the BackupPlus backup directory instead.
-			}           if ( ! is_file( $backupplus_dir . '/web.config' ) ) {
-				@file_put_contents( $backupplus_dir . '/web.config', "<configuration>\n<system.webServer>\n<authorization>\n<deny users=\"*\" />\n</authorization>\n</system.webServer>\n</configuration>\n" );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- Silenced to suppress errors that may arise because of the function. False positive: the 'file_put_contents()' function doesn't put the file in the plugin directory, it puts it in the BackupPlus backup directory instead.
-			}
+		}
+		if ( is_dir( $backupplus_dir ) ) {
+			BackupPlus_Backup_Directory::protect( $backupplus_dir );
 		}
 
 		$this->backup_dir = $backupplus_dir;

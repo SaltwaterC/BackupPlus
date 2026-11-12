@@ -196,7 +196,11 @@ class BackupPlus_Multisite_Restore {
 		if ( empty( $backup_set['db'] ) || empty( $backup_set['timestamp'] ) ) {
 			return null;
 		}
-		$file = $backupplus->backups_dir_location() . '/' . ( is_array( $backup_set['db'] ) ? reset( $backup_set['db'] ) : $backup_set['db'] );
+		$name = is_array( $backup_set['db'] ) ? reset( $backup_set['db'] ) : $backup_set['db'];
+		if ( ! is_string( $name ) || ! BackupPlus_Manipulation_Functions::is_backup_basename( $name ) ) {
+			return null;
+		}
+		$file = $backupplus->backups_dir_location() . '/' . $name;
 		if ( ! is_readable( $file ) || BackupPlus_Encryption::is_file_encrypted( $file ) ) {
 			return null;
 		}

@@ -163,14 +163,23 @@ foreach ( $expected as $id => $name ) {
 	backupplus_provider_expect( $object === BackupPlus_Storage_Methods_Interface::get_storage_object( $id ), 'Shared objects should be cached' );
 	backupplus_provider_expect( $object !== BackupPlus_Storage_Provider_Factory::create( $id, false ), 'Fresh objects should be independent' );
 	$authenticated = array(
-		'dropbox'     => array( 'tk_access_token' => 'fixture' ),
-		'googledrive' => array( 'user_id' => 'fixture' ),
+		'dropbox'     => array(
+			'tk_access_token' => 'fixture',
+			'appkey'          => 'fixture',
+		),
+		'googledrive' => array(
+			'clientid' => 'fixture',
+			'secret'   => 'fixture',
+			'token'    => 'fixture',
+		),
 		'googlecloud' => array( 'user_id' => 'fixture' ),
 		'onedrive'    => array( 'refresh_token' => 'fixture' ),
 		'pcloud'      => array( 'pclauth' => 'fixture' ),
 	);
 	if ( isset( $authenticated[ $id ] ) ) {
-		backupplus_provider_expect( $object->authentication_required( array() ), "$id must request authentication for an empty connection" );
+		// Google Drive signs in only with the site's own OAuth client (BPS-01), so a connection without a token is one with a client
+		$unauthenticated = 'googledrive' === $id ? array_diff_key( $authenticated[ $id ], array( 'token' => true ) ) : array();
+		backupplus_provider_expect( $object->authentication_required( $unauthenticated ), "$id must request authentication for an empty connection" );
 		backupplus_provider_expect( ! $object->authentication_required( $authenticated[ $id ] ), "$id must recognize an authenticated connection" );
 	}
 	if ( 'dreamobjects' === $id ) {

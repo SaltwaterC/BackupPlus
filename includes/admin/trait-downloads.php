@@ -170,13 +170,17 @@ trait BackupPlus_Admin_Downloads {
 				);
 			}
 
-			if ( false !== strpos( $file_path, '..' ) ) {
-				BackupPlus_Manipulation_Functions::error_log( "BackupPlus_Admin::do_backupplus_download_backup : invalid file_path: $file_path" );
-				return array( 'result' => __( 'Error: invalid path', 'backupplus' ) );
-			}
-
+			// A file path names only a file the zip browser extracted for this user, which the download then removes (BPS-20).
+			// It used to accept any file in the backup directory, which stage 2 and the delete stage would then remove.
+			$download_name = '';
 			if ( ! empty( $file_path ) ) {
-				$file = $file_path;
+				$extracted = preg_match( '/\Aextract-([a-f0-9]{32})\.tmp\z/D', $file_path, $extract_match ) ? get_transient( 'backupplus_extract_' . $extract_match[1] ) : false;
+				if ( ! is_array( $extracted ) || ! isset( $extracted['name'], $extracted['user'] ) || (int) $extracted['user'] !== get_current_user_id() || ! BackupPlus_Manipulation_Functions::is_safe_basename( $extracted['name'] ) ) {
+					BackupPlus_Manipulation_Functions::error_log( 'BackupPlus_Admin::do_backupplus_download_backup : invalid file_path' );
+					return array( 'result' => __( 'Error: invalid path', 'backupplus' ) );
+				}
+				$file          = $file_path;
+				$download_name = $extracted['name'];
 			}
 
 			// Where it should end up being downloaded to
@@ -188,11 +192,26 @@ trait BackupPlus_Admin_Downloads {
 			}
 
 			if ( 2 == $stage ) {
-				$backupplus->spool_file( $fullpath );
-				// We only want to remove if it was a temp file from the zip browser
-				if ( ! empty( $file_path ) ) {
-					@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-				}               // Do not return - we do not want the caller to add any output
+				if ( '' === $download_name ) {
+					$backupplus->spool_file( $fullpath );
+					die;
+				}
+				// A file from the zip browser is sent under its name in the archive and removed once sent whole, even if the browser
+				// disconnects. A range request (a resumed or segmented download) leaves it for the rest of the download; the
+				// temporary file cleanup removes it if that never comes.
+				$whole = empty( $_SERVER['HTTP_RANGE'] );
+				if ( $whole ) {
+					ignore_user_abort( true );
+					delete_transient( 'backupplus_extract_' . $extract_match[1] );
+				}
+				try {
+					$backupplus->spool_file( $fullpath, '', $download_name );
+				} finally {
+					if ( $whole ) {
+						@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					}
+				}
+				// Do not return - we do not want the caller to add any output
 				die;
 			}
 

@@ -16,6 +16,8 @@ require_once __DIR__ . '/class-pitr-manifest.php';
 require_once __DIR__ . '/class-pitr-binlog.php';
 require_once __DIR__ . '/class-pitr-database.php';
 require_once __DIR__ . '/class-pitr-storage.php';
+require_once __DIR__ . '/class-web-guard.php';
+require_once __DIR__ . '/class-executables.php';
 
 require_once __DIR__ . '/pitr/trait-scheduling.php';
 require_once __DIR__ . '/pitr/trait-state.php';
@@ -53,7 +55,9 @@ class BackupPlus_PITR {
 		$this->config = null === $config ? self::config() : $config;
 		$this->root   = BackupPlus_PITR_Process::directory( $backupplus->backups_dir_location() . '/pitr' );
 		if ( ! is_file( $this->root . '/.htaccess' ) ) {
-			BackupPlus_PITR_Process::private_file( $this->root . '/.htaccess', "Require all denied\nDeny from all\n" );
+			BackupPlus_PITR_Process::private_file( $this->root . '/.htaccess', BackupPlus_Web_Guard::HTACCESS );
+		} else {
+			BackupPlus_Web_Guard::upgrade_htaccess( $this->root . '/.htaccess' );
 		}
 		if ( ! is_file( $this->root . '/index.php' ) ) {
 			BackupPlus_PITR_Process::private_file( $this->root . '/index.php', "<?php exit;\n" );

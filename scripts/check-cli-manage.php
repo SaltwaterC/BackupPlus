@@ -55,6 +55,7 @@ $options = array(
 	'backupplus_extradbs'                  => array(),
 	'backupplus_database_next_id'          => 1,
 	'backupplus_s3generic'                 => array(),
+	'backupplus_ftp'                       => array(),
 	'backupplus_ntfy'                      => array(),
 	'backupplus_storage_limits'            => array(),
 	'backupplus_storage_limits_status'     => array(),
@@ -195,6 +196,24 @@ $run( 'backupplus remote set s3generic ' . $remote . ' --enabled=2', 1 );
 $run( 'backupplus remote remove s3generic clitest --yes' );
 cli_wp_expect( array() === $json( 'backupplus remote list --format=json' ), 'A removed destination is no longer listed' );
 $run( 'backupplus remote remove s3generic clitest --yes', 1 );
+
+// BPS-20: a destination created from the command line starts from the provider's defaults, so FTP uses explicit TLS.
+$ftp_remote = $directory . '/ftp.json';
+file_put_contents(
+	$ftp_remote,
+	json_encode(
+		array(
+			'host' => '127.0.0.1:1',
+			'user' => 'cli',
+			'pass' => 'cli-test-ftp-password',
+		)
+	)
+);
+$run( 'backupplus remote set ftp ' . $ftp_remote . ' --instance=clitls' );
+$ftp_saved = $option( 'backupplus_ftp' );
+cli_wp_expect( 'tls' === $ftp_saved['settings']['clitls']['encryption'], 'A new FTP destination must default to explicit TLS' );
+cli_wp_expect( false === strpos( serialize( $ftp_saved ), 'cli-test-ftp-password' ), 'The FTP password is encrypted at rest' );
+$run( 'backupplus remote remove ftp clitls --yes' );
 
 // External databases, with the site's own account.
 $database = $directory . '/database.json';

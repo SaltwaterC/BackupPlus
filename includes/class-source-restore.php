@@ -20,6 +20,27 @@ class BackupPlus_Source_Restore {
 		return $path;
 	}
 
+	/** The source path and kind recorded in history for a custom source, or null when the history has none. */
+	public static function recorded( $id, $backup ) {
+		$source = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : null;
+		if ( ! is_array( $source ) || ! isset( $source['path'], $source['kind'] ) || ! is_string( $source['path'] ) || '' === $source['path'] || ! in_array( $source['kind'], array( 'file', 'directory' ), true ) ) { return null; }
+		return array(
+			'path' => $source['path'],
+			'kind' => $source['kind'],
+		);
+	}
+
+	/** The destination the administrator entered for a custom source, or null when none was entered. */
+	public static function override( $id, $options ) {
+		if ( ! isset( $options['backupplus_source_destinations'][ $id ] ) || '' === $options['backupplus_source_destinations'][ $id ] ) { return null; }
+		if ( ! is_string( $options['backupplus_source_destinations'][ $id ] ) ) { throw new RuntimeException( 'Restore destinations require an absolute local path without dot segments.' ); }
+		return $options['backupplus_source_destinations'][ $id ];
+	}
+
+	private static function normalise( $path ) {
+		return rtrim( str_replace( '\\', '/', $path ), '/' );
+	}
+
 	public static function connection( $id, $options ) {
 		$mapping = isset( $options['backupplus_external_targets'][ $id ] ) ? $options['backupplus_external_targets'][ $id ] : array();
 		if ( ! empty( $mapping['saved'] ) ) {
@@ -57,12 +78,10 @@ class BackupPlus_Source_Restore {
 		}
 		foreach ( $entities as $id => $unused ) {
 			if ( BackupPlus_Backup_Sources::custom( $id ) ) {
-				$source      = isset( $backup['file_sources'][ $id ] ) ? $backup['file_sources'][ $id ] : array(
-					'path' => '',
-					'kind' => 'directory',
-				);
-				$destination = isset( $options['backupplus_source_destinations'][ $id ] ) ? $options['backupplus_source_destinations'][ $id ] : $source['path'];
-				self::destination( $destination, $source['kind'] );
+				$recorded = self::recorded( $id, $backup );
+				$override = self::override( $id, $options );
+				if ( null === $recorded && null === $override ) { throw new RuntimeException( 'This backup has no recorded destination for an additional source. Enter an absolute destination to restore it.' ); }
+				self::destination( null !== $override ? $override : $recorded['path'], null !== $recorded ? $recorded['kind'] : 'directory' );
 			} elseif ( preg_match( '/^db[1-9][0-9]*$/D', $id ) ) {
 				BackupPlus_Backup_Sources::connect( self::connection( $id, $options ) );
 			}
@@ -88,9 +107,18 @@ class BackupPlus_Source_Restore {
 		$manifest_path = $working . '/backupplus-manifest.json';
 		$manifest      = is_file( $manifest_path ) ? json_decode( file_get_contents( $manifest_path ), true ) : null;
 		if ( ! is_array( $manifest ) || $id !== $manifest['type'] || empty( $manifest['source'] ) ) { throw new RuntimeException( 'Custom source metadata is missing from the archive.' ); }
-		$source      = $manifest['source'];
-		$destination = isset( $options['backupplus_source_destinations'][ $id ] ) ? $options['backupplus_source_destinations'][ $id ] : $source['path'];
-		$destination = self::destination( $destination, $source['kind'] );
+		$source = $manifest['source'];
+		if ( ! is_array( $source ) || ! isset( $source['path'], $source['kind'] ) || ! is_string( $source['path'] ) || ! in_array( $source['kind'], array( 'file', 'directory' ), true ) ) { throw new RuntimeException( 'Custom source metadata is missing from the archive.' ); }
+		$recorded = self::recorded( $id, $backup );
+		$override = self::override( $id, $options );
+		if ( null !== $recorded ) {
+			// The archive must describe the source the history recorded; a replaced archive must not choose where it is written.
+			if ( self::normalise( $source['path'] ) !== self::normalise( $recorded['path'] ) || $source['kind'] !== $recorded['kind'] ) { throw new RuntimeException( 'The archive describes a different source than the backup history records. Restore aborted.' ); }
+			$source = $recorded;
+		} elseif ( null === $override ) {
+			throw new RuntimeException( 'This backup has no recorded destination for an additional source. Enter an absolute destination to restore it.' );
+		}
+		$destination = self::destination( null !== $override ? $override : $source['path'], $source['kind'] );
 		$from        = $working . '/' . $id . ( 'file' === $source['kind'] ? '/payload' : '' );
 		if ( file_exists( $from ) ) { self::merge( $from, $destination ); }
 		if ( $last ) {

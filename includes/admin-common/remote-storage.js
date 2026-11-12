@@ -214,6 +214,10 @@ function backupplus_remote_storage_test(method, result_callback, instance_id) {
 	var data = {
 		method: method
 	};
+	// Saved secrets are shown as placeholders; the server substitutes the saved values of this instance for them.
+	if (instance_id) {
+		data.instance_id = instance_id;
+	}
 	
 	// Add the other items to the data object. The expert mode settings are for the generic SSL options.
 	jQuery('#backupplus-navtab-settings-content '+settings_selector+' input[data-backupplus_settings_test], #backupplus-navtab-settings-content .expertmode input[data-backupplus_settings_test]').each(function(index, item) {

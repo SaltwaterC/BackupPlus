@@ -40,20 +40,57 @@ trait BackupPlus_Backup_Database_Tables {
 
 		$microtime = microtime( true );
 
-		global $backupplus, $wpdb;
+		global $backupplus;
 
 		// Deal with Windows/old MySQL setups with erroneous table prefixes differing in case
 		// Can't get binary mysqldump to make this transformation
 		// $dump_as_table = ($this->duplicate_tables_exist == false && stripos($table, $this->table_prefix) === 0 && strpos($table, $this->table_prefix) !== 0) ? $this->table_prefix.substr($table, strlen($this->table_prefix)) : $table;
-
-		$pfile = md5( time() . wp_rand() ) . '.tmp';
-		file_put_contents( $this->backupplus_dir . '/' . $pfile, "[mysqldump]\npassword=\"" . addslashes( $this->dbinfo['pass'] ) . "\"\n" );
 
 		$conditions = $this->table_conditions( $table_name );
 		if ( is_wp_error( $conditions ) ) {
 			$backupplus->log( $conditions->get_error_message(), 'error' );
 			return false;
 		}
+
+		// mysqldump must escape in the character set that the dump header declares, or a multibyte character can swallow the
+		// backslash before a quote on restore (BPS-12). A name that mysqldump would read as an option is left to the PHP dumper.
+		$charset = $this->sql()->charset();
+		// Where a byte of a character can look like a backslash, only the PHP dumper's hexadecimal literals are safe for the
+		// restorer, which splits statements by bytes.
+		if ( ! is_string( $charset ) || ! preg_match( '/\A[A-Za-z0-9_]+\z/D', $charset ) || BackupPlus_SQL::charset_has_multibyte_trail( $charset ) || '-' === substr( (string) $this->dbinfo['name'], 0, 1 ) || '-' === substr( (string) $table_name, 0, 1 ) ) {
+			$backupplus->log( "Table $table_name: binary mysqldump not used: the connection character set or a name cannot be passed to it safely" );
+			return false;
+		}
+
+		// Owner-only, removed below or at shutdown (BPS-08). A password the file cannot hold falls back to the PHP dumper.
+		try {
+			$pfile = BackupPlus_Mysqldump_Option_File::create( $this->backupplus_dir, $this->dbinfo['pass'] );
+		} catch ( RuntimeException $e ) {
+			$backupplus->log( "Table $table_name: binary mysqldump not used: " . $e->getMessage() );
+			return false;
+		}
+		try {
+			return $this->run_bindump( $potsql, $table_name, $conditions, basename( $pfile ), $microtime );
+		} finally {
+			BackupPlus_Mysqldump_Option_File::remove( $pfile );
+		}
+	}
+
+	/**
+	 * Run mysqldump for one table with an option file already in the backup directory
+	 *
+	 * @param String $potsql     - the path to the mysqldump binary
+	 * @param String $table_name - the name of the table being dumped
+	 * @param Array  $conditions - from table_conditions()
+	 * @param String $pfile      - the option file's name inside the backup directory
+	 * @param Float  $microtime  - when the dump began
+	 *
+	 * @return Boolean - success status
+	 */
+	private function run_bindump( $potsql, $table_name, $conditions, $pfile, $microtime ) {
+
+		global $backupplus, $wpdb;
+
 		// N.B. Don't add a WHERE prefix here; most versions of mysqldump silently strip it out, but one was encountered that didn't.
 		$where = $conditions ? BackupPlus_SQL::render( '%w', array( $conditions ) ) : '';
 		if ( 'win' === strtolower( substr( PHP_OS, 0, 3 ) ) ) {
@@ -77,9 +114,11 @@ trait BackupPlus_Backup_Database_Tables {
 		}
 
 		// Allow --max_allowed_packet to be configured via constant. Experience has shown some customers with complex CMS or pagebuilder setups can have very large postmeta entries.
-		$msqld_max_allowed_packet = ( defined( 'BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET' ) && ( is_int( BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET ) || is_string( BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET ) ) ) ? BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET : '12M';
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
+		$msqld_max_allowed_packet = BackupPlus_Executables::max_allowed_packet( '12M' );
 
-		$exec .= "$potsql --defaults-file=$pfile $where --max-allowed-packet=$msqld_max_allowed_packet --quote-names --add-drop-table";
+		// Configuration values reach the shell only escaped or checked against a pattern (BPS-20).
+		$exec .= BackupPlus_Executables::shell_program( $potsql ) . ' --defaults-file=' . escapeshellarg( $pfile ) . " $where --max-allowed-packet=$msqld_max_allowed_packet --quote-names --add-drop-table";
 
 		static $mysql_version = null;
 		if ( null === $mysql_version ) {
@@ -92,7 +131,7 @@ trait BackupPlus_Backup_Database_Tables {
 			$exec .= ' --no-tablespaces';
 		}
 
-		$exec .= ' --skip-comments --skip-set-charset --allow-keywords --dump-date --extended-insert --user=' . escapeshellarg( $this->dbinfo['user'] ) . ' ';
+		$exec .= ' --skip-comments --skip-set-charset --default-character-set=' . escapeshellarg( $this->sql()->charset() ) . ' --allow-keywords --dump-date --extended-insert --user=' . escapeshellarg( $this->dbinfo['user'] ) . ' ';
 
 		$host = $this->dbinfo['host'];
 
@@ -153,9 +192,6 @@ trait BackupPlus_Backup_Database_Tables {
 			$backupplus->log( 'Binary mysqldump error: bindump popen failed' );
 		}
 
-		// Clean temporary files
-		@unlink( $this->backupplus_dir . '/' . $pfile );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-
 		return $ret;
 	}
 
@@ -181,7 +217,7 @@ trait BackupPlus_Backup_Database_Tables {
 
 		$create_table = $this->sql()->rows( 'SHOW CREATE TABLE %i', array( $table ), array(), ARRAY_N );
 		if ( false === $create_table ) {
-			$this->stow( "#\n# Error with SHOW CREATE TABLE for " . $this->comment_name( $table ) . "\n#\n" );
+			$this->stow( "#\n# Could not read the definition of " . $this->comment_name( $table ) . "\n#\n" );
 		}
 		$create_line = BackupPlus_Manipulation_Functions::str_lreplace( 'TYPE=', 'ENGINE=', $create_table[0][1] );
 
@@ -511,9 +547,6 @@ trait BackupPlus_Backup_Database_Tables {
 				$this->log_expected_rows( $table, $this->expected_rows, $expected_via_count, $log_expected_records );
 			}
 
-			$search  = array( "\x00", "\x0a", "\x0d", "\x1a" );
-			$replace = array( '\0', '\n', '\r', '\Z' );
-
 			$conditions = $this->table_conditions( $table );
 			if ( is_wp_error( $conditions ) ) {
 				return $conditions;
@@ -671,7 +704,7 @@ trait BackupPlus_Backup_Database_Tables {
 								$this_entry .= "b'" . str_pad( $this->hex2bin( $hex ), $bit_fields[ strtolower( $key ) ], '0', STR_PAD_LEFT ) . "'";
 							}
 						} else {
-							$this_entry .= ( null === $value ) ? 'NULL' : "'" . str_replace( $search, $replace, str_replace( '\'', '\\\'', str_replace( '\\', '\\\\', $value ) ) ) . "'";
+							$this_entry .= ( null === $value ) ? 'NULL' : $sql->quote( $value );
 						}
 					}
 					$this_entry .= ')';

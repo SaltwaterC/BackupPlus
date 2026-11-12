@@ -150,7 +150,8 @@ class BackupPlus_CLI_Remote {
 			if ( isset( $assoc['enabled'] ) && ! in_array( $assoc['enabled'], array( '0', '1' ), true ) ) { throw new InvalidArgumentException( '--enabled must be 0 or 1.' ); }
 			$instances = self::instances( $args[0] );
 			$instance  = isset( $assoc['instance'] ) ? self::instance_id( $assoc['instance'] ) : 's-' . md5( wp_rand() . uniqid() . microtime( true ) );
-			$options   = array_merge( isset( $instances[ $instance ] ) ? $instances[ $instance ] : array(), $input );
+			// A new instance starts from the provider's defaults, as one added on the settings page does (FTP: explicit TLS).
+			$options = array_merge( isset( $instances[ $instance ] ) ? $instances[ $instance ] : $storage->get_default_options(), $input );
 			if ( isset( $assoc['label'] ) ) { $options['instance_label'] = $assoc['label']; }
 			if ( isset( $assoc['enabled'] ) ) { $options['instance_enabled'] = (int) $assoc['enabled']; }
 			$instances[ $instance ] = $options;

@@ -307,6 +307,24 @@ sources_wp_expect( is_wp_error( $result ), 'Interrupted external import stops wi
 $result = BackupPlus_External_Importer::restore( $dump, 'db7', $connection );
 sources_wp_expect( true === $result && '1' === (string) $wpdb->get_var( "SELECT COUNT(*) FROM `$table`" ), 'Resuming replays the interrupted table without duplicate rows' );
 sources_wp_expect( 'keep me' === $wpdb->get_var( "SELECT value FROM `$untouched` WHERE id=1" ), 'Resuming leaves unselected tables unchanged' );
+
+// BPS-18: a tampered statement that leaves the target schema is refused before it runs, and nothing after it runs either.
+$tampered = array(
+	'leading comment hides USE' => "/* header */ USE information_schema;\n",
+	'executable comment USE'    => "/*!40101 USE information_schema */;\n",
+	'other schema read'         => "INSERT INTO `$untouched` SELECT 2, SCHEMA_NAME FROM information_schema.SCHEMATA;\n",
+	'dynamic SQL'               => "PREPARE s FROM 'DELETE FROM `$untouched`';\n",
+);
+foreach ( $tampered as $label => $statement ) {
+	$file = $directory . '/tampered-' . md5( $label ) . '.sql';
+	file_put_contents( $file, $statement . "INSERT INTO `$untouched` VALUES (3, 'after');\n" );
+	$backupplus->initiate_restore_job();
+	$nonces[] = $backupplus->nonce;
+	$result   = BackupPlus_External_Importer::restore( $file, 'db7', $connection );
+	sources_wp_expect( is_wp_error( $result ) && false !== strpos( $result->get_error_message(), 'refused statement 1' ), 'External restore refuses a tampered dump (' . $label . '): ' . ( is_wp_error( $result ) ? $result->get_error_message() : json_encode( $result ) ) );
+	sources_wp_expect( '1' === (string) $wpdb->get_var( "SELECT COUNT(*) FROM `$untouched`" ), 'Nothing after a refused statement runs (' . $label . ')' );
+	unlink( $file );
+}
 $bad         = $connection;
 $bad['name'] = 'missing_database_' . $token;
 try { BackupPlus_Backup_Sources::connect( $bad );
@@ -378,7 +396,9 @@ foreach ( array( $ids[0], 'wpcore' ) as $id ) {
 	sources_wp_expect( is_array( $plain ), 'Encrypted custom/core archive can be decrypted' );
 	if ( BackupPlus_Backup_Sources::custom( $id ) ) {
 		$recovered = BackupPlus_Backup_Sources::archive_metadata( array(), $id, $plain['fullpath'] );
-		sources_wp_expect( $directory . '/one/data' === $recovered['file_sources'][ $id ]['path'], 'Encrypted imported metadata recovers original custom destination' );
+		sources_wp_expect( $directory . '/one/data' === $recovered['archive_sources'][ $id ]['path'], 'Encrypted imported metadata recovers the original custom path' );
+		// The archive's path is a hint only: without a recorded source or an entered destination, the restore refuses (BPS-15)
+		sources_wp_expect( ! isset( $recovered['file_sources'] ) && null === BackupPlus_Source_Restore::recorded( $id, $recovered ), 'A path an archive reports must not become the recorded destination' );
 	}
 	unlink( $plain['fullpath'] );
 }

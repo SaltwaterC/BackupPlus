@@ -38,7 +38,7 @@ trait BackupPlus_Storage_Limits_Interface {
 			);
 			if ( ! $config['alert'] && ! $config['quota'] ) { continue; }
 			$entry    = isset( $status[ $key ] ) ? $status[ $key ] : array();
-			$level    = max( isset( $entry['alert']['level'] ) ? $entry['alert']['level'] : 0, isset( $entry['quota']['level'] ) ? $entry['quota']['level'] : 0 );
+			$level    = max( $config['alert'] && isset( $entry['alert']['level'] ) ? $entry['alert']['level'] : 0, $config['quota'] && isset( $entry['quota']['level'] ) ? $entry['quota']['level'] : 0 );
 			$severity = 100 === $level ? __( 'Critical', 'backupplus' ) : ( 80 === $level ? __( 'Warning', 'backupplus' ) : __( 'OK', 'backupplus' ) );
 			$usage    = isset( $entry['usage'] ) ? number_format_i18n( $entry['usage'] / self::GB, 3 ) . ' GB' : __( 'Unavailable', 'backupplus' );
 			$html    .= '<p><strong>' . esc_html( self::label( $destination['service'], $destination['instance'] ) ) . '</strong>: ' . esc_html( $usage . ' — ' . $severity );
@@ -51,7 +51,7 @@ trait BackupPlus_Storage_Limits_Interface {
 			}
 			if ( ! empty( $entry['measured'] ) ) { $html .= '<br>' . esc_html__( 'Last measurement:', 'backupplus' ) . ' ' . esc_html( wp_date( 'Y-m-d H:i:s', $entry['measured'] ) ); }
 			if ( ! empty( $entry['outcome'] ) ) { $html .= '<br>' . esc_html( $entry['outcome'] ); }
-			if ( ! empty( $entry['notification'] ) ) { $html .= '<br>' . esc_html__( 'Last alert:', 'backupplus' ) . ' ' . esc_html( $entry['notification'] ); }
+			if ( $level && ! empty( $entry['notification'] ) ) { $html .= '<br>' . esc_html__( 'Last alert:', 'backupplus' ) . ' ' . esc_html( $entry['notification'] ); }
 			$html .= '</p>';
 		}
 		return $html . '</div>';

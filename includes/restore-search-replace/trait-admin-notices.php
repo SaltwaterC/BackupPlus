@@ -90,8 +90,7 @@ trait BackupPlus_Restore_Search_Replace_Admin_Notices {
 				<p><em><?php esc_html_e( 'This can easily destroy your site; so, use it with care!', 'backupplus' ); ?></em></p>
 				<form id="search_replace_form" method="post" onsubmit="return(confirm('<?php echo esc_js( __( 'A search/replace cannot be undone - are you sure you want to do this?', 'backupplus' ) ); ?>'))">
 				<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'backupplus-credentialtest-nonce' ) ); ?>">
-				<input type="hidden" name="action" value="backupplus_broadcastaction">
-				<input type="hidden" name="subaction" value="backupplus_adminaction_searchreplace">
+				<input type="hidden" name="action" value="backupplus_searchreplace">
 				<table>
 				<?php
 					$backupplus_admin->settings_debugrow( '<label for="search">' . esc_html__( 'Search for', 'backupplus' ) . '</label>:', '<input id="search" type="text" name="search" value="" style="width:380px;">' );

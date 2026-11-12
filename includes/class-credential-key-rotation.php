@@ -113,6 +113,62 @@ class BackupPlus_Credential_Key_Rotation {
 		}
 	}
 
+	/**
+	 * Remove every disk key except the active one (BPS-20). Rotation keeps historical keys so that older jobs and backups stay
+	 * readable; retiring them first re-encrypts, on every site of this network, whatever an older key wrote: provider settings,
+	 * other credential options, saved job credentials and Dropbox tokens. Current envelopes are left as they are. The key
+	 * store then removes the old keys under its lock, and only if no option of any site, and no network option, still holds an
+	 * envelope of one of them; otherwise it refuses and changes nothing.
+	 *
+	 * Credentials inside older backups and older recovery-key downloads can no longer be decrypted afterwards.
+	 *
+	 * @return Array The new configuration ('config') and the removed key IDs ('retired').
+	 */
+	public static function retire_manually() {
+		if ( BackupPlus_Credential_Key_Store::environment_managed() ) {
+			throw new RuntimeException( 'Environment-managed credential keys are retired by updating the service environment.' );
+		}
+		$config = BackupPlus_Credential_Key_Store::configuration();
+		self::reencrypt_old_envelopes();
+		return BackupPlus_Credential_Key_Store::retire( $config['active'], array( 'BackupPlus_Credential_Storage', 'key_references' ) );
+	}
+
+	/**
+	 * The next environment key-ring value without the old keys, once this network's credentials no longer need them. The
+	 * database can still be re-encrypted with the active key; the environment itself is the operator's to change.
+	 *
+	 * @return Array The encoded value ('value') and the key IDs it leaves out ('retired').
+	 */
+	public static function environment_retirement_value() {
+		self::reencrypt_old_envelopes();
+		return BackupPlus_Credential_Key_Store::environment_retirement_value( array( 'BackupPlus_Credential_Storage', 'key_references' ) );
+	}
+
+	/** Re-encrypt with the active key whatever an older key wrote, on every site of this network. Current envelopes are kept. */
+	private static function reencrypt_old_envelopes() {
+		$sites = is_multisite() ? get_sites(
+			array(
+				'fields'     => 'ids',
+				'number'     => 0,
+				'network_id' => get_current_network_id(),
+			)
+		) : array( get_current_blog_id() );
+		foreach ( $sites as $blog_id ) {
+			if ( is_multisite() ) {
+				switch_to_blog( $blog_id );
+			}
+			try {
+				// Providers that encrypt credentials of their own (Dropbox tokens) re-encrypt them here, as for rotation.
+				do_action( 'backupplus_credentials_retire' );
+				BackupPlus_Credential_Storage::rewrite( false, true );
+			} finally {
+				if ( is_multisite() ) {
+					restore_current_blog();
+				}
+			}
+		}
+	}
+
 	/** Add an age warning to the normal report when a key has reached its annual limit. */
 	public static function report_messages( $messages ) {
 		if ( ! is_array( $messages ) ) {

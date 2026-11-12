@@ -109,12 +109,12 @@ try {
 	xss_escaped( $raw['html'], 'The backup directory listing' );
 
 	// (c) The log line of a download job is the status message the browser renders with .html().
-	$job = 'abcdef012345';
+	$job               = 'abcdef012345';
 	$backupplus->nonce = $job;
 	$backupplus->jobdata_reset();
 	$jobs[] = $job;
 	$backupplus->jobdata_set( 'dlmessage_' . $timestamp . '_db_0', 'Requested file from remote service: s3: ' . $name );
-	$status = new ReflectionMethod( $backupplus_admin, 'download_status' );
+	$status   = new ReflectionMethod( $backupplus_admin, 'download_status' );
 	$download = $status->invoke( $backupplus_admin, (string) $timestamp, 'db', '0' );
 	xss_escaped( $download['m'], 'The download status message' );
 	$backupplus->jobdata_set( 'dlfile_' . $timestamp . '_db_0', 'failed' );
@@ -131,7 +131,7 @@ try {
 			)
 		);
 	};
-	$result = $restore( $name );
+	$result  = $restore( $name );
 	xss_expect( is_array( $result ), 'The preflight must answer.' );
 	xss_escaped( $result['e'], 'The preflight "File not found" error' );
 	file_put_contents( $directory . '/' . $name, '' );
@@ -157,7 +157,7 @@ try {
 
 	// (h) Rescan errors: a remote module that fails with attacker-chosen text.
 	BackupPlus_Storage_Provider_Factory::create( 's3' );
-	$s3 = new class() extends BackupPlus_BackupModule_s3 {
+	$s3        = new class() extends BackupPlus_BackupModule_s3 {
 		public static $text = '';
 		public function get_id() {
 			return 's3'; }
@@ -172,7 +172,16 @@ try {
 	$settings                   = BackupPlus_Credential_Storage::saving(
 		array(
 			'version'  => 1,
-			'settings' => array( 's-xss-test' => array_merge( $s3->get_default_options(), array( 'accesskey' => 'k', 'secretkey' => 's', 'path' => 'bucket/site' ) ) ),
+			'settings' => array(
+				's-xss-test' => array_merge(
+					$s3->get_default_options(),
+					array(
+						'accesskey' => 'k',
+						'secretkey' => 's',
+						'path'      => 'bucket/site',
+					)
+				),
+			),
 		),
 		'backupplus_s3'
 	);

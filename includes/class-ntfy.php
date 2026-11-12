@@ -53,6 +53,26 @@ class BackupPlus_Ntfy {
 	}
 
 	/**
+	 * Whether a server address uses plain HTTP, which sends the notifications and the access token unencrypted.
+	 *
+	 * @param  string $server Server address, as saved or as typed
+	 * @return bool
+	 */
+	public static function plaintext( $server ) {
+		return is_string( $server ) && 0 === stripos( trim( $server ), 'http://' );
+	}
+
+	/**
+	 * A suggested topic that cannot be guessed: on a public server the topic is the only thing that protects the
+	 * notifications. It is only offered in the settings; a topic is never saved without the administrator entering it.
+	 *
+	 * @return string
+	 */
+	public static function suggested_topic() {
+		return 'backupplus-' . bin2hex( random_bytes( 16 ) );
+	}
+
+	/**
 	 * Publish one notification.
 	 *
 	 * @param  string   $title    Notification title
@@ -80,6 +100,9 @@ class BackupPlus_Ntfy {
 		$headers = array( 'Content-Type' => 'application/json' );
 		if ( '' !== $config['token'] ) {
 			$headers['Authorization'] = 'Bearer ' . $config['token'];
+		}
+		if ( self::plaintext( $config['server'] ) ) {
+			self::log( 'ntfy: the server address uses plain HTTP, so the notification' . ( '' === $config['token'] ? ' is' : ' and the access token are' ) . ' sent unencrypted. Use an https:// server address.' );
 		}
 		$response = wp_remote_post(
 			$config['server'],

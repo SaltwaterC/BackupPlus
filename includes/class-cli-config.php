@@ -281,6 +281,7 @@ class BackupPlus_CLI_Databases {
 			} else { $id = max( array_merge( array( 0 ), array_keys( $connections ), array( (int) BackupPlus_Options::get_backupplus_option( 'backupplus_database_next_id', 1 ) - 1 ) ) ) + 1; }
 			$connection = array_merge( isset( $connections[ $id ] ) ? $connections[ $id ] : array( 'enabled' => true ), $input );
 			if ( isset( $input['enabled'] ) ) { $connection['enabled'] = (bool) $input['enabled']; }
+			if ( ! BackupPlus_Backup_Sources::valid_password( $connection ) ) { throw new InvalidArgumentException( 'The password cannot contain a line break or NUL character.' ); }
 			if ( ! isset( $assoc['skip-test'] ) ) { BackupPlus_Backup_Sources::connect( $connection ); }
 			$connections[ $id ] = $connection;
 			self::save( $connections );

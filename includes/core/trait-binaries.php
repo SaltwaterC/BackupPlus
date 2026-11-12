@@ -33,14 +33,51 @@ trait BackupPlus_Core_Binaries {
 		$backupplus_dir = $this->backups_dir_location();
 		global $wpdb;
 		$table_name = $wpdb->get_blog_prefix() . 'options';
-		$pfile      = md5( time() . wp_rand() ) . '.tmp';
-		file_put_contents( $backupplus_dir . '/' . $pfile, "[mysqldump]\npassword=\"" . addslashes( DB_PASSWORD ) . "\"\n" );
+		// Owner-only, removed below or at shutdown (BPS-08). A password the file cannot hold means the PHP dumper is used.
+		try {
+			$option_file = BackupPlus_Mysqldump_Option_File::create( $backupplus_dir, DB_PASSWORD );
+		} catch ( RuntimeException $e ) {
+			if ( $log_it ) {
+				$this->log( 'Binary mysqldump not used: ' . $e->getMessage() );
+			}
+			if ( $cacheit ) {
+				$this->jobdata_set( 'binsqldump', false );
+			}
+			return false;
+		}
+		try {
+			$result = $this->probe_sqldump( basename( $option_file ), $backupplus_dir, $table_name, $log_it );
+		} finally {
+			BackupPlus_Mysqldump_Option_File::remove( $option_file );
+		}
+
+		if ( $cacheit ) {
+			$this->jobdata_set( 'binsqldump', $result );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Try each mysqldump candidate on the options table
+	 *
+	 * @param String  $pfile          - the option file's name inside the backup directory
+	 * @param String  $backupplus_dir - the backup directory
+	 * @param String  $table_name     - the options table
+	 * @param Boolean $log_it         - whether to log the workings
+	 *
+	 * @return String|Boolean - the first working executable, or false
+	 */
+	private function probe_sqldump( $pfile, $backupplus_dir, $table_name, $log_it ) {
+		global $wpdb;
 
 		$result = false;
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
 		foreach ( explode( ',', BACKUPPLUS_MYSQLDUMP_EXECUTABLE ) as $potsql ) {
 
-			if ( ! @is_executable( $potsql ) ) {
-				continue;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			// Absolute and not replaceable by every user; the built-in list must not be writable by PHP either (BPS-20).
+			if ( ! BackupPlus_Executables::trusted_binary( $potsql, BackupPlus_Executables::configured( 'BACKUPPLUS_MYSQLDUMP_EXECUTABLE' ) ) ) {
+				continue;
 			}
 			if ( $log_it ) {
 				$this->log( "Testing potential mysqldump binary: $potsql" );
@@ -49,21 +86,15 @@ trait BackupPlus_Core_Binaries {
 			if ( 'win' == strtolower( substr( PHP_OS, 0, 3 ) ) ) {
 				$exec    = 'cd ' . escapeshellarg( str_replace( '/', '\\', $backupplus_dir ) ) . ' & ';
 				$siteurl = "'siteurl'";
-				if ( false !== strpos( $potsql, ' ' ) ) {
-					$potsql = '"' . $potsql . '"';
-				}
 			} else {
 				$exec    = 'cd ' . escapeshellarg( $backupplus_dir ) . '; ';
 				$siteurl = "\\'siteurl\\'";
-				if ( false !== strpos( $potsql, ' ' ) ) {
-					$potsql = "'$potsql'";
-				}
 			}
 
 			// Allow --max_allowed_packet to be configured via constant. Experience has shown some customers with complex CMS or pagebuilder setups can have extrememly large postmeta entries.
-			$msqld_max_allowed_packet = ( defined( 'BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET' ) && ( is_int( BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET ) || is_string( BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET ) ) ) ? BACKUPPLUS_MYSQLDUMP_MAX_ALLOWED_PACKET : '1M';
+			$msqld_max_allowed_packet = BackupPlus_Executables::max_allowed_packet( '1M' );
 
-			$exec .= "$potsql --defaults-file=$pfile --max_allowed_packet=$msqld_max_allowed_packet --quote-names --add-drop-table";
+			$exec .= BackupPlus_Executables::shell_program( $potsql ) . ' --defaults-file=' . escapeshellarg( $pfile ) . " --max_allowed_packet=$msqld_max_allowed_packet --quote-names --add-drop-table";
 
 			static $mysql_version = null;
 			if ( null === $mysql_version ) {
@@ -87,7 +118,7 @@ trait BackupPlus_Core_Binaries {
 				$exec .= '--host=' . escapeshellarg( DB_HOST ) . ' ';
 			}
 
-			$exec .= DB_NAME . ' ' . escapeshellarg( $table_name );
+			$exec .= escapeshellarg( DB_NAME ) . ' ' . escapeshellarg( $table_name );
 
 			$handle = ( function_exists( 'popen' ) && function_exists( 'pclose' ) ) ? popen( $exec, 'r' ) : false;
 			if ( $handle ) {
@@ -120,14 +151,6 @@ trait BackupPlus_Core_Binaries {
 					$this->log( 'Error: popen failed' );
 				}
 			}
-		}
-
-		if ( file_exists( $backupplus_dir . '/' . $pfile ) ) {
-			unlink( $backupplus_dir . '/' . $pfile );
-		}
-
-		if ( $cacheit ) {
-			$this->jobdata_set( 'binsqldump', $result );
 		}
 
 		return $result;
@@ -179,9 +202,11 @@ trait BackupPlus_Core_Binaries {
 			return $existing;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
 		$backupplus_dir = $this->backups_dir_location();
+		backupplus_try_include_file( 'includes/class-executables.php', 'require_once' );
 		foreach ( explode( ',', BACKUPPLUS_ZIP_EXECUTABLE ) as $potzip ) {
-			if ( ! @is_executable( $potzip ) ) {
-				continue;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			// As for mysqldump (BPS-20).
+			if ( ! BackupPlus_Executables::trusted_binary( $potzip, BackupPlus_Executables::configured( 'BACKUPPLUS_ZIP_EXECUTABLE' ) ) ) {
+				continue;
 			}           if ( $log_it ) {
 				$this->log( "Testing: $potzip" );
 			}
@@ -202,9 +227,10 @@ trait BackupPlus_Core_Binaries {
 
 			if ( is_file( $backupplus_dir . '/binziptest/subdir1/subdir2/test.html' ) ) {
 
-				$exec = 'cd ' . escapeshellarg( $backupplus_dir ) . "; $potzip";
-				if ( defined( 'BACKUPPLUS_BINZIP_OPTS' ) && BACKUPPLUS_BINZIP_OPTS ) {
-					$exec .= ' ' . BACKUPPLUS_BINZIP_OPTS;
+				$exec    = 'cd ' . escapeshellarg( $backupplus_dir ) . '; ' . BackupPlus_Executables::shell_program( $potzip );
+				$options = BackupPlus_Executables::binzip_options();
+				if ( '' !== $options ) {
+					$exec .= ' ' . $options;
 				}
 				$exec .= ' -v -u -r binziptest/test.zip binziptest/subdir1';
 
@@ -236,9 +262,9 @@ trait BackupPlus_Core_Binaries {
 				if ( true == $all_ok ) {
 					file_put_contents( $backupplus_dir . '/binziptest/subdir1/subdir2/test2.html', '<html><body>BackupPlus is a really great backup and restoration plugin for WordPress.</body></html>' );
 
-					$exec = $potzip;
-					if ( defined( 'BACKUPPLUS_BINZIP_OPTS' ) && BACKUPPLUS_BINZIP_OPTS ) {
-						$exec .= ' ' . BACKUPPLUS_BINZIP_OPTS;
+					$exec = BackupPlus_Executables::shell_program( $potzip );
+					if ( '' !== $options ) {
+						$exec .= ' ' . $options;
 					}
 					$exec .= ' -v -@ binziptest/test.zip';
 

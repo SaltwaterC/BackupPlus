@@ -217,7 +217,8 @@ class BackupPlus_PITR_Binlog {
 					if ( 'CONTROL' === $query['kind'] ) {
 						$length = strlen( $body ) - $query['offset'];
 						if ( $length < 4 ) { throw new RuntimeException( 'Invalid account-control event.' ); }
-						$body = substr( $body, 0, $query['offset'] ) . 'DO 0' . str_repeat( ' ', $length - 4 );
+						// The statement is replaced in place by a no-op of the same length, padded with spaces.
+						$body = substr( $body, 0, $query['offset'] ) . str_pad( BackupPlus_SQL::render( 'DO 0' ), $length );
 						$data = $body . strrev( hash( 'crc32b', $header . $body, true ) );
 						fseek( $handle, $position + 19 );
 						if ( fwrite( $handle, $data ) !== strlen( $data ) ) { throw new RuntimeException( 'Could not write the isolated control-event replacement.' ); }

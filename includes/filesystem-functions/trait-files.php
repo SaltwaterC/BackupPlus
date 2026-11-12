@@ -247,10 +247,16 @@ trait BackupPlus_Filesystem_Functions_Files {
 		// }
 		// return rmdir($dir);
 
+		// A symbolic link is removed itself, never followed: following it would empty the folder it points to (BPS-20)
+		if ( is_link( $dir ) ) {
+			return $contents_only ? true : self::remove_link( $dir );
+		}
 		if ( $handle = @opendir( $dir ) ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 			while ( false !== ( $entry = readdir( $handle ) ) ) {
 				if ( '.' !== $entry && '..' !== $entry ) {
-					if ( is_dir( $dir . '/' . $entry ) ) {
+					if ( is_link( $dir . '/' . $entry ) ) {
+						self::remove_link( $dir . '/' . $entry );
+					} elseif ( is_dir( $dir . '/' . $entry ) ) {
 						self::remove_local_directory( $dir . '/' . $entry, false );
 					} else {
 						@unlink( $dir . '/' . $entry );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
@@ -261,6 +267,40 @@ trait BackupPlus_Filesystem_Functions_Files {
 		}
 
 		return $contents_only ? true : rmdir( $dir );
+	}
+
+	/**
+	 * Remove a symbolic link without touching its target. Windows removes a link to a folder with rmdir().
+	 *
+	 * @param String $path - the link
+	 *
+	 * @return Boolean - success/failure
+	 */
+	public static function remove_link( $path ) {
+		return @unlink( $path ) || ( is_link( $path ) && @rmdir( $path ) ) || ! is_link( $path );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- The result is checked.
+	}
+
+	/**
+	 * Delete a file or folder during a restore without following symbolic links inside it. WP_Filesystem_Direct::delete()
+	 * lists a link to a folder as a folder and empties its target, so the local filesystem is walked here instead; other
+	 * transports delete on the server they connect to.
+	 *
+	 * @param WP_Filesystem_Base $wp_filesystem - the filesystem the restore writes with
+	 * @param String             $path          - the path to delete
+	 *
+	 * @return Boolean - success/failure
+	 */
+	public static function delete_restore_path( $wp_filesystem, $path ) {
+		if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Direct' ) ) {
+			return $wp_filesystem->delete( $path, true );
+		}
+		if ( is_link( $path ) ) {
+			return self::remove_link( $path );
+		}
+		if ( is_dir( $path ) ) {
+			return self::remove_local_directory( $path );
+		}
+		return ! file_exists( $path ) || @unlink( $path );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink -- The result is returned.
 	}
 
 	/**

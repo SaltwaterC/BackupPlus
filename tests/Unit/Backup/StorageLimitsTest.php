@@ -16,6 +16,7 @@ final class StorageLimitsTest extends TestCase {
 	private string $directory;
 	protected function setUp(): void {
 		require dirname( __DIR__, 2 ) . '/Support/storage-limits-stubs.php';
+		require dirname( __DIR__, 3 ) . '/includes/class-manipulation-functions.php';
 		require dirname( __DIR__, 3 ) . '/includes/class-storage-limits.php';
 		$this->directory = sys_get_temp_dir() . '/backupplus-limits-' . bin2hex( random_bytes( 8 ) );
 		mkdir( $this->directory );
@@ -373,6 +374,38 @@ final class StorageLimitsTest extends TestCase {
 		$this->assertStringContainsString( 'after eviction: 120', $GLOBALS['storage_mails'][0]['message'] );
 		Limits::run();
 		$this->assertCount( 1, $GLOBALS['storage_mails'] );
+	}
+
+	public function test_an_alert_is_cleared_once_usage_is_below_every_configured_limit(): void {
+		$this->fixture();
+		$stale                              = 'BackupPlus alert 80%: fake (1). Usage: 640 bytes. Limit: 800 bytes.';
+		Options::$options[ Limits::OPTION ] = array( 'fake' => array( 'a' => array( 'quota' => 1000 ) ) );
+		Options::$options[ Limits::STATUS ] = array(
+			'fake:a' => array(
+				'alert'             => array(
+					'level' => 80,
+					'limit' => 800,
+				),
+				'notification'      => $stale,
+				'notification_time' => time() - 60,
+			),
+		);
+		foreach ( array( 'esc_html', 'esc_attr' ) as $name ) {
+			if ( ! function_exists( $name ) ) { eval( 'function ' . $name . '( $text ) { return $text; }' ); }
+		}
+		if ( ! function_exists( 'esc_html__' ) ) { eval( 'function esc_html__( $text ) { return $text; }' ); }
+		if ( ! function_exists( 'number_format_i18n' ) ) { eval( 'function number_format_i18n( $number, $decimals = 0 ) { return number_format( $number, $decimals ); }' ); }
+		if ( ! function_exists( 'wp_date' ) ) { eval( 'function wp_date( $format, $time ) { return gmdate( $format, $time ); }' ); }
+		$this->assertStringNotContainsString( 'Last alert', Limits::summary_html(), 'An alert for a limit that is no longer crossed is not shown' );
+		Options::$options[ Limits::STATUS ]['fake:a']['quota'] = array(
+			'level' => 100,
+			'limit' => 1000,
+		);
+		$this->assertStringContainsString( 'Last alert: ' . $stale, Limits::summary_html(), 'An alert is shown while a limit is crossed' );
+		Limits::run();
+		$this->assertSame( array(), $GLOBALS['storage_mails'] );
+		$this->assertArrayNotHasKey( 'notification', Options::$options[ Limits::STATUS ]['fake:a'], 'The measurement below the quota clears the alert of the disabled threshold' );
+		$this->assertStringNotContainsString( 'Last alert', Limits::summary_html() );
 	}
 
 	public function test_remote_absence_resolves_a_lost_deletion_acknowledgement(): void {

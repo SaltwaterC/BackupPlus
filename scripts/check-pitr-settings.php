@@ -134,8 +134,40 @@ try {
 	if ( $engine !== $current['engine'] || ( fileperms( $current['source_config'] ) & 0077 ) ) {
 		throw new RuntimeException( 'Engine detection or private credential permissions failed.' );
 	}
-	$disabled            = $current;
-	$disabled['enabled'] = false;
+	// BPS-09: DB_PASSWORD is only in a PHP-guarded file, which reaches the native clients through the pipe.
+	$source = $current['source_config'];
+	if ( 'source.php' !== basename( $source ) || 0 !== strpos( file_get_contents( $source ), BackupPlus_PITR_Process::GUARD ) || DB_PASSWORD !== BackupPlus_PITR_Process::connection_options( $source )['password'] ) {
+		throw new RuntimeException( 'The WordPress database connection was not written as a guarded PHP file.' );
+	}
+	$work    = BackupPlus_PITR_Process::directory( $directory . '/pitr/work-check-' . bin2hex( random_bytes( 8 ) ) );
+	$handoff = BackupPlus_PITR_Process::connection_file( $source, $work );
+	if ( 0 !== strpos( $handoff, 'memory:' ) || array( '.', '..' ) !== scandir( $work ) ) {
+		throw new RuntimeException( 'The guarded connection was copied to disk instead of passed through the pipe.' );
+	}
+	BackupPlus_PITR_Process::forget_connection( $handoff );
+	rmdir( $work );
+	$legacy = dirname( $source ) . '/source.cnf';
+	file_put_contents( $legacy, "[client]\nuser=\"legacy\"\npassword=\"legacy\"\n" );
+	chmod( $legacy, 0600 );
+	$current['source_config'] = $legacy;
+	delete_transient( BackupPlus_PITR_Admin::LEGACY_RETRY );
+	BackupPlus_PITR_Admin::retire_plaintext_source();
+	if ( file_exists( $legacy ) || $source !== $current['source_config'] || DB_PASSWORD !== BackupPlus_PITR_Process::connection_options( $current['source_config'] )['password'] ) {
+		throw new RuntimeException( 'Settings from before BPS-09 kept the plaintext source.cnf.' );
+	}
+	mkdir( $directory . '/cli', 0700 );
+	$outside = $directory . '/cli/source.cnf';
+	file_put_contents( $outside, "[client]\nuser=\"cli\"\n" );
+	$current['source_config'] = $outside;
+	BackupPlus_PITR_Admin::retire_plaintext_source();
+	if ( ! file_exists( $outside ) || $outside !== $current['source_config'] ) {
+		throw new RuntimeException( 'An administrator-supplied CLI option file was moved or deleted.' );
+	}
+	unlink( $outside );
+	rmdir( $directory . '/cli' );
+	$current['source_config'] = $source;
+	$disabled                 = $current;
+	$disabled['enabled']      = false;
 	BackupPlus_PITR::save_configuration( $disabled );
 	if ( $current['enabled'] || false === has_filter( 'sanitize_option_' . BackupPlus_PITR::OPTION, array( 'BackupPlus_PITR_Admin', 'sanitize' ) ) ) {
 		throw new RuntimeException( 'Programmatic restore state was re-enabled by the settings form sanitizer.' );

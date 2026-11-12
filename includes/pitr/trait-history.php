@@ -132,22 +132,27 @@ trait BackupPlus_PITR_Orchestrator_History {
 		}
 		if ( ! $has_chains ) { return $history; }
 		global $backupplus;
-		$path  = $backupplus->backups_dir_location() . '/pitr/state.php';
-		$state = null;
-		if ( ! is_link( $path ) && is_file( $path ) && filesize( $path ) < 67108864 ) {
-			$raw = file_get_contents( $path );
-			if ( 0 === strpos( $raw, '<?php exit; ?>' ) ) {
-				$state = json_decode( substr( $raw, strlen( '<?php exit; ?>' ) ), true );
+		$root  = $backupplus->backups_dir_location() . '/pitr';
+		$state = self::read_index( $root );
+		$valid = function ( $state, $id ) {
+			if ( ! is_array( $state ) || ! isset( $state['version'], $state['chains'][ $id ] ) || ! in_array( $state['version'], array( 1, 2 ), true ) ) {
+				throw new RuntimeException( 'The PITR chain index is unavailable.' );
 			}
-		}
+		};
 		foreach ( $history as &$backup ) {
 			if ( empty( $backup['pitr'] ) ) { continue; }
 			$id = isset( $backup['pitr']['chain_id'] ) ? $backup['pitr']['chain_id'] : '';
 			try {
-				if ( ! is_array( $state ) || ! isset( $state['version'], $state['chains'][ $id ] ) || 1 !== $state['version'] ) {
-					throw new RuntimeException( 'The PITR chain index is unavailable.' );
+				$valid( $state, $id );
+				try {
+					$chain = self::load_chain( $root, $state, $id )[0];
+				} catch ( RuntimeException $stale ) {
+					// Read without the worker lock: a worker may have committed a newer index and removed the files of this one.
+					$state = self::read_index( $root );
+					$valid( $state, $id );
+					$chain = self::load_chain( $root, $state, $id )[0];
 				}
-				$backup['pitr'] = self::chain_metadata( $id, $state['chains'][ $id ] );
+				$backup['pitr'] = self::chain_metadata( $id, $chain );
 			} catch ( Throwable $error ) {
 				$backup['pitr']['state']  = 'unavailable';
 				$backup['pitr']['points'] = array();

@@ -87,7 +87,7 @@ class BackupPlus_RangeHeader {
 	}
 
 	/**
-	 * Get the start position when this range is applied to a file of the specified size
+	 * Get the start position when this range is applied to a file of the specified size (RFC 9110, section 14.1.2)
 	 *
 	 * @param int $fileSize
 	 * @return int
@@ -97,7 +97,13 @@ class BackupPlus_RangeHeader {
 		$size = (int) $fileSize;
 
 		if ( $this->firstByte === null ) {
-			return ( $size - 1 ) - $this->lastByte;
+			// bytes=-N is the last N bytes; N is $this->lastByte. A suffix longer than the file selects all of it, and an empty suffix (or file) selects nothing.
+			if ( $this->lastByte <= 0 || $size <= 0 ) {
+				throw new BackupPlus_UnsatisfiableRangeException(
+					'Empty suffix range'
+				);
+			}
+			return max( 0, $size - $this->lastByte );
 		}
 
 		if ( $size <= $this->firstByte ) {
@@ -110,7 +116,8 @@ class BackupPlus_RangeHeader {
 	}
 
 	/**
-	 * Get the end position when this range is applied to a file of the specified size
+	 * Get the end position when this range is applied to a file of the specified size. A last position at or beyond the end of
+	 * the file means the rest of the file (RFC 9110, section 14.1.2).
 	 *
 	 * @param int $fileSize
 	 * @return int
@@ -119,17 +126,14 @@ class BackupPlus_RangeHeader {
 	public function getEndPosition( $fileSize ) {
 		$size = (int) $fileSize;
 
-		if ( $this->lastByte === null ) {
+		// Applies the same checks as the start position, so that an unsatisfiable range is refused whichever is asked first
+		$this->getStartPosition( $size );
+
+		if ( $this->firstByte === null || $this->lastByte === null ) {
 			return $size - 1;
 		}
 
-		if ( $size <= $this->lastByte ) {
-			throw new BackupPlus_UnsatisfiableRangeException(
-				'End position is after the end of the file'
-			);
-		}
-
-		return $this->lastByte;
+		return min( $this->lastByte, $size - 1 );
 	}
 
 	/**
@@ -213,8 +217,9 @@ class BackupPlus_PartialFileServlet {
 	 *
 	 * @param string $path Local file system path to serve
 	 * @param string $contentType MIME type of the data stream
+	 * @param string|null $downloadName The file name for the download; null for the name of the file served
 	 */
-	public function sendFile( $path, $contentType = 'application/octet-stream' ) {
+	public function sendFile( $path, $contentType = 'application/octet-stream', $downloadName = null ) {
 		// Make sure the file exists and is a file, otherwise we are wasting our time
 		$localPath = realpath( $path );
 		if ( $localPath === false || ! is_file( $localPath ) ) {
@@ -232,10 +237,22 @@ class BackupPlus_PartialFileServlet {
 
 		$fileSize = filesize( $localPath );
 
+		if ( $this->range != null ) {
+			// Work out the range before any header is sent, so that an unsatisfiable range is answered with 416 alone
+			try {
+				$start  = $this->range->getStartPosition( $fileSize );
+				$length = $this->range->getLength( $fileSize );
+			} catch ( BackupPlus_UnsatisfiableRangeException $e ) {
+				fclose( $fp );
+				header( 'Content-Range: bytes */' . $fileSize );
+				throw $e;
+			}
+		}
+
 		if ( $this->range == null ) {
 			// No range requested, just send the whole file
 			header( 'HTTP/1.1 200 OK' );
-			$this->sendDownloadHeaders( basename( $localPath ), $fileSize, $contentType );
+			$this->sendDownloadHeaders( null === $downloadName ? basename( $localPath ) : $downloadName, $fileSize, $contentType );
 
 			fpassthru( $fp );
 		} else {
@@ -243,16 +260,12 @@ class BackupPlus_PartialFileServlet {
 			header( 'HTTP/1.1 206 Partial Content' );
 			header( 'Content-Range: ' . $this->range->getContentRangeHeader( $fileSize ) );
 			$this->sendDownloadHeaders(
-				basename( $localPath ),
-				$this->range->getLength( $fileSize ),
+				null === $downloadName ? basename( $localPath ) : $downloadName,
+				$length,
 				$contentType
 			);
 
-			$this->sendDataRange(
-				$fp,
-				$this->range->getStartPosition( $fileSize ),
-				$this->range->getLength( $fileSize )
-			);
+			$this->sendDataRange( $fp, $start, $length );
 		}
 
 		fclose( $fp );

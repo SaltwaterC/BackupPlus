@@ -270,23 +270,34 @@ if ( is_string( $report_rows ) ) {
 	<?php
 }
 	$ntfy = BackupPlus_Ntfy::config();
+	// The topic and token are secrets: the page shows a placeholder, which keeps the saved value when saved (BPS-20).
+	$ntfy_shown = $ntfy ? BackupPlus_Credential_Storage::mask( $ntfy, BackupPlus_Ntfy::OPTION ) : null;
 ?>
 	<tr id="backupplus_report_row_ntfy">
 		<th><?php esc_html_e( 'ntfy', 'backupplus' ); ?>:</th>
 		<td>
 			<p>
 				<label for="backupplus_ntfy_server"><?php esc_html_e( 'Server', 'backupplus' ); ?></label><br>
-				<input type="url" id="backupplus_ntfy_server" name="backupplus_ntfy[server]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['server'] : '' ); ?>" placeholder="<?php echo esc_attr( BackupPlus_Ntfy::DEFAULT_SERVER ); ?>" autocomplete="off">
+				<input type="url" id="backupplus_ntfy_server" name="backupplus_ntfy[server]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['server'] : '' ); ?>" placeholder="<?php echo esc_attr( BackupPlus_Ntfy::DEFAULT_SERVER ); ?>" autocomplete="off" data-backupplus_plaintext_pattern="^http://">
 			</p>
+			<p class="backupplus_plaintext_warning"<?php echo ( $ntfy && BackupPlus_Ntfy::plaintext( $ntfy['server'] ) ) ? '' : ' style="display: none;"'; ?>><strong><?php esc_html_e( 'Warning', 'backupplus' ); ?>:</strong> <?php esc_html_e( 'This server address uses plain HTTP, so the notifications and the access token are sent unencrypted. Use an https:// address.', 'backupplus' ); ?></p>
 			<p>
 				<label for="backupplus_ntfy_topic"><?php esc_html_e( 'Topic', 'backupplus' ); ?></label><br>
-				<input type="text" id="backupplus_ntfy_topic" name="backupplus_ntfy[topic]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['topic'] : '' ); ?>" maxlength="64" pattern="[A-Za-z0-9_\-]+" autocomplete="off">
+				<?php $ntfy_topic_suggestion = BackupPlus_Ntfy::suggested_topic(); ?>
+				<input type="text" id="backupplus_ntfy_topic" name="backupplus_ntfy[topic]" class="regular-text" value="<?php echo esc_attr( $ntfy_shown ? $ntfy_shown['topic'] : '' ); ?>" maxlength="64" pattern="<?php echo esc_attr( '[A-Za-z0-9_\-]+|' . BackupPlus_Credential_Storage::PLACEHOLDER ); ?>" placeholder="<?php echo esc_attr( $ntfy_topic_suggestion ); ?>" autocomplete="off">
 			</p>
 			<p>
 				<label for="backupplus_ntfy_token"><?php esc_html_e( 'Access token (optional)', 'backupplus' ); ?></label><br>
-				<input type="<?php echo esc_attr( apply_filters( 'backupplus_admin_secret_field_type', 'password' ) ); ?>" id="backupplus_ntfy_token" name="backupplus_ntfy[token]" class="regular-text" value="<?php echo esc_attr( $ntfy ? $ntfy['token'] : '' ); ?>" autocomplete="new-password">
+				<input type="<?php echo esc_attr( apply_filters( 'backupplus_admin_secret_field_type', 'password' ) ); ?>" id="backupplus_ntfy_token" name="backupplus_ntfy[token]" class="regular-text" value="<?php echo esc_attr( $ntfy_shown ? $ntfy_shown['token'] : '' ); ?>" autocomplete="new-password">
 			</p>
-			<p class="description"><?php esc_html_e( 'Enter a topic to also receive the backup report, storage alerts and credential key rotation notices as ntfy notifications; clear it to turn them off. Anyone who knows a topic on a public server can read it, so choose a hard-to-guess name or use an access token.', 'backupplus' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Enter a topic to also receive the backup report, storage alerts and credential key rotation notices as ntfy notifications; clear it to turn them off.', 'backupplus' ); ?></p>
+			<p class="description"><?php esc_html_e( 'The default server, ntfy.sh, is a public service. There the topic is the only protection: anyone who knows or guesses it can read your reports, which name your site, its backups and any errors. Treat the topic like a password and make it long and random, or use your own ntfy server with access control and an access token.', 'backupplus' ); ?></p>
+			<p class="description">
+				<?php
+				/* translators: %s: A randomly generated ntfy topic name. */
+				echo wp_kses( sprintf( __( 'A random topic you can use: %s', 'backupplus' ), '<code>' . esc_html( $ntfy_topic_suggestion ) . '</code>' ), array( 'code' => array() ) );
+				?>
+			</p>
 		</td>
 	</tr>
 </table>
@@ -383,7 +394,11 @@ foreach ( $storage_objects_and_ids as $method => $method_information ) {
 
 	<tr class="expertmode backupdirrow backupplus-hidden" style="display:none;">
 		<th><?php esc_html_e( 'Backup directory', 'backupplus' ); ?>:</th>
+		<?php if ( '' !== BackupPlus_Backup_Directory::constant_path() ) { ?>
+		<td><input type="text" id="backupplus_dir" style="width:525px" value="<?php echo esc_attr( $backupplus_dir ); ?>" disabled="disabled" /><br><?php esc_html_e( 'This location is set by BACKUPPLUS_BACKUP_DIRECTORY in wp-config.php.', 'backupplus' ); ?></td>
+		<?php } else { ?>
 		<td><input type="text" name="backupplus_dir" id="backupplus_dir" style="width:525px" value="<?php echo esc_attr( BackupPlus_Manipulation_Functions::prune_backupplus_dir_prefix( $backupplus_dir ) ); ?>" /></td>
+		<?php } ?>
 	</tr>
 	<tr class="expertmode backupdirrow backupplus-hidden" style="display:none;">
 		<td></td>
@@ -392,7 +407,7 @@ foreach ( $storage_objects_and_ids as $method => $method_information ) {
 				<?php echo wp_kses_post( $backupplus_admin->really_writable_message( $really_is_writable, $backupplus_dir ) ); ?>
 			</span>
 			<?php
-				echo esc_html__( 'This is where BackupPlus will write the zip files it creates initially.', 'backupplus' ) . ' ' . esc_html__( 'This directory must be writable by your web server.', 'backupplus' ) . ' ' . esc_html__( 'It is relative to your content directory (which by default is called wp-content).', 'backupplus' ) . ' ' . esc_html__( 'Do not place it inside your uploads or plugins directory, as that will cause recursion (backups of backups of backups of...).', 'backupplus' );
+				echo esc_html__( 'This is where BackupPlus will write the zip files it creates initially.', 'backupplus' ) . ' ' . esc_html__( 'This directory must be writable by your web server.', 'backupplus' ) . ' ' . esc_html__( 'It is a single folder name inside your content directory (which by default is called wp-content), and cannot be a WordPress, plugin, theme or uploads folder.', 'backupplus' ) . ' ' . esc_html__( 'To keep backups elsewhere, define BACKUPPLUS_BACKUP_DIRECTORY in wp-config.php.', 'backupplus' );
 			?>
 		</td>
 	</tr>
