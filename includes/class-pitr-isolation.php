@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.DB.RestrictedFunctions.mysql_mysqli_close -- Native connections to the databases being backed up or recovered, which $wpdb cannot open.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** Enforce a write barrier while replacing the source database. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
@@ -55,12 +57,12 @@ class BackupPlus_PITR_Isolation {
 		$config['source_config']   = $this->path;
 		$config['capture_account'] = false;
 		$this->adapter             = new BackupPlus_PITR_Database( $config, $directory );
-		$app                       = $wpdb->get_var( 'SELECT CURRENT_USER()' );
+		$app                       = $wpdb->get_var( 'SELECT CURRENT_USER()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		$recovery_user             = $this->adapter->query( 'SELECT CURRENT_USER()' )[0][0];
 		$app_name                  = $app ? substr( $app, 0, strrpos( $app, '@' ) ) : '';
 		$recovery_name             = substr( $recovery_user, 0, strrpos( $recovery_user, '@' ) );
 		if ( ! preg_match( '/\A[A-Za-z0-9_.$-]+\z/D', $app_name ) || $app_name === $recovery_name ) { throw new RuntimeException( 'Automatic restore protection requires separate WordPress and recovery database usernames.' ); }
-		foreach ( $wpdb->get_col( 'SHOW GRANTS FOR CURRENT_USER()' ) as $grant ) {
+		foreach ( $wpdb->get_col( 'SHOW GRANTS FOR CURRENT_USER()' ) as $grant ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 			if ( ! preg_match( '/^GRANT (.+) ON (.+) TO /', $grant, $m ) || false !== strpos( $m[1], 'PROXY' ) || ( '*.*' === $m[2] && preg_match( '/ALL PRIVILEGES|SUPER|CONNECTION[_ ]ADMIN|SYSTEM_VARIABLES_ADMIN|READ_ONLY ADMIN/', $m[1] ) ) ) {
 				throw new RuntimeException( 'The WordPress database account can bypass write protection or has unverified roles. Ask your hosting provider to use an application account without administrative write-bypass privileges or roles.' );
 			}
@@ -108,9 +110,9 @@ class BackupPlus_PITR_Isolation {
 		if ( 'mysql' === $config['engine'] && '1' === $this->adapter->query( 'SELECT @@global.super_read_only' )[0][0] ) { throw new RuntimeException( 'The database server has administrator-enforced super-read-only protection. Ask your hosting provider to resolve that state before restoring.' ); }
 		// MariaDB read_only binds the restore account too unless it holds READ_ONLY ADMIN; refuse instead of requiring that bypass.
 		if ( 'mariadb' === $config['engine'] && '1' === $this->adapter->query( 'SELECT @@global.read_only' )[0][0] ) { throw new RuntimeException( 'The database server is read-only. Ask your hosting provider to resolve that state before restoring.' ); }
-		$active = $wpdb->get_row( 'SELECT @@hostname, @@port, @@server_id', ARRAY_N );
+		$active = $wpdb->get_row( 'SELECT @@hostname, @@port, @@server_id', ARRAY_N ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		if ( $active !== $this->adapter->query( 'SELECT @@hostname, @@port, @@server_id' )[0] ) { throw new RuntimeException( 'The recovery account connects to a different database server.' ); }
-		if ( 'mysql' === $config['engine'] && $wpdb->get_var( 'SELECT @@server_uuid' ) !== $this->adapter->query( 'SELECT @@server_uuid' )[0][0] ) { throw new RuntimeException( 'The recovery account connects to a different database server.' ); }
+		if ( 'mysql' === $config['engine'] && $wpdb->get_var( 'SELECT @@server_uuid' ) !== $this->adapter->query( 'SELECT @@server_uuid' )[0][0] ) { throw new RuntimeException( 'The recovery account connects to a different database server.' ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		if ( $this->adapter->replicated() ) { throw new RuntimeException( 'Automatic recovery cannot isolate a replicated database server. A database administrator must coordinate replica recovery.' ); }
 		$this->adapter->query( 'SELECT @@session.sql_log_bin', true );
 		$options             = BackupPlus_PITR_Process::connection_options( $this->adapter->defaults );
@@ -220,7 +222,7 @@ class BackupPlus_PITR_Isolation {
 			$this->adapter->restore_monitor = array( $this, 'check' );
 		} catch ( Throwable $error ) {
 			if ( $this->owns_maintenance ) { $this->release(); }
-			else { unlink( $this->root . '/isolation.php' ); }
+			else { wp_delete_file( $this->root . '/isolation.php' ); }
 			throw new RuntimeException( 'Could not establish automatic restore protection; the database was not replaced. ' . $error->getMessage() );
 		}
 	}
@@ -251,8 +253,8 @@ class BackupPlus_PITR_Isolation {
 
 		foreach ( $this->receipt['accounts'] as $account ) { if ( ! $account['locked'] ) { $this->adapter->query( BackupPlus_SQL::render( 'ALTER USER %a ACCOUNT UNLOCK', array( array( $this->application, $account['host'] ) ) ), true ); }
 		}
-		if ( $this->owns_maintenance && file_exists( ABSPATH . '.maintenance' ) ) { unlink( ABSPATH . '.maintenance' ); }
-		if ( file_exists( $this->root . '/isolation.php' ) ) { unlink( $this->root . '/isolation.php' ); }
+		if ( $this->owns_maintenance && file_exists( ABSPATH . '.maintenance' ) ) { wp_delete_file( ABSPATH . '.maintenance' ); }
+		if ( file_exists( $this->root . '/isolation.php' ) ) { wp_delete_file( $this->root . '/isolation.php' ); }
 		$wpdb = $this->original;
 		$wpdb->check_connection( false );
 		$this->recovery->close();

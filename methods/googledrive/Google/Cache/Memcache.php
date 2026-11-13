@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -31,7 +33,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @author Chris Chabot <chabotc@google.com>
  */
-class Google_Cache_Memcache extends Google_Cache_Abstract
+class BackupPlus_Google_Cache_Memcache extends BackupPlus_Google_Cache_Abstract
 {
   private $connection = false;
   private $mc = false;
@@ -39,17 +41,17 @@ class Google_Cache_Memcache extends Google_Cache_Abstract
   private $port;
 
   /**
-   * @var Google_Client the current client
+   * @var BackupPlus_Google_Client the current client
    */
   private $client;
 
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     if (!function_exists('memcache_connect') && !class_exists("Memcached")) {
       $error = "Memcache functions not available";
 
       $client->getLogger()->error($error);
-      throw new Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     $this->client = $client;
@@ -65,7 +67,7 @@ class Google_Cache_Memcache extends Google_Cache_Abstract
         $error = "You need to supply a valid memcache host and port";
 
         $client->getLogger()->error($error);
-        throw new Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+        throw new BackupPlus_Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
       }
     }
   }
@@ -110,7 +112,7 @@ class Google_Cache_Memcache extends Google_Cache_Abstract
    * @inheritDoc
    * @param string $key
    * @param string $value
-   * @throws Google_Cache_Exception
+   * @throws BackupPlus_Google_Cache_Exception
    */
   public function set($key, $value)
   {
@@ -130,7 +132,7 @@ class Google_Cache_Memcache extends Google_Cache_Abstract
           array('key' => $key, 'var' => $data)
       );
 
-      throw new Google_Cache_Exception("Couldn't store data in cache");
+      throw new BackupPlus_Google_Cache_Exception("Couldn't store data in cache");
     }
 
     $this->client->getLogger()->debug(
@@ -180,7 +182,7 @@ class Google_Cache_Memcache extends Google_Cache_Abstract
       $error = "Couldn't connect to memcache server";
 
       $this->client->getLogger()->error($error);
-      throw new Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
   }
 }

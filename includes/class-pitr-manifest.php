@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Versioned portable metadata; coordinates always include filename and byte offset. */
 

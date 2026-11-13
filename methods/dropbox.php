@@ -30,8 +30,8 @@ if ( ! class_exists( 'BackupPlus_BackupModule' ) ) {
 
 // Fix a potential problem for users who had the short-lived 1.12.35-1.12.38 free versions (see: https://wordpress.org/support/topic/1-12-37-dropbox-auth-broken/page/2/#post-8981457)
 // Can be removed after a few months
-$potential_options = BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' );
-if ( is_array( $potential_options ) && isset( $potential_options['version'] ) && isset( $potential_options['settings'] ) && array() === $potential_options['settings'] ) {
+$backupplus_dropbox_options = BackupPlus_Options::get_backupplus_option( 'backupplus_dropbox' );
+if ( is_array( $backupplus_dropbox_options ) && isset( $backupplus_dropbox_options['version'] ) && isset( $backupplus_dropbox_options['settings'] ) && array() === $backupplus_dropbox_options['settings'] ) {
 	// Wipe it, which will force its re-creation in proper format
 	BackupPlus_Options::delete_backupplus_option( 'backupplus_dropbox' );
 }

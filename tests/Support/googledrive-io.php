@@ -11,10 +11,10 @@ require_once BACKUPPLUS_DIR . '/includes/class-manipulation-functions.php';
 require_once BACKUPPLUS_DIR . '/methods/googledrive/Google/autoload.php';
 require_once BACKUPPLUS_DIR . '/methods/googledrive/google-extensions.php';
 
-class Provider_Test_Google_IO extends UDP_Google_IO_Curl {
+class Provider_Test_Google_IO extends BackupPlus_Google_IO_Curl {
 	public $requests = array();
 	public $handler;
-	public function makeRequest( UDP_Google_Http_Request $request ) {
+	public function makeRequest( BackupPlus_Google_Http_Request $request ) {
 		$this->requests[]            = $request;
 		list($code, $headers, $body) = ( $this->handler )( $request );
 		$request->setResponseHttpCode( $code );

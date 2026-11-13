@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Reconstructing a database at a target time and restoring it, including abandoning an interrupted restore. */
 
@@ -146,7 +147,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 	/** The WordPress database account, which owns every restored view, trigger, routine and event. */
 	private function application_account() {
 		global $wpdb;
-		$account = $wpdb->get_var( 'SELECT CURRENT_USER()' );
+		$account = $wpdb->get_var( 'SELECT CURRENT_USER()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		$at      = is_string( $account ) ? strrpos( $account, '@' ) : false;
 		if ( ! $at ) { throw new RuntimeException( 'Could not identify the WordPress database account.' ); }
 		return array( substr( $account, 0, $at ), substr( $account, $at + 1 ) );
@@ -337,7 +338,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery {
 				update_option( self::STATUS, $this->summary(), false );
 				if ( $isolation ) { $isolation->release( false );
 					$isolation = null; }
-				else { unlink( ABSPATH . '.maintenance' ); }
+				else { wp_delete_file( ABSPATH . '.maintenance' ); }
 				return array(
 					'coordinate'        => $plan['target_coordinate'],
 					'tables'            => $tables,

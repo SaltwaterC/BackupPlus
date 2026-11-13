@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-class UDP_Google_Service
+// Modified by the BackupPlus project in 2026.
+
+class BackupPlus_Google_Service
 {
   public $rootUrl;
   public $version;
@@ -24,14 +26,14 @@ class UDP_Google_Service
   public $resource;
   private $client;
 
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     $this->client = $client;
   }
 
   /**
-   * Return the associated UDP_Google_Client class.
-   * @return UDP_Google_Client
+   * Return the associated BackupPlus_Google_Client class.
+   * @return BackupPlus_Google_Client
    */
   public function getClient()
   {

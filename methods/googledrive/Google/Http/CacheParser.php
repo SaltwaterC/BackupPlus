@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -25,7 +27,7 @@ if (!class_exists('UDP_Google_Client')) {
  * Implement the caching directives specified in rfc2616. This
  * implementation is guided by the guidance offered in rfc2616-sec13.
  */
-class Google_Http_CacheParser
+class BackupPlus_Google_Http_CacheParser
 {
   public static $CACHEABLE_HTTP_METHODS = array('GET', 'HEAD');
   public static $CACHEABLE_STATUS_CODES = array('200', '203', '300', '301');
@@ -34,11 +36,11 @@ class Google_Http_CacheParser
    * Check if an HTTP request can be cached by a private local cache.
    *
    * @static
-   * @param Google_Http_Request $resp
+   * @param BackupPlus_Google_Http_Request $resp
    * @return bool True if the request is cacheable.
    * False if the request is uncacheable.
    */
-  public static function isRequestCacheable(UDP_Google_Http_Request $resp)
+  public static function isRequestCacheable(BackupPlus_Google_Http_Request $resp)
   {
     $method = $resp->getRequestMethod();
     if (! in_array($method, self::$CACHEABLE_HTTP_METHODS)) {
@@ -60,11 +62,11 @@ class Google_Http_CacheParser
    * Check if an HTTP response can be cached by a private local cache.
    *
    * @static
-   * @param Google_Http_Request $resp
+   * @param BackupPlus_Google_Http_Request $resp
    * @return bool True if the response is cacheable.
    * False if the response is un-cacheable.
    */
-  public static function isResponseCacheable(UDP_Google_Http_Request $resp)
+  public static function isResponseCacheable(BackupPlus_Google_Http_Request $resp)
   {
     // First, check if the HTTP request was cacheable before inspecting the
     // HTTP response.
@@ -112,11 +114,11 @@ class Google_Http_CacheParser
 
   /**
    * @static
-   * @param Google_Http_Request $resp
+   * @param BackupPlus_Google_Http_Request $resp
    * @return bool True if the HTTP response is considered to be expired.
    * False if it is considered to be fresh.
    */
-  public static function isExpired(UDP_Google_Http_Request $resp)
+  public static function isExpired(BackupPlus_Google_Http_Request $resp)
   {
     // HTTP/1.1 clients and caches MUST treat other invalid date formats,
     // especially including the value “0”, as in the past.
@@ -151,7 +153,7 @@ class Google_Http_CacheParser
       // We can't default this to now, as that means future cache reads
       // will always pass with the logic below, so we will require a
       // date be injected if not supplied.
-      throw new Google_Exception("All cacheable requests must have creation dates.");
+      throw new BackupPlus_Google_Exception("All cacheable requests must have creation dates.");
     }
 
     if (false == $freshnessLifetime && isset($responseHeaders['expires'])) {
@@ -174,10 +176,10 @@ class Google_Http_CacheParser
   /**
    * Determine if a cache entry should be revalidated with by the origin.
    *
-   * @param Google_Http_Request $response
+   * @param BackupPlus_Google_Http_Request $response
    * @return bool True if the entry is expired, else return false.
    */
-  public static function mustRevalidate(UDP_Google_Http_Request $response)
+  public static function mustRevalidate(BackupPlus_Google_Http_Request $response)
   {
     // [13.3] When a cache has a stale entry that it would like to use as a
     // response to a client's request, it first has to check with the origin

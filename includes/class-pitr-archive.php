@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** A portable, uncompressed container for one PITR point's already compressed members. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 require_once __DIR__ . '/class-tar.php';
@@ -32,7 +34,7 @@ class BackupPlus_PITR_Archive {
 			}
 		} catch ( Throwable $error ) {
 			$tar->close();
-			if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+			if ( is_file( $path ) && ! is_link( $path ) ) { wp_delete_file( $path ); }
 			throw $error;
 		} finally { umask( $mask ); }
 	}
@@ -90,7 +92,7 @@ class BackupPlus_PITR_Archive {
 		if ( ! is_string( $name ) || ! preg_match( '/\A(backup_pitr_[a-f0-9]{32}_[a-f0-9]{32}_)(?:full\.sql\.(?:gz|zst)|log[0-9]+\.bin\.(?:gz|zst)|manifest\.json)(?:\.crypt)?\z/D', $name, $match ) ) { return; }
 		$archive = $directory . '/' . $match[1] . 'point.tar';
 		$path    = $directory . '/' . $name;
-		if ( ! is_link( $archive ) && is_file( $archive ) && ! is_link( $path ) && is_file( $path ) ) { unlink( $path ); }
+		if ( ! is_link( $archive ) && is_file( $archive ) && ! is_link( $path ) && is_file( $path ) ) { wp_delete_file( $path ); }
 	}
 
 	/** Copy one bounded member and authenticate it before exposing it to a restore. */
@@ -115,7 +117,7 @@ class BackupPlus_PITR_Archive {
 			if ( ! hash_equals( $artifact['sha256'], hash_file( 'sha256', $temp ) ) ) { throw new RuntimeException( 'PITR point member checksum failed.' ); }
 			if ( is_link( $target ) || ! rename( $temp, $target ) ) { throw new RuntimeException( 'Could not stage PITR point member.' ); }
 			return $target;
-		} finally { if ( is_file( $temp ) && ! is_link( $temp ) ) { unlink( $temp ); }
+		} finally { if ( is_file( $temp ) && ! is_link( $temp ) ) { wp_delete_file( $temp ); }
 		}
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_touch, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Creating zip archives for an entity, splitting them by size and resuming across runs. */
 
@@ -96,7 +97,7 @@ trait BackupPlus_Backup_Zip_Writer {
 				}
 			} elseif ( file_exists( $examine_zip ) ) {
 				$backupplus->log( 'Zip file already exists, but is not readable or was zero-sized; will remove: ' . basename( $examine_zip ) );
-				@unlink( $examine_zip );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				wp_delete_file( $examine_zip );
 			} elseif ( $backupplus->is_uploaded( basename( $examine_zip ) ) ) {
 				$this->populate_existing_files_list_from_zip( $examine_zip, true );
 			}
@@ -268,7 +269,7 @@ trait BackupPlus_Backup_Zip_Writer {
 				unset( $buf );
 
 				if ( ! $final ) {
-					@unlink( $cache_file_base . '-zfb.gz.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					wp_delete_file( $cache_file_base . '-zfb.gz.tmp' );
 					@gzclose( $whandle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 				} else {
 					gzclose( $whandle );
@@ -283,13 +284,13 @@ trait BackupPlus_Backup_Zip_Writer {
 						}
 					}
 					if ( ! empty( $aborted_on_skipped ) ) {
-						@unlink( $cache_file_base . '-zfs.gz.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-						@unlink( $cache_file_base . '-zfb.gz.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $cache_file_base . '-zfs.gz.tmp' );
+						wp_delete_file( $cache_file_base . '-zfb.gz.tmp' );
 					} else {
 						$info_array = array( 'makezip_recursive_batchedbytes' => $this->makezip_recursive_batchedbytes );
 						if ( ! file_put_contents( $cache_file_base . '-info.tmp', serialize( $info_array ) ) ) {
-							@unlink( $cache_file_base . '-zfs.gz.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-							@unlink( $cache_file_base . '-zfb.gz.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+							wp_delete_file( $cache_file_base . '-zfs.gz.tmp' );
+							wp_delete_file( $cache_file_base . '-zfb.gz.tmp' );
 						}
 						if ( $dhandle = gzopen( $cache_file_base . '-zfd.gz.tmp', 'w' ) ) {
 							if ( ! gzwrite( $dhandle, serialize( $this->zipfiles_dirbatched ) ) ) {
@@ -301,10 +302,10 @@ trait BackupPlus_Backup_Zip_Writer {
 						}
 						if ( ! empty( $aborted_on_dirbatched ) ) {
 							// phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged -- no error required if the file doesn't exist.
-							@unlink( $cache_file_base . '-zfs.gz.tmp' );
-							@unlink( $cache_file_base . '-zfd.gz.tmp' );
-							@unlink( $cache_file_base . '-zfb.gz.tmp' );
-							@unlink( $cache_file_base . '-info.tmp' );
+							wp_delete_file( $cache_file_base . '-zfs.gz.tmp' );
+							wp_delete_file( $cache_file_base . '-zfd.gz.tmp' );
+							wp_delete_file( $cache_file_base . '-zfb.gz.tmp' );
+							wp_delete_file( $cache_file_base . '-info.tmp' );
 						}
 					}
 				}

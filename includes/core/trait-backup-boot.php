@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.RestrictedFunctions.mysql_mysql_ping, WordPress.DB.RestrictedFunctions.mysql_mysqli_ping -- Native connections to the databases being backed up or recovered, which $wpdb cannot open.
 
 /** Booting a backup job: creating its state, checking prerequisites and scheduling the first resumption. */
 
@@ -26,7 +27,7 @@ trait BackupPlus_Core_Backup_Boot {
 		if ( function_exists( 'ignore_user_abort' ) ) {
 			@ignore_user_abort( true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}       if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		$is_scheduled_backup = is_bool( $backup_files ) || is_bool( $backup_database ) || ! empty( $options['scheduled_incremental'] );
 
@@ -221,7 +222,7 @@ trait BackupPlus_Core_Backup_Boot {
 			$ret = $this->backup_finish( false, false );
 			// Don't keep useless log files
 			if ( ! BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) && ! empty( $this->logfile_name ) && file_exists( $this->logfile_name ) ) {
-				unlink( $this->logfile_name );
+				wp_delete_file( $this->logfile_name );
 			}
 			// Currently backup_finish() appears to have a void return. We don't want to return false, as that indicates failure. But neither was it really a success. Void seems fine for now, given that nothing is currently using it.
 			return $ret;

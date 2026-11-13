@@ -130,7 +130,7 @@ trait BackupPlus_Core_Backup_Dispatch {
 			return $result;
 		}
 
-		do_action( $event, $options );
+		do_action( $event, $options ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- $event is one of the backupplus_backupnow_* hooks allowed above.
 	}
 
 	/**

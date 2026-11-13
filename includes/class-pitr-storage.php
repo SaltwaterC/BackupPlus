@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** PITR artifacts use existing provider instances and age encryption. */
 
@@ -143,7 +145,7 @@ class BackupPlus_PITR_Storage {
 		} catch ( Throwable $error ) {
 			foreach ( array( $path, $path . '.crypt' ) as $file ) {
 				if ( is_file( $file ) && ! is_link( $file ) ) {
-					unlink( $file );
+					wp_delete_file( $file );
 				}
 			} throw $error;
 		}
@@ -187,10 +189,10 @@ class BackupPlus_PITR_Storage {
 			if ( false === $encrypted || ! chmod( $encrypted, 0600 ) ) {
 				throw new RuntimeException( 'PITR age encryption failed.' );
 			}
-			unlink( $path );
+			wp_delete_file( $path );
 			$path = $encrypted;
 		} elseif ( 'none' !== $mode ) {
-			unlink( $path );
+			wp_delete_file( $path );
 			throw new RuntimeException( 'Unsupported PITR encryption configuration.' );
 		}
 		$artifact = array(
@@ -219,14 +221,14 @@ class BackupPlus_PITR_Storage {
 			throw new RuntimeException( 'Could not protect PITR transfer verification copy.' );
 		}
 		try {
-			unlink( $path );
+			wp_delete_file( $path );
 			$result = $this->download( $object, $artifact['name'] );
 			if ( false === $result || is_wp_error( $result ) || ! $this->verify_file( $artifact ) ) {
 				throw new RuntimeException( 'PITR remote object verification failed.' );
 			}
 		} finally {
 			if ( is_file( $path ) ) {
-				unlink( $path );
+				wp_delete_file( $path );
 			}
 			if ( ! rename( $copy, $path ) ) {
 				throw new RuntimeException( 'Could not restore local PITR artifact after remote verification.' );
@@ -284,7 +286,7 @@ class BackupPlus_PITR_Storage {
 		}
 		foreach ( $this->destinations as $destination ) {
 			if ( is_file( $path ) ) {
-				unlink( $path );
+				wp_delete_file( $path );
 			}
 			$object = $this->provider( $destination );
 			$result = $this->download( $object, $artifact['name'] );
@@ -446,7 +448,7 @@ class BackupPlus_PITR_Storage {
 		foreach ( $delete_local ? $files : array() as $file ) {
 			$path = $this->path( $file );
 			if ( is_file( $path ) && null !== $deadline && microtime( true ) >= $deadline ) { throw new BackupPlus_PITR_Delete_Pending(); }
-			if ( is_file( $path ) && ! unlink( $path ) ) {
+			if ( is_file( $path ) && ! wp_delete_file( $path ) ) {
 				throw new RuntimeException( 'Could not delete local PITR artifact.' );
 			}
 		}

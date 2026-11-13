@@ -1,0 +1,59 @@
+# Files that `make dist` leaves out of the plugin package (see scripts/build-dist.php).
+#
+# Only files tracked by git are packaged, so ignored files (.env, .cache/, node_modules/, build/) can never be shipped.
+# Patterns follow .gitignore rules: a leading / anchors a pattern to the plugin root, a trailing / matches a directory and
+# everything in it, a pattern without a slash matches a name at any depth, * stays within one path segment and ** spans
+# any number of them. Negation (!) is not supported.
+#
+# The plugin loads readable scripts and stylesheets when SCRIPT_DEBUG or BackupPlus debug mode is on, so the unminified
+# files in css/, js/ and includes/ are runtime files, not sources. Keep them.
+
+# Hidden files: version control, CI and editor configuration. The WordPress.org Plugin Check rejects them.
+.*
+
+# Development, build and test tooling
+/assets-src/
+/dev/
+/docs/
+/scripts/
+/tests/
+/compose.yaml
+# Installs the development tools only; the build writes a composer.json listing the bundled vendor/ packages instead.
+/composer.json
+/composer.lock
+/Makefile
+/package.json
+/package-lock.json
+/phpunit.xml.dist
+
+# Developer documentation; readme.txt is the WordPress.org readme, and readme.txt refers to changelog-old.txt and
+# example-decrypt.php, so those ship.
+/README.md
+/SECURITY.md
+
+# Translation sources: WordPress loads the compiled .mo files. backupplus.pot ships for translators.
+/languages/*.po
+
+# The plugin directory rejects compressed files. This one is only a smaller download of js/backupplus-agessh.wasm, which
+# ships; the plugin offers it only when it exists (includes/admin/trait-assets.php).
+/js/backupplus-agessh.wasm.gz
+
+# Compiled outside this repository; the minified, versioned stylesheet ships
+/css/backupplus-tour.scss
+
+# Development files of bundled libraries. Their LICENSE files and composer.json metadata ship.
+/vendor/**/tests/
+/vendor/**/docs/
+/vendor/**/README.md
+/vendor/**/CHANGELOG.md
+/vendor/**/UPGRADING.md
+/vendor/**/BACKERS.md
+/vendor/**/SECURITY.md
+/vendor/**/phpunit.xml.dist
+/vendor/**/psalm.xml
+/vendor/guzzle/guzzle/build.xml
+/vendor/rackspace/php-opencloud/apigen.neon
+/vendor/team-updraft/common-libs/CI/
+/vendor/team-updraft/common-libs/gulpfile.js
+/vendor/team-updraft/common-libs/package.json
+/vendor/team-updraft/common-libs/src/updraft-semaphore/test.php

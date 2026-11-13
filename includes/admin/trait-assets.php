@@ -125,16 +125,21 @@ trait BackupPlus_Admin_Assets {
 		wp_enqueue_script( 'backupplus-decryption', BACKUPPLUS_URL . '/includes/backupplus-decryption.js', array(), $enqueue_version, true );
 		wp_enqueue_script( 'backupplus-restore-decryption', BACKUPPLUS_URL . '/includes/backupplus-restore-decryption.js', array( 'backupplus-decryption', 'backupplus-admin-common' ), $enqueue_version . '.' . filemtime( BACKUPPLUS_DIR . '/includes/backupplus-restore-decryption.js' ), true );
 		$agessh_enqueue_version = $enqueue_version . '.' . filemtime( BACKUPPLUS_DIR . '/js/backupplus-agessh.wasm' );
+		$agessh                 = array(
+			'wasmURL'    => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm?ver=' . rawurlencode( $agessh_enqueue_version ),
+			'runtimeURL' => BACKUPPLUS_URL . '/js/backupplus-agessh-wasm_exec.js?ver=' . rawurlencode( $agessh_enqueue_version ),
+		);
+		// The gzip-compressed module is a smaller download of the same file. The WordPress.org package leaves it out, because
+		// the plugin directory does not accept compressed files; the browser then fetches the plain module.
+		if ( is_file( BACKUPPLUS_DIR . '/js/backupplus-agessh.wasm.gz' ) ) {
+			$agessh['compressedWasmURL'] = BACKUPPLUS_URL . '/js/backupplus-agessh.wasm.gz?ver=' . rawurlencode( $agessh_enqueue_version );
+		}
 		wp_localize_script(
 			'backupplus-decryption',
 			'backupplus_decryption',
 			array(
 				'worker'      => BACKUPPLUS_URL . '/js/backupplus-decryption-worker.js?ver=' . rawurlencode( $enqueue_version ),
-				'agessh'      => array(
-					'compressedWasmURL' => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm.gz?ver=' . rawurlencode( $agessh_enqueue_version ),
-					'wasmURL'           => BACKUPPLUS_URL . '/js/backupplus-agessh.wasm?ver=' . rawurlencode( $agessh_enqueue_version ),
-					'runtimeURL'        => BACKUPPLUS_URL . '/js/backupplus-agessh-wasm_exec.js?ver=' . rawurlencode( $agessh_enqueue_version ),
-				),
+				'agessh'      => $agessh,
 				'decrypting'  => __( 'Decrypting locally:', 'backupplus' ),
 				'extracting'  => __( 'Extracting locally:', 'backupplus' ),
 				'stages'      => array(
@@ -168,17 +173,17 @@ trait BackupPlus_Admin_Assets {
 
 		$this->ensure_sufficient_jquery_and_enqueue();
 		$jquery_blockui_enqueue_version = $backupplus->use_unminified_scripts() ? '2.71.0' . '.' . time() : '2.71.0';
-		wp_enqueue_script( 'jquery-blockui', BACKUPPLUS_URL . '/includes/blockui/jquery.blockUI' . $min_or_not . '.js', array( 'jquery' ), $jquery_blockui_enqueue_version );
+		wp_enqueue_script( 'jquery-blockui', BACKUPPLUS_URL . '/includes/blockui/jquery.blockUI' . $min_or_not . '.js', array( 'jquery' ), $jquery_blockui_enqueue_version, false );
 
-		wp_enqueue_script( 'jquery-labelauty', BACKUPPLUS_URL . '/includes/labelauty/jquery-labelauty' . $backupplus_min_or_not . '.js', array( 'jquery' ), $enqueue_version );
+		wp_enqueue_script( 'jquery-labelauty', BACKUPPLUS_URL . '/includes/labelauty/jquery-labelauty' . $backupplus_min_or_not . '.js', array( 'jquery' ), $enqueue_version, false );
 		wp_enqueue_style( 'jquery-labelauty', BACKUPPLUS_URL . '/includes/labelauty/jquery-labelauty' . $backupplus_min_or_not . '.css', array(), $enqueue_version );
 		$serialize_js_enqueue_version = $backupplus->use_unminified_scripts() ? '3.2.0' . '.' . time() : '3.2.0';
-		wp_enqueue_script( 'jquery.serializeJSON', BACKUPPLUS_URL . '/includes/jquery.serializeJSON/jquery.serializejson' . $min_or_not . '.js', array( 'jquery' ), $serialize_js_enqueue_version );
-		wp_enqueue_script( 'handlebars', BACKUPPLUS_URL . '/includes/handlebars/handlebars' . $min_or_not . '.js', array(), $enqueue_version );
+		wp_enqueue_script( 'jquery.serializeJSON', BACKUPPLUS_URL . '/includes/jquery.serializeJSON/jquery.serializejson' . $min_or_not . '.js', array( 'jquery' ), $serialize_js_enqueue_version, false );
+		wp_enqueue_script( 'handlebars', BACKUPPLUS_URL . '/includes/handlebars/handlebars' . $min_or_not . '.js', array(), $enqueue_version, false );
 		$this->enqueue_jstree();
 
 		$jqueryui_dialog_extended_version = $backupplus->use_unminified_scripts() ? '1.0.4' . '.' . time() : '1.0.4';
-		wp_enqueue_script( 'jquery-ui.dialog.extended', BACKUPPLUS_URL . '/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended' . $backupplus_min_or_not . '.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog' ), $jqueryui_dialog_extended_version );
+		wp_enqueue_script( 'jquery-ui.dialog.extended', BACKUPPLUS_URL . '/includes/jquery-ui.dialog.extended/jquery-ui.dialog.extended' . $backupplus_min_or_not . '.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-dialog' ), $jqueryui_dialog_extended_version, false );
 
 		$remote_storage_options_and_templates = BackupPlus_Storage_Methods_Interface::get_remote_storage_options_and_templates();
 		$backup_methods                       = $backupplus->backup_methods;
@@ -252,7 +257,7 @@ trait BackupPlus_Admin_Assets {
 					'chain_points_deleting'                => __( 'Deleting...', 'backupplus' ),
 					'chain_points_nothing'                 => __( 'Nothing to delete: none of the selected recovery points has a copy there.', 'backupplus' ),
 					/* translators: 1: Number of files, 2: Size freed. */
-					'chain_points_deleted'                 => __( 'Deleted %d file(s) (%s) from this server.', 'backupplus' ),
+					'chain_points_deleted'                 => __( 'Deleted %1$d file(s) (%2$s) from this server.', 'backupplus' ),
 					/* translators: %d: Number of files. */
 					'chain_points_deleted_remote'          => __( 'Deleted %d file(s) from remote storage.', 'backupplus' ),
 					/* translators: 1: Number of recovery points, 2: Backup component, e.g. Uploads. */
@@ -269,7 +274,7 @@ trait BackupPlus_Admin_Assets {
 					/* translators: %d: Number of recovery points. */
 					'chain_points_preparing'               => __( 'Preparing %d recovery point(s); files held only in remote storage are retrieved first...', 'backupplus' ),
 					/* translators: 1: Archive name, 2: File count, 3: Archive size. */
-					'chain_points_started'                 => __( 'Download started: %s (%d files, %s).', 'backupplus' ),
+					'chain_points_started'                 => __( 'Download started: %1$s (%2$d files, %3$s).', 'backupplus' ),
 					'download_selected'                    => __( 'Download selected', 'backupplus' ),
 					'download_select_all'                  => __( 'Select all', 'backupplus' ),
 					'dismiss_selected'                     => __( 'Dismiss selected', 'backupplus' ),
@@ -339,7 +344,7 @@ trait BackupPlus_Admin_Assets {
 					'processing'                           => __( 'Processing...', 'backupplus' ),
 					'loading'                              => __( 'Loading...', 'backupplus' ),
 					'pleasefillinrequired'                 => __( 'Please fill in the required information.', 'backupplus' ),
-					/* translators: %s: Settings type */
+					/* translators: %s: Name of the remote storage method. */
 					'test_settings'                        => __( 'Test %s Settings', 'backupplus' ),
 					/* translators: %s: Settings type */
 					'testing_settings'                     => __( 'Testing %s Settings...', 'backupplus' ),
@@ -497,7 +502,7 @@ trait BackupPlus_Admin_Assets {
 
 		global $pagenow;
 
-		if ( BackupPlus_Options::admin_page() != $pagenow || ! isset( $_REQUEST['page'] ) || 'backupplus' != $_REQUEST['page'] || ! BackupPlus_Options::user_can_manage() ) {
+		if ( BackupPlus_Options::admin_page() != $pagenow || ! isset( $_REQUEST['page'] ) || 'backupplus' != $_REQUEST['page'] || ! BackupPlus_Options::user_can_manage() ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checks whether this is the BackupPlus settings page.
 			return;
 		}
 
@@ -613,7 +618,7 @@ trait BackupPlus_Admin_Assets {
 		$jstree_enqueue_version = $backupplus->use_unminified_scripts() ? '3.3.12-rc.0' . '.' . time() : '3.3.12-rc.0';
 		$min_or_not             = $backupplus->use_unminified_scripts() ? '' : '.min';
 
-		wp_enqueue_script( 'jstree', BACKUPPLUS_URL . '/includes/jstree/jstree' . $min_or_not . '.js', array( 'jquery' ), $jstree_enqueue_version );
+		wp_enqueue_script( 'jstree', BACKUPPLUS_URL . '/includes/jstree/jstree' . $min_or_not . '.js', array( 'jquery' ), $jstree_enqueue_version, false );
 		wp_enqueue_style( 'jstree', BACKUPPLUS_URL . '/includes/jstree/themes/default/style' . $min_or_not . '.css', array(), $jstree_enqueue_version );
 	}
 

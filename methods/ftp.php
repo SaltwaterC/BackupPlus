@@ -14,14 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Migrate options to new-style storage - May 2014
 if ( ! is_array( BackupPlus_Options::get_backupplus_option( 'backupplus_ftp' ) ) && '' != BackupPlus_Options::get_backupplus_option( 'backupplus_server_address', '' ) ) {
-	$opts = array(
+	$backupplus_ftp_opts = array(
 		'user'    => BackupPlus_Options::get_backupplus_option( 'backupplus_ftp_login' ),
 		'pass'    => BackupPlus_Options::get_backupplus_option( 'backupplus_ftp_pass' ),
 		'host'    => BackupPlus_Options::get_backupplus_option( 'backupplus_server_address' ),
 		'path'    => BackupPlus_Options::get_backupplus_option( 'backupplus_ftp_remote_path' ),
 		'passive' => true,
 	);
-	BackupPlus_Options::update_backupplus_option( 'backupplus_ftp', $opts );
+	BackupPlus_Options::update_backupplus_option( 'backupplus_ftp', $backupplus_ftp_opts );
 	BackupPlus_Options::delete_backupplus_option( 'backupplus_server_address' );
 	BackupPlus_Options::delete_backupplus_option( 'backupplus_ftp_pass' );
 	BackupPlus_Options::delete_backupplus_option( 'backupplus_ftp_remote_path' );
@@ -133,8 +133,8 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 		$server     = $settings['host'];
 		$encryption = $settings['encryption'];
 
-		/* translators: %s: Storage method name */
 		if ( '' == trim( $server ) || '' == trim( $user ) || '' == trim( $pass ) ) {
+			/* translators: %s: Name of the storage method. */
 			return new WP_Error( 'no_settings', sprintf( __( 'No %s settings were found', 'backupplus' ), 'FTP' ) );
 		}
 
@@ -152,8 +152,8 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			backupplus_try_include_file( 'methods/ftp/client.php', 'include_once' );
 		}
 		$missing = BackupPlus_ftp_wrapper::get_support_errors( 'tls' === $encryption );
-		/* translators: %s: Required PHP cURL functions or libcurl capabilities. */
 		if ( $missing ) {
+			/* translators: %s: Missing PHP cURL functions or libcurl capabilities. */
 			return new WP_Error( 'ftp_missing_support', sprintf( __( 'Your PHP installation needs the following to use this FTP connection: %s.', 'backupplus' ), implode( ', ', $missing ) ) );
 		}
 
@@ -271,7 +271,7 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			'input_passive_label'            => __( 'Passive mode', 'backupplus' ),
 			'input_passive_title'            => __( 'Almost all FTP servers will want passive mode; but if you need active mode, then uncheck this.', 'backupplus' ),
 			'input_passive_type'             => 'checkbox',
-			/* translators: %s: Backup method name */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'               => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
 		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );
@@ -357,8 +357,8 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			return $ftp;
 		}
 
-		/* translators: %s: Storage method name */
 		if ( ! $ftp->connect() ) {
+			/* translators: %s: Name of the storage method. */
 			return new WP_Error( 'ftp_login_failed', sprintf( __( '%s connection failure', 'backupplus' ), 'FTP' ) . ': ' . $ftp->get_error() );
 		}
 
@@ -623,12 +623,12 @@ class BackupPlus_BackupModule_ftp extends BackupPlus_BackupModule {
 			return;
 		}
 		if ( empty( $login ) ) {
-			/* translators: %s: Missing credential type (e.g., login) */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'login', 'backupplus' ) ) );
 			return;
 		}
 		if ( empty( $pass ) ) {
-			/* translators: %s: Missing credential type (e.g., password) */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'password', 'backupplus' ) ) );
 			return;
 		}

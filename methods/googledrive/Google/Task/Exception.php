@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
-class Google_Task_Exception extends Google_Exception
+class BackupPlus_Google_Task_Exception extends BackupPlus_Google_Exception
 {
 }

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Filesystem access that moves by rename only, never by copy and delete. */
 

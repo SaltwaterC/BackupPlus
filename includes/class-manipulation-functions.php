@@ -512,7 +512,7 @@ class BackupPlus_Manipulation_Functions {
 	 * @return String - normalised
 	 */
 	public static function normalise_url( $url ) {
-		$parsed_descrip_url = parse_url( $url );
+		$parsed_descrip_url = wp_parse_url( $url );
 		if ( is_array( $parsed_descrip_url ) ) {
 			if ( preg_match( '/^www\./i', $parsed_descrip_url['host'], $matches ) ) {
 				$parsed_descrip_url['host'] = substr( $parsed_descrip_url['host'], 4 );

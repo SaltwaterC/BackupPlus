@@ -20,18 +20,18 @@
 // Modified by the BackupPlus project in 2026.
 
 /**
- * Http Streams based implementation of Google_IO.
+ * Http Streams based implementation of BackupPlus_Google_IO.
  *
  * @author Stuart Langley <slangley@google.com>
  */
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
-class UDP_Google_IO_Stream extends UDP_Google_IO_Abstract
+class BackupPlus_Google_IO_Stream extends BackupPlus_Google_IO_Abstract
 {
   const TIMEOUT = "timeout";
   const ZLIB = "compress.zlib://";
@@ -48,13 +48,13 @@ class UDP_Google_IO_Stream extends UDP_Google_IO_Abstract
     "verify_peer" => true,
   );
 
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     if (!ini_get('allow_url_fopen')) {
       $error = 'The stream IO handler requires the allow_url_fopen runtime ' .
                'configuration to be enabled';
       $client->getLogger()->critical($error);
-      throw new UDP_Google_IO_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_IO_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     parent::__construct($client);
@@ -63,11 +63,11 @@ class UDP_Google_IO_Stream extends UDP_Google_IO_Abstract
   /**
    * Execute an HTTP Request
    *
-   * @param Google_Http_Request $request the http request to be executed
+   * @param BackupPlus_Google_Http_Request $request the http request to be executed
    * @return array containing response headers, body, and http code
-   * @throws UDP_Google_IO_Exception on curl or IO error
+   * @throws BackupPlus_Google_IO_Exception on curl or IO error
    */
-  public function executeRequest(UDP_Google_Http_Request $request)
+  public function executeRequest(BackupPlus_Google_Http_Request $request)
   {
     $default_options = stream_context_get_options(stream_context_get_default());
 
@@ -185,7 +185,7 @@ if (!empty($this->options['proxy'])) {
       );
 
       $this->client->getLogger()->error('Stream ' . $error);
-      throw new UDP_Google_IO_Exception($error, $this->trappedErrorNumber); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_IO_Exception($error, $this->trappedErrorNumber); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     $response_data = false;
@@ -219,7 +219,7 @@ if (!empty($this->options['proxy'])) {
       );
 
       $this->client->getLogger()->error('Stream ' . $error);
-      throw new UDP_Google_IO_Exception($error, $respHttpCode); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_IO_Exception($error, $respHttpCode); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     $responseHeaders = $this->getHttpResponseHeaders($rawResponseHeaders);

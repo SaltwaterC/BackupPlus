@@ -20,7 +20,7 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -32,18 +32,18 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @author Chris Chabot <chabotc@google.com>
  */
-class Google_Cache_File extends Google_Cache_Abstract
+class BackupPlus_Google_Cache_File extends BackupPlus_Google_Cache_Abstract
 {
   const MAX_LOCK_RETRIES = 10;
   private $path;
   private $fh;
 
   /**
-   * @var Google_Client the current client
+   * @var BackupPlus_Google_Client the current client
    */
   private $client;
 
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     $this->client = $client;
     $this->path = $this->client->getClassConfig($this, 'directory');
@@ -77,7 +77,7 @@ class Google_Cache_File extends Google_Cache_Abstract
     if ($this->acquireReadLock($storageFile)) {
       if (filesize($storageFile) > 0) {
         $data = fread($this->fh, filesize($storageFile));
-        $data = BackupPlus::unserialize($data, array('UDP_Google_Http_Request'));
+        $data = BackupPlus::unserialize($data, array('BackupPlus_Google_Http_Request'));
       } else {
         $this->client->getLogger()->debug(
             'Cache file was empty',
@@ -120,12 +120,12 @@ class Google_Cache_File extends Google_Cache_Abstract
   public function delete($key)
   {
     $file = $this->getCacheFile($key);
-    if (file_exists($file) && !unlink($file)) {
+    if (file_exists($file) && !wp_delete_file($file)) {
       $this->client->getLogger()->error(
           'File cache delete failed',
           array('key' => $key, 'file' => $file)
       );
-      throw new Google_Cache_Exception("Cache file could not be deleted");
+      throw new BackupPlus_Google_Cache_Exception("Cache file could not be deleted");
     }
 
     $this->client->getLogger()->debug(
@@ -156,7 +156,7 @@ class Google_Cache_File extends Google_Cache_Abstract
             'File cache creation failed',
             array('dir' => $storageDir)
         );
-        throw new Google_Cache_Exception("Could not create storage directory: $storageDir"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+        throw new BackupPlus_Google_Cache_Exception("Could not create storage directory: $storageDir"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
       }
     }
     return $storageDir;

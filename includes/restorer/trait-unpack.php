@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Unpacking archives into the working directory. */
 
@@ -117,10 +118,10 @@ trait BackupPlus_Restorer_Unpack {
 		// Keep prepared plaintext for interrupted extraction; remove it on success.
 		if ( ! is_wp_error( $result ) && $result ) {
 			if ( $encrypted_package || $delete_package ) {
-				unlink( $package );
+				wp_delete_file( $package );
 			}
 			if ( $encrypted_package && $delete_package ) {
-				unlink( $encrypted_package );
+				wp_delete_file( $encrypted_package );
 			}
 		}
 
@@ -172,7 +173,7 @@ trait BackupPlus_Restorer_Unpack {
 			return BackupPlus_Filesystem_Functions::unzip_file( $plain, $working_dir, 0, array(), 'extract_only', 'tar' );
 		} finally {
 			if ( $plain !== $package && is_file( $plain ) ) {
-				unlink( $plain );
+				wp_delete_file( $plain );
 			}
 		}
 	}
@@ -223,7 +224,7 @@ trait BackupPlus_Restorer_Unpack {
 		}
 		if ( '' !== $error ) {
 			if ( is_file( $plain ) ) {
-				unlink( $plain );
+				wp_delete_file( $plain );
 			}
 			return new WP_Error( 'unpack_failed', $error );
 		}
@@ -253,7 +254,7 @@ trait BackupPlus_Restorer_Unpack {
 		$backup_dir = $wp_filesystem->find_folder( $backupplus_dir );
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		$packsize = round( filesize( $backup_dir . $package ) / 1048576, 1 ) . ' Mb';
 
@@ -316,11 +317,11 @@ trait BackupPlus_Restorer_Unpack {
 				}
 				if ( ! $copied ) {
 					if ( '' !== $legacy_plain && is_file( $legacy_plain ) ) {
-						unlink( $legacy_plain );
+						wp_delete_file( $legacy_plain );
 					}
 					return new WP_Error( 'write_failed', __( 'Failed to write out the decrypted database to the filesystem', 'backupplus' ) );
 				} else {
-					unlink( $decrypted_file['fullpath'] );
+					wp_delete_file( $decrypted_file['fullpath'] );
 				}
 			} else {
 				return new WP_Error( 'decryption_failed', __( 'Decryption failed.', 'backupplus' ) . ' ' . __( 'The most likely cause is that you used the wrong key.', 'backupplus' ) );

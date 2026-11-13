@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Finishing a backup job: history, last-backup state and error reporting. */
 
@@ -132,7 +133,7 @@ trait BackupPlus_Core_Backup_Completion {
 						$fullpath = $backupplus_dir . '/' . $file;
 						if ( file_exists( $fullpath . '.list.tmp' ) ) {
 							$this->log( "Deleting zip manifest ({$file}.list.tmp)" );
-							unlink( $fullpath . '.list.tmp' );
+							wp_delete_file( $fullpath . '.list.tmp' );
 						}
 					}
 				}
@@ -273,7 +274,7 @@ trait BackupPlus_Core_Backup_Completion {
 			} elseif ( is_string( $err ) ) {
 				echo '<li>' . esc_html( $err ) . '</li>';
 			} else {
-				print '<li>' . esc_html( print_r( $err, true ) ) . '</li>';
+				print '<li>' . esc_html( print_r( $err, true ) ) . '</li>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- Shows an error of an unexpected type, escaped, rather than hiding it.
 			}
 		}
 		echo '</ul>';

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** Connecting the Google account: the OAuth redirect flow, token refresh and revocation, and the connected-account admin output. */
 
@@ -189,7 +190,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 		if ( headers_sent() ) {
 			$this->log(
 				sprintf(
-					/* translators: %s: Storage provider name */
+					/* translators: %s: Name of the remote storage provider. */
 					__( 'The %s authentication could not go ahead, because something else on your site is breaking it.', 'backupplus' ),
 					'Google Drive'
 				) . ' ' .
@@ -346,7 +347,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 				if ( is_numeric( $quota_total ) && is_numeric( $quota_used ) ) {
 					$available_quota = $quota_total - $quota_used;
 					$used_perc       = round( $quota_used * 100 / $quota_total, 1 );
-					/* translators: 1: Storage provider name, 2: Percentage used, 3: Available quota in MB */
+					/* translators: 1: Name of the storage service, 2: Percentage of quota used, 3: Available quota in MB. */
 					$message .= sprintf( __( 'Your %1$s quota usage: %2$s %% used, %3$s available', 'backupplus' ), 'Google Drive', $used_perc, round( $available_quota / 1048576, 1 ) . ' MB' );
 				}
 			} elseif ( is_wp_error( $storage ) ) {
@@ -361,7 +362,7 @@ trait BackupPlus_GoogleDrive_OAuth {
 				$message .= '</ul>';
 			}
 		} catch ( Exception $e ) {
-			if ( is_a( $e, 'UDP_Google_Service_Exception' ) ) {
+			if ( is_a( $e, 'BackupPlus_Google_Service_Exception' ) ) {
 				$errs     = $e->getErrors();
 				$message .= __( 'However, subsequent access attempts failed:', 'backupplus' );
 				if ( is_array( $errs ) ) {

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Uploading backup files to and downloading them from Google Drive. */
 
@@ -209,10 +210,10 @@ trait BackupPlus_GoogleDrive_Transfers {
 
 		$local_size = filesize( $file );
 
-		$gdfile        = new UDP_Google_Service_Drive_DriveFile();
+		$gdfile        = new BackupPlus_Google_Service_Drive_DriveFile();
 		$gdfile->title = $basename;
 
-		$ref = new UDP_Google_Service_Drive_ParentReference();
+		$ref = new BackupPlus_Google_Service_Drive_ParentReference();
 		$ref->setId( $parent_id );
 		$gdfile->setParents( array( $ref ) );
 
@@ -229,7 +230,7 @@ trait BackupPlus_GoogleDrive_Transfers {
 
 			$headers = array( 'content-range' => 'bytes */' . $local_size );
 
-			$http_request = new UDP_Google_Http_Request(
+			$http_request = new BackupPlus_Google_Http_Request(
 				$possible_location[0],
 				'PUT',
 				$headers,
@@ -260,8 +261,8 @@ trait BackupPlus_GoogleDrive_Transfers {
 			}
 		}
 
-		// BackupPlus_Google_Http_MediaFileUpload extends Google_Http_MediaFileUpload, with a few extra methods to change private properties to public ones
-		$media = new BackupPlus_Google_Http_MediaFileUpload(
+		// BackupPlus_GoogleDrive_Resumable_Upload extends BackupPlus_Google_Http_MediaFileUpload, with a few extra methods to change private properties to public ones
+		$media = new BackupPlus_GoogleDrive_Resumable_Upload(
 			$client,
 			$request,
 			( ( '.zip' == substr( $basename, -4, 4 ) ) ? 'application/zip' : 'application/octet-stream' ),
@@ -327,9 +328,9 @@ trait BackupPlus_GoogleDrive_Transfers {
 				$this->jobdata_set( $transkey, array( $media->backupplus_getResumeUri(), $media->getProgress() ) );
 				$backupplus->record_uploaded_chunk( round( 100 * $pointer / $local_size, 1 ), $extra_log, $file );
 			}
-		} catch ( UDP_Google_Service_Exception $e ) {
+		} catch ( BackupPlus_Google_Service_Exception $e ) {
 			return $this->catch_upload_engine_exceptions( $e, $handle, $try_again, $file, $parent_id );
-		} catch ( UDP_Google_IO_Exception $e ) {
+		} catch ( BackupPlus_Google_IO_Exception $e ) {
 			return $this->catch_upload_engine_exceptions( $e, $handle, $try_again, $file, $parent_id );
 		}
 
@@ -454,7 +455,7 @@ trait BackupPlus_GoogleDrive_Transfers {
 				$pend   = round( 100 * $end / $size, 1 );
 				$this->log( "Requesting byte range: $existing_size - $end ($pstart - $pend %)" );
 
-				$request       = $this->client->getAuth()->sign( new UDP_Google_Http_Request( $gdfile->getDownloadUrl(), 'GET', $headers, null ) );
+				$request       = $this->client->getAuth()->sign( new BackupPlus_Google_Http_Request( $gdfile->getDownloadUrl(), 'GET', $headers, null ) );
 				$http_request  = $this->client->getIo()->makeRequest( $request );
 				$http_response = $http_request->getResponseHttpCode();
 				if ( 200 == $http_response || 206 == $http_response ) {

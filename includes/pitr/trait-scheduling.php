@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** WordPress hook registration, the capture schedule, saved settings and the manual capture entry point. */
 
@@ -28,6 +29,7 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 		foreach ( self::intervals() as $minutes ) {
 			$schedules[ 'backupplus_pitr_' . $minutes ] = array(
 				'interval' => $minutes * 60,
+				/* translators: %d: Number of minutes. */
 				'display'  => 1 === $minutes ? __( 'Database log capture every minute', 'backupplus' ) : sprintf( __( 'Database log capture every %d minutes', 'backupplus' ), $minutes ),
 			);
 		}
@@ -46,7 +48,7 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 
 	public static function scheduled( $scheduled_at = null ) {
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );
+		@set_time_limit( 0 ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		try {
 			$config = self::config();
 			if ( self::has_exact_schedule( $config ) && is_numeric( $scheduled_at ) ) {
@@ -67,7 +69,7 @@ trait BackupPlus_PITR_Orchestrator_Scheduling {
 	/** Keep the daily full-snapshot limit independent of an exact incremental capture cadence. */
 	public static function baseline_check() {
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );
+		@set_time_limit( 0 ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		try {
 			$config = self::config();
 			if ( empty( $config['enabled'] ) || ! self::has_exact_schedule( $config ) || (int) $config['interval'] <= 60 ) {

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The option file that gives mysqldump the database password without putting it on the command line (BPS-08). */
 
@@ -68,7 +69,7 @@ class BackupPlus_Mysqldump_Option_File {
 	public static function remove( $path ) {
 		unset( self::$pending[ $path ] );
 		if ( file_exists( $path ) || is_link( $path ) ) {
-			@unlink( $path );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- A file already gone needs no removal.
+			wp_delete_file( $path );
 		}
 	}
 

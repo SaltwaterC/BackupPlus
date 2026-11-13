@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** One Zstandard layer around tar archives and SQL, before optional encryption. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 require_once __DIR__ . '/class-pitr-process.php';
@@ -32,7 +33,7 @@ class BackupPlus_Archive_Compression {
 		if ( ! self::is_zstd( $path ) ) { return gzopen( $path, 'rb' ); }
 		$decoded = self::decoded_file( $path );
 		try { return fopen( $decoded, 'rb' ); }
-		finally { unlink( $decoded ); }
+		finally { wp_delete_file( $decoded ); }
 	}
 
 	/** Publish only after the compressor closes successfully; retry leaves the source intact. */
@@ -44,7 +45,7 @@ class BackupPlus_Archive_Compression {
 			BackupPlus_PITR_Compression::compress_zstd( $path, $temporary, dirname( $path ) );
 			if ( ! rename( $temporary, $output ) ) { throw new RuntimeException( 'Could not publish the Zstandard archive.' ); }
 			return $output;
-		} finally { if ( is_file( $temporary ) ) { unlink( $temporary ); }
+		} finally { if ( is_file( $temporary ) ) { wp_delete_file( $temporary ); }
 		}
 	}
 }
@@ -101,7 +102,7 @@ class BackupPlus_Zstd_Writer {
 			usleep( 100000 );
 			proc_terminate( $this->process, 9 );
 			proc_close( $this->process ); }
-		foreach ( array( $this->temporary, $this->errors ) as $path ) { if ( $path && is_file( $path ) ) { unlink( $path ); }
+		foreach ( array( $this->temporary, $this->errors ) as $path ) { if ( $path && is_file( $path ) ) { wp_delete_file( $path ); }
 		}
 	}
 }

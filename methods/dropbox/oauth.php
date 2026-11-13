@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** Connecting and disconnecting the Dropbox account and the connected-account admin output. */
 
@@ -54,12 +55,12 @@ trait BackupPlus_Dropbox_OAuth {
 		try {
 			$url = $this->start_authorisation();
 		} catch ( Exception $e ) {
-			/* translators: 1: Service name, 2: Error message */
+			/* translators: 1: Name of the service or storage method, 2: Error message. */
 			$this->log( sprintf( __( '%1$s error: %2$s', 'backupplus' ), sprintf( __( '%s authentication', 'backupplus' ), 'Dropbox' ), $e->getMessage() ), 'error' );
 			return;
 		}
 		if ( headers_sent() ) {
-			/* translators: %s: Authentication service name (e.g., Dropbox) */
+			/* translators: %s: Name of the remote storage provider. */
 			$this->log( sprintf( __( 'The %s authentication could not go ahead, because something else on your site is breaking it.', 'backupplus' ), 'Dropbox' ) . ' ' . __( 'Try disabling your other plugins and switching to a default theme.', 'backupplus' ), 'error' );
 			return;
 		}
@@ -100,7 +101,7 @@ trait BackupPlus_Dropbox_OAuth {
 		if ( ! $echo_instead_of_return ) {
 			return $html;
 		}
-		echo $html;
+		echo wp_kses_post( $html );
 	}
 
 	/**
@@ -115,7 +116,7 @@ trait BackupPlus_Dropbox_OAuth {
 		} catch ( Exception $e ) {
 			$this->log(
 				sprintf(
-					/* translators: 1: Service name, 2: Error message */
+					/* translators: 1: Name of the service or storage method, 2: Error message. */
 					__( '%1$s error: %2$s', 'backupplus' ),
 					/* translators: %s: Service name */
 					sprintf( __( '%s de-authentication', 'backupplus' ), 'Dropbox' ),
@@ -144,7 +145,7 @@ trait BackupPlus_Dropbox_OAuth {
 		try {
 			$account_info = $dropbox->accountInfo();
 		} catch ( Exception $e ) {
-			/* translators: 1: Service name, 2: Error message */
+			/* translators: 1: Name of the service or storage method, 2: Error message. */
 			$accountinfo_err = sprintf( __( '%1$s error: %2$s', 'backupplus' ), 'Dropbox', $e->getMessage() ) . ' (' . $e->getCode() . ')';
 		}
 
@@ -204,7 +205,7 @@ trait BackupPlus_Dropbox_OAuth {
 						$shared_quota    = $quota_info->shared;
 						$available_quota = $total_quota - ( $normal_quota + $shared_quota );
 						$used_perc       = round( ( $normal_quota + $shared_quota ) * 100 / $total_quota, 1 );
-						/* translators: 1: Service name, 2: Percentage used, 3: Available space */
+						/* translators: 1: Name of the storage service, 2: Percentage of quota used, 3: Available quota in MB. */
 						$message .= ' <br>' . sprintf( __( 'Your %1$s quota usage: %2$s %% used, %3$s available', 'backupplus' ), 'Dropbox', $used_perc, round( $available_quota / 1048576, 1 ) . ' MB' );
 					} else {
 						$total_quota = max( $body->allocation->allocated, 1 );
@@ -216,7 +217,7 @@ trait BackupPlus_Dropbox_OAuth {
 						}
 						$available_quota = $total_quota - $used;
 						$used_perc       = round( $used * 100 / $total_quota, 1 );
-						/* translators: 1: Service name, 2: Percentage of quota used, 3: Available quota in MB */
+						/* translators: 1: Name of the storage service, 2: Percentage of quota used, 3: Available quota in MB. */
 						$message .= ' <br>' . sprintf( __( 'Your %1$s quota usage: %2$s%% used, %3$s available', 'backupplus' ), 'Dropbox', $used_perc, round( $available_quota / 1048576, 1 ) . ' MB' );
 					}
 				}

@@ -19,7 +19,7 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -31,7 +31,7 @@ if (!class_exists('UDP_Google_Client')) {
  * @author Chirag Shah <chirags@google.com>
  *
  */
-class UDP_Google_Http_Request
+class BackupPlus_Google_Http_Request
 {
   const GZIP_UA = " (gzip)";
 
@@ -227,7 +227,7 @@ class UDP_Google_Http_Request
    */
   public function setResponseHeaders($headers)
   {
-    $headers = Google_Utils::normalize($headers);
+    $headers = BackupPlus_Google_Utils::normalize($headers);
     if ($this->responseHeaders) {
       $headers = array_merge($this->responseHeaders, $headers);
     }
@@ -313,7 +313,7 @@ class UDP_Google_Http_Request
         $url = '/' . $url;
       }
     }
-    $parts = parse_url($url);
+    $parts = wp_parse_url($url);
     if (isset($parts['host'])) {
       $this->baseComponent = sprintf(
           "%s%s%s",
@@ -345,7 +345,7 @@ class UDP_Google_Http_Request
    */
   public function setRequestHeaders($headers)
   {
-    $headers = Google_Utils::normalize($headers);
+    $headers = BackupPlus_Google_Utils::normalize($headers);
     if ($this->requestHeaders) {
       $headers = array_merge($this->requestHeaders, $headers);
     }
@@ -420,7 +420,7 @@ class UDP_Google_Http_Request
   public function toBatchString($id)
   {
     $str = '';
-    $path = parse_url($this->getUrl(), PHP_URL_PATH) . "?" .
+    $path = wp_parse_url($this->getUrl(), PHP_URL_PATH) . "?" .
         http_build_query($this->queryParams);
     $str .= $this->getRequestMethod() . ' ' . $path . " HTTP/1.1\n";
 

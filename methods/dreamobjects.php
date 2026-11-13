@@ -240,10 +240,10 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 			$simplexmlelement_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: missing PHP module */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
 					__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
-					/* translators: 1: module description, 2: required module */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ], 'SimpleXMLElement' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->get_id(),
@@ -259,7 +259,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: missing PHP module */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( "Your web server's PHP installation does not included a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
 					__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ),
 					$this->get_id(),
@@ -277,7 +277,7 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 			'simplexmlelement_existence_label' => $simplexmlelement_existence_label,
 			'xmlwriter_existence_label'        => $xmlwriter_existence_label,
 			'console_url_text'                 => sprintf(
-				/* translators: 1: console URL, 2: service name, 3: service name */
+				/* translators: 1: Console URL, 2: Console name, 3: Service name. */
 				__( 'Get your access key and secret key from your <a href="%1$s">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage.', 'backupplus' ),
 				'https://panel.dreamhost.com/index.cgi?tree=storage.dreamhostobjects',
 				$backupplus->backup_methods[ $this->get_id() ],
@@ -286,21 +286,21 @@ class BackupPlus_BackupModule_dreamobjects extends BackupPlus_BackupModule_dream
 			'ssl_error_text'                   => esc_html__( 'If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus' ),
 			'credentials_creation_link_text'   => __( 'Create Azure credentials in your Azure developer console.', 'backupplus' ),
 			'configuration_helper_link_text'   => __( 'For more detailed instructions, follow this link.', 'backupplus' ),
-			/* translators: %s: service name */
+			/* translators: %s: Name of the storage service. */
 			'input_accesskey_label'            => sprintf( __( '%s access key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_accesskey_placeholder'      => __( 'Paste your access key here', 'backupplus' ),
-			/* translators: %s: service name */
+			/* translators: %s: Name of the remote storage service. */
 			'input_secretkey_label'            => sprintf( __( '%s secret key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_secretkey_placeholder'      => __( 'Paste your secret key here', 'backupplus' ),
 			'input_secretkey_type'             => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
-			/* translators: %s: service name */
+			/* translators: %s: Name of the storage service. */
 			'input_location_label'             => sprintf( __( '%s location', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_location_prefix'            => 'dreamobjects://',
 			'input_location_title'             => __( 'Enter only a bucket name or a bucket and path.', 'backupplus' ) . ' ' . __( 'Examples: mybucket, mybucket/mypath', 'backupplus' ),
-			/* translators: %s: service name */
+			/* translators: %s: Name of the storage service. */
 			'input_endpoint_label'             => sprintf( __( '%s end-point', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_endpoint_option_labels'     => self::get_endpoints(),
-			/* translators: %s: service name */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                 => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			/* translators: %s: Desired endpoint format.*/
 			'invalid_endpoint_error_message'   => sprintf( __( 'Custom endpoint should be in the following format "%s".', 'backupplus' ), 's3.<region>.dream.io' ),

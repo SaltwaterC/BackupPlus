@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -41,8 +42,8 @@ class BackupPlus_Azure_Client extends BackupPlus_Remote_Storage_Client {
 				$canonical .= $key . ':' . trim( $value ) . "\n";
 			}
 		}
-		$resource = '/' . $this->options['account'] . parse_url( $url, PHP_URL_PATH );
-		parse_str( parse_url( $url, PHP_URL_QUERY ) ?? '', $query );
+		$resource = '/' . $this->options['account'] . wp_parse_url( $url, PHP_URL_PATH );
+		parse_str( wp_parse_url( $url, PHP_URL_QUERY ) ?? '', $query );
 		ksort( $query );
 		foreach ( $query as $key => $value ) {
 			$resource .= "\n" . strtolower( $key ) . ':' . $value;
@@ -182,7 +183,7 @@ class BackupPlus_Azure_Client extends BackupPlus_Remote_Storage_Client {
 			return true;
 		} finally {
 			if ( file_exists( $temporary ) ) {
-				unlink( $temporary );
+				wp_delete_file( $temporary );
 			}
 		}
 	}

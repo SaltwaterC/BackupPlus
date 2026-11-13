@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -29,20 +31,20 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @author Chris Chabot <chabotc@google.com>
  */
-class Google_Cache_Apc extends Google_Cache_Abstract
+class BackupPlus_Google_Cache_Apc extends BackupPlus_Google_Cache_Abstract
 {
   /**
-   * @var Google_Client the current client
+   * @var BackupPlus_Google_Client the current client
    */
   private $client;
 
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     if (! function_exists('apc_add') ) {
       $error = "Apc functions not available";
 
       $client->getLogger()->error($error);
-      throw new Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Cache_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     $this->client = $client;
@@ -91,7 +93,7 @@ class Google_Cache_Apc extends Google_Cache_Abstract
           'APC cache set failed',
           array('key' => $key, 'var' => $var)
       );
-      throw new Google_Cache_Exception("Couldn't store data");
+      throw new BackupPlus_Google_Cache_Exception("Couldn't store data");
     }
 
     $this->client->getLogger()->debug(

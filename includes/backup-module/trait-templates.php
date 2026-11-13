@@ -24,7 +24,7 @@ trait BackupPlus_BackupModule_Templates {
 			'method_id'                              => $this->get_id(),
 			'_instance_id'                           => $this->_instance_id,
 			'method_display_name'                    => $backupplus->backup_methods[ $this->get_id() ],
-			/* translators: %s: Storage method name. */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                       => sprintf( __( 'Test %s Settings', 'backupplus' ), $this->get_description() ),
 			'admin_page_url'                         => BackupPlus_Options::admin_page_url(),
 			'storage_auth_nonce'                     => wp_create_nonce( 'storage_auth_nonce' ),
@@ -289,7 +289,7 @@ trait BackupPlus_BackupModule_Templates {
 		?>
 		<tr class="<?php echo esc_attr( $this->get_css_classes() ); ?>">
 			<th></th>
-			<?php /* translators: %s: Remote storage method */ ?>
+			<?php /* translators: %s: Name of the remote storage method. */ ?>
 			<td><p><button id="backupplus-<?php echo esc_attr( $this->get_id() ); ?>-test-<?php echo esc_attr( $instance_id ); ?>" type="button" class="button-primary backupplus-test-button backupplus-<?php echo esc_attr( $this->get_id() ); ?>-test" data-instance_id="<?php echo esc_attr( $instance_id ); ?>" data-method="<?php echo esc_attr( $this->get_id() ); ?>" data-method_label="<?php echo esc_attr( $title ); ?>"><?php echo esc_html( sprintf( __( 'Test %s Settings', 'backupplus' ), $title ) ); ?></button></p></td>
 		</tr>
 		<?php

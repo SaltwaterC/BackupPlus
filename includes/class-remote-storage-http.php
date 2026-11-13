@@ -1,4 +1,7 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_close, WordPress.WP.AlternativeFunctions.curl_curl_errno, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array -- Transfers to remote storage stream files with resume and progress callbacks, which the WordPress HTTP API cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -13,7 +16,7 @@ class BackupPlus_Remote_Storage_HTTP {
 		if ( ! is_string( $url ) || preg_match( '/[\x00-\x20\x7f\\\\]/', $url ) ) {
 			return false;
 		}
-		$parts = parse_url( $url );
+		$parts = wp_parse_url( $url );
 		if ( ! $parts || 'https' !== ( $parts['scheme'] ?? '' ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['fragment'] ) || ( isset( $parts['port'] ) && 443 !== $parts['port'] ) ) {
 			return false;
 		}
@@ -267,7 +270,7 @@ abstract class BackupPlus_Remote_Storage_Client {
 			return true;
 		} finally {
 			if ( file_exists( $temporary ) ) {
-				unlink( $temporary );
+				wp_delete_file( $temporary );
 			}
 		}
 	}

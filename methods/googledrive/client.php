@@ -11,7 +11,7 @@ trait BackupPlus_GoogleDrive_Client {
 	public function bootstrap( $access_token = false ) {
 		$storage = $this->get_storage();
 
-		if ( ! empty( $storage ) && is_object( $storage ) && is_a( $storage, 'UDP_Google_Service_Drive' ) ) {
+		if ( ! empty( $storage ) && is_object( $storage ) && is_a( $storage, 'BackupPlus_Google_Service_Drive' ) ) {
 			return $storage;
 		}
 
@@ -42,44 +42,34 @@ trait BackupPlus_GoogleDrive_Client {
 			return $access_token;
 		}
 
-		$spl = spl_autoload_functions();
-		if ( is_array( $spl ) ) {
-			// Workaround for Google Drive CDN plugin's autoloader
-			if ( in_array( 'wpbgdc_autoloader', $spl ) ) {
-				spl_autoload_unregister( 'wpbgdc_autoloader' );
-			}
-			// http://www.wpdownloadmanager.com/download/google-drive-explorer/ - but also others, since this is the default function name used by the Google SDK
-			if ( in_array( 'google_api_php_client_autoload', $spl ) ) {
-				spl_autoload_unregister( 'google_api_php_client_autoload' );
-			}
-		}
-
-		if ( ( ! class_exists( 'UDP_Google_Config' ) || ! class_exists( 'UDP_Google_Client' ) || ! class_exists( 'UDP_Google_Service_Drive' ) || ! class_exists( 'UDP_Google_Http_Request' ) ) && ! function_exists( 'google_api_php_client_autoload_backupplus' ) ) {
+		// The bundled SDK's classes carry the BackupPlus_ prefix, so another plugin's copy of the Google SDK, and its autoloader,
+		// cannot clash with them.
+		if ( ( ! class_exists( 'BackupPlus_Google_Config' ) || ! class_exists( 'BackupPlus_Google_Client' ) || ! class_exists( 'BackupPlus_Google_Service_Drive' ) || ! class_exists( 'BackupPlus_Google_Http_Request' ) ) && ! function_exists( 'backupplus_google_api_php_client_autoload' ) ) {
 			backupplus_try_include_file( 'methods/googledrive/Google/autoload.php', 'include_once' );
 		}
 
-		if ( ! class_exists( 'BackupPlus_Google_Http_MediaFileUpload' ) ) {
+		if ( ! class_exists( 'BackupPlus_GoogleDrive_Resumable_Upload' ) ) {
 			backupplus_try_include_file( 'methods/googledrive/google-extensions.php', 'include_once' );
 		}
 
-		$config = new UDP_Google_Config();
-		$config->setClassConfig( 'UDP_Google_IO_Abstract', 'request_timeout_seconds', 60 );
+		$config = new BackupPlus_Google_Config();
+		$config->setClassConfig( 'BackupPlus_Google_IO_Abstract', 'request_timeout_seconds', 60 );
 		// In our testing, $storage->about->get() fails if gzip is not disabled when using the stream wrapper
 		if ( ! $curl_exists || ( defined( 'BACKUPPLUS_GOOGLEDRIVE_DISABLEGZIP' ) && BACKUPPLUS_GOOGLEDRIVE_DISABLEGZIP ) ) {
-			$config->setClassConfig( 'UDP_Google_Http_Request', 'disable_gzip', true );
+			$config->setClassConfig( 'BackupPlus_Google_Http_Request', 'disable_gzip', true );
 		}
 
 		$proxy  = new WP_HTTP_Proxy();
-		$client = new UDP_Google_Client( $config );
+		$client = new BackupPlus_Google_Client( $config );
 
 		$is_proxy_enabled = false;
 		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $client->getBasePath() ) ) {
 			$is_proxy_enabled = true;
 			if ( $curl_exists && ! defined( 'CURLOPT_PROXY' ) ) {
-				$this->log( 'cURL transports couldn\'t be used because a proxy is set but the installed cURL version doesn\'t support proxy connections. Stream/socket transports (UDP_Google_IO_Stream) are being used instead.' );
-				$config->setIoClass( 'UDP_Google_IO_Stream' );
-				// Redeclare the client to use UDP_Google_IO_Stream
-				$client = new UDP_Google_Client( $config );
+				$this->log( 'cURL transports couldn\'t be used because a proxy is set but the installed cURL version doesn\'t support proxy connections. Stream/socket transports (BackupPlus_Google_IO_Stream) are being used instead.' );
+				$config->setIoClass( 'BackupPlus_Google_IO_Stream' );
+				// Redeclare the client to use BackupPlus_Google_IO_Stream
+				$client = new BackupPlus_Google_Client( $config );
 			}
 		}
 
@@ -99,7 +89,7 @@ trait BackupPlus_GoogleDrive_Client {
 		$io      = $client->getIo();
 		$setopts = array();
 
-		if ( is_a( $io, 'UDP_Google_IO_Curl' ) ) {
+		if ( is_a( $io, 'BackupPlus_Google_IO_Curl' ) ) {
 			$setopts[ CURLOPT_SSL_VERIFYPEER ] = BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' ) ? false : true;
 			if ( ! BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) ) {
 				$setopts[ CURLOPT_CAINFO ] = BACKUPPLUS_DIR . '/includes/cacert.pem';
@@ -122,7 +112,7 @@ trait BackupPlus_GoogleDrive_Client {
 				$setopts[ CURLOPT_PROXYPORT ] = $port;
 				$setopts[ CURLOPT_PROXYTYPE ] = CURLPROXY_HTTP;
 			}
-		} elseif ( is_a( $io, 'UDP_Google_IO_Stream' ) ) {
+		} elseif ( is_a( $io, 'BackupPlus_Google_IO_Stream' ) ) {
 			$setopts['timeout'] = 60;
 			// We had to modify the SDK to support this
 			// https://wiki.php.net/rfc/tls-peer-verification - before PHP 5.6, there is no default CA file
@@ -145,7 +135,7 @@ trait BackupPlus_GoogleDrive_Client {
 
 		$io->setOptions( $setopts );
 
-		$storage      = new UDP_Google_Service_Drive( $client );
+		$storage      = new BackupPlus_Google_Service_Drive( $client );
 		$this->client = $client;
 		$this->set_storage( $storage );
 
@@ -161,7 +151,7 @@ trait BackupPlus_GoogleDrive_Client {
 					$parents  = $resource->getParents();
 					if ( is_array( $parents ) && count( $parents ) > 0 ) {
 						$parent   = array_shift( $parents );
-						$parentid = is_a( $parent, 'UDP_Google_Service_Drive_ParentReference' ) ? $parent->getId() : false;
+						$parentid = is_a( $parent, 'BackupPlus_Google_Service_Drive_ParentReference' ) ? $parent->getId() : false;
 					} else {
 						$parentid = false;
 					}

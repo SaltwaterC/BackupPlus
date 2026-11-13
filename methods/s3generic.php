@@ -238,10 +238,10 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 			$simplexmlelement_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
 					__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
-					/* translators: 1: Module name, 2: Required module name */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ], 'SimpleXMLElement' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->get_id(),
@@ -256,7 +256,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
 					__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ),
 					$this->get_id(),
@@ -272,18 +272,18 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 			'simplexmlelement_existence_label'        => $simplexmlelement_existence_label,
 			'curl_existence_label'                    => wp_kses( $backupplus_admin->curl_check( $backupplus->backup_methods[ $this->get_id() ], true, $this->get_id() . ' hide-in-udc', false ), $this->allowed_html_for_content_sanitisation() ),
 			'ssl_certificates_errors_link_text'       => esc_html__( 'If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus' ),
-			/* translators: %s: Cloud storage provider */
+			/* translators: %s: Name of the storage service. */
 			'input_access_key_label'                  => sprintf( __( '%s access key', 'backupplus' ), 'S3' ),
 			'input_access_key_placeholder'            => __( 'Paste your access key here', 'backupplus' ),
-			/* translators: %s: Cloud storage provider */
+			/* translators: %s: Name of the remote storage service. */
 			'input_secret_key_label'                  => sprintf( __( '%s secret key', 'backupplus' ), 'S3' ),
 			'input_secret_key_placeholder'            => __( 'Paste your secret key here', 'backupplus' ),
 			'input_secret_key_type'                   => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
-			/* translators: %s: Cloud storage provider */
+			/* translators: %s: Name of the storage service. */
 			'input_location_label'                    => sprintf( __( '%s location', 'backupplus' ), 'S3' ),
 			'input_location_title'                    => __( 'Enter only a bucket name or a bucket and path.', 'backupplus' ) . ' ' . __( 'Examples: mybucket, mybucket/mypath', 'backupplus' ),
 			'input_location_prefix'                   => 's3generic://',
-			/* translators: %s: Cloud storage provider */
+			/* translators: %s: Name of the storage service. */
 			'input_endpoint_label'                    => sprintf( __( '%s end-point', 'backupplus' ), 'S3' ),
 			'input_endpoint_placeholder'              => __( 'Example: sgp1.digitaloceanspaces.com', 'backupplus' ),
 			'input_bucket_access_style_label'         => __( 'Bucket access style', 'backupplus' ),
@@ -298,7 +298,7 @@ class BackupPlus_BackupModule_s3generic extends BackupPlus_BackupModule_s3generi
 				'v4' => __( 'SigV4', 'backupplus' ),
 				'v2' => __( 'SigV2', 'backupplus' ),
 			),
-			/* translators: %s: Backup method */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                        => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
 		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );

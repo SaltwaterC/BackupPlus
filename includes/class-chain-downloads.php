@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -16,7 +18,8 @@ class BackupPlus_Chain_Downloads {
 
 	/** Label of a database PITR recovery point, matching the restore dialog. */
 	public static function label( $point, $latest ) {
-		$label  = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $point['timestamp'] ), 'M d, Y G:i:s' ) . ' - ';
+		$label = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $point['timestamp'] ), 'M d, Y G:i:s' ) . ' - ';
+		/* translators: %d: Incremental backup number. */
 		$label .= $point['increment'] ? sprintf( __( 'database incremental %d', 'backupplus' ), $point['increment'] ) : __( 'full database backup', 'backupplus' );
 		if ( $latest ) {
 			$label .= ' (' . __( 'latest', 'backupplus' ) . ')';
@@ -25,7 +28,8 @@ class BackupPlus_Chain_Downloads {
 	}
 
 	private static function file_label( $timestamp, $position, $latest ) {
-		$label  = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $timestamp ), 'M d, Y G:i:s' ) . ' - ';
+		$label = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $timestamp ), 'M d, Y G:i:s' ) . ' - ';
+		/* translators: %d: Position of the incremental backup in its chain. */
 		$label .= $position ? sprintf( __( 'incremental backup %d', 'backupplus' ), $position ) : __( 'full backup', 'backupplus' );
 		if ( $latest ) {
 			$label .= ' (' . __( 'latest', 'backupplus' ) . ')';
@@ -388,7 +392,7 @@ class BackupPlus_Chain_Downloads {
 			$path = $dir . '/' . $name;
 			if ( is_file( $path ) && ! is_link( $path ) ) {
 				$size = filesize( $path );
-				if ( ! unlink( $path ) ) {
+				if ( ! wp_delete_file( $path ) ) {
 					/* translators: %s: File name. */
 					throw new RuntimeException( sprintf( __( 'The file %s could not be deleted.', 'backupplus' ), $name ) );
 				}
@@ -520,7 +524,7 @@ class BackupPlus_Chain_Downloads {
 	public static function send( $timestamp, $type, $selection ) {
 		$resolved = self::resolve( $timestamp, $type, $selection, false );
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		if ( $resolved['direct'] ) {
 			$input = fopen( $resolved['files'][0]['path'], 'rb' );

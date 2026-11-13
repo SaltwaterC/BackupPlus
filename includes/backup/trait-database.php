@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Dumping the database: the per-table loop, the dump file and its header. */
 
@@ -197,7 +198,7 @@ trait BackupPlus_Backup_Database {
 
 			// Increase script execution time-limit to 15 min for every table.
 			if ( function_exists( 'set_time_limit' ) ) {
-				@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+				@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 			}           // The table file may already exist if we have produced it on a previous run
 			$table_file_prefix = $file_base . '-db' . $this->whichdb_suffix . '-table-' . $table . '.table';
 
@@ -375,7 +376,7 @@ trait BackupPlus_Backup_Database {
 				if ( $backupplus->error_count() > $errors_at_table_start ) {
 
 					$backupplus->log( 'Errors occurred during backing up the table; therefore the open file will be removed' );
-					@unlink( $db_temp_file ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+					wp_delete_file( $db_temp_file );
 
 				} else {
 
@@ -622,7 +623,7 @@ trait BackupPlus_Backup_Database {
 		$backupplus->log( basename( $backup_final_file_name ) . ': finished writing out complete database file (' . round( filesize( $backup_final_file_name ) / 1024, 1 ) . ' KB)' );
 
 		foreach ( $unlink_files as $unlink_file ) {
-			@unlink( $unlink_file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			wp_delete_file( $unlink_file );
 		}
 
 		if ( $errors > 0 ) {

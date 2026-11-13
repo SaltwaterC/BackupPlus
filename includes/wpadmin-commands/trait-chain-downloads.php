@@ -30,7 +30,7 @@ trait BackupPlus_WPAdmin_Commands_Chain_Downloads {
 		backupplus_try_include_file( 'includes/class-stored-zip.php', 'include_once' );
 		try {
 			if ( function_exists( 'set_time_limit' ) ) {
-				@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+				@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 			}
 			return BackupPlus_Chain_Downloads::prepare( isset( $params['timestamp'] ) ? (int) $params['timestamp'] : 0, isset( $params['type'] ) && is_string( $params['type'] ) ? $params['type'] : '', isset( $params['points'] ) ? $params['points'] : '', empty( $params['archive'] ) ? false : true );
 		} catch ( RuntimeException $error ) {
@@ -43,7 +43,7 @@ trait BackupPlus_WPAdmin_Commands_Chain_Downloads {
 		backupplus_try_include_file( 'includes/class-chain-downloads.php', 'include_once' );
 		try {
 			if ( function_exists( 'set_time_limit' ) ) {
-				@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+				@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 			}
 			return BackupPlus_Chain_Downloads::delete(
 				isset( $params['timestamp'] ) ? (int) $params['timestamp'] : 0,

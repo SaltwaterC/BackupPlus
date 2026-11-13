@@ -1,4 +1,6 @@
 <?php
+if (!defined('ABSPATH')) die('No direct access allowed');
+
 require_once BACKUPPLUS_DIR.'/includes/class-credential-encrypter.php';
 
 /** Compatibility adapter: preserve the authenticated context of existing Dropbox tokens. */

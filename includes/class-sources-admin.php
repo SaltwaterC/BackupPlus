@@ -42,7 +42,7 @@ class BackupPlus_Sources_Admin {
 		if ( ! BackupPlus_Options::user_can_manage() ) { wp_send_json_error( 'Not authorized.', 403 ); }
 		try {
 			global $wpdb;
-			$info = isset( $_POST['connection'] ) ? wp_unslash( $_POST['connection'] ) : null;
+			$info = isset( $_POST['connection'] ) ? wp_unslash( $_POST['connection'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Connection details, including a password, that must stay exact; BackupPlus_Backup_Sources::connect() validates each field.
 			if ( is_array( $info ) ) {
 				// The form shows a saved password as a placeholder: use the saved password of the same connection for it (BPS-20).
 				$info = BackupPlus_Credential_Storage::unmask_at( $info, 'backupplus_extradbs', array( isset( $_POST['connection_id'] ) ? absint( $_POST['connection_id'] ) : 0 ) );
@@ -84,7 +84,7 @@ class BackupPlus_Sources_Admin {
 		$selection   = (array) BackupPlus_Options::get_backupplus_option( 'backupplus_database_selection', array() );
 		$connections = BackupPlus_Backup_Sources::connections();
 		echo '<div class="bp-databases" data-manual="' . ( $manual ? '1' : '0' ) . '"><div class="bp-wordpress-database"><h4>' . esc_html__( 'WordPress database', 'backupplus' ) . '</h4>';
-		self::table_selector( 'wp', isset( $selection['wp'] ) ? $selection['wp'] : array(), $manual, $wpdb->get_col( 'SHOW TABLES' ) );
+		self::table_selector( 'wp', isset( $selection['wp'] ) ? $selection['wp'] : array(), $manual, $wpdb->get_col( 'SHOW TABLES' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Lists the tables as they are now, which has no WordPress API and must not be cached.
 		if ( ! $manual ) {
 			echo '<input type="hidden" name="backupplus_backupdb_nonwp" value="0"><label class="bp-non-wp-tables"><input type="checkbox" name="backupplus_backupdb_nonwp" value="1" ' . checked( BackupPlus_Options::get_backupplus_option( 'backupplus_backupdb_nonwp', false ), true, false ) . '> ' . esc_html__( 'Include non-WordPress tables in All eligible tables', 'backupplus' ) . '</label>';
 		}

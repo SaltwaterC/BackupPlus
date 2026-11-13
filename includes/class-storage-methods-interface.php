@@ -422,7 +422,7 @@ class BackupPlus_Storage_Methods_Interface {
 					} else {
 						clearstatcache();
 						if ( 0 === @filesize( $fullpath ) ) {
-							@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+							wp_delete_file( $fullpath );
 						}                       $backupplus->log( 'Remote fetch failed' );
 					}
 				}
@@ -460,7 +460,7 @@ class BackupPlus_Storage_Methods_Interface {
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
 				$backupplus->log( $log_message );
-				/* translators: 1: Exception class, 2: Exception message. */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$message = sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
 				$backupplus->log( $message, 'error' );
 				return false;
@@ -470,7 +470,7 @@ class BackupPlus_Storage_Methods_Interface {
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
 				$backupplus->log( $log_message );
-				/* translators: 1: Fatal error class, 2: Error message. */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$message = sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
 				$backupplus->log( $message, 'error' );
 				return false;

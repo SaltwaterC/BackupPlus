@@ -15,6 +15,8 @@
  * the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Service definition for Logging (v1beta3).
  *
@@ -29,7 +31,7 @@
  *
  * @author Google, Inc.
  */
-class Google_Service_Logging extends UDP_Google_Service
+class BackupPlus_Google_Service_Logging extends BackupPlus_Google_Service
 {
   /** View and manage your data across Google Cloud Platform services. */
   const CLOUD_PLATFORM =
@@ -46,16 +48,16 @@ class Google_Service_Logging extends UDP_Google_Service
   /**
    * Constructs the internal representation of the Logging service.
    *
-   * @param Google_Client $client
+   * @param BackupPlus_Google_Client $client
    */
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     parent::__construct($client);
     $this->servicePath = '';
     $this->version = 'v1beta3';
     $this->serviceName = 'logging';
 
-    $this->projects_logServices = new Google_Service_Logging_ProjectsLogServices_Resource(
+    $this->projects_logServices = new BackupPlus_Google_Service_Logging_ProjectsLogServices_Resource(
         $this,
         $this->serviceName,
         'logServices',
@@ -87,7 +89,7 @@ class Google_Service_Logging extends UDP_Google_Service
           )
         )
     );
-    $this->projects_logServices_indexes = new Google_Service_Logging_ProjectsLogServicesIndexes_Resource(
+    $this->projects_logServices_indexes = new BackupPlus_Google_Service_Logging_ProjectsLogServicesIndexes_Resource(
         $this,
         $this->serviceName,
         'indexes',
@@ -132,7 +134,7 @@ class Google_Service_Logging extends UDP_Google_Service
           )
         )
     );
-    $this->projects_logServices_sinks = new Google_Service_Logging_ProjectsLogServicesSinks_Resource(
+    $this->projects_logServices_sinks = new BackupPlus_Google_Service_Logging_ProjectsLogServicesSinks_Resource(
         $this,
         $this->serviceName,
         'sinks',
@@ -232,7 +234,7 @@ class Google_Service_Logging extends UDP_Google_Service
           )
         )
     );
-    $this->projects_logs = new Google_Service_Logging_ProjectsLogs_Resource(
+    $this->projects_logs = new BackupPlus_Google_Service_Logging_ProjectsLogs_Resource(
         $this,
         $this->serviceName,
         'logs',
@@ -283,7 +285,7 @@ class Google_Service_Logging extends UDP_Google_Service
           )
         )
     );
-    $this->projects_logs_entries = new Google_Service_Logging_ProjectsLogsEntries_Resource(
+    $this->projects_logs_entries = new BackupPlus_Google_Service_Logging_ProjectsLogsEntries_Resource(
         $this,
         $this->serviceName,
         'entries',
@@ -308,7 +310,7 @@ class Google_Service_Logging extends UDP_Google_Service
           )
         )
     );
-    $this->projects_logs_sinks = new Google_Service_Logging_ProjectsLogsSinks_Resource(
+    $this->projects_logs_sinks = new BackupPlus_Google_Service_Logging_ProjectsLogsSinks_Resource(
         $this,
         $this->serviceName,
         'sinks',
@@ -416,11 +418,11 @@ class Google_Service_Logging extends UDP_Google_Service
  * The "projects" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $projects = $loggingService->projects;
  *  </code>
  */
-class Google_Service_Logging_Projects_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_Projects_Resource extends BackupPlus_Google_Service_Resource
 {
 }
 
@@ -428,11 +430,11 @@ class Google_Service_Logging_Projects_Resource extends UDP_Google_Service_Resour
  * The "logServices" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $logServices = $loggingService->logServices;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogServices_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogServices_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -451,13 +453,13 @@ class Google_Service_Logging_ProjectsLogServices_Resource extends UDP_Google_Ser
    * listed. log for which to list services. When empty, all services are listed.
    * @opt_param int pageSize The maximum number of `LogService` objects to return
    * in one operation.
-   * @return Google_Service_Logging_ListLogServicesResponse
+   * @return BackupPlus_Google_Service_Logging_ListLogServicesResponse
    */
   public function listProjectsLogServices($projectsId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Logging_ListLogServicesResponse");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Logging_ListLogServicesResponse");
   }
 }
 
@@ -465,11 +467,11 @@ class Google_Service_Logging_ProjectsLogServices_Resource extends UDP_Google_Ser
  * The "indexes" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $indexes = $loggingService->indexes;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogServicesIndexes_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogServicesIndexes_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -505,24 +507,24 @@ class Google_Service_Logging_ProjectsLogServicesIndexes_Resource extends UDP_Goo
    * versions associated with `myModule`. The trailing slash terminates the value.
    * + `"/myModule"` retrieves App Engine modules with names beginning with
    * `myModule`. + `""` retrieves all indexes.
-   * @return Google_Service_Logging_ListLogServiceIndexesResponse
+   * @return BackupPlus_Google_Service_Logging_ListLogServiceIndexesResponse
    */
   public function listProjectsLogServicesIndexes($projectsId, $logServicesId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Logging_ListLogServiceIndexesResponse");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Logging_ListLogServiceIndexesResponse");
   }
 }
 /**
  * The "sinks" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $sinks = $loggingService->sinks;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogServicesSinks_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -532,15 +534,15 @@ class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Googl
    * which to create a sink.
    * @param string $logServicesId Part of `serviceName`. See documentation of
    * `projectsId`.
-   * @param Google_LogSink $postBody
+   * @param BackupPlus_Google_LogSink $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
-  public function create($projectsId, $logServicesId, Google_Service_Logging_LogSink $postBody, $optParams = array())
+  public function create($projectsId, $logServicesId, BackupPlus_Google_Service_Logging_LogSink $postBody, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('create', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('create', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 
   /**
@@ -551,13 +553,13 @@ class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Googl
    * `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_Empty
+   * @return BackupPlus_Google_Service_Logging_Empty
    */
   public function delete($projectsId, $logServicesId, $sinksId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId, 'sinksId' => $sinksId);
     $params = array_merge($params, $optParams);
-    return $this->call('delete', array($params), "Google_Service_Logging_Empty");
+    return $this->call('delete', array($params), "BackupPlus_Google_Service_Logging_Empty");
   }
 
   /**
@@ -568,13 +570,13 @@ class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Googl
    * `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
   public function get($projectsId, $logServicesId, $sinksId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId, 'sinksId' => $sinksId);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 
   /**
@@ -586,13 +588,13 @@ class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Googl
    * @param string $logServicesId Part of `serviceName`. See documentation of
    * `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_ListLogServiceSinksResponse
+   * @return BackupPlus_Google_Service_Logging_ListLogServiceSinksResponse
    */
   public function listProjectsLogServicesSinks($projectsId, $logServicesId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Logging_ListLogServiceSinksResponse");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Logging_ListLogServiceSinksResponse");
   }
 
   /**
@@ -602,26 +604,26 @@ class Google_Service_Logging_ProjectsLogServicesSinks_Resource extends UDP_Googl
    * @param string $logServicesId Part of `sinkName`. See documentation of
    * `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
-   * @param Google_LogSink $postBody
+   * @param BackupPlus_Google_LogSink $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
-  public function update($projectsId, $logServicesId, $sinksId, Google_Service_Logging_LogSink $postBody, $optParams = array())
+  public function update($projectsId, $logServicesId, $sinksId, BackupPlus_Google_Service_Logging_LogSink $postBody, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logServicesId' => $logServicesId, 'sinksId' => $sinksId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 }
 /**
  * The "logs" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $logs = $loggingService->logs;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogs_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogs_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -631,13 +633,13 @@ class Google_Service_Logging_ProjectsLogs_Resource extends UDP_Google_Service_Re
    * @param string $projectsId Part of `logName`. The log resource to delete.
    * @param string $logsId Part of `logName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_Empty
+   * @return BackupPlus_Google_Service_Logging_Empty
    */
   public function delete($projectsId, $logsId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId);
     $params = array_merge($params, $optParams);
-    return $this->call('delete', array($params), "Google_Service_Logging_Empty");
+    return $this->call('delete', array($params), "BackupPlus_Google_Service_Logging_Empty");
   }
 
   /**
@@ -666,13 +668,13 @@ class Google_Service_Logging_ProjectsLogs_Resource extends UDP_Google_Service_Re
    * separated list of values, and need not specify all index labels. An empty
    * index (or a single slash) matches all log service indexes.
    * @opt_param int pageSize The maximum number of results to return.
-   * @return Google_Service_Logging_ListLogsResponse
+   * @return BackupPlus_Google_Service_Logging_ListLogsResponse
    */
   public function listProjectsLogs($projectsId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Logging_ListLogsResponse");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Logging_ListLogsResponse");
   }
 }
 
@@ -680,11 +682,11 @@ class Google_Service_Logging_ProjectsLogs_Resource extends UDP_Google_Service_Re
  * The "entries" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $entries = $loggingService->entries;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogsEntries_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogsEntries_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -699,26 +701,26 @@ class Google_Service_Logging_ProjectsLogsEntries_Resource extends UDP_Google_Ser
    * @param string $projectsId Part of `logName`. The name of the log resource
    * into which to insert the log entries.
    * @param string $logsId Part of `logName`. See documentation of `projectsId`.
-   * @param Google_WriteLogEntriesRequest $postBody
+   * @param BackupPlus_Google_WriteLogEntriesRequest $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_WriteLogEntriesResponse
+   * @return BackupPlus_Google_Service_Logging_WriteLogEntriesResponse
    */
-  public function write($projectsId, $logsId, Google_Service_Logging_WriteLogEntriesRequest $postBody, $optParams = array())
+  public function write($projectsId, $logsId, BackupPlus_Google_Service_Logging_WriteLogEntriesRequest $postBody, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('write', array($params), "Google_Service_Logging_WriteLogEntriesResponse");
+    return $this->call('write', array($params), "BackupPlus_Google_Service_Logging_WriteLogEntriesResponse");
   }
 }
 /**
  * The "sinks" collection of methods.
  * Typical usage is:
  *  <code>
- *   $loggingService = new Google_Service_Logging(...);
+ *   $loggingService = new BackupPlus_Google_Service_Logging(...);
  *   $sinks = $loggingService->sinks;
  *  </code>
  */
-class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Logging_ProjectsLogsSinks_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -727,15 +729,15 @@ class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Servi
    * @param string $projectsId Part of `logName`. The log in which to create a
    * sink resource.
    * @param string $logsId Part of `logName`. See documentation of `projectsId`.
-   * @param Google_LogSink $postBody
+   * @param BackupPlus_Google_LogSink $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
-  public function create($projectsId, $logsId, Google_Service_Logging_LogSink $postBody, $optParams = array())
+  public function create($projectsId, $logsId, BackupPlus_Google_Service_Logging_LogSink $postBody, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('create', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('create', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 
   /**
@@ -745,13 +747,13 @@ class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Servi
    * @param string $logsId Part of `sinkName`. See documentation of `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_Empty
+   * @return BackupPlus_Google_Service_Logging_Empty
    */
   public function delete($projectsId, $logsId, $sinksId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId, 'sinksId' => $sinksId);
     $params = array_merge($params, $optParams);
-    return $this->call('delete', array($params), "Google_Service_Logging_Empty");
+    return $this->call('delete', array($params), "BackupPlus_Google_Service_Logging_Empty");
   }
 
   /**
@@ -762,13 +764,13 @@ class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Servi
    * @param string $logsId Part of `sinkName`. See documentation of `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
   public function get($projectsId, $logsId, $sinksId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId, 'sinksId' => $sinksId);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 
   /**
@@ -778,13 +780,13 @@ class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Servi
    * @param string $projectsId Part of `logName`. The log for which to list sinks.
    * @param string $logsId Part of `logName`. See documentation of `projectsId`.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_ListLogSinksResponse
+   * @return BackupPlus_Google_Service_Logging_ListLogSinksResponse
    */
   public function listProjectsLogsSinks($projectsId, $logsId, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Logging_ListLogSinksResponse");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Logging_ListLogSinksResponse");
   }
 
   /**
@@ -793,26 +795,26 @@ class Google_Service_Logging_ProjectsLogsSinks_Resource extends UDP_Google_Servi
    * @param string $projectsId Part of `sinkName`. The name of the sink to update.
    * @param string $logsId Part of `sinkName`. See documentation of `projectsId`.
    * @param string $sinksId Part of `sinkName`. See documentation of `projectsId`.
-   * @param Google_LogSink $postBody
+   * @param BackupPlus_Google_LogSink $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Logging_LogSink
+   * @return BackupPlus_Google_Service_Logging_LogSink
    */
-  public function update($projectsId, $logsId, $sinksId, Google_Service_Logging_LogSink $postBody, $optParams = array())
+  public function update($projectsId, $logsId, $sinksId, BackupPlus_Google_Service_Logging_LogSink $postBody, $optParams = array())
   {
     $params = array('projectsId' => $projectsId, 'logsId' => $logsId, 'sinksId' => $sinksId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_Logging_LogSink");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Logging_LogSink");
   }
 }
 
 
 
 
-class Google_Service_Logging_Empty extends Google_Model
+class BackupPlus_Google_Service_Logging_Empty extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_ListLogServiceIndexesResponse extends Google_Collection
+class BackupPlus_Google_Service_Logging_ListLogServiceIndexesResponse extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'serviceIndexPrefixes';
   protected $internal_gapi_mappings = array(
@@ -839,12 +841,12 @@ class Google_Service_Logging_ListLogServiceIndexesResponse extends Google_Collec
   }
 }
 
-class Google_Service_Logging_ListLogServiceSinksResponse extends Google_Collection
+class BackupPlus_Google_Service_Logging_ListLogServiceSinksResponse extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'sinks';
   protected $internal_gapi_mappings = array(
   );
-  protected $sinksType = 'Google_Service_Logging_LogSink';
+  protected $sinksType = 'BackupPlus_Google_Service_Logging_LogSink';
   protected $sinksDataType = 'array';
 
 
@@ -858,12 +860,12 @@ class Google_Service_Logging_ListLogServiceSinksResponse extends Google_Collecti
   }
 }
 
-class Google_Service_Logging_ListLogServicesResponse extends Google_Collection
+class BackupPlus_Google_Service_Logging_ListLogServicesResponse extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'logServices';
   protected $internal_gapi_mappings = array(
   );
-  protected $logServicesType = 'Google_Service_Logging_LogService';
+  protected $logServicesType = 'BackupPlus_Google_Service_Logging_LogService';
   protected $logServicesDataType = 'array';
   public $nextPageToken;
 
@@ -886,12 +888,12 @@ class Google_Service_Logging_ListLogServicesResponse extends Google_Collection
   }
 }
 
-class Google_Service_Logging_ListLogSinksResponse extends Google_Collection
+class BackupPlus_Google_Service_Logging_ListLogSinksResponse extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'sinks';
   protected $internal_gapi_mappings = array(
   );
-  protected $sinksType = 'Google_Service_Logging_LogSink';
+  protected $sinksType = 'BackupPlus_Google_Service_Logging_LogSink';
   protected $sinksDataType = 'array';
 
 
@@ -905,12 +907,12 @@ class Google_Service_Logging_ListLogSinksResponse extends Google_Collection
   }
 }
 
-class Google_Service_Logging_ListLogsResponse extends Google_Collection
+class BackupPlus_Google_Service_Logging_ListLogsResponse extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'logs';
   protected $internal_gapi_mappings = array(
   );
-  protected $logsType = 'Google_Service_Logging_Log';
+  protected $logsType = 'BackupPlus_Google_Service_Logging_Log';
   protected $logsDataType = 'array';
   public $nextPageToken;
 
@@ -933,7 +935,7 @@ class Google_Service_Logging_ListLogsResponse extends Google_Collection
   }
 }
 
-class Google_Service_Logging_Log extends Google_Model
+class BackupPlus_Google_Service_Logging_Log extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -968,13 +970,13 @@ class Google_Service_Logging_Log extends Google_Model
   }
 }
 
-class Google_Service_Logging_LogEntry extends Google_Model
+class BackupPlus_Google_Service_Logging_LogEntry extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
   public $insertId;
   public $log;
-  protected $metadataType = 'Google_Service_Logging_LogEntryMetadata';
+  protected $metadataType = 'BackupPlus_Google_Service_Logging_LogEntryMetadata';
   protected $metadataDataType = '';
   public $protoPayload;
   public $structPayload;
@@ -997,7 +999,7 @@ class Google_Service_Logging_LogEntry extends Google_Model
   {
     return $this->log;
   }
-  public function setMetadata(Google_Service_Logging_LogEntryMetadata $metadata)
+  public function setMetadata(BackupPlus_Google_Service_Logging_LogEntryMetadata $metadata)
   {
     $this->metadata = $metadata;
   }
@@ -1031,7 +1033,7 @@ class Google_Service_Logging_LogEntry extends Google_Model
   }
 }
 
-class Google_Service_Logging_LogEntryMetadata extends Google_Model
+class BackupPlus_Google_Service_Logging_LogEntryMetadata extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -1111,24 +1113,24 @@ class Google_Service_Logging_LogEntryMetadata extends Google_Model
   }
 }
 
-class Google_Service_Logging_LogEntryMetadataLabels extends Google_Model
+class BackupPlus_Google_Service_Logging_LogEntryMetadataLabels extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_LogEntryProtoPayload extends Google_Model
+class BackupPlus_Google_Service_Logging_LogEntryProtoPayload extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_LogEntryStructPayload extends Google_Model
+class BackupPlus_Google_Service_Logging_LogEntryStructPayload extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_LogError extends Google_Model
+class BackupPlus_Google_Service_Logging_LogError extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
   public $resource;
-  protected $statusType = 'Google_Service_Logging_Status';
+  protected $statusType = 'BackupPlus_Google_Service_Logging_Status';
   protected $statusDataType = '';
   public $timeNanos;
 
@@ -1141,7 +1143,7 @@ class Google_Service_Logging_LogError extends Google_Model
   {
     return $this->resource;
   }
-  public function setStatus(Google_Service_Logging_Status $status)
+  public function setStatus(BackupPlus_Google_Service_Logging_Status $status)
   {
     $this->status = $status;
   }
@@ -1159,7 +1161,7 @@ class Google_Service_Logging_LogError extends Google_Model
   }
 }
 
-class Google_Service_Logging_LogService extends Google_Collection
+class BackupPlus_Google_Service_Logging_LogService extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'indexKeys';
   protected $internal_gapi_mappings = array(
@@ -1186,13 +1188,13 @@ class Google_Service_Logging_LogService extends Google_Collection
   }
 }
 
-class Google_Service_Logging_LogSink extends Google_Collection
+class BackupPlus_Google_Service_Logging_LogSink extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'errors';
   protected $internal_gapi_mappings = array(
   );
   public $destination;
-  protected $errorsType = 'Google_Service_Logging_LogError';
+  protected $errorsType = 'BackupPlus_Google_Service_Logging_LogError';
   protected $errorsDataType = 'array';
   public $name;
 
@@ -1223,7 +1225,7 @@ class Google_Service_Logging_LogSink extends Google_Collection
   }
 }
 
-class Google_Service_Logging_Status extends Google_Collection
+class BackupPlus_Google_Service_Logging_Status extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'details';
   protected $internal_gapi_mappings = array(
@@ -1259,17 +1261,17 @@ class Google_Service_Logging_Status extends Google_Collection
   }
 }
 
-class Google_Service_Logging_StatusDetails extends Google_Model
+class BackupPlus_Google_Service_Logging_StatusDetails extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_WriteLogEntriesRequest extends Google_Collection
+class BackupPlus_Google_Service_Logging_WriteLogEntriesRequest extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'entries';
   protected $internal_gapi_mappings = array(
   );
   public $commonLabels;
-  protected $entriesType = 'Google_Service_Logging_LogEntry';
+  protected $entriesType = 'BackupPlus_Google_Service_Logging_LogEntry';
   protected $entriesDataType = 'array';
 
 
@@ -1291,10 +1293,10 @@ class Google_Service_Logging_WriteLogEntriesRequest extends Google_Collection
   }
 }
 
-class Google_Service_Logging_WriteLogEntriesRequestCommonLabels extends Google_Model
+class BackupPlus_Google_Service_Logging_WriteLogEntriesRequestCommonLabels extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Logging_WriteLogEntriesResponse extends Google_Model
+class BackupPlus_Google_Service_Logging_WriteLogEntriesResponse extends BackupPlus_Google_Model
 {
 }

@@ -38,8 +38,8 @@ trait BackupPlus_Dropbox_Listing_Retention {
 
 			while ( true ) {
 				$search = $dropbox->search( $match, $searchpath, 1000, $cursor );
-				/* translators: 1: Service name, 2: HTTP response code */
 				if ( empty( $search['code'] ) || 200 != $search['code'] ) {
+					/* translators: 1: Name of the service, 2: HTTP response code. */
 					return new WP_Error( 'response_error', sprintf( __( '%1$s returned an unexpected HTTP response: %2$s', 'backupplus' ), 'Dropbox', $search['code'] ), $search['body'] );
 				}
 

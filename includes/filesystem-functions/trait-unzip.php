@@ -189,7 +189,7 @@ trait BackupPlus_Filesystem_Functions_Unzip {
 		if ( 'tar' === $archive_format || BackupPlus_Archive_Compression::is_zstd( $file ) ) {
 			return self::unzip_file_go( $file, $to, $needed_dirs, 'tar', $starting_index, $folders_to_look, $extract_matched_folders );
 		}
-		if ( class_exists( 'ZipArchive', false ) && apply_filters( 'unzip_file_use_ziparchive', true ) ) {
+		if ( class_exists( 'ZipArchive', false ) && apply_filters( 'unzip_file_use_ziparchive', true ) ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress's own filter, so a site that disables ZipArchive for unzip_file() gets the same here.
 			$result = self::unzip_file_go( $file, $to, $needed_dirs, 'ziparchive', $starting_index, $folders_to_look, $extract_matched_folders );
 			if ( true === $result || ( is_wp_error( $result ) && 'incompatible_archive' != $result->get_error_code() ) ) {
 				return $result;

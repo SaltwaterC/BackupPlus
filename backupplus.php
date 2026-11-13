@@ -6,6 +6,7 @@ Plugin Name: BackupPlus - Backup/Restore
 Description: Backup and restore: take backups locally, or backup to Amazon S3, Dropbox, Google Drive, Rackspace, (S)FTP, WebDAV & email, on automatic schedules.
 Author: BackupPlus contributors
 Version: 3.0.0
+Requires at least: 6.5
 Requires PHP: 7.2.5
 License: GPLv3
 Text Domain: backupplus
@@ -108,16 +109,16 @@ if ( ! defined( 'BACKUPPLUS_SET_TIME_LIMIT' ) ) {
 
 // Options to pass to the zip binary (if that method happens to be used). By default, we mark the extensions specified in BACKUPPLUS_ZIP_NOCOMPRESS for non-compression via the -n flag
 if ( ! defined( 'BACKUPPLUS_BINZIP_OPTS' ) ) {
-	$zip_nocompress  = array_map( 'trim', explode( ',', BACKUPPLUS_ZIP_NOCOMPRESS ) );
-	$zip_binzip_opts = '';
-	foreach ( $zip_nocompress as $ext ) {
-		if ( empty( $zip_binzip_opts ) ) {
-			$zip_binzip_opts = "-n $ext:" . strtoupper( $ext );
+	$backupplus_zip_nocompress = array_map( 'trim', explode( ',', BACKUPPLUS_ZIP_NOCOMPRESS ) );
+	$backupplus_binzip_opts    = '';
+	foreach ( $backupplus_zip_nocompress as $backupplus_zip_ext ) {
+		if ( empty( $backupplus_binzip_opts ) ) {
+			$backupplus_binzip_opts = "-n $backupplus_zip_ext:" . strtoupper( $backupplus_zip_ext );
 		} else {
-			$zip_binzip_opts .= ':' . $ext . ':' . strtoupper( $ext );
+			$backupplus_binzip_opts .= ':' . $backupplus_zip_ext . ':' . strtoupper( $backupplus_zip_ext );
 		}
 	}
-	define( 'BACKUPPLUS_BINZIP_OPTS', $zip_binzip_opts );
+	define( 'BACKUPPLUS_BINZIP_OPTS', $backupplus_binzip_opts );
 }
 
 /**
@@ -241,7 +242,7 @@ function backupplus_list_cron_schedules() {
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Fortnightly' ), 'fortnightly' ),
 		),
 		'monthly'        => array(
-			'interval' => date( 't' ) * 86400, // Calculate the monthly interval based on the total days of the current month.
+			'interval' => gmdate( 't' ) * 86400, // Calculate the monthly interval based on the total days of the current month.
 			'display'  => apply_filters( 'backupplus_cron_schedule_description', __( 'Monthly' ), 'monthly' ),
 		),
 		// phpcs:enable
@@ -277,53 +278,53 @@ if ( ! is_multisite() || is_main_site() ) {
 if ( ! is_admin() && ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) && ( ! defined( 'XMLRPC_REQUEST' ) || ! XMLRPC_REQUEST ) && empty( $_SERVER['SHELL'] ) && ( empty( $_SERVER['REQUEST_METHOD'] ) || 'OPTIONS' != $_SERVER['REQUEST_METHOD'] ) && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
 	// There is no good way to work out if the cron event is likely to be called under the ALTERNATE_WP_CRON system, other than re-running the calculation
 	// If ALTERNATE_WP_CRON is not active (and a few other things), then we are done
-	if ( ! defined( 'ALTERNATE_WP_CRON' ) || ! ALTERNATE_WP_CRON || ! empty( $_POST ) || defined( 'DOING_AJAX' ) || isset( $_GET['doing_wp_cron'] ) ) {
-		return; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- False positive: nonce verification not required here.
+	if ( ! defined( 'ALTERNATE_WP_CRON' ) || ! ALTERNATE_WP_CRON || ! empty( $_POST ) || defined( 'DOING_AJAX' ) || isset( $_GET['doing_wp_cron'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- Only decides whether to load the plugin's hooks; nothing is processed.
+		return;
 	}
 	// The check below is the one used by spawn_cron() to decide whether cron events should be run
-	$gmt_time = microtime( true );
-	$lock     = get_transient( 'doing_cron' );
-	if ( $lock > $gmt_time + 10 * 60 ) {
-		$lock = 0;
+	$backupplus_cron_now  = microtime( true );
+	$backupplus_cron_lock = get_transient( 'doing_cron' );
+	if ( $backupplus_cron_lock > $backupplus_cron_now + 10 * 60 ) {
+		$backupplus_cron_lock = 0;
 	}
-	if ( ( defined( 'WP_CRON_LOCK_TIMEOUT' ) && $lock + WP_CRON_LOCK_TIMEOUT > $gmt_time ) || ( ! defined( 'WP_CRON_LOCK_TIMEOUT' ) && $lock + 60 > $gmt_time ) ) {
+	if ( ( defined( 'WP_CRON_LOCK_TIMEOUT' ) && $backupplus_cron_lock + WP_CRON_LOCK_TIMEOUT > $backupplus_cron_now ) || ( ! defined( 'WP_CRON_LOCK_TIMEOUT' ) && $backupplus_cron_lock + 60 > $backupplus_cron_now ) ) {
 		return;
 	}
 	if ( function_exists( '_get_cron_array' ) ) {
-		$crons = _get_cron_array();
+		$backupplus_crons = _get_cron_array();
 	} else {
-		$crons = get_option( 'cron' );
+		$backupplus_crons = get_option( 'cron' );
 	}
-	if ( ! is_array( $crons ) ) {
+	if ( ! is_array( $backupplus_crons ) ) {
 		return;
 	}
 
-	$keys = array_keys( $crons );
-	if ( isset( $keys[0] ) && $keys[0] > $gmt_time ) {
+	$backupplus_cron_times = array_keys( $backupplus_crons );
+	if ( isset( $backupplus_cron_times[0] ) && $backupplus_cron_times[0] > $backupplus_cron_now ) {
 		return;
 	}
 	// If we got this far, then cron is going to be fired, so we do want to load all our hooks
 }
 
 $backupplus_have_addons = 0;
-if ( is_dir( BACKUPPLUS_DIR . '/addons' ) && $dir_handle = opendir( BACKUPPLUS_DIR . '/addons' ) ) {
-	while ( false !== ( $e = readdir( $dir_handle ) ) ) {
-		if ( is_file( BACKUPPLUS_DIR . '/addons/' . $e ) && preg_match( '/\.php$/', $e ) ) {
+if ( is_dir( BACKUPPLUS_DIR . '/addons' ) && $backupplus_addons_dir = opendir( BACKUPPLUS_DIR . '/addons' ) ) {
+	while ( false !== ( $backupplus_addon_file = readdir( $backupplus_addons_dir ) ) ) {
+		if ( is_file( BACKUPPLUS_DIR . '/addons/' . $backupplus_addon_file ) && preg_match( '/\.php$/', $backupplus_addon_file ) ) {
 			// We used to have 1024 bytes here - but this meant that if someone's site was hacked and a lot of code added at the top, and if they were running a too-low PHP version, then they might just see the symptom rather than the cause - and raise the support request with us.
-			$header      = file_get_contents( BACKUPPLUS_DIR . '/addons/' . $e, false, null, 0, 16384 );
-			$phprequires = preg_match( '/RequiresPHP: (\d[\d\.]+)/', $header, $matches ) ? $matches[1] : false;
-			$phpinclude  = preg_match( '/IncludePHP: (\S+)/', $header, $matches ) ? $matches[1] : false;
-			if ( false === $phprequires || version_compare( PHP_VERSION, $phprequires, '>=' ) ) {
+			$backupplus_addon_header       = file_get_contents( BACKUPPLUS_DIR . '/addons/' . $backupplus_addon_file, false, null, 0, 16384 );
+			$backupplus_addon_requires_php = preg_match( '/RequiresPHP: (\d[\d\.]+)/', $backupplus_addon_header, $backupplus_addon_matches ) ? $backupplus_addon_matches[1] : false;
+			$backupplus_addon_include      = preg_match( '/IncludePHP: (\S+)/', $backupplus_addon_header, $backupplus_addon_matches ) ? $backupplus_addon_matches[1] : false;
+			if ( false === $backupplus_addon_requires_php || version_compare( PHP_VERSION, $backupplus_addon_requires_php, '>=' ) ) {
 				++$backupplus_have_addons;
-				if ( $phpinclude ) {
-					backupplus_try_include_file( '' . $phpinclude, 'include_once' );
+				if ( $backupplus_addon_include ) {
+					backupplus_try_include_file( '' . $backupplus_addon_include, 'include_once' );
 				}
-				backupplus_try_include_file( 'addons/' . $e, 'include_once' );
+				backupplus_try_include_file( 'addons/' . $backupplus_addon_file, 'include_once' );
 			}
-			unset( $header );
+			unset( $backupplus_addon_header );
 		}
 	}
-	@closedir( $dir_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+	@closedir( $backupplus_addons_dir );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 }
 
 if ( ! file_exists( BACKUPPLUS_DIR . '/class-backupplus.php' ) || ! file_exists( BACKUPPLUS_DIR . '/options.php' ) ) {
@@ -348,9 +349,9 @@ if ( ! file_exists( BACKUPPLUS_DIR . '/class-backupplus.php' ) || ! file_exists(
 		// Experience appears to show that the memory limit is only likely to be hit (unless it is very low) by single files that are larger than available memory (when compressed)
 		// Add sanity checks - found someone who'd set WP_MAX_MEMORY_LIMIT to 256K !
 		if ( ! $backupplus->memory_check( $backupplus->memory_check_current( WP_MAX_MEMORY_LIMIT ) ) ) {
-			$new = absint( $backupplus->memory_check_current( WP_MAX_MEMORY_LIMIT ) );
-			if ( $new > 32 && $new < 100000 ) {
-				@ini_set( 'memory_limit', $new . 'M' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- Silenced to suppress errors that may arise because of the function. Safely using discouraged function ini_set().
+			$backupplus_memory_limit = absint( $backupplus->memory_check_current( WP_MAX_MEMORY_LIMIT ) );
+			if ( $backupplus_memory_limit > 32 && $backupplus_memory_limit < 100000 ) {
+				@ini_set( 'memory_limit', $backupplus_memory_limit . 'M' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- Silenced to suppress errors that may arise because of the function. Safely using discouraged function ini_set().
 			}
 		}
 	}

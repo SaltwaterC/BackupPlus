@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Verifies signatures.
  *
  * @author Brian Eaton <beaton@google.com>
  */
-abstract class Google_Verifier_Abstract
+abstract class BackupPlus_Google_Verifier_Abstract
 {
   /**
    * Checks a signature, returns true if the signature is correct,

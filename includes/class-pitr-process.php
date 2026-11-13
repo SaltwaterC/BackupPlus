@@ -1,4 +1,8 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.DB.RestrictedFunctions.mysql_mysqli_connect_error, WordPress.DB.RestrictedFunctions.mysql_mysqli_init, WordPress.DB.RestrictedFunctions.mysql_mysqli_options, WordPress.DB.RestrictedFunctions.mysql_mysqli_real_connect, WordPress.DB.RestrictedFunctions.mysql_mysqli_report, WordPress.DB.RestrictedFunctions.mysql_mysqli_set_charset, WordPress.DB.RestrictedFunctions.mysql_mysqli_ssl_set -- Native connections to the databases being backed up or recovered, which $wpdb cannot open.
+// phpcs:disable Generic.PHP.ForbiddenFunctions.Found -- Runs database clients and zstd from trusted absolute paths, with arguments as an array and no shell.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** Private native-client execution for database point-in-time backups. */
 
@@ -258,7 +262,7 @@ class BackupPlus_PITR_Process {
 			throw new RuntimeException( 'PITR requires a Unix PHP runtime with process support.' );
 		}
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );
+		@set_time_limit( 0 ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		$stdout = null === $output ? $directory . '/out-' . bin2hex( random_bytes( 8 ) ) : $output;
 		$stderr = $directory . '/err-' . bin2hex( random_bytes( 8 ) );
 		self::private_file( $stdout );
@@ -333,10 +337,10 @@ class BackupPlus_PITR_Process {
 				proc_close( $process );
 			}
 			if ( is_file( $stderr ) ) {
-				unlink( $stderr );
+				wp_delete_file( $stderr );
 			}
 			if ( null === $output && is_file( $stdout ) ) {
-				unlink( $stdout );
+				wp_delete_file( $stdout );
 			}
 			foreach ( $signals as $signal => $handler ) {
 				pcntl_signal( $signal, $handler );

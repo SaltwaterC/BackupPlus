@@ -66,9 +66,9 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 						reset( $found );
 						$current_parent_id = key( $found );
 					} elseif ( empty( $found ) ) {
-						$ref = new UDP_Google_Service_Drive_ParentReference();
+						$ref = new BackupPlus_Google_Service_Drive_ParentReference();
 						$ref->setId( $current_parent_id );
-						$dir = new UDP_Google_Service_Drive_DriveFile();
+						$dir = new BackupPlus_Google_Service_Drive_DriveFile();
 						$dir->setMimeType( 'application/vnd.google-apps.folder' );
 						$dir->setParents( array( $ref ) );
 						$dir->setTitle( $element );
@@ -93,7 +93,7 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 		} catch ( Exception $e ) {
 			$msg = $e->getMessage();
 			$this->log( 'id_from_path failure: exception (' . get_class( $e ) . '): ' . $msg . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() . ')' );
-			if ( is_a( $e, 'UDP_Google_Service_Exception' ) && false !== strpos( $msg, 'Invalid json in service response' ) && function_exists( 'mb_strpos' ) ) {
+			if ( is_a( $e, 'BackupPlus_Google_Service_Exception' ) && false !== strpos( $msg, 'Invalid json in service response' ) && function_exists( 'mb_strpos' ) ) {
 				// Aug 2015: saw a case where the gzip-encoding was not removed from the result
 				// https://stackoverflow.com/questions/10975775/how-to-determine-if-a-string-was-compressed
 				// @codingStandardsIgnoreLine
@@ -127,7 +127,7 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 		foreach ( array_keys( $this->multi_directories[ $this->get_instance_id() ] ) as $drive_id ) {
 			if ( ! isset( $oldest_reference ) ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- The variable is defined below.
 				$oldest_id        = $drive_id;
-				$oldest_reference = new UDP_Google_Service_Drive_ParentReference();
+				$oldest_reference = new BackupPlus_Google_Service_Drive_ParentReference();
 				$oldest_reference->setId( $oldest_id );
 				continue;
 			}
@@ -149,7 +149,7 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 
 					$this->log( "Moving: $title (" . $item->getId() . ") from duplicate folder $drive_id to $oldest_id" );
 
-					$file = new UDP_Google_Service_Drive_DriveFile();
+					$file = new BackupPlus_Google_Service_Drive_DriveFile();
 					$file->setParents( array( $oldest_reference ) );
 
 					$storage->files->patch( $item->getId(), $file );
@@ -233,7 +233,7 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 			return new WP_Error(
 				'no_settings',
 				sprintf(
-				/* translators: %s: Storage provider name */
+				/* translators: %s: Name of the storage method. */
 					__( 'No %s settings were found', 'backupplus' ),
 					__( 'Google Drive', 'backupplus' )
 				)
@@ -306,13 +306,13 @@ trait BackupPlus_GoogleDrive_Listing_Retention {
 	}
 
 	/**
-	 * Returns array of UDP_Google_Service_Drive_DriveFile objects
+	 * Returns array of BackupPlus_Google_Service_Drive_DriveFile objects
 	 *
 	 * @param  String $parent_id This is the Parent ID
 	 * @param  String $type      This is the type of file or directory but by default it is set to 'any' unless specified
 	 * @param  String $match     This will specify which match is used for the SQL but by default it is set to 'backup_' unless specified
 	 *
-	 * @return Array - list of UDP_Google_Service_Drive_DriveFile items
+	 * @return Array - list of BackupPlus_Google_Service_Drive_DriveFile items
 	 */
 	private function get_subitems( $parent_id, $type = 'any', $match = 'backup_' ) {
 

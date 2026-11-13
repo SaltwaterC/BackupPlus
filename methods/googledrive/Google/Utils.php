@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Collection of static utility methods used for convenience across
  * the client library.
  */
-class Google_Utils
+class BackupPlus_Google_Utils
 {
   public static function urlSafeB64Encode($data)
   {

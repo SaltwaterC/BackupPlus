@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The manifests that record what each archive holds, for incremental backups. */
 
@@ -189,7 +190,7 @@ trait BackupPlus_Backup_Zip_Manifest {
 		$zip = new $this->use_zip_object();
 		if ( true !== $zip->open( $zip_path ) ) {
 			$backupplus->log( 'Could not open zip file to examine (' . $zip->last_error . '); will remove: ' . basename( $zip_path ) );
-			unlink( $zip_path );
+			wp_delete_file( $zip_path );
 		} else {
 
 			$this->existing_zipfiles_size += filesize( $zip_path );

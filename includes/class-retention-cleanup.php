@@ -297,7 +297,7 @@ class BackupPlus_Retention_Cleanup {
 			$remaining = array();
 			foreach ( $item['files'] as $file ) {
 				$path = $backupplus->backups_dir_location() . '/' . basename( $file );
-				if ( file_exists( $path ) && ! @unlink( $path ) ) { // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The failure is recorded for a later retry.
+				if ( file_exists( $path ) && ! wp_delete_file( $path ) ) {
 					$remaining[] = $file;
 				}
 			}
@@ -407,7 +407,7 @@ class BackupPlus_Retention_Cleanup {
 			// Keep only this run's log.
 			foreach ( isset( $status['logs'] ) ? (array) $status['logs'] : array() as $job ) {
 				if ( $job !== $backupplus->nonce && is_file( $backupplus->get_logfile_name( $job ) ) ) {
-					unlink( $backupplus->get_logfile_name( $job ) );
+					wp_delete_file( $backupplus->get_logfile_name( $job ) );
 				}
 			}
 			$status = array(

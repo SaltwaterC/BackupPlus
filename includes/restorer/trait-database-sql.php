@@ -56,9 +56,9 @@ trait BackupPlus_Restorer_Database_Sql {
 		$old_val = $wpdb->suppress_errors();
 		try {
 			if ( is_null( $initial_value ) || is_wp_error( $initial_value ) ) {
-				$creators_val = $wpdb->get_var( 'SELECT @@GLOBAL.log_bin_trust_function_creators' );
-				/* translators: %s: Last error and last query information from $wpdb */
+				$creators_val = $wpdb->get_var( 'SELECT @@GLOBAL.log_bin_trust_function_creators' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 				if ( is_null( $creators_val ) ) {
+					/* translators: %s: Last error and last query information from $wpdb. */
 					throw new Exception( sprintf( __( 'An error occurred while attempting to retrieve the MySQL global log_bin_trust_function_creators variable %s', 'backupplus' ), '(' . $wpdb->last_error . ' - ' . $wpdb->last_query . ')' ), 0 );
 				}
 				$initial_value = '1' === $creators_val || 'on' === strtolower( $creators_val ) ? 'ON' : 'OFF';
@@ -68,7 +68,7 @@ trait BackupPlus_Restorer_Database_Sql {
 				$res = $sql->execute( 'SET GLOBAL log_bin_trust_function_creators = ?', array(), array( $value ) );
 				if ( false === $res ) {
 					$saved_value = null;
-					/* translators: %s: Last error information */
+					/* translators: %s: Last error information. */
 					throw new Exception( sprintf( __( 'An error occurred while attempting to set a new value to the MySQL global log_bin_trust_function_creators variable %s', 'backupplus' ), '(' . $sql->last_error() . ')' ), 0 );
 				}
 				if ( ! is_null( $saved_value ) ) {
@@ -303,7 +303,7 @@ trait BackupPlus_Restorer_Database_Sql {
 				if ( 0 == $this->insert_statements_run && $this->new_table_name && $this->new_table_name == $import_table_prefix . 'options' ) {
 					$backupplus->log( 'Leaving maintenance mode' );
 					$this->maintenance_mode( false );
-					/* translators: %s: String 'INSERT (options)' */
+					/* translators: %s: Name of the SQL command (e.g. INSERT (options), CREATE TABLE, SET NAMES). */
 					return new WP_Error( 'initial_db_error', sprintf( __( 'An error occurred on the first %s command - aborting run', 'backupplus' ), 'INSERT (options)' ) );
 				}
 				return false;
@@ -378,7 +378,7 @@ trait BackupPlus_Restorer_Database_Sql {
 				} else {
 					$backupplus->log( 'Leaving maintenance mode' );
 					$this->maintenance_mode( false );
-					/* translators: %s: String 'CREATE TABLE' */
+					/* translators: %s: Name of the SQL command (e.g. INSERT (options), CREATE TABLE, SET NAMES). */
 					return new WP_Error( 'initial_db_error', sprintf( __( 'An error occurred on the first %s command - aborting run', 'backupplus' ), 'CREATE TABLE' ) );
 				}
 			} elseif ( 2 == $sql_type && 0 == $this->tables_created && ! empty( $this->db_permissons_forbidden['drop'] ) ) {
@@ -402,7 +402,7 @@ trait BackupPlus_Restorer_Database_Sql {
 				}
 				return new WP_Error(
 					'initial_db_error',
-					/* translators: %s: String 'SET NAMES' */
+					/* translators: %s: Name of the SQL command (e.g. INSERT (options), CREATE TABLE, SET NAMES). */
 					sprintf( __( 'An error occurred on the first %s command - aborting run', 'backupplus' ), 'SET NAMES' ) . '. ' .
 					/* translators: %s: The character set */
 					sprintf( __( 'To use this backup, your database server needs to support the %s character set.', 'backupplus' ), $this->set_names ) . $extra_msg

@@ -191,12 +191,6 @@ class BackupPlus {
 
 		add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ) );
 
-		// Since the WordPress version 5.5, we are no longer forcing an auto update by hooking the auto_update_plugin filter because WordPress does something different to its auto-update interface
-		if ( version_compare( $this->get_wordpress_version(), '5.5', '<' ) ) {
-			// Auto update plugin
-			add_filter( 'auto_update_plugin', array( $this, 'maybe_auto_update_plugin' ), 20, 2 );
-		}
-
 		// Prevent iThemes Security from telling people that they have no backups (and advertising them another product on that basis!)
 		add_filter( 'itsec_has_external_backup', '__return_true', 999 );
 		add_filter( 'itsec_external_backup_link', array( $this, 'itsec_external_backup_link' ), 999 );

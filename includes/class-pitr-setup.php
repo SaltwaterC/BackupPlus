@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Saved capture credentials and request-only restore credentials. No account provisioning. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
@@ -99,7 +100,7 @@ class BackupPlus_PITR_Setup {
 		}
 		finally {
 			if ( $connection ) { BackupPlus_PITR_Process::forget_connection( $connection ); }
-			if ( $directory && is_dir( $directory ) ) { foreach ( new DirectoryIterator( $directory ) as $file ) { if ( $file->isFile() ) { unlink( $file->getPathname() );
+			if ( $directory && is_dir( $directory ) ) { foreach ( new DirectoryIterator( $directory ) as $file ) { if ( $file->isFile() ) { wp_delete_file( $file->getPathname() );
 			}
 			} rmdir( $directory ); }
 			if ( is_resource( $lock ) ) { flock( $lock, LOCK_UN );

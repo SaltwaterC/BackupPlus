@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -29,7 +31,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @see https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md
  */
-abstract class Google_Logger_Abstract
+abstract class BackupPlus_Google_Logger_Abstract
 {
   /**
    * Default log format
@@ -120,22 +122,22 @@ abstract class Google_Logger_Abstract
   protected $allowNewLines = false;
 
   /**
-   * @param UDP_Google_Client $client  The current Google client
+   * @param BackupPlus_Google_Client $client  The current Google client
    */
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     $this->setLevel(
-        $client->getClassConfig('Google_Logger_Abstract', 'level')
+        $client->getClassConfig('BackupPlus_Google_Logger_Abstract', 'level')
     );
 
-    $format = $client->getClassConfig('Google_Logger_Abstract', 'log_format');
+    $format = $client->getClassConfig('BackupPlus_Google_Logger_Abstract', 'log_format');
     $this->logFormat = $format ? $format : self::DEFAULT_LOG_FORMAT;
 
-    $format = $client->getClassConfig('Google_Logger_Abstract', 'date_format');
+    $format = $client->getClassConfig('BackupPlus_Google_Logger_Abstract', 'date_format');
     $this->dateFormat = $format ? $format : self::DEFAULT_DATE_FORMAT;
 
     $this->allowNewLines = (bool) $client->getClassConfig(
-        'Google_Logger_Abstract',
+        'BackupPlus_Google_Logger_Abstract',
         'allow_newlines'
     );
   }
@@ -386,7 +388,7 @@ abstract class Google_Logger_Abstract
    *
    * @param  mixed $level   The logging level
    * @return integer $level The normalized level
-   * @throws Google_Logger_Exception If $level is invalid
+   * @throws BackupPlus_Google_Logger_Exception If $level is invalid
    */
   protected function normalizeLevel($level)
   {
@@ -398,7 +400,7 @@ abstract class Google_Logger_Abstract
       return self::$levels[$level];
     }
 
-    throw new Google_Logger_Exception(
+    throw new BackupPlus_Google_Logger_Exception(
         sprintf("Unknown LogLevel: '%s'", $level) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     );
   }

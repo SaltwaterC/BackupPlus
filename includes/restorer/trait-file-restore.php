@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Moving unpacked files into place and setting aside what they replace. */
 
@@ -408,7 +409,7 @@ trait BackupPlus_Restorer_File_Restore {
 				return new WP_Error(
 					'no_dir',
 					sprintf(
-					/* translators: 1: String 'folder', 2: Upgrade folder path */
+					/* translators: 1: Type of item (folder or file), 2: Path of the item. */
 						__( 'BackupPlus needed to create a %1$s in your content directory, but failed - please check your file permissions and enable the access (%2$s)', 'backupplus' ),
 						__( 'folder', 'backupplus' ),
 						$upgrade_folder
@@ -424,7 +425,7 @@ trait BackupPlus_Restorer_File_Restore {
 				return new WP_Error(
 					'no_file',
 					sprintf(
-					/* translators: 1: String 'file', 2: Upgrade folder path with random file name */
+					/* translators: 1: Type of item (folder or file), 2: Path of the item. */
 						__( 'BackupPlus needed to create a %1$s in your content directory, but failed - please check your file permissions and enable the access (%2$s)', 'backupplus' ),
 						__( 'file', 'backupplus' ),
 						$upgrade_folder . $rand_file

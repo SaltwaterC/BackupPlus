@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,15 +28,15 @@ if (!class_exists('UDP_Google_Client')) {
  * @author Chris Chabot <chabotc@google.com>
  *
  */
-abstract class Google_Auth_Abstract
+abstract class BackupPlus_Google_Auth_Abstract
 {
   /**
    * An utility function that first calls $this->auth->sign($request) and then
    * executes makeRequest() on that signed request. Used for when a request
    * should be authenticated
-   * @param Google_Http_Request $request
-   * @return Google_Http_Request $request
+   * @param BackupPlus_Google_Http_Request $request
+   * @return BackupPlus_Google_Http_Request $request
    */
-  abstract public function authenticatedRequest(UDP_Google_Http_Request $request);
-  abstract public function sign(UDP_Google_Http_Request $request);
+  abstract public function authenticatedRequest(BackupPlus_Google_Http_Request $request);
+  abstract public function sign(BackupPlus_Google_Http_Request $request);
 }

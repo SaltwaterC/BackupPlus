@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Table level work during a database restore: creation, renaming, locking and dropping. */
 
@@ -398,8 +399,8 @@ trait BackupPlus_Restorer_Database_Tables {
 			}
 			$skip_table = true;
 		} elseif ( ! empty( $last_table ) && ! empty( $table_name ) && $table_name != $last_table ) {
-			/* translators: 1: Table name, 2: Last table name */
 			if ( empty( $this->previous_table_name ) || $table_name != $this->previous_table_name ) {
+				/* translators: 1: Table name, 2: Last table name. */
 				$backupplus->log( sprintf( __( 'Skipping table %1$s: already restored on a prior run; next table to restore: %2$s', 'backupplus' ), $table_name, $last_table ), 'notice-restore' );
 			}
 			$skip_table = true;
@@ -546,7 +547,7 @@ trait BackupPlus_Restorer_Database_Tables {
 				// WordPress has an option name predicated upon the table prefix. Yuk.
 				if ( $import_table_prefix != $old_table_prefix ) {
 					$backupplus->log( 'Table prefix has changed: changing options table field(s) accordingly (' . $mprefix . 'options)' );
-					/* translators: %s: String 'option' for table */
+					/* translators: %s: Name of the database table. */
 					$print_line = sprintf( __( 'Table prefix has changed: changing %s table field(s) accordingly:', 'backupplus' ), 'option' ) . ' ';
 					if ( false === $sql->execute( 'UPDATE %i SET option_name = ? WHERE option_name = ? LIMIT 1', array( $new_table_name ), array( $import_table_prefix . $mprefix . 'user_roles', $old_table_prefix . $mprefix . 'user_roles' ) ) ) {
 						$print_line .= __( 'Error', 'backupplus' );
@@ -641,7 +642,7 @@ trait BackupPlus_Restorer_Database_Tables {
 			// This table is not a per-site table, but per-install
 
 			$backupplus->log( 'Table prefix has changed: changing usermeta table field(s) accordingly' );
-			/* translators: %s: String 'usermeta' for table */
+			/* translators: %s: Name of the database table. */
 			$print_line = sprintf( __( 'Table prefix has changed: changing %s table field(s) accordingly:', 'backupplus' ), 'usermeta' ) . ' ';
 
 			$errors_occurred = false;
@@ -741,7 +742,7 @@ trait BackupPlus_Restorer_Database_Tables {
 			} elseif ( false == $report ) {
 				$backupplus->log(
 					sprintf(
-					/* translators: %s: String 'search and replace' */
+					/* translators: %s: Name of the operation. */
 						__( 'Failed: the %s operation was not able to start.', 'backupplus' ),
 						__( 'search and replace', 'backupplus' )
 					),
@@ -750,7 +751,7 @@ trait BackupPlus_Restorer_Database_Tables {
 			} elseif ( ! is_array( $report ) ) {
 				$backupplus->log(
 					sprintf(
-					/* translators: %s: String 'search and replace' */
+					/* translators: %s: Name of the operation. */
 						__( 'Failed: we did not understand the result returned by the %s operation.', 'backupplus' ),
 						__( 'search and replace', 'backupplus' )
 					),

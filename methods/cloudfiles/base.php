@@ -45,7 +45,7 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 			$storage = $this->get_openstack_service( $opts, BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ), BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' ) );
 		} catch ( AuthenticationError $e ) {
 			$backupplus->log( $this->desc . ' authentication failed (' . $e->getMessage() . ')' );
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			$backupplus->log( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		} catch ( Exception $e ) {
@@ -335,7 +335,7 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 				if ( $remote_size >= $upload_size ) {
 					$backupplus->log( "$file: Chunk now exists; ignoring error (presuming it was an apparently known curl bug)" );
 				} else {
-					/* translators: %s: Remote storage method */
+					/* translators: %s: Name of the remote storage service. */
 					$backupplus->log( "$file: " . sprintf( __( '%s Error: Failed to upload', 'backupplus' ), $this->desc ), 'error' );
 					return false;
 				}
@@ -381,7 +381,7 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 				$storage = $this->get_openstack_service( $opts, BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ), BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' ) );
 			} catch ( AuthenticationError $e ) {
 				$backupplus->log( $this->desc . ' authentication failed (' . $e->getMessage() . ')' );
-				/* translators: %s: Remote storage method */
+				/* translators: %s: Name of the remote storage method. */
 				$backupplus->log( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . $e->getMessage() . ')', 'error' );
 				return 'authentication_fail';
 			} catch ( Exception $e ) {
@@ -448,7 +448,7 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 			$storage = $this->get_openstack_service( $opts, BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ), BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_disableverify' ) );
 		} catch ( AuthenticationError $e ) {
 			$backupplus->log( $this->desc . ' authentication failed (' . $e->getMessage() . ')' );
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			$backupplus->log( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		} catch ( Exception $e ) {
@@ -489,7 +489,7 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 		} catch ( Exception $e ) {
 			global $backupplus;
 			$backupplus->log( "$file: Failed to download (" . $e->getMessage() . ')' );
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			$backupplus->log( "$file: " . sprintf( __( '%s Error', 'backupplus' ), $this->desc ) . ': ' . __( 'Error downloading remote file: Failed to download', 'backupplus' ) . ' (' . $e->getMessage() . ')', 'error' );
 			return false;
 		}
@@ -525,11 +525,11 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 			}
 			return;
 		} catch ( AuthenticationError $e ) {
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			echo esc_html( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . $e->getMessage() . ')' );
 			return;
 		} catch ( Exception $e ) {
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			echo esc_html( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . get_class( $e ) . ', ' . $e->getMessage() . ')' );
 			return;
 		}
@@ -548,13 +548,13 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 				return;
 			}
 		} catch ( Exception $e ) {
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			echo esc_html( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . get_class( $e ) . ', ' . $e->getMessage() . ')' );
 			return;
 		}
 
 		if ( ! is_a( $container_object, 'OpenCloud\ObjectStore\Resource\Container' ) && ! is_a( $container_object, 'Container' ) ) {
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			echo esc_html( sprintf( __( '%s authentication failed', 'backupplus' ), $this->desc ) . ' (' . get_class( $container_object ) . ')' );
 			return;
 		}
@@ -566,8 +566,8 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 		} catch ( Exception $e ) {
 			/* translators: %s: Remote storage method */
 			echo esc_html( sprintf( __( '%s error - we accessed the container, but failed to create a file within it', 'backupplus' ), $this->desc ) . ' (' . get_class( $e ) . ', ' . $e->getMessage() . ')' );
-			/* translators: %s: Region name */
 			if ( ! empty( $this->region ) ) {
+				/* translators: %s: Name of the region. */
 				echo ' ' . esc_html( sprintf( __( 'Region: %s', 'backupplus' ), $this->region ) );
 			}
 			return;
@@ -575,8 +575,8 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 
 		$this->set_connection_status( true );
 		echo esc_html( __( 'Success', 'backupplus' ) . ': ' . __( 'We accessed the container, and were able to create files within it.', 'backupplus' ) );
-		/* translators: %s: Region name */
 		if ( ! empty( $this->region ) ) {
+			/* translators: %s: Name of the region. */
 			echo ' ' . esc_html( sprintf( __( 'Region: %s', 'backupplus' ), $this->region ) );
 		}
 
@@ -620,10 +620,10 @@ class BackupPlus_BackupModule_cloudfiles_base extends BackupPlus_BackupModule {
 			if ( ! function_exists( 'mb_substr' ) ) {
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
 					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
-					/* translators: 1: Remote storage method, 2: Required module name */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $this->desc, 'mbstring' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->method

@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,7 +28,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @author Brian Eaton <beaton@google.com>
  */
-class Google_Auth_LoginTicket
+class BackupPlus_Google_Auth_LoginTicket
 {
   const USER_ATTR = "sub";
 
@@ -50,7 +52,7 @@ class Google_Auth_LoginTicket
 
   /**
    * Returns the numeric identifier for the user.
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    * @return
    */
   public function getUserId()
@@ -58,7 +60,7 @@ class Google_Auth_LoginTicket
     if (array_key_exists(self::USER_ATTR, $this->payload)) {
       return $this->payload[self::USER_ATTR];
     }
-    throw new Google_Auth_Exception("No user_id in token");
+    throw new BackupPlus_Google_Auth_Exception("No user_id in token");
   }
 
   /**

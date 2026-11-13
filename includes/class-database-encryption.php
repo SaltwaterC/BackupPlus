@@ -155,7 +155,7 @@ class BackupPlus_Database_Encryption {
 			</p>
 		</dialog>
 		<p class="description"><?php esc_html_e( 'Use age1… recipients, SSH RSA/Ed25519 public keys, or github:USERNAME. GitHub keys are fetched and pinned when you save; save again to refresh them. Backups use every saved recipient without contacting GitHub.', 'backupplus' ); ?></p>
-		<p class="description"><?php echo esc_html( sprintf( __( 'Saved public recipients: %d. Each recipient can decrypt the backup. Keep the corresponding private key for restoration; it is never saved here.', 'backupplus' ), isset( $config['recipients'] ) ? count( $config['recipients'] ) : 0 ) ); ?></p>
+		<p class="description"><?php /* translators: %d: Number of saved public recipients. */ echo esc_html( sprintf( __( 'Saved public recipients: %d. Each recipient can decrypt the backup. Keep the corresponding private key for restoration; it is never saved here.', 'backupplus' ), isset( $config['recipients'] ) ? count( $config['recipients'] ) : 0 ) ); ?></p>
 		</div>
 		</td></tr>
 		<?php

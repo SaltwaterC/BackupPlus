@@ -15,6 +15,8 @@
  * the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Service definition for Storage (v1).
  *
@@ -28,7 +30,7 @@
  *
  * @author Google, Inc.
  */
-class UDP_Google_Service_Storage extends UDP_Google_Service
+class BackupPlus_Google_Service_Storage extends BackupPlus_Google_Service
 {
   /** View and manage your data across Google Cloud Platform services. */
   const CLOUD_PLATFORM =
@@ -60,16 +62,16 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
   /**
    * Constructs the internal representation of the Storage service.
    *
-   * @param UDP_Google_Client $client
+   * @param BackupPlus_Google_Client $client
    */
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     parent::__construct($client);
     $this->servicePath = 'storage/v1/';
     $this->version = 'v1';
     $this->serviceName = 'storage';
 
-    $this->bucketAccessControls = new Google_Service_Storage_BucketAccessControls_Resource(
+    $this->bucketAccessControls = new BackupPlus_Google_Service_Storage_BucketAccessControls_Resource(
         $this,
         $this->serviceName,
         'bucketAccessControls',
@@ -159,7 +161,7 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
           )
         )
     );
-    $this->buckets = new Google_Service_Storage_Buckets_Resource(
+    $this->buckets = new BackupPlus_Google_Service_Storage_Buckets_Resource(
         $this,
         $this->serviceName,
         'buckets',
@@ -317,7 +319,7 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
           )
         )
     );
-    $this->channels = new Google_Service_Storage_Channels_Resource(
+    $this->channels = new BackupPlus_Google_Service_Storage_Channels_Resource(
         $this,
         $this->serviceName,
         'channels',
@@ -331,7 +333,7 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
           )
         )
     );
-    $this->defaultObjectAccessControls = new Google_Service_Storage_DefaultObjectAccessControls_Resource(
+    $this->defaultObjectAccessControls = new BackupPlus_Google_Service_Storage_DefaultObjectAccessControls_Resource(
         $this,
         $this->serviceName,
         'defaultObjectAccessControls',
@@ -429,7 +431,7 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
           )
         )
     );
-    $this->objectAccessControls = new Google_Service_Storage_ObjectAccessControls_Resource(
+    $this->objectAccessControls = new BackupPlus_Google_Service_Storage_ObjectAccessControls_Resource(
         $this,
         $this->serviceName,
         'objectAccessControls',
@@ -573,7 +575,7 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
           )
         )
     );
-    $this->objects = new Google_Service_Storage_Objects_Resource(
+    $this->objects = new BackupPlus_Google_Service_Storage_Objects_Resource(
         $this,
         $this->serviceName,
         'objects',
@@ -1034,11 +1036,11 @@ class UDP_Google_Service_Storage extends UDP_Google_Service
  * The "bucketAccessControls" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $bucketAccessControls = $storageService->bucketAccessControls;
  *  </code>
  */
-class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_BucketAccessControls_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -1067,13 +1069,13 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_BucketAccessControl
+   * @return BackupPlus_Google_Service_Storage_BucketAccessControl
    */
   public function get($bucket, $entity, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_Storage_BucketAccessControl");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Storage_BucketAccessControl");
   }
 
   /**
@@ -1081,15 +1083,15 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
    * (bucketAccessControls.insert)
    *
    * @param string $bucket Name of a bucket.
-   * @param Google_BucketAccessControl $postBody
+   * @param BackupPlus_Google_BucketAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_BucketAccessControl
+   * @return BackupPlus_Google_Service_Storage_BucketAccessControl
    */
-  public function insert($bucket, Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
+  public function insert($bucket, BackupPlus_Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('insert', array($params), "Google_Service_Storage_BucketAccessControl");
+    return $this->call('insert', array($params), "BackupPlus_Google_Service_Storage_BucketAccessControl");
   }
 
   /**
@@ -1098,13 +1100,13 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
    *
    * @param string $bucket Name of a bucket.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_BucketAccessControls
+   * @return BackupPlus_Google_Service_Storage_BucketAccessControls
    */
   public function listBucketAccessControls($bucket, $optParams = array())
   {
     $params = array('bucket' => $bucket);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Storage_BucketAccessControls");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Storage_BucketAccessControls");
   }
 
   /**
@@ -1115,15 +1117,15 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_BucketAccessControl $postBody
+   * @param BackupPlus_Google_BucketAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_BucketAccessControl
+   * @return BackupPlus_Google_Service_Storage_BucketAccessControl
    */
-  public function patch($bucket, $entity, Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
+  public function patch($bucket, $entity, BackupPlus_Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('patch', array($params), "Google_Service_Storage_BucketAccessControl");
+    return $this->call('patch', array($params), "BackupPlus_Google_Service_Storage_BucketAccessControl");
   }
 
   /**
@@ -1133,15 +1135,15 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_BucketAccessControl $postBody
+   * @param BackupPlus_Google_BucketAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_BucketAccessControl
+   * @return BackupPlus_Google_Service_Storage_BucketAccessControl
    */
-  public function update($bucket, $entity, Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
+  public function update($bucket, $entity, BackupPlus_Google_Service_Storage_BucketAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_Storage_BucketAccessControl");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Storage_BucketAccessControl");
   }
 }
 
@@ -1149,11 +1151,11 @@ class Google_Service_Storage_BucketAccessControls_Resource extends UDP_Google_Se
  * The "buckets" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $buckets = $storageService->buckets;
  *  </code>
  */
-class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_Buckets_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -1187,20 +1189,20 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
    * metadata conditional on whether the bucket's current metageneration does not
    * match the given value.
    * @opt_param string projection Set of properties to return. Defaults to noAcl.
-   * @return UDP_Google_Service_Storage_Bucket
+   * @return BackupPlus_Google_Service_Storage_Bucket
    */
   public function get($bucket, $optParams = array())
   {
     $params = array('bucket' => $bucket);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "UDP_Google_Service_Storage_Bucket");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Storage_Bucket");
   }
 
   /**
    * Creates a new bucket. (buckets.insert)
    *
    * @param string $project A valid API project identifier.
-   * @param Google_Bucket $postBody
+   * @param BackupPlus_Google_Bucket $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string predefinedAcl Apply a predefined set of access controls to
@@ -1210,13 +1212,13 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
    * it defaults to full.
    * @opt_param string predefinedDefaultObjectAcl Apply a predefined set of
    * default object access controls to this bucket.
-   * @return UDP_Google_Service_Storage_Bucket
+   * @return BackupPlus_Google_Service_Storage_Bucket
    */
-  public function insert($project, UDP_Google_Service_Storage_Bucket $postBody, $optParams = array())
+  public function insert($project, BackupPlus_Google_Service_Storage_Bucket $postBody, $optParams = array())
   {
     $params = array('project' => $project, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('insert', array($params), "UDP_Google_Service_Storage_Bucket");
+    return $this->call('insert', array($params), "BackupPlus_Google_Service_Storage_Bucket");
   }
 
   /**
@@ -1231,20 +1233,20 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
    * this prefix.
    * @opt_param string projection Set of properties to return. Defaults to noAcl.
    * @opt_param string maxResults Maximum number of buckets to return.
-   * @return Google_Service_Storage_Buckets
+   * @return BackupPlus_Google_Service_Storage_Buckets
    */
   public function listBuckets($project, $optParams = array())
   {
     $params = array('project' => $project);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Storage_Buckets");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Storage_Buckets");
   }
 
   /**
    * Updates a bucket. This method supports patch semantics. (buckets.patch)
    *
    * @param string $bucket Name of a bucket.
-   * @param Google_Bucket $postBody
+   * @param BackupPlus_Google_Bucket $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string projection Set of properties to return. Defaults to full.
@@ -1258,20 +1260,20 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
    * @opt_param string ifMetagenerationNotMatch Makes the return of the bucket
    * metadata conditional on whether the bucket's current metageneration does not
    * match the given value.
-   * @return UDP_Google_Service_Storage_Bucket
+   * @return BackupPlus_Google_Service_Storage_Bucket
    */
-  public function patch($bucket, UDP_Google_Service_Storage_Bucket $postBody, $optParams = array())
+  public function patch($bucket, BackupPlus_Google_Service_Storage_Bucket $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('patch', array($params), "UDP_Google_Service_Storage_Bucket");
+    return $this->call('patch', array($params), "BackupPlus_Google_Service_Storage_Bucket");
   }
 
   /**
    * Updates a bucket. (buckets.update)
    *
    * @param string $bucket Name of a bucket.
-   * @param Google_Bucket $postBody
+   * @param BackupPlus_Google_Bucket $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string projection Set of properties to return. Defaults to full.
@@ -1285,13 +1287,13 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
    * @opt_param string ifMetagenerationNotMatch Makes the return of the bucket
    * metadata conditional on whether the bucket's current metageneration does not
    * match the given value.
-   * @return UDP_Google_Service_Storage_Bucket
+   * @return BackupPlus_Google_Service_Storage_Bucket
    */
-  public function update($bucket, UDP_Google_Service_Storage_Bucket $postBody, $optParams = array())
+  public function update($bucket, BackupPlus_Google_Service_Storage_Bucket $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "UDP_Google_Service_Storage_Bucket");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Storage_Bucket");
   }
 }
 
@@ -1299,20 +1301,20 @@ class Google_Service_Storage_Buckets_Resource extends UDP_Google_Service_Resourc
  * The "channels" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $channels = $storageService->channels;
  *  </code>
  */
-class Google_Service_Storage_Channels_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_Channels_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
    * Stop watching resources through this channel (channels.stop)
    *
-   * @param Google_Channel $postBody
+   * @param BackupPlus_Google_Channel $postBody
    * @param array $optParams Optional parameters.
    */
-  public function stop(Google_Service_Storage_Channel $postBody, $optParams = array())
+  public function stop(BackupPlus_Google_Service_Storage_Channel $postBody, $optParams = array())
   {
     $params = array('postBody' => $postBody);
     $params = array_merge($params, $optParams);
@@ -1324,11 +1326,11 @@ class Google_Service_Storage_Channels_Resource extends UDP_Google_Service_Resour
  * The "defaultObjectAccessControls" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $defaultObjectAccessControls = $storageService->defaultObjectAccessControls;
  *  </code>
  */
-class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_DefaultObjectAccessControls_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -1357,13 +1359,13 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
   public function get($bucket, $entity, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1371,15 +1373,15 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
    * (defaultObjectAccessControls.insert)
    *
    * @param string $bucket Name of a bucket.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function insert($bucket, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function insert($bucket, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('insert', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('insert', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1394,13 +1396,13 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
    * @opt_param string ifMetagenerationNotMatch If present, only return default
    * ACL listing if the bucket's current metageneration does not match the given
    * value.
-   * @return Google_Service_Storage_ObjectAccessControls
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControls
    */
   public function listDefaultObjectAccessControls($bucket, $optParams = array())
   {
     $params = array('bucket' => $bucket);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Storage_ObjectAccessControls");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControls");
   }
 
   /**
@@ -1411,15 +1413,15 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function patch($bucket, $entity, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function patch($bucket, $entity, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('patch', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('patch', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1430,15 +1432,15 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function update($bucket, $entity, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function update($bucket, $entity, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 }
 
@@ -1446,11 +1448,11 @@ class Google_Service_Storage_DefaultObjectAccessControls_Resource extends UDP_Go
  * The "objectAccessControls" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $objectAccessControls = $storageService->objectAccessControls;
  *  </code>
  */
-class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_ObjectAccessControls_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -1487,13 +1489,13 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
    *
    * @opt_param string generation If present, selects a specific revision of this
    * object (as opposed to the latest version, the default).
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
   public function get($bucket, $object, $entity, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'entity' => $entity);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1502,18 +1504,18 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
    *
    * @param string $bucket Name of a bucket.
    * @param string $object Name of the object.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string generation If present, selects a specific revision of this
    * object (as opposed to the latest version, the default).
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function insert($bucket, $object, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function insert($bucket, $object, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('insert', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('insert', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1526,13 +1528,13 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
    *
    * @opt_param string generation If present, selects a specific revision of this
    * object (as opposed to the latest version, the default).
-   * @return Google_Service_Storage_ObjectAccessControls
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControls
    */
   public function listObjectAccessControls($bucket, $object, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Storage_ObjectAccessControls");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControls");
   }
 
   /**
@@ -1544,18 +1546,18 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string generation If present, selects a specific revision of this
    * object (as opposed to the latest version, the default).
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function patch($bucket, $object, $entity, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function patch($bucket, $object, $entity, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('patch', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('patch', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 
   /**
@@ -1566,18 +1568,18 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
    * @param string $entity The entity holding the permission. Can be user-userId,
    * user-emailAddress, group-groupId, group-emailAddress, allUsers, or
    * allAuthenticatedUsers.
-   * @param Google_ObjectAccessControl $postBody
+   * @param BackupPlus_Google_ObjectAccessControl $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string generation If present, selects a specific revision of this
    * object (as opposed to the latest version, the default).
-   * @return Google_Service_Storage_ObjectAccessControl
+   * @return BackupPlus_Google_Service_Storage_ObjectAccessControl
    */
-  public function update($bucket, $object, $entity, Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
+  public function update($bucket, $object, $entity, BackupPlus_Google_Service_Storage_ObjectAccessControl $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'entity' => $entity, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_Storage_ObjectAccessControl");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Storage_ObjectAccessControl");
   }
 }
 
@@ -1585,11 +1587,11 @@ class Google_Service_Storage_ObjectAccessControls_Resource extends UDP_Google_Se
  * The "objects" collection of methods.
  * Typical usage is:
  *  <code>
- *   $storageService = new UDP_Google_Service_Storage(...);
+ *   $storageService = new BackupPlus_Google_Service_Storage(...);
  *   $objects = $storageService->objects;
  *  </code>
  */
-class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resource
+class BackupPlus_Google_Service_Storage_Objects_Resource extends BackupPlus_Google_Service_Resource
 {
 
   /**
@@ -1599,7 +1601,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @param string $destinationBucket Name of the bucket in which to store the new
    * object.
    * @param string $destinationObject Name of the new object.
-   * @param Google_ComposeRequest $postBody
+   * @param BackupPlus_Google_ComposeRequest $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string ifGenerationMatch Makes the operation conditional on
@@ -1608,13 +1610,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * whether the object's current metageneration matches the given value.
    * @opt_param string destinationPredefinedAcl Apply a predefined set of access
    * controls to the destination object.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
-  public function compose($destinationBucket, $destinationObject, Google_Service_Storage_ComposeRequest $postBody, $optParams = array())
+  public function compose($destinationBucket, $destinationObject, BackupPlus_Google_Service_Storage_ComposeRequest $postBody, $optParams = array())
   {
     $params = array('destinationBucket' => $destinationBucket, 'destinationObject' => $destinationObject, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('compose', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('compose', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
@@ -1629,7 +1631,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @param string $destinationObject Name of the new object. Required when the
    * object metadata is not otherwise provided. Overrides the object metadata's
    * name value, if any.
-   * @param Google_StorageObject $postBody
+   * @param BackupPlus_Google_StorageObject $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string ifSourceGenerationNotMatch Makes the operation conditional
@@ -1660,13 +1662,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string projection Set of properties to return. Defaults to noAcl,
    * unless the object resource specifies the acl property, when it defaults to
    * full.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
-  public function copy($sourceBucket, $sourceObject, $destinationBucket, $destinationObject, UDP_Google_Service_Storage_StorageObject $postBody, $optParams = array())
+  public function copy($sourceBucket, $sourceObject, $destinationBucket, $destinationObject, BackupPlus_Google_Service_Storage_StorageObject $postBody, $optParams = array())
   {
     $params = array('sourceBucket' => $sourceBucket, 'sourceObject' => $sourceObject, 'destinationBucket' => $destinationBucket, 'destinationObject' => $destinationObject, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('copy', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('copy', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
@@ -1714,13 +1716,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string ifMetagenerationNotMatch Makes the operation conditional on
    * whether the object's current metageneration does not match the given value.
    * @opt_param string projection Set of properties to return. Defaults to noAcl.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
   public function get($bucket, $object, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('get', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
@@ -1728,7 +1730,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    *
    * @param string $bucket Name of the bucket in which to store the new object.
    * Overrides the provided object metadata's bucket value, if any.
-   * @param Google_StorageObject $postBody
+   * @param BackupPlus_Google_StorageObject $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string predefinedAcl Apply a predefined set of access controls to
@@ -1752,13 +1754,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string name Name of the object. Required when the object metadata
    * is not otherwise provided. Overrides the object metadata's name value, if
    * any.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
-  public function insert($bucket, UDP_Google_Service_Storage_StorageObject $postBody, $optParams = array())
+  public function insert($bucket, BackupPlus_Google_Service_Storage_StorageObject $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('insert', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('insert', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
@@ -1782,13 +1784,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * delimiter. Objects whose names, aside from the prefix, contain delimiter will
    * have their name, truncated after the delimiter, returned in prefixes.
    * Duplicate prefixes are omitted.
-   * @return Google_Service_Storage_Objects
+   * @return BackupPlus_Google_Service_Storage_Objects
    */
   public function listObjects($bucket, $optParams = array())
   {
     $params = array('bucket' => $bucket);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_Storage_Objects");
+    return $this->call('list', array($params), "BackupPlus_Google_Service_Storage_Objects");
   }
 
   /**
@@ -1797,7 +1799,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    *
    * @param string $bucket Name of the bucket in which the object resides.
    * @param string $object Name of the object.
-   * @param Google_StorageObject $postBody
+   * @param BackupPlus_Google_StorageObject $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string predefinedAcl Apply a predefined set of access controls to
@@ -1813,13 +1815,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string ifMetagenerationNotMatch Makes the operation conditional on
    * whether the object's current metageneration does not match the given value.
    * @opt_param string projection Set of properties to return. Defaults to full.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
-  public function patch($bucket, $object, UDP_Google_Service_Storage_StorageObject $postBody, $optParams = array())
+  public function patch($bucket, $object, BackupPlus_Google_Service_Storage_StorageObject $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('patch', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('patch', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
@@ -1834,7 +1836,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @param string $destinationObject Name of the new object. Required when the
    * object metadata is not otherwise provided. Overrides the object metadata's
    * name value, if any.
-   * @param Google_StorageObject $postBody
+   * @param BackupPlus_Google_StorageObject $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string ifSourceGenerationNotMatch Makes the operation conditional
@@ -1877,13 +1879,13 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string projection Set of properties to return. Defaults to noAcl,
    * unless the object resource specifies the acl property, when it defaults to
    * full.
-   * @return Google_Service_Storage_RewriteResponse
+   * @return BackupPlus_Google_Service_Storage_RewriteResponse
    */
-  public function rewrite($sourceBucket, $sourceObject, $destinationBucket, $destinationObject, UDP_Google_Service_Storage_StorageObject $postBody, $optParams = array())
+  public function rewrite($sourceBucket, $sourceObject, $destinationBucket, $destinationObject, BackupPlus_Google_Service_Storage_StorageObject $postBody, $optParams = array())
   {
     $params = array('sourceBucket' => $sourceBucket, 'sourceObject' => $sourceObject, 'destinationBucket' => $destinationBucket, 'destinationObject' => $destinationObject, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('rewrite', array($params), "Google_Service_Storage_RewriteResponse");
+    return $this->call('rewrite', array($params), "BackupPlus_Google_Service_Storage_RewriteResponse");
   }
 
   /**
@@ -1891,7 +1893,7 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    *
    * @param string $bucket Name of the bucket in which the object resides.
    * @param string $object Name of the object.
-   * @param Google_StorageObject $postBody
+   * @param BackupPlus_Google_StorageObject $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string predefinedAcl Apply a predefined set of access controls to
@@ -1907,20 +1909,20 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * @opt_param string ifMetagenerationNotMatch Makes the operation conditional on
    * whether the object's current metageneration does not match the given value.
    * @opt_param string projection Set of properties to return. Defaults to full.
-   * @return UDP_Google_Service_Storage_StorageObject
+   * @return BackupPlus_Google_Service_Storage_StorageObject
    */
-  public function update($bucket, $object, UDP_Google_Service_Storage_StorageObject $postBody, $optParams = array())
+  public function update($bucket, $object, BackupPlus_Google_Service_Storage_StorageObject $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'object' => $object, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "UDP_Google_Service_Storage_StorageObject");
+    return $this->call('update', array($params), "BackupPlus_Google_Service_Storage_StorageObject");
   }
 
   /**
    * Watch for changes on all objects in a bucket. (objects.watchAll)
    *
    * @param string $bucket Name of the bucket in which to look for objects.
-   * @param Google_Channel $postBody
+   * @param BackupPlus_Google_Channel $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string projection Set of properties to return. Defaults to noAcl.
@@ -1938,49 +1940,49 @@ class Google_Service_Storage_Objects_Resource extends UDP_Google_Service_Resourc
    * delimiter. Objects whose names, aside from the prefix, contain delimiter will
    * have their name, truncated after the delimiter, returned in prefixes.
    * Duplicate prefixes are omitted.
-   * @return Google_Service_Storage_Channel
+   * @return BackupPlus_Google_Service_Storage_Channel
    */
-  public function watchAll($bucket, Google_Service_Storage_Channel $postBody, $optParams = array())
+  public function watchAll($bucket, BackupPlus_Google_Service_Storage_Channel $postBody, $optParams = array())
   {
     $params = array('bucket' => $bucket, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('watchAll', array($params), "Google_Service_Storage_Channel");
+    return $this->call('watchAll', array($params), "BackupPlus_Google_Service_Storage_Channel");
   }
 }
 
 
 
 
-class UDP_Google_Service_Storage_Bucket extends Google_Collection
+class BackupPlus_Google_Service_Storage_Bucket extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'defaultObjectAcl';
   protected $internal_gapi_mappings = array(
   );
-  protected $aclType = 'Google_Service_Storage_BucketAccessControl';
+  protected $aclType = 'BackupPlus_Google_Service_Storage_BucketAccessControl';
   protected $aclDataType = 'array';
-  protected $corsType = 'Google_Service_Storage_BucketCors';
+  protected $corsType = 'BackupPlus_Google_Service_Storage_BucketCors';
   protected $corsDataType = 'array';
-  protected $defaultObjectAclType = 'Google_Service_Storage_ObjectAccessControl';
+  protected $defaultObjectAclType = 'BackupPlus_Google_Service_Storage_ObjectAccessControl';
   protected $defaultObjectAclDataType = 'array';
   public $etag;
   public $id;
   public $kind;
-  protected $lifecycleType = 'Google_Service_Storage_BucketLifecycle';
+  protected $lifecycleType = 'BackupPlus_Google_Service_Storage_BucketLifecycle';
   protected $lifecycleDataType = '';
   public $location;
-  protected $loggingType = 'Google_Service_Storage_BucketLogging';
+  protected $loggingType = 'BackupPlus_Google_Service_Storage_BucketLogging';
   protected $loggingDataType = '';
   public $metageneration;
   public $name;
-  protected $ownerType = 'Google_Service_Storage_BucketOwner';
+  protected $ownerType = 'BackupPlus_Google_Service_Storage_BucketOwner';
   protected $ownerDataType = '';
   public $projectNumber;
   public $selfLink;
   public $storageClass;
   public $timeCreated;
-  protected $versioningType = 'Google_Service_Storage_BucketVersioning';
+  protected $versioningType = 'BackupPlus_Google_Service_Storage_BucketVersioning';
   protected $versioningDataType = '';
-  protected $websiteType = 'Google_Service_Storage_BucketWebsite';
+  protected $websiteType = 'BackupPlus_Google_Service_Storage_BucketWebsite';
   protected $websiteDataType = '';
 
 
@@ -2032,7 +2034,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   {
     return $this->kind;
   }
-  public function setLifecycle(Google_Service_Storage_BucketLifecycle $lifecycle)
+  public function setLifecycle(BackupPlus_Google_Service_Storage_BucketLifecycle $lifecycle)
   {
     $this->lifecycle = $lifecycle;
   }
@@ -2048,7 +2050,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   {
     return $this->location;
   }
-  public function setLogging(Google_Service_Storage_BucketLogging $logging)
+  public function setLogging(BackupPlus_Google_Service_Storage_BucketLogging $logging)
   {
     $this->logging = $logging;
   }
@@ -2072,7 +2074,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   {
     return $this->name;
   }
-  public function setOwner(Google_Service_Storage_BucketOwner $owner)
+  public function setOwner(BackupPlus_Google_Service_Storage_BucketOwner $owner)
   {
     $this->owner = $owner;
   }
@@ -2112,7 +2114,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   {
     return $this->timeCreated;
   }
-  public function setVersioning(Google_Service_Storage_BucketVersioning $versioning)
+  public function setVersioning(BackupPlus_Google_Service_Storage_BucketVersioning $versioning)
   {
     $this->versioning = $versioning;
   }
@@ -2120,7 +2122,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   {
     return $this->versioning;
   }
-  public function setWebsite(Google_Service_Storage_BucketWebsite $website)
+  public function setWebsite(BackupPlus_Google_Service_Storage_BucketWebsite $website)
   {
     $this->website = $website;
   }
@@ -2130,7 +2132,7 @@ class UDP_Google_Service_Storage_Bucket extends Google_Collection
   }
 }
 
-class Google_Service_Storage_BucketAccessControl extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketAccessControl extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2142,7 +2144,7 @@ class Google_Service_Storage_BucketAccessControl extends Google_Model
   public $etag;
   public $id;
   public $kind;
-  protected $projectTeamType = 'Google_Service_Storage_BucketAccessControlProjectTeam';
+  protected $projectTeamType = 'BackupPlus_Google_Service_Storage_BucketAccessControlProjectTeam';
   protected $projectTeamDataType = '';
   public $role;
   public $selfLink;
@@ -2212,7 +2214,7 @@ class Google_Service_Storage_BucketAccessControl extends Google_Model
   {
     return $this->kind;
   }
-  public function setProjectTeam(Google_Service_Storage_BucketAccessControlProjectTeam $projectTeam)
+  public function setProjectTeam(BackupPlus_Google_Service_Storage_BucketAccessControlProjectTeam $projectTeam)
   {
     $this->projectTeam = $projectTeam;
   }
@@ -2238,7 +2240,7 @@ class Google_Service_Storage_BucketAccessControl extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketAccessControlProjectTeam extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketAccessControlProjectTeam extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2264,12 +2266,12 @@ class Google_Service_Storage_BucketAccessControlProjectTeam extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketAccessControls extends Google_Collection
+class BackupPlus_Google_Service_Storage_BucketAccessControls extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'items';
   protected $internal_gapi_mappings = array(
   );
-  protected $itemsType = 'Google_Service_Storage_BucketAccessControl';
+  protected $itemsType = 'BackupPlus_Google_Service_Storage_BucketAccessControl';
   protected $itemsDataType = 'array';
   public $kind;
 
@@ -2292,7 +2294,7 @@ class Google_Service_Storage_BucketAccessControls extends Google_Collection
   }
 }
 
-class Google_Service_Storage_BucketCors extends Google_Collection
+class BackupPlus_Google_Service_Storage_BucketCors extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'responseHeader';
   protected $internal_gapi_mappings = array(
@@ -2337,12 +2339,12 @@ class Google_Service_Storage_BucketCors extends Google_Collection
   }
 }
 
-class Google_Service_Storage_BucketLifecycle extends Google_Collection
+class BackupPlus_Google_Service_Storage_BucketLifecycle extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'rule';
   protected $internal_gapi_mappings = array(
   );
-  protected $ruleType = 'Google_Service_Storage_BucketLifecycleRule';
+  protected $ruleType = 'BackupPlus_Google_Service_Storage_BucketLifecycleRule';
   protected $ruleDataType = 'array';
 
 
@@ -2356,17 +2358,17 @@ class Google_Service_Storage_BucketLifecycle extends Google_Collection
   }
 }
 
-class Google_Service_Storage_BucketLifecycleRule extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketLifecycleRule extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
-  protected $actionType = 'Google_Service_Storage_BucketLifecycleRuleAction';
+  protected $actionType = 'BackupPlus_Google_Service_Storage_BucketLifecycleRuleAction';
   protected $actionDataType = '';
-  protected $conditionType = 'Google_Service_Storage_BucketLifecycleRuleCondition';
+  protected $conditionType = 'BackupPlus_Google_Service_Storage_BucketLifecycleRuleCondition';
   protected $conditionDataType = '';
 
 
-  public function setAction(Google_Service_Storage_BucketLifecycleRuleAction $action)
+  public function setAction(BackupPlus_Google_Service_Storage_BucketLifecycleRuleAction $action)
   {
     $this->action = $action;
   }
@@ -2374,7 +2376,7 @@ class Google_Service_Storage_BucketLifecycleRule extends Google_Model
   {
     return $this->action;
   }
-  public function setCondition(Google_Service_Storage_BucketLifecycleRuleCondition $condition)
+  public function setCondition(BackupPlus_Google_Service_Storage_BucketLifecycleRuleCondition $condition)
   {
     $this->condition = $condition;
   }
@@ -2384,7 +2386,7 @@ class Google_Service_Storage_BucketLifecycleRule extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketLifecycleRuleAction extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketLifecycleRuleAction extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2401,7 +2403,7 @@ class Google_Service_Storage_BucketLifecycleRuleAction extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketLifecycleRuleCondition extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketLifecycleRuleCondition extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2445,7 +2447,7 @@ class Google_Service_Storage_BucketLifecycleRuleCondition extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketLogging extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketLogging extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2471,7 +2473,7 @@ class Google_Service_Storage_BucketLogging extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketOwner extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketOwner extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2497,7 +2499,7 @@ class Google_Service_Storage_BucketOwner extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketVersioning extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketVersioning extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2514,7 +2516,7 @@ class Google_Service_Storage_BucketVersioning extends Google_Model
   }
 }
 
-class Google_Service_Storage_BucketWebsite extends Google_Model
+class BackupPlus_Google_Service_Storage_BucketWebsite extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2540,12 +2542,12 @@ class Google_Service_Storage_BucketWebsite extends Google_Model
   }
 }
 
-class Google_Service_Storage_Buckets extends Google_Collection
+class BackupPlus_Google_Service_Storage_Buckets extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'items';
   protected $internal_gapi_mappings = array(
   );
-  protected $itemsType = 'UDP_Google_Service_Storage_Bucket';
+  protected $itemsType = 'BackupPlus_Google_Service_Storage_Bucket';
   protected $itemsDataType = 'array';
   public $kind;
   public $nextPageToken;
@@ -2577,7 +2579,7 @@ class Google_Service_Storage_Buckets extends Google_Collection
   }
 }
 
-class Google_Service_Storage_Channel extends Google_Model
+class BackupPlus_Google_Service_Storage_Channel extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2675,23 +2677,23 @@ class Google_Service_Storage_Channel extends Google_Model
   }
 }
 
-class Google_Service_Storage_ChannelParams extends Google_Model
+class BackupPlus_Google_Service_Storage_ChannelParams extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Storage_ComposeRequest extends Google_Collection
+class BackupPlus_Google_Service_Storage_ComposeRequest extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'sourceObjects';
   protected $internal_gapi_mappings = array(
   );
-  protected $destinationType = 'UDP_Google_Service_Storage_StorageObject';
+  protected $destinationType = 'BackupPlus_Google_Service_Storage_StorageObject';
   protected $destinationDataType = '';
   public $kind;
-  protected $sourceObjectsType = 'Google_Service_Storage_ComposeRequestSourceObjects';
+  protected $sourceObjectsType = 'BackupPlus_Google_Service_Storage_ComposeRequestSourceObjects';
   protected $sourceObjectsDataType = 'array';
 
 
-  public function setDestination(UDP_Google_Service_Storage_StorageObject $destination)
+  public function setDestination(BackupPlus_Google_Service_Storage_StorageObject $destination)
   {
     $this->destination = $destination;
   }
@@ -2717,13 +2719,13 @@ class Google_Service_Storage_ComposeRequest extends Google_Collection
   }
 }
 
-class Google_Service_Storage_ComposeRequestSourceObjects extends Google_Model
+class BackupPlus_Google_Service_Storage_ComposeRequestSourceObjects extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
   public $generation;
   public $name;
-  protected $objectPreconditionsType = 'Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions';
+  protected $objectPreconditionsType = 'BackupPlus_Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions';
   protected $objectPreconditionsDataType = '';
 
 
@@ -2743,7 +2745,7 @@ class Google_Service_Storage_ComposeRequestSourceObjects extends Google_Model
   {
     return $this->name;
   }
-  public function setObjectPreconditions(Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions $objectPreconditions)
+  public function setObjectPreconditions(BackupPlus_Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions $objectPreconditions)
   {
     $this->objectPreconditions = $objectPreconditions;
   }
@@ -2753,7 +2755,7 @@ class Google_Service_Storage_ComposeRequestSourceObjects extends Google_Model
   }
 }
 
-class Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions extends Google_Model
+class BackupPlus_Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2770,7 +2772,7 @@ class Google_Service_Storage_ComposeRequestSourceObjectsObjectPreconditions exte
   }
 }
 
-class Google_Service_Storage_ObjectAccessControl extends Google_Model
+class BackupPlus_Google_Service_Storage_ObjectAccessControl extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2784,7 +2786,7 @@ class Google_Service_Storage_ObjectAccessControl extends Google_Model
   public $id;
   public $kind;
   public $object;
-  protected $projectTeamType = 'Google_Service_Storage_ObjectAccessControlProjectTeam';
+  protected $projectTeamType = 'BackupPlus_Google_Service_Storage_ObjectAccessControlProjectTeam';
   protected $projectTeamDataType = '';
   public $role;
   public $selfLink;
@@ -2870,7 +2872,7 @@ class Google_Service_Storage_ObjectAccessControl extends Google_Model
   {
     return $this->object;
   }
-  public function setProjectTeam(Google_Service_Storage_ObjectAccessControlProjectTeam $projectTeam)
+  public function setProjectTeam(BackupPlus_Google_Service_Storage_ObjectAccessControlProjectTeam $projectTeam)
   {
     $this->projectTeam = $projectTeam;
   }
@@ -2896,7 +2898,7 @@ class Google_Service_Storage_ObjectAccessControl extends Google_Model
   }
 }
 
-class Google_Service_Storage_ObjectAccessControlProjectTeam extends Google_Model
+class BackupPlus_Google_Service_Storage_ObjectAccessControlProjectTeam extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
@@ -2922,7 +2924,7 @@ class Google_Service_Storage_ObjectAccessControlProjectTeam extends Google_Model
   }
 }
 
-class Google_Service_Storage_ObjectAccessControls extends Google_Collection
+class BackupPlus_Google_Service_Storage_ObjectAccessControls extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'items';
   protected $internal_gapi_mappings = array(
@@ -2949,12 +2951,12 @@ class Google_Service_Storage_ObjectAccessControls extends Google_Collection
   }
 }
 
-class Google_Service_Storage_Objects extends Google_Collection
+class BackupPlus_Google_Service_Storage_Objects extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'prefixes';
   protected $internal_gapi_mappings = array(
   );
-  protected $itemsType = 'UDP_Google_Service_Storage_StorageObject';
+  protected $itemsType = 'BackupPlus_Google_Service_Storage_StorageObject';
   protected $itemsDataType = 'array';
   public $kind;
   public $nextPageToken;
@@ -2995,14 +2997,14 @@ class Google_Service_Storage_Objects extends Google_Collection
   }
 }
 
-class Google_Service_Storage_RewriteResponse extends Google_Model
+class BackupPlus_Google_Service_Storage_RewriteResponse extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
   public $done;
   public $kind;
   public $objectSize;
-  protected $resourceType = 'UDP_Google_Service_Storage_StorageObject';
+  protected $resourceType = 'BackupPlus_Google_Service_Storage_StorageObject';
   protected $resourceDataType = '';
   public $rewriteToken;
   public $totalBytesRewritten;
@@ -3032,7 +3034,7 @@ class Google_Service_Storage_RewriteResponse extends Google_Model
   {
     return $this->objectSize;
   }
-  public function setResource(UDP_Google_Service_Storage_StorageObject $resource)
+  public function setResource(BackupPlus_Google_Service_Storage_StorageObject $resource)
   {
     $this->resource = $resource;
   }
@@ -3058,12 +3060,12 @@ class Google_Service_Storage_RewriteResponse extends Google_Model
   }
 }
 
-class UDP_Google_Service_Storage_StorageObject extends Google_Collection
+class BackupPlus_Google_Service_Storage_StorageObject extends BackupPlus_Google_Collection
 {
   protected $collection_key = 'acl';
   protected $internal_gapi_mappings = array(
   );
-  protected $aclType = 'Google_Service_Storage_ObjectAccessControl';
+  protected $aclType = 'BackupPlus_Google_Service_Storage_ObjectAccessControl';
   protected $aclDataType = 'array';
   public $bucket;
   public $cacheControl;
@@ -3082,7 +3084,7 @@ class UDP_Google_Service_Storage_StorageObject extends Google_Collection
   public $metadata;
   public $metageneration;
   public $name;
-  protected $ownerType = 'Google_Service_Storage_StorageObjectOwner';
+  protected $ownerType = 'BackupPlus_Google_Service_Storage_StorageObjectOwner';
   protected $ownerDataType = '';
   public $selfLink;
   public $size;
@@ -3235,7 +3237,7 @@ class UDP_Google_Service_Storage_StorageObject extends Google_Collection
   {
     return $this->name;
   }
-  public function setOwner(Google_Service_Storage_StorageObjectOwner $owner)
+  public function setOwner(BackupPlus_Google_Service_Storage_StorageObjectOwner $owner)
   {
     $this->owner = $owner;
   }
@@ -3285,11 +3287,11 @@ class UDP_Google_Service_Storage_StorageObject extends Google_Collection
   }
 }
 
-class Google_Service_Storage_StorageObjectMetadata extends Google_Model
+class BackupPlus_Google_Service_Storage_StorageObjectMetadata extends BackupPlus_Google_Model
 {
 }
 
-class Google_Service_Storage_StorageObjectOwner extends Google_Model
+class BackupPlus_Google_Service_Storage_StorageObjectOwner extends BackupPlus_Google_Model
 {
   protected $internal_gapi_mappings = array(
   );

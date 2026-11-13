@@ -182,16 +182,22 @@ trait BackupPlus_Core_Restore_Support {
 	}
 
 	/**
-	 * Checking to see if a restore is in progress before
-	 * Turning off WP updates while restoration is in progress
+	 * While a restore is in progress, refuse to install any update (core, plugin, theme or translation, manual or automatic),
+	 * because it would write into the files the restore is replacing. WordPress still checks for and lists updates.
 	 */
 	public function block_updates_during_restore_progress() {
 		$check_restore_progress = $this->check_restore_progress( 1 );
-		// Check to see if the restore is still in progress
 		if ( is_array( $check_restore_progress ) && true == $check_restore_progress['status'] ) {
-			add_filter( 'pre_site_transient_update_core', '__return_false' ); // Disable WordPress core updates
-			add_filter( 'pre_site_transient_update_plugins', '__return_false' ); // Disable WordPress plugin updates
-			add_filter( 'pre_site_transient_update_themes', '__return_false' ); // Disable WordPress themes updates
+			add_filter( 'upgrader_pre_download', array( $this, 'refuse_update_during_restore' ), 1 );
 		}
+	}
+
+	/**
+	 * The upgrader_pre_download filter while a restore is in progress: an error stops the update before its package is fetched.
+	 *
+	 * @return WP_Error
+	 */
+	public function refuse_update_during_restore() {
+		return new WP_Error( 'backupplus_restore_in_progress', __( 'A BackupPlus restore is in progress. Try the update again when it has finished.', 'backupplus' ) );
 	}
 }

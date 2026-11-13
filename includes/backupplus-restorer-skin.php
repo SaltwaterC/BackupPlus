@@ -51,12 +51,16 @@ abstract class BackupPlus_Restorer_Skin_Main extends WP_Upgrader_Skin {
 				$string = vsprintf( $string, $args );
 			}
 		}
-		if ( empty( $string ) ) {
+		// WordPress writes these messages as HTML, with entities such as &#8230;. The log is plain text, escaped where it is shown.
+		$string = trim( html_entity_decode( wp_strip_all_tags( (string) $string ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+		if ( '' === $string ) {
 			return;
 		}
 
 		global $backupplus;
-		$backupplus->log_e( $string );
+		// Not log_e(): it would run the message through vsprintf() again, which fails on a literal % sign.
+		$backupplus->log( $string );
+		$backupplus->log( $string, 'notice-restore' );
 	}
 }
 

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -65,14 +66,14 @@ class BackupPlus_Credential_Key_Admin {
 	}
 
 	public static function ajax() {
-		if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			wp_die( 'Use a POST request.', '', array( 'response' => 405 ) );
 		}
 		check_ajax_referer( 'backupplus-credential-keys', 'nonce' );
 		try {
-			$operation = isset( $_POST['operation'] ) && is_string( $_POST['operation'] ) ? $_POST['operation'] : '';
-			$value     = isset( $_POST['value'] ) && is_string( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
-			$directory = isset( $_POST['directory'] ) && is_string( $_POST['directory'] ) ? wp_unslash( $_POST['directory'] ) : '';
+			$operation = isset( $_POST['operation'] ) && is_string( $_POST['operation'] ) ? sanitize_key( wp_unslash( $_POST['operation'] ) ) : '';
+			$value     = isset( $_POST['value'] ) && is_string( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A recovery key file or a server directory, which must stay byte-exact; BackupPlus_Credential_Key_Store parses and checks it.
+			$directory = isset( $_POST['directory'] ) && is_string( $_POST['directory'] ) ? wp_unslash( $_POST['directory'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- A server directory, which must stay byte-exact; BackupPlus_Credential_Key_Store checks it.
 			$message   = self::perform( $operation, $value, $directory );
 			wp_send_json(
 				array(
@@ -92,7 +93,7 @@ class BackupPlus_Credential_Key_Admin {
 	}
 
 	public static function download() {
-		if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			wp_die( 'Use a POST request.', '', array( 'response' => 405 ) );
 		}
 		check_admin_referer( 'backupplus-credential-keys' );
@@ -109,7 +110,7 @@ class BackupPlus_Credential_Key_Admin {
 		header( 'X-Content-Type-Options: nosniff' );
 		header( 'Content-Type: application/octet-stream' );
 		header( 'Content-Disposition: attachment; filename="backupplus-recovery-key.php"' );
-		echo $contents;
+		echo $contents; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The recovery key file itself, downloaded as application/octet-stream; it is not HTML.
 		exit;
 	}
 
@@ -127,7 +128,7 @@ class BackupPlus_Credential_Key_Admin {
 			}
 			?>
 			<?php if ( BackupPlus_Credential_Key_Store::environment_managed() ) { ?>
-				<p><?php printf( esc_html__( 'Credential keys are read from the %s environment variable. The disk-based credentials.php file is ignored while this variable is set.', 'backupplus' ), '<code>' . esc_html( BackupPlus_Credential_Key_Store::ENVIRONMENT_KEY ) . '</code>' ); ?></p>
+				<p><?php /* translators: %s: Name of the environment variable. */ printf( esc_html__( 'Credential keys are read from the %s environment variable. The disk-based credentials.php file is ignored while this variable is set.', 'backupplus' ), '<code>' . esc_html( BackupPlus_Credential_Key_Store::ENVIRONMENT_KEY ) . '</code>' ); ?></p>
 				<p><?php esc_html_e( 'Set it to a Base64 encoded JSON key configuration. WordPress does not rotate environment-managed keys; update the service configuration when the key age alert appears in backup reports.', 'backupplus' ); ?></p>
 				<p role="status" class="backupplus-key-status"><?php echo esc_html( $error ?: __( 'Environment key configuration is active.', 'backupplus' ) ); ?></p>
 				<p><button type="button" class="button" id="backupplus-key-download"><?php esc_html_e( 'Download current recovery key', 'backupplus' ); ?></button></p>

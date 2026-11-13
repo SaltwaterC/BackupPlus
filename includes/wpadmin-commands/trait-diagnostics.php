@@ -170,7 +170,7 @@ trait BackupPlus_WPAdmin_Commands_Diagnostics {
 	public function db_size( $raw_data_only = false ) {
 		global $wpdb;
 
-		$db_table_res  = $wpdb->get_results( 'SHOW TABLE STATUS', ARRAY_A );
+		$db_table_res  = $wpdb->get_results( 'SHOW TABLE STATUS', ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Lists the tables as they are now, which has no WordPress API and must not be cached.
 		$db_table_size = 0;
 		$db_size_info  = array();
 

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The persisted chain state, configuration checks, job and encryption setup and the configuration fingerprint. */
 
@@ -146,7 +147,7 @@ trait BackupPlus_PITR_Orchestrator_State {
 		foreach ( scandir( $directory ) as $name ) {
 			$path = $directory . '/' . $name;
 			if ( '.' !== $name && '..' !== $name && ! in_array( $name, $live, true ) && ( is_link( $path ) || is_file( $path ) ) ) {
-				unlink( $path );
+				wp_delete_file( $path );
 			}
 		}
 	}
@@ -198,11 +199,11 @@ trait BackupPlus_PITR_Orchestrator_State {
 
 	private function assert_wordpress_source( $source, $database ) {
 		global $wpdb;
-		$row = $wpdb->get_row( 'SELECT @@version, @@server_id, @@hostname, @@port', ARRAY_N );
+		$row = $wpdb->get_row( 'SELECT @@version, @@server_id, @@hostname, @@port', ARRAY_N ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		if ( ! is_array( $row ) || 4 !== count( $row ) || ( 'mariadb' === $source['engine'] ) !== ( false !== stripos( $row[0], 'mariadb' ) ) ) {
 			throw new RuntimeException( 'The native source is not this WordPress database server.' );
 		}
-		$identity = 'mysql' === $source['engine'] ? $wpdb->get_var( 'SELECT @@server_uuid' ) : implode( ':', array_slice( $row, 1 ) );
+		$identity = 'mysql' === $source['engine'] ? $wpdb->get_var( 'SELECT @@server_uuid' ) : implode( ':', array_slice( $row, 1 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		if ( $database !== DB_NAME || ! hash_equals( $source['identity'], hash( 'sha256', $identity ) ) ) {
 			throw new RuntimeException( 'The PITR backup connection must point to this WordPress database server.' );
 		}

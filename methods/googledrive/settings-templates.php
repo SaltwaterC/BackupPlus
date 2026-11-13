@@ -40,7 +40,7 @@ trait BackupPlus_GoogleDrive_Settings_Templates {
 			'authentication_link_text'               => sprintf( __( 'Sign in with %s', 'backupplus' ), 'Google' ),
 			'already_authenticated_label'            => __( "<strong>(You appear to be already authenticated,</strong> though you can authenticate again to refresh your access if you've had a problem).", 'backupplus' ),
 			'deauthentication_nonce'                 => wp_create_nonce( $this->get_id() . '_deauth_nonce' ),
-			/* translators: %s: Storage provider name */
+			/* translators: %s: Name of the storage service. */
 			'deauthentication_link_text'             => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'account_name_label'                     => __( "Account holder's name", 'backupplus' ),
 			'input_folder_placeholder'               => __( 'Enter your folder name', 'backupplus' ),

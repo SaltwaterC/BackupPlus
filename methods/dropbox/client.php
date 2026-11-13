@@ -144,7 +144,7 @@ trait BackupPlus_Dropbox_Client {
 			$oauth = new Dropbox_Curl( $this->app_key( $opts ), empty( $opts['secret'] ) ? '' : $opts['secret'], $token_storage, $deauthenticate );
 		} catch ( Exception $e ) {
 			$this->log( 'Curl error: ' . $e->getMessage() );
-			/* translators: 1: Service name, 2: Error message with exception details */
+			/* translators: 1: Name of the service or storage method, 2: Error message. */
 			$this->log( sprintf( __( '%1$s error: %2$s', 'backupplus' ), 'Dropbox/Curl', $e->getMessage() . ' (' . get_class( $e ) . ') (line: ' . $e->getLine() . ', file: ' . $e->getFile() ) . ')', 'error' );
 			return false;
 		}

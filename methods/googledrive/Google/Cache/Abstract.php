@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Abstract storage class
  *
  * @author Chris Chabot <chabotc@google.com>
  */
-abstract class Google_Cache_Abstract
+abstract class BackupPlus_Google_Cache_Abstract
 {
   
-  abstract public function __construct(UDP_Google_Client $client);
+  abstract public function __construct(BackupPlus_Google_Client $client);
 
   /**
    * Retrieves the data for the given key, or false if they

@@ -31,7 +31,7 @@ class BackupPlus_Options {
 	 * @return String
 	 */
 	public static function capability() {
-		return apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' );
+		return apply_filters( 'option_page_capability_backupplus-options-group', 'manage_options' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress's own filter for the capability of this settings group, as options.php applies it.
 	}
 
 	public static function options_table() {
@@ -250,8 +250,8 @@ class BackupPlus_Options {
 			$referer = BackupPlus_Manipulation_Functions::wp_unslash( remove_query_arg( $remove_query_args, $_SERVER['REQUEST_URI'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- To be executed on server only, hence this superglobal not to be empty, sanitization and unslashing is done by custom function.
 
 			// Add back the page parameter if it looks like we were on the settings page via an OAuth callback that has now had all parameters removed. This is likely unnecessarily conservative, but there's nothing requiring more than this at the current time.
-			if ( substr( $referer, -strlen( self::admin_page() ) ) == self::admin_page() && false !== strpos( $_SERVER['REQUEST_URI'], '?' ) ) {
-				$referer .= '?page=backupplus'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- To be executed on server only, hence this superglobal will not to be empty, sanitization and unslashing are not required as this superglobal is used directly.
+			if ( substr( $referer, -strlen( self::admin_page() ) ) == self::admin_page() && isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], '?' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only looks for a query string in the request URI.
+				$referer .= '?page=backupplus';
 			}
 			echo '<input type="hidden" name="_wp_http_referer" value="' . esc_attr( $referer ) . '" />';
 		}
@@ -380,7 +380,7 @@ class BackupPlus_Options {
 			);
 		}
 
-		$allowed = apply_filters( 'allowed_options', array() );
+		$allowed = apply_filters( 'allowed_options', array() ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress's own filter, which lists the options of each settings group, as options.php applies it.
 		foreach ( isset( $allowed['backupplus-options-group'] ) ? $allowed['backupplus-options-group'] : array() as $option ) {
 			$value = isset( $submitted[ $option ] ) ? $submitted[ $option ] : null;
 			if ( ! is_array( $value ) && null !== $value ) {

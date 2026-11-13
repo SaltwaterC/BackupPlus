@@ -196,8 +196,10 @@ function backupplus_download_controls(container) {
  * @param {string}  prettydate       - the pretty backup date
  * @param {boolean} async            - boolean to indicate if this is a async request or not
  * @param {Array|object} download_files - optional file metadata for download labels
+ * @param {string} title - optional label of the component, shown instead of its internal name
  */
-function backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async, download_files) {
+function backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async, download_files, title) {
+	title = title || what;
 	
 	if (typeof set_contents !== "string") set_contents = set_contents.toString();
 
@@ -214,7 +216,7 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 	var container = jQuery(whicharea).find('.backupplus_downloader_container').filter(function() { return jQuery(this).data('download-group') === group; });
 	if (!container.length) {
 		container = jQuery('<div class="backupplus_downloader_container postbox"></div>').addClass('backupplus_downloader_container_' + what).data('download-group', group).appendTo(jQuery(whicharea).first());
-		jQuery('<strong class="backupplus-download-heading"></strong>').text(backupplus_i18n.download + ' ' + what + ' (' + prdate + '):').appendTo(container);
+		jQuery('<strong class="backupplus-download-heading"></strong>').text(backupplus_i18n.download + ' ' + title + ' (' + prdate + '):').appendTo(container);
 	}
 
 	for (var i = 0; i < set_contents.length; i++) {
@@ -226,7 +228,7 @@ function backupplus_downloader(base, backup_timestamp, what, whicharea, set_cont
 		if (!jQuery(stid_selector).length) {
 			container.append('<div style="clear:left; padding: 8px; margin-top: 4px;" class="'+stid+' backupplus_downloader"><button onclick="remove_backupplus_downloader(this, \''+what+'\');" type="button" style="float:right; margin-bottom: 8px;" class="ud_downloadstatus__close" aria-label="Close"><span class="dashicons dashicons-no-alt"></span></button><label class="backupplus-download-label"><input type="checkbox" class="backupplus-download-select"> <strong></strong></label>:<div class="raw">'+backupplus_i18n.begunlooking+'</div><div class="file '+stid+'_st"><div class="dlfileprogress" style="width: 0;"></div></div></div>');
 			var file = download_files && download_files[set_contents[i]];
-			jQuery(stid_selector).find('.backupplus-download-label strong').text(file ? file.name : what + itext);
+			jQuery(stid_selector).find('.backupplus-download-label strong').text(file ? file.name : title + itext);
 			jQuery(stid_selector).data('downloaderfor', { base: base, nonce: backup_timestamp, what: what, index: set_contents[i] });
 			setTimeout(function() {
 					backupplus_activejobs_update(true);

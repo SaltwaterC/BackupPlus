@@ -293,8 +293,8 @@ class BackupPlus_Backup {
 		$site_name = str_replace( '__', '_', preg_replace( '/[^A-Za-z0-9_]/', '', str_replace( ' ', '_', substr( get_bloginfo(), 0, 32 ) ) ) );
 		if ( ! $site_name || preg_match( '#^_+$#', $site_name ) ) {
 			// Try again...
-			$parsed_url    = parse_url( home_url(), PHP_URL_HOST );
-			$parsed_subdir = untrailingslashit( parse_url( home_url(), PHP_URL_PATH ) );
+			$parsed_url    = wp_parse_url( home_url(), PHP_URL_HOST );
+			$parsed_subdir = untrailingslashit( wp_parse_url( home_url(), PHP_URL_PATH ) );
 			if ( $parsed_subdir && '/' != $parsed_subdir ) {
 				$parsed_url .= str_replace( array( '/', '\\' ), '_', $parsed_subdir );
 			}

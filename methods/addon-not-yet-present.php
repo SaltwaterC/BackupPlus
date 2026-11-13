@@ -28,12 +28,13 @@ class BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 		$this->required_php = $required_php;
 		$this->image        = $image;
 		$this->error_msg    = 'This remote storage method (' . $this->description . ') requires PHP ' . $this->required_php . ' or later';
-		/* translators: 1: Description, 2: Required PHP version */
+		/* translators: 1: Name of the remote storage method, 2: Required PHP version. */
 		$this->error_msg_trans = sprintf( __( 'This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus' ), $this->description, $this->required_php );
 	}
 
 	public function backup( $backup_array ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform backup for specific storage is not exist.
 
+		/* translators: %1$s: Name of the storage method. */
 		$this->log( sprintf( __( 'BackupPlus %1$s support is not available because its required module is not installed.', 'backupplus' ), $this->description ), 'error', 'missingaddon-' . $this->method );
 
 		return false;
@@ -72,6 +73,7 @@ class BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 	}
 
 	public function delete( $files, $method_obj = false, $sizeinfo = array() ) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Unused variable is present because the function to perform delete for specific storage is not exist.
+		/* translators: %1$s: Name of the storage method. */
 		$this->log( sprintf( __( 'BackupPlus %1$s support is not available because its required module is not installed.', 'backupplus' ), $this->description ), 'error', 'missingaddon-' . $this->method );
 
 		return false;
@@ -118,6 +120,7 @@ class BackupPlus_BackupModule_AddonNotYetPresent extends BackupPlus_BackupModule
 			'php_version_supported' => (bool) apply_filters( 'backupplus_storage_meets_php_requirement', version_compare( phpversion(), $this->required_php, '>=' ), $this->method ),
 			'image'                 => ( ! empty( $this->image ) ) ? '<p><img src="' . BACKUPPLUS_URL . '/images/' . $this->image . '"></p>' : '',
 			'error_msg_trans'       => $this->error_msg_trans,
+			/* translators: %s: Name of the storage method. */
 			'addon_text'            => sprintf( __( 'Support for %s is not available in this installation.', 'backupplus' ), $this->description ),
 			/* translators: %s: PHP version */
 			'php_version_text'      => sprintf( __( 'Your PHP version: %s.', 'backupplus' ), phpversion() ),

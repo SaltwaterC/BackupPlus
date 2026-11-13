@@ -81,7 +81,7 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 
 		if ( ! $this->options_exist( $this->options ) ) {
 			$this->log( 'No settings were found' );
-			/* translators: %s: Description */
+			/* translators: %s: Name of the storage method. */
 			$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 			return false;
 		}
@@ -143,8 +143,8 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 			}
 
 			$this->options = $this->get_options();
-			/* translators: %s: Description */
 			if ( ! $this->options_exist( $this->options ) ) {
+				/* translators: %s: Name of the storage method. */
 				return new WP_Error( 'no_settings', sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ) );
 			}
 
@@ -192,7 +192,7 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 			$this->options = $this->get_options();
 			if ( ! $this->options_exist( $this->options ) ) {
 				$this->log( 'No settings were found' );
-				/* translators: %s: Description */
+				/* translators: %s: Name of the storage method. */
 				$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 				return false;
 			}
@@ -256,7 +256,7 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 		$this->options = $this->get_options();
 		if ( ! $this->options_exist( $this->options ) ) {
 			$this->log( 'No settings were found' );
-			/* translators: %s: Description */
+			/* translators: %s: Name of the storage method. */
 			$this->log( sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ), 'error' );
 			return false;
 		}
@@ -292,7 +292,7 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 					$this->log(
 						"$file: " .
 						sprintf(
-							/* translators: %s: Description */
+							/* translators: %s: Name of the remote storage method. */
 							__( '%s Error', 'backupplus' ),
 							$this->description
 						) . ': ' .
@@ -377,8 +377,8 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 		}
 		$storage = $this->get_storage();
 		// Be careful of checking empty($opts) here - some storage methods may have no options until the OAuth token has been obtained
-		/* translators: %s: Description */
 		if ( $connect && ! $this->options_exist( $opts ) ) {
+			/* translators: %s: Name of the storage method. */
 			return new WP_Error( 'no_settings', sprintf( __( 'No %s settings were found', 'backupplus' ), $this->description ) );
 		}
 		if ( ! empty( $storage ) && ! is_wp_error( $storage ) ) {
@@ -400,7 +400,7 @@ abstract class BackupPlus_RemoteStorage_Addons_Base_v2 extends BackupPlus_Backup
 
 		foreach ( $required_test_parameters as $param => $descrip ) {
 			if ( empty( $posted_settings[ $param ] ) ) {
-				/* translators: %s: Description */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 				echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), $descrip ) ) . "\n";
 				return;
 			}

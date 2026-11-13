@@ -28,7 +28,7 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 		if ( isset( $res['backupplus_restore'] ) ) {
 
 			$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler( array( $this->_backupplus_admin, 'get_php_errors' ), $error_levels );
+			set_error_handler( array( $this->_backupplus_admin, 'get_php_errors' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Collects PHP warnings to show the administrator in the response.
 
 			$elements = array_flip( $res['backupplus_restore'] );
 
@@ -36,7 +36,7 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 			$err  = array();
 
 			if ( function_exists( 'set_time_limit' ) ) {
-				@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+				@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 			}           $max_execution_time = (int) @ini_get( 'max_execution_time' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 			if ( $max_execution_time > 0 && $max_execution_time < 61 ) {
@@ -115,7 +115,7 @@ trait BackupPlus_WPAdmin_Commands_Restore {
 			if ( ! empty( $backups[ $timestamp ]['meta_foreign'] ) ) {
 				$foreign_known = apply_filters( 'backupplus_accept_archivename', array() );
 				if ( ! is_array( $foreign_known ) || empty( $foreign_known[ $backups[ $timestamp ]['meta_foreign'] ] ) ) {
-					/* translators: %s: Backup source information */
+					/* translators: %s: Source of the backup. */
 					$err[] = sprintf( __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ), esc_html( $backups[ $timestamp ]['meta_foreign'] ) );
 				} else {
 					// For some reason, on PHP 5.5 passing by reference in a single array stopped working with apply_filters_ref_array (though not with do_action_ref_array).

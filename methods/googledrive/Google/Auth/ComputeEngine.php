@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -27,14 +29,14 @@ if (!class_exists('UDP_Google_Client')) {
  * and the appropriate scopes.
  * @author Jonathan Parrott <jon.wayne.parrott@gmail.com>
  */
-class Google_Auth_ComputeEngine extends Google_Auth_Abstract
+class BackupPlus_Google_Auth_ComputeEngine extends BackupPlus_Google_Auth_Abstract
 {
   const METADATA_AUTH_URL =
       'http://metadata/computeMetadata/v1/instance/service-accounts/default/token';
   private $client;
   private $token;
 
-  public function __construct(UDP_Google_Client $client, $config = null)
+  public function __construct(BackupPlus_Google_Client $client, $config = null)
   {
     $this->client = $client;
   }
@@ -45,11 +47,11 @@ class Google_Auth_ComputeEngine extends Google_Auth_Abstract
    * (which can modify the request in what ever way fits the auth mechanism)
    * and then calls apiCurlIO::makeRequest on the signed request
    *
-   * @param Google_Http_Request $request
-   * @return Google_Http_Request The resulting HTTP response including the
+   * @param BackupPlus_Google_Http_Request $request
+   * @return BackupPlus_Google_Http_Request The resulting HTTP response including the
    * responseHttpCode, responseHeaders and responseBody.
    */
-  public function authenticatedRequest(UDP_Google_Http_Request $request)
+  public function authenticatedRequest(BackupPlus_Google_Http_Request $request)
   {
     $request = $this->sign($request);
     return $this->client->getIo()->makeRequest($request);
@@ -57,16 +59,16 @@ class Google_Auth_ComputeEngine extends Google_Auth_Abstract
 
   /**
    * @param string $token
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    */
   public function setAccessToken($token)
   {
     $token = json_decode($token, true);
     if ($token == null) {
-      throw new Google_Auth_Exception('Could not json decode the token');
+      throw new BackupPlus_Google_Auth_Exception('Could not json decode the token');
     }
     if (! isset($token['access_token'])) {
-      throw new Google_Auth_Exception("Invalid token format");
+      throw new BackupPlus_Google_Auth_Exception("Invalid token format");
     }
     $token['created'] = time();
     $this->token = $token;
@@ -79,11 +81,11 @@ class Google_Auth_ComputeEngine extends Google_Auth_Abstract
 
   /**
    * Acquires a new access token from the compute engine metadata server.
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    */
   public function acquireAccessToken()
   {
-    $request = new UDP_Google_Http_Request(
+    $request = new BackupPlus_Google_Http_Request(
         self::METADATA_AUTH_URL,
         'GET',
         array(
@@ -98,7 +100,7 @@ class Google_Auth_ComputeEngine extends Google_Auth_Abstract
       $this->token['created'] = time();
       return $this->getAccessToken();
     } else {
-      throw new Google_Auth_Exception(
+      throw new BackupPlus_Google_Auth_Exception(
           sprintf(
               "Error fetching service account access token, message: '%s'",
               $response->getResponseBody() // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error messages should be escaped when caught and printed.
@@ -110,11 +112,11 @@ class Google_Auth_ComputeEngine extends Google_Auth_Abstract
 
   /**
    * Include an accessToken in a given apiHttpRequest.
-   * @param Google_Http_Request $request
-   * @return Google_Http_Request
-   * @throws Google_Auth_Exception
+   * @param BackupPlus_Google_Http_Request $request
+   * @return BackupPlus_Google_Http_Request
+   * @throws BackupPlus_Google_Auth_Exception
    */
-  public function sign(UDP_Google_Http_Request $request)
+  public function sign(BackupPlus_Google_Http_Request $request)
   {
     if ($this->isAccessTokenExpired()) {
       $this->acquireAccessToken();

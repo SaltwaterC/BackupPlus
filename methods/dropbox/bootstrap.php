@@ -9,8 +9,8 @@ require_once __DIR__ . '/Dropbox2/Exception.php';
 require_once __DIR__ . '/Dropbox2/OAuth/Storage/Encrypter.php';
 require_once __DIR__ . '/token-migration.php';
 
-foreach ( array( 'upgrade', 'upgrade_restored', 'rotate', 'retire', 'verify' ) as $operation ) {
-	add_action( 'backupplus_credentials_' . $operation, array( 'BackupPlus_Dropbox_Token_Migration', $operation ) );
+foreach ( array( 'upgrade', 'upgrade_restored', 'rotate', 'retire', 'verify' ) as $backupplus_credential_operation ) {
+	add_action( 'backupplus_credentials_' . $backupplus_credential_operation, array( 'BackupPlus_Dropbox_Token_Migration', $backupplus_credential_operation ) );
 }
 add_filter(
 	'backupplus_credentials_has_ciphertext',

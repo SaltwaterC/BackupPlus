@@ -11,6 +11,7 @@ trait BackupPlus_Core_Phpseclib {
 	/** Load the single bundled phpseclib 3 installation. */
 	public function ensure_phpseclib() {
 		if ( version_compare( PHP_VERSION, BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION, '<' ) ) {
+			/* translators: %s: Minimum required PHP version. */
 			return new WP_Error( 'phpseclib_php_version', sprintf( __( 'The bundled cryptography library requires PHP %s or newer.', 'backupplus' ), BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION ) );
 		}
 		backupplus_try_include_file( 'vendor/autoload.php', 'require_once' );

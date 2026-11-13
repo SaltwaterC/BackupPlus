@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,11 +28,11 @@ if (!class_exists('UDP_Google_Client')) {
  * completely unauthenticated, or by using a Simple API Access developer
  * key.
  */
-class Google_Auth_Simple extends Google_Auth_Abstract
+class BackupPlus_Google_Auth_Simple extends BackupPlus_Google_Auth_Abstract
 {
   private $client;
 
-  public function __construct(UDP_Google_Client $client, $config = null)
+  public function __construct(BackupPlus_Google_Client $client, $config = null)
   {
     $this->client = $client;
   }
@@ -41,17 +43,17 @@ class Google_Auth_Simple extends Google_Auth_Abstract
    * (which can modify the request in what ever way fits the auth mechanism)
    * and then calls apiCurlIO::makeRequest on the signed request
    *
-   * @param Google_Http_Request $request
-   * @return Google_Http_Request The resulting HTTP response including the
+   * @param BackupPlus_Google_Http_Request $request
+   * @return BackupPlus_Google_Http_Request The resulting HTTP response including the
    * responseHttpCode, responseHeaders and responseBody.
    */
-  public function authenticatedRequest(UDP_Google_Http_Request $request)
+  public function authenticatedRequest(BackupPlus_Google_Http_Request $request)
   {
     $request = $this->sign($request);
     return $this->io->makeRequest($request);
   }
 
-  public function sign(UDP_Google_Http_Request $request)
+  public function sign(BackupPlus_Google_Http_Request $request)
   {
     $key = $this->client->getClassConfig($this, 'developer_key');
     if ($key) {

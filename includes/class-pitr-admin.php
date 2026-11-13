@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** Administrator controls for database log backups. */
 
@@ -68,7 +70,7 @@ class BackupPlus_PITR_Admin {
 
 	private static function remove_legacy_source( $root ) {
 		$legacy = $root . '/' . self::LEGACY_SOURCE_FILE;
-		if ( ( file_exists( $legacy ) || is_link( $legacy ) ) && ! @unlink( $legacy ) ) {
+		if ( ( file_exists( $legacy ) || is_link( $legacy ) ) && ! wp_delete_file( $legacy ) ) {
 			throw new RuntimeException( __( 'Could not delete the old unprotected database connection file in the point-in-time recovery folder.', 'backupplus' ) );
 		}
 	}
@@ -113,7 +115,7 @@ class BackupPlus_PITR_Admin {
 			try {
 				$current = array_merge( $current, self::wordpress_configuration() );
 			} catch ( Throwable $error ) {
-				self::error( $error->getMessage() );
+				self::error( esc_html( $error->getMessage() ) );
 				return $current;
 			}
 		}
@@ -188,7 +190,7 @@ class BackupPlus_PITR_Admin {
 			$lines[] = 'ssl-ca=' . self::ini_value( $ca );
 			$lines[] = 'mysql' === $engine ? 'ssl-mode=VERIFY_IDENTITY' : 'ssl-verify-server-cert=1';
 		} elseif ( 'mariadb' === $engine ) {
-			$tls = $wpdb->get_row( "SHOW SESSION STATUS LIKE 'Ssl_cipher'", ARRAY_N );
+			$tls = $wpdb->get_row( "SHOW SESSION STATUS LIKE 'Ssl_cipher'", ARRAY_N ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 			if ( is_array( $tls ) && isset( $tls[1] ) && '' === $tls[1] ) { $lines[] = 'ssl=0'; }
 		}
 
@@ -201,7 +203,7 @@ class BackupPlus_PITR_Admin {
 		$temp = $root . '/.source-' . bin2hex( random_bytes( 16 ) ) . '.php';
 		BackupPlus_PITR_Process::private_file( $temp, BackupPlus_PITR_Process::GUARD . implode( "\n", $lines ) . "\n" );
 		if ( ! @rename( $temp, $path ) ) {
-			@unlink( $temp );
+			wp_delete_file( $temp );
 			throw new RuntimeException( __( 'Could not safely save the private database connection.', 'backupplus' ) );
 		}
 		$permissions = @fileperms( $path );
@@ -374,6 +376,6 @@ class BackupPlus_PITR_Admin {
 		$html    .= '<label class="backupplus-exact-hours">' . esc_html__( 'minute', 'backupplus' ) . ' <select data-part="hour-minute" aria-label="' . esc_attr__( 'Minute', 'backupplus' ) . '"></select></label>';
 		$html    .= '<input type="hidden" class="backupplus-starttime" name="backupplus_pitr[time]" value="' . esc_attr( $time ) . '">';
 		$html    .= '</span></span>';
-		echo $html;
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Every value is escaped as the fields are assembled above; wp_kses_post() would strip the form fields.
 	}
 }

@@ -142,6 +142,7 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 			clearstatcache( true, $local );
 			$size = is_file( $local ) && is_readable( $local ) ? filesize( $local ) : false;
 			if ( false === $size ) {
+				/* translators: %s: Name of the backup file. */
 				$this->log( sprintf( __( 'Cannot read backup file: %s', 'backupplus' ), $file ), 'error' );
 				$success = false;
 				continue;
@@ -243,13 +244,13 @@ class BackupPlus_BackupModule_webdav extends BackupPlus_BackupModule {
 				echo esc_html( __( 'Success: Connected and verified directory listing, upload, download and deletion.', 'backupplus' ) );
 			}
 		} finally {
-			unlink( $local );
+			wp_delete_file( $local );
 		}
 	}
 
 	public function get_template_properties() {
 		$properties = array(
-			/* translators: %s: Storage method name. */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'           => sprintf( __( 'Test %s Settings', 'backupplus' ), $this->get_description() ),
 			'input_webdav_label'         => __( 'Protocol', 'backupplus' ),
 			'input_webdav_option_labels' => array(

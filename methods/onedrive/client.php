@@ -121,7 +121,7 @@ class BackupPlus_OneDrive_Client extends BackupPlus_Remote_Storage_Client {
 		);
 		$data    = $this->json( $this->request( 'POST', $url . ':/createUploadSession', $body, array( 'Content-Type' => 'application/json' ) ) );
 		$session = $data['uploadUrl'] ?? '';
-		if ( ! BackupPlus_Remote_Storage_HTTP::valid_url( $session, $this->hosts ) || 'login.microsoftonline.com' === parse_url( $session, PHP_URL_HOST ) ) {
+		if ( ! BackupPlus_Remote_Storage_HTTP::valid_url( $session, $this->hosts ) || 'login.microsoftonline.com' === wp_parse_url( $session, PHP_URL_HOST ) ) {
 			throw new RuntimeException( 'OneDrive returned an untrusted upload endpoint.' );
 		}
 		$completed = false;
@@ -176,7 +176,7 @@ class BackupPlus_OneDrive_Client extends BackupPlus_Remote_Storage_Client {
 			$response = $this->request( 'GET', $url . ':/content', null, array(), array( 302 ) );
 			$link     = wp_remote_retrieve_header( $response, 'location' );
 		}
-		$headers = 'graph.microsoft.com' === parse_url( $link, PHP_URL_HOST ) ? array( 'Authorization' => 'Bearer ' . $this->token() ) : array();
+		$headers = 'graph.microsoft.com' === wp_parse_url( $link, PHP_URL_HOST ) ? array( 'Authorization' => 'Bearer ' . $this->token() ) : array();
 		return $this->receive( $link, $headers, $destination, $data['size'] );
 	}
 	public function delete( $name ) {

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** Streaming POSIX tar/PAX archives; entries are stored without compression. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 require_once __DIR__ . '/class-archive-compression.php';
@@ -177,7 +178,7 @@ class BackupPlus_Tar {
 			fclose( $this->handle );
 			$this->handle = null;
 		}
-		if ( $this->decoded && is_file( $this->decoded ) ) { unlink( $this->decoded ); }
+		if ( $this->decoded && is_file( $this->decoded ) ) { wp_delete_file( $this->decoded ); }
 		$this->decoded = null;
 		$this->writing = false;
 		return true;

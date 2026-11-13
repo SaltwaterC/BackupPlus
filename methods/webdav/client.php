@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_errno, WordPress.WP.AlternativeFunctions.curl_curl_error, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array -- Transfers to remote storage stream files with resume and progress callbacks, which the WordPress HTTP API cannot do.
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -26,7 +28,7 @@ class BackupPlus_WebDAV_Client {
 		if ( '' === $options['host'] ) {
 			return new WP_Error( 'no_settings', __( 'No WebDAV settings were found.', 'backupplus' ) );
 		}
-		$host = parse_url( $scheme . '://' . $options['host'] );
+		$host = wp_parse_url( $scheme . '://' . $options['host'] );
 		if ( ! $host || empty( $host['host'] ) || isset( $host['user'] ) || isset( $host['pass'] ) || isset( $host['path'] ) || isset( $host['query'] ) || isset( $host['fragment'] ) || preg_match( '/[\s\x00-\x1f\x7f\\\\]/', $options['host'] ) ) {
 			return new WP_Error( 'webdav_invalid_host', __( 'Enter a WebDAV hostname without a URL, path or credentials.', 'backupplus' ) );
 		}
@@ -85,7 +87,7 @@ class BackupPlus_WebDAV_Client {
 		}
 		if ( '' === $options['host'] && ! empty( $options['url'] ) && is_string( $options['url'] ) ) {
 			$url   = preg_replace( '#^webdavs://#i', 'https://', preg_replace( '#^webdav://#i', 'http://', $options['url'] ) );
-			$parts = parse_url( $url );
+			$parts = wp_parse_url( $url );
 			if ( $parts && isset( $parts['scheme'], $parts['host'] ) && ! isset( $parts['query'] ) && ! isset( $parts['fragment'] ) ) {
 				$options['webdav'] = $parts['scheme'] . '://';
 				$options['host']   = $parts['host'];
@@ -193,6 +195,7 @@ class BackupPlus_WebDAV_Client {
 			$result = curl_exec( $curl );
 		}
 		if ( false === $result ) {
+			/* translators: %s: Error message. */
 			return new WP_Error( 'webdav_transport', sprintf( __( 'WebDAV transfer failed: %s', 'backupplus' ), curl_error( $curl ) ) );
 		}
 		return array(
@@ -208,6 +211,7 @@ class BackupPlus_WebDAV_Client {
 		if ( in_array( $response['status'], $accepted, true ) ) {
 			return true;
 		}
+		/* translators: %d: HTTP status code returned by the WebDAV server. */
 		return new WP_Error( 'webdav_http_error', sprintf( __( 'WebDAV server returned HTTP %d. Check the endpoint, credentials and permissions.', 'backupplus' ), $response['status'] ) );
 	}
 
@@ -250,7 +254,7 @@ class BackupPlus_WebDAV_Client {
 				fclose( $destination );
 			}
 			if ( is_file( $temp ) ) {
-				unlink( $temp );
+				wp_delete_file( $temp );
 			}
 		}
 	}
@@ -281,11 +285,11 @@ class BackupPlus_WebDAV_Client {
 		}
 		$xpath = new DOMXPath( $xml );
 		$xpath->registerNamespace( 'd', 'DAV:' );
-		$base  = rawurldecode( parse_url( $this->url, PHP_URL_PATH ) );
+		$base  = rawurldecode( wp_parse_url( $this->url, PHP_URL_PATH ) );
 		$files = array();
 		foreach ( $xpath->query( '/d:multistatus/d:response' ) as $entry ) {
 			$href = $xpath->evaluate( 'string(d:href)', $entry );
-			$path = parse_url( $href, PHP_URL_PATH );
+			$path = wp_parse_url( $href, PHP_URL_PATH );
 			if ( ! is_string( $path ) ) {
 				continue;
 			}

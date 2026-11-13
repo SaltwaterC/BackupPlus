@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** Lossless binary-log compression; source bytes, coordinates and ancestry hashes stay unchanged. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 require_once __DIR__ . '/class-executables.php';
@@ -80,7 +81,7 @@ class BackupPlus_PITR_Compression {
 			$process = false;
 			if ( 0 !== ( $exit < 0 ? $closed : $exit ) || ( $exact && $produced !== $maximum ) ) { throw new RuntimeException( 'Corrupt or incomplete Zstandard PITR archive.' ); }
 		} catch ( Throwable $error ) {
-			if ( is_file( $output ) ) { unlink( $output ); }
+			if ( is_file( $output ) ) { wp_delete_file( $output ); }
 			throw $error;
 		} finally {
 			if ( isset( $pipes[1] ) && is_resource( $pipes[1] ) ) { fclose( $pipes[1] ); }
@@ -89,7 +90,7 @@ class BackupPlus_PITR_Compression {
 				proc_terminate( $process, 9 );
 				proc_close( $process ); }
 			if ( is_resource( $target ) ) { fclose( $target ); }
-			unlink( $errors );
+			wp_delete_file( $errors );
 		}
 		return $output;
 	}

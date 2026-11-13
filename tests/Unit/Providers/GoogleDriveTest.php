@@ -8,9 +8,9 @@ use BackupPlus_BackupModule;
 use Provider_Test_Google_IO;
 use ReflectionProperty;
 use RuntimeException;
-use UDP_Google_Client;
-use UDP_Google_IO_Exception;
-use UDP_Google_Service_Drive;
+use BackupPlus_Google_Client;
+use BackupPlus_Google_IO_Exception;
+use BackupPlus_Google_Service_Drive;
 use WP_Error;
 
 final class GoogleDriveTest extends ProviderTestCase {
@@ -19,7 +19,7 @@ final class GoogleDriveTest extends ProviderTestCase {
 
 	private array $options;
 
-	private UDP_Google_Client $client;
+	private BackupPlus_Google_Client $client;
 
 	private Provider_Test_Google_IO $io;
 
@@ -62,7 +62,7 @@ final class GoogleDriveTest extends ProviderTestCase {
 	/** Authenticate the provider against the fake SDK transport, as the bootstrap would with real credentials. */
 	private function connect(): void {
 		$this->provider->set_options( $this->options );
-		$this->client = new UDP_Google_Client();
+		$this->client = new BackupPlus_Google_Client();
 		$this->client->setAccessToken(
 			json_encode(
 				array(
@@ -75,7 +75,7 @@ final class GoogleDriveTest extends ProviderTestCase {
 		$this->io = new Provider_Test_Google_IO( $this->client );
 		$this->client->setIo( $this->io );
 		$this->io->handler = array( $this, 'serve' );
-		$service           = new UDP_Google_Service_Drive( $this->client );
+		$service           = new BackupPlus_Google_Service_Drive( $this->client );
 		$this->provider->set_storage( $service );
 		// bootstrap normally sets both fields. Inject the client alongside the cached
 		// SDK service so the actual private upload and download engines are exercised.
@@ -111,7 +111,7 @@ final class GoogleDriveTest extends ProviderTestCase {
 		}
 		if ( 'PUT' === $method && 'https://upload.example.test/session' === $url ) {
 			if ( 'upload' === $this->failure ) {
-				throw new UDP_Google_IO_Exception( 'Upload unavailable' );
+				throw new BackupPlus_Google_IO_Exception( 'Upload unavailable' );
 			}
 			if ( 0 === strpos( $request->getRequestHeader( 'content-range' ), 'bytes */' ) ) {
 				return array( 308, array( 'range' => 'bytes=0-' . ( strlen( $this->upload ) - 1 ) ), '' );

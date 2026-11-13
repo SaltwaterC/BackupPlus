@@ -9,25 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait BackupPlus_Core_Auto_Updates {
 
 	/**
-	 * Enables automatic updates for the plugin.
-	 *
-	 * @access public
-	 * @see __construct
-	 * @internal uses auto_update_plugin filter
-	 *
-	 * @param Bool   $update Whether the item has automatic updates enabled
-	 * @param Object $item   Object holding the asset to be updated
-	 * @return bool True of automatic updates enabled, false if not
-	 */
-	public function maybe_auto_update_plugin( $update, $item ) {
-		if ( ! isset( $item->plugin ) || BACKUPPLUS_PLUGIN_SLUG !== $item->plugin ) {
-			return $update;
-		}
-		$option_auto_update_settings = (array) get_site_option( 'auto_update_plugins', array() );
-		return in_array( $item->plugin, $option_auto_update_settings, true );
-	}
-
-	/**
 	 * Maintain compatibility on all versions between WordPress and BackupPlus, specifically since WordPress 5.5
 	 */
 	public function wordpress_55_updates_potential_migration() {

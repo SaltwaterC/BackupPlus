@@ -48,6 +48,7 @@ trait BackupPlus_Commands_Remote_Storage {
 			// translators: %s: The name of the missing add-on.
 			$data = array(
 				'e' => 1,
+				/* translators: %s: Name of the add-on. */
 				'm' => sprintf( __( '%s add-on not found', 'backupplus' ), 'Rackspace Cloud Files' ),
 			);
 		} else {

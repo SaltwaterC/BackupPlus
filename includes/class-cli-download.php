@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_is_writable, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** Copy the archives of a backup to a directory, fetching them from remote storage when they are not local. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -62,12 +63,12 @@ class BackupPlus_CLI_Download {
 				if ( ( file_exists( $destination ) || is_link( $destination ) ) && ! isset( $args['force'] ) ) { throw new RuntimeException( 'Refusing to overwrite ' . $destination . '. Use --force.' ); }
 				$partial = $destination . '.part';
 				if ( ! copy( $path, $partial ) || filesize( $partial ) !== filesize( $path ) ) {
-					@unlink( $partial );
+					wp_delete_file( $partial );
 					throw new RuntimeException( 'Cannot copy ' . basename( $path ) . '.' );
 				}
 				chmod( $partial, 0600 );
 				if ( ! rename( $partial, $destination ) ) {
-					@unlink( $partial );
+					wp_delete_file( $partial );
 					throw new RuntimeException( 'Cannot place ' . $destination . '.' );
 				}
 				$copied[] = $destination;

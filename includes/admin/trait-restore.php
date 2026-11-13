@@ -99,7 +99,7 @@ trait BackupPlus_Admin_Restore {
 			if ( $return_instead_of_echo ) {
 				return $html;
 			}
-			echo $html;
+			echo wp_kses_post( $html );
 			return;
 		}
 
@@ -133,6 +133,7 @@ trait BackupPlus_Admin_Restore {
 		remove_filter( 'wp_kses_allowed_html', array( $this, 'kses_allow_input_tags_on_unfinished_restoration_dialog' ) );
 	}
 
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Callers verify the request before calling prepare_restore(): the settings page and backupplus_ajaxrestore() check the nonce, and a continuation is checked against its restore token below.
 	/**
 	 * This function starts the backupplus restore process it processes $_REQUEST
 	 * (keys: backupplus_*, meta_foreign, backup_timestamp and job_id)
@@ -262,7 +263,7 @@ trait BackupPlus_Admin_Restore {
 
 		if ( $is_continuation ) {
 			$restore_in_progress = get_site_option( 'backupplus_restore_in_progress' );
-			if ( $restore_in_progress != $_REQUEST['job_id'] ) {
+			if ( $restore_in_progress != $restore_job_id ) {
 				$abort_restore_already = true;
 				$backupplus->log( __( 'Sufficient information about the in-progress restoration operation could not be found.', 'backupplus' ) . ' (job_id_mismatch)', 'error', 'job_id_mismatch' );
 			} else {
@@ -341,6 +342,7 @@ trait BackupPlus_Admin_Restore {
 			return;
 		}
 	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 	/**
 	 * This function will load the required ajax and output any relevant html for the ajax restore
@@ -365,7 +367,7 @@ trait BackupPlus_Admin_Restore {
 		$backupable_entities = $backupplus->get_backupable_file_entities( true, true );
 		$pretty_date         = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) $jobdata['backup_timestamp'] ), 'M d, Y G:i' );
 
-		wp_enqueue_script( 'backupplus-admin-restore', BACKUPPLUS_URL . '/js/backupplus-admin-restore' . $backupplus_min_or_not . '.js', array(), $enqueue_version );
+		wp_enqueue_script( 'backupplus-admin-restore', BACKUPPLUS_URL . '/js/backupplus-admin-restore' . $backupplus_min_or_not . '.js', array(), $enqueue_version, false );
 
 		$backupplus->log( 'Restore setup, now closing connection and starting restore over AJAX.' );
 
@@ -374,7 +376,7 @@ trait BackupPlus_Admin_Restore {
 		echo '<p><strong>' . esc_html__( 'Warning: If you can still read these words after the page finishes loading, then there is a JavaScript or jQuery problem in the site.', 'backupplus' ) . ' ' . esc_html__( 'This may prevent the restore procedure from being able to proceed.', 'backupplus' ) . '</strong>';
 		echo ' ' . esc_html__( 'Check the browser console for JavaScript errors and confirm that this site does not block its admin scripts.', 'backupplus' ) . '</p>';
 		echo '</div>';
-		echo '<div class="backupplus_restore_main--header">' . esc_html__( 'BackupPlus Restoration', 'backupplus' ) . ' - ' . esc_html__( 'Backup', 'backupplus' ) . ' ' . esc_html( $pretty_date ) . '</div>';
+		echo '<div class="backupplus_restore_main--header">' . esc_html__( 'BackupPlus Restoration', 'backupplus' ) . ' — ' . esc_html__( 'Backup', 'backupplus' ) . ' ' . esc_html( $pretty_date ) . '</div>';
 		echo '<div class="backupplus_restore_main">';
 
 		if ( $debug ) {
@@ -541,7 +543,7 @@ trait BackupPlus_Admin_Restore {
 			$backupplus->output_to_browser( '' ); // Start timer
 			// Force output buffering off so that we get log lines sent to the browser as they come not all at once at the end of the ajax restore
 			// zlib creates an output buffer, and waits for the entire page to be generated before it can send it to the client try to turn it off
-			@ini_set( 'zlib.output_compression', '0' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@ini_set( 'zlib.output_compression', '0' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Turns off output compression so that restore progress reaches the browser as it happens. Silenced in case the host disables it.
 			// Turn off PHP output buffering for NGINX
 			header( 'X-Accel-Buffering: no' );
 			header( 'Content-Encoding: none' );
@@ -576,7 +578,7 @@ trait BackupPlus_Admin_Restore {
 
 		$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
 		// This will be removed by BackupPlus_Restorer::post_restore_clean_up()
-		set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
+		set_error_handler( array( $backupplus, 'php_error' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Records PHP warnings in the job log, so the administrator sees them.
 
 		// Set $restore_options, either from the continuation data, or from $_POST
 		if ( ! empty( $continuation_data['restore_options'] ) ) {

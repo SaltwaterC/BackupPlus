@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /**
  * Checks a logical dump before PITR source recovery imports it as the restore account, and writes the copy that is imported.
@@ -75,7 +77,7 @@ class BackupPlus_PITR_SQL_Guard {
 		} catch ( Throwable $error ) {
 			if ( $guard->out ) { fclose( $guard->out ); }
 			$guard->out = null;
-			unlink( $output );
+			wp_delete_file( $output );
 			throw $error;
 		} finally {
 			if ( $guard->in ) { fclose( $guard->in ); }

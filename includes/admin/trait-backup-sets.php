@@ -24,7 +24,7 @@ trait BackupPlus_Admin_Backup_Sets {
 		global $backupplus;
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		$backups    = BackupPlus_Backup_History::get_history();
 		$timestamps = (string) $opts['backup_timestamp'];
@@ -52,7 +52,7 @@ trait BackupPlus_Admin_Backup_Sets {
 		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
 			$backupplus->logfile_open( $backupplus->nonce );
 			$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
+			set_error_handler( array( $backupplus, 'php_error' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Records PHP warnings in the job log, so the administrator sees them.
 		}
 
 		$backupplus_dir      = $backupplus->backups_dir_location();
@@ -132,7 +132,7 @@ trait BackupPlus_Admin_Backup_Sets {
 
 				foreach ( $files as $file ) {
 					// History entries can come from remote listings; never unlink outside the backup directory (BPS-02).
-					if ( BackupPlus_Manipulation_Functions::is_safe_basename( $file ) && is_file( $backupplus_dir . '/' . $file ) && @unlink( $backupplus_dir . '/' . $file ) ) {
+					if ( BackupPlus_Manipulation_Functions::is_safe_basename( $file ) && is_file( $backupplus_dir . '/' . $file ) && wp_delete_file( $backupplus_dir . '/' . $file ) ) {
 						++$local_deleted;// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
 					}
 				}
@@ -386,7 +386,7 @@ trait BackupPlus_Admin_Backup_Sets {
 		global $backupplus;
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		if ( $rescan ) {
 			$messages = BackupPlus_Backup_History::rebuild( $remotescan, false, $debug );

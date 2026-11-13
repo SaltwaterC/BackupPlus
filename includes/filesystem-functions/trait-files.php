@@ -143,7 +143,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 						);
 					}
 					if ( isset( $tar_references[ $entry ] ) || BackupPlus_Retention_Cleanup::backup_active() || get_site_option( 'backupplus_restore_in_progress', false ) ) { continue; }
-					if ( unlink( $path ) ) {
+					if ( wp_delete_file( $path ) ) {
 						$backupplus->log( "Deleting abandoned tar staging file: $entry", 'notice', false, 0 !== $files_deleted % 25 );
 						++$files_deleted;
 					}
@@ -166,13 +166,13 @@ trait BackupPlus_Filesystem_Functions_Files {
 					if ( ( $match && ( $ziparchive_match || $pclzip_match || $binzip_match || $cachelist_match || $manifest_match || 0 == $older_than ) && $now_time - filemtime( $backupplus_dir . '/' . $entry ) >= $older_than ) || $now_time - filemtime( $backupplus_dir . '/' . $entry ) > 43200 ) {
 						$skip_dblog = ( 0 == $files_deleted % 25 ) ? false : true;
 						$backupplus->log( "Deleting old temporary file: $entry", 'notice', false, $skip_dblog );
-						@unlink( $backupplus_dir . '/' . $entry );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $backupplus_dir . '/' . $entry );
 						++$files_deleted;
 					}
 				} elseif ( preg_match( '/^log\.[0-9a-f]+\.txt$/', $entry ) && $now_time - filemtime( $backupplus_dir . '/' . $entry ) > apply_filters( 'backupplus_log_delete_age', 86400 * 40, $entry ) ) {
 					$skip_dblog = ( 0 == $files_deleted % 25 ) ? false : true;
 					$backupplus->log( "Deleting old log file: $entry", 'notice', false, $skip_dblog );
-					@unlink( $backupplus_dir . '/' . $entry );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					wp_delete_file( $backupplus_dir . '/' . $entry );
 					++$files_deleted;
 				}
 			}
@@ -187,7 +187,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 					// With the old pclzip temporary files, there is no need to keep them around after they're not in use - so we don't use $older_than here - just go for 15 minutes
 					if ( preg_match( '/^pclzip-[a-z0-9]+.tmp$/', $entry ) && $now_time - filemtime( $path . $entry ) >= 900 ) {
 						$backupplus->log( "Deleting old PclZip temporary file: $entry (from " . basename( $path ) . ')' );
-						@unlink( $path . $entry );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $path . $entry );
 					}
 				}
 				@closedir( $handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
@@ -228,7 +228,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 			}
 		}
 
-		@unlink( $rand_file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+		wp_delete_file( $rand_file );
 		return ( $ret > 0 );
 	}
 
@@ -259,7 +259,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 					} elseif ( is_dir( $dir . '/' . $entry ) ) {
 						self::remove_local_directory( $dir . '/' . $entry, false );
 					} else {
-						@unlink( $dir . '/' . $entry );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $dir . '/' . $entry );
 					}
 				}
 			}
@@ -307,10 +307,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 	 * Compatibility function (exists in WP 4.8+)
 	 */
 	public static function wp_doing_cron() {
-		if ( function_exists( 'wp_doing_cron' ) ) {
-			return wp_doing_cron();
-		}
-		return apply_filters( 'wp_doing_cron', defined( 'DOING_CRON' ) && DOING_CRON );
+		return wp_doing_cron();
 	}
 
 	/**
@@ -454,7 +451,7 @@ trait BackupPlus_Filesystem_Functions_Files {
 				$result = @rmdir( $filepath ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the folder isn't empty.
 			} else {
 				// Delete the file whose modified time is older than the given timestamp
-				$result = @unlink( $filepath ); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist or we don't have sufficient permission to it.
+				$result = wp_delete_file( $filepath );
 			}
 
 			if ( ! isset( $result ) ) {

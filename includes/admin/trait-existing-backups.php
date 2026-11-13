@@ -100,11 +100,11 @@ trait BackupPlus_Admin_Existing_Backups {
 			$rawbackup .= '</p><strong>' . __( 'Total backup size:', 'backupplus' ) . '</strong> ' . BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total_size ) . '<p>';
 		}
 
-		$rawbackup .= '</p><hr><p><pre>' . esc_html( print_r( $backup, true ) ) . '</pre></p>';
+		$rawbackup .= '</p><hr><p><pre>' . esc_html( print_r( $backup, true ) ) . '</pre></p>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- The raw backup record, escaped, for the administrator.
 
 		if ( ! empty( $job_data ) && is_array( $job_data ) ) {
 			// Credentials in the job snapshot are shown only as placeholders (BPS-20).
-			$rawbackup .= '<p><pre>' . esc_html( print_r( BackupPlus_Credential_Storage::mask_job( $job_data ), true ) ) . '</pre></p>';
+			$rawbackup .= '<p><pre>' . esc_html( print_r( BackupPlus_Credential_Storage::mask_job( $job_data ), true ) ) . '</pre></p>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- The job record with credentials masked, escaped, for the administrator.
 		}
 
 		// Every dynamic value above is escaped for HTML where it is added. Callers hand the markup straight to the modal, so it is not entity-encoded again and nothing decodes it afterwards.
@@ -176,7 +176,7 @@ trait BackupPlus_Admin_Existing_Backups {
 			return $title . sprintf( _n( '(%1$d recovery point in %2$d files, total %3$s: full backup %4$s plus the log after it %5$s).', '(%1$d recovery points in %2$d files, total %3$s: full backup %4$s plus the logs after it %5$s).', $points, 'backupplus' ), $points, count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total - $full ) );
 		}
 		if ( $increments ) {
-			/* translators: 1: Archive count, 2: Total size, 3: Full backup size, 4: Increment count, 5: Increment size. */
+			/* translators: 1: Archive count, 2: Total size, 3: Full backup size, 4: Number of incremental backups, 5: Size of the incremental backups. */
 			return $title . sprintf( __( '(%1$d archive(s) in chain, total %2$s: full backup %3$s plus %4$d incremental backup(s) %5$s).', 'backupplus' ), count( $files ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total ), BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $full ), $increments, BackupPlus_Manipulation_Functions::convert_numeric_size_to_text( $total - $full ) );
 		}
 		/* translators: 1: Archive count, 2: Total size. */
@@ -218,11 +218,11 @@ trait BackupPlus_Admin_Existing_Backups {
 
 				if ( isset( $accept[ $backup['meta_foreign'] ] ) ) {
 					$desc_source = $accept[ $backup['meta_foreign'] ]['desc'];
-					/* translators: %s: Backup Source. */
+					/* translators: %s: Description of the backup source. */
 					$ide .= sprintf( __( 'Backup created by: %s.', 'backupplus' ), $accept[ $backup['meta_foreign'] ]['desc'] ) . ' ';
 				} else {
 					$desc_source = __( 'unknown source', 'backupplus' );
-					/* translators: %s: Unknown Source. */
+					/* translators: %s: Source of the backup. */
 					$ide .= __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ) . ' ';
 				}
 
@@ -380,11 +380,11 @@ trait BackupPlus_Admin_Existing_Backups {
 
 					if ( isset( $accept[ $backup['meta_foreign'] ] ) ) {
 						$desc_source = $accept[ $backup['meta_foreign'] ]['desc'];
-						/* translators: %s: Backup Source. */
+						/* translators: %s: Description of the backup source. */
 						$ide .= sprintf( __( 'Backup created by: %s.', 'backupplus' ), $accept[ $backup['meta_foreign'] ]['desc'] ) . ' ';
 					} else {
 						$desc_source = __( 'unknown source', 'backupplus' );
-						/* translators: %s: Unknown Source. */
+						/* translators: %s: Source of the backup. */
 						$ide .= __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ) . ' ';
 					}
 
@@ -592,7 +592,8 @@ trait BackupPlus_Admin_Existing_Backups {
 			$label       = $increments ? sprintf( _n( 'Recovery chain + %d incremental', 'Recovery chain + %d incrementals', $increments, 'backupplus' ), $increments ) : __( 'Recovery chain', 'backupplus' );
 			$description = __( 'Database point-in-time recovery', 'backupplus' );
 			if ( ! empty( $backup['pitr']['points'] ) ) {
-				$latest       = end( $backup['pitr']['points'] );
+				$latest = end( $backup['pitr']['points'] );
+				/* translators: %s: Date and time of the latest recovery point. */
 				$description .= '. ' . sprintf( __( 'Latest recovery point: %s', 'backupplus' ), get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $latest['timestamp'] ), 'M d, Y G:i:s' ) );
 			}
 			$pretty_date .= '<span class="backupplus-chain-badge backupplus-pitr-badge" title="' . esc_attr( $description ) . '">' . esc_html( $label ) . '</span>';
@@ -922,11 +923,11 @@ trait BackupPlus_Admin_Existing_Backups {
 				// Saved secrets of every other credential option are shown only as placeholders (BPS-20).
 				$value = BackupPlus_Credential_Storage::mask( $value, $opt );
 			}
-			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( $value, true ) ) . '</td>';
+			$response['html'] .= '<tr><td>' . htmlspecialchars( $opt ) . '</td><td>' . htmlspecialchars( print_r( $value, true ) ) . '</td>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- The option value with credentials masked, escaped, for the administrator.
 		}
 
 		// Get the option saved by yahnis-elsts/plugin-update-checker
-		$response['html'] .= '<tr><td>external_updates-backupplus</td><td><pre>' . htmlspecialchars( print_r( get_site_option( 'external_updates-backupplus' ), true ) ) . '</pre></td>';
+		$response['html'] .= '<tr><td>external_updates-backupplus</td><td><pre>' . htmlspecialchars( print_r( get_site_option( 'external_updates-backupplus' ), true ) ) . '</pre></td>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- The option value, escaped, for the administrator.
 
 		$response['html'] .= '</tbody></table>';
 

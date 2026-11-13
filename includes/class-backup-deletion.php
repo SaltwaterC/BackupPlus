@@ -149,7 +149,7 @@ class BackupPlus_Backup_Deletion {
 		$directory = $backupplus->backups_dir_location();
 		foreach ( $files as $file ) {
 			$path = $directory . '/' . $file;
-			if ( file_exists( $path ) && ( ! is_file( $path ) || ! @unlink( $path ) ) ) { $errors[] = array(
+			if ( file_exists( $path ) && ( ! is_file( $path ) || ! wp_delete_file( $path ) ) ) { $errors[] = array(
 				'code' => 'local_delete_failed',
 				'file' => $file,
 			); }
@@ -160,7 +160,7 @@ class BackupPlus_Backup_Deletion {
 			$snapshots = isset( $backup['incremental']['snapshots'] ) ? $backup['incremental']['snapshots'] : array();
 			$snapshots = array_merge( $snapshots, isset( $backup['pre_update']['snapshots'] ) ? $backup['pre_update']['snapshots'] : array() );
 			foreach ( $snapshots as $snapshot ) {
-				if ( is_string( $snapshot ) && preg_match( '/^incremental_[a-f0-9]{12}_[a-z-]+\.php$/D', $snapshot ) && file_exists( $directory . '/' . $snapshot ) && ! @unlink( $directory . '/' . $snapshot ) ) { $errors[] = array(
+				if ( is_string( $snapshot ) && preg_match( '/^incremental_[a-f0-9]{12}_[a-z-]+\.php$/D', $snapshot ) && file_exists( $directory . '/' . $snapshot ) && ! wp_delete_file( $directory . '/' . $snapshot ) ) { $errors[] = array(
 					'code' => 'inventory_delete_failed',
 					'file' => $snapshot,
 				); }

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Deleting and pruning chains, retention cleanup and the temporary work directories. */
 
@@ -162,7 +163,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			if ( empty( $entry['archive'] ) ) { continue; }
 			foreach ( array_merge( $entry['manifest']['artifacts'], array( $entry['locator']['manifest'] ) ) as $artifact ) {
 				$path = $backupplus->backups_dir_location() . '/' . BackupPlus_PITR_Manifest::filename( $artifact['name'] );
-				if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+				if ( is_file( $path ) && ! is_link( $path ) ) { wp_delete_file( $path ); }
 			}
 		}
 	}
@@ -255,7 +256,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 				if ( $entry->isDir() && ! $entry->isLink() ) {
 					self::remove_work( $child );
 				} else {
-					unlink( $child );
+					wp_delete_file( $child );
 				}
 			}
 			if ( ! $retained ) {
@@ -273,7 +274,7 @@ trait BackupPlus_PITR_Orchestrator_Retention {
 			if ( $entry->isDir() && ! $entry->isLink() ) {
 				self::remove_work( $child );
 			} else {
-				unlink( $child );
+				wp_delete_file( $child );
 			}
 		}
 		rmdir( $path );

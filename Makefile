@@ -1,4 +1,4 @@
-.PHONY: test-sites test-wordpress-lane build-assets check-assets check-php install-tools format-tools format check-format test-tools test test-host test-site test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser test-pitr-native
+.PHONY: dist dist-worktree dist-check wporg-assets wporg-screenshots test-sites test-wordpress-lane build-assets check-assets check-php install-tools format-tools format check-format test-tools test test-host test-site test-prerequisites test-unit test-integration test-wordpress test-client test-client-browser test-pitr-native
 
 PODMAN ?= podman
 COMPOSER ?= $(if $(wildcard .cache/composer.phar),php .cache/composer.phar,composer)
@@ -31,8 +31,32 @@ check-assets:
 	PODMAN="$(PODMAN)" node scripts/build-agessh-wasm.mjs --check
 	node scripts/build-decryptor.mjs --check
 
+# The plugin package, as installed on a WordPress site and published on WordPress.org: build/backupplus/ and
+# build/backupplus-VERSION.zip, holding the files committed at DIST_REF (default HEAD) minus those .distignore excludes.
+# dist-worktree packages the working tree, uncommitted changes included, for local testing only. dist-check installs the zip
+# on a throwaway WordPress site and runs the WordPress.org Plugin Check on it (see dev/dist-check.sh).
+DIST_REF ?= HEAD
+DIST_LINT = find build/backupplus -type f -name '*.php' -print0 | xargs -0 -n 1 -P $$(nproc) php -d display_errors=stderr -d 'error_reporting=E_ALL & ~E_DEPRECATED' -l >/dev/null
+
+dist:
+	php scripts/build-dist.php --ref="$(DIST_REF)"
+	@$(DIST_LINT)
+
+dist-worktree:
+	php scripts/build-dist.php --worktree
+	@$(DIST_LINT)
+
+dist-check:
+	PODMAN="$(PODMAN)" ./dev/dist-check.sh
+
+wporg-assets:
+	./scripts/render-wporg-assets.sh
+
+wporg-screenshots:
+	PODMAN="$(PODMAN)" ./dev/screenshots.sh
+
 check-php:
-	@find . -type d \( -name vendor -o -name node_modules -o -name .git -o -name .cache \) -prune -o -type f -name '*.php' -print0 | xargs -0 -n 1 -P $$(nproc) php -l
+	@find . -path ./build -prune -o -type d \( -name vendor -o -name node_modules -o -name .git -o -name .cache \) -prune -o -type f -name '*.php' -print0 | xargs -0 -n 1 -P $$(nproc) php -l
 	php scripts/check-sql.php
 
 install-tools:

@@ -24,7 +24,7 @@ final class AdminHardeningTest extends TestCase {
 		$iterator = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( self::root(), \FilesystemIterator::SKIP_DOTS ) );
 		foreach ( $iterator as $file ) {
 			$path = substr( $file->getPathname(), strlen( self::root() ) + 1 );
-			if ( preg_match( '#^(?:vendor|node_modules|tests|scripts|dev|docs|\.cache|\.git)/#', $path ) || ! preg_match( '/\.(?:php|js)\z/', $path ) ) {
+			if ( preg_match( '#^(?:build|vendor|node_modules|tests|scripts|dev|docs|\.cache|\.git)/#', $path ) || ! preg_match( '/\.(?:php|js)\z/', $path ) ) {
 				continue;
 			}
 			$files[ $path ] = file_get_contents( $file->getPathname() );

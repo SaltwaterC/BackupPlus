@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** WP-CLI commands for saved configuration: settings, external databases, notifications and storage limits. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -23,7 +25,7 @@ class BackupPlus_CLI_Input {
 		$written = fwrite( $handle, $contents );
 		fclose( $handle );
 		if ( strlen( $contents ) !== $written || ! rename( $partial, $path ) ) {
-			@unlink( $partial );
+			wp_delete_file( $partial );
 			throw new RuntimeException( 'Cannot write ' . $path . '.' );
 		}
 	}

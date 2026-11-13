@@ -287,7 +287,7 @@ trait BackupPlus_Pre_Update_Backups_Run {
 			}
 			foreach ( $files as $file ) {
 				$path = $backupplus->backups_dir_location() . '/' . basename( $file );
-				if ( is_file( $path ) && ! unlink( $path ) ) {
+				if ( is_file( $path ) && ! wp_delete_file( $path ) ) {
 					continue 2;
 				}
 			}

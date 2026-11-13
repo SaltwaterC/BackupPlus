@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Downloading backup archives through the browser. */
 
@@ -104,7 +105,7 @@ trait BackupPlus_Admin_Downloads {
 	public function do_backupplus_download_backup( $findexes, $type, $timestamp, $stage, $close_connection_callable = false, $file_path = '' ) {
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		global $backupplus;
 
@@ -208,7 +209,7 @@ trait BackupPlus_Admin_Downloads {
 					$backupplus->spool_file( $fullpath, '', $download_name );
 				} finally {
 					if ( $whole ) {
-						@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $fullpath );
 					}
 				}
 				// Do not return - we do not want the caller to add any output
@@ -216,7 +217,7 @@ trait BackupPlus_Admin_Downloads {
 			}
 
 			if ( 'delete' == $stage ) {
-				@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				wp_delete_file( $fullpath );
 				$backupplus->log( "The file has been deleted ($file)" );
 				return array( 'result' => 'deleted' );
 			}
@@ -227,7 +228,7 @@ trait BackupPlus_Admin_Downloads {
 			}
 
 			$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
+			set_error_handler( array( $backupplus, 'php_error' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Records PHP warnings in the job log, so the administrator sees them.
 
 			$backupplus->log( "Requested to obtain file: timestamp=$timestamp, type=$type, index=$findex" );
 
@@ -321,7 +322,7 @@ trait BackupPlus_Admin_Downloads {
 			if ( $debug_mode ) {
 				@fclose( $backupplus->logfile_handle );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 			}           if ( ! $debug_mode ) {
-				@unlink( $backupplus->logfile_name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				wp_delete_file( $backupplus->logfile_name );
 			}
 		}
 

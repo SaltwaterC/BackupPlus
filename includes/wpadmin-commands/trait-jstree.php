@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Directory and zip listings for the file browser tree, and zip file downloads. */
 
@@ -362,7 +363,7 @@ trait BackupPlus_WPAdmin_Commands_Jstree {
 		fclose( $stream );
 		@$zip->close();// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
 		if ( false === $copied ) {
-			@unlink( $this->_backupplus->backups_dir_location() . '/' . $name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The file may not have been created.
+			wp_delete_file( $this->_backupplus->backups_dir_location() . '/' . $name );
 			delete_transient( 'backupplus_extract_' . $id );
 			return array( 'error' => __( 'The file could not be extracted from the archive.', 'backupplus' ) );
 		}

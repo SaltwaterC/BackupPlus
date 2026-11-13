@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,7 +28,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * This logger simply discards all messages.
  */
-class Google_Logger_Null extends Google_Logger_Abstract
+class BackupPlus_Google_Logger_Null extends BackupPlus_Google_Logger_Abstract
 {
   /**
    * {@inheritdoc}

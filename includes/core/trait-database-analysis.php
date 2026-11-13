@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Scanning a database dump for the facts a restore needs, and collation fallbacks. */
 
@@ -25,7 +26,7 @@ trait BackupPlus_Core_Database_Analysis {
 		} finally {
 			// A database that was decrypted for the scan never stays on disk, whichever way the scan ends.
 			if ( '' !== $temporary && is_file( $temporary ) ) {
-				unlink( $temporary );
+				wp_delete_file( $temporary );
 			}
 		}
 	}
@@ -163,7 +164,7 @@ trait BackupPlus_Core_Database_Analysis {
 		$default_dbscan_timeout = ( filesize( $db_file ) < 31457280 ) ? 120 : 240;
 		$dbscan_timeout         = ( defined( 'BACKUPPLUS_DBSCAN_TIMEOUT' ) && is_numeric( BACKUPPLUS_DBSCAN_TIMEOUT ) ) ? BACKUPPLUS_DBSCAN_TIMEOUT : $default_dbscan_timeout;
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( $dbscan_timeout );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( $dbscan_timeout );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		// We limit the time that we spend scanning the file for character sets
 		$db_charset_collate_scan_timeout                         = ( defined( 'BACKUPPLUS_DB_CHARSET_COLLATE_SCAN_TIMEOUT' ) && is_numeric( BACKUPPLUS_DB_CHARSET_COLLATE_SCAN_TIMEOUT ) ) ? BACKUPPLUS_DB_CHARSET_COLLATE_SCAN_TIMEOUT : 10;
@@ -196,8 +197,8 @@ trait BackupPlus_Core_Database_Analysis {
 								// Same site migration with only http/https difference
 								$info['same_url']          = false;
 								$info['url_scheme_change'] = true;
-								$old_siteurl_parsed        = parse_url( $old_siteurl );
-								$actual_siteurl_parsed     = parse_url( site_url() );
+								$old_siteurl_parsed        = wp_parse_url( $old_siteurl );
+								$actual_siteurl_parsed     = wp_parse_url( site_url() );
 								if ( ( stripos( $old_siteurl_parsed['host'], 'www.' ) === 0 && stripos( $actual_siteurl_parsed['host'], 'www.' ) !== 0 ) || ( stripos( $old_siteurl_parsed['host'], 'www.' ) !== 0 && stripos( $actual_siteurl_parsed['host'], 'www.' ) === 0 ) ) {
 									/* translators: 1: Old site URL, 2: Current site URL */
 									$powarn = sprintf( __( 'The website address in the backup set (%1$s) is slightly different from that of the site now (%2$s).', 'backupplus' ), esc_html( $old_siteurl ), esc_html( site_url() ) ) . ' ' .
@@ -224,7 +225,7 @@ trait BackupPlus_Core_Database_Analysis {
 								$warn[]                    = apply_filters(
 									'backupplus_dbscan_urlchange',
 									sprintf(
-									/* translators: %s: Old and current site URLs */
+									/* translators: %s: Old and current site URLs. */
 										__( 'This backup set is from a different site (%s). After restoring, check whether any site URLs need to be updated.', 'backupplus' ),
 										esc_html( $old_siteurl . ' / ' . untrailingslashit( site_url() ) )
 									),
@@ -235,9 +236,9 @@ trait BackupPlus_Core_Database_Analysis {
 						}
 
 						if ( $this->mod_rewrite_unavailable( false ) ) {
-							/* translators: 1: Webserver type, 2: Missing module */
+							/* translators: 1: Name of the webserver, 2: Name of the missing module. */
 							$warn[] = sprintf( __( 'You are using the %1$s webserver, but do not seem to have the %2$s module loaded.', 'backupplus' ), 'Apache', 'mod_rewrite' ) . ' ' .
-									/* translators: 1: Module name, 2: Sample url */
+									/* translators: 1: Name of the Apache module, 2: Example permalink URL. */
 									sprintf( __( 'You should enable %1$s to make any pretty permalinks (e.g. %2$s) work', 'backupplus' ), 'mod_rewrite', 'http://example.com/my-page/' );
 						}
 					} else {
@@ -253,7 +254,7 @@ trait BackupPlus_Core_Database_Analysis {
 							$powarn        = apply_filters(
 								'backupplus_dbscan_urlchange',
 								sprintf(
-								/* translators: %s: Old and current home URLs */
+								/* translators: %s: Old and current site URLs. */
 									__( 'This backup set is from a different site (%s). After restoring, check whether any site URLs need to be updated.', 'backupplus' ),
 									htmlspecialchars( $old_home . ' / ' . home_url() )
 								),
@@ -284,7 +285,7 @@ trait BackupPlus_Core_Database_Analysis {
 						$old_php_version     = $nmatches[1];
 						$current_php_version = $cmatches[1];
 						if ( version_compare( $old_php_version, $current_php_version, '>' ) ) {
-							/* translators: 1: Old PHP version, 2: PHP */
+							/* translators: 1: Old version number, 2: Name of the software (PHP). */
 							$warn[] = sprintf( __( 'The site in this backup was running on a webserver with version %1$s of %2$s.', 'backupplus' ), $old_php_version, 'PHP' ) . ' ' .
 									/* translators: %s: Current PHP version */
 									sprintf( __( 'This is significantly newer than the server which you are now restoring onto (version %s).', 'backupplus' ), PHP_VERSION ) . ' ' .
@@ -293,7 +294,7 @@ trait BackupPlus_Core_Database_Analysis {
 									/* translators: %s: PHP */
 									sprintf( __( 'Any support requests to do with %s should be raised with your web hosting company.', 'backupplus' ), 'PHP' );
 						} elseif ( version_compare( $old_php_version, $current_php_version, '<' ) ) {
-							/* translators: 1: PHP version, 2: PHP */
+							/* translators: 1: Old version number, 2: Name of the software (PHP). */
 							$warn[] = sprintf( __( 'The site in this backup was running on a webserver with version %1$s of %2$s.', 'backupplus' ), $old_php_version, 'PHP' ) . ' ' .
 									/* translators: %s: Current PHP version */
 									sprintf( __( 'This is older than the server which you are now restoring onto (version %s).', 'backupplus' ), PHP_VERSION ) . ' ' .

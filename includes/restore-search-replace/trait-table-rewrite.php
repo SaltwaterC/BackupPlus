@@ -40,7 +40,7 @@ trait BackupPlus_Restore_Search_Replace_Table_Rewrite {
 
 		// If not done already, then search & replace this table, + record that it is done
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		$stripped_table = substr( $table, strlen( $import_table_prefix ) );
 		// Remove multisite site number prefix, if relevant
@@ -181,7 +181,7 @@ trait BackupPlus_Restore_Search_Replace_Table_Rewrite {
 		if ( false == $report ) {
 			$backupplus->log(
 				sprintf(
-				/* translators: %s: Operation name */
+				/* translators: %s: Name of the operation. */
 					__( 'Failed: the %s operation was not able to start.', 'backupplus' ),
 					__( 'search and replace', 'backupplus' )
 				),
@@ -190,7 +190,7 @@ trait BackupPlus_Restore_Search_Replace_Table_Rewrite {
 		} elseif ( ! is_array( $report ) ) {
 			$backupplus->log(
 				sprintf(
-				/* translators: %s: Operation name */
+				/* translators: %s: Name of the operation. */
 					__( 'Failed: we did not understand the result returned by the %s operation.', 'backupplus' ),
 					__( 'search and replace', 'backupplus' )
 				),

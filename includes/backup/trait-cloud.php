@@ -133,6 +133,7 @@ trait BackupPlus_Backup_Cloud {
 
 		foreach ( $services as $ind => $service ) {
 			if ( 'none' !== $service && '' !== $service && empty( $storage_objects_and_ids[ $service ]['object'] ) ) {
+				/* translators: %s: Identifier of the remote storage provider. */
 				$backupplus->log( sprintf( __( 'Remote storage provider unavailable: %s', 'backupplus' ), $service ), 'error' );
 				continue;
 			}
@@ -149,7 +150,7 @@ trait BackupPlus_Backup_Cloud {
 				$log_extra                   = $this->last_storage_instance ? ' (last)' : '';
 				$backupplus->log( 'Cloud backup selection (' . ( $ind + 1 ) . '/' . count( $services ) . '): ' . $service . ' with instance (' . ( $instance_id_count + 1 ) . '/' . $total_instance_ids . ')' . $log_extra );
 				if ( function_exists( 'set_time_limit' ) ) {
-					@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+					@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 				}
 				if ( 'none' == $service || '' == $service ) {
 					$backupplus->log( 'No remote despatch: user chose no remote backup service' );
@@ -163,7 +164,7 @@ trait BackupPlus_Backup_Cloud {
 						$fullpath = $this->backupplus_dir . '/' . $file;
 						if ( file_exists( $fullpath . '.list.tmp' ) ) {
 							$backupplus->log( "Deleting zip manifest ({$file}.list.tmp)" );
-							unlink( $fullpath . '.list.tmp' );
+							wp_delete_file( $fullpath . '.list.tmp' );
 						}
 					}
 					$this->prune_retained_backups( array( 'none' => array( 'all' => array( null, null ) ) ) );
@@ -203,13 +204,13 @@ trait BackupPlus_Backup_Cloud {
 				$log_message = 'Exception (' . get_class( $e ) . ') occurred during backup uploads to the ' . $service . '. Exception Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
 				$backupplus->log( $log_message );
 				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				/* translators: 1: Exception class, 2: Exception message */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$backupplus->log( sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 			} catch ( Error $e ) {// phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
 				$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred during backup uploads to the ' . $service . '. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
 				$backupplus->log( $log_message );
 				BackupPlus_Manipulation_Functions::error_log( $log_message );
-				/* translators: 1: Exception class, 2: Exception message */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$backupplus->log( sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 			}
 		}

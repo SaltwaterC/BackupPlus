@@ -156,7 +156,7 @@ trait BackupPlus_Admin_Ajax {
 		$this->logged = array();
 		// TODO: Add action for WP HTTP SSL stuff
 		$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-		set_error_handler( array( $this, 'get_php_errors' ), $error_levels );
+		set_error_handler( array( $this, 'get_php_errors' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Collects PHP warnings to show the administrator in the response.
 
 		$obj = BackupPlus_Storage_Provider_Factory::create( $method, false );
 
@@ -168,7 +168,7 @@ trait BackupPlus_Admin_Ajax {
 			$ret  = esc_html( $obj->get_error_message() );
 			$data = array( 'success' => false );
 			if ( ! $return_instead_of_echo ) {
-				echo $ret;
+				echo $ret; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped with esc_html() above.
 			}
 		} elseif ( is_callable( array( $obj, 'credentials_test' ) ) ) {
 			$obj->set_connection_status( false );
@@ -311,9 +311,10 @@ trait BackupPlus_Admin_Ajax {
 
 	public function get_php_errors( $errno, $errstr, $errfile, $errline ) {
 		global $backupplus;
-		if ( 0 == error_reporting() ) {
-			return true; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to get the current PHP error level.
-		}       $logline = $backupplus->php_error_to_logline( $errno, $errstr, $errfile, $errline );
+		if ( 0 == error_reporting() ) { // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting, PluginCheck.CodeAnalysis.PHPErrorReporting.DirectErrorReportingCall -- Only reads the current level, to skip errors silenced with @.
+			return true;
+		}
+		$logline = $backupplus->php_error_to_logline( $errno, $errstr, $errfile, $errline );
 		if ( false !== $logline ) {
 			$this->logged[] = $logline;
 		}

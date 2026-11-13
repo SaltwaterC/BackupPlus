@@ -150,7 +150,7 @@ abstract class BackupPlus_Remote_Storage_Module extends BackupPlus_BackupModule 
 					}
 			}
 			if ( $local && file_exists( $local ) ) {
-				unlink( $local );
+				wp_delete_file( $local );
 			}
 			}
 	}

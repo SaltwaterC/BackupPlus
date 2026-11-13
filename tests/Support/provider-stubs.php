@@ -83,8 +83,6 @@ function wp_remote_post( $url, $args ) {
 		return $GLOBALS['provider_post']( $url, $args );
 	}
 	throw new RuntimeException( 'Unexpected network request: ' . $url ); }
-function wp_parse_url( $url ) {
-	return parse_url( $url ); }
 function wp_json_encode( $value ) {
 	return json_encode( $value ); }
 function wp_remote_retrieve_response_message( $response ) {

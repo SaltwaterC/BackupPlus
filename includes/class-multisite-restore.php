@@ -318,7 +318,7 @@ class BackupPlus_Multisite_Restore {
 			wp_mkdir_p( $uploads['basedir'] );
 			file_put_contents( $file, (string) time() );
 		} elseif ( file_exists( $file ) ) {
-			unlink( $file );
+			wp_delete_file( $file );
 		}
 		return false;
 	}

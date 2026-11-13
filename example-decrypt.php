@@ -28,6 +28,7 @@ gunzip output.sql.gz
 
 */
 // @codingStandardsIgnoreEnd
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /**
  * An example of how to decrypt a file
@@ -36,7 +37,7 @@ gunzip output.sql.gz
  * @param String $key            Archive passphrase or age private identity
  * @param String $key_passphrase Passphrase for an encrypted private identity
  */
-function rijndael_decrypt_file( $file, $key, $key_passphrase = '' ) {
+function rijndael_decrypt_file( $file, $key, $key_passphrase = '' ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Standalone script, run outside WordPress; the name is its documented interface.
 
 	require_once __DIR__ . '/vendor/autoload.php';
 	require_once __DIR__ . '/includes/class-backupplus-crypto.php';

@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** A persistent native client session. Never reconnect: its lifetime owns backup locks. */
 
@@ -116,7 +118,7 @@ class BackupPlus_PITR_Session {
 			$this->process = null;
 		}
 		if ( $this->stderr && is_file( $this->stderr ) ) {
-			unlink( $this->stderr );
+			wp_delete_file( $this->stderr );
 		}
 	}
 

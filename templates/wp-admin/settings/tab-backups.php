@@ -62,7 +62,7 @@ if ( ! empty( $options['include_header'] ) ) {
 			if ( version_compare( $backupplus->get_wordpress_version(), '3.3', '<' ) ) {
 				echo '<em>' . esc_html(
 					sprintf(
-						/* translators: %1$s: WordPress  %2$s: version number */
+						/* translators: 1: Software name (WordPress), 2: Required version (3.3) */
 						__( 'This feature requires %1$s version %2$s or later', 'backupplus' ),
 						'WordPress',
 						'3.3'

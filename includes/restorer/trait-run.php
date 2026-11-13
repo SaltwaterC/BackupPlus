@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The restore run: downloading missing archives, performing each entity and cleaning up. */
 
@@ -150,6 +151,7 @@ trait BackupPlus_Restorer_Run {
 				$available = BackupPlus_Restore_Inventory::components( $second_loop[ $type ], $ticket, $backupplus->nonce, $type );
 				if ( is_wp_error( $available ) ) { return $available; }
 				$missing = array_diff( $selected, $available );
+				/* translators: %s: Comma-separated list of component names. */
 				if ( $missing ) { return new WP_Error( 'component_not_found', sprintf( __( 'Selected components were not found in the backup: %s', 'backupplus' ), implode( ', ', $missing ) ) ); }
 			}
 		}
@@ -401,7 +403,7 @@ trait BackupPlus_Restorer_Run {
 		$backupable_entities = apply_filters( 'backupplus_backupable_file_entities_on_restore', $backupable_entities, $restore_options, $backup_set );
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		// Get an ordered list of things to restore
 		// This requires the global $backupplus_restorer to be set up
@@ -471,7 +473,7 @@ trait BackupPlus_Restorer_Run {
 					$restore_result = $this->restore_backup( $file, $type, $info, $last_one, $last_entity );
 				} catch ( Exception $e ) {
 					$log_message = 'Exception (' . get_class( $e ) . ') occurred during restore: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
-					/* translators: 1: Class name, 2: Exception message */
+					/* translators: 1: Exception class name, 2: Exception message. */
 					$display_log_message = sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
 					BackupPlus_Manipulation_Functions::error_log( $log_message );
 					// @codingStandardsIgnoreLine
@@ -487,7 +489,7 @@ trait BackupPlus_Restorer_Run {
 					if ( function_exists( 'wp_debug_backtrace_summary' ) ) {
 						$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
 					}
-					/* translators: 1: Class name, 2: Exception message */
+					/* translators: 1: Exception class name, 2: Exception message. */
 					$display_log_message = sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() );
 					$backupplus->log( $display_log_message, 'notice-restore' );
 					die();
@@ -507,7 +509,7 @@ trait BackupPlus_Restorer_Run {
 				} elseif ( false === $restore_result ) {
 					return false;
 				} elseif ( $restore_result && $remove_zip ) {
-					$deleted = unlink( $backupplus->backups_dir_location() . '/' . $file );
+					$deleted = wp_delete_file( $backupplus->backups_dir_location() . '/' . $file );
 					$backupplus->log( "Delete zip during restore active; removing backup file: $file: " . ( $deleted ? 'OK' : 'Failed' ) );
 				}
 

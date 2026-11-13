@@ -1,4 +1,7 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.DB.RestrictedFunctions.mysql_mysqli_close -- Native connections to the databases being backed up or recovered, which $wpdb cannot open.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 
 /** MySQL/MariaDB native adapters with transactional snapshots and a persistent DDL guard. */
 
@@ -253,7 +256,7 @@ class BackupPlus_PITR_Database {
 			return $snapshot ? BackupPlus_PITR_Manifest::snapshot_coordinate( $path ) : null;
 		} catch ( Throwable $error ) {
 			if ( is_file( $path ) ) {
-				unlink( $path );
+				wp_delete_file( $path );
 			}
 			throw $error;
 		} finally {
@@ -356,7 +359,7 @@ class BackupPlus_PITR_Database {
 		try {
 			foreach ( $paths as $path ) { $copies[] = BackupPlus_PITR_Binlog::scoped_replay_copy( $path, $this->directory . '/replay-copy-' . bin2hex( random_bytes( 12 ) ) . '.bin', $database, $reject_events ); }
 			BackupPlus_PITR_Process::run( $this->command( 'binlog', array_merge( $args, $copies ) ), $this->directory, null, $output, 1800 );
-		} finally { foreach ( $copies as $copy ) { if ( is_file( $copy ) ) { unlink( $copy ); }
+		} finally { foreach ( $copies as $copy ) { if ( is_file( $copy ) ) { wp_delete_file( $copy ); }
 		}
 		}
 	}
@@ -369,6 +372,6 @@ class BackupPlus_PITR_Database {
 		$this->filtered_replay_sql( $paths, $start, $end, $database, $sql );
 		// Every file in one invocation/connection preserves session state across rotations.
 		$this->import( $sql, $database, $unlogged );
-		unlink( $sql );
+		wp_delete_file( $sql );
 	}
 }

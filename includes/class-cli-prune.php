@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** Choose which backup chains a bulk delete removes. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -78,7 +79,7 @@ class BackupPlus_CLI_Prune {
 			if ( $delay > 0 ) { sleep( min( 5, $delay ) );
 				continue; }
 			wp_unschedule_event( $events[0]['time'], $events[0]['hook'], $events[0]['args'] );
-			do_action_ref_array( $events[0]['hook'], $events[0]['args'] );
+			do_action_ref_array( $events[0]['hook'], $events[0]['args'] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Runs a scheduled BackupPlus event now, as WP-Cron would.
 		}
 		$status = $retention->status();
 		if ( isset( $status['state'] ) && 'waiting' === $status['state'] ) { throw new RuntimeException( 'A backup is running, so cleanup was deferred and will retry in five minutes.' ); }

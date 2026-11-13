@@ -432,21 +432,21 @@ trait BackupPlus_Admin_Settings_Page {
 
 		// PHP version
 		$site_info_data['php_version'] = array(
-			/* translators: %s: String 'PHP' */
+			/* translators: %s: Name of the software component whose version is shown. */
 			'label'   => sprintf( __( '%s version:', 'backupplus' ), 'PHP' ),
 			'value'   => htmlspecialchars( phpversion() ) . ' - <a href="admin-ajax.php?page=backupplus&amp;action=backupplus_ajax&amp;subaction=phpinfo&amp;nonce=' . wp_create_nonce( 'backupplus-credentialtest-nonce' ) . '" id="backupplus-phpinfo">' . __( 'show PHP information (phpinfo)', 'backupplus' ) . '</a>',
 			'is_html' => true,
 		);
 
 		// Database version
-		$db_version = $wpdb->get_var( 'SELECT VERSION()' );
+		$db_version = $wpdb->get_var( 'SELECT VERSION()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		// WPDB::db_version() uses mysqli_get_server_info() ; see: https://github.com/joomla/joomla-cms/issues/9062
 		if ( '' == $db_version ) {
 			$db_version = $wpdb->db_version();
 		}
 
 		$site_info_data['mysql_version'] = array(
-			/* translators: %s: String 'MySQL' */
+			/* translators: %s: Name of the software component whose version is shown. */
 			'label' => sprintf( __( '%s version:', 'backupplus' ), 'MySQL' ),
 			'value' => htmlspecialchars( $db_version ),
 		);
@@ -459,7 +459,7 @@ trait BackupPlus_Admin_Settings_Page {
 		);
 
 		// SQL mode
-		$sql_mode                   = $wpdb->get_var( 'SELECT @@GLOBAL.sql_mode' );
+		$sql_mode                   = $wpdb->get_var( 'SELECT @@GLOBAL.sql_mode' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		$sql_mode                   = ! empty( $sql_mode ) ? htmlspecialchars( $sql_mode ) : '-';
 		$site_info_data['sql_mode'] = array(
 			'label' => __( 'Current SQL mode:', 'backupplus' ),
@@ -474,14 +474,14 @@ trait BackupPlus_Admin_Settings_Page {
 			$cvs = __( 'Not installed', 'backupplus' ) . ' (' . __( 'required for some remote storage providers', 'backupplus' ) . ')';
 		}
 		$site_info_data['curl_version'] = array(
-			/* translators: %s: String 'Curl' */
+			/* translators: %s: Name of the software component whose version is shown. */
 			'label' => sprintf( __( '%s version:', 'backupplus' ), 'Curl' ),
 			'value' => htmlspecialchars( $cvs ),
 		);
 
 		// OpenSSL version
 		$site_info_data['openssl_version'] = array(
-			/* translators: %s: String 'OpenSSL' */
+			/* translators: %s: Name of the software component whose version is shown. */
 			'label' => sprintf( __( '%s version:', 'backupplus' ), 'OpenSSL' ),
 			'value' => defined( 'OPENSSL_VERSION_TEXT' ) ? OPENSSL_VERSION_TEXT : '-',
 		);

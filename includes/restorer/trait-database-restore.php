@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The database restore loop that reads the dump and applies it statement by statement. */
 
@@ -107,8 +108,8 @@ trait BackupPlus_Restorer_Database_Restore {
 		$db_basename = 'backup.db.gz';
 		if ( ! empty( $this->ud_foreign ) ) {
 			$plugins = apply_filters( 'backupplus_accept_archivename', array() );
-			/* translators: %s: Source of the database backup file */
 			if ( empty( $plugins[ $this->ud_foreign ] ) ) {
+				/* translators: %s: Source of the backup. */
 				return new WP_Error( 'unknown', sprintf( __( 'Backup created by unknown source (%s) - cannot be restored.', 'backupplus' ), $this->ud_foreign ) );
 			}
 
@@ -171,18 +172,18 @@ trait BackupPlus_Restorer_Database_Restore {
 		// NO_BACKSLASH_ESCAPES is also in the default list, but it's good to make it explicit
 		$set_sql_mode = BackupPlus_Database_Utility::set_sql_mode( array( 'NO_AUTO_VALUE_ON_ZERO' ), array( 'NO_BACKSLASH_ESCAPES' ), $this->use_wpdb() ? null : $this->mysql_dbh );
 		if ( false === $set_sql_mode ) {
-			return new WP_Error( 'set_sql_mode_failed', __( 'At least one incompatible SQL mode remains set; the  restore cannot continue' ) );
+			return new WP_Error( 'set_sql_mode_failed', __( 'At least one incompatible SQL mode remains set; the restore cannot continue', 'backupplus' ) );
 		} elseif ( null === $set_sql_mode && ( ! defined( 'BACKUPPLUS_ALLOW_SQL_MODE_FAILURE' ) || ! BACKUPPLUS_ALLOW_SQL_MODE_FAILURE ) ) {
-			return new WP_Error( 'set_sql_mode_failed', __( 'It is not known whether the SQL mode could be correctly set; to continue the restore you must define BACKUPPLUS_ALLOW_SQL_MODE_FAILURE as true.' ) );
+			return new WP_Error( 'set_sql_mode_failed', __( 'It is not known whether the SQL mode could be correctly set; to continue the restore you must define BACKUPPLUS_ALLOW_SQL_MODE_FAILURE as true.', 'backupplus' ) );
 		}
 
 		// Register restoration shutdown event so that we can set some MySQL global variables back to their original values
 		register_shutdown_function( array( $this, 'on_shutdown' ) );
 
 		// Find the supported engines - in case the dump had something else (case seen: saved from MariaDB with engine Aria; imported into plain MySQL without)
-		$supported_engines    = array_change_key_case( (array) $wpdb->get_results( 'SHOW ENGINES', OBJECT_K ) );
-		$supported_charsets   = array_change_key_case( (array) $wpdb->get_results( 'SHOW CHARACTER SET', OBJECT_K ) );
-		$supported_collations = array_change_key_case( (array) $wpdb->get_results( 'SHOW COLLATION', OBJECT_K ) );
+		$supported_engines    = array_change_key_case( (array) $wpdb->get_results( 'SHOW ENGINES', OBJECT_K ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
+		$supported_charsets   = array_change_key_case( (array) $wpdb->get_results( 'SHOW CHARACTER SET', OBJECT_K ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
+		$supported_collations = array_change_key_case( (array) $wpdb->get_results( 'SHOW COLLATION', OBJECT_K ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		$charset_options      = $this->validate_charset_options( $supported_charsets, $supported_collations );
 		if ( is_wp_error( $charset_options ) ) {
 			return $charset_options;
@@ -598,7 +599,7 @@ trait BackupPlus_Restorer_Database_Restore {
 				if ( 0 == $this->insert_statements_run && $this->restoring_table && $this->restoring_table == $import_table_prefix . 'options' ) {
 					$backupplus->log( 'Leaving maintenance mode' );
 					$this->maintenance_mode( false );
-					/* translators: %s: translated "INSERT (options)" */
+					/* translators: %s: Name of the SQL command (e.g. INSERT (options), CREATE TABLE, SET NAMES). */
 					return new WP_Error( 'initial_db_error', sprintf( __( 'An error occurred on the first %s command - aborting run', 'backupplus' ), 'INSERT (options)' ) );
 				}
 				continue;
@@ -755,7 +756,7 @@ trait BackupPlus_Restorer_Database_Restore {
 				$this->set_names = $charset;
 				if ( ! isset( $supported_charsets[ strtolower( $charset ) ] ) ) {
 					$names = (string) $this->restore_options['backupplus_restorer_charset'];
-					/* translators: 1: Requested charset, 2: Fallback charset */
+					/* translators: 1: Requested character set, 2: Fallback character set. */
 					$backupplus->log( 'Connection character set: ' . sprintf( __( 'Requested character set (%1$s) is not present - changing to %2$s.', 'backupplus' ), esc_html( $charset ), esc_html( $names ) ), 'notice-restore' );
 				}
 				// A changed character set replaces the dump's statement; an unchanged one runs as written.

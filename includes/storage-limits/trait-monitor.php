@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** Provider adapters, measurement, durable deletion progress and serialized monitoring. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 trait BackupPlus_Storage_Limits_Monitor {
@@ -186,7 +188,7 @@ trait BackupPlus_Storage_Limits_Monitor {
 					}
 				} else {
 					$path    = $backupplus->backups_dir_location() . '/' . basename( $file );
-					$deleted = ! file_exists( $path ) || unlink( $path );
+					$deleted = ! file_exists( $path ) || wp_delete_file( $path );
 				}
 				if ( ! $deleted ) { throw new RuntimeException( 'Artifact deletion failed; progress retained for retry: ' . $file ); }
 				$history[ $time ]['storage_deleted_files'][ $key ][ $file ] = true;

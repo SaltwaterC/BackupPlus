@@ -19,13 +19,13 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Modified by the BackupPlus project in 2026.
 
-function google_api_php_client_autoload_backupplus($className) {
+function backupplus_google_api_php_client_autoload($className) {
 
-  $className = str_replace('UDP_', '', $className);
-  $classPath = explode('_', $className);
-  if ($classPath[0] != 'Google') {
+  // BackupPlus prefixes the classes of this copy, so that it never loads, or is replaced by, another plugin's copy.
+  if (0 !== strpos($className, 'BackupPlus_Google_')) {
     return;
   }
+  $classPath = explode('_', substr($className, strlen('BackupPlus_')));
 
   // Drop 'Google', and maximum class file path depth in this project is 3.
   $classPath = array_slice($classPath, 1, 2);
@@ -38,7 +38,7 @@ function google_api_php_client_autoload_backupplus($className) {
 
 if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
 	// Use the 'prepend' parameter; if other tools have registered autoloaders for incompatible versions of the Google SDK, ours should still get loaded first (since we only register our autoloader late, immediately before using it).
-	spl_autoload_register('google_api_php_client_autoload_backupplus', true, true);
+	spl_autoload_register('backupplus_google_api_php_client_autoload', true, true);
 } else {
-	spl_autoload_register('google_api_php_client_autoload_backupplus');
+	spl_autoload_register('backupplus_google_api_php_client_autoload');
 }

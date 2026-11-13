@@ -44,7 +44,7 @@ try {
 	deinstall_option_expect( has_action( $ajax ), 'The dialog must be set up for a user who manages BackupPlus' );
 
 	// A value stored before the fix, by anyone, must not arm the wipe: uninstall.php wipes only on an explicit yes
-	deinstall_option_expect( 1 === preg_match( '/^if \( \'yes\' !== \$deinstall_option \) \{\s+return;/m', file_get_contents( dirname( __DIR__ ) . '/uninstall.php' ) ), 'uninstall.php must keep the data unless the stored choice is exactly yes' );
+	deinstall_option_expect( 1 === preg_match( '/^\s*if \( \'yes\' !== \$deinstall_option \) \{\s+return;/m', file_get_contents( dirname( __DIR__ ) . '/uninstall.php' ) ), 'uninstall.php must keep the data unless the stored choice is exactly yes' );
 } finally {
 	remove_filter( 'backupplus_user_can_manage', $filter, 1000 );
 	if ( $original === $missing ) {

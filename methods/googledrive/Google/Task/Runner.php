@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,7 +28,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @see https://developers.google.com/drive/web/handle-errors#implementing_exponential_backoff
  */
-class UDP_Google_Task_Runner
+class BackupPlus_Google_Task_Runner
 {
   /**
    * @var integer $maxDelay The max time (in seconds) to wait before a retry.
@@ -58,7 +60,7 @@ class UDP_Google_Task_Runner
   private $maxAttempts = 1;
 
   /**
-   * @var UDP_Google_Client $client The current API client.
+   * @var BackupPlus_Google_Client $client The current API client.
    */
   private $client;
 
@@ -78,23 +80,23 @@ class UDP_Google_Task_Runner
   /**
    * Creates a new task runner with exponential backoff support.
    *
-   * @param UDP_Google_Client $client The current API client
+   * @param BackupPlus_Google_Client $client The current API client
    * @param string $name The name of the current task (used for logging)
    * @param callable $action The task to run and possibly retry
    * @param array $arguments The task arguments
-   * @throws Google_Task_Exception when misconfigured
+   * @throws BackupPlus_Google_Task_Exception when misconfigured
    */
   public function __construct(
-      UDP_Google_Client $client,
+      BackupPlus_Google_Client $client,
       $name,
       $action,
       array $arguments = array()
   ) {
-    $config = (array) $client->getClassConfig('UDP_Google_Task_Runner');
+    $config = (array) $client->getClassConfig('BackupPlus_Google_Task_Runner');
 
     if (isset($config['initial_delay'])) {
       if ($config['initial_delay'] < 0) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task configuration `initial_delay` must not be negative.'
         );
       }
@@ -104,7 +106,7 @@ class UDP_Google_Task_Runner
 
     if (isset($config['max_delay'])) {
       if ($config['max_delay'] <= 0) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task configuration `max_delay` must be greater than 0.'
         );
       }
@@ -114,7 +116,7 @@ class UDP_Google_Task_Runner
 
     if (isset($config['factor'])) {
       if ($config['factor'] <= 0) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task configuration `factor` must be greater than 0.'
         );
       }
@@ -124,7 +126,7 @@ class UDP_Google_Task_Runner
 
     if (isset($config['jitter'])) {
       if ($config['jitter'] <= 0) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task configuration `jitter` must be greater than 0.'
         );
       }
@@ -134,7 +136,7 @@ class UDP_Google_Task_Runner
 
     if (isset($config['retries'])) {
       if ($config['retries'] < 0) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task configuration `retries` must not be negative.'
         );
       }
@@ -142,7 +144,7 @@ class UDP_Google_Task_Runner
     }
 
     if (!is_callable($action)) {
-        throw new Google_Task_Exception(
+        throw new BackupPlus_Google_Task_Exception(
             'Task argument `$action` must be a valid callable.'
         );
     }
@@ -167,14 +169,14 @@ class UDP_Google_Task_Runner
    * Runs the task and (if applicable) automatically retries when errors occur.
    *
    * @return mixed
-   * @throws Google_Task_Retryable on failure when no retries are available.
+   * @throws BackupPlus_Google_Task_Retryable on failure when no retries are available.
    */
   public function run()
   {
     while ($this->attempt()) {
       try {
         return call_user_func_array($this->action, $this->arguments);
-      } catch (Google_Task_Retryable $exception) {
+      } catch (BackupPlus_Google_Task_Retryable $exception) {
         $allowedRetries = $exception->allowedRetries();
 
         if (!$this->canAttmpt() || !$allowedRetries) {

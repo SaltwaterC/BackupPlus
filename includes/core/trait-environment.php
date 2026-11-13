@@ -198,18 +198,18 @@ trait BackupPlus_Core_Environment {
 	 */
 	public function max_packet_size( $first_raise = true, $log_it = true ) {
 		global $wpdb;
-		$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' );
+		$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		// Default to 1MB
 		$mp = ( is_numeric( $mp ) && $mp > 0 ) ? $mp : 1048576;
 		// 32MB
 		if ( $first_raise && $mp < 33554432 ) {
 			$save = $wpdb->show_errors( false );
-			$req  = @$wpdb->query( 'SET GLOBAL max_allowed_packet=33554432' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			$req  = @$wpdb->query( 'SET GLOBAL max_allowed_packet=33554432' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Asks the server for a larger packet size, which has no WordPress API. Silenced because an account without the privilege cannot.
 			$wpdb->show_errors( $save );
 			if ( ! $req ) {
 				$this->log( 'Tried to raise max_allowed_packet from ' . round( $mp / 1048576, 1 ) . ' MB to 32 MB, but failed (' . $wpdb->last_error . ', ' . serialize( $req ) . ')' );
 			}
-			$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' );
+			$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 			// Default to 1MB
 			$mp = ( is_numeric( $mp ) && $mp > 0 ) ? $mp : 1048576;
 		}
@@ -288,7 +288,7 @@ trait BackupPlus_Core_Environment {
 			$current_url = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'HTTP_REFERER' );
 		} else {
 			$url_prefix  = is_ssl() ? 'https' : 'http';
-			$host        = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'HTTP_HOST', parse_url( network_site_url(), PHP_URL_HOST ) );
+			$host        = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'HTTP_HOST', wp_parse_url( network_site_url(), PHP_URL_HOST ) );
 			$request_uri = BackupPlus_Manipulation_Functions::fetch_superglobal( 'server', 'REQUEST_URI', '' );
 			$current_url = $url_prefix . '://' . $host . $request_uri;
 		}
@@ -416,6 +416,6 @@ trait BackupPlus_Core_Environment {
 	 * @return String Site name
 	 */
 	private function get_site_name() {
-		return preg_replace( '/^www\./i', '', strtolower( parse_url( network_site_url(), PHP_URL_HOST ) ) );
+		return preg_replace( '/^www\./i', '', strtolower( wp_parse_url( network_site_url(), PHP_URL_HOST ) ) );
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- These are the Amazon S3 and IAM API endpoints that backups are stored through; no page assets are loaded from them.
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -530,7 +531,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 					try {
 						if ( ! $storage->putObjectFile( $fullpath, $bucket_name, $filepath, 'private', array(), array(), apply_filters( 'backupplus_' . $whoweare_key . '_storageclass', 'STANDARD', $storage, $config ) ) ) {
 							$this->log( "regular upload: failed ($fullpath)" );
-							/* translators: %s: Service name */
+							/* translators: %s: Name of the remote storage service. */
 							$this->log( "$file: " . sprintf( __( '%s Error: Failed to upload', 'backupplus' ), $whoweare ), 'error' );
 						} else {
 							$this->quota_used += $orig_file_size;
@@ -545,9 +546,9 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 							$backupplus->uploaded_file( $file );
 						}
 					} catch ( Exception $e ) {
-						/* translators: %s: Service name */
+						/* translators: %s: Name of the remote storage service. */
 						$this->log( "$file: " . sprintf( __( '%s Error: Failed to upload', 'backupplus' ), $whoweare ) . ': ' . $e->getMessage() . ' (line: ' . $e->getLine() . ', file: ' . $e->getFile() );
-						/* translators: %s: Service name */
+						/* translators: %s: Name of the remote storage service. */
 						$this->log( "$file: " . sprintf( __( '%s Error: Failed to upload', 'backupplus' ), $whoweare ), 'error' );
 					}
 					$storage->setExceptions( false );
@@ -1121,7 +1122,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 				if ( 'BackupPlus_DreamObjects_Compat' == $use_s3_class && ! class_exists( 'XMLWriter' ) ) {
 					$backupplus_admin->show_double_warning(
 						'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-						/* translators: %s: Required PHP module */
+						/* translators: %s: Name of the required PHP module. */
 						sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
 						__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' )
 					);
@@ -1130,10 +1131,10 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 				if ( ! class_exists( 'SimpleXMLElement' ) ) {
 					$backupplus_admin->show_double_warning(
 						'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-						/* translators: %s: Required module name */
+						/* translators: %s: Name of the required PHP module. */
 						sprintf( __( 'Your web server\'s PHP installation does not included a required module (%s).', 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
 						__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
-						/* translators: 1: Module name, 2: Required module name */
+						/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 						sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $whoweare_long, 'SimpleXMLElement' ) . ' ' .
 						__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 						$key
@@ -1147,7 +1148,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 					if ( $console_url ) {
 						$a_tag_html = array( 'a' => array( 'href' => array() ) );
 						echo wp_kses(
-							/* translators: 1: Console URL, 2: Console description, 3: Service name */
+							/* translators: 1: Console URL, 2: Console name, 3: Service name. */
 							sprintf( __( 'Get your access key and secret key from your <a href="%1$s">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage.', 'backupplus' ), $console_url, $console_descrip, $whoweare_long ),
 							$a_tag_html
 						) . ' ' . esc_html__( 'This bucket will be created for you if it does not already exist.', 'backupplus' );
@@ -1257,7 +1258,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		<tr class="<?php echo esc_attr( $classes ); ?>">
 			<th>
 				<?php
-					/* translators: %s: Access key type */
+					/* translators: %s: Name of the storage service. */
 					echo esc_html( sprintf( __( '%s access key', 'backupplus' ), $whoweare_short ) );
 				?>
 			</th>
@@ -1266,7 +1267,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		<tr class="<?php echo esc_attr( $classes ); ?>">
 			<th>
 				<?php
-					/* translators: %s: Secret key type */
+					/* translators: %s: Name of the remote storage service. */
 					echo esc_html( sprintf( __( '%s secret key', 'backupplus' ), $whoweare_short ) );
 				?>
 			</th>
@@ -1275,7 +1276,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		<tr class="<?php echo esc_attr( $classes ); ?>">
 			<th>
 				<?php
-					/* translators: %s: Location type */
+					/* translators: %s: Name of the storage service. */
 					echo esc_html( sprintf( __( '%s location', 'backupplus' ), $whoweare_short ) );
 				?>
 			</th>
@@ -1313,7 +1314,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 			$xmlwriter_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( "Your web server's PHP installation does not include a required module (%s).", 'backupplus' ), 'XMLWriter' ) . ' ' .
 					__( "Please contact your web hosting provider's support and ask for them to enable it.", 'backupplus' ),
 					$this->get_id(),
@@ -1328,10 +1329,10 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 			$simplexmlelement_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'SimpleXMLElement' ) . ' ' .
 					__( "Please contact your web hosting provider's support.", 'backupplus' ) . ' ' .
-					/* translators: 1: Module name, 2: Required module name */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ], 'SimpleXMLElement' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->get_id(),
@@ -1344,7 +1345,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		$properties = array(
 			'storage_image_url'                 => BACKUPPLUS_URL . '/images/aws_logo.png',
 			'console_url'                       => wp_kses(
-				/* translators: 1: Console URL, 2: Console name, 3: Service name */
+				/* translators: 1: Console URL, 2: Console name, 3: Service name. */
 				sprintf( __( 'Get your access key and secret key from your <a href="%1$s">%2$s console</a>, then pick a (globally unique - all %3$s users) bucket name (letters and numbers) (and optionally a path) to use for storage.', 'backupplus' ), 'https://aws.amazon.com/console/', 'AWS', $backupplus->backup_methods[ $this->get_id() ] ) . ' ' .
 				__( 'This bucket will be created for you if it does not already exist.', 'backupplus' ),
 				$this->allowed_html_for_content_sanitisation()
@@ -1355,18 +1356,18 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 			'ssl_certificates_errors_link_text' => esc_html__( 'If you see SSL certificate errors, check that your server has an up-to-date CA certificate bundle.', 'backupplus' ),
 			/* translators: %s: Remote storage name */
 			'faqs'                              => esc_html( sprintf( __( 'Use the %s provider documentation to confirm the endpoint and access settings.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ) ),
-			/* translators: %s: Access key type */
+			/* translators: %s: Name of the storage service. */
 			'input_access_key_label'            => sprintf( __( '%s access key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_access_key_placeholder'      => __( 'Paste your access key here', 'backupplus' ),
-			/* translators: %s: Secret key type */
+			/* translators: %s: Name of the remote storage service. */
 			'input_secret_key_label'            => sprintf( __( '%s secret key', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_secret_key_placeholder'      => __( 'Paste your secret key here', 'backupplus' ),
 			'input_secret_key_type'             => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
-			/* translators: %s: Location type */
+			/* translators: %s: Name of the storage service. */
 			'input_location_label'              => sprintf( __( '%s location', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'input_location_title'              => __( 'Enter only a bucket name or a bucket and path.', 'backupplus' ) . ' ' . __( 'Examples: mybucket, mybucket/mypath', 'backupplus' ),
 			'input_location_prefix'             => 's3://',
-			/* translators: %s: Test settings type */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                  => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 
 		);
@@ -1652,7 +1653,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		if ( empty( $posted_settings['accesskey'] ) ) {
 			echo esc_html(
 				sprintf(
-				/* translators: %s: Missing input type */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'API key', 'backupplus' )
 				)
@@ -1662,7 +1663,7 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 		if ( empty( $posted_settings['secretkey'] ) ) {
 			echo esc_html(
 				sprintf(
-				/* translators: %s: Missing input type */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'API secret', 'backupplus' )
 				)
@@ -1742,13 +1743,13 @@ abstract class BackupPlus_BackupModule_dreamobjects_base extends BackupPlus_Back
 				sprintf( __( 'Please check your access credentials, and if those are correct then try another bucket name (as another %s user may already have taken your name).', 'backupplus' ), $whoweare )
 			);
 
-			/* translators: %s: Service name */
 			if ( ! empty( $this->s3_exception ) ) {
+				/* translators: %s: Name of the remote storage service. */
 				echo "\n\n" . esc_html( sprintf( __( 'The error reported by %s was:', 'backupplus' ), $whoweare ) . ' ' . $this->s3_exception );
 			}
 
-			/* translators: %s: Service name */
 			if ( 's3' == $config['key'] && 'AK' != substr( $key, 0, 2 ) ) {
+				/* translators: %s: Name of the storage service. */
 				echo "\n\n" . esc_html( sprintf( __( 'The AWS access key looks to be wrong (valid %s access keys begin with "AK")', 'backupplus' ), $whoweare ) );
 			}
 		} else {

@@ -44,7 +44,7 @@ trait BackupPlus_Restore_Search_Replace_Admin_Notices {
 		$this->which_tables = empty( $post_which_tables ) ? '' : explode( ',', ( stripslashes( $post_which_tables ) ) );
 		if ( empty( $keyword_to_search ) ) {
 			echo sprintf(
-				/* translators: %s: Missing parameter name */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 				esc_html__( 'Failure: No %s was given.', 'backupplus' ),
 				esc_html__( 'search term', 'backupplus' )
 			) . '<br>';

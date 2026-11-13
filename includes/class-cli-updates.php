@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** Native WP-CLI update protection at the upgrader's filesystem boundary. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -110,7 +111,7 @@ class BackupPlus_CLI_Updates {
 	public static function filesystem( $method ) {
 		if ( ! self::$active || self::$busy ) { return $method; }
 		try {
-			$targets = self::resolve( debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT ) );
+			$targets = self::resolve( debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- Finds the WP-CLI upgrader that is about to change files, so they are backed up first.
 			if ( $targets ) { self::protect( $targets ); }
 		} catch ( Throwable $error ) { WP_CLI::error( $error->getMessage() ); }
 		return $method;
@@ -143,10 +144,10 @@ class BackupPlus_CLI_Updates {
 	}
 
 	public static function download( $reply, $package, $upgrader, $extra = array() ) {
-		if ( ! self::$active || is_a( $upgrader, 'Language_Pack_Upgrader' ) ) { return $reply; }
+		if ( ! self::$active || is_wp_error( $reply ) || is_a( $upgrader, 'Language_Pack_Upgrader' ) ) { return $reply; }
 		// Recheck resolved versions and packages at the last boundary before download.
 		try {
-			$targets = self::resolve( debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT ) );
+			$targets = self::resolve( debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- Finds the WP-CLI upgrader that is about to change files, so they are backed up first.
 			if ( ! $targets ) { throw new RuntimeException( 'Could not resolve native update targets before download.' ); }
 			self::protect( $targets );
 		} catch ( Throwable $error ) { return new WP_Error( 'backupplus_cli_update_blocked', $error->getMessage() ); }

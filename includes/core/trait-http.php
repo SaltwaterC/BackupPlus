@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_setopt -- Transfers to remote storage stream files with resume and progress callbacks, which the WordPress HTTP API cannot do.
 
 /** HTTP API options. */
 

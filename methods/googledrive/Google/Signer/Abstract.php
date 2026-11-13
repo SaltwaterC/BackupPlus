@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * Signs data.
  *
  * @author Brian Eaton <beaton@google.com>
  */
-abstract class Google_Signer_Abstract
+abstract class BackupPlus_Google_Signer_Abstract
 {
   /**
    * Signs data, returns the signature as binary data.

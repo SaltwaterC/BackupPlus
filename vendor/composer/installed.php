@@ -18,15 +18,6 @@
             'reference' => '46e5c18ee87d8a9b5765ef95468c1ac27bd107bf',
             'dev_requirement' => false,
         ),
-'components/jquery' => array(
-            'pretty_version' => '4.0.0',
-            'version' => '4.0.0.0',
-            'type' => 'component',
-            'install_path' => __DIR__ . '/../components/jquery',
-            'aliases' => array(),
-            'reference' => '594f9dd922c3b12519c8d52bde744b79fd2ca816',
-            'dev_requirement' => false,
-        ),
 'eher/oauth' => array(
             'pretty_version' => '1.0.7',
             'version' => '1.0.7.0',

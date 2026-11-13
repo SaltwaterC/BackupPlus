@@ -265,7 +265,7 @@ trait BackupPlus_Admin_Settings_Storage {
 		$this->setup_all_admin_notices_global( $service );
 		$this->setup_all_admin_notices_udonly( $service );
 
-		do_action( 'all_admin_notices' );
+		do_action( 'all_admin_notices' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress's own hook, run so that the notices also appear in this AJAX response.
 
 		if ( ! $really_is_writable ) { // Check if writable
 			$this->show_admin_warning_unwritable();

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Callbacks registered on WordPress hooks: menus, URL actions, plugin loading and third-party integrations. */
 
@@ -121,7 +122,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 		if ( is_readable( $mofile ) ) {
 			load_textdomain( 'backupplus', $mofile );
 		} else {
-			load_plugin_textdomain( 'backupplus', false, basename( BACKUPPLUS_DIR ) . '/languages/' );
+			load_plugin_textdomain( 'backupplus', false, basename( BACKUPPLUS_DIR ) . '/languages/' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Loads the translations bundled in languages/; WordPress only loads those from translate.wordpress.org by itself.
 		}
 		$this->handle_url_actions();
 		$this->backupplus_single_site_maintenance_init();
@@ -200,7 +201,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 						call_user_func( array( $backup_obj, $call_method ) );
 					}
 				} catch ( Exception $e ) {
-					/* translators: 1: Method name, 2: Error message */
+					/* translators: 1: Name of the service or storage method, 2: Error message. */
 					$this->log( sprintf( __( '%1$s error: %2$s', 'backupplus' ), $method, $e->getMessage() . ' (' . $e->getCode() . ')', 'error' ) );
 				}
 				$this->register_wp_http_option_hooks( false );
@@ -282,7 +283,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 		$time      = time();
 
 		if ( $time - $timestamp > 3600 ) {
-			unlink( $subsite_dir . '.maintenance' );
+			wp_delete_file( $subsite_dir . '.maintenance' );
 			return;
 		}
 
@@ -304,7 +305,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX && 'backupnow' == $subaction || 'backupplus' == $page ) ) {
 			remove_action( 'init', 'ganalyticator_stats_init' );
 			// Appointments+ does the same; but provides a cleaner way to disable it
-			@define( 'APP_GCAL_DISABLE', true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@define( 'APP_GCAL_DISABLE', true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- The Appointments+ plugin's own switch; silenced in case it is already defined.
 		}
 	}
 
@@ -317,7 +318,7 @@ trait BackupPlus_Core_WordPress_Hooks {
 		wp_deregister_style( 'select2' );
 		$select2_version = $this->use_unminified_scripts() ? '4.1.0-rc.0' . '.' . time() : '4.1.0-rc.0';
 		$min_or_not      = $this->use_unminified_scripts() ? '' : '.min';
-		wp_enqueue_script( 'select2', BACKUPPLUS_URL . '/includes/select2/select2' . $min_or_not . '.js', array( 'jquery' ), $select2_version );
+		wp_enqueue_script( 'select2', BACKUPPLUS_URL . '/includes/select2/select2' . $min_or_not . '.js', array( 'jquery' ), $select2_version, false );
 		wp_enqueue_style( 'select2', BACKUPPLUS_URL . '/includes/select2/select2' . $min_or_not . '.css', array(), $select2_version );
 	}
 

@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
  
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -26,7 +28,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * @author Brian Eaton <beaton@google.com>
  */
-class Google_Verifier_Pem extends Google_Verifier_Abstract
+class BackupPlus_Google_Verifier_Pem extends BackupPlus_Google_Verifier_Abstract
 {
   private $publicKey;
 
@@ -35,17 +37,17 @@ class Google_Verifier_Pem extends Google_Verifier_Abstract
    *
    * $pem: a PEM encoded certificate (not a file).
    * @param $pem
-   * @throws Google_Auth_Exception
-   * @throws Google_Exception
+   * @throws BackupPlus_Google_Auth_Exception
+   * @throws BackupPlus_Google_Exception
    */
   public function __construct($pem)
   {
     if (!function_exists('openssl_x509_read')) {
-      throw new Google_Exception('Google API PHP client needs the openssl PHP extension');
+      throw new BackupPlus_Google_Exception('Google API PHP client needs the openssl PHP extension');
     }
     $this->publicKey = openssl_x509_read($pem);
     if (!$this->publicKey) {
-      throw new Google_Auth_Exception("Unable to parse PEM: $pem"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Auth_Exception("Unable to parse PEM: $pem"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
   }
 
@@ -62,7 +64,7 @@ class Google_Verifier_Pem extends Google_Verifier_Abstract
    * Returns true if the signature is valid, false otherwise.
    * @param $data
    * @param $signature
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    * @return bool
    */
   public function verify($data, $signature)
@@ -71,7 +73,7 @@ class Google_Verifier_Pem extends Google_Verifier_Abstract
     $hash = defined("OPENSSL_ALGO_SHA256") ? OPENSSL_ALGO_SHA256 : "sha256";
     $status = openssl_verify($data, $signature, $this->publicKey, $hash);
     if ($status === -1) {
-      throw new Google_Auth_Exception('Signature verification error: ' . openssl_error_string()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Auth_Exception('Signature verification error: ' . openssl_error_string()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
     return $status === 1;
   }

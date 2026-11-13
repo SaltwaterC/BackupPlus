@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Result emails, Slack posts and ntfy notifications for finished backups. */
 
@@ -226,7 +227,7 @@ trait BackupPlus_Core_Notifications {
 		}
 
 		foreach ( $unlink_files as $file ) {
-			@unlink( $file );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			wp_delete_file( $file );
 		}
 		do_action( 'backupplus_report_finished' );
 	}

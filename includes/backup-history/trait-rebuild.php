@@ -286,7 +286,7 @@ trait BackupPlus_Backup_History_Rebuild {
 					'code'    => 'foundforeign_' . md5( $entry ),
 					'desc'    => $entry,
 					'method'  => '',
-					// translators: %s: The description of the accepted foreign backup type.
+					/* translators: %s: Description of the backup source. */
 					'message' => sprintf( __( 'Backup created by: %s.', 'backupplus' ), $accept[ $accepted_foreign ]['desc'] ),
 				);
 			} elseif ( '.zip' == strtolower( substr( $entry, -4, 4 ) ) || preg_match( '/\.sql(\.(bz2|gz))?$/i', $entry ) ) {

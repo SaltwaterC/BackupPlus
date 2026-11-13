@@ -920,7 +920,7 @@ $root  = realpath( isset( $argv[1] ) ? $argv[1] : dirname( __DIR__ ) );
 $check = new BackupPlus_SQL_Check();
 // The one audited place that turns templates into statements.
 $exempt_files = array( 'includes/class-sql.php' );
-$skip         = '#^(vendor|node_modules|scripts|tests|dev|\.cache|\.git|methods/googledrive/Google|methods/dropbox/Dropbox2|methods/cloudfiles/sdk)/#';
+$skip         = '#^(build|vendor|node_modules|scripts|tests|dev|\.cache|\.git|methods/googledrive/Google|methods/dropbox/Dropbox2|methods/cloudfiles/sdk)/#';
 $files        = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS ) );
 $paths        = array();
 foreach ( $files as $file ) {

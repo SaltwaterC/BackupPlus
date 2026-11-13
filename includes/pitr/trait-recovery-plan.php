@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Planning a recovery to a target time, authenticating the artifacts it needs and verifying it. */
 
@@ -192,7 +193,7 @@ trait BackupPlus_PITR_Orchestrator_Recovery_Plan {
 		$isolation = new BackupPlus_PITR_Isolation( $this->config, $this->work, $this->root );
 		$this->direct_source_check( $isolation->adapter, $plan );
 		list( $checked ) = $this->guarded_sql( $baseline, $isolation->adapter->engine, array(), $isolation->adapter->query( 'SELECT @@version' )[0][0] );
-		unlink( $checked );
+		wp_delete_file( $checked );
 		return $plan;
 	}
 

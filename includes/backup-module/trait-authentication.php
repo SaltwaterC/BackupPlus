@@ -104,7 +104,7 @@ trait BackupPlus_BackupModule_Authentication {
 		$id          = $this->get_id();
 		$description = $this->get_description();
 
-		/* translators: %s: Description */
+		/* translators: %s: Name of the storage service. */
 		echo ' <a class="backupplus_deauthlink" href="' . esc_url( BackupPlus_Options::admin_page_url() . '?action=backupplusmethod-' . $id . '-auth&page=backupplus&backupplus_' . $id . 'auth=deauth&nonce=' . wp_create_nonce( $id . '_deauth_nonce' ) . '&backupplus_instance={{instance_id}}' ) . '" data-instance_id="{{instance_id}}" data-remote_method="' . esc_attr( $id ) . '">' . esc_html( sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $description ) ) . '</a>';
 
 		if ( ! $echo_instead_of_return ) {

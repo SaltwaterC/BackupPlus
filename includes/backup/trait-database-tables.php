@@ -122,7 +122,7 @@ trait BackupPlus_Backup_Database_Tables {
 
 		static $mysql_version = null;
 		if ( null === $mysql_version ) {
-			$mysql_version = $wpdb->get_var( 'SELECT VERSION()' );
+			$mysql_version = $wpdb->get_var( 'SELECT VERSION()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 			if ( '' == $mysql_version ) {
 				$mysql_version = $wpdb->db_version();
 			}
@@ -575,7 +575,7 @@ trait BackupPlus_Backup_Database_Tables {
 			do {
 
 				if ( function_exists( 'set_time_limit' ) ) {
-					@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+					@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 				}
 				// Reset back to that which has constructed before the loop began
 				$final_where = $conditions;

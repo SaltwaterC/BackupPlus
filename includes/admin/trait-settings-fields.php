@@ -260,8 +260,8 @@ trait BackupPlus_Admin_Settings_Fields {
 
 		if ( $no_remote_configured && empty( $active_remote_storage_list ) ) {
 			return '<input type="checkbox" disabled="disabled" id="backupnow_includecloud"> <em>' .
-			/* translators: %s: "settings" which is the name of a tab on which remote storage settings are configured */
 			sprintf(
+				/* translators: %s: Name of the tab on which remote storage settings are configured. */
 				__( "Backup won't be sent to any remote storage - none has been saved in the %s", 'backupplus' ),
 				'<a href="' . BackupPlus_Options::admin_page_url() . '?page=backupplus&amp;tab=settings" id="backupplus_backupnow_gotosettings">' .
 				__( 'settings', 'backupplus' )

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
-class Google_Exception extends Exception
+// Modified by the BackupPlus project in 2026.
+
+class BackupPlus_Google_Exception extends Exception
 {
 }

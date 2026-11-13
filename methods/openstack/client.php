@@ -143,25 +143,25 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 	public function credentials_test( $posted_settings ) {
 
 		if ( empty( $posted_settings['user'] ) ) {
-			/* translators: %s: Username */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'username', 'backupplus' ) ) );
 			return;
 		}
 
 		if ( empty( $posted_settings['password'] ) ) {
-			/* translators: %s: Password */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'password', 'backupplus' ) ) );
 			return;
 		}
 
 		if ( empty( $posted_settings['tenant'] ) ) {
-			/* translators: %s: Tenant (used in OpenStack storage) */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), _x( 'tenant', '"tenant" is a term used with OpenStack storage - Google for "OpenStack tenant" to get more help on its meaning', 'backupplus' ) ) );
 			return;
 		}
 
 		if ( empty( $posted_settings['authurl'] ) ) {
-			/* translators: %s: Authentication URI */
+			/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 			echo esc_html( sprintf( __( 'Failure: No %s was given.', 'backupplus' ), __( 'authentication URI', 'backupplus' ) ) );
 			return;
 		}
@@ -279,10 +279,10 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 			$mb_substr_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Required module name */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
 					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
-					/* translators: 1: Module name, 2: Required module name */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $this->desc, 'mbstring' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->method,
@@ -314,7 +314,7 @@ class BackupPlus_BackupModule_openstack extends BackupPlus_BackupModule_openstac
 			'input_password_type'                  => apply_filters( 'backupplus_admin_secret_field_type', 'password' ),
 			'input_container_label'                => __( 'Container', 'backupplus' ),
 			'input_container_placeholder'          => __( 'Example: backups', 'backupplus' ),
-			/* translators: %s: Remote storage method */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                     => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
 		return wp_parse_args( $properties, $this->get_persistent_variables_and_methods() );

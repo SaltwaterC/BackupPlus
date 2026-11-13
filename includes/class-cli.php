@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** WP-CLI commands and the synchronous controller for resumable backups. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -517,7 +518,7 @@ class BackupPlus_CLI_Command {
 			if ( $events && $events[0]['time'] <= time() ) {
 				$event = $events[0];
 				wp_unschedule_event( $event['time'], $event['hook'], $event['args'] );
-				do_action_ref_array( $event['hook'], $event['args'] );
+				do_action_ref_array( $event['hook'], $event['args'] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Runs a scheduled BackupPlus event now, as WP-Cron would.
 			}
 		}
 	}

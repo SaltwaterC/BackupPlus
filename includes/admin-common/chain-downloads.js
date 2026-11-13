@@ -155,7 +155,7 @@ function backupplus_chain_downloads_open(timestamp, type, title, prettydate) {
 			form.appendTo(document.body).trigger('submit');
 			form.remove();
 			state.busy = false;
-			status(i18n.chain_points_started.replace('%s', response.name).replace('%d', response.files).replace('%s', response.size));
+			status(i18n.chain_points_started.replace('%1$s', response.name).replace('%2$d', response.files).replace('%3$s', response.size));
 			refresh_controls();
 		}, true);
 	}
@@ -212,7 +212,7 @@ function backupplus_chain_downloads_open(timestamp, type, title, prettydate) {
 				state.selected = {};
 				var notice = [];
 				if (response.remote_deleted) notice.push(i18n.chain_points_deleted_remote.replace('%d', response.remote_deleted));
-				if (response.deleted || !response.remote_deleted) notice.push(i18n.chain_points_deleted.replace('%d', response.deleted).replace('%s', response.size));
+				if (response.deleted || !response.remote_deleted) notice.push(i18n.chain_points_deleted.replace('%1$d', response.deleted).replace('%2$s', response.size));
 				state.notice = notice.join(' ');
 				backupplus_updatehistory(0, 0);
 				load(true);

@@ -214,7 +214,7 @@ class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupM
 			/* translators: %s: API key */
 			echo esc_html(
 				sprintf(
-				/* translators: %s: API key */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'API key', 'backupplus' )
 				)
@@ -226,7 +226,7 @@ class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupM
 			/* translators: %s: Username */
 			echo esc_html(
 				sprintf(
-				/* translators: %s: Username */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'Username', 'backupplus' )
 				)
@@ -347,10 +347,10 @@ class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupM
 			$mb_substr_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Missing PHP module */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
 					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
-					/* translators: 1: Module description, 2: Required module */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), $this->desc, 'mbstring' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					$this->method,
@@ -364,10 +364,10 @@ class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupM
 			$json_last_error_existence_label = wp_kses(
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Module description */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'json' ) . ' ' .
 					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
-					/* translators: 1: Module description, 2: Required module */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), 'Cloud Files', 'json' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					'cloudfiles',
@@ -408,7 +408,7 @@ class BackupPlus_BackupModule_cloudfiles_opencloudsdk extends BackupPlus_BackupM
 			'input_apikey_placeholder'        => __( 'Paste your key here', 'backupplus' ),
 			'input_container_label'           => wp_kses( apply_filters( 'backupplus_cloudfiles_location_description', __( 'Cloud Files Container', 'backupplus' ) ), $this->allowed_html_for_content_sanitisation() ),
 			'input_container_placeholder'     => __( 'Enter your container name', 'backupplus' ),
-			/* translators: %s: Backup method */
+			/* translators: %s: Name of the remote storage method. */
 			'input_test_label'                => sprintf( __( 'Test %s Settings', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 		);
 		return wp_parse_args( apply_filters( 'backupplus_' . $this->get_id() . '_template_properties', array() ), wp_parse_args( $properties, $this->get_persistent_variables_and_methods() ) );

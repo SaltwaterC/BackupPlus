@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** The job log file, log lines and PHP error capture. */
 
@@ -141,7 +142,7 @@ trait BackupPlus_Core_Logging {
 		call_user_func( $logging_function, 'Opened log file at time: ' . gmdate( 'r' ) . ' on ' . network_site_url() );
 
 		$wp_version    = $this->get_wordpress_version();
-		$mysql_version = $wpdb->get_var( 'SELECT VERSION()' );
+		$mysql_version = $wpdb->get_var( 'SELECT VERSION()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 		if ( '' == $mysql_version ) {
 			$mysql_version = $wpdb->db_version();
 		}
@@ -153,10 +154,10 @@ trait BackupPlus_Core_Logging {
 
 		// Attempt to raise limit to avoid false positives
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}       $max_execution_time = (int) @ini_get( 'max_execution_time' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
-		$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' );
+		$mp = (int) $wpdb->get_var( 'SELECT @@session.max_allowed_packet' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 
 		$proxy = new WP_HTTP_Proxy();
 
@@ -177,7 +178,7 @@ trait BackupPlus_Core_Logging {
 				$this->log( sprintf( __( 'The amount of memory (RAM) allowed for PHP is very low (%s Mb) - you should increase it to avoid failures due to insufficient memory (consult your web hosting company for more help)', 'backupplus' ), round( $memlim, 1 ) ), 'warning', 'lowram' );
 			}
 			if ( $max_execution_time > 0 && $max_execution_time < 20 ) {
-				/* translators: 1: Execution time in seconds, 2: Recommended execution time in seconds */
+				/* translators: 1: Current time limit in seconds, 2: Recommended time limit in seconds. */
 				call_user_func( $logging_function, sprintf( __( 'The amount of time allowed for WordPress plugins to run is very low (%1$s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %2$s seconds or more)', 'backupplus' ), $max_execution_time, 90 ), 'warning', 'lowmaxexecutiontime' );
 			}
 		}
@@ -190,7 +191,7 @@ trait BackupPlus_Core_Logging {
 			$quota_free = ' / ' . sprintf( 'Free disk space in account: %s (%s used)', round( $hosting_bytes_free[3] / 1048576, 1 ) . ' MB', "$perc %" );
 			if ( $hosting_bytes_free[3] < 1048576 * 50 ) {
 				$quota_free_mb = round( $hosting_bytes_free[3] / 1048576, 1 );
-				/* translators: %s: Available disk space in MB */
+				/* translators: %s: Remaining free disk space in MB. */
 				call_user_func( $logging_function, sprintf( __( 'Your free space in your hosting account is very low - only %s Mb remain', 'backupplus' ), $quota_free_mb ), 'warning', 'lowaccountspace' . $quota_free_mb );
 			}
 		} else {
@@ -204,8 +205,8 @@ trait BackupPlus_Core_Logging {
 		} else {
 			call_user_func( $logging_function, "Free space on disk containing BackupPlus's temporary directory: " . round( $disk_free_space / 1048576, 1 ) . ' MB' . $quota_free );
 			$disk_free_mb = round( $disk_free_space / 1048576, 1 );
-			/* translators: %s: Available disk space in MB */
 			if ( $disk_free_space < 50 * 1048576 ) {
+				/* translators: %s: Available disk space in MB. */
 				call_user_func( $logging_function, sprintf( __( 'Your free disk space is very low - only %s Mb remain', 'backupplus' ), round( $disk_free_space / 1048576, 1 ) ), 'warning', 'lowdiskspace' . $disk_free_mb );
 			}
 		}
@@ -364,8 +365,8 @@ trait BackupPlus_Core_Logging {
 		}
 		if ( is_string( $err ) ) {
 			$this->log( "Error message: $err" );
-			/* translators: %s: Error message */
 			if ( $echo ) {
+				/* translators: %s: Error message */
 				$this->log( sprintf( __( 'Error: %s', 'backupplus' ), $err ), 'notice-warning' );
 			}
 			if ( $logerror ) {
@@ -375,8 +376,8 @@ trait BackupPlus_Core_Logging {
 		}
 		foreach ( $err->get_error_messages() as $msg ) {
 			$this->log( "Error message: $msg" );
-			/* translators: %s: Error message */
 			if ( $echo ) {
+				/* translators: %s: Error message */
 				$this->log( sprintf( __( 'Error: %s', 'backupplus' ), $msg ), 'notice-warning' );
 			}
 			if ( $logerror ) {
@@ -589,7 +590,7 @@ trait BackupPlus_Core_Logging {
 	 */
 	public function php_error( $errno, $errstr, $errfile, $errline ) {
 		// Unlike in PHP 7.4 and lower, the 'error_reporting()' function in PHP 8.0+ will return the value of this bitwise expression: 'E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE' instead of '0' when we suppress the error using the '@' operator.
-		$error_level = error_reporting(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- The error_reporting() function is used to get the current PHP error level.
+		$error_level = error_reporting(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting, PluginCheck.CodeAnalysis.PHPErrorReporting.DirectErrorReportingCall -- Only reads the current level, to skip errors silenced with @.
 		$fatal_mask  = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 		if ( 0 === $error_level || 0 === ( $error_level & ~$fatal_mask ) ) {
 			return true;

@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -25,7 +27,7 @@ if (!class_exists('UDP_Google_Client')) {
  * Interface for checking how many times a given task can be retried following
  * a failure.
  */
-interface Google_Task_Retryable
+interface BackupPlus_Google_Task_Retryable
 {
   /**
    * Gets the number of times the associated task can be retried.

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Backup entities, their directories and the locations backups are written to. */
 
@@ -37,8 +38,8 @@ trait BackupPlus_Core_Entities {
 				$meta .= sprintf( __( 'External database (%s)', 'backupplus' ), esc_html( $dbinfo['user'] . '@' . $dbinfo['host'] . '/' . $dbinfo['name'] ) ) . '<br>';
 			}
 		}
-		/* translators: %s: Database size in MB */
 		if ( isset( $history[ $skey ] ) ) {
+			/* translators: %s: Size in MB. */
 			$meta .= sprintf( __( 'Size: %s MB', 'backupplus' ), round( $history[ $skey ] / 1048576, 1 ) );
 		}
 		$ckey = $entity . $ind;

@@ -150,6 +150,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 			$local = $backupplus->backups_dir_location() . '/' . $file;
 			$size  = is_file( $local ) ? filesize( $local ) : false;
 			if ( false === $size || ! is_readable( $local ) ) {
+				/* translators: %s: Name of the backup file. */
 				$this->log( sprintf( __( 'Cannot read backup file: %s', 'backupplus' ), $file ), 'error' );
 				$success = false;
 				continue;
@@ -160,6 +161,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 			if ( $client->upload( $file, $local, ! empty( $backupplus->current_resumption ), $progress ) ) {
 				$backupplus->uploaded_file( $file );
 			} else {
+				/* translators: %s: Name of the file. */
 				$this->log( sprintf( __( 'Upload failed: %s', 'backupplus' ), $file ), 'error' );
 				$success = false;
 			}
@@ -197,6 +199,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 		}
 		$result = $client->download( $file, $backupplus->backups_dir_location() . '/' . $file );
 		if ( ! $result ) {
+			/* translators: %s: File name. */
 			$this->log( sprintf( __( 'Download failed: %s', 'backupplus' ), $file ), 'error' );
 		}
 		return $result;
@@ -244,7 +247,7 @@ class BackupPlus_BackupModule_sftp extends BackupPlus_BackupModule {
 				echo esc_html( __( 'Failure: Connected, but could not upload, read back and delete a test file. Check the remote path and permissions.', 'backupplus' ) );
 			}
 		} finally {
-			unlink( $local );
+			wp_delete_file( $local );
 		}
 	}
 

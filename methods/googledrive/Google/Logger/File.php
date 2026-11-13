@@ -17,9 +17,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -28,7 +30,7 @@ if (!class_exists('UDP_Google_Client')) {
  *
  * This logger writes to a PHP stream resource.
  */
-class Google_Logger_File extends Google_Logger_Abstract
+class BackupPlus_Google_Logger_File extends BackupPlus_Google_Logger_Abstract
 {
   /**
    * @var string|resource $file Where logs are written
@@ -55,23 +57,23 @@ class Google_Logger_File extends Google_Logger_Abstract
   /**
    * {@inheritdoc}
    */
-  public function __construct(UDP_Google_Client $client)
+  public function __construct(BackupPlus_Google_Client $client)
   {
     parent::__construct($client);
 
-    $file = $client->getClassConfig('Google_Logger_File', 'file');
+    $file = $client->getClassConfig('BackupPlus_Google_Logger_File', 'file');
     if (!is_string($file) && !is_resource($file)) {
-      throw new Google_Logger_Exception(
+      throw new BackupPlus_Google_Logger_Exception(
           'File logger requires a filename or a valid file pointer'
       );
     }
 
-    $mode = $client->getClassConfig('Google_Logger_File', 'mode');
+    $mode = $client->getClassConfig('BackupPlus_Google_Logger_File', 'mode');
     if (!$mode) {
       $this->mode = $mode;
     }
 
-    $this->lock = (bool) $client->getClassConfig('Google_Logger_File', 'lock');
+    $this->lock = (bool) $client->getClassConfig('BackupPlus_Google_Logger_File', 'lock');
     $this->file = $file;
   }
 
@@ -83,7 +85,7 @@ class Google_Logger_File extends Google_Logger_Abstract
     if (is_string($this->file)) {
       $this->open();
     } elseif (!is_resource($this->file)) {
-      throw new Google_Logger_Exception('File pointer is no longer available');
+      throw new BackupPlus_Google_Logger_Exception('File pointer is no longer available');
     }
 
     if ($this->lock) {
@@ -117,7 +119,7 @@ class Google_Logger_File extends Google_Logger_Abstract
 
     // Handles trapped `fopen()` errors.
     if ($this->trappedErrorNumber) {
-      throw new Google_Logger_Exception(
+      throw new BackupPlus_Google_Logger_Exception(
           sprintf(
               "Logger Error: '%s'",
               $this->trappedErrorString // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.

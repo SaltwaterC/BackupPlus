@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** Built-in local sources and exact database coverage. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -206,7 +207,7 @@ class BackupPlus_Backup_Sources {
 	public static function sanitize_selection( $value ) {
 		try { return self::selection( is_string( $value ) ? json_decode( $value, true ) : $value ); }
 		catch ( Exception $e ) {
-			add_settings_error( 'backupplus_database_selection', 'invalid_selection', $e->getMessage() );
+			add_settings_error( 'backupplus_database_selection', 'invalid_selection', esc_html( $e->getMessage() ) );
 			return BackupPlus_Options::get_backupplus_option( 'backupplus_database_selection', array() );
 		}
 	}
@@ -214,7 +215,7 @@ class BackupPlus_Backup_Sources {
 	public static function sanitize_paths( $value ) {
 		try { return self::paths( $value ); }
 		catch ( Exception $e ) {
-			add_settings_error( 'backupplus_include_more_path', 'invalid_path', $e->getMessage() );
+			add_settings_error( 'backupplus_include_more_path', 'invalid_path', esc_html( $e->getMessage() ) );
 			return BackupPlus_Options::get_backupplus_option( 'backupplus_include_more_path', array() );
 		}
 	}

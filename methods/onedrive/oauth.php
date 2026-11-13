@@ -77,13 +77,13 @@ trait BackupPlus_OneDrive_OAuth {
 			throw new RuntimeException( 'Permission denied.' );
 		}
 		if ( isset( $_GET['state'] ) ) {
-			$this->complete_oauth( wp_unslash( $_GET['state'] ), wp_unslash( $_GET['code'] ?? '' ) );
+			$this->complete_oauth( wp_unslash( $_GET['state'] ), wp_unslash( $_GET['code'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Opaque OAuth values that sanitizing could alter: complete_oauth() requires the state to match the stored one, and the code only goes back to the provider.
 			wp_safe_redirect( BackupPlus_Options::admin_page_url() . '?page=backupplus' );
 		} else {
-			if ( ! wp_verify_nonce( $_GET['nonce'] ?? '', 'storage_auth_nonce' ) ) {
+			if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ?? '' ) ), 'storage_auth_nonce' ) ) {
 				throw new RuntimeException( 'Invalid authorization nonce.' );
 			}
-			wp_redirect( $this->authorization_url() );
+			wp_redirect( $this->authorization_url() ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Sends the user to Microsoft's fixed sign-in address, which wp_safe_redirect() refuses as an external host.
 		}
 		exit;
 	}

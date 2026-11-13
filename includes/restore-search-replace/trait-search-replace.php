@@ -214,7 +214,7 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 		}
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		list($from_array, $to_array) = $this->build_searchreplace_array( $replace_this_siteurl, $replace_this_home, $replace_this_content, $replace_this_uploads, $replace_this_abspath );
 
@@ -237,7 +237,7 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 		$tables = array();
 
 		// We use $wpdb for non-performance-sensitive operations (e.g. one-time calls)
-		$tables_mysql = $wpdb->get_results( 'SHOW TABLES', ARRAY_N );
+		$tables_mysql = $wpdb->get_results( 'SHOW TABLES', ARRAY_N ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Lists the tables as they are now, which has no WordPress API and must not be cached.
 
 		$is_multisite = is_multisite();
 		if ( $examine_siteurls && $is_multisite ) {
@@ -364,10 +364,10 @@ trait BackupPlus_Restore_Search_Replace_Replace {
 			}
 
 			if ( false == $report ) {
-				/* translators: %s: Operation name */
+				/* translators: %s: Name of the operation. */
 				$backupplus->log( sprintf( __( 'Failed: the %s operation was not able to start.', 'backupplus' ), 'search and replace' ), 'warning-notice' );
 			} elseif ( ! is_array( $report ) ) {
-				/* translators: %s: Operation name */
+				/* translators: %s: Name of the operation. */
 				$backupplus->log( sprintf( __( 'Failed: we did not understand the result returned by the %s operation.', 'backupplus' ), 'search and replace' ), 'warning-notice' );
 			}
 

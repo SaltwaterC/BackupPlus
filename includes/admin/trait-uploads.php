@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_is_writable, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Uploading backup archives through plupload. */
 
@@ -37,7 +38,7 @@ trait BackupPlus_Admin_Uploads {
 			$file = BackupPlus_Manipulation_Functions::fetch_superglobal( 'files', 'async-upload' );
 			$name = is_array( $file ) && isset( $file['name'] ) ? $file['name'] : null;
 		}
-		if ( ! isset( $_POST['chunks'] ) ) {
+		if ( ! isset( $_POST['chunks'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Both callers check the uploader nonce first.
 			return array(
 				'name'   => $name,
 				'chunk'  => null,
@@ -87,7 +88,7 @@ trait BackupPlus_Admin_Uploads {
 		$path = $backupplus_dir . '/' . $target;
 		if ( empty( $status['file'] ) || ! rename( $status['file'], $path ) ) {
 			if ( ! empty( $status['file'] ) ) {
-				@unlink( $status['file'] );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				wp_delete_file( $status['file'] );
 			}
 			return array(
 				'error' => sprintf(
@@ -107,7 +108,7 @@ trait BackupPlus_Admin_Uploads {
 
 		global $backupplus;
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		if ( ! BackupPlus_Options::user_can_manage() ) {
 			return;
@@ -216,31 +217,31 @@ trait BackupPlus_Admin_Uploads {
 								fwrite( $wh, $line );
 							}
 							fclose( $rh );
-							@unlink( $rf );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+							wp_delete_file( $rf );
 						}
 					}
 					fclose( $wh );
 					$path = $backupplus_dir . '/' . $final_file;
 					if ( '.tar' == substr( $final_file, -4, 4 ) ) {
 						if ( file_exists( $path . '.gz' ) ) {
-							unlink( $path . '.gz' );
+							wp_delete_file( $path . '.gz' );
 						}
 						if ( file_exists( $path . '.bz2' ) ) {
-							unlink( $path . '.bz2' );
+							wp_delete_file( $path . '.bz2' );
 						}
 					} elseif ( '.tar.gz' == substr( $final_file, -7, 7 ) ) {
 						if ( file_exists( substr( $path, 0, strlen( $path ) - 3 ) ) ) {
-							unlink( substr( $path, 0, strlen( $path ) - 3 ) );
+							wp_delete_file( substr( $path, 0, strlen( $path ) - 3 ) );
 						}
 						if ( file_exists( substr( $path, 0, strlen( $path ) - 3 ) . '.bz2' ) ) {
-							unlink( substr( $path, 0, strlen( $path ) - 3 ) . '.bz2' );
+							wp_delete_file( substr( $path, 0, strlen( $path ) - 3 ) . '.bz2' );
 						}
 					} elseif ( '.tar.bz2' == substr( $final_file, -8, 8 ) ) {
 						if ( file_exists( substr( $path, 0, strlen( $path ) - 4 ) ) ) {
-							unlink( substr( $path, 0, strlen( $path ) - 4 ) );
+							wp_delete_file( substr( $path, 0, strlen( $path ) - 4 ) );
 						}
 						if ( file_exists( substr( $path, 0, strlen( $path ) - 4 ) . '.gz' ) ) {
-							unlink( substr( $path, 0, strlen( $path ) - 4 ) . '.gz' );
+							wp_delete_file( substr( $path, 0, strlen( $path ) - 4 ) . '.gz' );
 						}
 					}
 				}
@@ -257,7 +258,7 @@ trait BackupPlus_Admin_Uploads {
 	public function plupload_action2() {
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}       global $backupplus;
 
 		if ( ! BackupPlus_Options::user_can_manage() ) {
@@ -299,7 +300,7 @@ trait BackupPlus_Admin_Uploads {
 							fwrite( $wh, $line );
 						}
 						fclose( $rh );
-						@unlink( $rf );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+						wp_delete_file( $rf );
 					}
 				}
 				fclose( $wh );

@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -218,7 +220,7 @@ class BackupPlus_Age_Restore {
 		foreach ( $data['files'] as $name => $entry ) {
 			if ( ! preg_match( '/\Adecrypt_[a-f0-9]{32}\.tmp\z/D', $entry['path'] ) ) { continue; }
 			$path = $backupplus->backups_dir_location() . '/' . $entry['path'];
-			if ( is_file( $path ) && ! is_link( $path ) ) { unlink( $path ); }
+			if ( is_file( $path ) && ! is_link( $path ) ) { wp_delete_file( $path ); }
 			if ( $remove_members && 0 === strpos( $name, 'backup_pitr_' ) ) {
 				require_once __DIR__ . '/class-pitr-archive.php';
 				BackupPlus_PITR_Archive::discard_staged( $backupplus->backups_dir_location(), $name );

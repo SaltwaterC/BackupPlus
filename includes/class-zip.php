@@ -44,7 +44,7 @@ class BackupPlus_PclZip {
 		// Put this in a non-backed-up, writeable location, to make sure that huge temporary files aren't created and then added to the backup - and that we have somewhere writable
 		global $backupplus;
 		if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) ) {
-			define( 'PCLZIP_TEMPORARY_DIR', trailingslashit( $backupplus->backups_dir_location() ) );
+			define( 'PCLZIP_TEMPORARY_DIR', trailingslashit( $backupplus->backups_dir_location() ) );// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- PclZip's own setting for its temporary directory.
 		}
 	}
 
@@ -270,7 +270,7 @@ class BackupPlus_PclZip {
 		$ziparchive_create_match = ( version_compare( PHP_VERSION, '5.2.12', '>' ) && defined( 'ZIPARCHIVE::CREATE' ) ) ? ZIPARCHIVE::CREATE : 1;
 
 		if ( $flags == $ziparchive_create_match && file_exists( $path ) ) {
-			@unlink( $path );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			wp_delete_file( $path );
 		}
 		$this->pclzip = new PclZip( $path );
 
@@ -535,7 +535,7 @@ class BackupPlus_BinZip extends BackupPlus_PclZip {
 
 		// BinZip does not like zero-sized zip files
 		if ( file_exists( $this->path ) && 0 == filesize( $this->path ) ) {
-			@unlink( $this->path );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+			wp_delete_file( $this->path );
 		}
 		$descriptorspec = array(
 			0 => array( 'pipe', 'r' ),

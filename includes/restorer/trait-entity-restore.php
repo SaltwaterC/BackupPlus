@@ -70,7 +70,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 		$this->final_import_table_prefix = $final_table_prefix;
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		// Based upon how WP updates work, the following code unpacks the "package" (the backup archive) and then later its contents are moved to their destination.
 
@@ -89,7 +89,7 @@ trait BackupPlus_Restorer_Entity_Restore {
 		$working_dir_localpath = apply_filters( 'backupplus_working_dir_localpath', WP_CONTENT_DIR . '/upgrade/' . basename( $working_dir ) );
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The call is speculative
+			@set_time_limit( 1800 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		// Allow extensions to either perform the move-in instead of the code below, or to modify the destination directory
 		$now_done = apply_filters( 'backupplus_pre_restore_move_in', false, $type, $working_dir, $info, $this->ud_backup_set, $this, $wp_filesystem_dir );
@@ -337,10 +337,10 @@ trait BackupPlus_Restorer_Entity_Restore {
 					if ( is_array( $cherry_child ) ) {
 						foreach ( $cherry_child as $theme ) {
 							if ( file_exists( $theme . '/style.less.cache' ) ) {
-								unlink( $theme . '/style.less.cache' );
+								wp_delete_file( $theme . '/style.less.cache' );
 							}
 							if ( file_exists( $theme . '/bootstrap/less/bootstrap.less.cache' ) ) {
-								unlink( $theme . '/bootstrap/less/bootstrap.less.cache' );
+								wp_delete_file( $theme . '/bootstrap/less/bootstrap.less.cache' );
 							}
 						}
 					}
@@ -366,9 +366,9 @@ trait BackupPlus_Restorer_Entity_Restore {
 
 				if ( $backupplus->mod_rewrite_unavailable() ) {
 					$backupplus->log( 'Using Apache, with permalinks (' . get_option( 'permalink_structure' ) . ') but no mod_rewrite enabled - enable it to make your permalinks work' );
-					/* translators: 1: String 'Apache', 2: String 'mod_rewrite' */
+					/* translators: 1: Name of the webserver, 2: Name of the missing module. */
 					$warn_no_rewrite = sprintf( __( 'You are using the %1$s webserver, but do not seem to have the %2$s module loaded.', 'backupplus' ), 'Apache', 'mod_rewrite' ) . ' ' .
-						/* translators: 1: String 'mod_rewrite', 2: String 'http://example.com/my-page/' */
+						/* translators: 1: Name of the Apache module, 2: Example permalink URL. */
 						sprintf( __( 'You should enable %1$s to make any pretty permalinks (e.g. %2$s) work', 'backupplus' ), 'mod_rewrite', 'http://example.com/my-page/' );
 					$backupplus->log( $warn_no_rewrite, 'warning-restore' );
 				}

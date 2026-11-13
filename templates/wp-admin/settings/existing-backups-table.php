@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- BackupPlus_Admin::run_template() includes templates, so their variables are local to that method.
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );

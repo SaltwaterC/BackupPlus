@@ -602,7 +602,7 @@ trait BackupPlus_Backup_Retention {
 				$fullpath = $this->backupplus_dir . '/log.' . $backup_to_examine['nonce'] . '.txt';
 				if ( is_file( $fullpath ) ) {
 					$backupplus->log( 'Deleting log file (log.' . $backup_to_examine['nonce'] . '.txt)' );
-					@unlink( $fullpath );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					wp_delete_file( $fullpath );
 				} else {
 					$backupplus->log( 'Corresponding log file (log.' . $backup_to_examine['nonce'] . '.txt) not found - must have already been deleted' );
 				}
@@ -649,17 +649,17 @@ trait BackupPlus_Backup_Retention {
 			$backupplus->log( "Deleting local copy ($dofile)" );
 			if ( $is_cleanup ) {
 				// A failed local deletion is queued for the next cleanup.
-				if ( @unlink( $fullpath ) ) { // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- The failure is recorded.
+				if ( wp_delete_file( $fullpath ) ) {
 					$cleanup->record_deleted( array( $dofile ) );
 				} else {
 					$cleanup->record_failed( 'local', '', array( $dofile ), array( null ) );
 				}
 			} else {
-				unlink( $fullpath );
+				wp_delete_file( $fullpath );
 			}
 			if ( file_exists( $fullpath . '.list.tmp' ) ) {
 				$backupplus->log( "Deleting zip manifest ({$dofile}.list.tmp)" );
-				unlink( $fullpath . '.list.tmp' );
+				wp_delete_file( $fullpath . '.list.tmp' );
 			}
 		}
 		// Despatch to the particular method's deletion routine

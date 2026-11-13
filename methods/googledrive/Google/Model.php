@@ -15,16 +15,18 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 /**
  * This class defines attributes, valid values, and usage which is generated
  * from a given json schema.
  * http://tools.ietf.org/html/draft-zyp-json-schema-03#section-5
  *
  */
-class Google_Model implements ArrayAccess
+class BackupPlus_Google_Model implements ArrayAccess
 {
   /**
-   * If you need to specify a NULL JSON value, use Google_Model::NULL_VALUE
+   * If you need to specify a NULL JSON value, use BackupPlus_Google_Model::NULL_VALUE
    * instead - it will be replaced when converting to JSON with a real null. 
    */
   const NULL_VALUE = "{}gapi-php-null";
@@ -102,7 +104,7 @@ class Google_Model implements ArrayAccess
         property_exists($this, $key)) {
           $this->$key = $val;
           unset($array[$key]);
-      } elseif (property_exists($this, $camelKey = Google_Utils::camelCase($key))) {
+      } elseif (property_exists($this, $camelKey = BackupPlus_Google_Utils::camelCase($key))) {
           // This checks if property exists as camelCase, leaving it in array as snake_case
           // in case of backwards compatibility issues.
           $this->$camelKey = $val;
@@ -160,7 +162,7 @@ class Google_Model implements ArrayAccess
    */
   private function getSimpleValue($value)
   {
-    if ($value instanceof Google_Model) {
+    if ($value instanceof BackupPlus_Google_Model) {
       return $value->toSimpleObject();
     } else if (is_array($value)) {
       $return = array();
@@ -233,14 +235,14 @@ class Google_Model implements ArrayAccess
 
   /**
    * Verify if $obj is an array.
-   * @throws Google_Exception Thrown if $obj isn't an array.
+   * @throws BackupPlus_Google_Exception Thrown if $obj isn't an array.
    * @param array $obj Items that should be validated.
    * @param string $method Method expecting an array as an argument.
    */
   public function assertIsArray($obj, $method)
   {
     if ($obj && !is_array($obj)) {
-      throw new Google_Exception(
+      throw new BackupPlus_Google_Exception(
           "Incorrect parameter type passed to $method(). Expected an array." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
       );
     }

@@ -28,7 +28,7 @@ class BackupPlus_BackupModule_insufficientphp extends BackupPlus_BackupModule {
 		$this->required_php = $php;
 		$this->image        = $image;
 		$this->error_msg    = 'This remote storage method (' . $this->desc . ') requires PHP ' . $this->required_php . ' or later';
-		/* translators: 1: remote storage method, 2: required PHP version */
+		/* translators: 1: Name of the remote storage method, 2: Required PHP version. */
 		$this->error_msg_trans = sprintf( __( 'This remote storage method (%1$s) requires PHP %2$s or later.', 'backupplus' ), $this->desc, $this->required_php );
 	}
 

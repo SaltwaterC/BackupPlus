@@ -19,28 +19,28 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
 /**
  * This class implements the RESTful transport of apiServiceRequest()'s
  */
-class UDP_Google_Http_REST
+class BackupPlus_Google_Http_REST
 {
   /**
-   * Executes a Google_Http_Request and (if applicable) automatically retries
+   * Executes a BackupPlus_Google_Http_Request and (if applicable) automatically retries
    * when errors occur.
    *
-   * @param UDP_Google_Client $client
-   * @param Google_Http_Request $req
+   * @param BackupPlus_Google_Client $client
+   * @param BackupPlus_Google_Http_Request $req
    * @return array decoded result
-   * @throws UDP_Google_Service_Exception on server side error (ie: not authenticated,
+   * @throws BackupPlus_Google_Service_Exception on server side error (ie: not authenticated,
    *  invalid or malformed post body, invalid url)
    */
-  public static function execute(UDP_Google_Client $client, UDP_Google_Http_Request $req)
+  public static function execute(BackupPlus_Google_Client $client, BackupPlus_Google_Http_Request $req)
   {
-    $runner = new UDP_Google_Task_Runner(
+    $runner = new BackupPlus_Google_Task_Runner(
         $client,
         sprintf('%s %s', $req->getRequestMethod(), $req->getUrl()),
         array(__CLASS__, 'doExecute'),
@@ -51,15 +51,15 @@ class UDP_Google_Http_REST
   }
 
   /**
-   * Executes a Google_Http_Request
+   * Executes a BackupPlus_Google_Http_Request
    *
-   * @param UDP_Google_Client $client
-   * @param Google_Http_Request $req
+   * @param BackupPlus_Google_Client $client
+   * @param BackupPlus_Google_Http_Request $req
    * @return array decoded result
-   * @throws UDP_Google_Service_Exception on server side error (ie: not authenticated,
+   * @throws BackupPlus_Google_Service_Exception on server side error (ie: not authenticated,
    *  invalid or malformed post body, invalid url)
    */
-  public static function doExecute(UDP_Google_Client $client, UDP_Google_Http_Request $req)
+  public static function doExecute(BackupPlus_Google_Client $client, BackupPlus_Google_Http_Request $req)
   {
     $httpRequest = $client->getIo()->makeRequest($req);
     $httpRequest->setExpectedClass($req->getExpectedClass());
@@ -69,12 +69,12 @@ class UDP_Google_Http_REST
   /**
    * Decode an HTTP Response.
    * @static
-   * @throws UDP_Google_Service_Exception
-   * @param Google_Http_Request $response The http response to be decoded.
-   * @param UDP_Google_Client $client
+   * @throws BackupPlus_Google_Service_Exception
+   * @param BackupPlus_Google_Http_Request $response The http response to be decoded.
+   * @param BackupPlus_Google_Client $client
    * @return mixed|null
    */
-  public static function decodeHttpResponse($response, ?UDP_Google_Client $client = null)
+  public static function decodeHttpResponse($response, ?BackupPlus_Google_Client $client = null)
   {
     $code = $response->getResponseHttpCode();
     $body = $response->getResponseBody();
@@ -107,11 +107,11 @@ class UDP_Google_Http_REST
         );
 
         $map = $client->getClassConfig(
-            'UDP_Google_Service_Exception',
+            'BackupPlus_Google_Service_Exception',
             'retry_map'
         );
       }
-      throw new UDP_Google_Service_Exception($err, $code, null, $errors, $map); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+      throw new BackupPlus_Google_Service_Exception($err, $code, null, $errors, $map); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
     }
 
     // Only attempt to decode the response, if the response code wasn't (204) 'no content'
@@ -127,7 +127,7 @@ class UDP_Google_Http_REST
         if ($client) {
           $client->getLogger()->error($error);
         }
-        throw new UDP_Google_Service_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+        throw new BackupPlus_Google_Service_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
       }
 
       if ($response->getExpectedClass()) {
@@ -170,7 +170,7 @@ class UDP_Google_Http_REST
     }
 
     if (count($uriTemplateVars)) {
-      $uriTemplateParser = new Google_Utils_URITemplate();
+      $uriTemplateParser = new BackupPlus_Google_Utils_URITemplate();
       $requestUrl = $uriTemplateParser->parse($requestUrl, $uriTemplateVars);
     }
 

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Admin notices and warnings shown around the plugin pages. */
 
@@ -124,11 +125,11 @@ trait BackupPlus_Admin_Notices {
 		global $backupplus;
 
 		if ( BackupPlus_Options::get_backupplus_option( 'backupplus_debug_mode' ) ) {
-			@ini_set( 'display_errors', 1 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@ini_set( 'display_errors', 1 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.PHPErrorReporting.IniDirectiveDisplay_errors, Squiz.PHP.DiscouragedFunctions.Discouraged -- Only on the BackupPlus page when the administrator turns on debug mode, which the page warns about; silenced in case the host forbids it.
 			if ( defined( 'E_DEPRECATED' ) ) {
-				@error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PHPCompatibility.Constants.NewConstants.e_deprecatedFound, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
+				@error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.PHPErrorReporting.DirectErrorReportingCall, PHPCompatibility.Constants.NewConstants.e_deprecatedFound, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
 			} else {
-				@error_reporting( E_ALL & ~E_NOTICE );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
+				@error_reporting( E_ALL & ~E_NOTICE );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, PluginCheck.CodeAnalysis.PHPErrorReporting.DirectErrorReportingCall, WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting -- Silenced to suppress errors that may arise because of the function. The error_reporting() function is used to display PHP errors when debug mode is enabled.
 			}
 			add_action( 'all_admin_notices', array( $this, 'show_admin_debug_warning' ) );
 		}
@@ -140,7 +141,7 @@ trait BackupPlus_Admin_Notices {
 
 		// Avoid false positives, by attempting to raise the limit (as happens when we actually do a backup)
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}       $max_execution_time = (int) ini_get( 'max_execution_time' );
 		if ( $max_execution_time > 0 && $max_execution_time < 20 ) {
 			add_action( 'all_admin_notices', array( $this, 'show_admin_warning_execution_time' ) );
@@ -227,7 +228,7 @@ trait BackupPlus_Admin_Notices {
 	public function show_admin_warning_execution_time() {
 		$this->show_admin_warning(
 			'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-			/* translators: 1: Max execution time, 2: Recommended value */
+			/* translators: 1: Current time limit in seconds, 2: Recommended time limit in seconds. */
 			sprintf( __( 'The amount of time allowed for WordPress plugins to run is very low (%1$s seconds) - you should increase it to avoid backup failures due to time-outs (consult your web hosting company for more help - it is the max_execution_time PHP setting; the recommended value is %2$s seconds or more)', 'backupplus' ), (int) @ini_get( 'max_execution_time' ), 90 )// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		);
 	}
@@ -285,7 +286,7 @@ trait BackupPlus_Admin_Notices {
 		if ( $printed ) {
 			return;
 		}
-		$dismissible = ( BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page ) && ( ! isset( $_REQUEST['action'] ) || 'backupplus_savesettings' !== $_REQUEST['action'] );
+		$dismissible = ( BackupPlus_Options::admin_page() !== $pagenow || 'backupplus' !== $plugin_page ) && ( ! isset( $_REQUEST['action'] ) || 'backupplus_savesettings' !== $_REQUEST['action'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only decides whether the notice can be dismissed; nothing is processed.
 		$class       = '';
 		// Suppress only when dismissed for the minimum recommended version (previously was boolean `true`), so older dismissals re-show after a version bump.
 		if ( $dismissible && BACKUPPLUS_PHPSECLIB_MIN_PHP_VERSION === BackupPlus_Options::get_backupplus_option( 'backupplus_dismiss_phpseclib_notice', false ) ) {
@@ -408,7 +409,7 @@ trait BackupPlus_Admin_Notices {
 			__( 'Sign-in to %s was started but not completed, so backups cannot be sent there.', 'backupplus' ),
 			esc_html( implode( ', ', $this->storage_service_with_partial_settings ) )
 		) . ' ' . __( 'Sign in again from the BackupPlus settings.', 'backupplus' );
-		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only chooses how the notice is worded; nothing is processed.
 			$this->show_admin_warning( $message, 'error' );
 		} else {
 			$this->show_admin_warning(
@@ -422,7 +423,7 @@ trait BackupPlus_Admin_Notices {
 	 * Show remote storage settings are empty warning
 	 */
 	public function show_admin_warning_if_remote_storage_setting_are_empty() {
-		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+		if ( ( isset( $_REQUEST['page'] ) && 'backupplus' == $_REQUEST['page'] ) || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only chooses how the notice is worded; nothing is processed.
 			/* translators: %s: List of storage services */
 			$this->show_admin_warning( sprintf( __( 'You have requested saving to remote storage (%s), but without entering any settings for that storage.', 'backupplus' ), implode( ', ', $this->storage_service_without_settings ) ), 'error' );
 		} else {

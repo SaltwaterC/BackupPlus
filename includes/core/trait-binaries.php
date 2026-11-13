@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Probing for working mysqldump and zip executables. */
 
@@ -98,7 +99,7 @@ trait BackupPlus_Core_Binaries {
 
 			static $mysql_version = null;
 			if ( null === $mysql_version ) {
-				$mysql_version = $wpdb->get_var( 'SELECT VERSION()' );
+				$mysql_version = $wpdb->get_var( 'SELECT VERSION()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
 				if ( '' == $mysql_version ) {
 					$mysql_version = $wpdb->db_version();
 				}
@@ -222,7 +223,7 @@ trait BackupPlus_Core_Binaries {
 			file_put_contents( $backupplus_dir . '/binziptest/subdir1/subdir2/test.html', '<html><body>BackupPlus is a great backup and restoration plugin for WordPress.</body></html>' );
 
 			if ( file_exists( $backupplus_dir . '/binziptest/test.zip' ) ) {
-				unlink( $backupplus_dir . '/binziptest/test.zip' );
+				wp_delete_file( $backupplus_dir . '/binziptest/test.zip' );
 			}
 
 			if ( is_file( $backupplus_dir . '/binziptest/subdir1/subdir2/test.html' ) ) {
@@ -371,11 +372,11 @@ trait BackupPlus_Core_Binaries {
 	 * @param String $backupplus_dir - directory to find the files in
 	 */
 	private function remove_binzip_test_files( $backupplus_dir ) {
-		@unlink( $backupplus_dir . '/binziptest/subdir1/subdir2/test.html' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
-		@unlink( $backupplus_dir . '/binziptest/subdir1/subdir2/test2.html' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+		wp_delete_file( $backupplus_dir . '/binziptest/subdir1/subdir2/test.html' );
+		wp_delete_file( $backupplus_dir . '/binziptest/subdir1/subdir2/test2.html' );
 		@rmdir( $backupplus_dir . '/binziptest/subdir1/subdir2' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		@rmdir( $backupplus_dir . '/binziptest/subdir1' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
-		@unlink( $backupplus_dir . '/binziptest/test.zip' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+		wp_delete_file( $backupplus_dir . '/binziptest/test.zip' );
 		@rmdir( $backupplus_dir . '/binziptest' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 	}
 }

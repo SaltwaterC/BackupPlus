@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Status, AJAX, log download, notices and the classic update screens. */
 
@@ -217,17 +218,17 @@ trait BackupPlus_Pre_Update_Backups_Interface {
 		$single = in_array( $action, array( 'upgrade-plugin', 'upgrade-theme' ), true );
 		$ids    = array();
 		if ( $single ) {
-			$ids = isset( $_REQUEST[ $type ] ) && is_string( $_REQUEST[ $type ] ) ? array( wp_unslash( $_REQUEST[ $type ] ) ) : array();
+			$ids = isset( $_REQUEST[ $type ] ) && is_string( $_REQUEST[ $type ] ) ? array( wp_unslash( $_REQUEST[ $type ] ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Plugin files or theme slugs exactly as WordPress's update screens receive them: they must match WordPress's update nonce checked below, and are only escaped into the page.
 		} elseif ( 'core' !== $type ) {
 			$plural = $type . 's';
-			$ids    = isset( $_GET[ $plural ] ) && is_string( $_GET[ $plural ] ) ? explode( ',', wp_unslash( $_GET[ $plural ] ) ) : ( isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ? wp_unslash( $_POST['checked'] ) : array() );
+			$ids    = isset( $_GET[ $plural ] ) && is_string( $_GET[ $plural ] ) ? explode( ',', wp_unslash( $_GET[ $plural ] ) ) : ( isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ? wp_unslash( $_POST['checked'] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Plugin files or theme slugs exactly as WordPress's update screens receive them: they must match WordPress's update nonce checked below, and are only escaped into the page.
 		}
 		$native_nonce = 'update-core.php' === $pagenow ? 'upgrade-core' : ( $single ? $action . '_' . reset( $ids ) : 'bulk-update-' . $type . 's' );
 		check_admin_referer( $native_nonce );
 		$keys = array();
 		if ( 'core' === $type ) {
-			$version = isset( $_POST['version'] ) && is_string( $_POST['version'] ) ? wp_unslash( $_POST['version'] ) : '';
-			$locale  = isset( $_POST['locale'] ) && is_string( $_POST['locale'] ) ? wp_unslash( $_POST['locale'] ) : get_locale();
+			$version = isset( $_POST['version'] ) && is_string( $_POST['version'] ) ? sanitize_text_field( wp_unslash( $_POST['version'] ) ) : '';
+			$locale  = isset( $_POST['locale'] ) && is_string( $_POST['locale'] ) ? sanitize_text_field( wp_unslash( $_POST['locale'] ) ) : get_locale();
 			$keys[]  = 'core:' . $version . ':' . $locale;
 		} else {
 			foreach ( $ids as $id ) {
@@ -240,7 +241,7 @@ trait BackupPlus_Pre_Update_Backups_Interface {
 			return;
 		}
 		$batch = $this->batch();
-		$token = isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? wp_unslash( $_REQUEST['backupplus_batch'] ) : '';
+		$token = isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backupplus_batch'] ) ) : '';
 		if ( $token && ! empty( $batch['id'] ) && $token === $batch['id'] && $this->can_manage( $batch ) && 'ready' === $batch['state'] && time() < $batch['completed'] + HOUR_IN_SECONDS && ! array_diff( $keys, $batch['remaining'] ) ) {
 			return;
 		}

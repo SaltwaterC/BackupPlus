@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fread, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Capturing the full snapshot and the incremental binary log artifacts, and publishing them to the destinations. */
 
@@ -14,12 +15,12 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 		$before = $adapter->status();
 		$token  = bin2hex( random_bytes( 32 ) );
 		// The application writes its own ancestry marker; the backup account stays data-read-only.
-		$was_logged = $wpdb->get_var( 'SELECT @@session.sql_log_bin' );
-		if ( '0' === $was_logged && false === $wpdb->query( 'SET SESSION sql_log_bin=1' ) ) { throw new RuntimeException( 'Could not log the PITR source marker.' ); }
+		$was_logged = $wpdb->get_var( 'SELECT @@session.sql_log_bin' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the database server's current state, which has no WordPress API and must not be cached.
+		if ( '0' === $was_logged && false === $wpdb->query( 'SET SESSION sql_log_bin=1' ) ) { throw new RuntimeException( 'Could not log the PITR source marker.' ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Changes a server setting for this session, which has no WordPress API.
 		try {
 			$sql = BackupPlus_SQL::wpdb();
 			if ( false === $sql->execute( "INSERT INTO %i (option_name, option_value, autoload) VALUES ('backupplus_pitr_source_anchor', ?, 'off') ON DUPLICATE KEY UPDATE option_value=VALUES(option_value)", array( array( $this->config['database'], $wpdb->options ) ), array( $token ) ) ) { throw new RuntimeException( 'WordPress could not write its PITR source marker. ' . $sql->last_error() ); }
-		} finally { if ( '0' === $was_logged ) { $wpdb->query( 'SET SESSION sql_log_bin=0' ); }
+		} finally { if ( '0' === $was_logged ) { $wpdb->query( 'SET SESSION sql_log_bin=0' ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Changes a server setting for this session, which has no WordPress API.
 		}
 		$names = array_keys( $adapter->logs() );
 		$start = array_search( $before['file'], $names, true );
@@ -165,7 +166,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 		);
 		try { $this->save(); }
 		catch ( Throwable $error ) { $this->state['pending'] = null;
-			unlink( $target );
+			wp_delete_file( $target );
 			throw $error; }
 	}
 
@@ -435,7 +436,7 @@ trait BackupPlus_PITR_Orchestrator_Capture {
 				fclose( $backupplus->logfile_handle );
 				$backupplus->logfile_handle = null;
 				if ( ! $keep_log ) {
-					@unlink( $backupplus->logfile_name );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					wp_delete_file( $backupplus->logfile_name );
 				}
 			}
 		}

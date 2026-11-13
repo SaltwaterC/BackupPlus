@@ -257,7 +257,7 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 			$storage          = $this->getCF( $opts['user'], $opts['apikey'], $opts['authurl'], BackupPlus_Options::get_backupplus_option( 'backupplus_ssl_useservercerts' ) );
 			$container_object = $storage->create_container( $container );
 		} catch ( Exception $e ) {
-			/* translators: %s: Authentication method */
+			/* translators: %s: Name of the remote storage method. */
 			return new WP_Error( 'no_access', sprintf( __( '%s authentication failed', 'backupplus' ), 'Cloud Files' ) . ' (' . $e->getMessage() . ')' );
 		}
 
@@ -471,10 +471,10 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 			if ( ! function_exists( 'mb_substr' ) ) {
 				$backupplus_admin->show_double_warning(
 					'<strong>' . __( 'Warning', 'backupplus' ) . ':</strong> ' .
-					/* translators: %s: Missing PHP module */
+					/* translators: %s: Name of the required PHP module. */
 					sprintf( __( 'Your web server\'s PHP installation does not include a required module (%s).', 'backupplus' ), 'mbstring' ) . ' ' .
 					__( 'Please contact your web hosting provider\'s support.', 'backupplus' ) . ' ' .
-					/* translators: 1: Module description, 2: Required module */
+					/* translators: 1: Name of the remote storage method, 2: Name of the required PHP module. */
 					sprintf( __( 'BackupPlus\'s %1$s module <strong>requires</strong> %2$s.', 'backupplus' ), 'Cloud Files', 'mbstring' ) . ' ' .
 					__( 'Please do not file any support requests; there is no alternative.', 'backupplus' ),
 					'cloudfiles'
@@ -561,7 +561,7 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 		if ( empty( $posted_settings['apikey'] ) ) {
 			echo esc_html(
 				sprintf(
-				/* translators: %s: API key */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'API key', 'backupplus' )
 				)
@@ -572,7 +572,7 @@ class BackupPlus_BackupModule_cloudfiles_oldsdk extends BackupPlus_BackupModule 
 		if ( empty( $posted_settings['user'] ) ) {
 			echo esc_html(
 				sprintf(
-				/* translators: %s: Username */
+				/* translators: %s: Name of the missing item (e.g. username, password, API key). */
 					__( 'Failure: No %s was given.', 'backupplus' ),
 					__( 'Username', 'backupplus' )
 				)

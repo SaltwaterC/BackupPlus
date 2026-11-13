@@ -10,7 +10,7 @@ trait BackupPlus_Pre_Update_Backups_Updates {
 
 	/** Bind a download to a verified batch and consume its target once per request. */
 	public function pre_download( $reply, $package, $upgrader, $extra = array() ) {
-		if ( ( ! self::enabled() && ! $this->cli_batch ) || is_a( $upgrader, 'Language_Pack_Upgrader' ) || ( ! $this->cli_batch && ( ( isset( $extra['action'] ) && 'update' !== $extra['action'] ) || is_a( $upgrader->skin, 'Plugin_Installer_Skin' ) || is_a( $upgrader->skin, 'Theme_Installer_Skin' ) ) ) ) {
+		if ( is_wp_error( $reply ) || ( ! self::enabled() && ! $this->cli_batch ) || is_a( $upgrader, 'Language_Pack_Upgrader' ) || ( ! $this->cli_batch && ( ( isset( $extra['action'] ) && 'update' !== $extra['action'] ) || is_a( $upgrader->skin, 'Plugin_Installer_Skin' ) || is_a( $upgrader->skin, 'Theme_Installer_Skin' ) ) ) ) {
 			return $reply;
 		}
 		$type = is_a( $upgrader, 'Core_Upgrader' ) ? 'core' : ( is_a( $upgrader, 'Plugin_Upgrader' ) ? 'plugin' : ( is_a( $upgrader, 'Theme_Upgrader' ) ? 'theme' : '' ) );
@@ -29,7 +29,7 @@ trait BackupPlus_Pre_Update_Backups_Updates {
 		if ( 'core' === $type && isset( $this->claims[ $object ] ) && in_array( $package, $this->claims[ $object ]['packages'], true ) ) {
 			return $reply;
 		}
-		$id = $this->cli_batch ? $this->cli_batch : ( $this->automatic_batch ? $this->automatic_batch : ( isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backupplus_batch'] ) ) : '' ) );
+		$id = $this->cli_batch ? $this->cli_batch : ( $this->automatic_batch ? $this->automatic_batch : ( isset( $_REQUEST['backupplus_batch'] ) && is_string( $_REQUEST['backupplus_batch'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backupplus_batch'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress checked the update screen's nonce before downloading; the batch token must also match the stored batch, which the user must be able to manage.
 		if ( ! $this->lock() ) {
 			return $this->error( 'backupplus_busy' );
 		}

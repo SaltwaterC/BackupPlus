@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Running jobs, their progress display and their log. */
 
@@ -400,7 +401,8 @@ trait BackupPlus_Admin_Active_Jobs {
 				break;
 			// Stage 6
 			case 'finished':
-				$stage    = 6;
+				$stage = 6;
+				/* translators: %s: Error message. */
 				$curstage = ! empty( $jobdata['pitr_error'] ) ? sprintf( __( 'Database recovery point failed: %s', 'backupplus' ), $jobdata['pitr_error'] ) : __( 'Backup finished', 'backupplus' );
 				break;
 			default:
@@ -519,7 +521,7 @@ trait BackupPlus_Admin_Active_Jobs {
 		if ( ! empty( $jobdata['warnings'] ) && is_array( $jobdata['warnings'] ) ) {
 			$ret .= '<ul class="disc">';
 			foreach ( $jobdata['warnings'] as $warning ) {
-				/* translators: %s: Warning message */
+				/* translators: %s: Warning message. */
 				$ret .= '<li>' . sprintf( __( 'Warning: %s', 'backupplus' ), make_clickable( htmlspecialchars( $warning ) ) ) . '</li>';
 			}
 			$ret .= '</ul>';

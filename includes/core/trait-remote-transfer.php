@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_readfile, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Chunked transfers and the bookkeeping of what has been uploaded to remote storage. */
 
@@ -577,7 +578,7 @@ trait BackupPlus_Core_Remote_Transfer {
 
 			// check to make sure it exists before removing
 			if ( realpath( $fullpath ) ) {
-				$deleted = unlink( $fullpath );
+				$deleted = wp_delete_file( $fullpath );
 				$this->log( $log . ( ( $deleted ) ? 'OK' : 'failed' ) );
 				return $deleted;
 			}
@@ -613,7 +614,7 @@ trait BackupPlus_Core_Remote_Transfer {
 	public function spool_file( $fullpath, $encryption = '', $download_name = '' ) {
 		$download_name = '' === $download_name ? basename( $fullpath ) : $download_name;
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( 900 );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}
 		if ( ! file_exists( $fullpath ) || filesize( $fullpath ) < 1 ) {
 			esc_html_e( 'File not found', 'backupplus' );

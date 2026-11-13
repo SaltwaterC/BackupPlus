@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+// Modified by the BackupPlus project in 2026.
+
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -25,9 +27,9 @@ if (!class_exists('UDP_Google_Client')) {
  * Psr logging class based on the PSR-3 standard.
  *
  * This logger will delegate all logging to a PSR-3 compatible logger specified
- * with the `Google_Logger_Psr::setLogger()` method.
+ * with the `BackupPlus_Google_Logger_Psr::setLogger()` method.
  */
-class Google_Logger_Psr extends Google_Logger_Abstract
+class BackupPlus_Google_Logger_Psr extends BackupPlus_Google_Logger_Abstract
 {
   /**
    * @param Psr\Log\LoggerInterface $logger The PSR-3 logger
@@ -35,10 +37,10 @@ class Google_Logger_Psr extends Google_Logger_Abstract
   private $logger;
 
   /**
-   * @param Google_Client $client           The current Google client
+   * @param BackupPlus_Google_Client $client           The current Google client
    * @param Psr\Log\LoggerInterface $logger PSR-3 logger where logging will be delegated.
    */
-  public function __construct(UDP_Google_Client $client, /*Psr\Log\LoggerInterface*/ $logger = null)
+  public function __construct(BackupPlus_Google_Client $client, /*Psr\Log\LoggerInterface*/ $logger = null)
   {
     parent::__construct($client);
 

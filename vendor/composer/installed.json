@@ -44,58 +44,6 @@
             "install-path": "../brumann/polyfill-unserialize"
         },
         {
-            "name": "components/jquery",
-            "version": "4.0.0",
-            "version_normalized": "4.0.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/components/jquery.git",
-                "reference": "594f9dd922c3b12519c8d52bde744b79fd2ca816"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/components/jquery/zipball/594f9dd922c3b12519c8d52bde744b79fd2ca816",
-                "reference": "594f9dd922c3b12519c8d52bde744b79fd2ca816",
-                "shasum": ""
-            },
-            "time": "2026-05-11T18:06:23+00:00",
-            "type": "component",
-            "extra": {
-                "component": {
-                    "files": [
-                        "jquery.min.js",
-                        "jquery.min.map",
-                        "jquery.slim.js",
-                        "jquery.slim.min.js",
-                        "jquery.slim.min.map"
-                    ],
-                    "scripts": [
-                        "jquery.js"
-                    ]
-                }
-            },
-            "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "JS Foundation and other contributors"
-                }
-            ],
-            "description": "jQuery JavaScript Library",
-            "homepage": "http://jquery.com",
-            "support": {
-                "forum": "http://forum.jquery.com",
-                "irc": "irc://irc.freenode.org/jquery",
-                "issues": "https://github.com/jquery/jquery/issues",
-                "source": "https://github.com/jquery/jquery",
-                "wiki": "http://docs.jquery.com/"
-            },
-            "install-path": "../components/jquery"
-        },
-        {
             "name": "eher/oauth",
             "version": "1.0.7",
             "version_normalized": "1.0.7.0",

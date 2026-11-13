@@ -1,4 +1,6 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_chmod, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed.' );
 }
@@ -493,7 +495,7 @@ class BackupPlus_Credential_Key_Store {
 				fclose( $file );
 			}
 			if ( @file_exists( $temp ) ) {
-				@unlink( $temp );
+				wp_delete_file( $temp );
 			}
 		}
 	}
@@ -557,7 +559,7 @@ class BackupPlus_Credential_Key_Store {
 					throw new RuntimeException( 'The key location could not be saved. Your previous key remains available.' );
 				}
 				// Retain .donotbackup and HTTP protection even if unlink fails.
-				@unlink( $old_path );
+				wp_delete_file( $old_path );
 				return $config;
 			},
 			false

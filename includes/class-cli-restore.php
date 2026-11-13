@@ -1,4 +1,7 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
+// phpcs:disable Generic.PHP.ForbiddenFunctions.Found -- Runs database clients and zstd from trusted absolute paths, with arguments as an array and no shell.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are plain text, escaped where they are displayed (esc_html(), jQuery .text(), the escaped log, WP-CLI).
 /** Interactive CLI restores. Secret input lives only in this process. */
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -76,7 +79,7 @@ class BackupPlus_CLI_Secret {
 						function ( $received ) use ( $tty, $state, &$hidden ) {
 							self::terminal( $tty, escapeshellarg( $state ) );
 							$hidden = false;
-							exit( 128 + $received );
+							exit( 128 + (int) $received );
 						},
 						false
 					);
@@ -393,7 +396,7 @@ class BackupPlus_CLI_Restore {
 	public static function cleanup() {
 		foreach ( self::$files as $entry ) {
 			if ( is_file( $entry['fullpath'] ) && ! is_link( $entry['fullpath'] ) ) {
-				unlink( $entry['fullpath'] );
+				wp_delete_file( $entry['fullpath'] );
 			}
 		}
 		self::$files         = array();
@@ -449,7 +452,7 @@ class BackupPlus_CLI_Restore {
 			}
 			$backupplus_restorer = new BackupPlus_Restorer( new BackupPlus_Restorer_Skin(), $backup, false, $options );
 			$error_levels        = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-			set_error_handler( array( $backupplus, 'php_error' ), $error_levels );
+			set_error_handler( array( $backupplus, 'php_error' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Records PHP warnings in the job log, so the administrator sees them.
 			$handler_active = true;
 			try {
 				$result = $backupplus_restorer->perform_restore( $entities, $options );

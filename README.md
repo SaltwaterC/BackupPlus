@@ -58,6 +58,42 @@ The admin script is split into the files in `includes/admin-common/`, listed in 
 
 The plugin's versioned minified assets are generated from the stable inputs in `assets-src/`. After changing the `Version:` header in `backupplus.php`, run `make build-assets` to produce the filenames used by the plugin and update CSS source-map references. Run `make check-assets` to verify the checked-in assets match the current plugin version. The browser decryptor is bundled from `assets-src/decryption/` using the pinned npm dependencies. Install build/test dependencies with `npm ci --ignore-scripts --omit=optional` (Node 22.4+), then run the same Make targets. Go 1.27.3 builds/checks the SSH/PEM WebAssembly bridge; if Go is missing, the builder image is built and run with Podman. Set `GO=/path/to/go` to select a local Go executable, or `PODMAN=/path/to/podman` to select Podman. The checked-in worker, WASM, matching Go runtime, compressed module and license notices ship with the plugin; deployed WordPress sites require neither Go, Node nor npm. See [the upstream age integration](docs/agessh-wasm-prototype.md). `make test-client` checks independent crypto fixtures and archive boundaries, the chained extraction (`scripts/test-client-extract.mjs`, against the tar, zstd, age and unzip tools), and the SSH key WebAssembly bridge in Node and in Chromium (set `CHROMIUM` as below). `make test-client-browser` checks the actual WordPress Extract tab in Chromium; set `CHROMIUM` to your Chromium executable and optionally `BACKUPPLUS_TEST_URL` to the local development site. The admin, deactivation and notices stylesheets are minified from their readable sources in `css/` (`css/backupplus-admin.css` and so on) into `assets-src/css/` by `scripts/build-css.mjs`, with esbuild, so edit the readable file and run `make build-assets`. `css/backupplus-admin.css` is only a list of `@import`s of the partials in `css/admin/`, which esbuild bundles in that order (the cascade depends on it, so keep new rules in the partial where they belong and add a partial at the right position in the list); `make check-assets` fails when the minified file is stale. `css/backupplus-tour.scss` is the exception: its minified file is compiled from SCSS and is still produced outside this repository. The admin script in `includes/admin-common/` is built the same way (see Code layout).
 
+## Packaging and releases
+
+The repository holds development tooling, tests and documentation that a WordPress site does not need. `make dist` packages only the files the plugin runs, into `build/backupplus/` and the installable `build/backupplus-VERSION.zip` (with its `.sha256`). The package is built from the files committed at `HEAD` (or `DIST_REF=<tag or commit>`), minus those excluded by [`.distignore`](.distignore), so uncommitted and untracked files never ship. A commit always produces the same zip, byte for byte. `make dist-worktree` packages the working tree as `git add -A` would commit it (uncommitted changes and new files), for local testing only.
+
+`.distignore` uses `.gitignore` patterns. It drops `assets-src/`, `dev/`, `docs/`, `scripts/`, `tests/`, build and lint configuration, hidden files, `.po` translation sources (WordPress loads the `.mo` files; `backupplus.pot` ships) and the development files of bundled libraries. The readable scripts and stylesheets next to the minified ones stay, because debug mode and `SCRIPT_DEBUG` load them. When you add a development-only file outside the excluded folders, add it to `.distignore`.
+
+Two files differ between the repository and the package, to satisfy the plugin directory:
+
+- `js/backupplus-agessh.wasm.gz` is left out, because WordPress.org rejects compressed files. The admin page only offers it when it exists, and the browser otherwise downloads the larger `js/backupplus-agessh.wasm`.
+- The repository's `composer.json` only installs development tools. The package instead gets a generated `composer.json` that requires each bundled `vendor/` package at its installed version, from `vendor/composer/installed.json`.
+
+The build fails if it would produce a broken or inconsistent package:
+
+- `backupplus.php` and `readme.txt` disagree: `Version` against `Stable tag`, `Requires PHP`, `Requires at least`, or the plugin name against the readme title.
+- A versioned minified asset is left over from another version (run `make build-assets`).
+- The package would contain a hidden file.
+- A file the code refers to is excluded. This covers `BACKUPPLUS_DIR`/`BACKUPPLUS_URL`/`__DIR__` paths and `backupplus_try_include_file()` in PHP, `url()` in CSS, and links in Markdown, such as the license texts listed in `licenses/THIRD-PARTY-LICENSES.md`. A file that the same PHP file tests for with `is_file()`, `file_exists()` or `is_readable()` counts as optional.
+
+Plugin Check, which WordPress.org runs on submissions, reads `// phpcs:disable <sniffs> -- <reason>` headers. Files that stream archives, open native database connections, transfer with cURL or run executables declare those sniffs at the top, with the reason; keep the header in step when such a file changes.
+
+`make dist` also lints every packaged PHP file.
+
+`make dist-check` installs the zip on a throwaway WordPress site (Podman stack `backupplus-distcheck`, port 18198, removed afterwards, `KEEP=1` to keep it). It checks that the plugin activates, that the settings page loads without PHP errors, and that every script, stylesheet, image and WebAssembly module the page refers to exists, both minified and in debug mode. It also checks that a database backup runs. Finally, it runs the [WordPress.org Plugin Check](https://wordpress.org/plugins/plugin-check/) and fails on packaging errors. The full report, code-level findings included, is saved as `build/plugin-check-VERSION.csv`.
+
+To release on WordPress.org:
+
+1. Raise `Version` in `backupplus.php` and `Stable tag` in `readme.txt`, run `make build-assets` and `make test`, and commit.
+2. Run `make dist DIST_REF=<the release commit>`, then `make dist-check`.
+3. Check out the plugin's SVN repository once: `svn checkout https://plugins.svn.wordpress.org/backupplus ~/svn/backupplus`.
+4. Run `scripts/stage-wporg-svn.sh ~/svn/backupplus`. It mirrors the package into `trunk/` (scheduling added and removed files), copies it to `tags/VERSION`, and mirrors `.wordpress-org/` (plugin directory banners, icons and screenshots, if present) into `assets/`. It refuses to overwrite an existing tag.
+5. Review `svn status`, then run the `svn commit` command the script prints. Nothing is published before that commit.
+
+The plugin directory images live in `.wordpress-org/`. The banners and icons are rendered from the SVG sources in `assets-src/wordpress-org/` by `make wporg-assets` (needs `rsvg-convert` and the Liberation Sans font); commit the rendered PNGs after changing a source. The screenshots, `screenshot-1.png` to `screenshot-6.png`, are numbered as the captions under `== Screenshots ==` in `readme.txt`. `make wporg-screenshots` takes them from the package (`make dist` first): `dev/screenshots.sh` starts a throwaway site (Podman stack `backupplus-screenshots`, port 18197, `KEEP=1` to keep it) with a backup schedule and three real backups, and `scripts/capture-wporg-screenshots.mjs` drives headless Chromium through the screens, including a real restore. Change a caption and its step in that script together.
+
+For any other site, install `build/backupplus-VERSION.zip` from **Plugins → Add New → Upload Plugin**, or unzip it into `wp-content/plugins/`.
+
 ## PHP formatting
 
 Install the development tools with PHP and Composer 2:

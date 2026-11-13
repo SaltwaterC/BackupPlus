@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Backing up directories into archives, with optional encryption of the result. */
 
@@ -23,7 +24,7 @@ trait BackupPlus_Backup_Files {
 		// Note: $create_from_dir can be an array or a string
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );
+			set_time_limit( BACKUPPLUS_SET_TIME_LIMIT ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead.
 		}
 
 		if ( $this->archive_compression_enabled() ) { $this->use_zip_object = 'BackupPlus_Tar';
@@ -59,8 +60,8 @@ trait BackupPlus_Backup_Files {
 					$flag_error = false;
 				}
 			}
-			/* translators: 1: Entity name, 2: Directory path */
 			if ( $flag_error ) {
+				/* translators: 1: Entity name, 2: Directory path. */
 				$backupplus->log( sprintf( __( '%1$s - could not back this entity up; the corresponding directory does not exist (%2$s)', 'backupplus' ), $whichone, $create_from_dir ), 'error' );
 			}
 			if ( ! $flag_error && $backupplus->jobdata_get( 'incremental_configuration' ) ) {
@@ -166,7 +167,7 @@ trait BackupPlus_Backup_Files {
 			if ( file_exists( $full_path . '.tmp' ) ) {
 				if ( @filesize( $full_path . '.tmp' ) === 0 ) {// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 					$backupplus->log( "Did not create $whichone zip (" . $this->index . ') - not needed' );
-					@unlink( $full_path . '.tmp' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+					wp_delete_file( $full_path . '.tmp' );
 				} else {
 
 					$checksum_description = '';
@@ -595,7 +596,7 @@ trait BackupPlus_Backup_Files {
 				if ( isset( $previous[ $entity ] ) && in_array( $file, $previous[ $entity ], true ) ) { continue; }
 				if ( preg_match( '/\.tar\.zst(?:\.crypt)?$/D', $file ) ) {
 					$source = $directory . '/' . preg_replace( '/\.zst(?:\.crypt)?$/D', '', $file );
-					foreach ( array( $source, $source . '.list.tmp' ) as $staging ) { if ( is_file( $staging ) && ! unlink( $staging ) ) { throw new RuntimeException( 'Could not remove completed tar staging files.' ); }
+					foreach ( array( $source, $source . '.list.tmp' ) as $staging ) { if ( is_file( $staging ) && ! wp_delete_file( $staging ) ) { throw new RuntimeException( 'Could not remove completed tar staging files.' ); }
 					}
 					continue;
 				}
@@ -608,8 +609,8 @@ trait BackupPlus_Backup_Files {
 				$backupplus->jobdata_set( 'filesize-' . $entity . $index, $size );
 				foreach ( $backupplus->which_checksums() as $checksum ) { $backupplus->jobdata_set( $checksum . '-' . $entity . $index, hash_file( $checksum, $compressed ) ); }
 				$backupplus->jobdata_set( 'backup_files_array', $files );
-				if ( ! unlink( $path ) ) { throw new RuntimeException( 'Could not remove the completed tar staging file.' ); }
-				if ( is_file( $path . '.list.tmp' ) ) { unlink( $path . '.list.tmp' ); }
+				if ( ! wp_delete_file( $path ) ) { throw new RuntimeException( 'Could not remove the completed tar staging file.' ); }
+				if ( is_file( $path . '.list.tmp' ) ) { wp_delete_file( $path . '.list.tmp' ); }
 			}
 		}
 		return $files;
@@ -686,7 +687,7 @@ trait BackupPlus_Backup_Files {
 				// A retry reads encrypted names even if interrupted during cleanup.
 				$backupplus->jobdata_set( 'backup_files_array', $files );
 				foreach ( array( $directory . '/' . $source, $directory . '/' . $source . '.list.tmp' ) as $plaintext ) {
-					if ( ( is_file( $plaintext ) || is_link( $plaintext ) ) && ! unlink( $plaintext ) ) {
+					if ( ( is_file( $plaintext ) || is_link( $plaintext ) ) && ! wp_delete_file( $plaintext ) ) {
 						return false;
 					}
 				}

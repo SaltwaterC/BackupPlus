@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_is_writable, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** Destination validation and confined merging of additional local sources. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 class BackupPlus_Source_Restore {
@@ -147,7 +148,7 @@ class BackupPlus_Source_Restore {
 			}
 			if ( ! rmdir( $path ) ) { throw new RuntimeException( 'Could not remove restored staging directory or deleted path.' ); }
 		} elseif ( file_exists( $path ) || is_link( $path ) ) {
-			if ( ! unlink( $path ) ) { throw new RuntimeException( 'Could not remove deleted path.' ); }
+			if ( ! wp_delete_file( $path ) ) { throw new RuntimeException( 'Could not remove deleted path.' ); }
 		}
 	}
 }

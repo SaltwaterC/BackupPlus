@@ -123,6 +123,6 @@ jQuery(function($) {
 		var set_contents = jQuery(this).data('set_contents');
 		var prettydate = jQuery(this).data('prettydate');
 		var async = true;
-		backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async, jQuery(this).data('download_files'));
+		backupplus_downloader(base, backup_timestamp, what, whicharea, set_contents, prettydate, async, jQuery(this).data('download_files'), jQuery(this).text().trim());
 	});
 });

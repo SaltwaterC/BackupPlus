@@ -24,12 +24,12 @@ trait BackupPlus_Core_Backup_Resume {
 		$last_bnonce = $bnonce;
 
 		$error_levels = version_compare( PHP_VERSION, '8.4.0', '>=' ) ? E_ALL : E_ALL & ~E_STRICT;
-		set_error_handler( array( $this, 'php_error' ), $error_levels );
+		set_error_handler( array( $this, 'php_error' ), $error_levels ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Records PHP warnings in the job log, so the administrator sees them.
 
 		$this->current_resumption = $resumption_no;
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+			@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 		}       if ( function_exists( 'ignore_user_abort' ) ) {
 			@ignore_user_abort( true );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 		}
@@ -360,7 +360,7 @@ trait BackupPlus_Core_Backup_Resume {
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
 				$this->log( $log_message );
-				/* translators: 1: Exception class, 2: Error message */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$this->log( sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 				die();
 			} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
@@ -369,13 +369,13 @@ trait BackupPlus_Core_Backup_Resume {
 				// @codingStandardsIgnoreLine
 				$log_message .= ' Backtrace: ' . str_replace( array( ABSPATH, "\n" ), array( '', ', ' ), $e->getTraceAsString() );
 				$this->log( $log_message );
-				/* translators: 1: Exception class, 2: Error message */
+				/* translators: 1: Exception class name, 2: Exception message. */
 				$this->log( sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 				die();
 			}
 		}
 
-		do_action( 'pre_database_backup_setup' );
+		do_action( 'backupplus_pre_database_backup_setup' );
 
 		$backup_databases = $this->jobdata_get( 'backup_database' );
 
@@ -431,14 +431,14 @@ trait BackupPlus_Core_Backup_Resume {
 					$log_message = 'Exception (' . get_class( $e ) . ') occurred during files backup: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
 					$this->log( $log_message );
 					BackupPlus_Manipulation_Functions::error_log( $log_message );
-					/* translators: 1: Exception class, 2: Error message */
+					/* translators: 1: Exception class name, 2: Exception message. */
 					$this->log( sprintf( __( 'A PHP exception (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 					die();
 				} catch ( Error $e ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
 					$log_message = 'PHP Fatal error (' . get_class( $e ) . ') has occurred. Error Message: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ', line ' . $e->getLine() . ' in ' . $e->getFile() . ')';
 					$this->log( $log_message );
 					BackupPlus_Manipulation_Functions::error_log( $log_message );
-					/* translators: 1: Exception class, 2: Error message */
+					/* translators: 1: Exception class name, 2: Exception message. */
 					$this->log( sprintf( __( 'A PHP fatal error (%1$s) has occurred: %2$s', 'backupplus' ), get_class( $e ), $e->getMessage() ), 'error' );
 					die();
 				}
@@ -504,7 +504,7 @@ trait BackupPlus_Core_Backup_Resume {
 					return false;
 				}
 				$plaintext = $backupplus_dir . '/' . substr( $our_files[ $tindex ], 0, -6 );
-				if ( ( is_file( $plaintext ) || is_link( $plaintext ) ) && ! unlink( $plaintext ) ) {
+				if ( ( is_file( $plaintext ) || is_link( $plaintext ) ) && ! wp_delete_file( $plaintext ) ) {
 					$this->log( 'Could not remove the plaintext database archive; backup dispatch has been stopped.', 'error' );
 					return false;
 				}

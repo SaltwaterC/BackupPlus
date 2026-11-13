@@ -37,7 +37,7 @@ trait BackupPlus_Dropbox_Settings_Templates {
 			'authentication_link_text'       => wp_kses( sprintf( __( "<strong>After</strong> you have saved your settings (by clicking 'Save Changes' below), follow this link to authorize %s in a new tab.", 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ), $this->allowed_html_for_content_sanitisation() ),
 			'authorisation_code_label'       => __( 'Then paste the code Dropbox displays:', 'backupplus' ),
 			'complete_authorisation_label'   => __( 'Connect', 'backupplus' ),
-			/* translators: %s: Service name */
+			/* translators: %s: Name of the storage service. */
 			'deauthentication_link_text'     => sprintf( __( 'Follow this link to remove these settings for %s.', 'backupplus' ), $backupplus->backup_methods[ $this->get_id() ] ),
 			'authentication_label'           => __( 'Ensure you are logged into the correct account before continuing.', 'backupplus' ),
 			'input_app_key_label'            => __( 'Dropbox app key', 'backupplus' ),

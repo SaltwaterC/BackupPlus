@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** WP-CLI commands for running backup jobs: listing, cancelling, resuming and reading logs. */
 if ( ! defined( 'ABSPATH' ) ) { die( 'No direct access allowed' ); }
 
@@ -102,7 +103,7 @@ class BackupPlus_CLI_Jobs {
 			if ( $event['time'] > time() && ! isset( $assoc['force'] ) ) { throw new RuntimeException( 'The next resumption is due in ' . ( $event['time'] - time() ) . ' seconds. Use --force to run it now.' ); }
 			if ( ! defined( 'BACKUPPLUS_FOLLOWUPS_ALLOWED' ) ) { define( 'BACKUPPLUS_FOLLOWUPS_ALLOWED', true ); }
 			wp_unschedule_event( $event['time'], $event['hook'], $event['args'] );
-			do_action_ref_array( $event['hook'], $event['args'] );
+			do_action_ref_array( $event['hook'], $event['args'] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Runs a scheduled BackupPlus event now, as WP-Cron would.
 			$next = BackupPlus_CLI::events( $nonce );
 			if ( $next ) { WP_CLI::success( 'Resumption ran; the job continues at ' . gmdate( 'Y-m-d H:i:s', $next[0]['time'] ) . ' UTC.' ); }
 			else { WP_CLI::success( 'Resumption ran; the job has no further scheduled resumptions.' ); }

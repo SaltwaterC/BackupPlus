@@ -197,7 +197,7 @@ trait BackupPlus_Admin_WordPress_Integration {
 	 */
 	public function maybe_download_backup_from_email() {
 		global $pagenow;
-		if ( BackupPlus_Options::user_can_manage() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && BackupPlus_Options::admin_page() === $pagenow && isset( $_REQUEST['page'] ) && 'backupplus' === $_REQUEST['page'] && isset( $_REQUEST['action'] ) && 'backupplus_download_backup' === $_REQUEST['action'] ) {
+		if ( BackupPlus_Options::user_can_manage() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) && BackupPlus_Options::admin_page() === $pagenow && isset( $_REQUEST['page'] ) && 'backupplus' === $_REQUEST['page'] && isset( $_REQUEST['action'] ) && 'backupplus_download_backup' === $_REQUEST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The emailed download link has no WordPress nonce; it needs the manage capability and the backup's own nonce (checked below), and only reads the backup.
 			$findex            = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'findex' );
 			$findexes          = empty( $findex ) ? array( 0 ) : $findex;
 			$request_timestamp = BackupPlus_Manipulation_Functions::fetch_superglobal( 'request', 'timestamp' );

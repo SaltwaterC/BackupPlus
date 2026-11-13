@@ -83,7 +83,7 @@ class BackupPlus_Tour {
 
 		$script_suffix         = $backupplus->use_unminified_scripts() ? '' : '.min';
 		$backupplus_min_or_not = $backupplus->get_backupplus_file_version();
-		wp_enqueue_script( 'backupplus-tether-js', trailingslashit( BACKUPPLUS_URL ) . 'includes/tether/tether' . $script_suffix . '.js', $backupplus->version, true );
+		wp_enqueue_script( 'backupplus-tether-js', trailingslashit( BACKUPPLUS_URL ) . 'includes/tether/tether' . $script_suffix . '.js', array(), $backupplus->version, true );
 		wp_enqueue_script( 'backupplus-shepherd-js', trailingslashit( BACKUPPLUS_URL ) . 'includes/tether-shepherd/shepherd' . $script_suffix . '.js', array( 'backupplus-tether-js' ), $backupplus->version, true );
 		wp_enqueue_style( 'backupplus-shepherd-css', trailingslashit( BACKUPPLUS_URL ) . 'css/tether-shepherd/shepherd-theme-arrows-plain-buttons' . $script_suffix . '.css', false, $backupplus->version );
 		wp_enqueue_style( 'backupplus-tour-css', trailingslashit( BACKUPPLUS_URL ) . 'css/backupplus-tour' . $backupplus_min_or_not . '.css', false, $backupplus->version );

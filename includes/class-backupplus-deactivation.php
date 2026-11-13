@@ -73,7 +73,7 @@ class BackupPlus_Deactivation {
 		$enqueue_version       = $backupplus->use_unminified_scripts() ? $backupplus->version . '.' . time() : $backupplus->version;
 		$backupplus_min_or_not = $backupplus->get_backupplus_file_version();
 		wp_enqueue_style( 'backupplus-deactivation-popup', BACKUPPLUS_URL . '/css/backupplus-deactivation' . $backupplus_min_or_not . '.css', array( 'backupplus-jquery-ui' ), $enqueue_version );
-		wp_enqueue_script( 'backupplus-deactivation-js', BACKUPPLUS_URL . '/js/backupplus-deactivation' . $backupplus_min_or_not . '.js', array( 'jquery' ), $enqueue_version );
+		wp_enqueue_script( 'backupplus-deactivation-js', BACKUPPLUS_URL . '/js/backupplus-deactivation' . $backupplus_min_or_not . '.js', array( 'jquery' ), $enqueue_version, false );
 		wp_localize_script(
 			'backupplus-deactivation-js',
 			'backupplus_deinstall_dialog',

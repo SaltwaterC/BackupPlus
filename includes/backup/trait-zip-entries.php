@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_touch, WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 
 /** Adding files to the archive being written and tracking its errors and index. */
 
@@ -98,7 +99,7 @@ trait BackupPlus_Backup_Zip_Entries {
 				$opencode = $zip->open( $zipfile );
 				clearstatcache();
 			} elseif ( 0 === $original_size ) {
-				unlink( $zipfile );
+				wp_delete_file( $zipfile );
 			} else {
 				$opencode = false;
 			}
@@ -111,8 +112,8 @@ trait BackupPlus_Backup_Zip_Entries {
 			$opencode    = $zip->open( $zipfile, $create_code );
 		}
 
-		/* translators: 1: Zip file path, 2: Error message */
 		if ( true !== $opencode ) {
+			/* translators: 1: Zip file path, 2: Error message. */
 			return new WP_Error( 'no_open', sprintf( __( 'Failed to open the zip file (%1$s) - %2$s', 'backupplus' ), $zipfile, $zip->last_error ) );
 		}
 
@@ -239,7 +240,7 @@ trait BackupPlus_Backup_Zip_Entries {
 					}
 
 					if ( function_exists( 'set_time_limit' ) ) {
-						@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+						@set_time_limit( BACKUPPLUS_SET_TIME_LIMIT );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Long backup and restore steps need more time; where the host forbids it, the job resumes instead. Silenced in case the host disables it.
 					}                   $something_useful_sizetest = false;
 
 					if ( $data_added_since_reopen > $maxzipbatch ) {
@@ -443,7 +444,7 @@ trait BackupPlus_Backup_Zip_Entries {
 						$opencode = $zip->open( $zipfile );
 						clearstatcache();
 					} elseif ( 0 === $original_size ) {
-						unlink( $zipfile );
+						wp_delete_file( $zipfile );
 					} else {
 						$opencode = false;
 					}
@@ -456,8 +457,8 @@ trait BackupPlus_Backup_Zip_Entries {
 					$opencode    = $zip->open( $zipfile, $create_code );
 				}
 
-				/* translators: 1: Zip file path, 2: Error message */
 				if ( true !== $opencode ) {
+					/* translators: 1: Zip file path, 2: Error message. */
 					return new WP_Error( 'no_open', sprintf( __( 'Failed to open the zip file (%1$s) - %2$s', 'backupplus' ), $zipfile, $zip->last_error ) );
 				}
 			}
@@ -473,7 +474,7 @@ trait BackupPlus_Backup_Zip_Entries {
 
 		if ( $this->incremental_manifest || apply_filters( 'backupplus_include_manifest', false, $this->whichone, $this ) ) {
 			if ( ! empty( $this->manifest_path ) && file_exists( $this->manifest_path ) ) {
-				$backupplus->log( 'Removing manifest file: ' . basename( $this->manifest_path ) . ': ' . ( @unlink( $this->manifest_path ) ? 'OK' : 'failed' ) );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise if the file doesn't exist.
+				$backupplus->log( 'Removing manifest file: ' . basename( $this->manifest_path ) . ': ' . ( wp_delete_file( $this->manifest_path ) ? 'OK' : 'failed' ) );
 			}
 		}
 
@@ -511,7 +512,7 @@ trait BackupPlus_Backup_Zip_Entries {
 				if ( $hosting_bytes_free[3] < 1048576 * 50 ) {
 					$quota_low     = true;
 					$quota_free_mb = round( $hosting_bytes_free[3] / 1048576, 1 );
-					/* translators: %s: Remaining free space in MB */
+					/* translators: %s: Remaining free disk space in MB. */
 					$backupplus->log( sprintf( __( 'Your free space in your hosting account is very low - only %s Mb remain', 'backupplus' ), $quota_free_mb ), 'warning', 'lowaccountspace' . $quota_free_mb );
 				}
 			}

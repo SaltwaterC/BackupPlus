@@ -119,7 +119,7 @@ class BackupPlus_Job_Scheduler {
 		$backupplus_dir = $backupplus->backups_dir_location();
 		if ( file_exists( $backupplus_dir . '/deleteflag-' . $backupplus->nonce . '.txt' ) ) {
 			$backupplus->log( 'User request for abort: backup job will be immediately halted' );
-			@unlink( $backupplus_dir . '/deleteflag-' . $backupplus->nonce . '.txt' );// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the method.
+			wp_delete_file( $backupplus_dir . '/deleteflag-' . $backupplus->nonce . '.txt' );
 			$backupplus->backup_finish( true, true, true );
 			die;
 		}

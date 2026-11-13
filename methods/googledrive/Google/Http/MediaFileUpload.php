@@ -19,7 +19,7 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -27,7 +27,7 @@ if (!class_exists('UDP_Google_Client')) {
  * Manage large file uploads, which may be media but can be any type
  * of sizable data.
  */
-class Google_Http_MediaFileUpload
+class BackupPlus_Google_Http_MediaFileUpload
 {
   const UPLOAD_MEDIA_TYPE = 'media';
   const UPLOAD_MULTIPART_TYPE = 'multipart';
@@ -58,10 +58,10 @@ class Google_Http_MediaFileUpload
   public $progress;
 //   private $progress;
 
-  /** @var Google_Client */
+  /** @var BackupPlus_Google_Client */
   private $client;
 
-  /** @var Google_Http_Request */
+  /** @var BackupPlus_Google_Http_Request */
   private $request;
 
   /** @var string */
@@ -81,8 +81,8 @@ class Google_Http_MediaFileUpload
    * only used if resumable=True
    */
   public function __construct(
-      UDP_Google_Client $client,
-      UDP_Google_Http_Request $request,
+      BackupPlus_Google_Client $client,
+      BackupPlus_Google_Http_Request $request,
       $mimeType,
       $data,
       $resumable = false,
@@ -156,14 +156,14 @@ class Google_Http_MediaFileUpload
       'expect' => '',
     );
 
-    $httpRequest = new UDP_Google_Http_Request(
+    $httpRequest = new BackupPlus_Google_Http_Request(
         $this->resumeUri,
         'PUT',
         $headers,
         $chunk
     );
 
-    if ($this->client->getClassConfig("UDP_Google_Http_Request", "enable_gzip_for_uploads")) {
+    if ($this->client->getClassConfig("BackupPlus_Google_Http_Request", "enable_gzip_for_uploads")) {
       $httpRequest->enableGzip();
     } else {
       $httpRequest->disableGzip();
@@ -188,7 +188,7 @@ class Google_Http_MediaFileUpload
       // No problems, but upload not complete.
       return false;
     } else {
-      return UDP_Google_Http_REST::decodeHttpResponse($response, $this->client);
+      return BackupPlus_Google_Http_REST::decodeHttpResponse($response, $this->client);
     }
   }
 
@@ -278,7 +278,7 @@ class Google_Http_MediaFileUpload
     if ($body) {
       $headers = array(
         'content-type' => 'application/json; charset=UTF-8',
-        'content-length' => Google_Utils::getStrLen($body),
+        'content-length' => BackupPlus_Google_Utils::getStrLen($body),
         'x-upload-content-type' => $this->mimeType,
         'x-upload-content-length' => $this->size,
         'expect' => '',
@@ -305,6 +305,6 @@ class Google_Http_MediaFileUpload
 
     $error = "Failed to start the resumable upload (HTTP {$message})";
     $this->client->getLogger()->error($error);
-    throw new Google_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
+    throw new BackupPlus_Google_Exception($error); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Error message to be escaped when caught and printed.
   }
 }

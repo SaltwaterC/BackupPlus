@@ -19,7 +19,7 @@
 
 if (!defined('ABSPATH')) die('No direct access allowed');
 
-if (!class_exists('UDP_Google_Client')) {
+if (!class_exists('BackupPlus_Google_Client')) {
   require_once dirname(__FILE__) . '/../autoload.php';
 }
 
@@ -27,32 +27,32 @@ if (!class_exists('UDP_Google_Client')) {
  * The Google API Client
  * http://code.google.com/p/google-api-php-client/
  */
-class UDP_Google_Client
+class BackupPlus_Google_Client
 {
   const LIBVER = "1.1.4";
   const USER_AGENT_SUFFIX = "google-api-php-client-ud/";
   /**
-   * @var Google_Auth_Abstract $auth
+   * @var BackupPlus_Google_Auth_Abstract $auth
    */
   private $auth;
 
   /**
-   * @var UDP_Google_IO_Abstract $io
+   * @var BackupPlus_Google_IO_Abstract $io
    */
   private $io;
 
   /**
-   * @var Google_Cache_Abstract $cache
+   * @var BackupPlus_Google_Cache_Abstract $cache
    */
   private $cache;
 
   /**
-   * @var UDP_Google_Config $config
+   * @var BackupPlus_Google_Config $config
    */
   private $config;
 
   /**
-   * @var Google_Logger_Abstract $logger
+   * @var BackupPlus_Google_Logger_Abstract $logger
    */
   private $logger;
 
@@ -74,32 +74,32 @@ class UDP_Google_Client
   /**
    * Construct the Google Client.
    *
-   * @param $config UDP_Google_Config or string for the ini file to load
+   * @param $config BackupPlus_Google_Config or string for the ini file to load
    */
   public function __construct($config = null)
   {
     if (is_string($config) && strlen($config)) {
-      $config = new UDP_Google_Config($config);
-    } else if ( !($config instanceof UDP_Google_Config)) {
-      $config = new UDP_Google_Config();
+      $config = new BackupPlus_Google_Config($config);
+    } else if ( !($config instanceof BackupPlus_Google_Config)) {
+      $config = new BackupPlus_Google_Config();
 
       if ($this->isAppEngine()) {
         // Automatically use Memcache if we're in AppEngine.
-        $config->setCacheClass('Google_Cache_Memcache');
+        $config->setCacheClass('BackupPlus_Google_Cache_Memcache');
       }
 
       if (version_compare(phpversion(), "5.3.4", "<=") || $this->isAppEngine()) {
         // Automatically disable compress.zlib, as currently unsupported.
-        $config->setClassConfig('UDP_Google_Http_Request', 'disable_gzip', true);
+        $config->setClassConfig('BackupPlus_Google_Http_Request', 'disable_gzip', true);
       }
     }
 
-    if ($config->getIoClass() == UDP_Google_Config::USE_AUTO_IO_SELECTION) {
+    if ($config->getIoClass() == BackupPlus_Google_Config::USE_AUTO_IO_SELECTION) {
       if (function_exists('curl_version') && function_exists('curl_exec')
           && !$this->isAppEngine()) {
-        $config->setIoClass("UDP_Google_IO_Curl");
+        $config->setIoClass("BackupPlus_Google_IO_Curl");
       } else {
-        $config->setIoClass("UDP_Google_IO_Stream");
+        $config->setIoClass("BackupPlus_Google_IO_Stream");
       }
     }
 
@@ -137,7 +137,7 @@ class UDP_Google_Client
    *
    * @param string $jsonLocation File location of the project-key.json.
    * @param array $scopes The scopes to assert.
-   * @return Google_Auth_AssertionCredentials.
+   * @return BackupPlus_Google_Auth_AssertionCredentials.
    * @
    */
   public function loadServiceAccountJson($jsonLocation, $scopes)
@@ -145,14 +145,14 @@ class UDP_Google_Client
     $data = json_decode(file_get_contents($jsonLocation));
     if (isset($data->type) && $data->type == 'service_account') {
       // Service Account format.
-      $cred = new Google_Auth_AssertionCredentials(
+      $cred = new BackupPlus_Google_Auth_AssertionCredentials(
           $data->client_email,
           $scopes,
           $data->private_key
       );
       return $cred;
     } else {
-      throw new Google_Exception("Invalid service account JSON file.");
+      throw new BackupPlus_Google_Exception("Invalid service account JSON file.");
     }
   }
 
@@ -162,14 +162,14 @@ class UDP_Google_Client
    * the "Download JSON" button on in the Google Developer
    * Console.
    * @param string $json the configuration json
-   * @throws Google_Exception
+   * @throws BackupPlus_Google_Exception
    */
   public function setAuthConfig($json)
   {
     $data = json_decode($json);
     $key = isset($data->installed) ? 'installed' : 'web';
     if (!isset($data->$key)) {
-      throw new Google_Exception("Invalid client secret JSON file.");
+      throw new BackupPlus_Google_Exception("Invalid client secret JSON file.");
     }
     $this->setClientId($data->$key->client_id);
     $this->setClientSecret($data->$key->client_secret);
@@ -191,14 +191,14 @@ class UDP_Google_Client
   }
 
   /**
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    * @return array
    * @visible For Testing
    */
   public function prepareScopes()
   {
     if (empty($this->requestedScopes)) {
-      throw new Google_Auth_Exception("No scopes specified");
+      throw new BackupPlus_Google_Auth_Exception("No scopes specified");
     }
     $scopes = implode(' ', $this->requestedScopes);
     return $scopes;
@@ -206,7 +206,7 @@ class UDP_Google_Client
 
   /**
    * Set the OAuth 2.0 access token using the string that resulted from calling createAuthUrl()
-   * or UDP_Google_Client#getAccessToken().
+   * or BackupPlus_Google_Client#getAccessToken().
    * @param string $accessToken JSON encoded string containing in the following format:
    * {"access_token":"TOKEN", "refresh_token":"TOKEN", "token_type":"Bearer",
    *  "expires_in":3600, "id_token":"TOKEN", "created":1320790426}
@@ -223,9 +223,9 @@ class UDP_Google_Client
 
   /**
    * Set the authenticator object
-   * @param Google_Auth_Abstract $auth
+   * @param BackupPlus_Google_Auth_Abstract $auth
    */
-  public function setAuth(Google_Auth_Abstract $auth)
+  public function setAuth(BackupPlus_Google_Auth_Abstract $auth)
   {
     $this->config->setAuthClass(get_class($auth));
     $this->auth = $auth;
@@ -233,9 +233,9 @@ class UDP_Google_Client
 
   /**
    * Set the IO object
-   * @param UDP_Google_IO_Abstract $io
+   * @param BackupPlus_Google_IO_Abstract $io
    */
-  public function setIo(UDP_Google_IO_Abstract $io)
+  public function setIo(BackupPlus_Google_IO_Abstract $io)
   {
     $this->config->setIoClass(get_class($io));
     $this->io = $io;
@@ -243,9 +243,9 @@ class UDP_Google_Client
 
   /**
    * Set the Cache object
-   * @param Google_Cache_Abstract $cache
+   * @param BackupPlus_Google_Cache_Abstract $cache
    */
-  public function setCache(Google_Cache_Abstract $cache)
+  public function setCache(BackupPlus_Google_Cache_Abstract $cache)
   {
     $this->config->setCacheClass(get_class($cache));
     $this->cache = $cache;
@@ -253,9 +253,9 @@ class UDP_Google_Client
 
   /**
    * Set the Logger object
-   * @param Google_Logger_Abstract $logger
+   * @param BackupPlus_Google_Logger_Abstract $logger
    */
-  public function setLogger(Google_Logger_Abstract $logger)
+  public function setLogger(BackupPlus_Google_Logger_Abstract $logger)
   {
     $this->config->setLoggerClass(get_class($logger));
     $this->logger = $logger;
@@ -461,7 +461,7 @@ class UDP_Google_Client
   /**
    * Revoke an OAuth2 access token or refresh token. This method will revoke the current access
    * token, if a token isn't provided.
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    * @param string|null $token The token (access token or a refresh token) that should be revoked.
    * @return boolean Returns True if the revocation was successful, otherwise False.
    */
@@ -473,9 +473,9 @@ class UDP_Google_Client
   /**
    * Verify an id_token. This method will verify the current id_token, if one
    * isn't provided.
-   * @throws Google_Auth_Exception
+   * @throws BackupPlus_Google_Auth_Exception
    * @param string|null $token The token (id_token) that should be verified.
-   * @return Google_Auth_LoginTicket Returns an apiLoginTicket if the verification was
+   * @return BackupPlus_Google_Auth_LoginTicket Returns an apiLoginTicket if the verification was
    * successful.
    */
   public function verifyIdToken($token = null)
@@ -495,15 +495,15 @@ class UDP_Google_Client
    */
   public function verifySignedJwt($id_token, $cert_location, $audience, $issuer, $max_expiry = null)
   {
-    $auth = new Google_Auth_OAuth2($this);
+    $auth = new BackupPlus_Google_Auth_OAuth2($this);
     $certs = $auth->retrieveCertsFromLocation($cert_location);
     return $auth->verifySignedJwtWithCerts($id_token, $certs, $audience, $issuer, $max_expiry);
   }
 
   /**
-   * @param $creds Google_Auth_AssertionCredentials
+   * @param $creds BackupPlus_Google_Auth_AssertionCredentials
    */
-  public function setAssertionCredentials(Google_Auth_AssertionCredentials $creds)
+  public function setAssertionCredentials(BackupPlus_Google_Auth_AssertionCredentials $creds)
   {
     $this->getAuth()->setAssertionCredentials($creds);
   }
@@ -575,27 +575,27 @@ class UDP_Google_Client
   /**
    * Helper method to execute deferred HTTP requests.
    *
-   * @param $request Google_Http_Request|Google_Http_Batch
-   * @throws Google_Exception
+   * @param $request BackupPlus_Google_Http_Request|BackupPlus_Google_Http_Batch
+   * @throws BackupPlus_Google_Exception
    * @return object of the type of the expected class or array.
    */
   public function execute($request)
   {
-    if ($request instanceof UDP_Google_Http_Request) {
+    if ($request instanceof BackupPlus_Google_Http_Request) {
       $request->setUserAgent(
           $this->getApplicationName()
           . " " . self::USER_AGENT_SUFFIX
           . $this->getLibraryVersion()
       );
-      if (!$this->getClassConfig("UDP_Google_Http_Request", "disable_gzip")) {
+      if (!$this->getClassConfig("BackupPlus_Google_Http_Request", "disable_gzip")) {
         $request->enableGzip();
       }
       $request->maybeMoveParametersToBody();
-      return UDP_Google_Http_REST::execute($this, $request);
-    } else if ($request instanceof Google_Http_Batch) {
+      return BackupPlus_Google_Http_REST::execute($this, $request);
+    } else if ($request instanceof BackupPlus_Google_Http_Batch) {
       return $request->execute();
     } else {
-      throw new Google_Exception("Do not know how to execute this type of object.");
+      throw new BackupPlus_Google_Exception("Do not know how to execute this type of object.");
     }
   }
 
@@ -609,7 +609,7 @@ class UDP_Google_Client
   }
 
   /**
-   * @return Google_Auth_Abstract Authentication implementation
+   * @return BackupPlus_Google_Auth_Abstract Authentication implementation
    */
   public function getAuth()
   {
@@ -621,7 +621,7 @@ class UDP_Google_Client
   }
 
   /**
-   * @return UDP_Google_IO_Abstract IO implementation
+   * @return BackupPlus_Google_IO_Abstract IO implementation
    */
   public function getIo()
   {
@@ -633,7 +633,7 @@ class UDP_Google_Client
   }
 
   /**
-   * @return Google_Cache_Abstract Cache implementation
+   * @return BackupPlus_Google_Cache_Abstract Cache implementation
    */
   public function getCache()
   {
@@ -645,7 +645,7 @@ class UDP_Google_Client
   }
 
   /**
-   * @return Google_Logger_Abstract Logger implementation
+   * @return BackupPlus_Google_Logger_Abstract Logger implementation
    */
   public function getLogger()
   {
@@ -672,7 +672,7 @@ class UDP_Google_Client
 
   /**
    * Set configuration specific to a given class.
-   * $config->setClassConfig('Google_Cache_File',
+   * $config->setClassConfig('BackupPlus_Google_Cache_File',
    *   array('directory' => '/tmp/cache'));
    * @param $class string|object - The class name for the configuration
    * @param $config string key or an array of configuration values

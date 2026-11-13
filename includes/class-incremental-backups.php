@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.WP.AlternativeFunctions.rename_rename -- Backup archives, logs, keys and temporary files are streamed, locked and given permissions directly, which WP_Filesystem cannot do.
 /** Incremental file backup planning and content inventories. */
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'No direct access allowed' );
@@ -222,7 +223,7 @@ class BackupPlus_Incremental_Backups {
 			if ( is_string( $name ) && preg_match( '/^incremental_[a-f0-9]{12}_[a-z-]+\\.php$/D', $name ) ) {
 				$path = $backupplus->backups_dir_location() . '/' . $name;
 				if ( is_file( $path ) ) {
-					unlink( $path );
+					wp_delete_file( $path );
 				}
 			}
 		}
